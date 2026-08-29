@@ -67,14 +67,37 @@ El script ds.sh centraliza la administración de los contenedores y herramientas
 | `./ds.sh up`       | Construye imágenes (si es necesario) y levanta los servicios en segundo plano. |
 | `./ds.sh down`     | Detiene los contenedores sin eliminar datos ni volúmenes.                      |
 | `./ds.sh ps`       | Lista el estado y los puertos de los contenedores activos.                     |
-| `./ds.sh logs`     | Muestra los logs en vivo de todos los servicios (ej. `./ds.sh logs backend`).  |
-| `./ds.sh restart`  | Reinicia todos los servicios o uno específico (ej. `./ds.sh restart db`).      |
-| `./ds.sh build`    | Fuerza la reconstrucción de las imágenes Docker.                               |
+| `./ds.sh compile`       | Compila el backend Java dentro del contenedor (mvn compile -DskipTests) y dispara el hot-reload de DevTools. |
+| `./ds.sh mvn <argumentos>`       | Ejecuta comandos Maven dentro del contenedor backend (ej: ``./ds.sh mvn clean package``). |
+| `./ds.sh logs [servicio]`     | Muestra los logs en vivo de todos los servicios (ej. `./ds.sh logs backend`).  |
+| `./ds.sh restart [servicio]`  | Reinicia todos los servicios o uno específico (ej: ``./ds.sh restart backend``).      |
+| `./ds.sh build [servicio]`    | Reconstruye las imágenes de Docker.                            |
 | `./ds.sh db`       | Abre una consola interactiva `psql` conectada a PostgreSQL.                    |
 | `./ds.sh backend`  | Abre una terminal interactiva dentro del contenedor del backend.               |
 | `./ds.sh frontend` | Abre una terminal interactiva dentro del contenedor del frontend.              |
 | `./ds.sh test`     | Ejecuta la suite de pruebas automatizadas contra la API.                       |
 | `./ds.sh reset`    | Detiene el entorno y borra los volúmenes de datos (pide confirmación).         |
+
+
+## Flujo de Desarrollo Habitual 
+   1. **Iniciar el entorno:**
+      ```bash
+         ./ds.sh up
+      ```
+      * Frontend: http://localhost:4200
+
+      * Backend API: http://localhost:8080
+
+      * Base de datos: localhost:5432
+   2. **Aplicar cambios en Java (Backend):**
+         Tras modificar archivos ``.java`` en ``backend/src/``:
+      ```bash
+         ./ds.sh compile
+      ```
+   3. **Ejecutar pruebas BDD (Cucumber.js):**
+      ```bash
+         ./ds.sh test
+      ```
 
 ## Gestión de Base de Datos y Reset
 
