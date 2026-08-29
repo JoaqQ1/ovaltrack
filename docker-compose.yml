@@ -1,0 +1,100 @@
+services:
+  # Base de datos principal
+  db:
+    image: postgres:16-alpine
+    container_name: ovaltrack-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ovaltrack}
+      POSTGRES_USER: ${DB_USER:-APP}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-APP}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - ovaltrack_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-APP} -d ${DB_NAME:-ovaltrack}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ovaltrack-net
+
+  # Backend Spring Boot único
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ovaltrack-backend
+    restart: unless-stopped
+    command: bash run.sh
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME:-ovaltrack}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-APP}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-APP}
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 15s
+    volumes:
+      - ./backend:/app
+      - /app/target
+      - backend_maven_cache:/root/.m2
+    networks:
+      - ovaltrack-net
+
+  # Frontend Angular PWA
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ovaltrack-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      API_URL: http://localhost:${BACKEND_PORT:-8080}
+    ports:
+      - "${FRONTEND_PORT:-4200}:4200"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    networks:
+      - ovaltrack-net
+
+  # Contenedor de pruebas BDD Cucumber (solo se ejecuta con ./ds.sh test)
+  testing:
+    build:
+      context: ./testing
+      dockerfile: Dockerfile
+    container_name: ovaltrack-testing
+    profiles:
+      - test
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      API_URL: http://backend:8080
+    volumes:
+      - ./testing:/app
+      - testing_node_modules:/app/node_modules
+    networks:
+      - ovaltrack-net
+
+networks:
+  ovaltrack-net:
+    driver: bridge
+
+volumes:
+  ovaltrack_db_data:
+  backend_maven_cache:
+  frontend_node_modules:
+  testing_node_modules:

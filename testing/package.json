@@ -1,0 +1,14 @@
+
+
+{
+    "name": "ovaltrack-testing",
+    "version": "1.0.0",
+    "description": "Suite de pruebas BDD con Cucumber en JavaScript para OvalTrack",
+    "type": "module",
+    "scripts": {
+        "test": "cucumber-js"
+    },
+    "devDependencies": {
+        "@cucumber/cucumber": "^13.2.1"
+    }
+}

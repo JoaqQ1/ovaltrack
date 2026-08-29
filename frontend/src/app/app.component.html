@@ -1,0 +1,16 @@
+<main style="font-family: system-ui, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto;">
+      <h1>OvalTrack — Verificación de Entorno</h1>
+      <hr style="margin-bottom: 1.5rem;" />
+      
+      <div [style.background-color]="isConnected ? '#e6f4ea' : '#fce8e6'"
+           [style.color]="isConnected ? '#137333' : '#c5221f'"
+           style="padding: 1rem; border-radius: 8px; border: 1px solid currentColor;">
+        <p style="margin: 0; font-weight: bold;">
+          Estado de conexión con el Backend:
+        </p>
+        <p style="margin: 0.5rem 0 0 0;">
+          {{ statusMessage }}
+        </p>
+      </div>
+    </main>
+<router-outlet />

@@ -1,0 +1,22 @@
+# Dependencias locales del host (evita pisar node_modules del contenedor durante el COPY)
+node_modules
+npm-debug.log
+
+# Salidas de compilación y empaquetado
+dist
+.angular
+
+# Archivos y carpetas del IDE / Editor
+.git
+.gitignore
+.editorconfig
+.vscode
+.idea
+
+# Reportes de testing y cobertura
+coverage
+.nyc_output
+
+# Archivos de entorno locales sensibles o temporales
+*.local
+.env

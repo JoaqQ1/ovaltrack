@@ -1,0 +1,8 @@
+{
+  "default": {
+    "paths": ["features/**/*.feature"],
+    "require": ["features/**/*.js"],
+    "format": ["summary", "progress-bar"],
+    "publishQuiet": true
+  }
+}
