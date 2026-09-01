@@ -1,4 +1,4 @@
-package com.ovaltrack.backend.config; // <-- Debe estar dentro del paquete escaneado
+package com.ovaltrack.backend.common.config; 
 
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
