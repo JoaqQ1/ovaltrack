@@ -1,0 +1,173 @@
+@startuml UML_Ovaltrack
+
+skinparam classAttributeIconSize 0
+skinparam monochrome false
+skinparam linetype ortho
+
+package "user" {
+    enum UserRole {
+        ADMIN_OVALTRACK
+        ADMIN_CLUB
+        COACH_ANALYST
+        PLAYER
+    }
+
+    class User {
+        - UUID id
+        - String email
+        - String password
+        - String firstName
+        - String lastName
+        - LocalDate birthDate
+        - UserRole role
+        - Boolean active
+        - LocalDateTime createdAt
+    }
+
+    User --> UserRole
+}
+
+package "club" {
+    enum ClubStatus {
+        REJECTED
+        ACTIVE
+        PENDING
+    }
+
+    class Club {
+        - UUID id
+        - String name
+        - LocalDateTime createdAt
+        - ClubStatus status
+        - User adminUser
+        - String city
+        - String logoUrl
+        - String contactEmail
+        - String contactPhone
+    }
+
+    Club --> ClubStatus
+    Club "0..*" --> "1" User : adminUser
+}
+
+package "division" {
+    enum AgeCategory {
+        U14
+        U15
+        U16
+        U18
+        U20
+        SENIOR
+        VETERAN
+    }
+
+    enum Gender {
+        MALE
+        FEMALE
+        MIXED
+    }
+
+    class Division {
+        - UUID id
+        - String name
+        - Club club
+        - LocalDateTime createdAt
+        - AgeCategory ageCategory
+        - Gender gender
+        - Boolean active
+    }
+
+    class DivisionPlayer {
+        - UUID id
+        - User user
+        - Division division
+        - Integer jerseyNumber
+        - String position
+        - LocalDate startDate
+        - LocalDate endDate
+    }
+
+    class DivisionCoach {
+        - UUID id
+        - User user
+        - Division division
+        - LocalDate startDate
+        - LocalDate endDate
+    }
+
+    Division --> AgeCategory
+    Division --> Gender
+    Division "0..*" --> "1" Club : club
+    DivisionPlayer "0..*" --> "1" User : user
+    DivisionPlayer "0..*" --> "1" Division : division
+    DivisionCoach "0..*" --> "1" User : user
+    DivisionCoach "0..*" --> "1" Division : division
+}
+
+package "match" {
+    enum MatchStatus {
+        NOT_STARTED
+        IN_PROGRESS
+        FINISHED
+    }
+
+    class Match {
+        - UUID id
+        - LocalDateTime date
+        - Division division
+        - String opponent
+        - MatchStatus status
+    }
+
+    Match --> MatchStatus
+    Match "0..*" --> "1" Division : division
+}
+
+package "event" {
+    enum EventPossession {
+        OWN
+        OPPONENT
+        NEUTRAL
+    }
+
+    enum EventCategory {
+        ATTACK
+        DEFENSE
+        NEUTRAL
+    }
+
+    class EventType {
+        - UUID id
+        - String name
+        - String groupName
+        - EventCategory category
+        - Boolean affectsPossession
+        - Boolean isScoring
+        - Integer points
+        - Boolean requiresPlayer
+        - Map<String, Object> metadata
+        - LocalDateTime createdAt
+        - Boolean active
+    }
+
+    class Event {
+        - UUID id
+        - Match match
+        - User player
+        - EventPossession teamPossession
+        - Integer matchTime
+        - LocalDateTime realTime
+        - Integer period
+        - String origin
+        - Map<String, Object> attributes
+        - LocalDateTime createdAt
+        - LocalDateTime synchronizedAt
+    }
+
+    EventType --> EventCategory
+    Event --> EventPossession
+    Event "0..*" --> "1" Match : match
+    Event "0..*" --> "0..1" User : player
+}
+
+@enduml
