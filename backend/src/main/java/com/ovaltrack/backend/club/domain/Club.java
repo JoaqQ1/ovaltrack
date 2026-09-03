@@ -4,11 +4,8 @@ import com.ovaltrack.backend.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -41,4 +38,9 @@ public class Club {
 
     private String city;
 
+    private String logoUrl;
+    
+    private String contactEmail;
+    
+    private String contactPhone;
 }
