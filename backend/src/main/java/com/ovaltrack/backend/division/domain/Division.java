@@ -1,10 +1,10 @@
 package com.ovaltrack.backend.division.domain;
 
+import com.ovaltrack.backend.club.domain.Club;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import com.ovaltrack.backend.club.domain.Club;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -31,4 +31,15 @@ public class Division {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AgeCategory ageCategory;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Gender gender;
+
+    @Builder.Default
+    private Boolean active = true;
 }
