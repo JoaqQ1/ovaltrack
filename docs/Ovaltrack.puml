@@ -1,53 +1,122 @@
 @startuml UML_Ovaltrack
 
-skinparam classAttributeIconSize 0
-skinparam monochrome false
+title Modelo de Dominio — OvalTrack
+
+' ========================================================
+' ESTILOS PROFESIONALES (THEMING)
+' ========================================================
+skinparam DefaultFontName Arial
+skinparam DefaultFontSize 12
+skinparam Shadowing false
+skinparam RoundCorner 6
+skinparam ClassAttributeIconSize 0
+skinparam PackageStyle rectangle
+skinparam nodesep 55
+skinparam ranksep 70
+skinparam ArrowFontSize 11
+skinparam ArrowFontColor #495057
+skinparam ArrowThickness 1.2
+skinparam Padding 3
 skinparam linetype ortho
 
-package "user" {
-    enum UserRole {
-        ADMIN_OVALTRACK
-        ADMIN_CLUB
-        COACH_ANALYST
-        PLAYER
-    }
-
-    class User {
-        - UUID id
-        - String email
-        - String password
-        - String firstName
-        - String lastName
-        - LocalDate birthDate
-        - UserRole role
-        - Boolean active
-        - LocalDateTime createdAt
-    }
-
-    User --> UserRole
+skinparam title {
+    FontSize 20
+    FontColor #2C3E50
+    FontStyle bold
 }
 
-package "club" {
-    enum ClubStatus {
-        REJECTED
-        ACTIVE
-        PENDING
+' Nota: 'linetype ortho' funciona bien ahora porque el modelo está
+' "decluttered" (sin flechas redundantes hacia enums, solo relaciones
+' reales). Con el diagrama original de 16 relaciones, ortho generaba
+' líneas larguísimas que se salían del lienzo; con el grafo simplificado
+' cada relación consigue su propio canal en ángulo recto.
+
+skinparam class {
+    BackgroundColor #F8F9FA
+    ArrowColor #2C3E50
+    BorderColor #2C3E50
+    HeaderBackgroundColor #DEE2E6
+    FontSize 12
+    AttributeFontSize 11
+    AttributeFontColor #343A40
+}
+
+skinparam enum {
+    BackgroundColor #E9ECEF
+    BorderColor #ADB5BD
+    FontSize 11
+}
+
+skinparam package {
+    BackgroundColor #FFFFFF
+    BorderColor #ADB5BD
+    FontColor #495057
+    FontStyle bold
+    Shadowing false
+}
+
+' ========================================================
+' PAQUETES Y CLASES
+' ========================================================
+package "event" {
+    enum EventPossession {
+        OWN
+        OPPONENT
+        NEUTRAL
     }
 
-    class Club {
+    enum EventCategory {
+        ATTACK
+        DEFENSE
+        NEUTRAL
+    }
+
+    class EventType {
         - UUID id
         - String name
+        - String groupName
+        - EventCategory category
+        - Boolean affectsPossession
+        - Boolean isScoring
+        - Integer points
+        - Boolean requiresPlayer
+        - Map<String, Object> metadata
         - LocalDateTime createdAt
-        - ClubStatus status
-        - User adminUser
-        - String city
-        - String logoUrl
-        - String contactEmail
-        - String contactPhone
+        - Boolean active
     }
 
-    Club --> ClubStatus
-    Club "0..*" --> "1" User : adminUser
+    class Event {
+        - UUID id
+        - EventType eventType
+        - Match match
+        - User player
+        - EventPossession teamPossession
+        - Integer matchTime
+        - LocalDateTime realTime
+        - Integer period
+        - String origin
+        - Map<String, Object> attributes
+        - LocalDateTime createdAt
+        - LocalDateTime synchronizedAt
+    }
+
+    Event "0..*" --> "1" EventType : eventType
+}
+
+package "match" {
+    enum MatchStatus {
+        NOT_STARTED
+        IN_PROGRESS
+        FINISHED
+    }
+
+    class Match {
+        - UUID id
+        - LocalDateTime date
+        - Division division
+        - String opponent
+        - MatchStatus status
+    }
 }
 
 package "division" {
@@ -95,79 +164,73 @@ package "division" {
         - LocalDate endDate
     }
 
-    Division --> AgeCategory
-    Division --> Gender
-    Division "0..*" --> "1" Club : club
-    DivisionPlayer "0..*" --> "1" User : user
     DivisionPlayer "0..*" --> "1" Division : division
-    DivisionCoach "0..*" --> "1" User : user
     DivisionCoach "0..*" --> "1" Division : division
 }
 
-package "match" {
-    enum MatchStatus {
-        NOT_STARTED
-        IN_PROGRESS
-        FINISHED
+package "club" {
+    enum ClubStatus {
+        REJECTED
+        ACTIVE
+        PENDING
     }
 
-    class Match {
-        - UUID id
-        - LocalDateTime date
-        - Division division
-        - String opponent
-        - MatchStatus status
-    }
-
-    Match --> MatchStatus
-    Match "0..*" --> "1" Division : division
-}
-
-package "event" {
-    enum EventPossession {
-        OWN
-        OPPONENT
-        NEUTRAL
-    }
-
-    enum EventCategory {
-        ATTACK
-        DEFENSE
-        NEUTRAL
-    }
-
-    class EventType {
+    class Club {
         - UUID id
         - String name
-        - String groupName
-        - EventCategory category
-        - Boolean affectsPossession
-        - Boolean isScoring
-        - Integer points
-        - Boolean requiresPlayer
-        - Map<String, Object> metadata
         - LocalDateTime createdAt
-        - Boolean active
+        - ClubStatus status
+        - User adminUser
+        - String city
+        - String logoUrl
+        - String contactEmail
+        - String contactPhone
     }
-
-    class Event {
-        - UUID id
-        - Match match
-        - User player
-        - EventPossession teamPossession
-        - Integer matchTime
-        - LocalDateTime realTime
-        - Integer period
-        - String origin
-        - Map<String, Object> attributes
-        - LocalDateTime createdAt
-        - LocalDateTime synchronizedAt
-    }
-
-    EventType --> EventCategory
-    Event --> EventPossession
-    Event "0..*" --> "1" Match : match
-    Event "0..*" --> "0..1" User : player
 }
+
+package "user" {
+    enum UserRole {
+        ADMIN_OVALTRACK
+        ADMIN_CLUB
+        COACH_ANALYST
+        PLAYER
+    }
+
+    class User {
+        - UUID id
+        - String email
+        - String password
+        - String firstName
+        - String lastName
+        - LocalDate birthDate
+        - UserRole role
+        - Boolean active
+        - LocalDateTime createdAt
+    }
+}
+
+' ========================================================
+' RELACIONES ENTRE ENTIDADES — columna vertebral del dominio
+' (Event -> Match -> Division -> Club -> User)
+' ========================================================
+Event "0..*" -down-> "1" Match : match
+Match "0..*" -down-> "1" Division : division
+Division "0..*" -down-> "1" Club : club
+Club "0..*" -down-> "1" User : adminUser
+
+' ========================================================
+' RELACIONES DIRECTAS A USER (saltan capas de la jerarquía)
+' Se dibujan punteadas para no competir visualmente con la
+' columna vertebral de arriba.
+' ========================================================
+DivisionPlayer ..> User : user
+DivisionCoach ..> User : user
+Event ..> User : player
+
+legend right
+  |= Línea |= Significado |
+  |  <color:#2C3E50>━━━━━</color> | Relación estructural (columna vertebral) |
+  |  <color:#2C3E50>┅┅┅┅┅</color> | Referencia directa a User (cross-cutting) |
+endlegend
 
 @enduml

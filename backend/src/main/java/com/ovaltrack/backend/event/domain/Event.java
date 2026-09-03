@@ -26,6 +26,10 @@ public class Event {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_type_id", nullable = false)
+    private EventType eventType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "match_id", nullable = false)
     private Match match;
 
