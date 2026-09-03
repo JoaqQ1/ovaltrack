@@ -35,8 +35,8 @@ public class Club {
     @Column(nullable = false)
     private ClubStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "admin_user_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admin_user_id", unique = true)
     private User adminUser;
 
     private String city;
