@@ -24,18 +24,24 @@ public class EventController {
 	private EventService eventService;
 
 	@GetMapping
-	public ResponseEntity<Collection<Event>> findAllEvents() {
+	public ResponseEntity<Object> findAllEvents() {
 		return ResponseEntity.ok(eventService.findAllEvents());
 	}
 
+	@GetMapping("/{eventId}")
+	public ResponseEntity<Object> findEventById(@PathVariable UUID eventId) {
+		return ResponseEntity.ok(eventService.findEventById(eventId));
+	}
+
 	@PostMapping
-	public ResponseEntity<Event> saveEvent(@RequestBody Event event) {
+	public ResponseEntity<Object> saveEvent(@RequestBody Event event) {
 		return ResponseEntity.ok(eventService.saveEvent(event));
 	}
 
+	//TODO: Soft delete, change it
 	@DeleteMapping("/{eventId}")
-	public ResponseEntity<Void> deleteEvent(@PathVariable UUID eventId) {
+	public ResponseEntity<Object> deleteEvent(@PathVariable UUID eventId) {
 		eventService.deleteEvent(eventId);
-		return ResponseEntity.noContent().build();
+		return ResponseEntity.ok("Evento eliminado correctamente");
 	}
 }

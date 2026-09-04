@@ -21,6 +21,10 @@ public class EventService {
 		return eventRepository.findAll();
 	}
 
+	public Event findEventById(UUID eventId) {
+		return eventRepository.findById(eventId).orElse(null);
+	}
+
 	@Transactional
 	public Event saveEvent(Event event) {
 		return eventRepository.save(event);

@@ -20,6 +20,10 @@ public class ClubService {
         return clubRepository.findAll();
     }
 
+    public Club findClubById(UUID clubId) {
+        return clubRepository.findById(clubId).orElse(null);
+    }
+
     //Paged getAll function
 
     //This function will assign status and creation timestamp

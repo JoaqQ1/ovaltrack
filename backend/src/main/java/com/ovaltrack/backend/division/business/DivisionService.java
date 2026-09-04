@@ -21,6 +21,10 @@ public class DivisionService {
 		return divisionRepository.findAll();
 	}
 
+	public Division findDivisionById(UUID divisionId) {
+		return divisionRepository.findById(divisionId).orElse(null);
+	}
+
     //Function will assign timestamp
 	@Transactional
 	public Division saveDivision(Division division) {
