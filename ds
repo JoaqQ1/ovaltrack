@@ -98,6 +98,20 @@ case "$cmd" in
   db)
     dc exec db psql -U "${DB_USER:-APP}" -d "${DB_NAME:-ovaltrack}"
     ;;
+  staging)
+    if [ -z "${1:-}" ]; then
+      echo "Error: Debes especificar el archivo SQL a cargar (ej: ./ds.sh staging data.sql)"
+      exit 1
+    fi
+    SQL_FILE="staging/$1"
+    if [ ! -f "$SQL_FILE" ]; then
+      echo "Error: No se encontró el archivo $SQL_FILE"
+      exit 1
+    fi
+    echo "Ejecutando script $SQL_FILE en la base de datos..."
+    docker exec -i "ovaltrack-db" psql -U "${DB_USER:-APP}" -d "${DB_NAME:-ovaltrack}" < "$SQL_FILE"
+    echo "Carga finalizada."
+    ;;
   *)
     cat <<EOF
 Uso: ./ds.sh <comando>
@@ -116,6 +130,7 @@ Comandos disponibles:
   backend   Abre una terminal interactiva en el contenedor del backend
   frontend  Abre una terminal interactiva en el contenedor del frontend
   db        Abre una consola psql conectada a la base de datos
+  staging   Ejecuta un script SQL de la carpeta staging en la BD (ej: ./ds.sh staging data.sql)
 EOF
     exit 1
     ;;
