@@ -1,7 +1,6 @@
 package com.ovaltrack.backend.user.business;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.ovaltrack.backend.club.business.ClubService;
 import com.ovaltrack.backend.club.domain.Club;
+import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 
 import jakarta.validation.Valid;
 
@@ -47,22 +48,25 @@ public class ClubController {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        return ResponseEntity.ok(clubService.saveClub(club));
+        try {
+            return ResponseEntity.ok(clubService.saveClub(club));
+        } catch (BusinessException anError) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
+        } catch (DataIntegrityViolationException anError) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al guardar club");
+        }
     }
 
     @DeleteMapping("/{clubId}")
     public ResponseEntity<Object> deleteClub(@PathVariable UUID clubId) {
-        clubService.deleteClub(clubId);
-        return ResponseEntity.ok("Club eliminado correctamente");
-        /* 
         try {
-            service.delete(id);
-            return Response.ok( "");
+            clubService.deleteClub(clubId);
+            return ResponseEntity.ok("Club eliminado correctamente");
         } catch (BusinessException anError) {
-            return Response.conflict(anError.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
         } catch (DataIntegrityViolationException anError) {
-            return Response.conflict("");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al eliminar club, hay entidades relacionadas");
         }
-         */
+
     }
 }
