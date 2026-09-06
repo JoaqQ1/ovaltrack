@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ovaltrack.backend.club.domain.Club;
 import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionCoach;
 import com.ovaltrack.backend.division.domain.DivisionPlayer;
@@ -40,8 +41,9 @@ public class DivisionService {
 
 	// Function will assign timestamp
 	@Transactional
-	public Division saveDivision(Division division) {
-		return divisionRepository.save(division);
+	public Division saveDivision(Club aClub, Division aDivision) {
+		aDivision.setClub(aClub);
+		return divisionRepository.save(aDivision);
 	}
 
 	@Transactional
@@ -64,8 +66,8 @@ public class DivisionService {
 	}
 
 	@Transactional
-	public DivisionPlayer saveDivisionPlayer(UUID divisionId, DivisionPlayer divisionPlayer) {
-		return divisionPlayerService.saveDivisionPlayer(divisionId, divisionPlayer);
+	public DivisionPlayer saveDivisionPlayer(Division aDivision, DivisionPlayer divisionPlayer) {
+		return divisionPlayerService.saveDivisionPlayer(aDivision, divisionPlayer);
 	}
 
 	@Transactional
@@ -88,8 +90,8 @@ public class DivisionService {
 	}
 
 	@Transactional
-	public DivisionCoach saveDivisionCoach(UUID divisionId, DivisionCoach divisionCoach) {
-		return divisionCoachService.saveDivisionCoach(divisionId, divisionCoach);
+	public DivisionCoach saveDivisionCoach(Division aDivision, DivisionCoach divisionCoach) {
+		return divisionCoachService.saveDivisionCoach(aDivision, divisionCoach);
 	}
 
 	@Transactional

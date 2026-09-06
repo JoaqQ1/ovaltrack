@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionCoach;
 import com.ovaltrack.backend.division.repository.DivisionCoachRepository;
 
@@ -26,7 +27,8 @@ public class DivisionCoachService {
     }
 
     @Transactional
-	public DivisionCoach saveDivisionCoach(UUID divisionId, DivisionCoach divisionCoach) {
+	public DivisionCoach saveDivisionCoach(Division aDivision, DivisionCoach divisionCoach) {
+        divisionCoach.setDivision(aDivision);
 		return divisionCoachRepository.save(divisionCoach);
 	}
 

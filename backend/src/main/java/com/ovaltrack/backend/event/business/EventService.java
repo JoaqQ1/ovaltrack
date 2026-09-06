@@ -17,8 +17,16 @@ public class EventService {
 	@Autowired
 	private EventRepository eventRepository;
 
-	public Collection<Event> findAllEvents() {
-		return eventRepository.findAll();
+	public Collection<Event> findEventsByClubId(UUID clubId) {
+		return eventRepository.findEventsByClubId(clubId);
+	}
+
+	public Collection<Event> findEventsByDivisionId(UUID divisionId) {
+		return eventRepository.findEventsByDivisionId(divisionId);
+	}
+
+	public Collection<Event> findEventsByMatchId(UUID matchId) {
+		return eventRepository.findEventsByMatchId(matchId);
 	}
 
 	public Event findEventById(UUID eventId) {

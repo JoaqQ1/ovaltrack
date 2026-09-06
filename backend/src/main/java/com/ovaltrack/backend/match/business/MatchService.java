@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.match.domain.Match;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 
@@ -17,16 +18,21 @@ public class MatchService {
 	@Autowired
 	private MatchRepository matchRepository;
 
-	public Collection<Match> findAllMatches() {
-		return matchRepository.findAll();
-	}
+	public Collection<Match> findAllMatchesByClubId(UUID clubId) {
+        return matchRepository.findAllMatchesByClubId(clubId);
+    }
+
+	public Collection<Match> findAllMatchesByDivisionId(UUID divisionId) {
+        return matchRepository.findAllMatchesByDivisionId(divisionId);
+    }
 
 	public Match findMatchById(UUID matchId) {
 		return matchRepository.findById(matchId).orElse(null);
 	}
 
 	@Transactional
-	public Match saveMatch(Match match) {
+	public Match saveMatch(Division aDivision, Match match) {
+		match.setDivision(aDivision);
 		return matchRepository.save(match);
 	}
 

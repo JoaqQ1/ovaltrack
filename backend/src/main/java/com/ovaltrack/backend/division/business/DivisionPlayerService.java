@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionPlayer;
 import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
 
@@ -26,7 +27,8 @@ public class DivisionPlayerService {
     }
 
     @Transactional
-	public DivisionPlayer saveDivisionPlayer(UUID divisionId, DivisionPlayer divisionPlayer) {
+	public DivisionPlayer saveDivisionPlayer(Division aDivision, DivisionPlayer divisionPlayer) {
+        divisionPlayer.setDivision(aDivision);
 		return divisionPlayerRepository.save(divisionPlayer);
 	}
 
