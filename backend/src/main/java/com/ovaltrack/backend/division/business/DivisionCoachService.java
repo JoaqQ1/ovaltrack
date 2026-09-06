@@ -1,5 +1,6 @@
 package com.ovaltrack.backend.division.business;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -30,6 +31,8 @@ public class DivisionCoachService {
     @Transactional
 	public DivisionCoach saveDivisionCoach(Division aDivision, DivisionCoach divisionCoach) {
         divisionCoach.setDivision(aDivision);
+        divisionCoach.setStartDate(LocalDate.now());
+        divisionCoach.setEndDate(null);
 		return divisionCoachRepository.save(divisionCoach);
 	}
 
@@ -46,7 +49,13 @@ public class DivisionCoachService {
 			throw new BusinessException("Club no coincide con club del entrenador");
 		}
 
-        divisionCoachRepository.deleteById(divisionCoachId);
+        if (aDivisionCoach.getEndDate() != null) {
+            throw new BusinessException("No se puede desasociar un entrenador que ya no esta asociado a la division");
+        }
+
+        aDivisionCoach.setEndDate(LocalDate.now());
+        divisionCoachRepository.save(aDivisionCoach);
+        //divisionCoachRepository.deleteById(divisionCoachId);
     }
 
 }

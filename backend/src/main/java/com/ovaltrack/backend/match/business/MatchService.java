@@ -4,13 +4,12 @@ import java.util.Collection;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.match.domain.Match;
+import com.ovaltrack.backend.match.domain.MatchStatus;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 
 import jakarta.transaction.Transactional;
@@ -36,6 +35,20 @@ public class MatchService {
 	@Transactional
 	public Match saveMatch(Division aDivision, Match match) {
 		match.setDivision(aDivision);
+		match.setStatus(MatchStatus.NOT_STARTED);
+		return matchRepository.save(match);
+	}
+
+	//TODO: functions to start and to finish match, add endpoints and logic to check division association
+	@Transactional
+	public Match startMatch(Division aDivision, Match match) {
+		match.setStatus(MatchStatus.IN_PROGRESS);
+		return matchRepository.save(match);
+	}
+
+	@Transactional
+	public Match FinishMatch(Division aDivision, Match match) {
+		match.setStatus(MatchStatus.FINISHED);
 		return matchRepository.save(match);
 	}
 

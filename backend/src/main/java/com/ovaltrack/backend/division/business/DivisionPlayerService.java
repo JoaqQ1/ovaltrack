@@ -1,5 +1,6 @@
 package com.ovaltrack.backend.division.business;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -31,6 +32,8 @@ public class DivisionPlayerService {
     @Transactional
 	public DivisionPlayer saveDivisionPlayer(Division aDivision, DivisionPlayer divisionPlayer) {
         divisionPlayer.setDivision(aDivision);
+        divisionPlayer.setStartDate(LocalDate.now());
+        divisionPlayer.setEndDate(null);
 		return divisionPlayerRepository.save(divisionPlayer);
 	}
 
@@ -45,7 +48,13 @@ public class DivisionPlayerService {
 			throw new BusinessException("Club no coincide con club del jugador");
 		}
 
-        divisionPlayerRepository.deleteById(divisionPlayerId);
+        if (aDivisionPlayer.getEndDate() != null) {
+            throw new BusinessException("No se puede desasociar un jugador que ya no esta asociado a la division");
+        }
+
+        aDivisionPlayer.setEndDate(LocalDate.now());
+        divisionPlayerRepository.save(aDivisionPlayer);
+        //divisionPlayerRepository.deleteById(divisionPlayerId);
     }
 
 }

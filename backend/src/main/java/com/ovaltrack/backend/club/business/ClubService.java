@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.club.domain.Club;
+import com.ovaltrack.backend.club.domain.ClubStatus;
 import com.ovaltrack.backend.club.repository.ClubRepository;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 
@@ -27,13 +28,16 @@ public class ClubService {
 
     //Paged getAll function
 
-    //This function will assign status and creation timestamp
     @Transactional
     public Club saveClub(Club aClub) {
-        //this.validateClub(aClub);  
+        if (aClub.getId() != null) {
+
+        }   else {
+            
+        }
+        aClub.setStatus(ClubStatus.ACTIVE);
         return clubRepository.save(aClub);
     }
-    //TODO: Ask whether club's status is pending by default considering our MVP
 
     @Transactional
     public void deleteClub(UUID clubId) {

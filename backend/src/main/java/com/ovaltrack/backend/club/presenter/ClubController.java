@@ -35,7 +35,7 @@ import jakarta.validation.Valid;
 public class ClubController {
 
     @Autowired
-    ClubService clubService;
+    private ClubService clubService;
 
     @Autowired
     private DivisionService divisionService;

@@ -43,6 +43,14 @@ public class DivisionService {
 	// Function will assign timestamp
 	@Transactional
 	public Division saveDivision(Club aClub, Division aDivision) {
+		if (aDivision.getId() != null) {
+			if (findDivisionByIdAndClubId(aDivision.getId(), aClub.getId()) != null) {
+				aDivision.setActive(true);
+			}
+			if (divisionRepository.findById(aDivision.getId()) != null) {
+				throw new BusinessException("No se puede asignar una division de otro club");
+			}
+		}
 		aDivision.setClub(aClub);
 		return divisionRepository.save(aDivision);
 	}
@@ -53,7 +61,11 @@ public class DivisionService {
 		if (aDivision == null) {
 			throw new BusinessException("No se puede eliminar una division que no esta asociada al club");
 		}
-		divisionRepository.deleteById(divisionId);
+
+		aDivision.setActive(false);
+		divisionRepository.save(aDivision);
+		//TODO: Discuss whether to allow disabling without considering player association. In which case this should disable every DivisionPlayer and DivisionCoach associated
+		//divisionRepository.deleteById(divisionId);
 	}
 
 	/*
