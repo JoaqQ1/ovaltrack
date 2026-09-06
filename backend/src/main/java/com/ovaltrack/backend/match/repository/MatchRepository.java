@@ -17,4 +17,7 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
     @Query("SELECT m FROM Match m WHERE m.division.id = :divisionId")
     Collection<Match> findAllMatchesByDivisionId(@Param("divisionId") UUID divisionId);
 
+    @Query("SELECT m FROM Match m WHERE m.id = :matchId AND m.division.id = :divisionId")
+    Match findMatchByIdAndDivisionId(@Param("matchId") UUID matchId, @Param("divisionId") UUID divisionId);
+
 }

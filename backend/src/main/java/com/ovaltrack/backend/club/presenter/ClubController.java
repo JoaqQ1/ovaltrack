@@ -52,16 +52,18 @@ public class ClubController {
      * /////////////////////////////////////////////////////////////////////////////
      */
 
-    // Creation of object instead of sending the result directly from the function
     @GetMapping
     public ResponseEntity<Object> findAllClubs() {
-        Collection<Club> allClubs = clubService.findAllClubs();
-        return ResponseEntity.ok(allClubs);
+        Collection<Club> result = clubService.findAllClubs();
+        return (result != null) ? ResponseEntity.ok(result) 
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro ningun club");
     }
 
     @GetMapping("/{clubId}")
     public ResponseEntity<Object> findClubById(@PathVariable UUID clubId) {
-        return ResponseEntity.ok(clubService.findClubById(clubId));
+        Club result = clubService.findClubById(clubId);
+        return (result != null) ? ResponseEntity.ok(result) 
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
     }
 
     @PostMapping
@@ -71,7 +73,8 @@ public class ClubController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
         try {
-            return ResponseEntity.ok(clubService.saveClub(club));
+            Club result = clubService.saveClub(club);
+            return ResponseEntity.ok(result);
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
         } catch (DataIntegrityViolationException anError) {
@@ -101,13 +104,24 @@ public class ClubController {
 
     @GetMapping("/{clubId}/division")
     public ResponseEntity<Object> findAllDivisionsByClubId(@PathVariable UUID clubId) {
-        return ResponseEntity.ok(divisionService.findAllDivisionsByClubId(clubId));
+        if (clubService.findClubById(clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+        Collection<Division> result = divisionService.findAllDivisionsByClubId(clubId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Divisiones no encontradas");
     }
 
     @GetMapping("/{clubId}/division/{divisionId}")
-    public ResponseEntity<Object> findDivisionById(
+    public ResponseEntity<Object> findDivisionByIdAndClubId(
             @PathVariable UUID clubId, @PathVariable UUID divisionId) {
-        return ResponseEntity.ok(divisionService.findDivisionById(divisionId));
+        if (clubService.findClubById(clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+        Division result = divisionService.findDivisionByIdAndClubId(divisionId, clubId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+
     }
 
     @PostMapping("/{clubId}/division")
@@ -120,9 +134,8 @@ public class ClubController {
 
         try {
             Club aClub = clubService.findClubById(clubId);
-
             if (aClub == null) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Club no encontrado");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
             }
 
             Division aDivision = divisionService.saveDivision(aClub, division);
@@ -139,7 +152,12 @@ public class ClubController {
     public ResponseEntity<Object> deleteDivision(
             @PathVariable UUID clubId, @PathVariable UUID divisionId) {
         try {
-            divisionService.deleteDivision(divisionId);
+            Club aClub = clubService.findClubById(clubId);
+            if (aClub == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+            }
+
+            divisionService.deleteDivision(aClub, divisionId);
             return ResponseEntity.ok("Division eliminada correctamente");
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
@@ -158,26 +176,47 @@ public class ClubController {
     @GetMapping("/{clubId}/division/{divisionId}/players")
     public ResponseEntity<Object> findDivisionPlayers(
             @PathVariable UUID clubId, @PathVariable UUID divisionId) {
-        return ResponseEntity.ok(divisionService.findDivisionPlayersByDivision(divisionId));
+
+        if (clubService.findClubById(clubId) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+        if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+        }
+
+        Collection<DivisionPlayer> result = divisionService.findDivisionPlayersByDivision(divisionId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron jugadores asociados a la division");
+
     }
 
     @GetMapping("/{clubId}/division/{divisionId}/players/{divisionPlayerId}")
-    public ResponseEntity<Object> findDivisionPlayerById(
+    public ResponseEntity<Object> findDivisionPlayerByIdAndDivisionId(
             @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID divisionPlayerId) {
-        return ResponseEntity.ok(divisionService.findDivisionPlayerById(divisionPlayerId));
+        if (clubService.findClubById(clubId) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+        if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+        }
+
+        DivisionPlayer result = divisionService.findDivisionPlayerByIdAndDivisionId(divisionPlayerId, divisionId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro al jugador asociado a la division");
     }
 
     @PostMapping("/{clubId}/division/{divisionId}/players")
     public ResponseEntity<Object> saveDivisionPlayer(
             @PathVariable UUID clubId, @PathVariable UUID divisionId, @RequestBody DivisionPlayer divisionPlayer) {
         try {
-
-            Division aDivision = divisionService.findDivisionById(divisionId);
-            if (aDivision == null) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Division no encontrada");
+            if (clubService.findClubById(clubId) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+            }
+            if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
             }
 
-            DivisionPlayer aDivisionPlayer = divisionService.saveDivisionPlayer(aDivision, divisionPlayer);
+            DivisionPlayer aDivisionPlayer = divisionService.saveDivisionPlayer(divisionService.findDivisionByIdAndClubId(divisionId, clubId), divisionPlayer);
             return ResponseEntity.ok(aDivisionPlayer);
 
         } catch (BusinessException anError) {
@@ -191,7 +230,16 @@ public class ClubController {
     public ResponseEntity<Object> deleteDivisionPlayer(
             @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID divisionPlayerId) {
         try {
-            divisionService.deleteDivisionPlayer(divisionPlayerId);
+            Club aClub = clubService.findClubById(clubId);
+            if (aClub == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+            }
+            Division aDivision = divisionService.findDivisionByIdAndClubId(divisionId, clubId);
+            if (aDivision == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+            }
+
+            divisionService.deleteDivisionPlayer(aClub, aDivision, divisionPlayerId);
             return ResponseEntity.ok("Jugador eliminado correctamente");
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
@@ -208,29 +256,49 @@ public class ClubController {
      */
 
     @GetMapping("/{clubId}/division/{divisionId}/coaches")
-    public ResponseEntity<Object> findDivisionCoaches(
+    public ResponseEntity<Object> findDivisionCoachesByDivisionId(
             @PathVariable UUID clubId, @PathVariable UUID divisionId) {
-        return ResponseEntity.ok(divisionService.findDivisionCoachesByDivisionId(divisionId));
+        if (clubService.findClubById(clubId) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+        if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+        }
+
+        Collection<DivisionCoach> result = divisionService.findDivisionCoachesByClubIdAndDivisionId(clubId, divisionId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron entrenadores asociados a la division");
     }
 
     @GetMapping("/{clubId}/division/{divisionId}/coaches/{divisionCoachId}")
-    public ResponseEntity<Object> findDivisionCoachById(
+    public ResponseEntity<Object> findDivisionCoachByIdAndDivisionId(
             @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID divisionCoachId) {
-        return ResponseEntity.ok(divisionService.findDivisionCoachById(divisionCoachId));
+        if (clubService.findClubById(clubId) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+        if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+        }
+
+        DivisionCoach result = divisionService.findDivisionCoachByIdAndDivisionId(divisionCoachId, divisionId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro al entrenador asociado a la division");
+
     }
 
     @PostMapping("/{clubId}/division/{divisionId}/coaches")
     public ResponseEntity<Object> saveDivisionCoach(
             @PathVariable UUID clubId, @PathVariable UUID divisionId, @RequestBody DivisionCoach divisionCoach) {
         try {
-
-            Division aDivision = divisionService.findDivisionById(divisionId);
-            if (aDivision == null) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Division no encontrada");
+            if (clubService.findClubById(clubId) == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+            }
+            if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
             }
 
-            DivisionCoach aDivisionCoach = divisionService.saveDivisionCoach(aDivision, divisionCoach);
-            return ResponseEntity.ok(aDivisionCoach);
+            DivisionCoach result = divisionService.saveDivisionCoach(divisionService.findDivisionByIdAndClubId(divisionId, clubId), divisionCoach);
+            return ResponseEntity.ok(result);
 
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
@@ -243,7 +311,16 @@ public class ClubController {
     public ResponseEntity<Object> deleteDivisionCoach(
             @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID divisionCoachId) {
         try {
-            divisionService.deleteDivisionCoach(divisionCoachId);
+            Club aClub = clubService.findClubById(clubId);
+            if (aClub == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+            }
+            Division aDivision = divisionService.findDivisionByIdAndClubId(divisionId, clubId);
+            if (aDivision == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+            }
+
+            divisionService.deleteDivisionCoach(aClub, aDivision, divisionCoachId);
             return ResponseEntity.ok("Entrenador eliminado correctamente");
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
@@ -261,31 +338,54 @@ public class ClubController {
 
     @GetMapping("/{clubId}/matches")
     public ResponseEntity<Object> findAllMatchesByClubId(@PathVariable UUID clubId) {
-        return ResponseEntity.ok(matchService.findAllMatchesByClubId(clubId));
+        if (clubService.findClubById(clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+        Collection<Match> result = matchService.findAllMatchesByClubId(clubId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron partidos asociados al club");
     }
 
     @GetMapping("/{clubId}/division/{divisionId}/matches")
-    public ResponseEntity<Object> findAllMatchesByDivisionId(@PathVariable UUID clubId, @PathVariable UUID divisionId) {
-        return ResponseEntity.ok(matchService.findAllMatchesByDivisionId(divisionId));
+    public ResponseEntity<Object> findAllMatchesByDivisionIdAndClubId(@PathVariable UUID clubId, @PathVariable UUID divisionId) {
+        if (clubService.findClubById(clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+        if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+        }
+        Collection<Match> result = matchService.findAllMatchesByDivisionId(divisionId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron partidos asociados a la division");
     }
 
     @GetMapping("/{clubId}/division/{divisionId}/matches/{matchId}")
-    public ResponseEntity<Object> findMatchById(
+    public ResponseEntity<Object> findMatchByIdAndDivisionId(
             @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID matchId) {
-        return ResponseEntity.ok(matchService.findMatchById(matchId));
+        if (clubService.findClubById(clubId) == null ) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+        if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+        }
+        Match result = matchService.findMatchByIdAndDivisionId(matchId, divisionId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro el partido");
     }
 
     @PostMapping("/{clubId}/division/{divisionId}/matches")
     public ResponseEntity<Object> saveMatch(@PathVariable UUID clubId, @PathVariable UUID divisionId,
             @RequestBody Match match) {
         try {
-            Division aDivision = divisionService.findDivisionById(divisionId);
+            if (clubService.findClubById(clubId) == null ) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+            }
+            Division aDivision = divisionService.findDivisionByIdAndClubId(divisionId, clubId);
             if (aDivision == null) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Division no encontrada");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
             }
 
             Match result = matchService.saveMatch(aDivision, match);
-
             return ResponseEntity.ok(result);
 
         } catch (BusinessException anError) {
@@ -295,11 +395,18 @@ public class ClubController {
         }
     }
 
-    @DeleteMapping("/{clubId}/matches/{matchId}")
+    @DeleteMapping("/{clubId}/division/{divisionId}/matches/{matchId}")
     public ResponseEntity<Object> deleteMatch(
-            @PathVariable UUID clubId, @PathVariable UUID matchId) {
+            @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID matchId) {
         try {
-            matchService.deleteMatch(matchId);
+            if (clubService.findClubById(clubId) == null ) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+            }
+            if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+            }
+
+            matchService.deleteMatch(divisionId, matchId);
             return ResponseEntity.ok("Partido eliminado correctamente");
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
@@ -317,31 +424,84 @@ public class ClubController {
 
     @GetMapping("/{clubId}/events")
     public ResponseEntity<Object> findEventsByClubId(@PathVariable UUID clubId) {
-        return ResponseEntity.ok(eventService.findEventsByClubId(clubId));
+        if (clubService.findClubById(clubId) == null ) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+
+        Collection<Event> result = eventService.findEventsByClubId(clubId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron eventos asociados al club");
     }
 
-    @GetMapping("/{clubId}/division/{divisionId}/matches/events")
+    @GetMapping("/{clubId}/division/{divisionId}/events")
     public ResponseEntity<Object> findEventsByDivisionId(@PathVariable UUID clubId, @PathVariable UUID divisionId) {
-        return ResponseEntity.ok(eventService.findEventsByDivisionId(divisionId));
+        if (clubService.findClubById(clubId) == null ) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+        if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+        }
+
+        Collection<Event> result = eventService.findEventsByDivisionId(divisionId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron eventos asociados a la division");
     }
 
     @GetMapping("/{clubId}/division/{divisionId}/matches/{matchId}/events")
     public ResponseEntity<Object> findEventsByMatchId(
             @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID matchId) {
-        return ResponseEntity.ok(eventService.findEventsByMatchId(matchId));
+
+        if (clubService.findClubById(clubId) == null ) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+        if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+        }
+
+        if (matchService.findMatchByIdAndDivisionId(matchId, divisionId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Partido no encontrado");
+        }
+
+        Collection<Event> result = eventService.findEventsByMatchId(matchId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron eventos asociados al partido");
     }
 
     @GetMapping("/{clubId}/division/{divisionId}/matches/{matchId}/events/{eventId}")
-    public ResponseEntity<Object> findEventById(
-            @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID matchId, @PathVariable UUID eventId) {
-        return ResponseEntity.ok(eventService.findEventById(eventId));
+    public ResponseEntity<Object> findEventByIdAndMatchId(
+            @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID matchId,
+            @PathVariable UUID eventId) {
+        if (clubService.findClubById(clubId) == null ) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        }
+        if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+        }
+        if (matchService.findMatchByIdAndDivisionId(matchId, divisionId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Partido no encontrado");
+        }
+
+        Event result = eventService.findEventByIdAndMatchId(eventId, matchId);
+        return (result != null) ? ResponseEntity.ok(result)
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro el evento asociado al partido");
     }
 
     @PostMapping("/{clubId}/division/{divisionId}/matches/{matchId}/events")
     public ResponseEntity<Object> saveEvent(
-            @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID matchId, @RequestBody Event event) {
+            @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID matchId,
+            @RequestBody Event event) {
         try {
-            return ResponseEntity.ok(eventService.saveEvent(event));
+            if (clubService.findClubById(clubId) == null ) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+            }
+            if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+            }
+            Match match = matchService.findMatchByIdAndDivisionId(matchId, divisionId);
+            if (match == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Partido no encontrado");
+            }
+            return ResponseEntity.ok(eventService.saveEvent(match, event));
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
         } catch (DataIntegrityViolationException anError) {
@@ -352,9 +512,20 @@ public class ClubController {
     // TODO: Soft delete, change it later
     @DeleteMapping("/{clubId}/division/{divisionId}/matches/{matchId}/events/{eventId}")
     public ResponseEntity<Object> deleteEvent(
-            @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID matchId, @PathVariable UUID eventId) {
+            @PathVariable UUID clubId, @PathVariable UUID divisionId, @PathVariable UUID matchId,
+            @PathVariable UUID eventId) {
         try {
-            eventService.deleteEvent(eventId);
+            if (clubService.findClubById(clubId) == null ) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+            }
+            if (divisionService.findDivisionByIdAndClubId(divisionId, clubId) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+            }
+            Match match = matchService.findMatchByIdAndDivisionId(matchId, divisionId);
+            if (match == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Partido no encontrado");
+            }
+            eventService.deleteEvent(eventId, matchId);
             return ResponseEntity.ok("Evento eliminado correctamente");
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());

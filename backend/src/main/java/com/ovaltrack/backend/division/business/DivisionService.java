@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.club.domain.Club;
+import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionCoach;
 import com.ovaltrack.backend.division.domain.DivisionPlayer;
@@ -35,8 +36,8 @@ public class DivisionService {
 		return divisionRepository.findAllDivisionsByClubId(clubId);
 	}
 
-	public Division findDivisionById(UUID divisionId) {
-		return divisionRepository.findById(divisionId).orElse(null);
+	public Division findDivisionByIdAndClubId(UUID divisionId, UUID clubId) {
+		return divisionRepository.findDivisionByIdAndClubId(divisionId, clubId);
 	}
 
 	// Function will assign timestamp
@@ -47,7 +48,11 @@ public class DivisionService {
 	}
 
 	@Transactional
-	public void deleteDivision(UUID divisionId) {
+	public void deleteDivision(Club aClub, UUID divisionId) {
+		Division aDivision = this.findDivisionByIdAndClubId(divisionId, aClub.getId());
+		if (aDivision == null) {
+			throw new BusinessException("No se puede eliminar una division que no esta asociada al club");
+		}
 		divisionRepository.deleteById(divisionId);
 	}
 
@@ -61,8 +66,8 @@ public class DivisionService {
 		return divisionPlayerService.findDivisionPlayersByDivision(divisionId);
 	}
 
-	public DivisionPlayer findDivisionPlayerById(UUID divisionPlayerId) {
-		return divisionPlayerService.findDivisionPlayerById(divisionPlayerId);
+	public DivisionPlayer findDivisionPlayerByIdAndDivisionId(UUID divisionPlayerId, UUID divisionId) {
+		return divisionPlayerService.findDivisionPlayerByIdAndDivisionId(divisionPlayerId, divisionId);
 	}
 
 	@Transactional
@@ -71,8 +76,8 @@ public class DivisionService {
 	}
 
 	@Transactional
-	public void deleteDivisionPlayer(UUID divisionPlayerId) {
-		divisionPlayerService.deleteDivisionPlayer(divisionPlayerId);
+	public void deleteDivisionPlayer(Club aClub, Division aDivision, UUID divisionPlayerId) {
+		divisionPlayerService.deleteDivisionPlayer(aClub, aDivision, divisionPlayerId);
 	}
 
 	/*
@@ -81,12 +86,12 @@ public class DivisionService {
 	 * /////////////////////////////////////////////////////////////////////////////
 	 */
 
-	public Collection<DivisionCoach> findDivisionCoachesByDivisionId(UUID divisionId) {
-		return divisionCoachService.findDivisionCoachesByDivisionId(divisionId);
+	public Collection<DivisionCoach> findDivisionCoachesByClubIdAndDivisionId(UUID clubId, UUID divisionId) {
+		return divisionCoachService.findDivisionCoachesByClubIdAndDivisionId(clubId, divisionId);
 	}
 
-	public DivisionCoach findDivisionCoachById(UUID coachId) {
-		return divisionCoachService.findDivisionCoachById(coachId);
+	public DivisionCoach findDivisionCoachByIdAndDivisionId(UUID coachId, UUID divisionId) {
+		return divisionCoachService.findDivisionCoachByIdAndDivisionId(coachId, divisionId);
 	}
 
 	@Transactional
@@ -95,8 +100,8 @@ public class DivisionService {
 	}
 
 	@Transactional
-	public void deleteDivisionCoach(UUID divisionCoachId) {
-		divisionCoachService.deleteDivisionCoach(divisionCoachId);
+	public void deleteDivisionCoach(Club aClub, Division aDivision, UUID divisionCoachId) {
+		divisionCoachService.deleteDivisionCoach(aClub, aDivision, divisionCoachId);
 	}
 
 }

@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ovaltrack.backend.match.domain.Match;
+import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.event.domain.Event;
 import com.ovaltrack.backend.event.repository.EventRepository;
 
@@ -29,17 +31,21 @@ public class EventService {
 		return eventRepository.findEventsByMatchId(matchId);
 	}
 
-	public Event findEventById(UUID eventId) {
-		return eventRepository.findById(eventId).orElse(null);
+	public Event findEventByIdAndMatchId(UUID eventId, UUID matchId) {
+		return eventRepository.findEventByIdAndMatchId(eventId, matchId);
 	}
 
 	@Transactional
-	public Event saveEvent(Event event) {
+	public Event saveEvent(Match match, Event event) {
+		event.setMatch(match);
 		return eventRepository.save(event);
 	}
 
 	@Transactional
-	public void deleteEvent(UUID eventId) {
+	public void deleteEvent(UUID eventId, UUID matchId) {
+		if (findEventByIdAndMatchId(eventId, matchId) == null) {
+			throw new BusinessException("No se puede eliminar un evento que no existe");
+		}
 		eventRepository.deleteById(eventId);
 	}
 }

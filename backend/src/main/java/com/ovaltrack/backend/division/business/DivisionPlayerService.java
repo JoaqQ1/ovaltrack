@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ovaltrack.backend.club.domain.Club;
+import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionPlayer;
 import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
@@ -22,8 +24,8 @@ public class DivisionPlayerService {
 		return divisionPlayerRepository.findDivisionPlayersByDivision(divisionId);
 	}
 
-    public DivisionPlayer findDivisionPlayerById(UUID divisionPlayerId) {
-        return divisionPlayerRepository.findById(divisionPlayerId).orElse(null);
+    public DivisionPlayer findDivisionPlayerByIdAndDivisionId(UUID divisionPlayerId, UUID divisionId) {
+        return divisionPlayerRepository.findDivisionPlayerByIdAndDivisionId(divisionPlayerId, divisionId);
     }
 
     @Transactional
@@ -33,7 +35,17 @@ public class DivisionPlayerService {
 	}
 
     @Transactional
-    public void deleteDivisionPlayer(UUID divisionPlayerId) {
+    public void deleteDivisionPlayer(Club aClub, Division aDivision, UUID divisionPlayerId) {
+        DivisionPlayer aDivisionPlayer = this.findDivisionPlayerByIdAndDivisionId(divisionPlayerId, divisionPlayerId);
+        if (aDivisionPlayer == null) {
+            throw new BusinessException("No se puede desasociar un jugador que no existe");
+        }
+
+		if (!aClub.equals(aDivisionPlayer.getDivision().getClub())) {
+			throw new BusinessException("Club no coincide con club del jugador");
+		}
+
         divisionPlayerRepository.deleteById(divisionPlayerId);
     }
+
 }
