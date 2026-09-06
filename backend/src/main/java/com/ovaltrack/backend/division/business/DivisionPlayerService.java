@@ -36,7 +36,7 @@ public class DivisionPlayerService {
 
     @Transactional
     public void deleteDivisionPlayer(Club aClub, Division aDivision, UUID divisionPlayerId) {
-        DivisionPlayer aDivisionPlayer = this.findDivisionPlayerByIdAndDivisionId(divisionPlayerId, divisionPlayerId);
+        DivisionPlayer aDivisionPlayer = this.findDivisionPlayerByIdAndDivisionId(divisionPlayerId, aDivision.getId());
         if (aDivisionPlayer == null) {
             throw new BusinessException("No se puede desasociar un jugador que no existe");
         }

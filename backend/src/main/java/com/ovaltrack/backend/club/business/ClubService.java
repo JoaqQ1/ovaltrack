@@ -38,7 +38,7 @@ public class ClubService {
     @Transactional
     public void deleteClub(UUID clubId) {
         //Verifications
-       if (clubRepository.findById(clubId) == null) {
+       if (findClubById(clubId) == null) {
             throw new BusinessException("Club no encontrado");
        }
         clubRepository.deleteById(clubId);

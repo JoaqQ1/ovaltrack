@@ -55,7 +55,7 @@ public class ClubController {
     @GetMapping
     public ResponseEntity<Object> findAllClubs() {
         Collection<Club> result = clubService.findAllClubs();
-        return (result != null) ? ResponseEntity.ok(result) 
+        return (result.isEmpty()) ? ResponseEntity.ok(result) 
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro ningun club");
     }
 
@@ -108,7 +108,7 @@ public class ClubController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
         }
         Collection<Division> result = divisionService.findAllDivisionsByClubId(clubId);
-        return (result != null) ? ResponseEntity.ok(result)
+        return (result.isEmpty()) ? ResponseEntity.ok(result)
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Divisiones no encontradas");
     }
 
@@ -185,7 +185,7 @@ public class ClubController {
         }
 
         Collection<DivisionPlayer> result = divisionService.findDivisionPlayersByDivision(divisionId);
-        return (result != null) ? ResponseEntity.ok(result)
+        return (result.isEmpty()) ? ResponseEntity.ok(result)
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron jugadores asociados a la division");
 
     }
@@ -266,7 +266,7 @@ public class ClubController {
         }
 
         Collection<DivisionCoach> result = divisionService.findDivisionCoachesByClubIdAndDivisionId(clubId, divisionId);
-        return (result != null) ? ResponseEntity.ok(result)
+        return (result.isEmpty()) ? ResponseEntity.ok(result)
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron entrenadores asociados a la division");
     }
 
@@ -342,7 +342,7 @@ public class ClubController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
         }
         Collection<Match> result = matchService.findAllMatchesByClubId(clubId);
-        return (result != null) ? ResponseEntity.ok(result)
+        return (result.isEmpty()) ? ResponseEntity.ok(result)
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron partidos asociados al club");
     }
 
@@ -355,7 +355,7 @@ public class ClubController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
         }
         Collection<Match> result = matchService.findAllMatchesByDivisionId(divisionId);
-        return (result != null) ? ResponseEntity.ok(result)
+        return (result.isEmpty()) ? ResponseEntity.ok(result)
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron partidos asociados a la division");
     }
 
@@ -429,7 +429,7 @@ public class ClubController {
         }
 
         Collection<Event> result = eventService.findEventsByClubId(clubId);
-        return (result != null) ? ResponseEntity.ok(result)
+        return (result.isEmpty()) ? ResponseEntity.ok(result)
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron eventos asociados al club");
     }
 
@@ -443,7 +443,7 @@ public class ClubController {
         }
 
         Collection<Event> result = eventService.findEventsByDivisionId(divisionId);
-        return (result != null) ? ResponseEntity.ok(result)
+        return (result.isEmpty()) ? ResponseEntity.ok(result)
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron eventos asociados a la division");
     }
 
@@ -463,7 +463,7 @@ public class ClubController {
         }
 
         Collection<Event> result = eventService.findEventsByMatchId(matchId);
-        return (result != null) ? ResponseEntity.ok(result)
+        return (result.isEmpty()) ? ResponseEntity.ok(result)
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron eventos asociados al partido");
     }
 
