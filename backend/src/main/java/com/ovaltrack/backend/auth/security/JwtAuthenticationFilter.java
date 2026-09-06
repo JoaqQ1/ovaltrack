@@ -18,11 +18,17 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final int TOKEN_START_INDEX = 7; 
 
     public JwtAuthenticationFilter(JwtService jwtService) {
         this.jwtService = jwtService;
     }
 
+    /**
+     * Intercepta cada solicitud HTTP una única vez.
+     * Si contiene una cabecera Bearer válida, extrae el token, verifica la firma
+     * e inyecta la autoridad con prefijo 'ROLE_' requerida por Spring Security.
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
             HttpServletResponse response,
@@ -35,7 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        final String token = authHeader.substring(7); // TODO: numero magico
+        final String token = authHeader.substring(TOKEN_START_INDEX); 
         try {
             var claims = jwtService.extractClaims(token);
             String email = claims.getSubject();

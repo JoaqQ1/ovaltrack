@@ -28,6 +28,13 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * Genera un token firmado con HMAC-SHA256.
+     * Incluye en el payload el id y rol del usuario como claims privados
+     * para evitar consultas adicionales a la base de datos en peticiones
+     * subsecuentes.
+     * TODO: Todavia no esta implementado con las clases de User que seran utilizadas en produccion
+     */
     public String generateToken(Usuario usuario) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("rol", usuario.getRol().name());
