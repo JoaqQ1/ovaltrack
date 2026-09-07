@@ -4,13 +4,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.ovaltrack.backend.auth.model.Usuario;
+import com.ovaltrack.backend.user.domain.User;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -30,20 +31,18 @@ public class JwtService {
 
     /**
      * Genera un token firmado con HMAC-SHA256.
-     * Incluye en el payload el id y rol del usuario como claims privados
+     * Incluye en el payload el id y rol del Usuario como claims privados
      * para evitar consultas adicionales a la base de datos en peticiones
      * subsecuentes.
-     * TODO: Todavia no esta implementado con las clases de User que seran utilizadas en produccion
      */
-    public String generateToken(Usuario usuario) {
+    public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("rol", usuario.getRol().name());
-        claims.put("clubId", usuario.getClubId());
-        claims.put("divisionId", usuario.getDivisionId());
+        claims.put("userId", user.getId());
+        claims.put("role", user.getRole().name());
 
         return Jwts.builder()
                 .claims(claims)
-                .subject(usuario.getEmail())
+                .subject(user.getEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey())
@@ -51,6 +50,7 @@ public class JwtService {
     }
 
     public Claims extractClaims(String token) {
+
 
         return Jwts.parser()
                 .verifyWith(getSigningKey())
@@ -61,6 +61,15 @@ public class JwtService {
 
     public String extractEmail(String token) {
         return extractClaims(token).getSubject();
+    }
+
+    public UUID extractUserId(String token) {
+        String userIdStr = extractClaims(token).get("userId", String.class);
+        return UUID.fromString(userIdStr);
+    }
+
+    public String extractRole(String token) {
+        return extractClaims(token).get("role", String.class);
     }
 
     public boolean isTokenValid(String token, String email) {

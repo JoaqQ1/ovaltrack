@@ -6,60 +6,61 @@ import org.springframework.stereotype.Service;
 import com.ovaltrack.backend.auth.dto.AuthResponse;
 import com.ovaltrack.backend.auth.dto.LoginRequest;
 import com.ovaltrack.backend.auth.dto.RegistroRequest;
-import com.ovaltrack.backend.auth.model.Rol;
-import com.ovaltrack.backend.auth.model.Usuario;
-import com.ovaltrack.backend.auth.repository.UsuarioRepository;
+
 import com.ovaltrack.backend.auth.security.JwtService;
+import com.ovaltrack.backend.common.config.exceptions.BusinessException;
+import com.ovaltrack.backend.user.business.UserService;
+import com.ovaltrack.backend.user.domain.User;
 
 import jakarta.transaction.Transactional;
 
-@Service 
+@Service
 public class AuthService {
-    private final UsuarioRepository userRepository;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public AuthService( UsuarioRepository userRepository,
-                        PasswordEncoder passwordEncoder,
-                        JwtService jwtService ){
-        this.userRepository = userRepository;
+    public AuthService(UserService userService,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService) {
+        this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
-    @Transactional 
-    public AuthResponse register(RegistroRequest request){
-        if(userRepository.existsByEmail(request.email())){
-            throw new IllegalArgumentException("The email is alredy registered");
+
+    @Transactional
+    public AuthResponse register(RegistroRequest request) {
+        if (userService.existsByEmail(request.email())) {
+            throw new BusinessException("The email is alredy registered");
         }
-        if(request.rol() != Rol.ADMIN_OVALTRACK && request.clubId() == null){
-            throw new IllegalArgumentException("Los usuarios asignados a un club deben tener un clubId válido");
-        }
+
         String passwordHasheada = passwordEncoder.encode(request.password());
+        User user = new User();
+        user.setActive(true);
+        user.setEmail(request.email());
+        user.setPassword(passwordHasheada);
+        user.setRole(request.role());
+        user.setLastName(request.lastName());
+        user.setFirstName(request.firstName());
+        user.setBirthDate(request.birthDate());
 
-        Usuario nuevoUsuario = new Usuario(
-                null,
-                request.email(),
-                passwordHasheada,
-                request.rol(),
-                request.clubId(),
-                request.divisionId()
-        );
-
-        Usuario guardado = userRepository.save(nuevoUsuario);
+        User guardado = userService.saveUser(user);
         String token = jwtService.generateToken(guardado);
         return new AuthResponse(token);
     }
+
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        Usuario usuario = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new IllegalArgumentException("Credenciales incorrectas"));
+        User user = userService.findUserByEmail(request.email());
+        if (user == null) {
+            throw new BusinessException("El usuario con el email " + request.email() + " no existe");
+        }
 
         // Comprobación segura contra el hash
-        if (!passwordEncoder.matches(request.password(), usuario.getPassword())) {
-            throw new IllegalArgumentException("Credenciales incorrectas");
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new BusinessException("Contraseña incorrecta");
         }
-        String token = jwtService.generateToken(usuario);
-
+        String token = jwtService.generateToken(user);
         return new AuthResponse(token);
     }
 }
