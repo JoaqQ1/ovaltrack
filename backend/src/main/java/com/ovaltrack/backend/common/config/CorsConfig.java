@@ -13,6 +13,11 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
+    /**
+     * Configuración CORS con precedencia máxima (HIGHEST_PRECEDENCE).
+     * Debe ejecutarse antes de Spring Security para responder adecuadamente
+     * a las solicitudes preflight (OPTIONS) emitidas por navegadores web.
+     */
     @Bean
     public FilterRegistrationBean<CorsFilter> customCorsFilter() {
         CorsConfiguration config = new CorsConfiguration();

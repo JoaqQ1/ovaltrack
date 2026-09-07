@@ -17,10 +17,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class EventType {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @EqualsAndHashCode.Include
     private UUID id;
 
     @Column(nullable = false)
@@ -47,5 +49,6 @@ public class EventType {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    //TODO: Move this variable to Event.java
     private Boolean active;
 }
