@@ -4,5 +4,6 @@ public enum UserRole {
     ADMIN_OVALTRACK,
     ADMIN_CLUB,
     COACH_ANALYST,
-    PLAYER
+    PLAYER,
+    NO_ROLE
 }
