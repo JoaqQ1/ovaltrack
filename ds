@@ -112,6 +112,17 @@ case "$cmd" in
     docker exec -i "ovaltrack-db" psql -U "${DB_USER:-APP}" -d "${DB_NAME:-ovaltrack}" < "$SQL_FILE"
     echo "Carga finalizada."
     ;;
+  pwa)
+    echo "Construyendo y levantando contenedor PWA (producción)..."
+    dc --profile pwa up -d --build frontend-pwa
+    echo "========================================="
+    echo " PWA lista para probar en: http://localhost:4201"
+    echo "========================================="
+    ;;
+  pwa-down)
+    dc --profile pwa stop frontend-pwa
+    echo "Contenedor PWA detenido."
+    ;;
   sync-node)
     echo "Verificando estado del contenedor frontend..."
     if ! docker ps --format '{{.Names}}' | grep -q "^ovaltrack-frontend$"; then
@@ -133,22 +144,25 @@ case "$cmd" in
     ;;
   *)
     cat <<EOF
-Uso: ./ds.sh <comando>
+Uso: ./ds <comando>
 
 Comandos disponibles:
   up        Construye (si hace falta) y levanta frontend, backend y base de datos
   down      Detiene los contenedores (no borra datos)
   build     Reconstruye las imágenes (todas, o pasá el nombre del servicio)
-  logs      Sigue los logs de todos los servicios (o de uno: ./ds.sh logs backend)
+  logs      Sigue los logs de todos los servicios (o de uno: ./ds logs backend)
   ps        Muestra el estado de los contenedores
-  restart   Reinicia todos los servicios (o uno puntual: ./ds.sh restart db)
+  restart   Reinicia todos los servicios (o uno puntual: ./ds restart db)
   compile   Compila el código Java en el contenedor (dispara DevTools)
-  mvn       Ejecuta cualquier comando Maven (ej: ./ds.sh mvn clean install)
+  mvn       Ejecuta cualquier comando Maven (ej: ./ds mvn clean install)
   test      Corre la suite de tests (Cucumber.js) contra el backend y se cierra sola
   reset     Baja el entorno y borra los volúmenes (pide confirmación)
   backend   Abre una terminal interactiva en el contenedor del backend
   frontend  Abre una terminal interactiva en el contenedor del frontend
   db        Abre una consola psql conectada a la base de datos
+  staging   Ejecuta un script SQL de la carpeta staging en la BD (ej: ./ds staging data.sql)
+  pwa       Levanta una versión de producción de la PWA servida con Nginx en el puerto 4201
+  pwa-down  Detiene el contenedor dedicado a la PWA
   staging   Ejecuta un script SQL de la carpeta staging en la BD (ej: ./ds.sh staging data.sql)
   sync-node Sincroniza node_modules del frontend al host para el autocompletado en VS Code
 EOF
