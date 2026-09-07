@@ -3,7 +3,6 @@ package com.ovaltrack.backend.club.presenter;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,16 +33,12 @@ import jakarta.validation.Valid;
 @RequestMapping("club")
 public class ClubController {
 
-    @Autowired
     private ClubService clubService;
 
-    @Autowired
     private DivisionService divisionService;
 
-    @Autowired
     private MatchService matchService;
 
-    @Autowired
     private EventService eventService;
 
     /*
@@ -51,6 +46,14 @@ public class ClubController {
      * CLUB REQUESTS
      * /////////////////////////////////////////////////////////////////////////////
      */
+
+    public ClubController(ClubService clubService, DivisionService divisionService, MatchService matchService,
+            EventService eventService) {
+        this.clubService = clubService;
+        this.divisionService = divisionService;
+        this.matchService = matchService;
+        this.eventService = eventService;
+    }
 
     @GetMapping
     public ResponseEntity<Object> findAllClubs() {

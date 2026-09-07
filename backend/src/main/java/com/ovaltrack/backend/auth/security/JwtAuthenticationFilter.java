@@ -45,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             var claims = jwtService.extractClaims(token);
             String email = claims.getSubject();
-            String rol = claims.get("rol", String.class);
+            String rol = claims.get("role", String.class);
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 // Se registra la autoridad con prefijo ROLE_ (convención de Spring Security)
