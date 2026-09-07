@@ -142,6 +142,11 @@ case "$cmd" in
     echo " Ctrl+Shift+P -> TypeScript: Restart TS Server"
     echo "==================================================================="
     ;;
+  install)
+    echo "Actualizando dependencias (npm install) en el contenedor frontend..."
+    docker exec ovaltrack-frontend npm install --legacy-peer-deps
+    echo "¡Dependencias actualizadas exitosamente en el contenedor!"
+    ;;
   *)
     cat <<EOF
 Uso: ./ds <comando>
@@ -163,8 +168,9 @@ Comandos disponibles:
   staging   Ejecuta un script SQL de la carpeta staging en la BD (ej: ./ds staging data.sql)
   pwa       Levanta una versión de producción de la PWA servida con Nginx en el puerto 4201
   pwa-down  Detiene el contenedor dedicado a la PWA
-  staging   Ejecuta un script SQL de la carpeta staging en la BD (ej: ./ds.sh staging data.sql)
+  staging   Ejecuta un script SQL de la carpeta staging en la BD (ej: ./ds staging data.sql)
   sync-node Sincroniza node_modules del frontend al host para el autocompletado en VS Code
+  install   Ejecuta npm install dentro del contenedor del frontend para actualizar dependencias
 EOF
     exit 1
     ;;
