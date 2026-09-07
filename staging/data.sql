@@ -119,7 +119,10 @@ INSERT INTO matches (id, date, division_id, opponent, status) VALUES
 INSERT INTO event_types (id, name, group_name, category, affects_possession, is_scoring, points, requires_player, created_at, active) VALUES
     ('11111111-1111-1111-1111-000000000050', 'Try', 'Anotacion', 'ATTACK', false, true, 5, true, CURRENT_TIMESTAMP, true),
     ('11111111-1111-1111-1111-000000000051', 'Tackle', 'Defensa', 'DEFENSE', false, false, 0, true, CURRENT_TIMESTAMP, true),
-    ('11111111-1111-1111-1111-000000000052', 'Scrum', 'Fijo', 'NEUTRAL', true, false, 0, false, CURRENT_TIMESTAMP, true);
+    ('11111111-1111-1111-1111-000000000052', 'Line', 'Fijo', 'NEUTRAL', true, false, 0, false, CURRENT_TIMESTAMP, true),
+    ('11111111-1111-1111-1111-000000000053', 'Conversion', 'Anotacion', 'ATTACK', false, true, 2, true, CURRENT_TIMESTAMP, true),
+    ('11111111-1111-1111-1111-000000000054', 'Penal', 'Anotacion', 'ATTACK', true, false, 3, false, CURRENT_TIMESTAMP, true),
+    ('11111111-1111-1111-1111-000000000055', 'Scrum', 'Fijo', 'NEUTRAL', true, false, 0, false, CURRENT_TIMESTAMP, true);
 
 
 -- =========================================
