@@ -1,0 +1,73 @@
+<main class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+      <section class="card border-0 shadow-sm">
+        <div class="card-body p-4 p-md-5">
+          <h1 class="h3 text-center mb-4">Crear cuenta</h1>
+
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="row g-3">
+    <div class="col-md-6">
+      <label for="firstName" class="form-label">Nombre</label>
+      <input id="firstName" formControlName="firstName" type="text" class="form-control" autocomplete="given-name" />
+      @if (
+        registerForm.controls.firstName.touched &&
+        registerForm.controls.firstName.invalid
+      ) {
+        <small class="text-danger">El nombre es obligatorio</small>
+      }
+    </div>
+
+    <div class="col-md-6">
+      <label for="lastName" class="form-label">Apellido</label>
+      <input id="lastName" formControlName="lastName" type="text" class="form-control" autocomplete="family-name" />
+      @if (
+        registerForm.controls.lastName.touched &&
+        registerForm.controls.lastName.invalid
+      ) {
+        <small class="text-danger">El apellido es obligatorio</small>
+      }
+    </div>
+
+    <div class="col-12">
+      <label for="email" class="form-label">Email</label>
+      <input id="email" formControlName="email" type="email" class="form-control" autocomplete="email" />
+      @if (
+        registerForm.controls.email.touched &&
+        registerForm.controls.email.invalid
+      ) {
+        <small class="text-danger">Ingresa un correo válido</small>
+      }
+    </div>
+
+    <div class="col-md-6">
+      <label for="password" class="form-label">Contraseña</label>
+      <input id="password" formControlName="password" type="password" class="form-control" autocomplete="new-password" />
+      @if (
+        registerForm.controls.password.touched &&
+        registerForm.controls.password.invalid
+      ) {
+        <small class="text-danger">Debe tener mínimo 8 caracteres</small>
+      }
+    </div>
+
+    <div class="col-md-6">
+      <label for="birthDate" class="form-label">Fecha de nacimiento</label>
+      <input id="birthDate" formControlName="birthDate" type="date" class="form-control" />
+    </div>
+
+    <div class="col-12">
+      @if (errorMessage) {
+        <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+      }
+      <button type="submit" class="btn btn-primary w-100" [disabled]="registerForm.invalid || isSubmitting">
+        {{ isSubmitting ? 'Registrando...' : 'Registrarse' }}
+      </button>
+    </div>
+  </form>
+
+          <p class="text-center text-secondary mt-4 mb-0">¿Ya tienes cuenta? <a routerLink="/auth/login" class="link-primary">Iniciar sesión</a></p>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>

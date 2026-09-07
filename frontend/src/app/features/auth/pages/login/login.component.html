@@ -1,0 +1,37 @@
+<main class="container py-5">
+	<div class="row justify-content-center">
+		<div class="col-12 col-md-8 col-lg-5">
+			<section class="card border-0 shadow-sm">
+				<div class="card-body p-4 p-md-5">
+					<h1 class="h3 text-center mb-4">Iniciar sesión</h1>
+
+					<form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+						<div class="mb-3">
+							<label for="email" class="form-label">Email</label>
+							<input id="email" formControlName="email" type="email" autocomplete="email" class="form-control" />
+							@if (loginForm.controls.email.touched && loginForm.controls.email.invalid) {
+								<small class="text-danger">Ingresa un correo válido</small>
+							}
+						</div>
+
+						<div class="mb-3">
+							<label for="password" class="form-label">Contraseña</label>
+							<input id="password" formControlName="password" type="password" autocomplete="current-password" class="form-control" />
+							@if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
+								<small class="text-danger">La contraseña es obligatoria</small>
+							}
+						</div>
+
+						@if (errorMessage) {
+							<p class="alert alert-danger" role="alert">{{ errorMessage }}</p>
+						}
+
+						<button type="submit" class="btn btn-primary w-100" [disabled]="loginForm.invalid">Iniciar sesión</button>
+					</form>
+
+					<p class="text-center text-secondary mt-4 mb-0">¿No tienes cuenta? <a routerLink="/auth/register" class="link-primary">Regístrate</a></p>
+				</div>
+			</section>
+		</div>
+	</div>
+</main>
