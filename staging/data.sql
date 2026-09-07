@@ -1,5 +1,7 @@
 -- OvalTrack Data Seeder
 -- =========================================
+
+TRUNCATE TABLE users, clubs, divisions, division_coaches, division_players, matches, event_types, events CASCADE;
 -- USERS (Admin, Coaches, Players)
 -- =========================================
 
