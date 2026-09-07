@@ -1,0 +1,27 @@
+# OvalTrack - PWA Production Build
+FROM node:20-alpine AS build
+
+WORKDIR /app
+ENV NG_CLI_ANALYTICS="false"
+
+# Instalar dependencias
+COPY package*.json ./
+RUN npm ci --legacy-peer-deps
+
+# Copiar código fuente
+COPY . .
+
+# Construir aplicación en modo producción
+RUN npm run build -- --configuration production
+
+# Servir con Nginx
+FROM nginx:alpine
+
+# Copiar artefactos de build
+COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
+
+# Copiar el script de entrypoint para inyectar variables de entorno
+COPY pwa-entrypoint.sh /docker-entrypoint.d/99-pwa-entrypoint.sh
+RUN chmod +x /docker-entrypoint.d/99-pwa-entrypoint.sh
+
+EXPOSE 80

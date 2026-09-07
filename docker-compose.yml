@@ -70,6 +70,23 @@ services:
     networks:
       - ovaltrack-net
 
+  # Frontend Angular PWA (Producción para testing)
+  frontend-pwa:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.pwa
+    container_name: ovaltrack-frontend-pwa
+    profiles:
+      - pwa
+    depends_on:
+      - backend
+    environment:
+      API_URL: http://localhost:${BACKEND_PORT:-8080}
+    ports:
+      - "4201:80"
+    networks:
+      - ovaltrack-net
+
   # Contenedor de pruebas BDD Cucumber (solo se ejecuta con ./ds.sh test)
   testing:
     build:
