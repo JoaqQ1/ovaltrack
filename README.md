@@ -33,112 +33,115 @@ cp .env.example .env
 3. **Otorgar permisos de ejecución al script gestor**
 
 ```bash
-chmod +x ds.sh
+chmod +x ds
 ```
 
 4. **Levantar el entorno completo**
 
 ```bash
-./ds.sh up
+./ds up
 ```
 
 ## Servicios y accesos
 
-Una vez ejecutado ./ds.sh up, los servicios quedan disponibles en:
+Una vez ejecutado `./ds up` (y opcionalmente `./ds pwa`), los servicios quedan disponibles en:
+
 | Servicio | URL / Host | Puerto | Descripción |
 | :--- | :--- | :--- | :--- |
-| **Frontend** | `http://localhost:4200` | `4200` | Angular 18 PWA con hot-reload |
+| **Frontend (Desarrollo)** | `http://localhost:4200` | `4200` | Angular 18 PWA con hot-reload |
+| **Frontend (Producción)** | `http://localhost:4201` | `4201` | PWA compilada, servida por Nginx con soporte offline |
 | **Backend API** | `http://localhost:8080` | `8080` | Spring Boot 3 API |
 | **Health Check** | `http://localhost:8080/actuator/health` | `8080` | Estado de salud y conexión a BD |
 | **PostgreSQL** | `localhost:5432` | `5432` | Base de datos relacional |
 
-## Gestión del entorno con `ds.sh`
+## Gestión del entorno con `ds`
 
-El script ds.sh centraliza la administración de los contenedores y herramientas de desarrollo:
+El script `ds` centraliza la administración de los contenedores y herramientas de desarrollo:
 
 ```bash
-./ds.sh <comando> [opciones]
+./ds <comando> [opciones]
 ```
 
 ### Comandos disponibles
 
 | Comando            | Descripción                                                                    |
 | :----------------- | :----------------------------------------------------------------------------- |
-| `./ds.sh up`       | Construye imágenes (si es necesario) y levanta los servicios en segundo plano. |
-| `./ds.sh down`     | Detiene los contenedores sin eliminar datos ni volúmenes.                      |
-| `./ds.sh ps`       | Lista el estado y los puertos de los contenedores activos.                     |
-| `./ds.sh compile`       | Compila el backend Java dentro del contenedor (mvn compile -DskipTests) y dispara el hot-reload de DevTools. |
-| `./ds.sh mvn <argumentos>`       | Ejecuta comandos Maven dentro del contenedor backend (ej: ``./ds.sh mvn clean package``). |
-| `./ds.sh logs [servicio]`     | Muestra los logs en vivo de todos los servicios (ej. `./ds.sh logs backend`).  |
-| `./ds.sh restart [servicio]`  | Reinicia todos los servicios o uno específico (ej: ``./ds.sh restart backend``).      |
-| `./ds.sh build [servicio]`    | Reconstruye las imágenes de Docker.                            |
-| `./ds.sh db`       | Abre una consola interactiva `psql` conectada a PostgreSQL.                    |
-| `./ds.sh backend`  | Abre una terminal interactiva dentro del contenedor del backend.               |
-| `./ds.sh frontend` | Abre una terminal interactiva dentro del contenedor del frontend.              |
-| `./ds.sh test`     | Ejecuta la suite de pruebas automatizadas contra la API.                       |
-| `./ds.sh reset`    | Detiene el entorno y borra los volúmenes de datos (pide confirmación).         |
+| `./ds up`          | Construye imágenes (si es necesario) y levanta los servicios en segundo plano. |
+| `./ds down`        | Detiene los contenedores sin eliminar datos ni volúmenes.                      |
+| `./ds ps`          | Lista el estado y los puertos de los contenedores activos.                     |
+| `./ds compile`     | Compila el backend Java dentro del contenedor y dispara el hot-reload.         |
+| `./ds mvn <args>`  | Ejecuta comandos Maven dentro del contenedor backend (ej: `./ds mvn clean`).   |
+| `./ds logs [svc]`  | Muestra los logs en vivo de todos los servicios o de uno específico.           |
+| `./ds restart`     | Reinicia todos los servicios o uno específico.                                 |
+| `./ds build [svc]` | Reconstruye las imágenes de Docker.                                            |
+| `./ds db`          | Abre una consola interactiva `psql` conectada a PostgreSQL.                    |
+| `./ds backend`     | Abre una terminal interactiva dentro del contenedor del backend.               |
+| `./ds frontend`    | Abre una terminal interactiva dentro del contenedor del frontend.              |
+| `./ds test`        | Ejecuta la suite de pruebas automatizadas contra la API.                       |
+| `./ds reset`       | Detiene el entorno y borra los volúmenes de datos (pide confirmación).         |
+| `./ds pwa`         | Construye y levanta la versión de producción de la PWA (Nginx) en el puerto 4201. |
+| `./ds pwa-down`    | Detiene únicamente el contenedor de la PWA.                                |
+| `./ds install`     | Actualiza dependencias (`npm install`) dentro del contenedor de desarrollo.|
+| `./ds sync-node`   | Sincroniza `node_modules` del frontend al host para el autocompletado en VS Code. |
 
 
 ## Flujo de Desarrollo Habitual 
    1. **Iniciar el entorno:**
       ```bash
-         ./ds.sh up
+         ./ds up
       ```
-      * Frontend: http://localhost:4200
-
-      * Backend API: http://localhost:8080
-
-      * Base de datos: localhost:5432
    2. **Aplicar cambios en Java (Backend):**
-         Tras modificar archivos ``.java`` en ``backend/src/``:
       ```bash
-         ./ds.sh compile
+         ./ds compile
       ```
    3. **Ejecutar pruebas BDD (Cucumber.js):**
       ```bash
-         ./ds.sh test
+         ./ds test
+      ```
+   4. **Probar la experiencia real PWA (Instalación y Offline):**
+      ```bash
+         ./ds pwa
       ```
 
-## Gestión de Base de Datos y Reset
+## Gestión de Base de Datos y Dependencias
+
+#### Resolver errores de dependencias (Angular)
+Si luego de hacer un `git pull` el frontend crashea por paquetes faltantes, sincronizá el volumen interno ejecutando:
+```bash
+./ds install
+```
 
 #### Resetear datos de prueba
-
-Para limpiar el contenido de PostgreSQL y reiniciar las tablas desde cero sin reinstalar dependencias de desarrollo (`node_modules` o `.m2`):
-
+Para limpiar el contenido de PostgreSQL y reiniciar las tablas desde cero:
 ```bash
-./ds.sh reset
+./ds reset
 ```
 
 #### Conexión desde clientes externos (DBeaver / DataGrip)
-
-- Host: `localhost`
-- Puerto: `5432`
-- Base de datos: `ovaltrack`
-- Usuario: `APP`(o el valor asignado en `DB_USER`)
-- Contraseña: `APP`(o el valor asignado en `DB_PASWORD`)
+- Host: `localhost` | Puerto: `5432` | BD: `ovaltrack` | User/Pass: `APP`
 
 ## Estructura del proyecto
 
 ```text
 ├── backend/               # Código fuente Spring Boot (Java 21, Maven)
-│   ├── src/
-│   ├── pom.xml
-│   └── Dockerfile
 ├── frontend/              # Código fuente Angular 18 (PWA, CSS)
 │   ├── src/
 │   ├── package.json
-│   └── Dockerfile
+│   ├── Dockerfile
+│   ├── Dockerfile.pwa       # Build de producción y servidor Nginx
+│   ├── nginx.conf           # Configuración de enrutamiento SPA para Nginx
+│   └── pwa-entrypoint.sh    # Inyector dinámico de variables de entorno (API_URL)
 ├── testing/               # Suite de tests automatizados
 ├── .env.example           # Plantilla de variables de entorno
 ├── docker-compose.yml     # Orquestación de servicios
-├── ds.sh                  # Script CLI de gestión
+├── ds                     # Script CLI de gestión
 └── README.md
 ```
 
 
 ## Arquitectura y Comunicación de Contenedores
 
-Los 3 servicios principales se ejecutan en contenedores aislados y se comunican a través de la red interna de Docker (`ovaltrack-net`), exponiendo únicamente los puertos necesarios hacia la máquina anfitriona (Host).
+Los servicios principales se ejecutan en contenedores aislados y se comunican a través de la red interna de Docker (`ovaltrack-net`).
 
 ```text
 +-----------------------------------------------------------------------------------+
@@ -147,36 +150,34 @@ Los 3 servicios principales se ejecutan en contenedores aislados y se comunican 
 |    +------------------------+                           +--------------------+    |
 |    | Navegador Web (Cliente)|                           | DBeaver / DataGrip |    |
 |    +-----------+------------+                           +---------+----------+    |
-+----------------|--------------------------------------------------|---------------+
-                 |                                                  |
-                 | HTTP                                             | JDBC (5432)
-                 v                                                  |
++--------|-------|--------------------------------------------------|---------------+
+         |       |                                                  |
+    HTTP |       | HTTP                                             | JDBC (5432)
+  (4200) |       | (4201)                                           |
+         v       v                                                  |
 +-------------------------------------------------------------------|---------------+
 | RED DOCKER (ovaltrack-net)                                        |               |
 |                                                                   v               |
 |  +---------------------------+        REST / JSON      +-----------------------+  |
 |  |     ovaltrack-frontend    | ----------------------> |   ovaltrack-backend   |  |
-|  |     (Angular 18 PWA)      |                         | (Spring Boot 3 / J21) |  |
-|  |     Puerto: 4200          |                         | Puerto: 8080          |  |
-|  +---------------------------+                         +-----------+-----------+  |
-|                                                                    |              |
-|                                                                    | JDBC         |
-|                                                                    | (db:5432)    |
-|                                                                    v              |
-|                                                        +-----------------------+  |
+|  |       (Desarrollo)        |            |            | (Spring Boot 3 / J21) |  |
+|  +---------------------------+            |            | Puerto: 8080          |  |
+|                                           |            +-----------+-----------+  |
+|  +---------------------------+            |                        |              |
+|  |   ovaltrack-frontend-pwa  | -----------+                        | JDBC         |
+|  |  (Nginx Producción PWA)   |                                     v              |
+|  +---------------------------+                         +-----------------------+  |
 |                                                        |     ovaltrack-db      |  |
 |                                                        |    (PostgreSQL 16)    |  |
-|                                                        |     Puerto: 5432      |  |
 |                                                        +-----------------------+  |
 +-----------------------------------------------------------------------------------+
 ```
 ## Flujo de Comunicación
-1. **Frontend** (``ovaltrack-frontend``):
-   * Servido en http://localhost:4200 mediante Angular CLI (``ng serve``).
-   * La aplicación web se ejecuta en el navegador del host y envía peticiones HTTP/REST al backend en http://localhost:8080 (o mediante el proxy configurado).
-2. **Backend** (``ovaltrack-backend``):
+1. **Frontend (Desarrollo)**:
+   * Servido en http://localhost:4200 mediante Angular CLI (`ng serve`).
+2. **Frontend (Producción PWA)**:
+   * Servido en http://localhost:4201 mediante Nginx. Utiliza assets compilados y soporta Service Workers. Inyecta la URL del backend dinámicamente en tiempo de ejecución.
+3. **Backend**:
    * Servidor Spring Boot 3 expuesto en http://localhost:8080.
-   * Se conecta a la base de datos de manera interna dentro de la red Docker utilizando el hostname de servicio jdbc:postgresql://db:5432/ovaltrack.
-3. **Base de Datos** (``ovaltrack-db``):
-   * PostgreSQL 16 expuesto en el puerto 5432 tanto para la red interna de Docker como para clientes externos de administración (DBeaver, DataGrip, psql). 
-   * Almacena datos persistentes en el volumen nombrado ovaltrack_db_data.
+4. **Base de Datos**:
+   * PostgreSQL expuesto en el puerto 5432 para la red interna y acceso externo.
