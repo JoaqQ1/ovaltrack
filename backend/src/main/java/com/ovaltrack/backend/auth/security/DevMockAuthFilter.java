@@ -1,7 +1,7 @@
 package com.ovaltrack.backend.auth.security;
 
-import com.ovaltrack.backend.auth.model.Rol;
-import com.ovaltrack.backend.auth.model.Usuario;
+import com.ovaltrack.backend.user.domain.User;
+import com.ovaltrack.backend.user.domain.UserRole;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -28,16 +28,13 @@ public class DevMockAuthFilter extends OncePerRequestFilter {
 
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
             // Usuario ficticio con permisos totales para facilitar pruebas en equipo
-            Usuario mockPrincipal = new Usuario(
-                    1L,
-                    "dev@ovaltrack.com",
-                    "contraseña",
-                    Rol.ADMIN_OVALTRACK,
-                    1L,
-                    1L
-            );
+            User mockPrincipal = new User();
+            mockPrincipal.setActive(true);
+            mockPrincipal.setEmail("dev@ovaltrack.com");
+            mockPrincipal.setRole(UserRole.ADMIN_OVALTRACK);
 
-            var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + Rol.ADMIN_OVALTRACK.name()));
+
+            var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + UserRole.ADMIN_OVALTRACK.name()));
             var mockAuth = new UsernamePasswordAuthenticationToken(mockPrincipal, null, authorities);
 
             SecurityContextHolder.getContext().setAuthentication(mockAuth);
