@@ -5,6 +5,10 @@ import java.util.UUID;
 import jakarta.validation.constraints.NotNull;
 
 public record DivisionCoachCreationDTO(
-        @NotNull UUID userId
+    @NotNull
+    UUID divisionId,
+    
+    @NotNull
+    UUID userId
 ) {
 }

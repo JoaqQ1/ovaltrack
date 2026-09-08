@@ -11,7 +11,6 @@ import com.ovaltrack.backend.club.domain.Club;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.common.config.exceptions.EntityNotFoundException;
 import com.ovaltrack.backend.division.domain.Division;
-import com.ovaltrack.backend.division.domain.DivisionCoach;
 import com.ovaltrack.backend.division.domain.dto.DivisionDTOMapper;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionResponseDTO;
@@ -28,11 +27,6 @@ public class DivisionService {
 
 	@Autowired 
 	private ClubService clubService;
-
-	@Autowired
-	private DivisionCoachService divisionCoachService;
-
-
 
 	/*
 	 * /////////////////////////////////////////////////////////////////////////////
@@ -102,33 +96,5 @@ public class DivisionService {
 
 		return DivisionDTOMapper.toResponseDTO(divisionRepository.save(aDivision));
 	}
-
-	/*
-	 * /////////////////////////////////////////////////////////////////////////////
-	 * DIVISION_COACH FUNCTIONS
-	 * /////////////////////////////////////////////////////////////////////////////
-	 */
-
-	public Collection<DivisionCoach> findDivisionCoachesByClubIdAndDivisionId(UUID clubId, UUID divisionId) {
-		return divisionCoachService.findDivisionCoachesByClubIdAndDivisionId(clubId, divisionId);
-	}
-
-	public DivisionCoach findDivisionCoachByIdAndDivisionId(UUID coachId, UUID divisionId) {
-		return divisionCoachService.findDivisionCoachByIdAndDivisionId(coachId, divisionId);
-	}
-
-	@Transactional
-	public DivisionCoach saveDivisionCoach(Division aDivision, DivisionCoach divisionCoach) {
-		return divisionCoachService.saveDivisionCoach(aDivision, divisionCoach);
-	}
-
-	@Transactional
-	public void deleteDivisionCoach(Club aClub, Division aDivision, UUID divisionCoachId) {
-		divisionCoachService.deleteDivisionCoach(aClub, aDivision, divisionCoachId);
-	}
-
-
-
-
 
 }
