@@ -12,10 +12,10 @@ import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.common.config.exceptions.EntityNotFoundException;
 import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionCoach;
-import com.ovaltrack.backend.division.domain.DivisionPlayer;
-import com.ovaltrack.backend.division.domain.dto.DivisionCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.DivisionDTOMapper;
-import com.ovaltrack.backend.division.domain.dto.DivisionResponseDTO;
+import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionCreationDTO;
+import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionResponseDTO;
+import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionUpdateDTO;
 import com.ovaltrack.backend.division.repository.DivisionRepository;
 
 import jakarta.transaction.Transactional;
@@ -30,13 +30,8 @@ public class DivisionService {
 	private ClubService clubService;
 
 	@Autowired
-	private DivisionPlayerService divisionPlayerService;
-
-	@Autowired
 	private DivisionCoachService divisionCoachService;
 
-
-//TODO: Adapt division services to use DTOs instead of JPA entities. Adapt endpoints
 
 
 	/*
@@ -59,58 +54,32 @@ public class DivisionService {
 		return DivisionDTOMapper.toResponseDTO(result);
 	}
 
+	public Division findDivisionEntityById(UUID divisionId) {
+		return divisionRepository.findById(divisionId).orElse(null);
+	}
+
 	@Transactional
-	public DivisionResponseDTO saveDivision(UUID clubId, DivisionCreationDTO aDivision) {
-		if (aDivision.divisionId() == null) {
-			Club aClub = clubService.findClubById(clubId);
-			if (aClub == null) {
-				throw new EntityNotFoundException("Club no encontrado");
-			}
-			aDivision.setClub(aClub);
+	public DivisionResponseDTO saveDivision(DivisionCreationDTO aDivisionRequest) {
+		Club aClub = clubService.findClubEntityById(aDivisionRequest.clubId());
+		if (aClub == null ){
+			throw new BusinessException("No se puede asignar una division a un club que no existe");
 		}
-/* 
-		if (aDivision.getId() != null) {
-			if (findDivisionByIdAndClubId(aDivision.getId(), aClub.getId()) != null) {
-				aDivision.setActive(true);
-			}
-			if (divisionRepository.findById(aDivision.getId()) != null) {
-				throw new BusinessException("No se puede asignar una division de otro club");
-			}
-		}
- */
-		return divisionRepository.save(aDivision);
+		Division aDivision = new Division();
+		aDivision.setName(aDivisionRequest.name());
+		aDivision.setAgeCategory(aDivisionRequest.ageCategory());
+		aDivision.setClub(aClub);
+		aDivision.setGender(aDivisionRequest.gender());
+		aDivision.setActive(true);
+
+		return DivisionDTOMapper.toResponseDTO(divisionRepository.save(aDivision));
 	}
 
 
 	@Transactional
-	public Division updateDivision(UUID clubId, Division aDivision) {
-		if (aDivision.getId() == null) {
-			Club aClub = clubService.findClubById(clubId);
-			if (aClub == null) {
-				throw new EntityNotFoundException("Club no encontrado");
-			}
-			aDivision.setClub(aClub);
-		}
-/* 
-		if (aDivision.getId() != null) {
-			if (findDivisionByIdAndClubId(aDivision.getId(), aClub.getId()) != null) {
-				aDivision.setActive(true);
-			}
-			if (divisionRepository.findById(aDivision.getId()) != null) {
-				throw new BusinessException("No se puede asignar una division de otro club");
-			}
-		}
- */
-		return divisionRepository.save(aDivision);
-	}
-
-
-
-	@Transactional
-	public void deleteDivision(Club aClub, UUID divisionId) {
-		Division aDivision = this.findDivisionByIdAndClubId(divisionId, aClub.getId());
+	public void deleteDivision(UUID divisionId) {
+		Division aDivision = findDivisionEntityById(divisionId);
 		if (aDivision == null) {
-			throw new BusinessException("No se puede eliminar una division que no esta asociada al club");
+			throw new BusinessException("No se puede eliminar una division que no existe");
 		}
 
 		aDivision.setActive(false);
@@ -119,28 +88,19 @@ public class DivisionService {
 		//divisionRepository.deleteById(divisionId);
 	}
 
-	/*
-	 * /////////////////////////////////////////////////////////////////////////////
-	 * DIVISION_PLAYER FUNCTIONS
-	 * /////////////////////////////////////////////////////////////////////////////
-	 */
-
-	public Collection<DivisionPlayer> findDivisionPlayersByDivision(UUID divisionId) {
-		return divisionPlayerService.findDivisionPlayersByDivision(divisionId);
-	}
-
-	public DivisionPlayer findDivisionPlayerByIdAndDivisionId(UUID divisionPlayerId, UUID divisionId) {
-		return divisionPlayerService.findDivisionPlayerByIdAndDivisionId(divisionPlayerId, divisionId);
-	}
-
 	@Transactional
-	public DivisionPlayer saveDivisionPlayer(Division aDivision, DivisionPlayer divisionPlayer) {
-		return divisionPlayerService.saveDivisionPlayer(aDivision, divisionPlayer);
-	}
+	public DivisionResponseDTO updateDivision(UUID divisionId, DivisionUpdateDTO request) {
 
-	@Transactional
-	public void deleteDivisionPlayer(Club aClub, Division aDivision, UUID divisionPlayerId) {
-		divisionPlayerService.deleteDivisionPlayer(aClub, aDivision, divisionPlayerId);
+		Division aDivision = divisionRepository.findById(divisionId).orElse(null);
+		if (aDivision == null){
+			throw new BusinessException("Division no encontrada");
+		}
+
+		aDivision.setName(request.name());
+		aDivision.setAgeCategory(request.ageCategory());
+		aDivision.setGender(request.gender());
+
+		return DivisionDTOMapper.toResponseDTO(divisionRepository.save(aDivision));
 	}
 
 	/*
@@ -166,5 +126,9 @@ public class DivisionService {
 	public void deleteDivisionCoach(Club aClub, Division aDivision, UUID divisionCoachId) {
 		divisionCoachService.deleteDivisionCoach(aClub, aDivision, divisionCoachId);
 	}
+
+
+
+
 
 }

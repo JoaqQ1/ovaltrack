@@ -84,6 +84,12 @@ public class ClubService {
     }
 
 
+    //PRIVATE
+
+    public Club findClubEntityById(UUID clubId) {
+        return clubRepository.findById(clubId).orElse(null);
+    }
+
 }
 
 

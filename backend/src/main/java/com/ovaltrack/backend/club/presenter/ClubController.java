@@ -1,6 +1,5 @@
 package com.ovaltrack.backend.club.presenter;
 
-import java.util.Collection;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
