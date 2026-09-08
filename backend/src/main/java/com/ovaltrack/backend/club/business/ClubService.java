@@ -11,6 +11,7 @@ import com.ovaltrack.backend.club.domain.ClubStatus;
 import com.ovaltrack.backend.club.domain.dto.ClubCreationDTO;
 import com.ovaltrack.backend.club.domain.dto.ClubDTOMapper;
 import com.ovaltrack.backend.club.domain.dto.ClubResponseDTO;
+import com.ovaltrack.backend.club.domain.dto.ClubUpdateDTO;
 import com.ovaltrack.backend.club.repository.ClubRepository;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.user.business.UserService;
@@ -55,6 +56,23 @@ public class ClubService {
         aClub = clubRepository.save(aClub);
         return ClubDTOMapper.toResponseDTO(aClub);
     }
+
+    @Transactional
+    public ClubResponseDTO updateClub(UUID clubId, ClubUpdateDTO request) {
+        Club club = clubRepository.findById(clubId).orElse(null);
+        if (club == null) {
+            throw new BusinessException("Club no encontrado");
+        }
+
+        club.setName(request.name());
+        club.setCity(request.city());
+        club.setLogoUrl(request.logoUrl());
+        club.setContactEmail(request.contactEmail());
+        club.setContactPhone(request.contactPhone());
+
+        return ClubDTOMapper.toResponseDTO(clubRepository.save(club));
+    }
+
 
     @Transactional
     public void deleteClub(UUID clubId) {

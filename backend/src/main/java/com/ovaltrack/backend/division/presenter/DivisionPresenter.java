@@ -44,6 +44,7 @@ public class DivisionPresenter {
 
     @GetMapping
     public ResponseEntity<Object> findAllDivisionsByClubId(@RequestParam UUID clubId) {
+        return ResponseEntity.ok(divisionService.findAllDivisionsByClubId(clubId))
         try {
             return ResponseEntity.ok(divisionService.findAllDivisionsByClubId(clubId));
         } catch (EntityNotFoundException anError) {

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.ovaltrack.backend.club.business.ClubService;
 import com.ovaltrack.backend.club.domain.dto.ClubCreationDTO;
 import com.ovaltrack.backend.club.domain.dto.ClubResponseDTO;
+import com.ovaltrack.backend.club.domain.dto.ClubUpdateDTO;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 
 import jakarta.validation.Valid;
@@ -59,14 +61,30 @@ public class ClubController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
         try {
-            ClubResponseDTO result = clubService.saveClub(aClub);
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok(clubService.saveClub(aClub));
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
         } catch (DataIntegrityViolationException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al guardar club");
         }
     }
+
+    @PutMapping("/{clubId}")
+    public ResponseEntity<Object> updateClub(@PathVariable UUID clubId,@Valid @RequestBody ClubUpdateDTO request,
+            BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest()
+                    .body(bindingResult.getFieldError().getDefaultMessage());
+        }
+        try {
+            return ResponseEntity.ok(clubService.updateClub(clubId, request));
+        } catch (BusinessException anError) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
+        } catch (DataIntegrityViolationException anError) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al actualizar club");
+        }
+    }
+
 
     @DeleteMapping("/{clubId}")
     public ResponseEntity<Object> deleteClub(@PathVariable UUID clubId) {
@@ -76,8 +94,7 @@ public class ClubController {
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
         } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Error al eliminar club, hay entidades relacionadas");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al eliminar club, hay entidades relacionadas");
         }
 
     }
