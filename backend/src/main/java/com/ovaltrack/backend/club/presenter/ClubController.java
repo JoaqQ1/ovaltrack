@@ -20,6 +20,9 @@ import com.ovaltrack.backend.club.domain.dto.ClubCreationDTO;
 import com.ovaltrack.backend.club.domain.dto.ClubResponseDTO;
 import com.ovaltrack.backend.club.domain.dto.ClubUpdateDTO;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
+import com.ovaltrack.backend.division.business.DivisionService;
+import com.ovaltrack.backend.event.business.EventService;
+import com.ovaltrack.backend.match.business.MatchService;
 
 import jakarta.validation.Valid;
 
@@ -29,40 +32,41 @@ public class ClubController {
 
     private ClubService clubService;
 
-    private DivisionService divisionService;
-
-    private MatchService matchService;
-
-    private EventService eventService;
-
     /*
      * /////////////////////////////////////////////////////////////////////////////
      * CLUB REQUESTS
-     * /////////////////////////////////////////////////////////////////////////////
+     * ////////////////
+     * private DivisionService divisionService;
+     * 
+     * private MatchService matchService;
+     * 
+     * private EventService eventService;
+     * /////////////////////////////////////////////////////////////
      */
 
     public ClubController(ClubService clubService, DivisionService divisionService, MatchService matchService,
             EventService eventService) {
         this.clubService = clubService;
-        this.divisionService = divisionService;
-        this.matchService = matchService;
-        this.eventService = eventService;
     }
 
     @GetMapping
     public ResponseEntity<Object> findAllClubs() {
         return ResponseEntity.ok(clubService.findAllClubs());
 
-        /* Collection<Club> result = clubService.findAllClubs();
-        return (!result.isEmpty()) ? ResponseEntity.ok(result) 
-        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro ningun club"); */
+        /*
+         * Collection<Club> result = clubService.findAllClubs();
+         * return (!result.isEmpty()) ? ResponseEntity.ok(result)
+         * :
+         * ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro ningun club"
+         * );
+         */
     }
 
     @GetMapping("/{clubId}")
     public ResponseEntity<Object> findClubById(@PathVariable UUID clubId) {
         ClubResponseDTO result = clubService.findClubById(clubId);
-        return (result != null) ? ResponseEntity.ok(result) 
-        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        return (result != null) ? ResponseEntity.ok(result)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
     }
 
     @PostMapping
@@ -81,7 +85,7 @@ public class ClubController {
     }
 
     @PutMapping("/{clubId}")
-    public ResponseEntity<Object> updateClub(@PathVariable UUID clubId,@Valid @RequestBody ClubUpdateDTO request,
+    public ResponseEntity<Object> updateClub(@PathVariable UUID clubId, @Valid @RequestBody ClubUpdateDTO request,
             BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest()
@@ -96,7 +100,6 @@ public class ClubController {
         }
     }
 
-
     @DeleteMapping("/{clubId}")
     public ResponseEntity<Object> deleteClub(@PathVariable UUID clubId) {
         try {
@@ -105,7 +108,8 @@ public class ClubController {
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
         } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al eliminar club, hay entidades relacionadas");
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Error al eliminar club, hay entidades relacionadas");
         }
 
     }
