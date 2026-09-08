@@ -24,6 +24,12 @@ public class UserService {
 	public User findUserById(UUID userId) {
 		return userRepository.findById(userId).orElse(null);
 	}
+	public User findUserByEmail(String email) {
+		return userRepository.findByEmail(email).orElse(null);
+	}
+	public boolean existsByEmail(String email) {
+		return userRepository.existsByEmail(email);
+	}
 
 	@Transactional
 	public User saveUser(User user) {

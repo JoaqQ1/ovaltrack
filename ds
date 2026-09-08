@@ -112,25 +112,65 @@ case "$cmd" in
     docker exec -i "ovaltrack-db" psql -U "${DB_USER:-APP}" -d "${DB_NAME:-ovaltrack}" < "$SQL_FILE"
     echo "Carga finalizada."
     ;;
+  pwa)
+    echo "Construyendo y levantando contenedor PWA (producción)..."
+    dc --profile pwa up -d --build frontend-pwa
+    echo "========================================="
+    echo " PWA lista para probar en: http://localhost:4201"
+    echo "========================================="
+    ;;
+  pwa-down)
+    dc --profile pwa stop frontend-pwa
+    echo "Contenedor PWA detenido."
+    ;;
+  sync-node)
+    echo "Verificando estado del contenedor frontend..."
+    if ! docker ps --format '{{.Names}}' | grep -q "^ovaltrack-frontend$"; then
+      echo "Error: El contenedor 'ovaltrack-frontend' no está corriendo."
+      echo "Ejecutá primero: ./ds.sh up"
+      exit 1
+    fi
+    echo "Limpiando ./frontend/node_modules local..."
+    rm -rf frontend/node_modules
+    echo "Copiando dependencias desde el contenedor a la máquina local..."
+    docker cp ovaltrack-frontend:/app/node_modules ./frontend
+    echo ""
+    echo "==================================================================="
+    echo " ¡Sincronización completada con éxito!"
+    echo " Dependencias listas en ./frontend/node_modules"
+    echo " Si VS Code no actualiza el autocompletado, ejecutá en VS Code:"
+    echo " Ctrl+Shift+P -> TypeScript: Restart TS Server"
+    echo "==================================================================="
+    ;;
+  install)
+    echo "Actualizando dependencias (npm install) en el contenedor frontend..."
+    docker exec ovaltrack-frontend npm install --legacy-peer-deps
+    echo "¡Dependencias actualizadas exitosamente en el contenedor!"
+    ;;
   *)
     cat <<EOF
-Uso: ./ds.sh <comando>
+Uso: ./ds <comando>
 
 Comandos disponibles:
   up        Construye (si hace falta) y levanta frontend, backend y base de datos
   down      Detiene los contenedores (no borra datos)
   build     Reconstruye las imágenes (todas, o pasá el nombre del servicio)
-  logs      Sigue los logs de todos los servicios (o de uno: ./ds.sh logs backend)
+  logs      Sigue los logs de todos los servicios (o de uno: ./ds logs backend)
   ps        Muestra el estado de los contenedores
-  restart   Reinicia todos los servicios (o uno puntual: ./ds.sh restart db)
+  restart   Reinicia todos los servicios (o uno puntual: ./ds restart db)
   compile   Compila el código Java en el contenedor (dispara DevTools)
-  mvn       Ejecuta cualquier comando Maven (ej: ./ds.sh mvn clean install)
+  mvn       Ejecuta cualquier comando Maven (ej: ./ds mvn clean install)
   test      Corre la suite de tests (Cucumber.js) contra el backend y se cierra sola
   reset     Baja el entorno y borra los volúmenes (pide confirmación)
   backend   Abre una terminal interactiva en el contenedor del backend
   frontend  Abre una terminal interactiva en el contenedor del frontend
   db        Abre una consola psql conectada a la base de datos
-  staging   Ejecuta un script SQL de la carpeta staging en la BD (ej: ./ds.sh staging data.sql)
+  staging   Ejecuta un script SQL de la carpeta staging en la BD (ej: ./ds staging data.sql)
+  pwa       Levanta una versión de producción de la PWA servida con Nginx en el puerto 4201
+  pwa-down  Detiene el contenedor dedicado a la PWA
+  staging   Ejecuta un script SQL de la carpeta staging en la BD (ej: ./ds staging data.sql)
+  sync-node Sincroniza node_modules del frontend al host para el autocompletado en VS Code
+  install   Ejecuta npm install dentro del contenedor del frontend para actualizar dependencias
 EOF
     exit 1
     ;;

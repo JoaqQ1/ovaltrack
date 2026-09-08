@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { environment } from '../environments/environment.docker';
+import { environment } from '@environments/environment.docker';
 import { HttpClient } from '@angular/common/http';
 
 interface PingResponse {
