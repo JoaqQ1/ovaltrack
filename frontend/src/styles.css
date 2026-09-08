@@ -1,3 +1,18 @@
+@import './styles/ovaltrack-tokens.css';
+@import './styles/live-capture.css';
+
+html,
 body {
+	min-height: 100%;
+}
+
+body {
+	margin: 0;
 	background-color: #f8f9fa;
+	font-family: var(--ot-font-body);
+	overflow: hidden;
+}
+
+* {
+	box-sizing: border-box;
 }
