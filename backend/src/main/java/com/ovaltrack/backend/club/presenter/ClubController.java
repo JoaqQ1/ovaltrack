@@ -44,8 +44,7 @@ public class ClubController {
      * /////////////////////////////////////////////////////////////
      */
 
-    public ClubController(ClubService clubService, DivisionService divisionService, MatchService matchService,
-            EventService eventService) {
+    public ClubController(ClubService clubService) {
         this.clubService = clubService;
     }
 
