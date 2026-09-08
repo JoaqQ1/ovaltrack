@@ -14,6 +14,7 @@ import com.ovaltrack.backend.match.domain.MatchStatus;
 import com.ovaltrack.backend.match.domain.dto.MatchCreationDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchDTOMapper;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
+import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 
 import jakarta.transaction.Transactional;
@@ -46,7 +47,7 @@ public class MatchService {
 	}
 
 	@Transactional
-	public Match saveMatch(MatchCreationDTO aMatchRequest) {
+	public MatchResponseDTO saveMatch(MatchCreationDTO aMatchRequest) {
 		Division aDivision = divisionService.findDivisionEntityById(aMatchRequest.divisionId());
 		if (aDivision == null) {
 			throw new BusinessException("No se puede asociar un partido a una division que no existe");
@@ -56,8 +57,22 @@ public class MatchService {
 		aMatch.setDivision(aDivision);
 		aMatch.setOpponent(aMatchRequest.opponent());
 		aMatch.setStatus(MatchStatus.NOT_STARTED);
+		aMatch = matchRepository.save(aMatch);
+		return MatchDTOMapper.toResponseDTO(aMatch);
+	}
 
-		return matchRepository.save(aMatch);
+	@Transactional
+	public MatchResponseDTO updateMatch(UUID matchId, MatchUpdateDTO request) {
+		Match match = findMatchEntityById(matchId);
+		if (match == null) {
+			throw new BusinessException("Partido no encontrado");
+		}
+
+		match.setDate(request.date());
+		match.setOpponent(request.opponent());
+		match.setStatus(request.status());
+
+		return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
 	}
 
 	//TODO: functions to start and to finish match, add endpoints and logic to check division association
@@ -77,6 +92,9 @@ public class MatchService {
 
 	@Transactional
 	public void deleteMatch(UUID matchId) {
+		if (findMatchEntityById(matchId) == null) {
+			throw new BusinessException("Partido no encontrado");
+		}
 		matchRepository.deleteById(matchId);
 	}
 }

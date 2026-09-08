@@ -25,7 +25,7 @@ public class Match {
     private LocalDateTime date;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "division_id")
+    @JoinColumn(name = "division_id", nullable = false)
     private Division division;
 
     private String opponent;

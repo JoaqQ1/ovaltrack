@@ -16,9 +16,9 @@ public record MatchCreationDTO(
     UUID divisionId,
 
     @NotBlank
-    String opponent,
-    
-    @NotNull
-    MatchStatus status
+    String opponent
+
+    //@NotNull
+    //MatchStatus status
 ) {
 }

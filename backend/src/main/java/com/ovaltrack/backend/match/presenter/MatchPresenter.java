@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +20,9 @@ import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.match.business.MatchService;
 import com.ovaltrack.backend.match.domain.dto.MatchCreationDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
+import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("matches")
@@ -27,15 +31,13 @@ public class MatchPresenter {
     @Autowired
     private MatchService matchService;
 
- 
-//TODO: Adapt match services to use DTOs instead of JPA entities. Adapt endpoints
     /*
      * /////////////////////////////////////////////////////////////////////////////
      * MATCH REQUESTS
      * /////////////////////////////////////////////////////////////////////////////
      */
 
-    @GetMapping
+    @GetMapping(params = "clubId")
     public ResponseEntity<Object> findAllMatchesByClubId(@RequestParam UUID clubId) {
         try {
             return ResponseEntity.ok(matchService.findAllMatchesByClubId(clubId));
@@ -44,7 +46,7 @@ public class MatchPresenter {
         }
     }
 
-    @GetMapping
+    @GetMapping(params = "divisionId")
     public ResponseEntity<Object> findAllMatchesByDivisionId(@RequestParam UUID divisionId) {
         try {
             return ResponseEntity.ok(matchService.findAllMatchesByDivisionId(divisionId));
@@ -61,13 +63,26 @@ public class MatchPresenter {
     }
 
     @PostMapping
-    public ResponseEntity<Object> saveMatch(@RequestBody MatchCreationDTO match) {
+    public ResponseEntity<Object> saveMatch(@Valid @RequestBody MatchCreationDTO match) {
         try {
             return ResponseEntity.ok(matchService.saveMatch(match));
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
         } catch (DataIntegrityViolationException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al guardar partido");
+        }
+    }
+
+    @PutMapping("/{matchId}")
+    public ResponseEntity<Object> updateMatch(
+            @PathVariable UUID matchId,
+            @Valid @RequestBody MatchUpdateDTO request) {
+        try {
+            return ResponseEntity.ok(matchService.updateMatch(matchId, request));
+        } catch (BusinessException anError) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
+        } catch (DataIntegrityViolationException anError) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al actualizar partido");
         }
     }
 
