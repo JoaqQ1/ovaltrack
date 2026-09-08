@@ -32,6 +32,9 @@ public class DivisionCoachService {
     private UserService userService;
 
 	public Collection<DivisionCoachResponseDTO> findDivisionCoachesByDivisionId(UUID divisionId) {
+		if (divisionService.findDivisionById(divisionId) == null) {
+			throw new BusinessException("Division no encontrada");
+        }
 		return divisionCoachRepository.findDivisionCoachesByDivisionId(divisionId).stream().map(DivisionDTOMapper::toResponseDTO).toList();
 	}
     public DivisionCoachResponseDTO findDivisionCoachById(UUID divisionCoachId) {
@@ -52,6 +55,10 @@ public class DivisionCoachService {
         Division aDivision = divisionService.findDivisionEntityById(divisionCoachRequest.divisionId());
         if (aDivision == null ){
             throw new BusinessException("No se puede asignar un entrenador a una division que no existe");
+        }
+        if (divisionCoachRepository.existsActiveAssociation(
+                aDivision.getId(), anUser.getId())) {
+            throw new BusinessException("El usuario ya esta asociado como entrenador en esta division");
         }
 
         DivisionCoach aDivisionCoach = new DivisionCoach();

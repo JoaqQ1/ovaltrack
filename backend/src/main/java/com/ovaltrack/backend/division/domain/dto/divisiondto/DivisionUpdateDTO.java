@@ -2,10 +2,15 @@ package com.ovaltrack.backend.division.domain.dto.divisiondto;
 
 import com.ovaltrack.backend.division.domain.AgeCategory;
 import com.ovaltrack.backend.division.domain.Gender;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record DivisionUpdateDTO(
+    @NotBlank
     String name,
+    @NotNull
     AgeCategory ageCategory,
+    @NotNull
     Gender gender
 ) {
 }

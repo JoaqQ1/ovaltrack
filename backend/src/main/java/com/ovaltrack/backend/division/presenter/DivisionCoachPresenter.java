@@ -1,6 +1,5 @@
 package com.ovaltrack.backend.division.presenter;
 
-import java.util.Collection;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +20,7 @@ import com.ovaltrack.backend.division.business.DivisionCoachService;
 import com.ovaltrack.backend.division.domain.dto.divisioncoachdto.DivisionCoachCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisioncoachdto.DivisionCoachResponseDTO;
 
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("coaches")
@@ -37,9 +37,11 @@ public class DivisionCoachPresenter {
 
     @GetMapping
     public ResponseEntity<Object> findDivisionCoachesByDivisionId(@RequestParam UUID divisionId) {
-        Collection<DivisionCoachResponseDTO> result = divisionCoachService.findDivisionCoachesByDivisionId(divisionId);
-        return (!result.isEmpty()) ? ResponseEntity.ok(result)
-        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontraron entrenadores asociados a la division");
+        try {
+            return ResponseEntity.ok(divisionCoachService.findDivisionCoachesByDivisionId(divisionId));
+        }   catch(BusinessException anError) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
+        }
     }
 
     @GetMapping("/{divisionCoachId}")
@@ -51,7 +53,7 @@ public class DivisionCoachPresenter {
     }
 
     @PostMapping
-    public ResponseEntity<Object> saveDivisionCoach(@RequestBody DivisionCoachCreationDTO divisionCoach) {
+    public ResponseEntity<Object> saveDivisionCoach(@Valid @RequestBody DivisionCoachCreationDTO divisionCoach) {
         try {
             return ResponseEntity.ok(divisionCoachService.saveDivisionCoach(divisionCoach));
         } catch (BusinessException anError) {

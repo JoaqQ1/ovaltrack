@@ -13,6 +13,10 @@ public final class DivisionDTOMapper {
 	 * Static function to map a Division entity to a DTO
 	 */
 	public static DivisionResponseDTO toResponseDTO(Division division) {
+		if (division == null) {
+			return null;
+		}
+
 		return new DivisionResponseDTO(
 				division.getId(),
 				division.getName(),
@@ -28,6 +32,10 @@ public final class DivisionDTOMapper {
 	 * Static function to map a DivisionPlayer entity to a DTO
 	 */
     public static DivisionPlayerResponseDTO toResponseDTO(DivisionPlayer player) {
+		if (player == null) {
+			return null;
+		}
+
         return new DivisionPlayerResponseDTO(
                 player.getId(),
                 player.getUser().getId(),
@@ -43,6 +51,10 @@ public final class DivisionDTOMapper {
 	 * Static function to map a DivisionCoach entity to a DTO
 	 */
     public static DivisionCoachResponseDTO toResponseDTO(DivisionCoach coach) {
+		if (coach == null) {
+			return null;
+		}
+
         return new DivisionCoachResponseDTO(
                 coach.getId(),
                 coach.getUser().getId(),

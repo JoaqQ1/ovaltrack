@@ -33,6 +33,9 @@ public class DivisionPlayerService {
     private UserService userService;
 
 	public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivision(UUID divisionId) {
+		if (divisionService.findDivisionById(divisionId) == null) {
+			throw new BusinessException("Division no encontrada");
+        }
         return divisionPlayerRepository.findDivisionPlayersByDivision(divisionId).stream().map(DivisionDTOMapper::toResponseDTO).toList();
 	}
 
@@ -54,6 +57,10 @@ public class DivisionPlayerService {
         Division aDivision = divisionService.findDivisionEntityById(divisionPlayerRequest.divisionId());
         if (aDivision == null ){
             throw new BusinessException("No se puede asignar un jugador a una division que no existe");
+        }
+        if (divisionPlayerRepository.existsActiveAssociation(
+                aDivision.getId(), anUser.getId())) {
+            throw new BusinessException("El usuario ya esta asociado como jugador en esta division");
         }
 
         DivisionPlayer aDivisionPlayer = new DivisionPlayer();

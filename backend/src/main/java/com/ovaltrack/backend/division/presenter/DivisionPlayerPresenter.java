@@ -38,8 +38,12 @@ public class DivisionPlayerPresenter {
      */
 
     @GetMapping
-    public ResponseEntity<Object> findDivisionPlayers(@RequestParam UUID divisionId) {
-        return ResponseEntity.ok(divisionPlayerService.findDivisionPlayersByDivision(divisionId));
+    public ResponseEntity<Object> findDivisionPlayersByDivisionId(@RequestParam UUID divisionId) {
+        try {
+            return ResponseEntity.ok(divisionPlayerService.findDivisionPlayersByDivision(divisionId));
+        }   catch(BusinessException anError) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
+        }
     }
 
     @GetMapping("/{divisionPlayerId}")
@@ -50,7 +54,7 @@ public class DivisionPlayerPresenter {
     }
 
     @PostMapping
-    public ResponseEntity<Object> saveDivisionPlayer(@RequestBody DivisionPlayerCreationDTO aDivisionPlayerRequest) {
+    public ResponseEntity<Object> saveDivisionPlayer(@Valid @RequestBody DivisionPlayerCreationDTO aDivisionPlayerRequest) {
         try {
             return ResponseEntity.ok(divisionPlayerService.saveDivisionPlayer(aDivisionPlayerRequest));
         } catch (BusinessException anError) {

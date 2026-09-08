@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import com.ovaltrack.backend.club.business.ClubService;
 import com.ovaltrack.backend.club.domain.Club;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
-import com.ovaltrack.backend.common.config.exceptions.EntityNotFoundException;
 import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.dto.DivisionDTOMapper;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionCreationDTO;
@@ -36,7 +35,7 @@ public class DivisionService {
 
 	public Collection<DivisionResponseDTO> findAllDivisionsByClubId(UUID clubId) {
 		if (clubService.findClubById(clubId) == null) {
-			throw new EntityNotFoundException("Club no encontrado");
+			throw new BusinessException("Club no encontrado");
         }
 		return divisionRepository.findAllDivisionsByClubId(clubId).stream()
 				.map(DivisionDTOMapper::toResponseDTO)
