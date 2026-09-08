@@ -17,7 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.ovaltrack.backend.club.business.ClubService;
-import com.ovaltrack.backend.club.domain.Club;
+import com.ovaltrack.backend.club.domain.dto.ClubCreationDTO;
+import com.ovaltrack.backend.club.domain.dto.ClubResponseDTO;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 
 import jakarta.validation.Valid;
@@ -28,8 +29,6 @@ public class ClubController {
 
     @Autowired
     private ClubService clubService;
-//TODO: Adapt club services to use DTOs instead of JPA entities
-
 
     /*
      * /////////////////////////////////////////////////////////////////////////////
@@ -39,26 +38,28 @@ public class ClubController {
 
     @GetMapping
     public ResponseEntity<Object> findAllClubs() {
-        Collection<Club> result = clubService.findAllClubs();
+        return ResponseEntity.ok(clubService.findAllClubs());
+
+        /* Collection<Club> result = clubService.findAllClubs();
         return (!result.isEmpty()) ? ResponseEntity.ok(result) 
-        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro ningun club");
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro ningun club"); */
     }
 
     @GetMapping("/{clubId}")
     public ResponseEntity<Object> findClubById(@PathVariable UUID clubId) {
-        Club result = clubService.findClubById(clubId);
+        ClubResponseDTO result = clubService.findClubById(clubId);
         return (result != null) ? ResponseEntity.ok(result) 
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
     }
 
     @PostMapping
-    public ResponseEntity<Object> saveClub(@Valid @RequestBody Club club, BindingResult bindingResult) {
+    public ResponseEntity<Object> saveClub(@Valid @RequestBody ClubCreationDTO aClub, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
         try {
-            Club result = clubService.saveClub(club);
+            ClubResponseDTO result = clubService.saveClub(aClub);
             return ResponseEntity.ok(result);
         } catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());

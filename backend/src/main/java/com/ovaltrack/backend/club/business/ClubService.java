@@ -8,8 +8,13 @@ import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.club.domain.Club;
 import com.ovaltrack.backend.club.domain.ClubStatus;
+import com.ovaltrack.backend.club.domain.dto.ClubCreationDTO;
+import com.ovaltrack.backend.club.domain.dto.ClubDTOMapper;
+import com.ovaltrack.backend.club.domain.dto.ClubResponseDTO;
 import com.ovaltrack.backend.club.repository.ClubRepository;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
+import com.ovaltrack.backend.user.business.UserService;
+import com.ovaltrack.backend.user.domain.User;
 
 import jakarta.transaction.Transactional;
 
@@ -18,25 +23,37 @@ public class ClubService {
     @Autowired
     private ClubRepository clubRepository;
 
-    public Collection<Club> findAllClubs() {
-        return clubRepository.findAll();
+    @Autowired 
+    private UserService userService;
+
+    public Collection<ClubResponseDTO> findAllClubs() {
+		return clubRepository.findAll().stream().map(ClubDTOMapper::toResponseDTO).toList();
     }
 
-    public Club findClubById(UUID clubId) {
-        return clubRepository.findById(clubId).orElse(null);
+    public ClubResponseDTO findClubById(UUID clubId) {
+        return ClubDTOMapper.toResponseDTO(clubRepository.findById(clubId).orElse(null));
     }
 
     //Paged getAll function
 
     @Transactional
-    public Club saveClub(Club aClub) {
-        if (aClub.getId() != null) {
-
-        }   else {
-            
+    public ClubResponseDTO saveClub(ClubCreationDTO aClubRequest) {
+        Club aClub = new Club();
+        User anUser = userService.findUserById(aClubRequest.adminUserId());
+        if (anUser == null) {
+            throw new BusinessException("No se puede crear un club sin asignarle un usuario admin");
         }
+        aClub.setName(aClubRequest.name());
+        aClub.setAdminUser(anUser);
+        aClub.setCity(aClubRequest.city());
+        aClub.setLogoUrl(aClubRequest.logoUrl());
+        aClub.setContactEmail(aClubRequest.contactEmail());
+        aClub.setContactPhone(aClubRequest.contactPhone());
+
         aClub.setStatus(ClubStatus.ACTIVE);
-        return clubRepository.save(aClub);
+
+        aClub = clubRepository.save(aClub);
+        return ClubDTOMapper.toResponseDTO(aClub);
     }
 
     @Transactional
