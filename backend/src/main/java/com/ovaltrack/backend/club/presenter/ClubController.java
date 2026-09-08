@@ -20,9 +20,6 @@ import com.ovaltrack.backend.club.domain.dto.ClubCreationDTO;
 import com.ovaltrack.backend.club.domain.dto.ClubResponseDTO;
 import com.ovaltrack.backend.club.domain.dto.ClubUpdateDTO;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
-import com.ovaltrack.backend.division.business.DivisionService;
-import com.ovaltrack.backend.event.business.EventService;
-import com.ovaltrack.backend.match.business.MatchService;
 
 import jakarta.validation.Valid;
 
