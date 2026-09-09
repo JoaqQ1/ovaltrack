@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { ClubListComponent } from './features/club-list/club-list.component';
+import { ClubFormComponent } from './features/club-form/club-form.component';
 
 export const routes: Routes = [
     {
@@ -24,5 +26,13 @@ export const routes: Routes = [
         path: '',
         redirectTo: 'auth',
         pathMatch: 'full'
-    }
+    },
+    { 
+        path: 'clubes', 
+        component: ClubListComponent 
+    },
+    {   
+        path: 'clubes/nuevo', 
+        component: ClubFormComponent 
+    },
 ];
