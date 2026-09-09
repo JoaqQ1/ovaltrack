@@ -1,4 +1,4 @@
-package com.ovaltrack.backend.event.presenter;
+/* package com.ovaltrack.backend.event.presenter;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -35,11 +35,6 @@ public class EventPresenter {
     @Autowired
     private EventService eventService;
 
-    /*
-     * /////////////////////////////////////////////////////////////////////////////
-     * EVENT REQUESTS
-     * /////////////////////////////////////////////////////////////////////////////
-     */
 
 //TODO: Adapt Event services to use DTOs instead of JPA entities. Adapt endpoints
 
@@ -157,3 +152,4 @@ public class EventPresenter {
     }
 
 }
+ */

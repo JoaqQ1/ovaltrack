@@ -22,22 +22,29 @@ import com.ovaltrack.backend.match.domain.dto.MatchCreationDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("matches")
+@Tag(name = "Matches", description = "Create, query, update, and delete matches")
 public class MatchPresenter {
 
     @Autowired
     private MatchService matchService;
 
-    /*
-     * /////////////////////////////////////////////////////////////////////////////
-     * MATCH REQUESTS
-     * /////////////////////////////////////////////////////////////////////////////
-     */
-
-    @GetMapping(params = "clubId")
+    @Operation(
+        summary = "List matches for a club",
+        description = "Returns all matches associated with the club identified by the clubId query parameter."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Matches returned successfully, even if there are none."),
+        @ApiResponse(responseCode = "409", description = "The club or request could not be processed because of a business conflict.")
+    })
+    @GetMapping(value = "/club",params = "clubId")
     public ResponseEntity<Object> findAllMatchesByClubId(@RequestParam UUID clubId) {
         try {
             return ResponseEntity.ok(matchService.findAllMatchesByClubId(clubId));
@@ -46,7 +53,15 @@ public class MatchPresenter {
         }
     }
 
-    @GetMapping(params = "divisionId")
+    @Operation(
+        summary = "List matches for a division",
+        description = "Returns all matches associated with the division identified by the divisionId query parameter."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Matches returned successfully, even if there are none."),
+        @ApiResponse(responseCode = "409", description = "The division or request could not be processed because of a business conflict.")
+    })
+    @GetMapping(value = "/division", params = "divisionId")
     public ResponseEntity<Object> findAllMatchesByDivisionId(@RequestParam UUID divisionId) {
         try {
             return ResponseEntity.ok(matchService.findAllMatchesByDivisionId(divisionId));
@@ -55,6 +70,14 @@ public class MatchPresenter {
         }
     }
 
+    @Operation(
+        summary = "Find a match",
+        description = "Returns the match identified by the matchId path parameter."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Match returned successfully."),
+        @ApiResponse(responseCode = "404", description = "No match exists with the specified ID.")
+    })
     @GetMapping("/{matchId}")
     public ResponseEntity<Object> findMatchById(@PathVariable UUID matchId) {
         MatchResponseDTO result = matchService.findMatchById(matchId);
@@ -62,6 +85,21 @@ public class MatchPresenter {
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro el partido");
     }
 
+    @Operation(
+        summary = "Create a match",
+        description = "Creates a match from the request body and returns the created match.",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Match data required to create a match.",
+            required = true,
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = MatchCreationDTO.class)
+            )
+        )
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Match created successfully."),
+        @ApiResponse(responseCode = "409", description = "The match cannot be created because of a business or data-integrity conflict.")
+    })
     @PostMapping
     public ResponseEntity<Object> saveMatch(@Valid @RequestBody MatchCreationDTO match) {
         try {
@@ -73,6 +111,21 @@ public class MatchPresenter {
         }
     }
 
+    @Operation(
+        summary = "Update a match",
+        description = "Updates the match identified by the matchId path parameter and returns the updated match.",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Match data required to update a match.",
+            required = true,
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = MatchUpdateDTO.class)
+            )
+        )
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Match updated successfully."),
+        @ApiResponse(responseCode = "409", description = "The match cannot be updated because of a business or data-integrity conflict.")
+    })
     @PutMapping("/{matchId}")
     public ResponseEntity<Object> updateMatch(
             @PathVariable UUID matchId,
@@ -86,6 +139,14 @@ public class MatchPresenter {
         }
     }
 
+    @Operation(
+        summary = "Delete a match",
+        description = "Deletes the match identified by the matchId path parameter."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Match deleted successfully."),
+        @ApiResponse(responseCode = "409", description = "The match cannot be deleted because of a business or data-integrity conflict.")
+    })
     @DeleteMapping("/{matchId}")
     public ResponseEntity<Object> deleteMatch(@PathVariable UUID matchId) {
         try {
