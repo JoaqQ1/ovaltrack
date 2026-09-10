@@ -1,0 +1,37 @@
+<div class="club-list-container">
+  <h2>Listado de Clubes</h2>
+
+  <div *ngIf="cargando" class="loading-message">
+    Cargando clubes...
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <table *ngIf="!cargando && !error" class="club-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Localidad</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let club of clubes">
+        <td>{{ club.id }}</td>
+        <td>{{ club.nombre }}</td>
+        <td>{{ club.localidad }}</td>
+        <td>
+          <span class="badge" [ngClass]="club.estado?.toLowerCase()">
+            {{ club.estado }}
+          </span>
+        </td>
+      </tr>
+      <tr *ngIf="clubes.length === 0">
+        <td colspan="4" class="empty-message">No hay clubes registrados.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

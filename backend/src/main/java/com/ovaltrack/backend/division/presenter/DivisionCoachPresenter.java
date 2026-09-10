@@ -20,21 +20,28 @@ import com.ovaltrack.backend.division.business.DivisionCoachService;
 import com.ovaltrack.backend.division.domain.dto.divisioncoachdto.DivisionCoachCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisioncoachdto.DivisionCoachResponseDTO;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("coaches")
+@Tag(name = "Division coaches", description = "Manage coaches registered in divisions")
 public class DivisionCoachPresenter {
 
     @Autowired 
     private DivisionCoachService divisionCoachService;
 
-    /*
-     * /////////////////////////////////////////////////////////////////////////////
-     * DIVISION_COACH REQUESTS
-     * /////////////////////////////////////////////////////////////////////////////
-     */
-
+    @Operation(
+        summary = "List coaches in a division",
+        description = "Returns all coaches associated with the division identified by the divisionId query parameter."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Division coaches returned successfully, even if there are none."),
+        @ApiResponse(responseCode = "409", description = "The division or request could not be processed because of a business conflict.")
+    })
     @GetMapping
     public ResponseEntity<Object> findDivisionCoachesByDivisionId(@RequestParam UUID divisionId) {
         try {
@@ -44,6 +51,14 @@ public class DivisionCoachPresenter {
         }
     }
 
+    @Operation(
+        summary = "Find a division coach",
+        description = "Returns the division-coach association identified by the divisionCoachId path parameter."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Division coach returned successfully."),
+        @ApiResponse(responseCode = "404", description = "No coach association exists with the specified ID.")
+    })
     @GetMapping("/{divisionCoachId}")
     public ResponseEntity<Object> findDivisionCoachById(@PathVariable UUID divisionCoachId) {
         DivisionCoachResponseDTO result = divisionCoachService.findDivisionCoachById(divisionCoachId);
@@ -52,6 +67,21 @@ public class DivisionCoachPresenter {
 
     }
 
+    @Operation(
+        summary = "Register a coach in a division",
+        description = "Creates a division-coach association from the request body and returns it.",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Coach data required to register a coach in a division.",
+            required = true,
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DivisionCoachCreationDTO.class)
+            )
+        )
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Coach registered in the division successfully."),
+        @ApiResponse(responseCode = "409", description = "The association cannot be created because of a business or data-integrity conflict.")
+    })
     @PostMapping
     public ResponseEntity<Object> saveDivisionCoach(@Valid @RequestBody DivisionCoachCreationDTO divisionCoach) {
         try {
@@ -63,6 +93,14 @@ public class DivisionCoachPresenter {
         }
     }
 
+    @Operation(
+        summary = "Remove a coach from a division",
+        description = "Deletes the division-coach association identified by the divisionCoachId path parameter."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Coach removed from the division successfully."),
+        @ApiResponse(responseCode = "409", description = "The association cannot be deleted because of a business or data-integrity conflict.")
+    })
     @DeleteMapping("/{divisionCoachId}")
     public ResponseEntity<Object> deleteDivisionCoach(@PathVariable UUID divisionCoachId) {
         try {

@@ -1,0 +1,131 @@
+<section class="live-capture">
+    <header class="live-capture__header">
+        <div class="live-capture__brand">
+            <svg class="live-capture__brand-icon" viewBox="0 0 24 24"
+                fill="none" aria-hidden="true">
+                <ellipse cx="12" cy="12" rx="9.5" ry="5.5"
+                    transform="rotate(-32 12 12)" stroke="currentColor"
+                    stroke-width="1.6" />
+            </svg>
+            <span class="live-capture__brand-name">OVAL<span
+                    class="live-capture__brand-accent">TRACK</span></span>
+        </div>
+
+        <div class="live-capture__scoreboard">
+            <span class="live-capture__score">
+                {{ equipoLocal }}
+                <span class="live-capture__score-value">{{ marcador.local }}–{{
+                    marcador.visitante }}</span>
+                {{ equipoVisitante }}
+            </span>
+
+            <div class="live-capture__clock">
+                <span class="live-capture__clock-time">{{ relojJuego }}</span>
+                <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="pausarReloj()"
+                    [attr.aria-label]="pausaLabel">
+                    <i [class]="pausaIcon" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="live-capture__actions">
+            <button type="button" class="btn btn--outline">{{ periodoLabel
+                }}</button>
+            <button type="button" class="btn btn--outline"
+                (click)="deshacerUltimoEvento()">
+                <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
+                Deshacer
+            </button>
+            <i
+                class="ti live-capture__sync"
+                [class.ti-cloud-check]="sincronizado"
+                [class.ti-cloud-off]="!sincronizado"
+                [class.live-capture__sync--ok]="sincronizado"
+                [class.live-capture__sync--off]="!sincronizado"
+                [attr.aria-label]="sincronizado ? 'Sincronizado' : 'Sin conexión, guardando local'"
+                role="img"></i>
+        </div>
+    </header>
+
+    <div class="live-capture__body">
+
+        <aside class="live-capture__number-column live-capture__number-column--own" aria-label="Jugadores del equipo propio">
+            @for (numero of numeracionColumna; track numero) {
+            <button type="button" class="live-capture__number-circle" [attr.aria-label]="'Seleccionar jugador ' + numero + ' del equipo propio'">
+                {{ numero }}
+            </button>
+            }
+        </aside>
+
+        <div class="event-catalog">
+
+            @for (categoria of categorias; track categoria.nombre) {
+            <div class="event-catalog__category">
+                <p class="event-catalog__label">{{ categoria.nombre }}</p>
+
+                <div class="event-catalog__grid">
+                    @for (evento of categoria.eventos; track evento.id) {
+                    <button
+                        type="button"
+                        class="event-chip"
+                        [class.event-chip--success]="evento.variante === 'success'"
+                        [class.event-chip--danger]="evento.variante === 'danger'"
+                        [class.event-chip--warning]="evento.variante === 'warning'"
+                        (click)="onEventoTap(evento)">
+                        {{ evento.nombre }}
+                        @if (evento.contador) {
+                        <span class="event-chip__badge">{{ evento.contador
+                            }}</span>
+                        }
+                    </button>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+
+        <aside class="live-capture__number-column live-capture__number-column--rival" aria-label="Jugadores del equipo rival">
+            @for (numero of numeracionColumna; track numero) {
+            <button type="button" class="live-capture__number-circle" [attr.aria-label]="'Seleccionar jugador ' + numero + ' del equipo rival'">
+                {{ numero }}
+            </button>
+            }
+        </aside>
+
+        <aside class="historial">
+            <p class="historial__label">Historial</p>
+
+            @for (item of historial; track item.id) {
+            <div class="historial__item">
+                <div class="historial__meta">
+                    <span class="historial__time">{{ item.minuto }}</span>
+                    <button type="button" class="historial__button"
+                        [attr.aria-label]="'Deshacer evento de ' + item.minuto"
+                        (click)="deshacerEventoDelHistorial(item.id ?? item.minuto)">
+                        <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <span class="historial__desc">{{ item.descripcion }}</span>
+            </div>
+            }
+        </aside>
+    </div>
+
+    <footer class="possession-bar">
+        @for (posesion of posesiones; track posesion) {
+        <button
+            type="button"
+            class="possession-bar__btn"
+            [class.possession-bar__btn--propio]="posesion === 'propio'"
+            [class.possession-bar__btn--neutro]="posesion === 'neutro'"
+            [class.possession-bar__btn--rival]="posesion === 'rival'"
+            [class.is-active]="posesionActual === posesion"
+            (click)="seleccionarPosesion(posesion)">
+            {{ posesion }}
+        </button>
+        }
+    </footer>
+</section>
