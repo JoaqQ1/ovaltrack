@@ -13,18 +13,18 @@
 
         <div class="live-capture__scoreboard">
             <span class="live-capture__score">
-                {{ equipoLocal }}
-                <span class="live-capture__score-value">{{ marcador.local }}–{{
-                    marcador.visitante }}</span>
-                {{ equipoVisitante }}
+                {{ homeTeam }}
+                <span class="live-capture__score-value">{{ scoreboard.home }}–{{
+                    scoreboard.away }}</span>
+                {{ awayTeam }}
             </span>
 
             <div class="live-capture__clock">
-                <span class="live-capture__clock-time">{{ relojJuego }}</span>
+                <span class="live-capture__clock-time">{{ gameClock }}</span>
                 <button
                     type="button"
                     class="icon-btn"
-                    (click)="pausarReloj()"
+                    (click)="toggleClock()"
                     [attr.aria-label]="pausaLabel">
                     <i [class]="pausaIcon" aria-hidden="true"></i>
                 </button>
@@ -32,29 +32,34 @@
         </div>
 
         <div class="live-capture__actions">
-            <button type="button" class="btn btn--outline">{{ periodoLabel
+            <button type="button" class="btn btn--outline">{{ periodLabel
                 }}</button>
             <button type="button" class="btn btn--outline"
-                (click)="deshacerUltimoEvento()">
+                (click)="undoLastEvent()">
                 <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
                 Deshacer
             </button>
             <i
                 class="ti live-capture__sync"
-                [class.ti-cloud-check]="sincronizado"
-                [class.ti-cloud-off]="!sincronizado"
-                [class.live-capture__sync--ok]="sincronizado"
-                [class.live-capture__sync--off]="!sincronizado"
-                [attr.aria-label]="sincronizado ? 'Sincronizado' : 'Sin conexión, guardando local'"
+                [class.ti-cloud-check]="synchronized"
+                [class.ti-cloud-off]="!synchronized"
+                [class.live-capture__sync--ok]="synchronized"
+                [class.live-capture__sync--off]="!synchronized"
+                [attr.aria-label]="synchronized ? 'Sincronizado' : 'Sin conexión, guardando local'"
                 role="img"></i>
         </div>
     </header>
 
     <div class="live-capture__body">
 
-        <aside class="live-capture__number-column live-capture__number-column--own" aria-label="Jugadores del equipo propio">
+        <aside
+            class="live-capture__number-column live-capture__number-column--own"
+            aria-label="Jugadores del equipo propio">
             @for (numero of numeracionColumna; track numero) {
-            <button type="button" class="live-capture__number-circle" [attr.aria-label]="'Seleccionar jugador ' + numero + ' del equipo propio'">
+            <button type="button" class="live-capture__number-circle"
+                [attr.aria-label]="'Seleccionar jugador ' + numero + ' del equipo propio'"
+                [disabled]="!pendingSelection?.homeEnabled"
+                (click)="onPlayerNumberTap(numero, 'own')">
                 {{ numero }}
             </button>
             }
@@ -62,24 +67,22 @@
 
         <div class="event-catalog">
 
-            @for (categoria of categorias; track categoria.nombre) {
+            @for (category of categories; track category.name) {
             <div class="event-catalog__category">
-                <p class="event-catalog__label">{{ categoria.nombre }}</p>
+                <p class="event-catalog__label">{{ category.name }}</p>
 
                 <div class="event-catalog__grid">
-                    @for (evento of categoria.eventos; track evento.id) {
+                    @for (event of category.events; track event.id) {
                     <button
                         type="button"
                         class="event-chip"
-                        [class.event-chip--success]="evento.variante === 'success'"
-                        [class.event-chip--danger]="evento.variante === 'danger'"
-                        [class.event-chip--warning]="evento.variante === 'warning'"
-                        (click)="onEventoTap(evento)">
-                        {{ evento.nombre }}
-                        @if (evento.contador) {
-                        <span class="event-chip__badge">{{ evento.contador
-                            }}</span>
-                        }
+                        [class.event-chip--success]="eventVariant(event) === 'success'"
+                        [class.event-chip--danger]="eventVariant(event) === 'danger'"
+                        [class.event-chip--warning]="eventVariant(event) === 'warning'"
+                        [disabled]="pendingSelection !== null && pendingSelection.event.id !== event.id"
+                        [class.event-chip--selected]="pendingSelection?.event?.id === event.id"
+                        (click)="onEventTap(event)">
+                        {{ event.name }}
                     </button>
                     }
                 </div>
@@ -87,44 +90,49 @@
             }
         </div>
 
-        <aside class="live-capture__number-column live-capture__number-column--rival" aria-label="Jugadores del equipo rival">
+        <aside
+            class="live-capture__number-column live-capture__number-column--rival"
+            aria-label="Jugadores del equipo rival">
             @for (numero of numeracionColumna; track numero) {
-            <button type="button" class="live-capture__number-circle" [attr.aria-label]="'Seleccionar jugador ' + numero + ' del equipo rival'">
+            <button type="button" class="live-capture__number-circle"
+                [attr.aria-label]="'Seleccionar jugador ' + numero + ' del equipo rival'"
+                [disabled]="!pendingSelection?.awayEnabled"
+                (click)="onPlayerNumberTap(numero, 'opponent')">
                 {{ numero }}
             </button>
             }
         </aside>
 
-        <aside class="historial">
-            <p class="historial__label">Historial</p>
+        <aside class="history">
+            <p class="history__label">Historial</p>
 
-            @for (item of historial; track item.id) {
-            <div class="historial__item">
-                <div class="historial__meta">
-                    <span class="historial__time">{{ item.minuto }}</span>
-                    <button type="button" class="historial__button"
-                        [attr.aria-label]="'Deshacer evento de ' + item.minuto"
-                        (click)="deshacerEventoDelHistorial(item.id ?? item.minuto)">
+            @for (item of history; track item.id) {
+            <div class="history__item">
+                <div class="history__meta">
+                    <span class="history__time">{{ item.minute }}</span>
+                    <button type="button" class="history__button"
+                        [attr.aria-label]="'Deshacer evento de ' + item.minute"
+                        (click)="undoHistoryEvent(item.id ?? item.minute)">
                         <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
                     </button>
                 </div>
-                <span class="historial__desc">{{ item.descripcion }}</span>
+                <span class="history__desc">{{ item.description }}</span>
             </div>
             }
         </aside>
     </div>
 
     <footer class="possession-bar">
-        @for (posesion of posesiones; track posesion) {
+        @for (possession of possessions; track possession) {
         <button
             type="button"
             class="possession-bar__btn"
-            [class.possession-bar__btn--propio]="posesion === 'propio'"
-            [class.possession-bar__btn--neutro]="posesion === 'neutro'"
-            [class.possession-bar__btn--rival]="posesion === 'rival'"
-            [class.is-active]="posesionActual === posesion"
-            (click)="seleccionarPosesion(posesion)">
-            {{ posesion }}
+            [class.possession-bar__btn--own]="possession === 'own'"
+            [class.possession-bar__btn--neutral]="possession === 'neutral'"
+            [class.possession-bar__btn--opponent]="possession === 'opponent'"
+            [class.is-active]="currentPossession === possession"
+            (click)="selectPossession(possession)">
+            {{ possession }}
         </button>
         }
     </footer>

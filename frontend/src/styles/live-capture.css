@@ -216,6 +216,12 @@
   box-shadow: 0 0 0 2px rgba(36, 181, 106, 0.28);
 }
 
+.live-capture__number-circle:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none; /* opcional, refuerza que no reaccione a hover */
+}
+
 .event-catalog {
   padding: var(--ot-margin-screen);
   display: flex;
@@ -310,7 +316,18 @@
   color: var(--ot-on-tertiary-container);
 }
 
-.historial {
+.event-chip:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.event-chip--selected {
+    outline: 2px solid currentColor; /* o el estilo que uses para destacar */
+    opacity: 1; /* por las dudas, para que no herede el opacity de disabled */
+}
+
+.history {
   padding: var(--ot-margin-screen) calc(18px * var(--ot-live-scale));
   background: var(--ot-surface-card);
   border-left: 1px solid var(--ot-outline);
@@ -318,7 +335,7 @@
   overflow: auto;
 }
 
-.historial__label {
+.history__label {
   font-family: var(--ot-font-body);
   font-weight: 700;
   font-size: var(--ot-size-label-caps);
@@ -328,7 +345,7 @@
   margin: 0 0 calc(12px * var(--ot-live-scale));
 }
 
-.historial__item {
+.history__item {
   display: flex;
   flex-direction: column;
   padding: calc(10px * var(--ot-live-scale)) 0;
@@ -336,25 +353,25 @@
   gap: calc(6px * var(--ot-live-scale));
 }
 
-.historial__item:last-child {
+.history__item:last-child {
   border-bottom: none;
 }
 
-.historial__meta {
+.history__meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: calc(8px * var(--ot-live-scale));
 }
 
-.historial__time {
+.history__time {
   font-family: var(--ot-font-display);
   font-weight: 500;
   font-size: var(--ot-size-data-mono);
   color: var(--ot-primary);
 }
 
-.historial__button {
+.history__button {
   border: 1px solid var(--ot-outline);
   background: var(--ot-surface-raised);
   color: var(--ot-on-surface);
@@ -369,7 +386,7 @@
   cursor: pointer;
 }
 
-.historial__desc {
+.history__desc {
   font-size: calc(13px * var(--ot-live-scale));
   color: var(--ot-on-surface-muted);
 }
@@ -399,17 +416,17 @@
   color: var(--ot-possession-inactive-fg);
 }
 
-.possession-bar__btn--propio.is-active {
+.possession-bar__btn--own.is-active {
   background: var(--ot-possession-own);
   color: var(--ot-possession-own-fg);
 }
 
-.possession-bar__btn--neutro.is-active {
+.possession-bar__btn--neutral.is-active {
   background: var(--ot-possession-neutral);
   color: var(--ot-possession-neutral-fg);
 }
 
-.possession-bar__btn--rival.is-active {
+.possession-bar__btn--opponent.is-active {
   background: var(--ot-possession-rival);
   color: var(--ot-possession-rival-fg);
 }
@@ -417,6 +434,7 @@
 .icon-btn:focus-visible,
 .btn:focus-visible,
 .event-chip:focus-visible,
+.history__button:focus-visible,
 .possession-bar__btn:focus-visible {
   outline: calc(2px * var(--ot-live-scale)) solid var(--ot-primary);
   outline-offset: calc(2px * var(--ot-live-scale));
@@ -428,7 +446,7 @@
     grid-template-rows: minmax(0, 1fr) auto;
   }
 
-  .historial {
+  .history {
     border-left: none;
     border-top: 1px solid var(--ot-outline);
   }
@@ -467,7 +485,7 @@
   .live-capture__actions,
   .possession-bar,
   .event-catalog,
-  .historial {
+  .history {
     padding-left: calc(var(--ot-margin-screen) * 0.75);
     padding-right: calc(var(--ot-margin-screen) * 0.75);
   }

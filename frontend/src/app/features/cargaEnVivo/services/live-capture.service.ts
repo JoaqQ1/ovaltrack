@@ -1,25 +1,25 @@
 import { Injectable } from '@angular/core';
 import { Observable, delay, of } from 'rxjs';
 import {
+  LiveCaptureBackendResponse,
   LiveCaptureBackendQuery,
-  LiveCaptureBackendState,
 } from '../types/live-capture.types';
 import { LIVE_CAPTURE_MOCK_RESPONSE } from '../data/live-capture.mock';
 
 export const LIVE_CAPTURE_BACKEND_CONTRACT = [
-  'Identificación del partido con clubId, divisionId y matchId.',
-  'Estado inicial con marcador, reloj, periodo, posesión, sincronización y reloj pausado.',
-  'Catálogo de eventos activos agrupados por categoría visual.',
-  'Historial reciente con minuto y descripción legible para la interfaz.',
-  'Metadatos del evento para distinguir scoring, posesión y necesidad de jugador.',
+  'Match identification with clubId, divisionId, and matchId.',
+  'Initial state with scoreboard, game clock, period, possession, synchronization, and paused clock.',
+  'Active event catalog grouped by visual category.',
+  'Recent history with minute and interface-readable description.',
+  'Event metadata to distinguish scoring, possession, and player requirements.',
 ] as const;
 
 @Injectable({
   providedIn: 'root',
 })
 export class LiveCaptureService {
-  getLiveCaptureBootstrap(query: LiveCaptureBackendQuery): Observable<LiveCaptureBackendState> {
-    return of(this.resolveResponse(query).state).pipe(delay(250));
+  getLiveCaptureBootstrap(query: LiveCaptureBackendQuery): Observable<LiveCaptureBackendResponse> {
+    return of(this.resolveResponse(query)).pipe(delay(250));
   }
 
   private resolveResponse(query: LiveCaptureBackendQuery) {
