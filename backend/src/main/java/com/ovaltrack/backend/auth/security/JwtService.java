@@ -42,7 +42,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .claims(claims)
-                .subject(user.getEmail())
+                .subject(user.getLoginEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey())
@@ -50,7 +50,6 @@ public class JwtService {
     }
 
     public Claims extractClaims(String token) {
-
 
         return Jwts.parser()
                 .verifyWith(getSigningKey())
