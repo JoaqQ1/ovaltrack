@@ -14,9 +14,8 @@ import com.ovaltrack.backend.division.domain.dto.DivisionDTOMapper;
 import com.ovaltrack.backend.division.domain.dto.divisioncoachdto.DivisionCoachCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisioncoachdto.DivisionCoachResponseDTO;
 import com.ovaltrack.backend.division.repository.DivisionCoachRepository;
-import com.ovaltrack.backend.user.business.UserService;
-import com.ovaltrack.backend.user.domain.User;
-
+import com.ovaltrack.backend.person.business.PersonService;
+import com.ovaltrack.backend.person.domain.Person;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -25,18 +24,20 @@ public class DivisionCoachService {
     @Autowired
     private DivisionCoachRepository divisionCoachRepository;
 
-    @Autowired 
+    @Autowired
     private DivisionService divisionService;
 
-    @Autowired 
-    private UserService userService;
+    @Autowired
+    private PersonService personService;
 
-	public Collection<DivisionCoachResponseDTO> findDivisionCoachesByDivisionId(UUID divisionId) {
-		if (divisionService.findDivisionById(divisionId) == null) {
-			throw new BusinessException("Division no encontrada");
+    public Collection<DivisionCoachResponseDTO> findDivisionCoachesByDivisionId(UUID divisionId) {
+        if (divisionService.findDivisionById(divisionId) == null) {
+            throw new BusinessException("Division no encontrada");
         }
-		return divisionCoachRepository.findDivisionCoachesByDivisionId(divisionId).stream().map(DivisionDTOMapper::toResponseDTO).toList();
-	}
+        return divisionCoachRepository.findDivisionCoachesByDivisionId(divisionId).stream()
+                .map(DivisionDTOMapper::toResponseDTO).toList();
+    }
+
     public DivisionCoachResponseDTO findDivisionCoachById(UUID divisionCoachId) {
         DivisionCoach result = divisionCoachRepository.findById(divisionCoachId).orElse(null);
         return DivisionDTOMapper.toResponseDTO(result);
@@ -47,33 +48,32 @@ public class DivisionCoachService {
     }
 
     @Transactional
-	public DivisionCoachResponseDTO saveDivisionCoach(DivisionCoachCreationDTO divisionCoachRequest) {
-        User anUser = userService.findUserById(divisionCoachRequest.userId());
-        if (anUser == null ){
-            throw new BusinessException("El usuario no existe");
+    public DivisionCoachResponseDTO saveDivisionCoach(DivisionCoachCreationDTO divisionCoachRequest) {
+        Person aPerson = personService.findPersonEntityById(divisionCoachRequest.personId());
+        if (aPerson == null) {
+            throw new BusinessException("La persona no existe");
         }
         Division aDivision = divisionService.findDivisionEntityById(divisionCoachRequest.divisionId());
-        if (aDivision == null ){
+        if (aDivision == null) {
             throw new BusinessException("No se puede asignar un entrenador a una division que no existe");
         }
-        if (divisionCoachRepository.existsActiveAssociation(
-                aDivision.getId(), anUser.getId())) {
-            throw new BusinessException("El usuario ya esta asociado como entrenador en esta division");
+        if (divisionCoachRepository.existsActiveAssociation(aDivision.getId(), aPerson.getId())) {
+            throw new BusinessException("La persona ya esta asociada como entrenador en esta division");
         }
 
         DivisionCoach aDivisionCoach = new DivisionCoach();
         aDivisionCoach.setDivision(aDivision);
-        aDivisionCoach.setUser(anUser);
+        aDivisionCoach.setPerson(aPerson);
         aDivisionCoach.setStartDate(LocalDate.now());
         aDivisionCoach.setEndDate(null);
 
         aDivisionCoach = divisionCoachRepository.save(aDivisionCoach);
         return DivisionDTOMapper.toResponseDTO(aDivisionCoach);
-	}
+    }
 
     @Transactional
     public void deleteDivisionCoach(UUID divisionCoachId) {
-		DivisionCoach aDivisionCoach = this.findDivisionCoachEntityById(divisionCoachId);
+        DivisionCoach aDivisionCoach = this.findDivisionCoachEntityById(divisionCoachId);
 
         if (aDivisionCoach == null) {
             throw new BusinessException("No se puede desasociar un entrenador que no existe");

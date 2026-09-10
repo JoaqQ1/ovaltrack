@@ -24,11 +24,13 @@ public class UserService {
 	public User findUserById(UUID userId) {
 		return userRepository.findById(userId).orElse(null);
 	}
+
 	public User findUserByEmail(String email) {
-		return userRepository.findByEmail(email).orElse(null);
+		return userRepository.findByLoginEmail(email).orElse(null);
 	}
+
 	public boolean existsByEmail(String email) {
-		return userRepository.existsByEmail(email);
+		return userRepository.existsByLoginEmail(email);
 	}
 
 	@Transactional

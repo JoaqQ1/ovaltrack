@@ -15,8 +15,8 @@ import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlaye
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerUpdateDTO;
 import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
-import com.ovaltrack.backend.user.business.UserService;
-import com.ovaltrack.backend.user.domain.User;
+import com.ovaltrack.backend.person.business.PersonService;
+import com.ovaltrack.backend.person.domain.Person;
 
 import jakarta.transaction.Transactional;
 
@@ -26,18 +26,19 @@ public class DivisionPlayerService {
     @Autowired
     private DivisionPlayerRepository divisionPlayerRepository;
 
-    @Autowired 
+    @Autowired
     private DivisionService divisionService;
 
-    @Autowired 
-    private UserService userService;
+    @Autowired
+    private PersonService personService;
 
-	public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivision(UUID divisionId) {
-		if (divisionService.findDivisionById(divisionId) == null) {
-			throw new BusinessException("Division no encontrada");
+    public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivision(UUID divisionId) {
+        if (divisionService.findDivisionById(divisionId) == null) {
+            throw new BusinessException("Division no encontrada");
         }
-        return divisionPlayerRepository.findDivisionPlayersByDivision(divisionId).stream().map(DivisionDTOMapper::toResponseDTO).toList();
-	}
+        return divisionPlayerRepository.findDivisionPlayersByDivision(divisionId).stream()
+                .map(DivisionDTOMapper::toResponseDTO).toList();
+    }
 
     public DivisionPlayerResponseDTO findDivisionPlayerById(UUID divisionPlayerId) {
         DivisionPlayer result = divisionPlayerRepository.findById(divisionPlayerId).orElse(null);
@@ -49,31 +50,30 @@ public class DivisionPlayerService {
     }
 
     @Transactional
-	public DivisionPlayerResponseDTO saveDivisionPlayer(DivisionPlayerCreationDTO divisionPlayerRequest) {
-        User anUser = userService.findUserById(divisionPlayerRequest.userId());
-        if (anUser == null ){
-            throw new BusinessException("El usuario no existe");
+    public DivisionPlayerResponseDTO saveDivisionPlayer(DivisionPlayerCreationDTO divisionPlayerRequest) {
+        Person aPerson = personService.findPersonEntityById(divisionPlayerRequest.personId());
+        if (aPerson == null) {
+            throw new BusinessException("La persona no existe");
         }
         Division aDivision = divisionService.findDivisionEntityById(divisionPlayerRequest.divisionId());
-        if (aDivision == null ){
+        if (aDivision == null) {
             throw new BusinessException("No se puede asignar un jugador a una division que no existe");
         }
-        if (divisionPlayerRepository.existsActiveAssociation(
-                aDivision.getId(), anUser.getId())) {
-            throw new BusinessException("El usuario ya esta asociado como jugador en esta division");
+        if (divisionPlayerRepository.existsActiveAssociation(aDivision.getId(), aPerson.getId())) {
+            throw new BusinessException("La persona ya esta asociada como jugador en esta division");
         }
 
         DivisionPlayer aDivisionPlayer = new DivisionPlayer();
-
         aDivisionPlayer.setDivision(aDivision);
-        aDivisionPlayer.setUser(anUser);
+        aDivisionPlayer.setPerson(aPerson);
         aDivisionPlayer.setJerseyNumber(divisionPlayerRequest.jerseyNumber());
         aDivisionPlayer.setPosition(divisionPlayerRequest.position());
         aDivisionPlayer.setStartDate(LocalDate.now());
         aDivisionPlayer.setEndDate(null);
-		aDivisionPlayer = divisionPlayerRepository.save(aDivisionPlayer);
+
+        aDivisionPlayer = divisionPlayerRepository.save(aDivisionPlayer);
         return DivisionDTOMapper.toResponseDTO(aDivisionPlayer);
-	}
+    }
 
     @Transactional
     public void deleteDivisionPlayer(UUID divisionPlayerId) {
@@ -91,7 +91,7 @@ public class DivisionPlayerService {
     }
 
     @Transactional
-    public DivisionPlayerResponseDTO updateDivisionPlayer(UUID divisionPlayerId,DivisionPlayerUpdateDTO request) {
+    public DivisionPlayerResponseDTO updateDivisionPlayer(UUID divisionPlayerId, DivisionPlayerUpdateDTO request) {
         DivisionPlayer divisionPlayer = findDivisionPlayerEntityById(divisionPlayerId);
         if (divisionPlayer == null) {
             throw new BusinessException("Jugador no encontrado en la division");

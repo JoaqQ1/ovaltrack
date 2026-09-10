@@ -1,6 +1,6 @@
 package com.ovaltrack.backend.division.domain;
 
-import com.ovaltrack.backend.user.domain.User;
+import com.ovaltrack.backend.person.domain.Person;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,8 +23,8 @@ public class DivisionCoach {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "person_id", nullable = false)
+    private Person person;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "division_id", nullable = false)
