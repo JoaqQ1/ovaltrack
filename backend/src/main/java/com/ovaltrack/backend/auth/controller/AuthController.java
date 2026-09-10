@@ -1,5 +1,7 @@
 package com.ovaltrack.backend.auth.controller;
 
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,10 +13,8 @@ import com.ovaltrack.backend.auth.dto.AuthResponse;
 import com.ovaltrack.backend.auth.dto.LoginRequest;
 import com.ovaltrack.backend.auth.dto.PasswordResetRequest;
 import com.ovaltrack.backend.auth.dto.RegistroRequest;
-
 import com.ovaltrack.backend.auth.service.AuthService;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
-import com.ovaltrack.backend.common.dto.response.ApiResponse;
 
 import jakarta.validation.Valid;
 
@@ -29,32 +29,33 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<AuthResponse>> registrar(@Valid @RequestBody RegistroRequest request) {
-        AuthResponse response;
+    public ResponseEntity<Object> registrar(@Valid @RequestBody RegistroRequest request) {
         try {
-            response = authService.register(request);
+            AuthResponse response = authService.register(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (BusinessException e) {
-            return (e.getMessage() != null) ? ApiResponse.response(HttpStatus.BAD_REQUEST, e.getMessage(), null)
-                    : ApiResponse.response(HttpStatus.BAD_REQUEST, "", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", e.getMessage() != null ? e.getMessage() : "Error en el registro"));
         } catch (IllegalArgumentException e) {
-            return ApiResponse.response(HttpStatus.BAD_REQUEST, "", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Datos inválidos"));
         }
-        return ApiResponse.response(HttpStatus.CREATED, "OK", response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody LoginRequest request) {
-        AuthResponse response;
+    public ResponseEntity<Object> login(@RequestBody LoginRequest request) {
         try {
-            response = authService.login(request);
+            AuthResponse response = authService.login(request);
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ApiResponse.response(HttpStatus.BAD_REQUEST, "Credencial invalida", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Credencial inválida"));
         }
-        return ApiResponse.ok(response);
     }
 
     @PostMapping("/password-reset/request")
-    public ResponseEntity<ApiResponse<Void>> passwordReset(@RequestBody PasswordResetRequest request) {
-        return ApiResponse.accepted("Solicitud enviada correctamente", null);
+    public ResponseEntity<Object> passwordReset(@RequestBody PasswordResetRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(Map.of("message", "Solicitud enviada correctamente"));
     }
 }
