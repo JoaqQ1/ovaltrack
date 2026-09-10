@@ -50,7 +50,7 @@
 		font-size: calc(11px * var(--ot-live-scale));
 	}
 
-	.historial {
+	.history {
 		grid-column: 1 / -1;
 		grid-row: 2;
 	}

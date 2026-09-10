@@ -1,23 +1,16 @@
-export type Posesion = 'propio' | 'neutro' | 'rival';
+export type Possession = 'own' | 'neutral' | 'opponent';
 
-export type EventoVariante = 'success' | 'danger' | 'warning' | 'default';
+export type EventVariant = 'success' | 'danger' | 'warning' | 'default';
 
-export interface EventoCatalogo {
-  id: string;
-  nombre: string;
-  contador?: number;
-  variante?: EventoVariante;
+export interface EventCategoryGroup {
+  name: string;
+  events: LiveCaptureBackendEventType[];
 }
 
-export interface CategoriaEventos {
-  nombre: string;
-  eventos: EventoCatalogo[];
-}
-
-export interface HistorialItem {
+export interface HistoryItem {
   id?: string;
-  minuto: string;
-  descripcion: string;
+  minute: string;
+  description: string;
 }
 
 export interface LiveCaptureBackendQuery {
@@ -40,31 +33,32 @@ export interface LiveCaptureBackendEventType {
 
 export interface LiveCaptureBackendEvent {
   id: string;
-  eventTypeId: string;
-  eventTypeName: string;
-  teamPossession: Posesion;
+  eventType: string;
+  match:string;
+  player: string | null;
+  teamPossession: Possession;
   matchTime: number;
+  realTime: number;
   period: number;
   origin: 'live-capture' | 'manual' | 'import';
-  points: number;
   attributes?: Record<string, unknown>;
+  createdAt: string;
   synchronizedAt?: string | null;
 }
 
 export interface LiveCaptureBackendState {
-  teamLocal: string;
-  teamVisitante: string;
-  marcador: {
-    local: number;
-    visitante: number;
+  homeTeam: string;
+  awayTeam: string;
+  scoreboard: {
+    home: number;
+    away: number;
   };
-  relojJuego: string;
-  periodoLabel: string;
-  relojPausado: boolean;
-  posesionActual: Posesion;
-  sincronizado: boolean;
-  categorias: CategoriaEventos[];
-  historial: HistorialItem[];
+  gameClock: string;
+  periodLabel: string;
+  clockPaused: boolean;
+  currentPossession: Possession;
+  synchronized: boolean;
+  history: HistoryItem[];
 }
 
 export interface LiveCaptureBackendResponse {
