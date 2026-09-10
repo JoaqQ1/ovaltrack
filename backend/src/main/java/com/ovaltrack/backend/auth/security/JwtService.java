@@ -38,6 +38,9 @@ public class JwtService {
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
+        if (user.getPerson() != null && user.getPerson().getId() != null) {
+            claims.put("personId", user.getPerson().getId());
+        }
         claims.put("role", user.getRole().name());
 
         return Jwts.builder()
@@ -56,6 +59,11 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    public UUID extractPersonId(String token) {
+        String personIdStr = extractClaims(token).get("personId", String.class);
+        return personIdStr != null ? UUID.fromString(personIdStr) : null;
     }
 
     public String extractEmail(String token) {

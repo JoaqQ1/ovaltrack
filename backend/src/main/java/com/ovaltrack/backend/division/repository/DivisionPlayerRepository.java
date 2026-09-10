@@ -15,8 +15,8 @@ public interface DivisionPlayerRepository extends JpaRepository<DivisionPlayer, 
 	Collection<DivisionPlayer> findDivisionPlayersByDivision(@Param("divisionId") UUID divisionId);
 
 	@Query("SELECT COUNT(dp) > 0 FROM DivisionPlayer dp "
-			+ "WHERE dp.division.id = :divisionId AND dp.user.id = :userId "
+			+ "WHERE dp.division.id = :divisionId AND dp.person.id = :personId "
 			+ "AND dp.endDate IS NULL")
 	boolean existsActiveAssociation(@Param("divisionId") UUID divisionId,
-			@Param("userId") UUID userId);
+			@Param("personId") UUID personId);
 }

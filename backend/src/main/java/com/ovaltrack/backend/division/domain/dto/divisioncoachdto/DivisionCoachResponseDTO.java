@@ -4,10 +4,9 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public record DivisionCoachResponseDTO(
-    UUID id,
-    UUID userId,
-    UUID divisionId,
-    LocalDate startDate,
-    LocalDate endDate
-) {
+        UUID id,
+        UUID personId,
+        UUID divisionId,
+        LocalDate startDate,
+        LocalDate endDate) {
 }
