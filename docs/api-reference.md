@@ -410,6 +410,89 @@ Path parameter: `matchId` (`UUID`)
 | `200 OK` | Match deleted successfully. | Text: `Partido eliminado correctamente` |
 | `409 Conflict` | Business or data-integrity conflict. | Error message text |
 
+## Users
+
+Tag: `Users`  
+Controller path: `/user`
+
+### `GET /user`
+
+Lists all users in the system.
+
+| Status | Meaning | Response body |
+|---|---|---|
+| `200 OK` | Users returned successfully. | Array of `User` |
+
+### `GET /user/{userId}`
+
+Returns one user by its ID.
+
+Path parameter: `userId` (`UUID`)
+
+| Status | Meaning | Response body |
+|---|---|---|
+| `200 OK` | User found. | `User` |
+| `404 Not Found` | The ID does not belong to any user. | Text: `Usuario no encontrado` |
+
+### `POST /user`
+
+Creates a user in the system.
+
+Request body: `User` (required)
+
+| Status | Meaning | Response body |
+|---|---|---|
+| `200 OK` | User created successfully. | `User` |
+| `409 Conflict` | Business conflict or data integrity violation. | Error message text |
+
+### `PATCH /user/{userId}/role` (and `PUT /user/{userId}/role`)
+
+Assigns or modifies a user's role in the platform.
+
+**Security**: Restricted to `ADMIN_CLUB` (Club Administrator) or `ADMIN_OVALTRACK` (Super-admin).
+- `ADMIN_CLUB` cannot assign `ADMIN_OVALTRACK`.
+- A club admin cannot demote their own role if they manage an active club.
+- Unauthorized roles (e.g. `PLAYER`) receive `403 Forbidden`.
+- Unauthenticated requests receive `401 Unauthorized` / `403 Forbidden`.
+
+Path parameter: `userId` (`UUID`)
+
+Request body: `UserRoleUpdateDTO` (required)
+
+```json
+{
+  "role": "COACH_ANALYST"
+}
+```
+
+Allowed role values:
+- `ADMIN_OVALTRACK`
+- `ADMIN_CLUB`
+- `COACH_ANALYST`
+- `PLAYER`
+- `COMMISSION`
+- `NO_ROLE`
+
+| Status | Meaning | Response body |
+|---|---|---|
+| `200 OK` | User role updated successfully. | `UserResponseDTO` |
+| `400 Bad Request` | Missing or invalid role value. | `{"message": "El rol es obligatorio"}` |
+| `401 Unauthorized` | Missing or invalid authentication token. | `{"message": "No autorizado: se requiere autenticación"}` |
+| `403 Forbidden` | Access denied (caller does not have `ADMIN_CLUB` or `ADMIN_OVALTRACK`). | `{"message": "Acceso denegado: solo el administrador del club puede realizar esta acción"}` |
+| `404 Not Found` | Target user not found. | `{"message": "Usuario no encontrado"}` |
+| `409 Conflict` | Business rule violated (e.g., club admin assigning `ADMIN_OVALTRACK` or self-demotion). | `{"message": "<detalles del error>"}` |
+
+### `DELETE /user/{userId}`
+
+Deletes a user by its ID.
+
+Path parameter: `userId` (`UUID`)
+
+| Status | Meaning | Response body |
+|---|---|---|
+| `200 OK` | User deleted successfully. | Text: `Usuario eliminado correctamente` |
+| `409 Conflict` | The user cannot be deleted because of related entities. | Error message text |
+
 ## DTO response schemas
 
 ### `ClubResponseDTO`
@@ -476,5 +559,24 @@ Path parameter: `matchId` (`UUID`)
   "divisionId": "00000000-0000-0000-0000-000000000001",
   "opponent": "Rival Club",
   "status": "NOT_STARTED"
+}
+```
+
+### `UserRoleUpdateDTO`
+
+```json
+{
+  "role": "COACH_ANALYST"
+}
+```
+
+### `UserResponseDTO`
+
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000002",
+  "email": "jugador.uno@test.com",
+  "role": "COACH_ANALYST",
+  "active": true
 }
 ```
