@@ -1,0 +1,61 @@
+<div class="division-form-container">
+  <h2>Crear Nueva División</h2>
+
+  <form [formGroup]="divisionDetails" (ngSubmit)="guardarDivision()">
+    
+    <div class="form-group">
+      <label for="clubId">Club</label>
+      <select id="clubId" formControlName="clubId" class="form-control">
+        <option value="" disabled selected>Seleccione el club correspondiente</option>
+        <option *ngFor="let club of clubes" [value]="club.id">
+          {{ club.name }}
+        </option>
+      </select>
+      <span class="error-text" *ngIf="divisionDetails.get('clubId')?.touched && divisionDetails.get('clubId')?.invalid">
+        Debes seleccionar un club.
+      </span>
+    </div>
+
+    <div class="form-group">
+      <label for="name">Nombre de la División</label>
+      <input type="text" id="name" formControlName="name" class="form-control" placeholder="Ej: Primera">
+      <span class="error-text" *ngIf="divisionDetails.get('name')?.touched && divisionDetails.get('name')?.invalid">
+        El nombre es requerido.
+      </span>
+    </div>
+    
+    <div class="form-group">
+      <label for="ageCategory">Categoría por Edad</label>
+      <select id="ageCategory" formControlName="ageCategory" class="form-control">
+        <option value="" disabled selected>Seleccione una categoría</option>
+        <option value="U14">M14</option>
+        <option value="U15">M15</option>
+        <option value="U16">M16</option>
+        <option value="U18">M18</option>
+        <option value="U20">M20</option>
+        <option value="SENIOR">PRIMERA</option> 
+        <option value="VETERAN">VETERANOS</option> 
+      </select>
+      <span class="error-text" *ngIf="divisionDetails.get('ageCategory')?.touched && divisionDetails.get('ageCategory')?.invalid">
+        La categoría es requerida.
+      </span>
+    </div>
+
+    <div class="form-group">
+      <label for="gender">Género</label>
+      <select id="gender" formControlName="gender" class="form-control">
+        <option value="" disabled selected>Seleccione una opción</option>
+        <option value="MALE">Masculino</option>
+        <option value="FEMALE">Femenino</option>
+      </select>
+      <span class="error-text" *ngIf="divisionDetails.get('gender')?.touched && divisionDetails.get('gender')?.invalid">
+        El género es requerido.
+      </span>
+    </div>
+
+    <button type="submit" [disabled]="divisionDetails.invalid" class="btn-submit">
+      Guardar División
+    </button>
+
+  </form>
+</div>
