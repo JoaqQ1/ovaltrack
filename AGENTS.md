@@ -32,3 +32,13 @@
 
 - Angular 18 PWA, served with `ng serve --poll 2000 --host 0.0.0.0` (hot reload). Dependencies install with **`npm install --legacy-peer-deps`**.
 - Backend URL is injectable via `window.__env` (`frontend/src/assets/env.js`) / `environment.docker.ts`.
+
+## Development Guidelines (SOLID & Clean Code)
+
+- El desarrollo en todo el proyecto (backend y frontend) debe esforzarse activamente por respetar los principios **SOLID**:
+  - **S (Single Responsibility Principle - Responsabilidad Única)**: Cada clase, entidad, servicio o componente debe tener un único motivo para cambiar. Separar estrictamente entidades de dominio, DTOs, mappers, servicios de negocio y controladores/presenters.
+  - **O (Open/Closed Principle - Abierto/Cerrado)**: El código debe estar abierto a la extensión pero cerrado a la modificación. El uso de DTOs y mappers desacopla la persistencia del contrato de API, permitiendo evolucionar esquemas sin romper clientes.
+  - **L (Liskov Substitution Principle - Sustitución de Liskov)**: Las subclases o implementaciones deben poder sustituir a sus tipos base sin alterar el comportamiento esperado del sistema.
+  - **I (Interface Segregation Principle - Segregación de Interfaces)**: Preferir contratos pequeños y específicos. Los DTOs deben solicitar y exponer únicamente los datos necesarios para la operación en cuestión.
+  - **D (Dependency Inversion Principle - Inversión de Dependencias)**: Los módulos de alto nivel no deben depender de los de bajo nivel, sino de abstracciones (inyección de dependencias en Spring, interfaces de servicios y repositorios).
+

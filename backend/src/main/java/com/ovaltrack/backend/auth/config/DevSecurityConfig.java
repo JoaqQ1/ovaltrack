@@ -1,6 +1,7 @@
 package com.ovaltrack.backend.auth.config;
 
 import com.ovaltrack.backend.auth.security.DevMockAuthFilter;
+import com.ovaltrack.backend.auth.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -17,9 +18,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class DevSecurityConfig {
 
     private final DevMockAuthFilter devMockAuthFilter;
+    private final JwtAuthenticationFilter jwtAuthFilter;
 
-    public DevSecurityConfig(DevMockAuthFilter devMockAuthFilter) {
+    public DevSecurityConfig(DevMockAuthFilter devMockAuthFilter,
+                             JwtAuthenticationFilter jwtAuthFilter) {
         this.devMockAuthFilter = devMockAuthFilter;
+        this.jwtAuthFilter = jwtAuthFilter;
     }
 
     @Bean
@@ -31,7 +35,8 @@ public class DevSecurityConfig {
                 .formLogin(fl -> fl.disable())
                 .httpBasic(hb -> hb.disable())
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-                .addFilterBefore(devMockAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(devMockAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 }

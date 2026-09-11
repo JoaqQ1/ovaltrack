@@ -22,6 +22,12 @@ import java.util.List;
 public class DevMockAuthFilter extends OncePerRequestFilter {
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/api/auth/") || path.contains("/role");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
@@ -35,7 +41,7 @@ public class DevMockAuthFilter extends OncePerRequestFilter {
 
 
             var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + UserRole.ADMIN_OVALTRACK.name()));
-            var mockAuth = new UsernamePasswordAuthenticationToken(mockPrincipal, null, authorities);
+            var mockAuth = new UsernamePasswordAuthenticationToken(mockPrincipal.getEmail(), null, authorities);
 
             SecurityContextHolder.getContext().setAuthentication(mockAuth);
         }
