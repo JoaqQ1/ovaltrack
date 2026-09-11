@@ -5,7 +5,7 @@ Característica: Gestión de roles restringido a administrador de club
   Para asignar las responsabilidades correspondientes en el club
 
   Esquema del escenario: El administrador de club modifica el rol de un usuario desde la tabla
-    Dado que el administrador de club con email "admin.club@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Dado que el administrador de club con email "admin@club.com" y contraseña "administrador" ha iniciado sesión
     Y que existe el usuario con email "<emailUsuario>"
     Cuando en la tabla de miembros selecciona el nuevo rol "<nuevoRol>" para "<emailUsuario>" y presiona "Guardar rol"
     Entonces el sistema muestra el mensaje "<mensajeEsperado>"
@@ -19,7 +19,7 @@ Característica: Gestión de roles restringido a administrador de club
       | jugador.tres@test.com   | ADMIN_OVALTRACK | El administrador de club no puede asignar el rol ADMIN_OVALTRACK | PLAYER        |
 
   Escenario: Modificación múltiple de roles desde la tabla
-    Dado que el administrador de club con email "admin.club@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Dado que el administrador de club con email "admin@club.com" y contraseña "administrador" ha iniciado sesión
     Y que existe el usuario con email "otro.jugador@test.com"
     Cuando modifica los roles en la tabla según los siguientes cambios y presiona "Guardar cambios":
       | emailUsuario          | nuevoRol      | mensajeEsperado               |
@@ -39,6 +39,6 @@ Característica: Gestión de roles restringido a administrador de club
     Entonces el sistema rechaza la acción solicitando autenticación
 
   Escenario: Intentar modificar el rol de un usuario inexistente
-    Dado que el administrador de club con email "admin.club@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Dado que el administrador de club con email "admin@club.com" y contraseña "administrador" ha iniciado sesión
     Cuando presiona el botón para cambiar el rol del usuario inexistente con ID "00000000-0000-0000-0000-000000000000" a "COACH_ANALYST"
     Entonces el sistema muestra el mensaje de error "Usuario no encontrado"
