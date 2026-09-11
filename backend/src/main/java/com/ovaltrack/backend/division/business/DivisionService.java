@@ -53,8 +53,19 @@ public class DivisionService {
 
 	@Transactional
 	public DivisionResponseDTO saveDivision(DivisionCreationDTO aDivisionRequest) {
-		Club aClub = clubService.findClubEntityById(aDivisionRequest.clubId());
-		if (aClub == null ){
+		return saveDivision(aDivisionRequest, null);
+	}
+
+	@Transactional
+	public DivisionResponseDTO saveDivision(DivisionCreationDTO aDivisionRequest, org.springframework.security.core.Authentication authentication) {
+		Club aClub = null;
+		if (aDivisionRequest.clubId() != null) {
+			aClub = clubService.findClubEntityById(aDivisionRequest.clubId());
+		} else if (authentication != null) {
+			aClub = clubService.findClubEntityForAuthenticatedUser(authentication);
+		}
+
+		if (aClub == null) {
 			throw new BusinessException("No se puede asignar una division a un club que no existe");
 		}
 		Division aDivision = new Division();

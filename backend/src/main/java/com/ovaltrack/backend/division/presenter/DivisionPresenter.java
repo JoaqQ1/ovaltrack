@@ -86,14 +86,15 @@ public class DivisionPresenter {
         @ApiResponse(responseCode = "409", description = "The division cannot be saved because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> saveDivision(@Valid @RequestBody DivisionCreationDTO aDivisionRequest, BindingResult bindingResult) {
+    public ResponseEntity<Object> saveDivision(@Valid @RequestBody DivisionCreationDTO aDivisionRequest, BindingResult bindingResult,
+            org.springframework.security.core.Authentication authentication) {
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
 
         try {
-            return ResponseEntity.ok(divisionService.saveDivision(aDivisionRequest));
+            return ResponseEntity.ok(divisionService.saveDivision(aDivisionRequest, authentication));
         }  catch (BusinessException anError) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
         } catch (DataIntegrityViolationException anError) {

@@ -39,6 +39,26 @@ public class ClubController {
     }
 
     @Operation(
+        summary = "Get current authenticated user's club",
+        description = "Returns the club managed by the authenticated club admin."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Club returned successfully."),
+        @ApiResponse(responseCode = "404", description = "No club is associated with the authenticated user."),
+        @ApiResponse(responseCode = "409", description = "Business conflict or unauthenticated access.")
+    })
+    @GetMapping("/my-club")
+    public ResponseEntity<Object> getMyClub(org.springframework.security.core.Authentication authentication) {
+        try {
+            ClubResponseDTO result = clubService.findClubForAuthenticatedUser(authentication);
+            return (result != null) ? ResponseEntity.ok(result)
+                    : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+        } catch (BusinessException anError) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
+        }
+    }
+
+    @Operation(
         summary = "List all clubs in the system",
         description = "Returns every club registered in the system."
     )

@@ -1,10 +1,9 @@
 import { ApplicationConfig, provideZoneChangeDetection, isDevMode } from '@angular/core';
 import { provideRouter } from '@angular/router';
-
 import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
-import { provideHttpClient } from '@angular/common/http';
-
+import { provideHttpClient, withInterceptors } from '@angular/common/http'; // 👈 Importar withInterceptors
+import { jwtInterceptor } from './core/interceptor/jwt.interceptor';          // 👈 Importar jwtInterceptor
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -14,6 +13,6 @@ export const appConfig: ApplicationConfig = {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000'
     }),
-    provideHttpClient()
+    provideHttpClient(withInterceptors([jwtInterceptor])) // 👈 Registrar el interceptor aquí
   ]
 };

@@ -1,55 +1,62 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { switchMap, of, catchError } from 'rxjs';
 import { DivisionService } from 'src/app/services/division.service';
 import { ClubService } from 'src/app/services/club.service';
+import { Division, ClubSummary } from './types/division.types';
 
 @Component({
   selector: 'app-division-list',
   standalone: true,
-  imports: [CommonModule],
-  templateUrl: './division-list.component.html'
+  imports: [CommonModule, RouterLink],
+  templateUrl: './division-list.component.html',
+  styleUrl: './division-list.component.css'
 })
 export class DivisionListComponent implements OnInit {
-  private divisionService = inject(DivisionService);
-  private clubService = inject(ClubService);
+  private readonly divisionService = inject(DivisionService);
+  private readonly clubService = inject(ClubService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  clubes: any[] = [];
-  divisions: any[] = [];
+  myClub: ClubSummary | null = null;
+  divisions: Division[] = [];
   cargando: boolean = false;
   error: string = '';
 
   ngOnInit(): void {
-    this.cargarClubes();
+    this.cargarClubYDivisiones();
   }
 
-  cargarClubes() {
-    this.clubService.getClubes().subscribe({
-      next: (data) => this.clubes = data,
-      error: (err) => console.error('Error al cargar clubes', err)
-    });
-  }
-
-  onClubChange(event: Event) {
-    const selectElement = event.target as HTMLSelectElement;
-    const clubId = selectElement.value;
-    if (clubId) {
-      this.obtenerDivisiones(clubId);
-    }
-  }
-
-  obtenerDivisiones(clubId: string) {
+  cargarClubYDivisiones(): void {
     this.cargando = true;
     this.error = '';
-    this.divisionService.getDivisiones(clubId).subscribe({
-      next: (data) => {
-        this.divisions = data;
+
+    this.clubService.getMyClub()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        switchMap((club: ClubSummary) => {
+          this.myClub = club;
+          if (!club?.id) {
+            return of([]);
+          }
+          return this.divisionService.getDivisiones(club.id).pipe(
+            catchError((err) => {
+              console.error('Error al cargar las divisiones', err);
+              this.error = 'No se pudieron cargar las divisiones de tu club.';
+              return of([]);
+            })
+          );
+        }),
+        catchError((err) => {
+          console.error('Error al cargar el club del usuario', err);
+          this.error = 'No se pudo obtener la información de tu club.';
+          return of([]);
+        })
+      )
+      .subscribe((divisions: Division[]) => {
+        this.divisions = divisions;
         this.cargando = false;
-      },
-      error: (err) => {
-        console.error('Error al cargar las divisiones', err);
-        this.error = 'No se pudieron cargar las divisiones.';
-        this.cargando = false;
-      }
-    });
+      });
   }
 }

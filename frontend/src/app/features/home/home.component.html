@@ -4,12 +4,17 @@
       <span class="badge text-bg-primary mb-3">Área protegida</span>
       <h1 class="display-6">Bienvenido a OvalTrack</h1>
       <p class="lead text-secondary mb-0">Has accedido correctamente a la página protegida por autenticación.</p>
-      <button type="button" class="btn btn-outline-success mt-4" (click)="goToCargaEnVivo()">
-        Carga en vivo
-      </button>
-      <button type="button" class="btn btn-outline-danger mt-4" (click)="logout()">
-        Cerrar sesión
-      </button>
+      <div class="d-flex justify-content-center gap-2 mt-4 flex-wrap">
+        <button type="button" class="btn btn-outline-primary" (click)="goToDivisions()">
+          Ver Divisiones
+        </button>
+        <button type="button" class="btn btn-outline-success" (click)="goToCargaEnVivo()">
+          Carga en vivo
+        </button>
+        <button type="button" class="btn btn-outline-danger" (click)="logout()">
+          Cerrar sesión
+        </button>
+      </div>
     </div>
   </section>
 </main>

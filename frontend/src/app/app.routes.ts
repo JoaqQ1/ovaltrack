@@ -40,14 +40,17 @@ export const routes: Routes = [
     },
     {   
         path: 'divisions/new', 
+        canMatch: [authGuard],
         component: DivisionDetailsComponent 
     },
     {   
         path: 'divisions', 
+        canMatch: [authGuard],
         component: DivisionListComponent 
     },
     {   
         path: 'players/new', 
+        canMatch: [authGuard],
         component: DivisionPlayerDetailsComponent
     },
 ];
