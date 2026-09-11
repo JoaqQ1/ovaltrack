@@ -16,6 +16,10 @@ export class HomeComponent {
     void this.router.navigate(['/carga-en-vivo']);
   }
 
+  goToDivisions(): void {
+    void this.router.navigate(['/divisions']);
+  }
+
   logout(): void {
     this.authService.logout();
   }

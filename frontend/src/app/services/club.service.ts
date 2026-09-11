@@ -2,19 +2,22 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
+import { ClubSummary } from '../features/division/types/division.types';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClubService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   
-  private apiUrl = `${environment.apiUrl}/club`; 
+  private readonly apiUrl = `${environment.apiUrl}/club`; 
 
-  constructor() { }
+  getClubes(): Observable<ClubSummary[]> {
+    return this.http.get<ClubSummary[]>(this.apiUrl);
+  }
 
-  getClubes(): Observable<any> {
-    return this.http.get<any>(this.apiUrl);
+  getMyClub(): Observable<ClubSummary> {
+    return this.http.get<ClubSummary>(`${this.apiUrl}/my-club`);
   }
 
   createClub(club : any): Observable<any> {

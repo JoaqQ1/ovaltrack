@@ -2,35 +2,34 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
+import { Division, DivisionCreationRequest, DivisionUpdateRequest } from '../features/division/types/division.types';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DivisionService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   
-  private apiUrl = `${environment.apiUrl}/division`; 
+  private readonly apiUrl = `${environment.apiUrl}/division`; 
 
-  constructor() { }
-
-  getDivisiones(clubId: string): Observable<any> {
+  getDivisiones(clubId: string): Observable<Division[]> {
     const params = new HttpParams().set('clubId', clubId);
-    return this.http.get<any>(this.apiUrl, { params });
+    return this.http.get<Division[]>(this.apiUrl, { params });
   }
 
-  getDivisionById(id: number | string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${id}`);
+  getDivisionById(id: string): Observable<Division> {
+    return this.http.get<Division>(`${this.apiUrl}/${id}`);
   }
 
-  createDivision(division: any): Observable<any> {
-    return this.http.post<any>(this.apiUrl, division);
+  createDivision(division: DivisionCreationRequest): Observable<Division> {
+    return this.http.post<Division>(this.apiUrl, division);
   }
 
-  updateDivision(id: number | string, division: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${id}`, division);
+  updateDivision(id: string, division: DivisionUpdateRequest): Observable<Division> {
+    return this.http.put<Division>(`${this.apiUrl}/${id}`, division);
   }
 
-  deleteDivision(id: number | string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/${id}`);
+  deleteDivision(id: string): Observable<string> {
+    return this.http.delete<string>(`${this.apiUrl}/${id}`, { responseType: 'text' as 'json' });
   }
 }

@@ -1,0 +1,167 @@
+.division-list-container {
+  max-width: 960px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  font-family: var(--ot-font-body, 'Inter', sans-serif);
+}
+
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--ot-size-headline-md, 1.5rem);
+  font-weight: 700;
+  color: var(--ot-bg-deep, #051320);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--ot-surface-card, #0f2e4a);
+  color: #ffffff;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--ot-radius-md, 6px);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.btn-primary:hover {
+  background-color: var(--ot-surface-raised, #123252);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Tarjeta Contextual de Club */
+.club-context-card {
+  background: linear-gradient(135deg, var(--ot-surface-card, #0f2e4a) 0%, var(--ot-surface-raised, #123252) 100%);
+  color: #ffffff;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--ot-radius-lg, 8px);
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(5, 19, 32, 0.12);
+}
+
+.club-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ot-primary, #91da40);
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.club-name {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.club-city {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+/* Mensajes de Estado */
+.loading-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem;
+  color: var(--ot-label-muted, #8fa3b8);
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: var(--ot-error, #f04438);
+  border: 1px solid #fecaca;
+  padding: 1rem 1.25rem;
+  border-radius: var(--ot-radius-md, 6px);
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+/* Tabla de Divisiones */
+.table-wrapper {
+  background: #ffffff;
+  border-radius: var(--ot-radius-lg, 8px);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+}
+
+.division-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.division-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.division-table td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.division-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.division-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Badges de Estado */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--ot-radius-full, 9999px);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-active {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.badge-inactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.empty-message {
+  text-align: center;
+  color: #64748b;
+  padding: 2.5rem 1.25rem !important;
+  font-style: italic;
+}

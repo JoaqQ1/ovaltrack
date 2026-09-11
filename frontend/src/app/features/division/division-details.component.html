@@ -1,21 +1,27 @@
 <div class="division-form-container">
   <h2>Crear Nueva División</h2>
 
+  <!-- Tarjeta informativa contextual del Club -->
+  <div class="club-context-card" *ngIf="myClub">
+    <span class="club-label">Club</span>
+    <h3 class="club-name">{{ myClub.name }}</h3>
+    <span class="club-city" *ngIf="myClub.city">{{ myClub.city }}</span>
+  </div>
+
+  <div *ngIf="cargandoClub" class="loading-text">
+    Cargando datos de tu club...
+  </div>
+
+  <!-- Mensajes de feedback -->
+  <div *ngIf="mensajeExito" class="alert-success">
+    {{ mensajeExito }}
+  </div>
+  <div *ngIf="mensajeError" class="alert-error">
+    {{ mensajeError }}
+  </div>
+
   <form [formGroup]="divisionDetails" (ngSubmit)="guardarDivision()">
     
-    <div class="form-group">
-      <label for="clubId">Club</label>
-      <select id="clubId" formControlName="clubId" class="form-control">
-        <option value="" disabled selected>Seleccione el club correspondiente</option>
-        <option *ngFor="let club of clubes" [value]="club.id">
-          {{ club.name }}
-        </option>
-      </select>
-      <span class="error-text" *ngIf="divisionDetails.get('clubId')?.touched && divisionDetails.get('clubId')?.invalid">
-        Debes seleccionar un club.
-      </span>
-    </div>
-
     <div class="form-group">
       <label for="name">Nombre de la División</label>
       <input type="text" id="name" formControlName="name" class="form-control" placeholder="Ej: Primera">
@@ -53,9 +59,14 @@
       </span>
     </div>
 
-    <button type="submit" [disabled]="divisionDetails.invalid" class="btn-submit">
-      Guardar División
-    </button>
+    <div class="form-actions" style="display: flex; gap: 12px; align-items: center; margin-top: 20px;">
+      <button type="submit" [disabled]="divisionDetails.invalid || guardando" class="btn-submit">
+        {{ guardando ? 'Guardando...' : 'Guardar División' }}
+      </button>
+      <a routerLink="/divisions" class="btn-cancel" style="text-decoration: none; padding: 10px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); color: inherit;">
+        Ver Divisiones
+      </a>
+    </div>
 
   </form>
 </div>

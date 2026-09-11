@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record DivisionCreationDTO(
-	@NotNull 
     UUID clubId,
 
     @NotBlank 

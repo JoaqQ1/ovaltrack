@@ -1,14 +1,14 @@
 <div class="division-list-container">
-  <h2>Listado de Divisiones</h2>
+  <div class="header-actions">
+    <h2 class="title">Listado de Divisiones</h2>
+    <a routerLink="/divisions/new" class="btn-primary">+ Nueva División</a>
+  </div>
 
-  <div class="form-group club-selector" style="margin-bottom: 20px;">
-    <label for="clubSelect">Selecciona un Club para ver sus divisiones:</label>
-    <select id="clubSelect" class="form-control" (change)="onClubChange($event)">
-      <option value="" disabled selected>Elige un club...</option>
-      <option *ngFor="let club of clubes" [value]="club.id">
-        {{ club.name }}
-      </option>
-    </select>
+  <!-- Tarjeta contextual de club -->
+  <div class="club-context-card" *ngIf="myClub">
+    <span class="club-label">Club</span>
+    <h3 class="club-name">{{ myClub.name }}</h3>
+    <span class="club-city" *ngIf="myClub.city">{{ myClub.city }}</span>
   </div>
 
   <div *ngIf="cargando" class="loading-message">
@@ -19,26 +19,32 @@
     {{ error }}
   </div>
 
-  <!-- La tabla solo se muestra si no está cargando, no hay error y ya se seleccionó un club (divisions.length o vacío) -->
-  <table *ngIf="!cargando && !error && clubes.length > 0" class="division-table">
-    <thead>
-      <tr>
-        <th>Nombre</th>
-        <th>Categoría</th>
-        <th>Género</th>
-        <th>Club</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let division of divisions">
-        <td>{{ division.name }}</td>
-        <td>{{ division.ageCategory }}</td>
-        <td>{{ division.gender }}</td>
-        <td>{{ division.club?.name }}</td>
-      </tr>
-      <tr *ngIf="divisions.length === 0">
-        <td colspan="4" class="empty-message">No hay divisiones registradas para este club.</td>
-      </tr>
-    </tbody>
-  </table>
+  <!-- La tabla se muestra directamente para el club del usuario logueado -->
+  <div *ngIf="!cargando && !error && myClub" class="table-wrapper">
+    <table class="division-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th>Género</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let division of divisions">
+          <td><strong>{{ division.name }}</strong></td>
+          <td>{{ division.ageCategory }}</td>
+          <td>{{ division.gender }}</td>
+          <td>
+            <span class="badge" [class.badge-active]="division.active !== false" [class.badge-inactive]="division.active === false">
+              {{ division.active !== false ? 'Activa' : 'Inactiva' }}
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="divisions.length === 0">
+          <td colspan="4" class="empty-message">No hay divisiones registradas en este club.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
