@@ -21,11 +21,11 @@
     <tbody>
       <tr *ngFor="let club of clubes">
         <td>{{ club.id }}</td>
-        <td>{{ club.nombre }}</td>
-        <td>{{ club.localidad }}</td>
+        <td>{{ club.name }}</td>
+        <td>{{ club.city }}</td>
         <td>
           <span class="badge" [ngClass]="club.estado?.toLowerCase()">
-            {{ club.estado }}
+            {{ club.status }}
           </span>
         </td>
       </tr>

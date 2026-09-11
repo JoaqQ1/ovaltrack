@@ -8,14 +8,12 @@ import { ClubService } from 'src/app/services/club.service';
   selector: 'app-club-form',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
-  templateUrl: './club-form.component.html',
-  styleUrls: ['./club-form.component.scss']
+  templateUrl: './club-details.component.html'
 })
-export class ClubFormComponent implements OnInit {
+export class ClubDetailsComponent implements OnInit {
   private clubService = inject(ClubService);
   private router = inject(Router);
 
-  // Definimos adminUserId de forma plana para que coincida con el DTO
   club = {
     name: '',
     city: '',

@@ -1,0 +1,57 @@
+<div class="player-form-container">
+  <h2>Alta de Jugador en División</h2>
+
+  <form [formGroup]="playerDetails" (ngSubmit)="guardarJugador()">
+    
+    <div class="form-group">
+      <label for="clubId">1. Seleccionar Club</label>
+      <select id="clubId" formControlName="clubId" class="form-control" (change)="onClubChange($event)">
+        <option value="" disabled selected>Elige un club...</option>
+        <option *ngFor="let club of clubes" [value]="club.id">
+          {{ club.name }}
+        </option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="divisionId">2. Seleccionar División</label>
+      <select id="divisionId" formControlName="divisionId" class="form-control">
+        <option value="" disabled selected>Elige una división...</option>
+        <option *ngFor="let div of divisiones" [value]="div.id">
+          {{ div.name }} ({{ div.ageCategory }} - {{ div.gender }})
+        </option>
+      </select>
+      <span class="error-text" *ngIf="playerDetails.get('divisionId')?.touched && playerDetails.get('divisionId')?.invalid">
+        Debes seleccionar una división.
+      </span>
+    </div>
+
+    <div class="form-group">
+      <label for="userId">3. Seleccionar Usuario</label>
+      <select id="userId" formControlName="userId" class="form-control">
+        <option value="" disabled selected>Elige una cuenta de usuario...</option>
+        <option *ngFor="let user of usuarios" [value]="user.id">
+          {{ user.username || user.email }} 
+        </option>
+      </select>
+      <span class="error-text" *ngIf="playerDetails.get('userId')?.touched && playerDetails.get('userId')?.invalid">
+        Debes seleccionar un usuario.
+      </span>
+    </div>
+
+    <div class="form-group">
+      <label for="jerseyNumber">Número de Camiseta (Opcional)</label>
+      <input type="number" id="jerseyNumber" formControlName="jerseyNumber" class="form-control" placeholder="Ej: 10">
+    </div>
+
+    <div class="form-group">
+      <label for="position">Posición (Opcional)</label>
+      <input type="text" id="position" formControlName="position" class="form-control" placeholder="Ej: Apertura - hooker">
+    </div>
+
+    <button type="submit" [disabled]="playerDetails.invalid" class="btn-submit">
+      Vincular Jugador
+    </button>
+
+  </form>
+</div>

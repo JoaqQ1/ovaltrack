@@ -6,8 +6,7 @@ import { ClubService } from 'src/app/services/club.service';
   selector: 'app-club-list',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './club-list.component.html',
-  styleUrls: ['./club-list.component.scss']
+  templateUrl: './club-list.component.html'
 })
 export class ClubListComponent implements OnInit {
   private clubService = inject(ClubService);

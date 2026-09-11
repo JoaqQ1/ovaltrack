@@ -1,0 +1,44 @@
+<div class="division-list-container">
+  <h2>Listado de Divisiones</h2>
+
+  <div class="form-group club-selector" style="margin-bottom: 20px;">
+    <label for="clubSelect">Selecciona un Club para ver sus divisiones:</label>
+    <select id="clubSelect" class="form-control" (change)="onClubChange($event)">
+      <option value="" disabled selected>Elige un club...</option>
+      <option *ngFor="let club of clubes" [value]="club.id">
+        {{ club.name }}
+      </option>
+    </select>
+  </div>
+
+  <div *ngIf="cargando" class="loading-message">
+    Cargando divisiones...
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <!-- La tabla solo se muestra si no está cargando, no hay error y ya se seleccionó un club (divisions.length o vacío) -->
+  <table *ngIf="!cargando && !error && clubes.length > 0" class="division-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Categoría</th>
+        <th>Género</th>
+        <th>Club</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let division of divisions">
+        <td>{{ division.name }}</td>
+        <td>{{ division.ageCategory }}</td>
+        <td>{{ division.gender }}</td>
+        <td>{{ division.club?.name }}</td>
+      </tr>
+      <tr *ngIf="divisions.length === 0">
+        <td colspan="4" class="empty-message">No hay divisiones registradas para este club.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

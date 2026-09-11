@@ -1,7 +1,10 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
-import { ClubListComponent } from './features/club-list/club-list.component';
-import { ClubFormComponent } from './features/club-form/club-form.component';
+import { ClubListComponent } from './features/club/club-list.component';
+import { ClubDetailsComponent } from './features/club/club-details.component';
+import { DivisionDetailsComponent } from './features/division/division-details.component';
+import { DivisionListComponent } from './features/division/division-list.component';
+import { DivisionPlayerDetailsComponent } from './features/division-player/division-player-details.component';
 
 export const routes: Routes = [
     {
@@ -28,11 +31,23 @@ export const routes: Routes = [
         pathMatch: 'full'
     },
     { 
-        path: 'clubes', 
+        path: 'club', 
         component: ClubListComponent 
     },
     {   
-        path: 'clubes/nuevo', 
-        component: ClubFormComponent 
+        path: 'club/new', 
+        component: ClubDetailsComponent 
+    },
+    {   
+        path: 'divisions/new', 
+        component: DivisionDetailsComponent 
+    },
+    {   
+        path: 'divisions', 
+        component: DivisionListComponent 
+    },
+    {   
+        path: 'players/new', 
+        component: DivisionPlayerDetailsComponent
     },
 ];
