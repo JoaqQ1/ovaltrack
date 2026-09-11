@@ -10,7 +10,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -90,7 +89,7 @@ public class UserController {
 			@ApiResponse(responseCode = "404", description = "Target user not found."),
 			@ApiResponse(responseCode = "409", description = "Business conflict (e.g. assigning ADMIN_OVALTRACK or self-demotion).")
 	})
-	@PatchMapping("/{userId}/role")
+	@PutMapping("/{userId}/role")
 	@PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
 	public ResponseEntity<Object> updateUserRole(
 			@PathVariable UUID userId,
@@ -111,16 +110,6 @@ public class UserController {
 		} catch (BusinessException e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of("message", e.getMessage()));
 		}
-	}
-
-	@PutMapping("/{userId}/role")
-	@PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
-	public ResponseEntity<Object> updateUserRolePut(
-			@PathVariable UUID userId,
-			@Valid @RequestBody UserRoleUpdateDTO request,
-			BindingResult bindingResult,
-			Authentication authentication) {
-		return updateUserRole(userId, request, bindingResult, authentication);
 	}
 
 	@Operation(summary = "Delete a user", description = "Deletes the user identified by the UUID.")

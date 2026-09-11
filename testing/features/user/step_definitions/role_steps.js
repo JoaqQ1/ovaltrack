@@ -62,7 +62,7 @@ When('en la tabla de miembros selecciona el nuevo rol {string} para {string} y p
   assert.ok(userId, `El usuario ${email} no posee un ID válido`);
 
   this.lastResponse = await fetch(`${BACKEND_URL}/user/${userId}/role`, {
-    method: 'PATCH',
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.token}`
@@ -125,7 +125,7 @@ When('modifica los roles en la tabla según los siguientes cambios y presiona "G
     assert.ok(targetUser, `Usuario ${row.emailUsuario} no encontrado en la tabla`);
 
     const res = await fetch(`${BACKEND_URL}/user/${targetUser.id}/role`, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.token}`
@@ -159,7 +159,7 @@ When('presiona el botón para cambiar el rol de {string} a {string}', async func
   assert.ok(userId, `Usuario ${email} no encontrado`);
 
   this.lastResponse = await fetch(`${BACKEND_URL}/user/${userId}/role`, {
-    method: 'PATCH',
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.token}`
@@ -200,7 +200,7 @@ When('intenta enviar la solicitud para cambiar el rol de {string} a {string}', a
   assert.ok(userId, `Usuario ${email} no encontrado`);
 
   this.lastResponse = await fetch(`${BACKEND_URL}/user/${userId}/role`, {
-    method: 'PATCH',
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json'
     },
@@ -218,7 +218,7 @@ Then('el sistema rechaza la acción solicitando autenticación', function () {
 
 When('presiona el botón para cambiar el rol del usuario inexistente con ID {string} a {string}', async function (nonexistentId, newRole) {
   this.lastResponse = await fetch(`${BACKEND_URL}/user/${nonexistentId}/role`, {
-    method: 'PATCH',
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.token}`

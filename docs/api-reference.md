@@ -445,7 +445,7 @@ Request body: `User` (required)
 | `200 OK` | User created successfully. | `User` |
 | `409 Conflict` | Business conflict or data integrity violation. | Error message text |
 
-### `PATCH /user/{userId}/role` (and `PUT /user/{userId}/role`)
+### `PUT /user/{userId}/role`
 
 Assigns or modifies a user's role in the platform.
 

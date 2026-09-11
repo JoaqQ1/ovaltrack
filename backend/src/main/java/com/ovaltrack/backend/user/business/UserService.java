@@ -73,26 +73,29 @@ public class UserService {
 	}
 
 	private void validateRoleAssignmentPermissions(UserRole newRole, Authentication authentication) {
-		boolean isSuperAdmin = authentication != null && authentication.getAuthorities().stream()
-				.anyMatch(a -> a.getAuthority().equals("ROLE_" + UserRole.ADMIN_OVALTRACK.name())
-						|| a.getAuthority().equals(UserRole.ADMIN_OVALTRACK.name()));
-
-		if (!isSuperAdmin && newRole == UserRole.ADMIN_OVALTRACK) {
+		if (newRole == UserRole.ADMIN_OVALTRACK && !isSuperAdmin(authentication)) {
 			throw new BusinessException("El administrador de club no puede asignar el rol ADMIN_OVALTRACK");
 		}
 	}
 
-	private void validateSelfDemotion(User user, UserRole newRole, Authentication authentication) {
-		if (authentication == null) {
-			return;
-		}
+	private boolean isSuperAdmin(Authentication authentication) {
+		if (authentication == null)
+			return false;
+		String superAdminRole = "ROLE_" + UserRole.ADMIN_OVALTRACK.name();
+		return authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(superAdminRole)
+				|| a.getAuthority().equals(UserRole.ADMIN_OVALTRACK.name()));
+	}
 
-		String callerEmail = authentication.getName();
-		if (callerEmail != null && callerEmail.equalsIgnoreCase(user.getLoginEmail())) {
-			if (newRole != UserRole.ADMIN_CLUB && clubRepository.existsByAdminUserId(user.getId())) {
-				throw new BusinessException(
-						"No puede cambiar su propio rol mientras sea el administrador designado de un club");
-			}
+	private void validateSelfDemotion(User user, UserRole newRole, Authentication authentication) {
+		if (authentication == null || newRole == UserRole.ADMIN_CLUB)
+			return;
+
+		boolean isSelf = user.getLoginEmail() != null
+				&& user.getLoginEmail().equalsIgnoreCase(authentication.getName());
+
+		if (isSelf && clubRepository.existsByAdminUserId(user.getId())) {
+			throw new BusinessException(
+					"No puede cambiar su propio rol mientras sea el administrador designado de un club");
 		}
 	}
 }
