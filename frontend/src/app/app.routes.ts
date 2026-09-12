@@ -5,20 +5,20 @@ import { ClubDetailsComponent } from './features/club/club-details.component';
 import { DivisionDetailsComponent } from './features/division/division-details.component';
 import { DivisionListComponent } from './features/division/division-list.component';
 import { DivisionPlayerDetailsComponent } from './features/division-player/division-player-details.component';
+import { hasRoleGuard } from './core/guards/has-role.guard';
 
 export const routes: Routes = [
+    // Raíz: redirige a /home
+    {
+        path: '',
+        redirectTo: 'home',
+        pathMatch: 'full'
+    },
+
     {
         path: 'home',
-        canMatch: [authGuard],
         loadComponent: () =>
             import('./features/home/home.component').then(m => m.HomeComponent)
-    },
-    {
-        path: 'carga-en-vivo',
-        loadComponent: () =>
-            import('./features/cargaEnVivo/carga-en-vivo/carga-en-vivo.component').then(
-                m => m.CargaEnVivoComponent
-            )
     },
     {
         path: 'auth',
@@ -26,31 +26,64 @@ export const routes: Routes = [
             import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
     },
     {
-        path: '',
-        redirectTo: 'auth',
-        pathMatch: 'full'
+        path: 'carga-en-vivo',
+        canActivate:[hasRoleGuard],
+        
+        data: {
+            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB", "COACH_ANALYST"]
+        },
+        loadComponent: () =>
+            import('./features/cargaEnVivo/carga-en-vivo/carga-en-vivo.component').then(
+                m => m.CargaEnVivoComponent
+            )
     },
-    { 
-        path: 'club', 
-        component: ClubListComponent 
-    },
-    {   
-        path: 'club/new', 
-        component: ClubDetailsComponent 
-    },
-    {   
-        path: 'divisions/new', 
+    {
         canMatch: [authGuard],
-        component: DivisionDetailsComponent 
+        canActivate:[hasRoleGuard],
+        data: {
+            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
+        },
+        path: 'club',
+        component: ClubListComponent
     },
-    {   
-        path: 'divisions', 
+    {
+        path: 'club/new',
+        canActivate:[hasRoleGuard],
+        data: {
+            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
+        },
+        component: ClubDetailsComponent
+    },
+    {
+        path: 'divisions/new',
+        canActivate:[hasRoleGuard],
+        data: {
+            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
+        },
         canMatch: [authGuard],
-        component: DivisionListComponent 
+        component: DivisionDetailsComponent
     },
-    {   
-        path: 'players/new', 
+    {
+        path: 'divisions',
+        canActivate:[hasRoleGuard],
+        data: {
+            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
+        },
+        canMatch: [authGuard],
+        component: DivisionListComponent
+    },
+    {
+        path: 'players/new',
+        canActivate:[hasRoleGuard],
+        data: {
+            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB", "COACH_ANALYST"]
+        },
         canMatch: [authGuard],
         component: DivisionPlayerDetailsComponent
     },
+    // Wildcard para rutas no encontradas
+    {
+        path: '**',
+        redirectTo: 'home'
+    }
 ];

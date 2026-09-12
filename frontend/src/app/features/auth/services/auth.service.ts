@@ -15,6 +15,7 @@ export class AuthService {
   private readonly router = inject(Router);
   private currentUserSignal = signal<CurrentUserSession | null>(this.loadUserFromToken());
   readonly currentUser = this.currentUserSignal.asReadonly();
+  // readonly currentUserRole = this.currentUserSignal;
 
   constructor(private http: HttpClient) { }
 
