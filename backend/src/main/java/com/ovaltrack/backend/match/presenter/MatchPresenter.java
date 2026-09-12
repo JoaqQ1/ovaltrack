@@ -3,9 +3,9 @@ package com.ovaltrack.backend.match.presenter;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.match.business.MatchService;
 import com.ovaltrack.backend.match.domain.dto.MatchCreationDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
@@ -46,11 +45,7 @@ public class MatchPresenter {
     })
     @GetMapping(value = "/club",params = "clubId")
     public ResponseEntity<Object> findAllMatchesByClubId(@RequestParam UUID clubId) {
-        try {
-            return ResponseEntity.ok(matchService.findAllMatchesByClubId(clubId));
-        }   catch(BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        }
+        return ResponseEntity.ok(matchService.findAllMatchesByClubId(clubId));
     }
 
     @Operation(
@@ -63,11 +58,7 @@ public class MatchPresenter {
     })
     @GetMapping(value = "/division", params = "divisionId")
     public ResponseEntity<Object> findAllMatchesByDivisionId(@RequestParam UUID divisionId) {
-        try {
-            return ResponseEntity.ok(matchService.findAllMatchesByDivisionId(divisionId));
-        }   catch(BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        }
+        return ResponseEntity.ok(matchService.findAllMatchesByDivisionId(divisionId));
     }
 
     @Operation(
@@ -101,14 +92,12 @@ public class MatchPresenter {
         @ApiResponse(responseCode = "409", description = "The match cannot be created because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> saveMatch(@Valid @RequestBody MatchCreationDTO match) {
-        try {
-            return ResponseEntity.ok(matchService.saveMatch(match));
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al guardar partido");
+    public ResponseEntity<Object> saveMatch(@Valid @RequestBody MatchCreationDTO match, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            String message = bindingResult.getFieldError().getDefaultMessage();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
+        return ResponseEntity.ok(matchService.saveMatch(match));
     }
 
     @Operation(
@@ -129,14 +118,12 @@ public class MatchPresenter {
     @PutMapping("/{matchId}")
     public ResponseEntity<Object> updateMatch(
             @PathVariable UUID matchId,
-            @Valid @RequestBody MatchUpdateDTO request) {
-        try {
-            return ResponseEntity.ok(matchService.updateMatch(matchId, request));
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al actualizar partido");
+            @Valid @RequestBody MatchUpdateDTO request, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            String message = bindingResult.getFieldError().getDefaultMessage();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
+        return ResponseEntity.ok(matchService.updateMatch(matchId, request));
     }
 
     @Operation(
@@ -149,15 +136,8 @@ public class MatchPresenter {
     })
     @DeleteMapping("/{matchId}")
     public ResponseEntity<Object> deleteMatch(@PathVariable UUID matchId) {
-        try {
-            matchService.deleteMatch(matchId);
-            return ResponseEntity.ok("Partido eliminado correctamente");
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Error al eliminar partido, hay entidades relacionadas");
-        }
+        matchService.deleteMatch(matchId);
+        return ResponseEntity.ok("Partido eliminado correctamente");
     }
 
 }

@@ -2,7 +2,6 @@ package com.ovaltrack.backend.club.presenter;
 
 import java.util.UUID;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -19,7 +18,6 @@ import com.ovaltrack.backend.club.business.ClubService;
 import com.ovaltrack.backend.club.domain.dto.ClubCreationDTO;
 import com.ovaltrack.backend.club.domain.dto.ClubResponseDTO;
 import com.ovaltrack.backend.club.domain.dto.ClubUpdateDTO;
-import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -30,11 +28,11 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("club")
 @Tag(name = "Clubs", description = "Create, query, update, and delete clubs")
-public class ClubController {
+public class ClubPresenter {
 
     private ClubService clubService;
 
-    public ClubController(ClubService clubService) {
+    public ClubPresenter(ClubService clubService) {
         this.clubService = clubService;
     }
 
@@ -49,13 +47,9 @@ public class ClubController {
     })
     @GetMapping("/my-club")
     public ResponseEntity<Object> getMyClub(org.springframework.security.core.Authentication authentication) {
-        try {
-            ClubResponseDTO result = clubService.findClubForAuthenticatedUser(authentication);
-            return (result != null) ? ResponseEntity.ok(result)
-                    : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        }
+        ClubResponseDTO result = clubService.findClubForAuthenticatedUser(authentication);
+        return (result != null) ? ResponseEntity.ok(result)
+            : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
     }
 
     @Operation(
@@ -108,13 +102,7 @@ public class ClubController {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        try {
-            return ResponseEntity.ok(clubService.saveClub(aClub));
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al guardar club");
-        }
+        return ResponseEntity.ok(clubService.saveClub(aClub));
     }
 
 
@@ -140,13 +128,7 @@ public class ClubController {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        try {
-            return ResponseEntity.ok(clubService.updateClub(clubId, request));
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al actualizar club");
-        }
+        return ResponseEntity.ok(clubService.updateClub(clubId, request));
     }
 
     @Operation(
@@ -159,16 +141,8 @@ public class ClubController {
     })
     @DeleteMapping("/{clubId}")
     public ResponseEntity<Object> deleteClub(@PathVariable UUID clubId) {
-        try {
-            clubService.deleteClub(clubId);
-            return ResponseEntity.ok("Club eliminado correctamente");
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Error al eliminar club, hay entidades relacionadas");
-        }
-
+        clubService.deleteClub(clubId);
+        return ResponseEntity.ok("Club eliminado correctamente");
     }
 
 }
