@@ -5,10 +5,17 @@ import java.util.UUID;
 
 public record DivisionPlayerResponseDTO(
         UUID id,
+
         UUID personId,
+
         UUID divisionId,
+
         Integer jerseyNumber,
+
         String position,
+
         LocalDate startDate,
-        LocalDate endDate) {
+
+        LocalDate endDate
+) {
 }

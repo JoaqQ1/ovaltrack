@@ -3,7 +3,6 @@ package com.ovaltrack.backend.division.presenter;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.division.business.DivisionService;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionResponseDTO;
@@ -48,11 +46,7 @@ public class DivisionPresenter {
     })
     @GetMapping
     public ResponseEntity<Object> findAllDivisionsByClubId(@RequestParam UUID clubId) {
-        try {
-            return ResponseEntity.ok(divisionService.findAllDivisionsByClubId(clubId));
-        }   catch(BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        }
+        return ResponseEntity.ok(divisionService.findAllDivisionsByClubId(clubId));
     }
 
     @Operation(
@@ -93,13 +87,7 @@ public class DivisionPresenter {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
 
-        try {
-            return ResponseEntity.ok(divisionService.saveDivision(aDivisionRequest, authentication));
-        }  catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al guardar division");
-        }
+        return ResponseEntity.ok(divisionService.saveDivision(aDivisionRequest, authentication));
     }
 
     @Operation(
@@ -112,15 +100,8 @@ public class DivisionPresenter {
     })
     @DeleteMapping("/{divisionId}")
     public ResponseEntity<Object> deleteDivision(@PathVariable UUID divisionId) {
-        try {
-            divisionService.deleteDivision(divisionId);
-            return ResponseEntity.ok("Division eliminada correctamente");
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Error al eliminar division, hay entidades relacionadas");
-        }
+        divisionService.deleteDivision(divisionId);
+        return ResponseEntity.ok("Division eliminada correctamente");
     }
 
     @Operation(
@@ -141,19 +122,11 @@ public class DivisionPresenter {
     @PutMapping("/{divisionId}")
     public ResponseEntity<Object> updateDivision(@PathVariable UUID divisionId, @Valid @RequestBody DivisionUpdateDTO request,
             BindingResult bindingResult) {
-
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-
-        try {
-            return ResponseEntity.ok(divisionService.updateDivision(divisionId, request));
-        } catch (BusinessException error) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(error.getMessage());
-        } catch (DataIntegrityViolationException error) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al actualizar la division");
-        }
+        return ResponseEntity.ok(divisionService.updateDivision(divisionId, request));
     }
 
 }

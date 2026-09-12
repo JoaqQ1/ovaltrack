@@ -8,8 +8,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record MatchUpdateDTO(
-    @NotNull LocalDateTime date,
-    @NotBlank String opponent,  //TODO: debate whether to change opponent
-    @NotNull MatchStatus status
+    @NotNull(message = "La fecha del partido es obligatoria")
+    LocalDateTime date,
+
+    @NotBlank(message = "El nombre del equipo rival es obligatorio")
+    String opponent,  //TODO: debate whether to change opponent
+
+    @NotNull(message = "El estado del partido es obligatorio")
+    MatchStatus status
 ) {
 }

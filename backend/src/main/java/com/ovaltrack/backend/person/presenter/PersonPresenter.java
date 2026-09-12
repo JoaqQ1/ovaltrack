@@ -1,6 +1,5 @@
 package com.ovaltrack.backend.person.presenter;
 
-import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.dto.PersonCreationDTO;
 import com.ovaltrack.backend.person.domain.dto.PersonResponseDTO;
@@ -10,7 +9,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -84,13 +82,7 @@ public class PersonPresenter {
             String message = bindingResult.getFieldError() != null ? bindingResult.getFieldError().getDefaultMessage() : "Datos inválidos";
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        try {
-            return ResponseEntity.ok(personService.savePerson(request));
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al guardar persona");
-        }
+        return ResponseEntity.ok(personService.savePerson(request));
     }
 
     @Operation(
@@ -116,13 +108,7 @@ public class PersonPresenter {
             String message = bindingResult.getFieldError() != null ? bindingResult.getFieldError().getDefaultMessage() : "Datos inválidos";
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        try {
-            return ResponseEntity.ok(personService.updatePerson(personId, request));
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al actualizar persona");
-        }
+        return ResponseEntity.ok(personService.updatePerson(personId, request));
     }
 
     @Operation(
@@ -135,13 +121,7 @@ public class PersonPresenter {
     })
     @DeleteMapping("/{personId}")
     public ResponseEntity<Object> deletePerson(@PathVariable UUID personId) {
-        try {
-            personService.deletePerson(personId);
-            return ResponseEntity.ok("Persona eliminada correctamente");
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al eliminar persona, hay entidades relacionadas");
-        }
+        personService.deletePerson(personId);
+        return ResponseEntity.ok("Persona eliminada correctamente");
     }
 }
