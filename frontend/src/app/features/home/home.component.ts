@@ -48,6 +48,14 @@ export class HomeComponent {
       icon: 'club'
     },
     {
+      title: 'Gestión de Miembros',
+      description: 'Administración de usuarios, roles deportivos y asignación de permisos.',
+      route: '/members',
+      badge: 'Admin',
+      allowedRoles: ['ADMIN_CLUB', 'ADMIN_OVALTRACK'] as UserRole[],
+      icon: 'members'
+    },
+    {
       title: 'Nuevo Jugador',
       description: 'Alta y asignación de perfiles médicos y técnicos al plantel.',
       route: '/players/new',
@@ -61,6 +69,10 @@ export class HomeComponent {
     const role = this.currentUser?.role;
     return this.allNavigationCards.filter(card => card.allowedRoles.includes(role));
   });
+
+  goToMembers(): void {
+    void this.router.navigate(['/members']);
+  }
 
   logout(): void {
     this.authService.logout();

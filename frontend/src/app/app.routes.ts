@@ -81,6 +81,23 @@ export const routes: Routes = [
         canMatch: [authGuard],
         component: DivisionPlayerDetailsComponent
     },
+    {
+        path: 'members',
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard],
+        data: {
+            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
+        },
+        loadComponent: () =>
+            import('./features/members/pages/members-list/members-list.component').then(
+                m => m.MembersListComponent
+            )
+    },
+    {
+        path: 'miembros',
+        redirectTo: 'members',
+        pathMatch: 'full'
+    },
     // Wildcard para rutas no encontradas
     {
         path: '**',

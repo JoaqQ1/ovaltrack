@@ -7,7 +7,7 @@ Característica: Registro de nuevos usuarios y personas
   Escenario: Registro de usuarios y miembros del club
     Dado que se completan los formularios de registro con los siguientes datos:
       | nombre  | apellido | email                   | contrasenia    | fechaNacimiento | rol        |
-      | Marcelo | Gallardo | admin@club.com          | administrador  | 1970-04-26      | ADMIN_CLUB |
+      | Marcelo | Gallardo | admin@club.com          | administrador  | 1970-04-26      | ADMIN_CLUB |  
       | Agustín | Creevy   | jugador.uno@test.com    | PassSegura123! | 1985-03-15      | PLAYER     |
       | Nicolás | Sánchez  | jugador.dos@test.com    | PassSegura123! | 1988-10-26      | PLAYER     |
       | Pablo   | Matera   | jugador.tres@test.com   | PassSegura123! | 1993-03-16      | PLAYER     |
