@@ -6,11 +6,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record DivisionUpdateDTO(
-    @NotBlank
+    @NotBlank(message = "El nombre de la division es obligatorio")
     String name,
-    @NotNull
+
+    @NotNull(message = "La categoria del club es obligatoria")
     AgeCategory ageCategory,
-    @NotNull
+    
+    @NotNull(message = "El genero de la division es obligatorio")
     Gender gender
 ) {
 }

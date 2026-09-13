@@ -1,0 +1,139 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: #0b111e;
+  color: #e2e8f0;
+}
+
+.login-wrapper {
+  min-height: 100vh;
+}
+
+/* Brand Icon */
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  background-color: #162238;
+  border: 1px solid #2a3c5a;
+  color: #a3e635;
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+/* Auth Card */
+.auth-card {
+  background-color: #131c2e;
+  border: 1px solid #1f2e47;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Labels e Inputs */
+.custom-label {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+}
+
+.custom-input {
+  background-color: #0d1524;
+  border: 1px solid #1f2e47;
+  color: #f8fafc;
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.92rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.custom-input::placeholder {
+  color: #475569;
+}
+
+.custom-input:focus {
+  background-color: #0d1524;
+  border-color: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.custom-input.is-invalid {
+  border-color: #ef4444;
+}
+
+.custom-input.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.error-text {
+  color: #f87171;
+  font-size: 0.78rem;
+}
+
+/* Alerts */
+.custom-alert {
+  background-color: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+/* Botones */
+.btn-neon {
+  background-color: #a3e635;
+  color: #0b111e;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-neon:hover:not(:disabled) {
+  background-color: #bef264;
+  color: #0b111e;
+  box-shadow: 0 0 16px rgba(163, 230, 53, 0.35);
+}
+
+.btn-neon:disabled {
+  background-color: #1e293b;
+  color: #64748b;
+  cursor: not-allowed;
+  border: 1px solid #334155;
+}
+
+/* Divisor y enlaces */
+.auth-divider {
+  height: 1px;
+  background-color: #1f2e47;
+}
+
+.link-neon {
+  color: #a3e635;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.link-neon:hover {
+  color: #bef264;
+  text-decoration: underline !important;
+}
+
+.login-wrapper {
+  min-height: calc(100vh - 58px);
+}
+.input-password {
+  display: flex;
+  /* flex-direction: column; */
+}
+.input-password i {
+  margin: 1rem;
+  vertical-align: middle;
+}
+.input-password i:hover {
+  /* color: #a3e635; */
+  cursor: pointer;
+}

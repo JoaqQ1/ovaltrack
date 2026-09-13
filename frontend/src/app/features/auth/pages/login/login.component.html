@@ -1,37 +1,139 @@
-<main class="container py-5">
-	<div class="row justify-content-center">
-		<div class="col-12 col-md-8 col-lg-5">
-			<section class="card border-0 shadow-sm">
-				<div class="card-body p-4 p-md-5">
-					<h1 class="h3 text-center mb-4">Iniciar sesión</h1>
+<app-navbar-public [currentView]="'login'"></app-navbar-public>
+<main
+  class="login-wrapper d-flex align-items-center justify-content-center py-5"
+>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xl-4">
+        <!-- Header con marca -->
+        <div class="text-center mb-4">
+          <a
+            routerLink="/home"
+            class="text-decoration-none d-inline-flex align-items-center gap-2 mb-2"
+          >
+            <div
+              class="brand-icon d-flex align-items-center justify-content-center"
+            >
+              O
+            </div>
+            <span class="fs-4 fw-bold text-white tracking-wide">OvalTrack</span>
+          </a>
+          <p class="text-secondary small mb-0">
+            Ingresa tus credenciales para acceder
+          </p>
+        </div>
 
-					<form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-						<div class="mb-3">
-							<label for="email" class="form-label">Email</label>
-							<input id="email" formControlName="email" type="email" autocomplete="email" class="form-control" />
-							@if (loginForm.controls.email.touched && loginForm.controls.email.invalid) {
-								<small class="text-danger">Ingresa un correo válido</small>
-							}
-						</div>
+        <!-- Tarjeta de Login -->
+        <section class="auth-card p-4 p-md-5">
+          <h1 class="h4 text-white text-center fw-semibold mb-4">
+            Iniciar sesión
+          </h1>
 
-						<div class="mb-3">
-							<label for="password" class="form-label">Contraseña</label>
-							<input id="password" formControlName="password" type="password" autocomplete="current-password" class="form-control" />
-							@if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
-								<small class="text-danger">La contraseña es obligatoria</small>
-							}
-						</div>
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+            <!-- Email -->
+            <div class="mb-3">
+              <label for="email" class="form-label custom-label"
+                >Correo electrónico</label
+              >
+              <input
+                id="email"
+                formControlName="email"
+                type="email"
+                autocomplete="email"
+                placeholder="nombre@ejemplo.com"
+                class="form-control custom-input"
+                [class.is-invalid]="
+                  loginForm.controls.email.touched &&
+                  loginForm.controls.email.invalid
+                "
+              />
+              @if (
+                loginForm.controls.email.touched &&
+                loginForm.controls.email.invalid
+              ) {
+                <small class="error-text mt-1 d-block"
+                  >Ingresa un correo válido</small
+                >
+              }
+            </div>
 
-						@if (errorMessage) {
-							<p class="alert alert-danger" role="alert">{{ errorMessage }}</p>
-						}
+            <!-- Password -->
+            <div class="mb-4">
+              <label for="password" class="form-label custom-label"
+                >Contraseña</label
+              >
+              <div class="input-password">
+                <input
+                  #myPassword
+                  id="password"
+                  formControlName="password"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="••••••••"
+                  class="form-control custom-input"
+                  [class.is-invalid]="
+                    loginForm.controls.password.touched &&
+                    loginForm.controls.password.invalid
+                  "
+                />
+                <i 
+                #myBtnChangeVisibity 
+                class="bx bxs-low-vision" 
+                (click)="visiblePassword()"></i>
+              </div>
+              @if (
+                loginForm.controls.password.touched &&
+                loginForm.controls.password.invalid
+              ) {
+                <small class="error-text mt-1 d-block"
+                  >La contraseña es obligatoria</small
+                >
+              }
+            </div>
 
-						<button type="submit" class="btn btn-primary w-100" [disabled]="loginForm.invalid">Iniciar sesión</button>
-					</form>
+            <!-- Error del backend -->
+            @if (errorMessage) {
+              <div
+                class="custom-alert mb-4 d-flex align-items-center gap-2"
+                role="alert"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>{{ errorMessage }}</span>
+              </div>
+            }
 
-					<p class="text-center text-secondary mt-4 mb-0">¿No tienes cuenta? <a routerLink="/auth/register" class="link-primary">Regístrate</a></p>
-				</div>
-			</section>
-		</div>
-	</div>
+            <button
+              type="submit"
+              class="btn btn-neon w-100 py-2"
+              [disabled]="loginForm.invalid"
+            >
+              Iniciar sesión
+            </button>
+          </form>
+
+          <div class="auth-divider my-4"></div>
+
+          <p class="text-center text-secondary small mb-0">
+            ¿No tienes cuenta?
+            <a
+              routerLink="/auth/register"
+              class="link-neon text-decoration-none ms-1"
+              >Regístrate</a
+            >
+          </p>
+        </section>
+      </div>
+    </div>
+  </div>
 </main>

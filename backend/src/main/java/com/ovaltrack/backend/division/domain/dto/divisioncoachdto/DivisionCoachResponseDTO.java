@@ -5,8 +5,13 @@ import java.util.UUID;
 
 public record DivisionCoachResponseDTO(
         UUID id,
+
         UUID personId,
+
         UUID divisionId,
+
         LocalDate startDate,
-        LocalDate endDate) {
+        
+        LocalDate endDate
+) {
 }

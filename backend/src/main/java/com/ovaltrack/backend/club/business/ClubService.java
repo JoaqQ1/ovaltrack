@@ -35,8 +35,6 @@ public class ClubService {
         return ClubDTOMapper.toResponseDTO(clubRepository.findById(clubId).orElse(null));
     }
 
-    //Paged getAll function
-
     @Transactional
     public ClubResponseDTO saveClub(ClubCreationDTO aClubRequest) {
         Club aClub = new Club();
@@ -95,8 +93,6 @@ public class ClubService {
         }
         return ClubDTOMapper.toResponseDTO(club);
     }
-
-    //PRIVATE
 
     public Club findClubEntityById(UUID clubId) {
         return clubRepository.findById(clubId).orElse(null);

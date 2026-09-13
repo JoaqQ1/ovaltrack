@@ -3,9 +3,9 @@ package com.ovaltrack.backend.division.presenter;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.division.business.DivisionCoachService;
 import com.ovaltrack.backend.division.domain.dto.divisioncoachdto.DivisionCoachCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisioncoachdto.DivisionCoachResponseDTO;
@@ -44,11 +43,7 @@ public class DivisionCoachPresenter {
     })
     @GetMapping
     public ResponseEntity<Object> findDivisionCoachesByDivisionId(@RequestParam UUID divisionId) {
-        try {
-            return ResponseEntity.ok(divisionCoachService.findDivisionCoachesByDivisionId(divisionId));
-        }   catch(BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        }
+        return ResponseEntity.ok(divisionCoachService.findDivisionCoachesByDivisionId(divisionId));
     }
 
     @Operation(
@@ -83,14 +78,12 @@ public class DivisionCoachPresenter {
         @ApiResponse(responseCode = "409", description = "The association cannot be created because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> saveDivisionCoach(@Valid @RequestBody DivisionCoachCreationDTO divisionCoach) {
-        try {
-            return ResponseEntity.ok(divisionCoachService.saveDivisionCoach(divisionCoach));
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al guardar entrenador en la division");
+    public ResponseEntity<Object> saveDivisionCoach(@Valid @RequestBody DivisionCoachCreationDTO divisionCoach, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            String message = bindingResult.getFieldError().getDefaultMessage();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
+        return ResponseEntity.ok(divisionCoachService.saveDivisionCoach(divisionCoach));
     }
 
     @Operation(
@@ -103,15 +96,8 @@ public class DivisionCoachPresenter {
     })
     @DeleteMapping("/{divisionCoachId}")
     public ResponseEntity<Object> deleteDivisionCoach(@PathVariable UUID divisionCoachId) {
-        try {
-            divisionCoachService.deleteDivisionCoach(divisionCoachId);
-            return ResponseEntity.ok("Entrenador eliminado correctamente");
-        } catch (BusinessException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
-        } catch (DataIntegrityViolationException anError) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Error al eliminar entrenador, hay entidades relacionadas");
-        }
+        divisionCoachService.deleteDivisionCoach(divisionCoachId);
+        return ResponseEntity.ok("Entrenador eliminado correctamente");
     }
 
 }
