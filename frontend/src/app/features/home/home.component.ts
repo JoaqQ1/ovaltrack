@@ -20,6 +20,10 @@ export class HomeComponent {
     void this.router.navigate(['/divisions']);
   }
 
+  goToMembers(): void {
+    void this.router.navigate(['/members']);
+  }
+
   logout(): void {
     this.authService.logout();
   }

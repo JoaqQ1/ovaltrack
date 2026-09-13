@@ -53,4 +53,17 @@ export const routes: Routes = [
         canMatch: [authGuard],
         component: DivisionPlayerDetailsComponent
     },
+    {
+        path: 'members',
+        canMatch: [authGuard],
+        loadComponent: () =>
+            import('./features/members/pages/members-list/members-list.component').then(
+                m => m.MembersListComponent
+            )
+    },
+    {
+        path: 'miembros',
+        redirectTo: 'members',
+        pathMatch: 'full'
+    }
 ];
