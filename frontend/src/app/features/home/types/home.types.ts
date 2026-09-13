@@ -6,6 +6,6 @@ export interface NavigationCard {
   route: string;
   badge: string;
   allowedRoles: UserRole[];
-  icon: 'division' | 'live' | 'club' | 'player';
+  icon: 'division' | 'live' | 'club' | 'player' | 'members';
 }
 

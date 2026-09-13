@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
 import { MembersService } from '../../services/members.service';
 import {
   BannerNotification,
@@ -25,7 +26,7 @@ import {
 @Component({
   selector: 'app-members-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NavbarAuthComponent],
   templateUrl: './members-list.component.html',
   styleUrl: './members-list.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
