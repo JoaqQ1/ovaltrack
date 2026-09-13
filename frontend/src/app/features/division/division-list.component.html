@@ -1,50 +1,90 @@
-<div class="division-list-container">
-  <div class="header-actions">
-    <h2 class="title">Listado de Divisiones</h2>
-    <a routerLink="/divisions/new" class="btn-primary">+ Nueva División</a>
+<app-navbar-auth></app-navbar-auth>
+<div class="topbar"></div>
+
+<div class="app">
+  <!-- HUD / Header -->
+  <header class="hud">
+    <div class="hud-brand">
+      <div class="crest" aria-hidden="true">{{ getClubCrest() }}</div>
+      <div class="brand-text">
+        <div class="club">{{ myClub?.name || 'Mi Club' }}</div>
+        <div class="title">Divisiones & Planteles</div>
+      </div>
+    </div>
+
+    <div class="hud-actions">
+      <a routerLink="/divisions/new" class="btn btn-invite" id="newDivisionBtn">
+        + Nueva División
+      </a>
+    </div>
+  </header>
+
+  <!-- Región de Banners -->
+  <div class="banner-region" aria-live="polite" *ngIf="error">
+    <div class="banner banner-error" role="alert">
+      <div style="flex: 1">
+        <strong>Error de carga</strong>
+        <p>{{ error }}</p>
+      </div>
+      <button class="close" (click)="closeError()" aria-label="Cerrar aviso">✕</button>
+    </div>
   </div>
 
-  <!-- Tarjeta contextual de club -->
-  <div class="club-context-card" *ngIf="myClub">
-    <span class="club-label">Club</span>
-    <h3 class="club-name">{{ myClub.name }}</h3>
-    <span class="club-city" *ngIf="myClub.city">{{ myClub.city }}</span>
+  <!-- Estado Skeleton / Cargando -->
+  <div class="skeleton-state" *ngIf="cargando">
+    <div class="sk-row" *ngFor="let i of [1, 2, 3, 4]">
+      <div style="flex: 1">
+        <div class="sk sk-line"></div>
+        <div class="sk sk-line s"></div>
+      </div>
+      <div class="sk sk-block" style="max-width: 140px;"></div>
+      <div class="sk sk-pill"></div>
+    </div>
   </div>
 
-  <div *ngIf="cargando" class="loading-message">
-    Cargando divisiones...
+  <!-- Estado Vacío -->
+  <div class="empty-state" *ngIf="!cargando && !error && divisions.length === 0">
+    <div class="empty-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    </div>
+    <div class="empty-title">No hay divisiones registradas</div>
+    <p class="empty-copy">
+      Crea la primera división para organizar categorías, jugadores y cuerpo técnico de tu club.
+    </p>
+    <a routerLink="/divisions/new" class="btn btn-invite">+ Crear primera división</a>
   </div>
 
-  <div *ngIf="error" class="error-message">
-    {{ error }}
-  </div>
+  <!-- Listado de Divisiones -->
+  <div class="division-list" *ngIf="!cargando && !error && divisions.length > 0">
+    <div class="division-card" *ngFor="let division of divisions">
+      <div class="division-main">
+        <div class="division-badge-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <div class="division-info">
+          <div class="division-name">{{ division.name }}</div>
+          <div class="division-meta">
+            <span class="meta-tag">{{ formatCategory(division.ageCategory) }}</span>
+            <span class="meta-dot">•</span>
+            <span class="meta-gender">{{ formatGender(division.gender) }}</span>
+          </div>
+        </div>
+      </div>
 
-  <!-- La tabla se muestra directamente para el club del usuario logueado -->
-  <div *ngIf="!cargando && !error && myClub" class="table-wrapper">
-    <table class="division-table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Categoría</th>
-          <th>Género</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let division of divisions">
-          <td><strong>{{ division.name }}</strong></td>
-          <td>{{ division.ageCategory }}</td>
-          <td>{{ division.gender }}</td>
-          <td>
-            <span class="badge" [class.badge-active]="division.active !== false" [class.badge-inactive]="division.active === false">
-              {{ division.active !== false ? 'Activa' : 'Inactiva' }}
-            </span>
-          </td>
-        </tr>
-        <tr *ngIf="divisions.length === 0">
-          <td colspan="4" class="empty-message">No hay divisiones registradas en este club.</td>
-        </tr>
-      </tbody>
-    </table>
+      <div class="division-status-zone">
+        <span class="status-badge" [ngClass]="division.active !== false ? 'status-active' : 'status-inactive'">
+          <span class="dot"></span>
+          {{ division.active !== false ? 'Activa' : 'Inactiva' }}
+        </span>
+      </div>
+    </div>
   </div>
 </div>

@@ -2,19 +2,21 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
 import { DivisionService } from 'src/app/services/division.service';
 import { ClubService } from 'src/app/services/club.service';
 
 @Component({
   selector: 'app-division-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  templateUrl: './division-details.component.html'
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, NavbarAuthComponent],
+  templateUrl: './division-details.component.html',
+  styleUrl: './division-details.component.css'
 })
 export class DivisionDetailsComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private divisionService = inject(DivisionService);
-  private clubService = inject(ClubService);
+  private readonly fb = inject(FormBuilder);
+  private readonly divisionService = inject(DivisionService);
+  private readonly clubService = inject(ClubService);
 
   divisionDetails!: FormGroup;
   myClub: any = null;
@@ -23,22 +25,34 @@ export class DivisionDetailsComponent implements OnInit {
   mensajeExito: string = '';
   mensajeError: string = '';
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.iniciarFormulario();
     this.cargarMiClub();
   }
 
-  iniciarFormulario() {
+  getClubCrest(): string {
+    const name = this.myClub?.name?.trim();
+    return name ? name.charAt(0).toUpperCase() : 'O';
+  }
+
+  closeSuccess(): void {
+    this.mensajeExito = '';
+  }
+
+  closeError(): void {
+    this.mensajeError = '';
+  }
+
+  iniciarFormulario(): void {
     this.divisionDetails = this.fb.group({
-      name: ['', Validators.required],
+      name: ['', [Validators.required, Validators.minLength(2)]],
       ageCategory: ['', Validators.required],
       gender: ['', Validators.required]
     });
   }
 
-  cargarMiClub() {
+  cargarMiClub(): void {
     this.cargandoClub = true;
-    this.errorClub = '';
     this.clubService.getMyClub().subscribe({
       next: (club) => {
         this.myClub = club;
@@ -52,7 +66,7 @@ export class DivisionDetailsComponent implements OnInit {
     });
   }
 
-  guardarDivision() {
+  guardarDivision(): void {
     this.mensajeExito = '';
     this.mensajeError = '';
 
@@ -64,9 +78,13 @@ export class DivisionDetailsComponent implements OnInit {
       };
 
       this.divisionService.createDivision(payload).subscribe({
-        next: (res) => {
+        next: () => {
           this.mensajeExito = '¡División creada con éxito!';
-          this.divisionDetails.reset();
+          this.divisionDetails.reset({
+            name: '',
+            ageCategory: '',
+            gender: ''
+          });
           this.guardando = false;
         },
         error: (err) => {
@@ -79,6 +97,4 @@ export class DivisionDetailsComponent implements OnInit {
       this.divisionDetails.markAllAsTouched();
     }
   }
-
-  private errorClub: string = '';
 }
