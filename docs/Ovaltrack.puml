@@ -89,7 +89,7 @@ package "event" {
         - UUID id
         - EventType eventType
         - Match match
-        - User player
+        - Person player
         - EventPossession teamPossession
         - Integer matchTime
         - LocalDateTime realTime
@@ -148,7 +148,7 @@ package "division" {
 
     class DivisionPlayer {
         - UUID id
-        - User user
+        - Person person
         - Division division
         - Integer jerseyNumber
         - String position
@@ -158,7 +158,7 @@ package "division" {
 
     class DivisionCoach {
         - UUID id
-        - User user
+        - Person person
         - Division division
         - LocalDate startDate
         - LocalDate endDate
@@ -196,17 +196,29 @@ package "user" {
         PLAYER
     }
 
-    class User {
+    class Person {
         - UUID id
-        - String email
-        - String password
         - String firstName
         - String lastName
         - LocalDate birthDate
+        - String contactEmail
+        - String contactPhone
+        - LocalDateTime createdAt
+    }
+
+    class User {
+        - UUID id
+        - Person person
+        - String loginEmail
+        - String passwordHash
         - UserRole role
         - Boolean active
         - LocalDateTime createdAt
     }
+
+    ' Toda cuenta (User) representa exactamente una Persona.
+    ' No toda Persona tiene una cuenta (ej: jugador menor sin acceso propio).
+    User "0..1" --> "1" Person : person
 }
 
 ' ========================================================
@@ -219,18 +231,20 @@ Division "0..*" -down-> "1" Club : club
 Club "0..*" -down-> "1" User : adminUser
 
 ' ========================================================
-' RELACIONES DIRECTAS A USER (saltan capas de la jerarquía)
+' RELACIONES DIRECTAS A PERSON (saltan capas de la jerarquía)
 ' Se dibujan punteadas para no competir visualmente con la
-' columna vertebral de arriba.
+' columna vertebral de arriba. Notar que estas relaciones ya
+' NO apuntan a User: apuntan a Person, porque representan
+' "quién jugó / quién dirigió", no "quién inició sesión".
 ' ========================================================
-DivisionPlayer ..> User : user
-DivisionCoach ..> User : user
-Event ..> User : player
+DivisionPlayer ..> Person : person
+DivisionCoach ..> Person : person
+Event ..> Person : player
 
 legend right
   |= Línea |= Significado |
   |  <color:#2C3E50>━━━━━</color> | Relación estructural (columna vertebral) |
-  |  <color:#2C3E50>┅┅┅┅┅</color> | Referencia directa a User (cross-cutting) |
+  |  <color:#2C3E50>┅┅┅┅┅</color> | Referencia directa a Person (cross-cutting) |
 endlegend
 
 @enduml

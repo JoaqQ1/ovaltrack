@@ -35,8 +35,6 @@ public class ClubService {
         return ClubDTOMapper.toResponseDTO(clubRepository.findById(clubId).orElse(null));
     }
 
-    //Paged getAll function
-
     @Transactional
     public ClubResponseDTO saveClub(ClubCreationDTO aClubRequest) {
         Club aClub = new Club();
@@ -84,10 +82,32 @@ public class ClubService {
     }
 
 
-    //PRIVATE
+    public ClubResponseDTO findClubByAdminUserId(UUID adminUserId) {
+        return ClubDTOMapper.toResponseDTO(clubRepository.findByAdminUserId(adminUserId).orElse(null));
+    }
+
+    public ClubResponseDTO findClubForAuthenticatedUser(org.springframework.security.core.Authentication authentication) {
+        Club club = findClubEntityForAuthenticatedUser(authentication);
+        if (club == null) {
+            throw new BusinessException("No se encontró un club asociado al usuario administrador autenticado");
+        }
+        return ClubDTOMapper.toResponseDTO(club);
+    }
 
     public Club findClubEntityById(UUID clubId) {
         return clubRepository.findById(clubId).orElse(null);
+    }
+
+    public Club findClubEntityForAuthenticatedUser(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return null;
+        }
+        String email = authentication.getName();
+        return clubRepository.findByAdminUserLoginEmail(email)
+                .orElseGet(() -> {
+                    User user = userService.findUserByEmail(email);
+                    return (user != null) ? clubRepository.findByAdminUserId(user.getId()).orElse(null) : null;
+                });
     }
 
 }

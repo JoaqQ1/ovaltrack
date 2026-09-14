@@ -6,13 +6,19 @@ import java.util.UUID;
 
 public record ClubResponseDTO(
 	UUID id,
-	String name,
-    ClubStatus status,
-    UUID adminUserId,
-    String city,
-    String logoUrl,
-    String contactEmail,
-    String contactPhone
 
+	String name,
+
+    ClubStatus status,
+
+    UUID adminUserId,
+
+    String city,
+
+    String logoUrl,
+
+    String contactEmail,
+    
+    String contactPhone
 ) {
 }

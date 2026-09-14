@@ -24,44 +24,31 @@ public final class DivisionDTOMapper {
 				division.getCreatedAt(),
 				division.getAgeCategory(),
 				division.getGender(),
-				division.getActive()
-		);
+				division.getActive());
 	}
 
-	/**
-	 * Static function to map a DivisionPlayer entity to a DTO
-	 */
-    public static DivisionPlayerResponseDTO toResponseDTO(DivisionPlayer player) {
-		if (player == null) {
+	public static DivisionPlayerResponseDTO toResponseDTO(DivisionPlayer player) {
+		if (player == null)
 			return null;
-		}
+		return new DivisionPlayerResponseDTO(
+				player.getId(),
+				player.getPerson().getId(),
+				player.getDivision().getId(),
+				player.getJerseyNumber(),
+				player.getPosition(),
+				player.getStartDate(),
+				player.getEndDate());
+	}
 
-        return new DivisionPlayerResponseDTO(
-                player.getId(),
-                player.getUser().getId(),
-                player.getDivision().getId(),
-                player.getJerseyNumber(),
-                player.getPosition(),
-                player.getStartDate(),
-                player.getEndDate()
-        );
-    }
-
-	/**
-	 * Static function to map a DivisionCoach entity to a DTO
-	 */
-    public static DivisionCoachResponseDTO toResponseDTO(DivisionCoach coach) {
-		if (coach == null) {
+	public static DivisionCoachResponseDTO toResponseDTO(DivisionCoach coach) {
+		if (coach == null)
 			return null;
-		}
-
-        return new DivisionCoachResponseDTO(
-                coach.getId(),
-                coach.getUser().getId(),
-                coach.getDivision().getId(),
-                coach.getStartDate(),
-                coach.getEndDate()
-        );
-    }
+		return new DivisionCoachResponseDTO(
+				coach.getId(),
+				coach.getPerson().getId(),
+				coach.getDivision().getId(),
+				coach.getStartDate(),
+				coach.getEndDate());
+	}
 
 }

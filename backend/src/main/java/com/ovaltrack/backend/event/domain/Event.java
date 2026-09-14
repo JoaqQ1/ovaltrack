@@ -1,7 +1,7 @@
 package com.ovaltrack.backend.event.domain;
 
 import com.ovaltrack.backend.match.domain.Match;
-import com.ovaltrack.backend.user.domain.User;
+import com.ovaltrack.backend.person.domain.Person;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -37,7 +37,7 @@ public class Event {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "player_id")
-    private User player;
+    private Person player;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "team_possession")

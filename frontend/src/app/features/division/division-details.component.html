@@ -1,0 +1,125 @@
+<app-navbar-auth></app-navbar-auth>
+<div class="topbar"></div>
+
+<div class="app">
+  <!-- HUD / Header -->
+  <header class="hud">
+    <div class="hud-brand">
+      <div class="crest" aria-hidden="true">{{ getClubCrest() }}</div>
+      <div class="brand-text">
+        <div class="club">{{ myClub?.name || 'Mi Club' }}</div>
+        <div class="title">Nueva División</div>
+      </div>
+    </div>
+
+    <div class="hud-actions">
+      <a routerLink="/divisions" class="btn btn-outline">
+        ← Volver a divisiones
+      </a>
+    </div>
+  </header>
+
+  <!-- Región de Banners -->
+  <div class="banner-region" aria-live="polite">
+    <div class="banner banner-success" role="alert" *ngIf="mensajeExito">
+      <div style="flex: 1">
+        <strong>¡Excelente!</strong>
+        <p>{{ mensajeExito }}</p>
+      </div>
+      <button class="close" (click)="closeSuccess()" aria-label="Cerrar aviso">✕</button>
+    </div>
+
+    <div class="banner banner-error" role="alert" *ngIf="mensajeError">
+      <div style="flex: 1">
+        <strong>Error</strong>
+        <p>{{ mensajeError }}</p>
+      </div>
+      <button class="close" (click)="closeError()" aria-label="Cerrar aviso">✕</button>
+    </div>
+  </div>
+
+  <!-- Formulario en Card Central -->
+  <div class="form-card-wrapper">
+    <div class="form-card">
+      <div class="card-header">
+        <h3 class="card-title">Configuración del Plantel</h3>
+        <p class="card-subtitle">
+          Completa los datos para dar de alta la división en {{ myClub?.name || 'tu club' }}.
+        </p>
+      </div>
+
+      <form [formGroup]="divisionDetails" (ngSubmit)="guardarDivision()">
+        <!-- Campo: Nombre -->
+        <div class="form-group">
+          <label for="name" class="form-label">Nombre de la División</label>
+          <input
+            type="text"
+            id="name"
+            formControlName="name"
+            class="form-control"
+            placeholder="Ej: M19 A, Primera, Intermedia"
+            [class.is-invalid]="divisionDetails.get('name')?.touched && divisionDetails.get('name')?.invalid"
+          />
+          <div class="field-error" *ngIf="divisionDetails.get('name')?.touched && divisionDetails.get('name')?.invalid">
+            El nombre es obligatorio (mínimo 2 caracteres).
+          </div>
+        </div>
+
+        <!-- Campo: Categoría por Edad -->
+        <div class="form-group">
+          <label for="ageCategory" class="form-label">Categoría por Edad</label>
+          <select
+            id="ageCategory"
+            formControlName="ageCategory"
+            class="form-control form-select"
+            [class.is-invalid]="divisionDetails.get('ageCategory')?.touched && divisionDetails.get('ageCategory')?.invalid"
+          >
+            <option value="" disabled selected>Selecciona una categoría</option>
+            <option value="U14">M14 (Menores de 14)</option>
+            <option value="U15">M15 (Menores de 15)</option>
+            <option value="U16">M16 (Menores de 16)</option>
+            <option value="U18">M18 (Menores de 18)</option>
+            <option value="U20">M20 / M19 (Juveniles)</option>
+            <option value="SENIOR">Primera / Superior (Plantel Superior)</option>
+            <option value="VETERAN">Veteranos / Classic</option>
+          </select>
+          <div class="field-error" *ngIf="divisionDetails.get('ageCategory')?.touched && divisionDetails.get('ageCategory')?.invalid">
+            Debes seleccionar una categoría por edad.
+          </div>
+        </div>
+
+        <!-- Campo: Género -->
+        <div class="form-group">
+          <label for="gender" class="form-label">Rama / Género</label>
+          <select
+            id="gender"
+            formControlName="gender"
+            class="form-control form-select"
+            [class.is-invalid]="divisionDetails.get('gender')?.touched && divisionDetails.get('gender')?.invalid"
+          >
+            <option value="" disabled selected>Selecciona una opción</option>
+            <option value="MALE">Masculino</option>
+            <option value="FEMALE">Femenino</option>
+          </select>
+          <div class="field-error" *ngIf="divisionDetails.get('gender')?.touched && divisionDetails.get('gender')?.invalid">
+            Debes seleccionar el género de la división.
+          </div>
+        </div>
+
+        <!-- Acciones del Formulario -->
+        <div class="form-actions">
+          <a routerLink="/divisions" class="btn btn-ghost">
+            Cancelar
+          </a>
+          <button
+            type="submit"
+            [disabled]="divisionDetails.invalid || guardando"
+            class="btn btn-invite"
+          >
+            {{ guardando ? 'Guardando...' : 'Guardar División' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

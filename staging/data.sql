@@ -1,44 +1,74 @@
 -- OvalTrack Data Seeder
 -- =========================================
 
-TRUNCATE TABLE users, clubs, divisions, division_coaches, division_players, matches, event_types, events CASCADE;
--- USERS (Admin, Coaches, Players)
+TRUNCATE TABLE events, event_types, matches, division_players, division_coaches, divisions, clubs, users, persons RESTART IDENTITY CASCADE;
+
+-- =========================================
+-- PERSONS (30 personas en total)
 -- =========================================
 
-INSERT INTO users (id, email, password, first_name, last_name, birth_date, role, active, created_at) VALUES
-    ('11111111-1111-1111-1111-000000000001', 'admin@ovaltrack.com', '123456', 'Juan', 'Admin', '1980-01-01', 'ADMIN_CLUB', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000002', 'coach1@ovaltrack.com', '123456', 'Carlos', 'Coach', '1975-05-10', 'COACH_ANALYST', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000003', 'coach2@ovaltrack.com', '123456', 'Mario', 'Analyst', '1982-11-20', 'COACH_ANALYST', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000101', 'player1@ovaltrack.com', '123456', 'Player', '1', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000102', 'player2@ovaltrack.com', '123456', 'Player', '2', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000103', 'player3@ovaltrack.com', '123456', 'Player', '3', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000104', 'player4@ovaltrack.com', '123456', 'Player', '4', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000105', 'player5@ovaltrack.com', '123456', 'Player', '5', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000106', 'player6@ovaltrack.com', '123456', 'Player', '6', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000107', 'player7@ovaltrack.com', '123456', 'Player', '7', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000108', 'player8@ovaltrack.com', '123456', 'Player', '8', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000109', 'player9@ovaltrack.com', '123456', 'Player', '9', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000110', 'player10@ovaltrack.com', '123456', 'Player', '10', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000111', 'player11@ovaltrack.com', '123456', 'Player', '11', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000112', 'player12@ovaltrack.com', '123456', 'Player', '12', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000113', 'player13@ovaltrack.com', '123456', 'Player', '13', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000114', 'player14@ovaltrack.com', '123456', 'Player', '14', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000115', 'player15@ovaltrack.com', '123456', 'Player', '15', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000116', 'player16@ovaltrack.com', '123456', 'Player', '16', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000117', 'player17@ovaltrack.com', '123456', 'Player', '17', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000118', 'player18@ovaltrack.com', '123456', 'Player', '18', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000119', 'player19@ovaltrack.com', '123456', 'Player', '19', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000120', 'player20@ovaltrack.com', '123456', 'Player', '20', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000121', 'player21@ovaltrack.com', '123456', 'Player', '21', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000122', 'player22@ovaltrack.com', '123456', 'Player', '22', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000123', 'player23@ovaltrack.com', '123456', 'Player', '23', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000124', 'player24@ovaltrack.com', '123456', 'Player', '24', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000125', 'player25@ovaltrack.com', '123456', 'Player', '25', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000126', 'player26@ovaltrack.com', '123456', 'Player', '26', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000127', 'player27@ovaltrack.com', '123456', 'Player', '27', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000128', 'player28@ovaltrack.com', '123456', 'Player', '28', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000129', 'player29@ovaltrack.com', '123456', 'Player', '29', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000130', 'player30@ovaltrack.com', '123456', 'Player', '30', '2000-01-01', 'PLAYER', true, CURRENT_TIMESTAMP);
+INSERT INTO persons (id, first_name, last_name, birth_date, contact_email, contact_phone, created_at) VALUES
+    -- 1: Administrador del Club
+    ('11111111-1111-1111-1111-000000000001', 'Carlos', 'Administrador', '1980-01-01', 'admin@club.com', '123456789', CURRENT_TIMESTAMP),
+    -- 2: Entrenador Gonzalo
+    ('11111111-1111-1111-1111-000000000002', 'Gonzalo', 'Entrenador', '1985-05-10', 'gonzalo@mail.com', '123456789', CURRENT_TIMESTAMP),
+    -- 3: Segundo Entrenador / Analista
+    ('11111111-1111-1111-1111-000000000003', 'Mario', 'Analista', '1982-11-20', 'coach2@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    -- 4 a 15: 12 Jugadores que SI tienen cuenta de usuario
+    ('11111111-1111-1111-1111-000000000101', 'Agustin', 'Creevy', '1995-03-15', 'player1@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000102', 'Julian', 'Montoya', '1996-04-20', 'player2@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000103', 'Tomas', 'Lavanini', '1997-01-11', 'player3@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000104', 'Guido', 'Petti', '1998-07-08', 'player4@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000105', 'Pablo', 'Matera', '1999-02-14', 'player5@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000106', 'Marcos', 'Kremer', '2000-06-25', 'player6@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000107', 'Facundo', 'Isa', '1996-09-21', 'player7@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000108', 'Gonzalo', 'Bertranou', '1997-12-31', 'player8@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000109', 'Nicolas', 'Sanchez', '1995-10-26', 'player9@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000110', 'Santiago', 'Carreras', '1998-05-01', 'player10@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000111', 'Emiliano', 'Boffelli', '1999-01-16', 'player11@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000112', 'Mateo', 'Carreras', '2000-12-17', 'player12@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
+    -- 16 a 30: 15 Personas/Jugadores que NO tienen cuenta de usuario
+    ('11111111-1111-1111-1111-000000000113', 'Juan', 'Perez', '2001-03-01', 'juan.perez@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000114', 'Lucas', 'Gomez', '2001-04-12', 'lucas.gomez@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000115', 'Martin', 'Rodriguez', '2002-05-18', 'martin.rodriguez@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000116', 'Joaquin', 'Lopez', '2002-08-22', 'joaquin.lopez@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000117', 'Franco', 'Diaz', '2003-01-30', 'franco.diaz@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000118', 'Bautista', 'Alvarez', '2003-06-14', 'bautista.alvarez@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000119', 'Tomas', 'Romero', '2003-09-09', 'tomas.romero@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000120', 'Ignacio', 'Sosa', '2004-02-11', 'ignacio.sosa@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000121', 'Santiago', 'Torres', '2004-07-19', 'santiago.torres@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000122', 'Manuel', 'Ruiz', '2004-11-05', 'manuel.ruiz@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000123', 'Felipe', 'Benitez', '2005-01-25', 'felipe.benitez@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000124', 'Ramiro', 'Castro', '2005-04-16', 'ramiro.castro@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000125', 'Esteban', 'Morales', '2005-08-03', 'esteban.morales@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000126', 'Lautaro', 'Gutierrez', '2005-10-10', 'lautaro.gutierrez@madryn.com', '123456789', CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000127', 'Valentin', 'Ortiz', '2005-12-28', 'valentin.ortiz@madryn.com', '123456789', CURRENT_TIMESTAMP);
+
+
+-- =========================================
+-- USERS (15 cuentas de usuario en total)
+-- =========================================
+
+INSERT INTO users (id, login_email, password_hash, role, person_id, active, created_at) VALUES
+    -- 1: Admin de Club (password: 'administrador')
+    ('11111111-1111-1111-1111-000000000001', 'admin@club.com', '$2a$10$muT5CkR/ijOSgfmjvAWwNuYxVc6bZUKpt2inx5AXux7ukib9X3h6K', 'ADMIN_CLUB', '11111111-1111-1111-1111-000000000001', true, CURRENT_TIMESTAMP),
+    -- 2: Entrenador Gonzalo (password: '12345678')
+    ('11111111-1111-1111-1111-000000000002', 'gonzalo@mail.com', '$2a$10$EJRf2jQGFPYWYSL03J6rCe4v9v3dMxeyt/efj17fIzSgCO9Um1ImW', 'COACH_ANALYST', '11111111-1111-1111-1111-000000000002', true, CURRENT_TIMESTAMP),
+    -- 3: Segundo Entrenador / Analista (password: '123456')
+    ('11111111-1111-1111-1111-000000000003', 'coach2@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'COACH_ANALYST', '11111111-1111-1111-1111-000000000003', true, CURRENT_TIMESTAMP),
+    -- 4 a 15: 12 Jugadores con cuenta (password: '123456')
+    ('11111111-1111-1111-1111-000000000101', 'player1@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000101', true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000102', 'player2@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000102', true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000103', 'player3@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000103', true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000104', 'player4@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000104', true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000105', 'player5@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000105', true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000106', 'player6@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000106', true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000107', 'player7@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000107', true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000108', 'player8@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000108', true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000109', 'player9@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000109', true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000110', 'player10@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000110', true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000111', 'player11@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000111', true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000112', 'player12@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000112', true, CURRENT_TIMESTAMP);
 
 
 -- =========================================
@@ -46,7 +76,7 @@ INSERT INTO users (id, email, password, first_name, last_name, birth_date, role,
 -- =========================================
 
 INSERT INTO clubs (id, name, created_at, status, admin_user_id, city, logo_url, contact_email, contact_phone) VALUES
-    ('11111111-1111-1111-1111-000000000010', 'San Isidro Club', CURRENT_TIMESTAMP, 'ACTIVE', '11111111-1111-1111-1111-000000000001', 'San Isidro', 'http://logo.com/sic.png', 'contacto@sic.com', '123456789');
+    ('11111111-1111-1111-1111-000000000010', 'Puerto Madryn Rugby Club', CURRENT_TIMESTAMP, 'ACTIVE', '11111111-1111-1111-1111-000000000001', 'Puerto Madryn', 'http://logo.com/pmrc.png', 'contacto@pmrc.com', '123456789');
 
 
 -- =========================================
@@ -59,19 +89,20 @@ INSERT INTO divisions (id, name, club_id, created_at, age_category, gender, acti
 
 
 -- =========================================
--- DIVISION_COACH (Entrenadores por División)
+-- DIVISION_COACHES (Entrenadores por División)
 -- =========================================
 
-INSERT INTO division_coaches (id, user_id, division_id, start_date, end_date) VALUES
+INSERT INTO division_coaches (id, person_id, division_id, start_date, end_date) VALUES
     ('11111111-1111-1111-1111-000000000030', '11111111-1111-1111-1111-000000000002', '11111111-1111-1111-1111-000000000020', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000031', '11111111-1111-1111-1111-000000000003', '11111111-1111-1111-1111-000000000021', '2023-01-01', NULL);
 
 
 -- =========================================
--- DIVISION_PLAYER (Jugadores por División)
+-- DIVISION_PLAYERS (Jugadores por División)
 -- =========================================
 
-INSERT INTO division_players (id, user_id, division_id, jersey_number, position, start_date, end_date) VALUES
+INSERT INTO division_players (id, person_id, division_id, jersey_number, position, start_date, end_date) VALUES
+    -- Jugadores en Primera (15 jugadores)
     ('11111111-1111-1111-1111-000000000200', '11111111-1111-1111-1111-000000000101', '11111111-1111-1111-1111-000000000020', 1, 'Forward', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000201', '11111111-1111-1111-1111-000000000102', '11111111-1111-1111-1111-000000000020', 2, 'Forward', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000202', '11111111-1111-1111-1111-000000000103', '11111111-1111-1111-1111-000000000020', 3, 'Forward', '2023-01-01', NULL),
@@ -87,6 +118,7 @@ INSERT INTO division_players (id, user_id, division_id, jersey_number, position,
     ('11111111-1111-1111-1111-000000000212', '11111111-1111-1111-1111-000000000113', '11111111-1111-1111-1111-000000000020', 13, 'Back', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000213', '11111111-1111-1111-1111-000000000114', '11111111-1111-1111-1111-000000000020', 14, 'Back', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000214', '11111111-1111-1111-1111-000000000115', '11111111-1111-1111-1111-000000000020', 15, 'Back', '2023-01-01', NULL),
+    -- Jugadores en M19 (12 jugadores)
     ('11111111-1111-1111-1111-000000000215', '11111111-1111-1111-1111-000000000116', '11111111-1111-1111-1111-000000000021', 1, 'Forward', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000216', '11111111-1111-1111-1111-000000000117', '11111111-1111-1111-1111-000000000021', 2, 'Forward', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000217', '11111111-1111-1111-1111-000000000118', '11111111-1111-1111-1111-000000000021', 3, 'Forward', '2023-01-01', NULL),
@@ -98,10 +130,7 @@ INSERT INTO division_players (id, user_id, division_id, jersey_number, position,
     ('11111111-1111-1111-1111-000000000223', '11111111-1111-1111-1111-000000000124', '11111111-1111-1111-1111-000000000021', 9, 'Back', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000224', '11111111-1111-1111-1111-000000000125', '11111111-1111-1111-1111-000000000021', 10, 'Back', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000225', '11111111-1111-1111-1111-000000000126', '11111111-1111-1111-1111-000000000021', 11, 'Back', '2023-01-01', NULL),
-    ('11111111-1111-1111-1111-000000000226', '11111111-1111-1111-1111-000000000127', '11111111-1111-1111-1111-000000000021', 12, 'Back', '2023-01-01', NULL),
-    ('11111111-1111-1111-1111-000000000227', '11111111-1111-1111-1111-000000000128', '11111111-1111-1111-1111-000000000021', 13, 'Back', '2023-01-01', NULL),
-    ('11111111-1111-1111-1111-000000000228', '11111111-1111-1111-1111-000000000129', '11111111-1111-1111-1111-000000000021', 14, 'Back', '2023-01-01', NULL),
-    ('11111111-1111-1111-1111-000000000229', '11111111-1111-1111-1111-000000000130', '11111111-1111-1111-1111-000000000021', 15, 'Back', '2023-01-01', NULL);
+    ('11111111-1111-1111-1111-000000000226', '11111111-1111-1111-1111-000000000127', '11111111-1111-1111-1111-000000000021', 12, 'Back', '2023-01-01', NULL);
 
 
 -- =========================================
@@ -109,11 +138,11 @@ INSERT INTO division_players (id, user_id, division_id, jersey_number, position,
 -- =========================================
 
 INSERT INTO matches (id, date, division_id, opponent, status) VALUES
-    ('11111111-1111-1111-1111-000000000040', '2024-10-10 15:30:00', '11111111-1111-1111-1111-000000000020', 'Alumni', 'FINISHED');
+    ('11111111-1111-1111-1111-000000000040', '2024-10-10 15:30:00', '11111111-1111-1111-1111-000000000020', 'Trelew Rugby Club', 'FINISHED');
 
 
 -- =========================================
--- EVENT_TYPE (Tipos de Eventos / Catálogo)
+-- EVENT_TYPES (Tipos de Eventos / Catálogo)
 -- =========================================
 
 INSERT INTO event_types (id, name, group_name, category, affects_possession, is_scoring, points, requires_player, created_at, active) VALUES

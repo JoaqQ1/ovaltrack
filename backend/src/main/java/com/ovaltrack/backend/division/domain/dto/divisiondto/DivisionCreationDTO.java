@@ -9,16 +9,15 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record DivisionCreationDTO(
-	@NotNull 
     UUID clubId,
 
-    @NotBlank 
+    @NotBlank(message = "El nombre de la division es obligatorio")
     String name,
-	
-    @NotNull
+
+    @NotNull(message = "La categoria del club es obligatoria")
     AgeCategory ageCategory,
-	
-    @NotNull
+
+    @NotNull(message = "El genero de la division es obligatorio")
     Gender gender
 ) {
 }

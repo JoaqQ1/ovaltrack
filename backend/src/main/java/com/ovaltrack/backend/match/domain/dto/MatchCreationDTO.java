@@ -9,13 +9,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record MatchCreationDTO(
-    @NotNull 
+    @NotNull(message = "La fecha del partido es obligatoria")
     LocalDateTime date,
 
-    @NotNull
+    @NotNull(message = "El ID de la division asociada al partido es obligatorio")
     UUID divisionId,
 
-    @NotBlank
+    @NotBlank(message = "El nombre del equipo rival es obligatorio")
     String opponent
 
     //@NotNull

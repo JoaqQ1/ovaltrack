@@ -1,18 +1,420 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
 @import './styles/ovaltrack-tokens.css';
 @import './styles/live-capture.css';
 
+/* ==========================================================================
+   Design Tokens (Claro / Base Reutilizable)
+   ========================================================================== */
+:root {
+  --bg: #f6f7f1;
+  --surface: #ffffff;
+  --surface-alt: #eef1e7;
+  --surface-hover: #f1f3ea;
+  --border: rgba(27, 33, 22, 0.10);
+  --border-strong: rgba(27, 33, 22, 0.22);
+
+  --text-primary: #1b2116;
+  --text-secondary: #4b5540;
+  --text-muted: #7c8571;
+
+  /* Verde "pasto" — reservado a acciones primarias / confirmar / estado activo */
+  --grass: #91da40;
+  --grass-hover: #7fc932;
+  --on-grass: #1d3700;
+  --grass-deep: #3a6410;          /* contraste AA sobre fondos claros */
+  --grass-tint: rgba(145, 218, 64, 0.18);
+  --grass-tint-strong: rgba(145, 218, 64, 0.30);
+  --grass-border: rgba(90, 150, 30, 0.45);
+
+  /* Azul — rol Admin, foco, enlaces */
+  --navy: #16324f;
+  --navy-tint: rgba(22, 50, 79, 0.08);
+  --navy-border: rgba(22, 50, 79, 0.30);
+  --blue-mid: #2b6ca3;             /* rol Coach */
+  --blue-mid-tint: rgba(43, 108, 163, 0.08);
+
+  /* Neutro — rol Jugador / sin rol */
+  --player: #6b6f5f;
+  --player-tint: rgba(20, 25, 15, 0.05);
+
+  /* Semántica */
+  --warning: #8a5700;
+  --warning-tint: rgba(253, 176, 34, 0.20);
+  --warning-border: rgba(154, 104, 0, 0.4);
+  --error: #b42318;
+  --error-tint: rgba(240, 68, 56, 0.14);
+  --error-border: rgba(180, 35, 24, 0.35);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  --font-head: 'Hanken Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --hit: 48px; /* Hit target táctil accesible */
+}
+
+/* ==========================================================================
+   Base y Reseteo
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+}
+
 html,
 body {
-	min-height: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
 }
 
 body {
-	margin: 0;
-	background-color: #f8f9fa;
-	font-family: var(--ot-font-body);
-	overflow: hidden;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-* {
-	box-sizing: border-box;
+button,
+input {
+  font-family: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Componentes Globales Reutilizables
+   ========================================================================== */
+
+/* Barra de acento superior */
+.topbar {
+  height: 4px;
+  background: linear-gradient(90deg, var(--grass), var(--blue-mid));
+}
+
+/* Botones */
+.btn {
+  height: var(--hit);
+  padding: 0 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-weight: 700;
+  font-size: 14.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all .15s ease;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-invite {
+  background: var(--grass);
+  color: var(--on-grass);
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 6px 16px rgba(90, 150, 30, 0.28);
+}
+
+.btn-invite:hover {
+  background: var(--grass-hover);
+}
+
+.btn-outline {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  height: 44px;
+}
+
+.btn-outline:hover {
+  background: var(--surface-hover);
+  border-color: var(--navy-border);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  height: 40px;
+  padding: 0 12px;
+}
+
+.btn-ghost:hover {
+  color: var(--text-primary);
+}
+
+/* Filtros unificados con chips y conteo */
+.filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 18px 0 16px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 6px;
+}
+
+.chip {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: all .15s ease;
+}
+
+.chip:hover {
+  color: var(--text-primary);
+}
+
+.chip.active {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(20, 25, 15, 0.06);
+}
+
+.chip .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.chip .count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.chip.active .count {
+  color: var(--text-secondary);
+}
+
+/* Banners de feedback */
+.banner-region {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.banner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid;
+  border-radius: var(--radius-md);
+  padding: 13px 15px;
+  font-size: 14px;
+}
+
+.banner strong {
+  font-weight: 700;
+}
+
+.banner p {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.banner-success {
+  border-left-color: var(--grass-deep);
+}
+
+.banner-success strong {
+  color: var(--grass-deep);
+}
+
+.banner-error {
+  border-left-color: var(--error);
+}
+
+.banner-error strong {
+  color: var(--error);
+}
+
+.banner-warning {
+  border-left-color: var(--warning);
+}
+
+.banner-warning strong {
+  color: var(--warning);
+}
+
+.banner-info {
+  border-left-color: var(--navy);
+}
+
+.banner-info strong {
+  color: var(--navy);
+}
+
+.banner .close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 2px;
+  height: auto;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.banner .close:hover {
+  color: var(--text-primary);
+}
+
+/* Badges de estado */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.status-badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-active {
+  background: var(--grass-tint);
+  color: var(--grass-deep);
+}
+
+.status-active .dot {
+  background: var(--grass-deep);
+}
+
+.status-inactive {
+  background: var(--player-tint);
+  color: var(--player);
+}
+
+.status-inactive .dot {
+  background: var(--player);
+}
+
+/* Skeletons de carga */
+.sk-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.sk {
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--surface-alt) 25%, var(--surface-hover) 50%, var(--surface-alt) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.sk-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sk-line {
+  height: 11px;
+  width: 60%;
+}
+
+.sk-line.s {
+  width: 38%;
+  margin-top: 6px;
+}
+
+.sk-block {
+  height: 40px;
+  flex: 1;
+  border-radius: var(--radius-md);
+}
+
+.sk-pill {
+  height: 22px;
+  width: 64px;
+  border-radius: var(--radius-pill);
+}
+
+/* Estados vacíos */
+.empty-state {
+  padding: 60px 24px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.empty-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.empty-title {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.empty-copy {
+  color: var(--text-secondary);
+  font-size: 14px;
+  max-width: 340px;
+  margin: 6px auto 18px;
 }

@@ -1,6 +1,5 @@
 package com.ovaltrack.backend.auth.controller;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -12,8 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ovaltrack.backend.auth.dto.AuthResponse;
 import com.ovaltrack.backend.auth.dto.LoginRequest;
+import com.ovaltrack.backend.auth.dto.PasswordResetRequest;
 import com.ovaltrack.backend.auth.dto.RegistroRequest;
-
 import com.ovaltrack.backend.auth.service.AuthService;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 
@@ -31,26 +30,32 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<Object> registrar(@Valid @RequestBody RegistroRequest request) {
-        AuthResponse response;
         try {
-            response = authService.register(request);
+            AuthResponse response = authService.register(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (BusinessException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage() != null ? new AuthResponse(e.getMessage()) : null);
+                    .body(Map.of("message", e.getMessage() != null ? e.getMessage() : "Error en el registro"));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Datos inválidos"));
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/login")
     public ResponseEntity<Object> login(@RequestBody LoginRequest request) {
-        AuthResponse response;
         try {
-            response = authService.login(request);
+            AuthResponse response = authService.login(request);
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Credencial invalida");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Credencial inválida"));
         }
-        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/password-reset/request")
+    public ResponseEntity<Object> passwordReset(@RequestBody PasswordResetRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(Map.of("message", "Solicitud enviada correctamente"));
     }
 }

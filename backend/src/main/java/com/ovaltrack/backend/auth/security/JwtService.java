@@ -38,11 +38,14 @@ public class JwtService {
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
+        if (user.getPerson() != null && user.getPerson().getId() != null) {
+            claims.put("personId", user.getPerson().getId());
+        }
         claims.put("role", user.getRole().name());
 
         return Jwts.builder()
                 .claims(claims)
-                .subject(user.getEmail())
+                .subject(user.getLoginEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey())
@@ -51,12 +54,16 @@ public class JwtService {
 
     public Claims extractClaims(String token) {
 
-
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    public UUID extractPersonId(String token) {
+        String personIdStr = extractClaims(token).get("personId", String.class);
+        return personIdStr != null ? UUID.fromString(personIdStr) : null;
     }
 
     public String extractEmail(String token) {
