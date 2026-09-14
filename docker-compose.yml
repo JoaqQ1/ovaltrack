@@ -87,7 +87,7 @@ services:
     networks:
       - ovaltrack-net
 
-  # Contenedor de pruebas BDD Cucumber (solo se ejecuta con ./ds.sh test)
+  # Contenedor de pruebas BDD Cucumber (solo se ejecuta con ./ds test)
   testing:
     build:
       context: ./testing

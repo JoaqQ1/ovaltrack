@@ -24,7 +24,11 @@ describe('CargaEnVivoComponent', () => {
           provide: LiveCaptureService,
           useValue: {
             getLiveCaptureBootstrap: () => of({
-              query: { clubId: 'club', divisionId: 'division', matchId: 'match' },
+              query: {
+                clubId: '550e8400-e29b-41d4-a716-446655440000',
+                divisionId: '550e8400-e29b-41d4-a716-446655440001',
+                matchId: '550e8400-e29b-41d4-a716-446655440002',
+              },
               state: {
                 homeTeam: 'PMRC',
                 awayTeam: 'DRC',
@@ -32,13 +36,16 @@ describe('CargaEnVivoComponent', () => {
                 gameClock: '00:00',
                 periodLabel: '1T',
                 clockPaused: false,
-                currentPossession: 'own',
+                currentPossession: 'OWN',
                 synchronized: false,
                 history: [],
               },
               recentEvents: [],
               eventTypes: [],
             }),
+            saveLiveCaptureState: () => of(undefined),
+            saveEvent: () => of(undefined),
+            deleteEvent: () => of(undefined),
           },
         },
       ],
@@ -49,38 +56,96 @@ describe('CargaEnVivoComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should remove a history item directly from the list', () => {
-    component.history = [
-      { id: 'evt-1', minute: '00:10', description: 'Try — PMRC' },
-      { id: 'evt-2', minute: '00:25', description: 'Turnover' },
-    ];
+  it('should remove a persisted event from the rendered history', () => {
+    const event = {
+      id: '550e8400-e29b-41d4-a716-446655440011',
+      eventTypeId: 'event-type-try',
+      matchId: '550e8400-e29b-41d4-a716-446655440002',
+      playerId: null,
+      teamPossession: 'OWN' as const,
+      matchTime: 10,
+      realTime: null,
+      period: 1,
+      origin: 'live-capture',
+      attributes: null,
+      createdAt: '2026-09-14T12:00:00Z',
+      synchronizedAt: null,
+      localSequence: 1,
+    };
+    component.categories = [{
+      name: 'Ataque',
+      events: [{
+        id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK',
+        affectsPossession: false, isScoring: true, points: 5, requiresPlayer: false,
+        active: true, templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
+      }],
+    }];
+    (component as any).events = [event];
 
-    component.removeHistoryEvent('evt-1');
+    component.removeHistoryEvent('550e8400-e29b-41d4-a716-446655440011');
 
-    expect(component.history.map(item => item.id)).toEqual(['evt-2']);
+    expect(component.history).toEqual([]);
   });
 
-  it('should undo a specific history item using its stored snapshot', () => {
-    component.scoreboard = { home: 5, away: 1 };
-    component.currentPossession = 'own';
-
-    const snapshot = {
-      scoreboard: { home: 3, away: 1 },
-      clockPaused: false,
-      currentPossession: 'opponent' as const,
-      synchronized: true,
-      periodLabel: '1T',
-      categories: [],
-      history: [],
+  it('should cancel pending player selection without deleting an event', () => {
+    const pendingEvent = {
+      id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK' as const,
+      affectsPossession: false, isScoring: true, points: 5, requiresPlayer: true,
+      active: true, templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
     };
+    component.pendingSelection = {
+      event: pendingEvent,
+      eventId: 'pending-event',
+      homeEnabled: true,
+      awayEnabled: false,
+    };
+    component.currentPossession = 'OWN';
 
-    (component as any).historySnapshots = new Map([['evt-1', snapshot]]);
-    component.history = [{ id: 'evt-1', minute: '00:10', description: 'Try — PMRC' }];
+    component.undoLastEvent();
 
-    component.undoHistoryEvent('evt-1');
+    expect(component.pendingSelection).toBe(null);
+    expect(component.currentPossession).toBe('OWN');
+  });
 
-    expect(component.scoreboard.home).toBe(3);
-    expect(component.currentPossession).toBe('opponent');
-    expect(component.history).toEqual([]);
+  it('should confirm the pending event without a player when its button is tapped again', () => {
+    const pendingEvent = {
+      id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK' as const,
+      affectsPossession: false, isScoring: true, points: 5, requiresPlayer: true,
+      active: true, templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
+    };
+    component.pendingSelection = {
+      event: pendingEvent,
+      eventId: 'pending-event',
+      homeEnabled: true,
+      awayEnabled: false,
+    };
+    component.onEventTap(pendingEvent);
+
+    expect(component.pendingSelection).toBe(null);
+    expect((component as any).events[0].id).toBe('pending-event');
+    expect((component as any).events[0].attributes).toBe(null);
+  });
+
+  it('should revert score without changing possession when deleting an older event', () => {
+    const eventType = (id: string, name: string, affectsPossession: boolean, isScoring: boolean, points: number) => ({
+      id, name, groupName: 'Test', category: 'ATTACK' as const, affectsPossession, isScoring,
+      points, requiresPlayer: false, active: true, templateEventFields: null,
+      createdAt: '2026-09-14T12:00:00Z',
+    });
+    component.categories = [{ name: 'Test', events: [
+      eventType('event-type-try', 'Try', true, true, 5),
+      eventType('event-type-turnover', 'Turnover', true, false, 0),
+    ] }];
+    (component as any).events = [
+      { id: 'event-1', eventTypeId: 'event-type-try', matchId: 'match', playerId: null, teamPossession: 'OWN', matchTime: 10, realTime: null, period: 1, origin: 'live-capture', attributes: null, createdAt: '2026-09-14T12:00:00Z', synchronizedAt: null, localSequence: 1 },
+      { id: 'event-2', eventTypeId: 'event-type-turnover', matchId: 'match', playerId: null, teamPossession: 'OPPONENT', matchTime: 20, realTime: null, period: 1, origin: 'live-capture', attributes: null, createdAt: '2026-09-14T12:00:01Z', synchronizedAt: null, localSequence: 2 },
+    ];
+    component.currentPossession = 'OWN';
+    (component as any).rebuildStateFromEvents();
+
+    component.undoHistoryEvent('event-1');
+
+    expect(component.scoreboard.home).toBe(0);
+    expect(component.currentPossession).toBe('OWN');
   });
 });

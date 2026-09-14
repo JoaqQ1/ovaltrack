@@ -59,7 +59,7 @@
             <button type="button" class="live-capture__number-circle"
                 [attr.aria-label]="'Seleccionar jugador ' + numero + ' del equipo propio'"
                 [disabled]="!pendingSelection?.homeEnabled"
-                (click)="onPlayerNumberTap(numero, 'own')">
+                (click)="onPlayerNumberTap(numero, 'OWN')">
                 {{ numero }}
             </button>
             }
@@ -97,7 +97,7 @@
             <button type="button" class="live-capture__number-circle"
                 [attr.aria-label]="'Seleccionar jugador ' + numero + ' del equipo rival'"
                 [disabled]="!pendingSelection?.awayEnabled"
-                (click)="onPlayerNumberTap(numero, 'opponent')">
+                (click)="onPlayerNumberTap(numero, 'OPPONENT')">
                 {{ numero }}
             </button>
             }
@@ -112,7 +112,7 @@
                     <span class="history__time">{{ item.minute }}</span>
                     <button type="button" class="history__button"
                         [attr.aria-label]="'Deshacer evento de ' + item.minute"
-                        (click)="undoHistoryEvent(item.id ?? item.minute)">
+                        (click)="undoHistoryEvent(item.id)">
                         <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -127,9 +127,9 @@
         <button
             type="button"
             class="possession-bar__btn"
-            [class.possession-bar__btn--own]="possession === 'own'"
-            [class.possession-bar__btn--neutral]="possession === 'neutral'"
-            [class.possession-bar__btn--opponent]="possession === 'opponent'"
+            [class.possession-bar__btn--own]="possession === 'OWN'"
+            [class.possession-bar__btn--neutral]="possession === 'NEUTRAL'"
+            [class.possession-bar__btn--opponent]="possession === 'OPPONENT'"
             [class.is-active]="currentPossession === possession"
             (click)="selectPossession(possession)">
             {{ possession }}

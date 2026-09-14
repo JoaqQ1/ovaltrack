@@ -1,15 +1,49 @@
-<main class="container py-5">
-  <section class="card border-0 shadow-sm">
-    <div class="card-body p-4 p-md-5 text-center">
-      <span class="badge text-bg-primary mb-3">Área protegida</span>
-      <h1 class="display-6">Bienvenido a OvalTrack</h1>
-      <p class="lead text-secondary mb-0">Has accedido correctamente a la página protegida por autenticación.</p>
-      <button type="button" class="btn btn-outline-success mt-4" (click)="goToCargaEnVivo()">
-        Carga en vivo
-      </button>
-      <button type="button" class="btn btn-outline-danger mt-4" (click)="logout()">
-        Cerrar sesión
-      </button>
+<main class="home-page">
+  <header class="home-header">
+    <div class="home-brand" aria-label="OvalTrack">
+      <span class="home-brand__mark" aria-hidden="true"></span>
+      <span class="home-brand__name">OVAL<span>TRACK</span></span>
     </div>
+
+    <button type="button" class="home-logout" (click)="logout()">
+      <i class="ti ti-logout-2" aria-hidden="true"></i>
+      Cerrar sesión
+    </button>
+  </header>
+
+  <section class="home-intro" aria-labelledby="home-title">
+    <div class="home-intro__eyebrow">
+      <span class="home-intro__dot" aria-hidden="true"></span>
+      Panel diario
+    </div>
+    <h1 id="home-title">Buen día, equipo.</h1>
+    <p>Todo listo para continuar el seguimiento de tus partidos.</p>
+    @if (currentUser(); as user) {
+    <span class="home-intro__user">{{ user.email }}</span>
+    }
   </section>
+
+  <section class="home-workspace" aria-label="Área de trabajo">
+    <div class="home-section-heading">
+      <span>Acceso rápido</span>
+      <span class="home-section-heading__line"></span>
+    </div>
+
+    <button type="button" class="home-action home-action--primary"
+      (click)="goToMatchSelection()">
+      <span class="home-action__icon" aria-hidden="true">
+        <i class="ti ti-layout-grid-add"></i>
+      </span>
+      <span class="home-action__body">
+        <span class="home-action__label">Partidos</span>
+        <span class="home-action__description">Crear, revisar y abrir la carga en vivo.</span>
+      </span>
+      <i class="ti ti-arrow-up-right home-action__arrow" aria-hidden="true"></i>
+    </button>
+  </section>
+
+  <footer class="home-footer">
+    <span>OVALTRACK / OPERACIONES</span>
+    <span class="home-footer__status"><span aria-hidden="true"></span> Sesión activa</span>
+  </footer>
 </main>

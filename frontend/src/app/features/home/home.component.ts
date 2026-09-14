@@ -12,8 +12,10 @@ export class HomeComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  goToCargaEnVivo(): void {
-    void this.router.navigate(['/carga-en-vivo']);
+  readonly currentUser = this.authService.currentUser;
+
+  goToMatchSelection(): void {
+    void this.router.navigate(['/match-selection']);
   }
 
   logout(): void {
