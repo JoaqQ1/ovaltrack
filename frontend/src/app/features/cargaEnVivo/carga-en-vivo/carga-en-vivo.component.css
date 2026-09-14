@@ -1,4 +1,4 @@
- :host {
+:host {
 	display: block;
 	height: 100%;
 }
@@ -53,5 +53,74 @@
 	.history {
 		grid-column: 1 / -1;
 		grid-row: 2;
+	}
+}
+
+/*
+ * Este breakpoint queda acá (y no en live-capture.css) a propósito.
+ * Angular scopea los selectores de este archivo agregándoles un atributo
+ * único, lo que les da más especificidad que los selectores "planos" del
+ * CSS global. Si el mismo breakpoint se define en ambos archivos, el de
+ * acá siempre gana — así que definir el override final de mobile en
+ * live-capture.css no tenía efecto real por debajo de 991px.
+ */
+@media (max-width: 768px) {
+	.live-capture__body {
+		/*
+		 * En celulares reales las columnas de números pasan a ser tiras
+		 * horizontales scrolleables en vez de columnas verticales
+		 * apretadas, así los círculos pueden tener un tamaño tocable
+		 * decente sin robarle ancho al catálogo de eventos.
+		 */
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto minmax(0, 1fr) auto auto;
+	}
+
+	.live-capture__number-column {
+		/* De columna vertical a fila horizontal scrolleable */
+		flex-direction: row;
+		justify-content: flex-start;
+		overflow-x: auto;
+		overflow-y: hidden;
+		padding: calc(var(--ot-margin-screen) * 0.35) var(--ot-margin-screen);
+		gap: calc(8px * var(--ot-live-scale));
+		/* Evita que el scroll horizontal rebote feo al llegar al final en iOS */
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.live-capture__number-column--own {
+		grid-row: 1;
+	}
+
+	.live-capture__number-column--opponent {
+		grid-row: 3;
+	}
+
+	.event-catalog {
+		grid-row: 2;
+		/* El contenido puede ser más alto que la pantalla en un celular; que scrollee en vez de recortarse */
+		overflow-y: auto;
+	}
+
+	.history {
+		grid-row: 4;
+		grid-column: 1;
+		max-height: 30vh;
+	}
+
+	.live-capture__number-circle {
+		/*
+		 * En fila horizontal hay lugar para respetar el tamaño táctil
+		 * mínimo que ya definís para el resto de los botones, en vez del
+		 * tamaño reducido pensado para la columna vertical angosta.
+		 */
+		width: var(--ot-touch-target-min);
+		height: var(--ot-touch-target-min);
+		font-size: var(--ot-size-body-md);
+	}
+
+	.event-catalog__grid {
+		/* Chips un poco más angostos para que entren más por fila en pantallas chicas */
+		grid-template-columns: repeat(auto-fit, minmax(calc(96px * var(--ot-live-scale)), 1fr));
 	}
 }

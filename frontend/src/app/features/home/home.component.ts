@@ -13,6 +13,9 @@ import { NavigationCard } from './types/home.types';
 })
 export class HomeComponent {
 
+
+  goToMatchSelection(): void {
+    void this.router.navigate(['/match-selection']);
   currentUser: CurrentUserSession | null = null;
   constructor(
     private authService: AuthService,

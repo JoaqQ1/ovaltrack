@@ -100,7 +100,7 @@ case "$cmd" in
     ;;
   staging)
     if [ -z "${1:-}" ]; then
-      echo "Error: Debes especificar el archivo SQL a cargar (ej: ./ds.sh staging data.sql)"
+      echo "Error: Debes especificar el archivo SQL a cargar (ej: ./ds staging data.sql)"
       exit 1
     fi
     SQL_FILE="staging/$1"
@@ -127,7 +127,7 @@ case "$cmd" in
     echo "Verificando estado del contenedor frontend..."
     if ! docker ps --format '{{.Names}}' | grep -q "^ovaltrack-frontend$"; then
       echo "Error: El contenedor 'ovaltrack-frontend' no está corriendo."
-      echo "Ejecutá primero: ./ds.sh up"
+      echo "Ejecutá primero: ./ds up"
       exit 1
     fi
     echo "Limpiando ./frontend/node_modules local..."
