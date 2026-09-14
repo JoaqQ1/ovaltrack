@@ -97,4 +97,9 @@ public class MatchService {
 		}
 		matchRepository.deleteById(matchId);
 	}
+
+    public Match findMatchByIdAndDivisionId(UUID matchId, UUID divisionId) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'findMatchByIdAndDivisionId'");
+    }
 }

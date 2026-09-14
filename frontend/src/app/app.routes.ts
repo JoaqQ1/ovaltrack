@@ -26,7 +26,7 @@ export const routes: Routes = [
             import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
     },
     {
-        path: 'carga-en-vivo',
+        path: 'carga-en-vivo/:matchId',
         canActivate:[hasRoleGuard],
         
         data: {
@@ -35,6 +35,13 @@ export const routes: Routes = [
         loadComponent: () =>
             import('./features/cargaEnVivo/carga-en-vivo/carga-en-vivo.component').then(
                 m => m.CargaEnVivoComponent
+            )
+    },
+    {
+        path: 'match-selection',
+        loadComponent: () =>
+            import('./features/match-selection/match-selection.component').then(
+                m => m.MatchSelectComponent
             )
     },
     {

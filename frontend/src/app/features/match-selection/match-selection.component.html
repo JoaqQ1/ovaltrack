@@ -1,0 +1,99 @@
+<section class="match-select">
+    <header class="match-select__header">
+        <h1 class="match-select__title">Partidos</h1>
+        <button type="button" class="btn btn--primary"
+            (click)="openCreateModal()">
+            <i class="ti ti-plus" aria-hidden="true"></i>
+            Crear partido
+        </button>
+    </header>
+
+    <div class="match-select__filters" role="tablist"
+        aria-label="Filtrar partidos por estado">
+        @for (filter of filters; track filter) {
+        <button
+            type="button"
+            class="filter-chip"
+            role="tab"
+            [attr.aria-selected]="activeFilter === filter"
+            [class.is-active]="activeFilter === filter"
+            (click)="setFilter(filter)">
+            {{ statusLabels[filter] }}
+        </button>
+        }
+    </div>
+
+    <div class="match-select__grid">
+        @for (match of visibleMatches; track match.id) {
+        <div class="match-card-shell">
+            <button type="button" class="match-card"
+                (click)="openMatch(match); selectMatch.emit(match)">
+                <span class="match-card__status"
+                    [class]="'match-card__status--' + match.status">
+                    @if (match.status === 'in_progress') {
+                    <span class="match-card__pulse" aria-hidden="true"></span>
+                    }
+                    {{ statusLabel(match.status) }}
+                </span>
+
+                <span class="match-card__opponent">{{ match.opponent }}</span>
+
+                <div class="match-card__meta">
+                    <span class="match-card__date">{{ formatMatchDate(match.date)
+                        }}</span>
+
+                    @if (match.score) {
+                    <span class="match-card__score">{{ match.score.home }}–{{
+                        match.score.away }}</span>
+                    }
+                </div>
+            </button>
+            <button type="button" class="match-card__delete"
+                [attr.aria-label]="'Eliminar partido contra ' + match.opponent"
+                (click)="confirmDeleteMatch(match)">
+                <i class="ti ti-trash" aria-hidden="true"></i>
+            </button>
+        </div>
+        } @empty {
+        <p class="match-select__empty">No hay partidos {{ activeFilter !== 'all'
+            ? ('en estado "' + statusLabels[activeFilter] + '"') : '' }}
+            todavía.</p>
+        }
+    </div>
+
+    @if (isCreateOpen) {
+    <div class="match-modal__backdrop" (click)="closeCreateModal()">
+        <div class="match-modal" role="dialog" aria-modal="true"
+            aria-labelledby="match-modal-title"
+            (click)="$event.stopPropagation()">
+            <h2 class="match-modal__title" id="match-modal-title">Crear
+                partido</h2>
+
+            <label class="match-modal__field">
+                <span class="match-modal__label">Fecha</span>
+                <input type="date" class="match-modal__input"
+                    [(ngModel)]="draft.date" name="matchDate" />
+            </label>
+
+            <label class="match-modal__field">
+                <span class="match-modal__label">Oponente</span>
+                <input
+                    type="text"
+                    class="match-modal__input"
+                    placeholder="Nombre del rival"
+                    [(ngModel)]="draft.opponent"
+                    name="matchOpponent" />
+            </label>
+
+            <div class="match-modal__actions">
+                <button type="button" class="btn btn--outline"
+                    (click)="closeCreateModal()">Cancelar</button>
+                <button type="button" class="btn btn--primary"
+                    [disabled]="!canCreateMatch" (click)="confirmCreateMatch()">
+                    Crear partido
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+</section>

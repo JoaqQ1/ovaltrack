@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap, of, catchError } from 'rxjs';
+import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
 import { DivisionService } from 'src/app/services/division.service';
 import { ClubService } from 'src/app/services/club.service';
 import { Division, ClubSummary } from './types/division.types';
@@ -10,7 +11,7 @@ import { Division, ClubSummary } from './types/division.types';
 @Component({
   selector: 'app-division-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, NavbarAuthComponent],
   templateUrl: './division-list.component.html',
   styleUrl: './division-list.component.css'
 })
@@ -26,6 +27,38 @@ export class DivisionListComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarClubYDivisiones();
+  }
+
+  getClubCrest(): string {
+    const name = this.myClub?.name?.trim();
+    return name ? name.charAt(0).toUpperCase() : 'O';
+  }
+
+  formatCategory(category?: string): string {
+    if (!category) return 'Sin categoría';
+    const mapping: Record<string, string> = {
+      U14: 'M14',
+      U15: 'M15',
+      U16: 'M16',
+      U18: 'M18',
+      U20: 'M20',
+      SENIOR: 'Primera',
+      VETERAN: 'Veteranos'
+    };
+    return mapping[category] || category;
+  }
+
+  formatGender(gender?: string): string {
+    if (!gender) return 'General';
+    const mapping: Record<string, string> = {
+      MALE: 'Masculino',
+      FEMALE: 'Femenino'
+    };
+    return mapping[gender] || gender;
+  }
+
+  closeError(): void {
+    this.error = '';
   }
 
   cargarClubYDivisiones(): void {
