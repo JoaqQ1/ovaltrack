@@ -31,3 +31,14 @@ export interface CurrentUserSession {
   email: string;
   role: UserRole;
 }
+
+export interface UserContext {
+  userId: string;
+  email: string;
+  role: UserRole;
+  personId?: string;
+  firstName?: string;
+  lastName?: string;
+  club: import('../../division/types/division.types').ClubSummary | null;
+  activeDivisions: import('../../division/types/division.types').Division[];
+}

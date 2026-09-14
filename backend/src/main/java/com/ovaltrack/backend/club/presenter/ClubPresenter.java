@@ -53,6 +53,19 @@ public class ClubPresenter {
     }
 
     @Operation(
+        summary = "Get current authenticated club's members",
+        description = "Returns the users associated with the authenticated user's club."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Members returned successfully."),
+        @ApiResponse(responseCode = "404", description = "No club is associated with the authenticated user.")
+    })
+    @GetMapping("/my-club/members")
+    public ResponseEntity<Object> getMyClubMembers(org.springframework.security.core.Authentication authentication) {
+        return ResponseEntity.ok(clubService.findMembersForAuthenticatedClub(authentication));
+    }
+
+    @Operation(
         summary = "List all clubs in the system",
         description = "Returns every club registered in the system."
     )

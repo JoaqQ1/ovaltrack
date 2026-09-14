@@ -131,6 +131,9 @@ export interface BackendUserResponse {
   role: UserRole;
   active: boolean;
   createdAt?: string;
+  personId?: string;
+  firstName?: string;
+  lastName?: string;
   person?: {
     id?: string;
     firstName?: string;

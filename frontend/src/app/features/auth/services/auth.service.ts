@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthResponse, CurrentUserSession, LoginRequest, RegistroRequest, TokenPayload } from '../types/auth.types';
 import { environment } from '@environments/environment.docker';
 import { TokenService } from '../../../core/services/token.service';
+import { UserContextService } from '../../../core/services/user-context.service';
 import { Observable, tap } from 'rxjs';
 @Injectable({
   providedIn: 'root'
@@ -12,12 +13,17 @@ export class AuthService {
 
   private readonly apiUrl = `${environment.apiUrl}/api/auth`;
   private readonly tokenService = inject(TokenService);
+  private readonly userContextService = inject(UserContextService);
   private readonly router = inject(Router);
   private currentUserSignal = signal<CurrentUserSession | null>(this.loadUserFromToken());
   readonly currentUser = this.currentUserSignal.asReadonly();
   // readonly currentUserRole = this.currentUserSignal;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+    if (this.tokenService.isAuthenticated()) {
+      this.userContextService.loadUserContext().subscribe();
+    }
+  }
 
   register(data: RegistroRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data).pipe(
@@ -57,6 +63,7 @@ export class AuthService {
   }
   logout(): void {
     this.tokenService.removeToken();
+    this.userContextService.clear();
     this.currentUserSignal.set(null);
     this.router.navigate(['/auth/login']);
   }
@@ -64,6 +71,7 @@ export class AuthService {
   private handleAuthSuccess(token: string): void {
     this.tokenService.setToken(token);
     this.currentUserSignal.set(this.loadUserFromToken());
+    this.userContextService.loadUserContext().subscribe();
   }
 
   private loadUserFromToken(): CurrentUserSession | null {

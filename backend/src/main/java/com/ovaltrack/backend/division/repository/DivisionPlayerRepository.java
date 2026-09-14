@@ -19,4 +19,7 @@ public interface DivisionPlayerRepository extends JpaRepository<DivisionPlayer, 
 			+ "AND dp.endDate IS NULL")
 	boolean existsActiveAssociation(@Param("divisionId") UUID divisionId,
 			@Param("personId") UUID personId);
+
+	@Query("SELECT dp FROM DivisionPlayer dp JOIN FETCH dp.division d WHERE dp.person.id = :personId AND dp.endDate IS NULL")
+	Collection<DivisionPlayer> findActiveByPersonId(@Param("personId") UUID personId);
 }

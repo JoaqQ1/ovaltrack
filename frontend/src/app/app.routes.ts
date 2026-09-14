@@ -74,7 +74,7 @@ export const routes: Routes = [
         path: 'divisions',
         canActivate:[hasRoleGuard],
         data: {
-            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
+            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB", "COACH_ANALYST"]
         },
         canMatch: [authGuard],
         component: DivisionListComponent

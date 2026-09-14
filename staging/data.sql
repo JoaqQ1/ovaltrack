@@ -78,6 +78,9 @@ INSERT INTO users (id, login_email, password_hash, role, person_id, active, crea
 INSERT INTO clubs (id, name, created_at, status, admin_user_id, city, logo_url, contact_email, contact_phone) VALUES
     ('11111111-1111-1111-1111-000000000010', 'Puerto Madryn Rugby Club', CURRENT_TIMESTAMP, 'ACTIVE', '11111111-1111-1111-1111-000000000001', 'Puerto Madryn', 'http://logo.com/pmrc.png', 'contacto@pmrc.com', '123456789');
 
+-- Asociar todas las personas existentes al club creado
+UPDATE persons SET club_id = '11111111-1111-1111-1111-000000000010';
+
 
 -- =========================================
 -- DIVISIONS
