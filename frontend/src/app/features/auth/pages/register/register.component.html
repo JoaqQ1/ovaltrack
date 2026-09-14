@@ -1,114 +1,275 @@
 <!-- Navbar sticky superior -->
 <app-navbar-public [currentView]="'register'"></app-navbar-public>
-<main class="register-wrapper d-flex align-items-center justify-content-center py-5">
+<main
+  class="register-wrapper d-flex align-items-center justify-content-center py-5"
+>
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-12 col-sm-11 col-md-9 col-lg-7 col-xl-6">
-        
         <!-- Header con marca -->
         <div class="text-center mb-4">
-          <a routerLink="/home" class="text-decoration-none d-inline-flex align-items-center gap-2 mb-2">
-            <div class="brand-icon d-flex align-items-center justify-content-center">
+          <a
+            routerLink="/home"
+            class="text-decoration-none d-inline-flex align-items-center gap-2 mb-2"
+          >
+            <div
+              class="brand-icon d-flex align-items-center justify-content-center"
+            >
               O
             </div>
             <span class="fs-4 fw-bold text-white tracking-wide">OvalTrack</span>
           </a>
-          <p class="text-secondary small mb-0">Crea tu cuenta para comenzar a gestionar tu club</p>
+          <p class="text-secondary small mb-0">
+            Crea tu cuenta para comenzar a gestionar tu club
+          </p>
         </div>
 
         <!-- Tarjeta de Registro -->
         <section class="auth-card p-4 p-md-5">
-          <h1 class="h4 text-white text-center fw-semibold mb-4">Crear cuenta</h1>
+          <h1 class="h4 text-white text-center fw-semibold mb-4">
+            Crear cuenta
+          </h1>
 
-          <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="row g-3" novalidate>
+          <form
+            [formGroup]="registerForm"
+            (ngSubmit)="onSubmit()"
+            class="row g-3"
+            novalidate
+          >
+            <div class="col-12 mb-2">
+              <label class="form-label custom-label d-block text-center mb-2"
+                >¿Cómo deseas registrarte?</label
+              >
+              <div class="btn-group w-100" role="group">
+                <input
+                  type="radio"
+                  class="btn-check"
+                  id="typeUser"
+                  value="NO_ROLE"
+                  formControlName="accountType"
+                />
+                <label class="btn btn-outline-secondary py-2" for="typeUser">
+                  Jugador / Coach
+                </label>
+
+                <input
+                  type="radio"
+                  class="btn-check"
+                  id="typeClub"
+                  value="ADMIN_CLUB"
+                  formControlName="accountType"
+                />
+                <label class="btn btn-outline-secondary py-2" for="typeClub">
+                  Administrador de Club
+                </label>
+              </div>
+            </div>
+
             <!-- Nombre -->
             <div class="col-md-6">
-              <label for="firstName" class="form-label custom-label">Nombre</label>
-              <input 
-                id="firstName" 
-                formControlName="firstName" 
-                type="text" 
-                autocomplete="given-name" 
+              <label for="firstName" class="form-label custom-label"
+                >Nombre</label
+              >
+              <input
+                id="firstName"
+                formControlName="firstName"
+                type="text"
+                autocomplete="given-name"
                 placeholder="Ej. Juan"
-                class="form-control custom-input" 
-                [class.is-invalid]="registerForm.controls.firstName.touched && registerForm.controls.firstName.invalid"
+                class="form-control custom-input"
+                [class.is-invalid]="
+                  registerForm.controls.firstName.touched &&
+                  registerForm.controls.firstName.invalid
+                "
               />
-              @if (registerForm.controls.firstName.touched && registerForm.controls.firstName.invalid) {
-                <small class="error-text mt-1 d-block">El nombre es obligatorio</small>
+              @if (
+                registerForm.controls.firstName.touched &&
+                registerForm.controls.firstName.invalid
+              ) {
+                <small class="error-text mt-1 d-block"
+                  >El nombre es obligatorio</small
+                >
               }
             </div>
 
             <!-- Apellido -->
             <div class="col-md-6">
-              <label for="lastName" class="form-label custom-label">Apellido</label>
-              <input 
-                id="lastName" 
-                formControlName="lastName" 
-                type="text" 
-                autocomplete="family-name" 
+              <label for="lastName" class="form-label custom-label"
+                >Apellido</label
+              >
+              <input
+                id="lastName"
+                formControlName="lastName"
+                type="text"
+                autocomplete="family-name"
                 placeholder="Ej. Pérez"
-                class="form-control custom-input" 
-                [class.is-invalid]="registerForm.controls.lastName.touched && registerForm.controls.lastName.invalid"
+                class="form-control custom-input"
+                [class.is-invalid]="
+                  registerForm.controls.lastName.touched &&
+                  registerForm.controls.lastName.invalid
+                "
               />
-              @if (registerForm.controls.lastName.touched && registerForm.controls.lastName.invalid) {
-                <small class="error-text mt-1 d-block">El apellido es obligatorio</small>
+              @if (
+                registerForm.controls.lastName.touched &&
+                registerForm.controls.lastName.invalid
+              ) {
+                <small class="error-text mt-1 d-block"
+                  >El apellido es obligatorio</small
+                >
               }
             </div>
 
             <!-- Email -->
             <div class="col-12">
-              <label for="email" class="form-label custom-label">Correo electrónico</label>
-              <input 
-                id="email" 
-                formControlName="email" 
-                type="email" 
-                autocomplete="email" 
+              <label for="email" class="form-label custom-label"
+                >Correo electrónico</label
+              >
+              <input
+                id="email"
+                formControlName="email"
+                type="email"
+                autocomplete="email"
                 placeholder="nombre@ejemplo.com"
-                class="form-control custom-input" 
-                [class.is-invalid]="registerForm.controls.email.touched && registerForm.controls.email.invalid"
+                class="form-control custom-input"
+                [class.is-invalid]="
+                  registerForm.controls.email.touched &&
+                  registerForm.controls.email.invalid
+                "
               />
-              @if (registerForm.controls.email.touched && registerForm.controls.email.invalid) {
-                <small class="error-text mt-1 d-block">Ingresa un correo válido</small>
+              @if (
+                registerForm.controls.email.touched &&
+                registerForm.controls.email.invalid
+              ) {
+                <small class="error-text mt-1 d-block"
+                  >Ingresa un correo válido</small
+                >
               }
             </div>
 
             <!-- Contraseña -->
             <div class="col-md-6">
-              <label for="password" class="form-label custom-label">Contraseña</label>
-              <input 
-                id="password" 
-                formControlName="password" 
-                type="password" 
-                autocomplete="new-password" 
+              <label for="password" class="form-label custom-label"
+                >Contraseña</label
+              >
+              <input
+                id="password"
+                formControlName="password"
+                type="password"
+                autocomplete="new-password"
                 placeholder="Mínimo 8 caracteres"
-                class="form-control custom-input" 
-                [class.is-invalid]="registerForm.controls.password.touched && registerForm.controls.password.invalid"
+                class="form-control custom-input"
+                [class.is-invalid]="
+                  registerForm.controls.password.touched &&
+                  registerForm.controls.password.invalid
+                "
               />
-              @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
-                <small class="error-text mt-1 d-block">Debe tener mínimo 8 caracteres</small>
+              @if (
+                registerForm.controls.password.touched &&
+                registerForm.controls.password.invalid
+              ) {
+                <small class="error-text mt-1 d-block"
+                  >Debe tener mínimo 8 caracteres</small
+                >
               }
             </div>
 
             <!-- Fecha de nacimiento -->
             <div class="col-md-6">
-              <label for="birthDate" class="form-label custom-label">Fecha de nacimiento</label>
-              <input 
-                id="birthDate" 
-                formControlName="birthDate" 
-                type="date" 
-                class="form-control custom-input" 
-                [class.is-invalid]="registerForm.controls.birthDate.touched && registerForm.controls.birthDate.invalid"
+              <label for="birthDate" class="form-label custom-label"
+                >Fecha de nacimiento</label
+              >
+              <input
+                id="birthDate"
+                formControlName="birthDate"
+                type="date"
+                class="form-control custom-input"
+                [class.is-invalid]="
+                  registerForm.controls.birthDate.touched &&
+                  registerForm.controls.birthDate.invalid
+                "
               />
-              @if (registerForm.controls.birthDate.touched && registerForm.controls.birthDate.invalid) {
-                <small class="error-text mt-1 d-block">La fecha es obligatoria</small>
+              @if (
+                registerForm.controls.birthDate.touched &&
+                registerForm.controls.birthDate.invalid
+              ) {
+                <small class="error-text mt-1 d-block"
+                  >La fecha es obligatoria</small
+                >
               }
             </div>
+            <!-- @if (registerForm.get("accountType")?.value === "ADMIN_CLUB") {
+              <div
+                class="col-12 mt-3 pt-3 border-top border-secondary border-opacity-25"
+              >
+                <h2 class="h6 text-white fw-semibold mb-3">Datos del Club</h2>
+              </div>
+
+              <div class="col-md-8">
+                <label for="clubName" class="form-label custom-label"
+                  >Nombre del Club</label
+                >
+                <input
+                  id="clubName"
+                  formControlName="clubName"
+                  type="text"
+                  placeholder="Ej. Patoruzú Rugby Club"
+                  class="form-control custom-input"
+                  [class.is-invalid]="
+                    registerForm.get('clubName')?.touched &&
+                    registerForm.get('clubName')?.invalid
+                  "
+                />
+                @if (
+                  registerForm.get("clubName")?.touched &&
+                  registerForm.get("clubName")?.invalid
+                ) {
+                  <small class="error-text mt-1 d-block"
+                    >El nombre del club es obligatorio</small
+                  >
+                }
+              </div>
+
+              <div class="col-md-4">
+                <label for="clubCity" class="form-label custom-label"
+                  >Ciudad / Localidad</label
+                >
+                <input
+                  id="clubCity"
+                  formControlName="clubCity"
+                  type="text"
+                  placeholder="Ej. Trelew"
+                  class="form-control custom-input"
+                  [class.is-invalid]="
+                    registerForm.get('clubCity')?.touched &&
+                    registerForm.get('clubCity')?.invalid
+                  "
+                />
+                @if (
+                  registerForm.get("clubCity")?.touched &&
+                  registerForm.get("clubCity")?.invalid
+                ) {
+                  <small class="error-text mt-1 d-block"
+                    >La ciudad es obligatoria</small
+                  >
+                }
+              </div>
+            } -->
 
             <!-- Mensaje de error backend -->
             @if (errorMessage) {
               <div class="col-12">
-                <div class="custom-alert d-flex align-items-center gap-2" role="alert">
-                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <div
+                  class="custom-alert d-flex align-items-center gap-2"
+                  role="alert"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="12" y1="8" x2="12" y2="12"></line>
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -120,13 +281,17 @@
 
             <!-- Botón Submit -->
             <div class="col-12 mt-4">
-              <button 
-                type="submit" 
-                class="btn btn-neon w-100 py-2" 
+              <button
+                type="submit"
+                class="btn btn-neon w-100 py-2"
                 [disabled]="registerForm.invalid || isSubmitting"
               >
                 @if (isSubmitting) {
-                  <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  <span
+                    class="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
                   <span>Registrando...</span>
                 } @else {
                   <span>Registrarse</span>
@@ -138,11 +303,14 @@
           <div class="auth-divider my-4"></div>
 
           <p class="text-center text-secondary small mb-0">
-            ¿Ya tienes cuenta? 
-            <a routerLink="/auth/login" class="link-neon text-decoration-none ms-1">Iniciar sesión</a>
+            ¿Ya tienes cuenta?
+            <a
+              routerLink="/auth/login"
+              class="link-neon text-decoration-none ms-1"
+              >Iniciar sesión</a
+            >
           </p>
         </section>
-
       </div>
     </div>
   </div>

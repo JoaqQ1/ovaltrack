@@ -17,29 +17,58 @@ export class RegisterComponent {
   private router = inject(Router);
 
   registerForm = this.fb.nonNullable.group({
+    accountType: ['NO_ROLE' as UserRole, [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
     firstName: ['', [Validators.required]],
     lastName: ['', [Validators.required]],
     birthDate: ['', [Validators.required]],
-    // role: [UserRole.NO_ROLE, [Validators.required]]
+    clubName: [''],
+    clubCity: ['']
   });
 
   errorMessage = '';
   isSubmitting = false;
+
+  constructor() {
+    this.registerForm.controls.accountType.valueChanges.subscribe((role) => {
+      const { clubName, clubCity } = this.registerForm.controls;
+
+      if (role === 'ADMIN_CLUB') {
+        clubName.setValidators([Validators.required]);
+        clubCity.setValidators([Validators.required]);
+      } else {
+        clubName.clearValidators();
+        clubCity.clearValidators();
+        clubName.setValue('');
+        clubCity.setValue('');
+      }
+
+      clubName.updateValueAndValidity();
+      clubCity.updateValueAndValidity();
+    });
+  }
 
   onSubmit(): void {
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       return;
     }
-    const role: UserRole = 'NO_ROLE';
+
+    const { accountType, clubName, clubCity, ...baseData } = this.registerForm.getRawValue();
+
     const data = {
-      ...this.registerForm.getRawValue(),
-      role: role
+      ...baseData,
+      role: accountType,
+      ...(accountType === 'ADMIN_CLUB' && {
+        clubName: clubName.trim(),
+        clubCity: clubCity.trim()
+      })
     };
+
     this.errorMessage = '';
     this.isSubmitting = true;
+
     this.authService.register(data).subscribe({
       next: () => {
         this.router.navigate(['/home']);
