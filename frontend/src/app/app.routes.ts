@@ -40,7 +40,7 @@ export const routes: Routes = [
     {
         path: 'match-selection',
         loadComponent: () =>
-            import('./features/cargaEnVivo/match-selection/match-selection.component').then(
+            import('./features/match-selection/match-selection.component').then(
                 m => m.MatchSelectComponent
             )
     },

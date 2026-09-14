@@ -109,7 +109,7 @@ case "$cmd" in
       exit 1
     fi
     echo "Ejecutando script $SQL_FILE en la base de datos..."
-    docker exec -i "ovaltrack-db" psql -U "${DB_USER:-APP}" -d "${DB_NAME:-ovaltrack}" < "$SQL_FILE"
+    docker exec -i "ovaltrack-db" psql -v ON_ERROR_STOP=1 -U "${DB_USER:-APP}" -d "${DB_NAME:-ovaltrack}" < "$SQL_FILE"
     echo "Carga finalizada."
     ;;
   pwa)

@@ -13,9 +13,6 @@ import { NavigationCard } from './types/home.types';
 })
 export class HomeComponent {
 
-
-  goToMatchSelection(): void {
-    void this.router.navigate(['/match-selection']);
   currentUser: CurrentUserSession | null = null;
   constructor(
     private authService: AuthService,
@@ -27,9 +24,9 @@ export class HomeComponent {
   // Catálogo de secciones protegidas con control de roles
   private readonly allNavigationCards: NavigationCard[] = [
     {
-      title: 'Carga en Vivo',
+      title: 'Seleccion de partidos',
       description: 'Tagging y registro en tiempo real de eventos de partido y métricas tácticas.',
-      route: '/carga-en-vivo',
+      route: '/match-selection',
       badge: 'En vivo',
       allowedRoles: ['ADMIN_CLUB', 'COACH', 'ADMIN_OVALTRACK'] as UserRole[],
       icon: 'live'
@@ -81,5 +78,9 @@ export class HomeComponent {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
   }
-  
+
+  goToMatchSelection(): void {
+    void this.router.navigate(['/match-selection']);
+  }
+
 }
