@@ -28,7 +28,7 @@ export class HomeComponent {
       description: 'Tagging y registro en tiempo real de eventos de partido y métricas tácticas.',
       route: '/match-selection',
       badge: 'En vivo',
-      allowedRoles: ['ADMIN_CLUB', 'COACH', 'ADMIN_OVALTRACK'] as UserRole[],
+      allowedRoles: ['ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK'] as UserRole[],
       icon: 'live'
     },
     {
@@ -36,7 +36,7 @@ export class HomeComponent {
       description: 'Consulta de categorías, listados de equipos y gestión de convocatorias.',
       route: '/divisions',
       badge: 'Gestión',
-      allowedRoles: ['ADMIN', 'COACH', 'PLAYER', 'ADMIN_OVALTRACK'] as UserRole[],
+      allowedRoles: ['ADMIN', 'COACH_ANALYST', 'PLAYER', 'ADMIN_OVALTRACK'] as UserRole[],
       icon: 'division'
     },
     {
@@ -60,7 +60,7 @@ export class HomeComponent {
       description: 'Alta y asignación de perfiles médicos y técnicos al plantel.',
       route: '/players/new',
       badge: 'Staff',
-      allowedRoles: ['ADMIN_CLUB', 'COACH', 'ADMIN_OVALTRACK'] as UserRole[],
+      allowedRoles: ['ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK'] as UserRole[],
       icon: 'player'
     }
   ];
