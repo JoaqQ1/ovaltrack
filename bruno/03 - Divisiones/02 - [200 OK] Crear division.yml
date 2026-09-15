@@ -14,7 +14,7 @@ http:
     data: |-
       {
         "clubId": "{{clubId}}",
-        "name": "M18",
+        "name": "M18 DEMO",
         "ageCategory": "U18",
         "gender": "MALE"
       }
