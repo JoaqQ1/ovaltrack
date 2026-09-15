@@ -15,7 +15,7 @@ http:
       {
         "date": "2026-10-20T17:00:00",
         "opponent": "Bigornia Club Rugby",
-        "status": "SCHEDULED"
+        "status": "IN_PROGRESS"
       }
   auth: inherit
 

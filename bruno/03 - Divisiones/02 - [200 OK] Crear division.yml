@@ -14,8 +14,8 @@ http:
     data: |-
       {
         "clubId": "{{clubId}}",
-        "name": "M17",
-        "ageCategory": "U17",
+        "name": "M18",
+        "ageCategory": "U18",
         "gender": "MALE"
       }
   auth: inherit
@@ -26,7 +26,7 @@ runtime:
       code: |-
         test("Debe responder 200 OK y retornar la nueva division", function() {
           expect(res.getStatus()).to.equal(200);
-          expect(res.getBody().name).to.equal("M17");
+          expect(res.getBody().name).to.equal("M18");
           bru.setEnvVar("newDivisionId", res.getBody().id);
         });
 

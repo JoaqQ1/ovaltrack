@@ -13,8 +13,8 @@ http:
     type: json
     data: |-
       {
-        "name": "M17 A",
-        "ageCategory": "U17",
+        "name": "M18 A",
+        "ageCategory": "U18",
         "gender": "MALE"
       }
   auth: inherit
@@ -25,7 +25,7 @@ runtime:
       code: |-
         test("Debe responder 200 OK con division actualizada", function() {
           expect(res.getStatus()).to.equal(200);
-          expect(res.getBody().name).to.equal("M17 A");
+          expect(res.getBody().name).to.equal("M18 A");
         });
 
 settings:
