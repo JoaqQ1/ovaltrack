@@ -1,0 +1,34 @@
+info:
+  name: 01 - [200 OK] Admin cambia rol a Coach
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/user/{{targetUserId}}/role"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "role": "COACH_ANALYST"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().role).to.equal("COACH_ANALYST");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

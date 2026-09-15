@@ -1,0 +1,39 @@
+info:
+  name: 02 - [200 OK] Crear persona
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/person"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "firstName": "Esteban",
+        "lastName": "Quito",
+        "birthDate": "2000-05-15",
+        "contactEmail": "esteban.quito@madryn.com",
+        "contactPhone": "123456789"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y crear la persona", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().firstName).to.equal("Esteban");
+          bru.setEnvVar("newPersonId", res.getBody().id);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

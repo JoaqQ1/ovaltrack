@@ -1,0 +1,38 @@
+info:
+  name: 02 - [200 OK] Crear division
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/division"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "clubId": "{{clubId}}",
+        "name": "M17",
+        "ageCategory": "U17",
+        "gender": "MALE"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y retornar la nueva division", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().name).to.equal("M17");
+          bru.setEnvVar("newDivisionId", res.getBody().id);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

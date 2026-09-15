@@ -1,0 +1,38 @@
+info:
+  name: 02 - [200 OK] Asociar jugador a division
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/players"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "divisionId": "{{divisionId}}",
+        "personId": "{{unassignedPersonId}}",
+        "jerseyNumber": 22,
+        "position": "Wing"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y crear la asociacion", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().position).to.equal("Wing");
+          bru.setEnvVar("newDivisionPlayerId", res.getBody().id);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

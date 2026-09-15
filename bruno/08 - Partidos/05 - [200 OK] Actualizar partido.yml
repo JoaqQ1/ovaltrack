@@ -1,0 +1,36 @@
+info:
+  name: 05 - [200 OK] Actualizar partido
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/matches/{{newMatchId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "date": "2026-10-20T17:00:00",
+        "opponent": "Bigornia Club Rugby",
+        "status": "SCHEDULED"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK con el partido actualizado", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().opponent).to.equal("Bigornia Club Rugby");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

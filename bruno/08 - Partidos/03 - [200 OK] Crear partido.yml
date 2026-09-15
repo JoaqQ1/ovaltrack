@@ -1,0 +1,37 @@
+info:
+  name: 03 - [200 OK] Crear partido
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/matches"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "date": "2026-10-20T16:00:00",
+        "divisionId": "{{divisionId}}",
+        "opponent": "Bigornia Club"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y crear el partido", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().opponent).to.equal("Bigornia Club");
+          bru.setEnvVar("newMatchId", res.getBody().id);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

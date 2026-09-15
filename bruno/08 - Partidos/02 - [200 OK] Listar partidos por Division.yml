@@ -1,0 +1,29 @@
+info:
+  name: 02 - [200 OK] Listar partidos por Division
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/matches/division?divisionId={{divisionId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK con partidos de la division", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody()).to.be.an('array');
+          expect(res.getBody().length).to.be.greaterThan(0);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
