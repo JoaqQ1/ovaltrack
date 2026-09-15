@@ -13,7 +13,7 @@ http:
     type: json
     data: |-
       {
-        "name": "Trelew Rugby Club Demo",
+        "name": "Trelew Rugby Club DEMO",
         "adminUserId": "11111111-1111-1111-1111-000000000002",
         "city": "Trelew",
         "logoUrl": "https://logo.com/trc.png",
@@ -28,7 +28,7 @@ runtime:
       code: |-
         test("Debe responder 200 OK y crear el club", function() {
           expect(res.getStatus()).to.equal(200);
-          expect(res.getBody().name).to.equal("Trelew Rugby Club Demo");
+          expect(res.getBody().name).to.equal("Trelew Rugby Club DEMO");
           bru.setEnvVar("newClubId", res.getBody().id);
         });
 

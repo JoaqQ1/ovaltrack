@@ -13,10 +13,10 @@ http:
     type: json
     data: |-
       {
-        "firstName": "Esteban",
-        "lastName": "Quito",
+        "firstName": "Esteban DEMO",
+        "lastName": "Quito DEMO",
         "birthDate": "2000-05-15",
-        "contactEmail": "esteban.quito@madryn.com",
+        "contactEmail": "esteban.demo@madryn.com",
         "contactPhone": "123456789"
       }
   auth: inherit
@@ -27,7 +27,7 @@ runtime:
       code: |-
         test("Debe responder 200 OK y crear la persona", function() {
           expect(res.getStatus()).to.equal(200);
-          expect(res.getBody().firstName).to.equal("Esteban");
+          expect(res.getBody().firstName).to.equal("Esteban DEMO");
           bru.setEnvVar("newPersonId", res.getBody().id);
         });
 

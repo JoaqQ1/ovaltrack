@@ -18,7 +18,7 @@ runtime:
         test("Debe responder 200 OK con datos del partido recien creado", function() {
           expect(res.getStatus()).to.equal(200);
           expect(res.getBody().id).to.equal(bru.getEnvVar("newMatchId"));
-          expect(res.getBody().opponent).to.equal("Bigornia Club");
+          expect(res.getBody().opponent).to.equal("Bigornia Club DEMO");
         });
 
 settings:

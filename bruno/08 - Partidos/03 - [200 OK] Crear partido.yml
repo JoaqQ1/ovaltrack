@@ -15,7 +15,7 @@ http:
       {
         "date": "2026-10-20T16:00:00",
         "divisionId": "{{divisionId}}",
-        "opponent": "Bigornia Club"
+        "opponent": "Bigornia Club DEMO"
       }
   auth: inherit
 
@@ -25,7 +25,7 @@ runtime:
       code: |-
         test("Debe responder 200 OK y crear el partido", function() {
           expect(res.getStatus()).to.equal(200);
-          expect(res.getBody().opponent).to.equal("Bigornia Club");
+          expect(res.getBody().opponent).to.equal("Bigornia Club DEMO");
           bru.setEnvVar("newMatchId", res.getBody().id);
         });
 

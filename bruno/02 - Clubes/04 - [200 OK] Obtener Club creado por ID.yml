@@ -18,7 +18,7 @@ runtime:
         test("Debe responder 200 OK con los datos del club recien creado", function() {
           expect(res.getStatus()).to.equal(200);
           expect(res.getBody().id).to.equal(bru.getEnvVar("newClubId"));
-          expect(res.getBody().name).to.equal("Trelew Rugby Club Demo");
+          expect(res.getBody().name).to.equal("Trelew Rugby Club DEMO");
         });
 
 settings:

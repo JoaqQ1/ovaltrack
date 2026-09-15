@@ -18,7 +18,7 @@ runtime:
         test("Debe responder 200 OK con la persona recien creada", function() {
           expect(res.getStatus()).to.equal(200);
           expect(res.getBody().id).to.equal(bru.getEnvVar("newPersonId"));
-          expect(res.getBody().firstName).to.equal("Esteban");
+          expect(res.getBody().firstName).to.equal("Esteban DEMO");
         });
 
 settings:

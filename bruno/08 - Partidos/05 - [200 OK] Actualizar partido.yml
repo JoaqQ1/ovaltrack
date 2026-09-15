@@ -14,7 +14,7 @@ http:
     data: |-
       {
         "date": "2026-10-20T17:00:00",
-        "opponent": "Bigornia Club Rugby",
+        "opponent": "Bigornia Club DEMO Actualizado",
         "status": "IN_PROGRESS"
       }
   auth: inherit
@@ -25,7 +25,7 @@ runtime:
       code: |-
         test("Debe responder 200 OK con el partido actualizado", function() {
           expect(res.getStatus()).to.equal(200);
-          expect(res.getBody().opponent).to.equal("Bigornia Club Rugby");
+          expect(res.getBody().opponent).to.equal("Bigornia Club DEMO Actualizado");
         });
 
 settings:

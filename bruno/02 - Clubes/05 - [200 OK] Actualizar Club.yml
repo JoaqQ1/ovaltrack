@@ -13,7 +13,7 @@ http:
     type: json
     data: |-
       {
-        "name": "Trelew Rugby Club Actualizado",
+        "name": "Trelew Rugby Club DEMO Actualizado",
         "city": "Trelew",
         "logoUrl": "http://logo.com/trc_new.png",
         "contactEmail": "contacto@trelewrc.com",
@@ -27,7 +27,7 @@ runtime:
       code: |-
         test("Debe responder 200 OK y actualizar el club", function() {
           expect(res.getStatus()).to.equal(200);
-          expect(res.getBody().name).to.equal("Trelew Rugby Club Actualizado");
+          expect(res.getBody().name).to.equal("Trelew Rugby Club DEMO Actualizado");
         });
 
 settings:

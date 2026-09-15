@@ -26,3 +26,5 @@ variables:
     value: 415a4327-b46e-4d7b-b1af-801d9f935d80
   - name: newDivisionId
     value: d5696f28-badf-4b9c-ac90-31abc303b25b
+  - name: newPersonId
+    value: 21e34356-2b22-4ff6-b2e7-c447d8d12719
