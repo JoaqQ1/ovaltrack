@@ -23,8 +23,6 @@ export class RegisterComponent {
     firstName: ['', [Validators.required]],
     lastName: ['', [Validators.required]],
     birthDate: ['', [Validators.required]],
-    clubName: [''],
-    clubCity: ['']
   });
 
   errorMessage = '';
@@ -32,20 +30,6 @@ export class RegisterComponent {
 
   constructor() {
     this.registerForm.controls.accountType.valueChanges.subscribe((role) => {
-      const { clubName, clubCity } = this.registerForm.controls;
-
-      if (role === 'ADMIN_CLUB') {
-        clubName.setValidators([Validators.required]);
-        clubCity.setValidators([Validators.required]);
-      } else {
-        clubName.clearValidators();
-        clubCity.clearValidators();
-        clubName.setValue('');
-        clubCity.setValue('');
-      }
-
-      clubName.updateValueAndValidity();
-      clubCity.updateValueAndValidity();
     });
   }
 
@@ -55,15 +39,11 @@ export class RegisterComponent {
       return;
     }
 
-    const { accountType, clubName, clubCity, ...baseData } = this.registerForm.getRawValue();
+    const { accountType,  ...baseData } = this.registerForm.getRawValue();
 
     const data = {
       ...baseData,
       role: accountType,
-      ...(accountType === 'ADMIN_CLUB' && {
-        clubName: clubName.trim(),
-        clubCity: clubCity.trim()
-      })
     };
 
     this.errorMessage = '';
