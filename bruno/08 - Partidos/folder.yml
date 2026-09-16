@@ -1,0 +1,7 @@
+info:
+  name: 08 - Partidos
+  type: folder
+  seq: 8
+
+request:
+  auth: inherit

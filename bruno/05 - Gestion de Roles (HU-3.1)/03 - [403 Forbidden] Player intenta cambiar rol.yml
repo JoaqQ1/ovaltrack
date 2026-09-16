@@ -1,0 +1,34 @@
+info:
+  name: 03 - [403 Forbidden] Player intenta cambiar rol
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/user/{{targetUserId}}/role"
+  headers:
+    - name: Authorization
+      value: Bearer {{playerToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "role": "COACH_ANALYST"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe rechazar con 403 Forbidden", function() {
+          expect(res.getStatus()).to.equal(403);
+          expect(res.getBody().message).to.equal("Acceso denegado: solo el administrador del club puede realizar esta acción");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

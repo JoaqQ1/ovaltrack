@@ -1,0 +1,7 @@
+info:
+  name: 06 - Jugadores de Division
+  type: folder
+  seq: 6
+
+request:
+  auth: inherit

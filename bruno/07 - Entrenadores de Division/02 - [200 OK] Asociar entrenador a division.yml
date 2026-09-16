@@ -1,0 +1,35 @@
+info:
+  name: 02 - [200 OK] Asociar entrenador a division
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/coaches"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "divisionId": "{{divisionId}}",
+        "personId": "11111111-1111-1111-1111-000000000003"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y registrar entrenador", function() {
+          expect(res.getStatus()).to.equal(200);
+          bru.setEnvVar("newDivisionCoachId", res.getBody().id);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

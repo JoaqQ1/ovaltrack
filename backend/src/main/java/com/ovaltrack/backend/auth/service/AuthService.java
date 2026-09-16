@@ -35,6 +35,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegistroRequest request) {
+        
         if (userService.existsByEmail(request.email())) {
             throw new BusinessException("The email is alredy registered");
         }

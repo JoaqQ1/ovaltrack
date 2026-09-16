@@ -1,0 +1,29 @@
+info:
+  name: 04 - [200 OK] Obtener Club creado por ID
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/club/{{newClubId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK con los datos del club recien creado", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().id).to.equal(bru.getEnvVar("newClubId"));
+          expect(res.getBody().name).to.equal("Trelew Rugby Club DEMO");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

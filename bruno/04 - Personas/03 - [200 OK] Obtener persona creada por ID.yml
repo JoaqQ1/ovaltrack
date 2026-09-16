@@ -1,0 +1,29 @@
+info:
+  name: 03 - [200 OK] Obtener persona creada por ID
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/person/{{newPersonId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK con la persona recien creada", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().id).to.equal(bru.getEnvVar("newPersonId"));
+          expect(res.getBody().firstName).to.equal("Esteban DEMO");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

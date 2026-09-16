@@ -1,0 +1,36 @@
+info:
+  name: 04 - [200 OK] Actualizar division
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/division/{{newDivisionId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "M18 DEMO A",
+        "ageCategory": "U18",
+        "gender": "MALE"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK con division actualizada", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().name).to.equal("M18 DEMO A");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

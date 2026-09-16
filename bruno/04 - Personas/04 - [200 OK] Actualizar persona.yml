@@ -1,0 +1,38 @@
+info:
+  name: 04 - [200 OK] Actualizar persona
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/person/{{newPersonId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "firstName": "Esteban DEMO Modificado",
+        "lastName": "Quito DEMO",
+        "birthDate": "2000-05-15",
+        "contactEmail": "esteban.demo.modificado@madryn.com",
+        "contactPhone": "987654321"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y actualizar la persona", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().firstName).to.equal("Esteban DEMO Modificado");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

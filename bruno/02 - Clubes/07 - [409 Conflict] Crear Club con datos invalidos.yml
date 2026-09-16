@@ -1,0 +1,36 @@
+info:
+  name: 07 - [409 Conflict] Crear Club con datos invalidos
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{baseUrl}}/club"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "",
+        "adminUserId": "11111111-1111-1111-1111-000000000002",
+        "city": "Trelew",
+        "contactEmail": "email-invalido"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 409 Conflict por validaciones", function() {
+          expect(res.getStatus()).to.equal(409);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

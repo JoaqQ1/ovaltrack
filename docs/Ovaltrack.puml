@@ -188,22 +188,26 @@ package "club" {
     }
 }
 
-package "user" {
-    enum UserRole {
-        ADMIN_OVALTRACK
-        ADMIN_CLUB
-        COACH_ANALYST
-        PLAYER
-    }
-
+package "person" {
     class Person {
         - UUID id
+        - Club club
         - String firstName
         - String lastName
         - LocalDate birthDate
         - String contactEmail
         - String contactPhone
         - LocalDateTime createdAt
+    }
+}
+
+package "user" {
+    enum UserRole {
+        ADMIN_OVALTRACK
+        ADMIN_CLUB
+        COACH_ANALYST
+        PLAYER
+        NO_ROLE
     }
 
     class User {
@@ -217,25 +221,21 @@ package "user" {
     }
 
     ' Toda cuenta (User) representa exactamente una Persona.
-    ' No toda Persona tiene una cuenta (ej: jugador menor sin acceso propio).
+    ' No toda Persona tiene una cuenta (ej: jugador menor o sin acceso digital).
     User "0..1" --> "1" Person : person
 }
 
 ' ========================================================
-' RELACIONES ENTRE ENTIDADES — columna vertebral del dominio
-' (Event -> Match -> Division -> Club -> User)
+' RELACIONES ENTRE ENTIDADES — Columna vertebral y Pertenencia
 ' ========================================================
 Event "0..*" -down-> "1" Match : match
 Match "0..*" -down-> "1" Division : division
 Division "0..*" -down-> "1" Club : club
-Club "0..*" -down-> "1" User : adminUser
+Club "0..*" -down-> "0..1" User : adminUser
+Person "0..*" -up-> "0..1" Club : club
 
 ' ========================================================
-' RELACIONES DIRECTAS A PERSON (saltan capas de la jerarquía)
-' Se dibujan punteadas para no competir visualmente con la
-' columna vertebral de arriba. Notar que estas relaciones ya
-' NO apuntan a User: apuntan a Person, porque representan
-' "quién jugó / quién dirigió", no "quién inició sesión".
+' ASIGNACIONES DEPORTIVAS Y REFERENCIAS A PERSON
 ' ========================================================
 DivisionPlayer ..> Person : person
 DivisionCoach ..> Person : person
@@ -243,8 +243,8 @@ Event ..> Person : player
 
 legend right
   |= Línea |= Significado |
-  |  <color:#2C3E50>━━━━━</color> | Relación estructural (columna vertebral) |
-  |  <color:#2C3E50>┅┅┅┅┅</color> | Referencia directa a Person (cross-cutting) |
+  |  <color:#2C3E50>━━━━━</color> | Relación estructural / pertenencia institucional |
+  |  <color:#2C3E50>┅┅┅┅┅</color> | Asignación deportiva / referencia directa a Person |
 endlegend
 
 @enduml

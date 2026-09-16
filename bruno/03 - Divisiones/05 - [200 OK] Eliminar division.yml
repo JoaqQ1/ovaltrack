@@ -1,0 +1,27 @@
+info:
+  name: 05 - [200 OK] Eliminar division
+  type: http
+  seq: 5
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/division/{{newDivisionId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK al eliminar division", function() {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

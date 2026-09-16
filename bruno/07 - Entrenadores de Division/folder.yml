@@ -1,0 +1,7 @@
+info:
+  name: 07 - Entrenadores de Division
+  type: folder
+  seq: 7
+
+request:
+  auth: inherit

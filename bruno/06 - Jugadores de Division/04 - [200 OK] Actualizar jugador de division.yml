@@ -1,0 +1,36 @@
+info:
+  name: 04 - [200 OK] Actualizar jugador de division
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/players/{{newDivisionPlayerId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "jerseyNumber": 23,
+        "position": "Fullback"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y actualizar posicion y numero", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().position).to.equal("Fullback");
+          expect(res.getBody().jerseyNumber).to.equal(23);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,38 @@
+info:
+  name: 05 - [200 OK] Actualizar Club
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/club/{{newClubId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Trelew Rugby Club DEMO Actualizado",
+        "city": "Trelew",
+        "logoUrl": "http://logo.com/trc_new.png",
+        "contactEmail": "contacto@trelewrc.com",
+        "contactPhone": "2804999999"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y actualizar el club", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().name).to.equal("Trelew Rugby Club DEMO Actualizado");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

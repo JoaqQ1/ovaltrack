@@ -1,0 +1,30 @@
+info:
+  name: 04 - [401 Unauthorized] Peticion sin token
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/user/{{targetUserId}}/role"
+  body:
+    type: json
+    data: |-
+      {
+        "role": "COACH_ANALYST"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe rechazar con 401 Unauthorized", function() {
+          expect(res.getStatus()).to.equal(401);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

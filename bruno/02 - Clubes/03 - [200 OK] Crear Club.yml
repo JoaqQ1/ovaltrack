@@ -1,0 +1,40 @@
+info:
+  name: 03 - [200 OK] Crear Club
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/club"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Trelew Rugby Club DEMO",
+        "adminUserId": "11111111-1111-1111-1111-000000000002",
+        "city": "Trelew",
+        "logoUrl": "https://logo.com/trc.png",
+        "contactEmail": "contacto@trelewrc.com",
+        "contactPhone": "2804123456"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y crear el club", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().name).to.equal("Trelew Rugby Club DEMO");
+          bru.setEnvVar("newClubId", res.getBody().id);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

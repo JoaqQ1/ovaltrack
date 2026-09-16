@@ -1,0 +1,29 @@
+info:
+  name: 01 - [200 OK] Listar partidos por Club
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/matches/club?clubId={{clubId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK con partidos del club", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody()).to.be.an('array');
+          expect(res.getBody().length).to.be.greaterThan(0);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
