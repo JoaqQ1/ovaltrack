@@ -11,6 +11,7 @@ backend/*.log
 
 # Node.js / Angular (Frontend & Testing)
 frontend/node_modules/
+frontend/node_modules.root-owned/
 frontend/dist/
 frontend/.angular/
 testing/node_modules/
