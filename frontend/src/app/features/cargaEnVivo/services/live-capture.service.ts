@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, defer, forkJoin, from, map, switchMap } from 'rxjs';
+import { Observable, defer, firstValueFrom, forkJoin, from, map, switchMap } from 'rxjs';
 import {
   liveCaptureDatabase,
   matchDatabase,
@@ -49,15 +49,22 @@ export class LiveCaptureService {
     return defer(() => from(this.removeEvent(eventId)));
   }
 
+  deleteMatchData(matchId: string): Observable<void> {
+    return defer(() => from(this.removeMatchData(matchId)));
+  }
+
   getMatchStatus(matchId: string): Observable<MatchStatus> {
     return defer(() => from(this.readLiveCaptureStatus(matchId)));
   }
 
   private async readBootstrap(query: LiveCaptureQuery): Promise<LiveCaptureBootstrap> {
     const match = await this.readMatch(query.matchId);
+    if (!match) {
+      throw new Error(`Match ${query.matchId} was not found`);
+    }
     const resolvedQuery = {
       ...query,
-      divisionId: match?.divisionId ?? query.divisionId,
+      divisionId: match.divisionId,
     };
     await seedEventTypes();
     const [persistedState, eventTypes, events] = await Promise.all([
@@ -70,7 +77,7 @@ export class LiveCaptureService {
       query: resolvedQuery,
       state: {
         homeTeam: HOME_TEAM_NAME,
-        awayTeam: match?.opponent ?? 'Rival',
+        awayTeam: match.opponent,
         scoreboard: { home: 0, away: 0 },
         gameClock: '00:00',
         period: 1,
@@ -122,6 +129,18 @@ export class LiveCaptureService {
 
   private removeEvent(eventId: string): Promise<void> {
     return liveCaptureDatabase.events.delete(eventId);
+  }
+
+  private async removeMatchData(matchId: string): Promise<void> {
+    await liveCaptureDatabase.transaction(
+      'rw',
+      liveCaptureDatabase.states,
+      liveCaptureDatabase.events,
+      async () => {
+        await liveCaptureDatabase.states.delete(matchId);
+        await liveCaptureDatabase.events.where('matchId').equals(matchId).delete();
+      },
+    );
   }
 }
 
@@ -183,6 +202,7 @@ export class MatchService {
   }
 
   private removeMatch(matchId: string): Promise<void> {
-    return matchDatabase.matches.delete(matchId);
+    return firstValueFrom(this.liveCaptureService.deleteMatchData(matchId))
+      .then(() => matchDatabase.matches.delete(matchId));
   }
 }
