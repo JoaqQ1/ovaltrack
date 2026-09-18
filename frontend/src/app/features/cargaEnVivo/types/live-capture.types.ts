@@ -22,9 +22,9 @@ export interface HistoryItem {
 
 /** Identificadores necesarios para consultar datos relacionados con un partido. */
 export interface LiveCaptureQuery {
-  clubId: UUID;
-  divisionId: UUID;
   matchId: UUID;
+  clubId?: UUID;
+  divisionId?: UUID;
 }
 
 /** Respuesta JSON de un tipo de evento persistido en event_types. */
@@ -129,6 +129,11 @@ export interface LiveCapturePersistedState {
   } | null;
   clockElapsedSeconds: number;
   savedAt: number;
+  currentPossession?: Possession;
+  scoreboard?: {
+    home: number;
+    away: number;
+  };
 }
 
 /** Evento local con la misma forma que EventResponseDTO del backend. */

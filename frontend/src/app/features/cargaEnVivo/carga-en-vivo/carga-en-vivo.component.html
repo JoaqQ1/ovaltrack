@@ -1,4 +1,10 @@
 <section class="live-capture">
+    @if (errorMessage) {
+    <p class="live-capture__error" role="alert">{{ errorMessage }}</p>
+    }
+    @if (isLoading) {
+    <p class="live-capture__loading" role="status">Cargando partido...</p>
+    }
     <header class="live-capture__header">
         <div class="live-capture__brand">
             <svg class="live-capture__brand-icon" viewBox="0 0 24 24"
