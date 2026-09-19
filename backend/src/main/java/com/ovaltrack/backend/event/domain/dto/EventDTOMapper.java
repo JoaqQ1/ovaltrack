@@ -43,7 +43,6 @@ public final class EventDTOMapper {
                 Boolean.TRUE.equals(eventType.getIsScoring()),
                 eventType.getPoints(),
                 Boolean.TRUE.equals(eventType.getRequiresPlayer()),
-                eventType.getTemplateEventFields(),
-                eventType.getCreatedAt());
+                eventType.getTemplateEventFields());
     }
 }

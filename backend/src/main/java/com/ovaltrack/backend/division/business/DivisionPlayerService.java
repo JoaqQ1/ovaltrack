@@ -76,7 +76,7 @@ public class DivisionPlayerService {
     }
 
     @Transactional
-    public void deleteDivisionPlayer(UUID divisionPlayerId) {
+    public DivisionPlayerResponseDTO deleteDivisionPlayer(UUID divisionPlayerId) {
         DivisionPlayer aDivisionPlayer = this.findDivisionPlayerEntityById(divisionPlayerId);
         if (aDivisionPlayer == null) {
             throw new BusinessException("No se puede desasociar un jugador que no existe");
@@ -88,6 +88,8 @@ public class DivisionPlayerService {
 
         aDivisionPlayer.setEndDate(LocalDate.now());
         divisionPlayerRepository.save(aDivisionPlayer);
+        
+        return DivisionDTOMapper.toResponseDTO(aDivisionPlayer);
     }
 
     @Transactional

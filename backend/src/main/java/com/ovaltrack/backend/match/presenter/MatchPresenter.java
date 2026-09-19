@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.ovaltrack.backend.match.business.MatchService;
+import com.ovaltrack.backend.match.domain.MatchStatus;
 import com.ovaltrack.backend.match.domain.dto.MatchCreationDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
@@ -89,6 +90,7 @@ public class MatchPresenter {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Match created successfully."),
+        @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
         @ApiResponse(responseCode = "409", description = "The match cannot be created because of a business or data-integrity conflict.")
     })
     @PostMapping
@@ -113,6 +115,7 @@ public class MatchPresenter {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Match updated successfully."),
+        @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
         @ApiResponse(responseCode = "409", description = "The match cannot be updated because of a business or data-integrity conflict.")
     })
     @PutMapping("/{matchId}")
@@ -127,17 +130,42 @@ public class MatchPresenter {
     }
 
     @Operation(
-        summary = "Delete a match",
-        description = "Deletes the match identified by the matchId path parameter."
+        summary = "Starts a match",
+        description = "Starts the match identified by the matchId path parameter."
     )
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Match deleted successfully."),
-        @ApiResponse(responseCode = "409", description = "The match cannot be deleted because of a business or data-integrity conflict.")
+        @ApiResponse(responseCode = "200", description = "Match started successfully."),
     })
-    @DeleteMapping("/{matchId}")
-    public ResponseEntity<Object> deleteMatch(@PathVariable UUID matchId) {
-        matchService.deleteMatch(matchId);
-        return ResponseEntity.ok("Partido eliminado correctamente");
+    @PutMapping("/{matchId}/start")
+    public ResponseEntity<Object> startMatch(@PathVariable UUID matchId) {
+        matchService.changeMatchStatus(matchId, MatchStatus.IN_PROGRESS);
+        return ResponseEntity.ok("Partido empezado correctamente");
+    }
+
+    @Operation(
+        summary = "Finish a match",
+        description = "Finishes the match identified by the matchId path parameter."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Match finished successfully."),
+    })
+    @PutMapping("/{matchId}/finish")
+    public ResponseEntity<Object> finishMatch(@PathVariable UUID matchId) {
+        matchService.changeMatchStatus(matchId, MatchStatus.FINISHED);
+        return ResponseEntity.ok("Partido terminado correctamente");
+    }
+
+    @Operation(
+        summary = "Cancels a match",
+        description = "Softly deletes the match identified by the matchId path parameter."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Match cancelled successfully."),
+    })
+    @DeleteMapping("/{matchId}/cancel")
+    public ResponseEntity<Object> cancelMatch(@PathVariable UUID matchId) {
+        matchService.changeMatchStatus(matchId, MatchStatus.CANCELLED);
+        return ResponseEntity.ok("Partido cancelado correctamente");
     }
 
 }

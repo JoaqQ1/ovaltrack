@@ -72,7 +72,7 @@ public class DivisionCoachService {
     }
 
     @Transactional
-    public void deleteDivisionCoach(UUID divisionCoachId) {
+    public DivisionCoachResponseDTO deleteDivisionCoach(UUID divisionCoachId) {
         DivisionCoach aDivisionCoach = this.findDivisionCoachEntityById(divisionCoachId);
 
         if (aDivisionCoach == null) {
@@ -83,7 +83,7 @@ public class DivisionCoachService {
         }
 
         aDivisionCoach.setEndDate(LocalDate.now());
-        divisionCoachRepository.save(aDivisionCoach);
+        return DivisionDTOMapper.toResponseDTO(aDivisionCoach);
     }
 
 }

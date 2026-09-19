@@ -12,4 +12,13 @@ public interface DivisionRepository extends JpaRepository<Division, UUID>{
 
     @Query("SELECT d FROM Division d WHERE d.club.id = :clubId")
     Collection<Division> findAllDivisionsByClubId(@Param("clubId") UUID clubId);
+
+/* 
+    @Query("SELECT d FROM Division d WHERE d.club.id = :clubId AND d.name = :name")
+    Division findByNameAndClubId(@Param("name") String name, @Param("clubId") UUID clubId);
+ */
+
+    @Query("SELECT d FROM Division d WHERE d.club.id = :clubId AND UPPER(d.name) = :name AND d.active = true")
+    Division findByNameAndClubId(@Param("name") String name, @Param("clubId") UUID clubId);
+
 }

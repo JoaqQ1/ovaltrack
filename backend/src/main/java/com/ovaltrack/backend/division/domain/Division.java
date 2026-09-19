@@ -10,6 +10,13 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "divisions")
+/* 
+@Table(name = "divisions",
+uniqueConstraints = {
+        @UniqueConstraint(name = "uk_division_nombre", columnNames = { "name", "club_id"}),
+
+})
+ */
 @Getter
 @Setter
 @NoArgsConstructor

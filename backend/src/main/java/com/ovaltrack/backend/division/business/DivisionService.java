@@ -27,12 +27,6 @@ public class DivisionService {
 	@Autowired 
 	private ClubService clubService;
 
-	/*
-	 * /////////////////////////////////////////////////////////////////////////////
-	 * DIVISION FUNCTIONS
-	 * /////////////////////////////////////////////////////////////////////////////
-	 */
-
 	public Collection<DivisionResponseDTO> findAllDivisionsByClubId(UUID clubId) {
 		if (clubService.findClubById(clubId) == null) {
 			throw new BusinessException("Club no encontrado");
@@ -68,6 +62,18 @@ public class DivisionService {
 		if (aClub == null) {
 			throw new BusinessException("No se puede asignar una division a un club que no existe");
 		}
+
+/* 
+		Division aDivision = divisionRepository.findByNameAndClubId(aDivisionRequest.name(), aClub.getId());
+		if (aDivision != null && aDivision.getActive()) {
+			throw new BusinessException("No se puede crear una division que ya esta activa");
+		}
+*/
+
+		if (divisionRepository.findByNameAndClubId(aDivisionRequest.name().toUpperCase(), aClub.getId()) != null) {
+			throw new BusinessException("No se puede crear una division que ya esta activa");
+		}
+
 		Division aDivision = new Division();
 		aDivision.setName(aDivisionRequest.name());
 		aDivision.setAgeCategory(aDivisionRequest.ageCategory());
@@ -88,8 +94,6 @@ public class DivisionService {
 
 		aDivision.setActive(false);
 		divisionRepository.save(aDivision);
-		//TODO: Discuss whether to allow disabling without considering player association. In which case this should disable every DivisionPlayer and DivisionCoach associated
-		//divisionRepository.deleteById(divisionId);
 	}
 
 	@Transactional

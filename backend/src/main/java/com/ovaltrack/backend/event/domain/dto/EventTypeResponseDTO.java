@@ -1,6 +1,5 @@
 package com.ovaltrack.backend.event.domain.dto;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,8 +22,6 @@ public record EventTypeResponseDTO(
 
     boolean requiresPlayer,
 
-    Map<String,Object> templateEventFields,
-    
-    LocalDateTime createdAt
+    Map<String,Object> templateEventFields
 ) {
 }

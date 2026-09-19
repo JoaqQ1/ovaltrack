@@ -40,12 +40,6 @@ public class EventService {
 	@Autowired 
 	private PersonService personService;
 
-    /*
-     * /////////////////////////////////////////////////////////////////////////////
-     * EVENT FUNCTIONS
-     * /////////////////////////////////////////////////////////////////////////////
-     */
-
 	public Collection<EventResponseDTO> findEventsByClubId(UUID clubId) {
 		if (clubService.findClubById(clubId) == null) {
 			throw new BusinessException("Club no encontrado");
