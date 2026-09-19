@@ -94,6 +94,7 @@ public class ClubPresenter {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Club created successfully."),
+        @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
         @ApiResponse(responseCode = "409", description = "The request is invalid or the club cannot be saved because of a business or data-integrity conflict.")
     })
     @PostMapping
@@ -119,6 +120,7 @@ public class ClubPresenter {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Club updated successfully."),
+        @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
         @ApiResponse(responseCode = "409", description = "The club cannot be updated because of a business or data-integrity conflict.")
     })
     @PutMapping("/{clubId}")

@@ -76,6 +76,7 @@ public class DivisionPlayerPresenter {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Player registered in the division successfully."),
+        @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
         @ApiResponse(responseCode = "409", description = "The association cannot be created because of a business or data-integrity conflict.")
     })
     @PostMapping
@@ -114,6 +115,7 @@ public class DivisionPlayerPresenter {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Division player updated successfully."),
+        @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
         @ApiResponse(responseCode = "409", description = "The association cannot be updated because of a business or data-integrity conflict.")
     })
     @PutMapping("/{divisionPlayerId}")
