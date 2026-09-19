@@ -48,7 +48,4 @@ public class EventType {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    //TODO: Move this variable to Event.java
-    private Boolean active;
 }

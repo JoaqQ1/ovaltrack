@@ -60,4 +60,6 @@ public class Event {
     private LocalDateTime createdAt;
 
     private LocalDateTime synchronizedAt;
+
+    private Boolean active;
 }
