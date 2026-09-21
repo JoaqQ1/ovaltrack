@@ -1,10 +1,11 @@
-package com.ovaltrack.backend.division.presenter;
+package com.ovaltrack.backend.division.controller;
 
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,14 +27,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("players")
 @Tag(name = "Division players", description = "Manage players registered in divisions")
-public class DivisionPlayerPresenter {
+@RequiredArgsConstructor
+public class DivisionPlayerController {
 
-    @Autowired 
-    private DivisionPlayerService divisionPlayerService;
+    private final DivisionPlayerService divisionPlayerService;
    
     @Operation(
         summary = "List players in a division",
@@ -80,12 +82,16 @@ public class DivisionPlayerPresenter {
         @ApiResponse(responseCode = "409", description = "The association cannot be created because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> saveDivisionPlayer(@Valid @RequestBody DivisionPlayerCreationDTO aDivisionPlayerRequest, BindingResult bindingResult) {
+    @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
+    public ResponseEntity<Object> saveDivisionPlayer(
+            @Valid @RequestBody DivisionPlayerCreationDTO aDivisionPlayerRequest,
+            BindingResult bindingResult,
+            Authentication authentication) {
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        return ResponseEntity.ok(divisionPlayerService.saveDivisionPlayer(aDivisionPlayerRequest));
+        return ResponseEntity.ok(divisionPlayerService.saveDivisionPlayer(aDivisionPlayerRequest, authentication));
     }
 
     @Operation(

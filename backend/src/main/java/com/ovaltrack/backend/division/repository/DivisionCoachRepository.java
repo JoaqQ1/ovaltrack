@@ -24,4 +24,6 @@ public interface DivisionCoachRepository extends JpaRepository<DivisionCoach, UU
     boolean existsActiveAssociation(@Param("divisionId") UUID divisionId,
             @Param("personId") UUID personId);
 
+    @Query("SELECT dc FROM DivisionCoach dc JOIN FETCH dc.division d WHERE dc.person.id = :personId AND dc.endDate IS NULL")
+    Collection<DivisionCoach> findActiveByPersonId(@Param("personId") UUID personId);
 }

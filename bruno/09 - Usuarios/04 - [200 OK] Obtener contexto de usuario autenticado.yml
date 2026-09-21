@@ -1,11 +1,11 @@
 info:
-  name: 06 - [200 OK] Cancelar partido
+  name: 04 - [200 OK] Obtener contexto de usuario autenticado
   type: http
-  seq: 6
+  seq: 4
 
 http:
-  method: DELETE
-  url: "{{baseUrl}}/matches/{{newMatchId}}/cancel"
+  method: GET
+  url: "{{baseUrl}}/api/me"
   headers:
     - name: Authorization
       value: Bearer {{adminToken}}
@@ -15,8 +15,10 @@ runtime:
   scripts:
     - type: tests
       code: |-
-        test("Debe responder 200 OK al cancelar partido", function() {
+        test("Debe responder 200 OK con contexto de usuario", function() {
           expect(res.getStatus()).to.equal(200);
+          expect(res.getBody()).to.have.property('userId');
+          expect(res.getBody()).to.have.property('email');
         });
 
 settings:

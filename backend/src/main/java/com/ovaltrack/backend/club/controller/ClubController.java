@@ -1,4 +1,4 @@
-package com.ovaltrack.backend.club.presenter;
+package com.ovaltrack.backend.club.controller;
 
 import java.util.UUID;
 
@@ -24,17 +24,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("club")
 @Tag(name = "Clubs", description = "Create, query, update, and delete clubs")
-public class ClubPresenter {
+@RequiredArgsConstructor
+public class ClubController {
 
-    private ClubService clubService;
-
-    public ClubPresenter(ClubService clubService) {
-        this.clubService = clubService;
-    }
+    private final ClubService clubService;
 
     @Operation(
         summary = "Get current authenticated user's club",
@@ -53,6 +51,19 @@ public class ClubPresenter {
     }
 
     @Operation(
+        summary = "Get current authenticated club's members",
+        description = "Returns the users associated with the authenticated user's club."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Members returned successfully."),
+        @ApiResponse(responseCode = "404", description = "No club is associated with the authenticated user.")
+    })
+    @GetMapping("/my-club/members")
+    public ResponseEntity<Object> getMyClubMembers(org.springframework.security.core.Authentication authentication) {
+        return ResponseEntity.ok(clubService.findMembersForAuthenticatedClub(authentication));
+    }
+
+    @Operation(
         summary = "List all clubs in the system",
         description = "Returns every club registered in the system."
     )
@@ -63,7 +74,6 @@ public class ClubPresenter {
     public ResponseEntity<Object> findAllClubs() {
         return ResponseEntity.ok(clubService.findAllClubs());
     }
-
 
     @Operation(
         summary = "Find a specific club in the system",
@@ -79,7 +89,6 @@ public class ClubPresenter {
         return (result != null) ? ResponseEntity.ok(result)
                 : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
     }
-
 
     @Operation(
         summary = "Create a club in the system",
@@ -105,7 +114,6 @@ public class ClubPresenter {
         }
         return ResponseEntity.ok(clubService.saveClub(aClub));
     }
-
 
     @Operation(
         summary = "Updates a club in the system",
@@ -146,5 +154,4 @@ public class ClubPresenter {
         clubService.deleteClub(clubId);
         return ResponseEntity.ok("Club eliminado correctamente");
     }
-
 }

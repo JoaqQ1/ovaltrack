@@ -1,4 +1,4 @@
-package com.ovaltrack.backend.person.presenter;
+package com.ovaltrack.backend.person.controller;
 
 import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.dto.PersonCreationDTO;
@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -26,13 +28,10 @@ import java.util.UUID;
 @RestController
 @RequestMapping("person")
 @Tag(name = "Persons", description = "Create, query, update, and delete physical persons (players, coaches, staff)")
-public class PersonPresenter {
+@RequiredArgsConstructor
+public class PersonController {
 
     private final PersonService personService;
-
-    public PersonPresenter(PersonService personService) {
-        this.personService = personService;
-    }
 
     @Operation(
         summary = "List all persons",

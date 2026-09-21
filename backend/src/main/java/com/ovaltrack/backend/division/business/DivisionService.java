@@ -3,7 +3,6 @@ package com.ovaltrack.backend.division.business;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.club.business.ClubService;
@@ -17,15 +16,14 @@ import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionUpdateDTO;
 import com.ovaltrack.backend.division.repository.DivisionRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class DivisionService {
 
-	@Autowired
-	private DivisionRepository divisionRepository;
-
-	@Autowired 
-	private ClubService clubService;
+	private final DivisionRepository divisionRepository;
+	private final ClubService clubService;
 
 	public Collection<DivisionResponseDTO> findAllDivisionsByClubId(UUID clubId) {
 		if (clubService.findClubById(clubId) == null) {
@@ -63,13 +61,6 @@ public class DivisionService {
 			throw new BusinessException("No se puede asignar una division a un club que no existe");
 		}
 
-/* 
-		Division aDivision = divisionRepository.findByNameAndClubId(aDivisionRequest.name(), aClub.getId());
-		if (aDivision != null && aDivision.getActive()) {
-			throw new BusinessException("No se puede crear una division que ya esta activa");
-		}
-*/
-
 		if (divisionRepository.findByNameAndClubId(aDivisionRequest.name().toUpperCase(), aClub.getId()) != null) {
 			throw new BusinessException("No se puede crear una division que ya esta activa");
 		}
@@ -83,7 +74,6 @@ public class DivisionService {
 
 		return DivisionDTOMapper.toResponseDTO(divisionRepository.save(aDivision));
 	}
-
 
 	@Transactional
 	public void deleteDivision(UUID divisionId) {

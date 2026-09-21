@@ -3,7 +3,6 @@ package com.ovaltrack.backend.event.business;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.match.business.MatchService;
@@ -21,24 +20,17 @@ import com.ovaltrack.backend.event.domain.dto.event.EventUpdateDTO;
 import com.ovaltrack.backend.event.repository.EventRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class EventService {
 
-	@Autowired
-	private EventRepository eventRepository;
-
-	@Autowired 
-	private EventTypeService eventTypeService;
-
-	@Autowired 
-	private ClubService clubService;
-
-	@Autowired 
-	private MatchService matchService;
-
-	@Autowired 
-	private PersonService personService;
+	private final EventRepository eventRepository;
+	private final EventTypeService eventTypeService;
+	private final ClubService clubService;
+	private final MatchService matchService;
+	private final PersonService personService;
 
 	public Collection<EventResponseDTO> findEventsByClubId(UUID clubId) {
 		if (clubService.findClubById(clubId) == null) {
@@ -123,9 +115,6 @@ public class EventService {
 			throw new BusinessException("No se puede modificar un evento que no existe");
 		}
 
-		if (eventRequest.playerId() != null) {
-
-		}
 		result.setTeamPossession(eventRequest.teamPossession());
 		result.setMatchTime(eventRequest.matchTime());
 		result.setPeriod(eventRequest.period());
