@@ -48,6 +48,20 @@ public class PersonService {
         return PersonDTOMapper.toResponseDTO(person);
     }
 
+    public boolean existsByContactEmail(String contactEmail) {
+        if (contactEmail == null || contactEmail.isBlank()) {
+            return false;
+        }
+        return personRepository.existsByContactEmailIgnoreCase(contactEmail.trim());
+    }
+
+    public boolean existsByContactPhone(String contactPhone) {
+        if (contactPhone == null || contactPhone.isBlank()) {
+            return false;
+        }
+        return personRepository.existsByContactPhone(contactPhone.trim());
+    }
+
     @Transactional
     public Person savePersonEntity(Person person) {
         return personRepository.save(person);

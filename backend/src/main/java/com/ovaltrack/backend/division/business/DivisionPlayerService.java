@@ -63,12 +63,27 @@ public class DivisionPlayerService {
                 divisionPlayerRequest.lastName() == null || divisionPlayerRequest.lastName().trim().isEmpty()) {
                 throw new BusinessException("Debe seleccionar una persona existente o ingresar nombre y apellido para crear una nueva");
             }
+
+            if (divisionPlayerRequest.contactEmail() != null && !divisionPlayerRequest.contactEmail().trim().isBlank()) {
+                String email = divisionPlayerRequest.contactEmail().trim();
+                if (personService.existsByContactEmail(email)) {
+                    throw new BusinessException("Email ya registrado");
+                }
+            }
+
+            if (divisionPlayerRequest.contactPhone() != null && !divisionPlayerRequest.contactPhone().trim().isBlank()) {
+                String phone = divisionPlayerRequest.contactPhone().trim();
+                if (personService.existsByContactPhone(phone)) {
+                    throw new BusinessException("Teléfono ya registrado");
+                }
+            }
+
             aPerson = new Person();
             aPerson.setFirstName(divisionPlayerRequest.firstName().trim());
             aPerson.setLastName(divisionPlayerRequest.lastName().trim());
             aPerson.setBirthDate(divisionPlayerRequest.birthDate());
-            aPerson.setContactEmail(divisionPlayerRequest.contactEmail());
-            aPerson.setContactPhone(divisionPlayerRequest.contactPhone());
+            aPerson.setContactEmail(divisionPlayerRequest.contactEmail() != null && !divisionPlayerRequest.contactEmail().trim().isBlank() ? divisionPlayerRequest.contactEmail().trim() : null);
+            aPerson.setContactPhone(divisionPlayerRequest.contactPhone() != null && !divisionPlayerRequest.contactPhone().trim().isBlank() ? divisionPlayerRequest.contactPhone().trim() : null);
             aPerson.setClub(aDivision.getClub());
             aPerson = personService.savePersonEntity(aPerson);
         }

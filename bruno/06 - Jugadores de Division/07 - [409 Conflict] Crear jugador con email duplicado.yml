@@ -1,0 +1,38 @@
+info:
+  name: 07 - [409 Conflict] Crear jugador con email duplicado
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{baseUrl}}/players"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "divisionId": "{{divisionId}}",
+        "firstName": "Emiliano",
+        "lastName": "Boffelli",
+        "contactEmail": "bautista.delguy@test.com",
+        "jerseyNumber": 15,
+        "position": "Fullback"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 409 Conflict cuando el email ya existe", function() {
+          expect(res.getStatus()).to.equal(409);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

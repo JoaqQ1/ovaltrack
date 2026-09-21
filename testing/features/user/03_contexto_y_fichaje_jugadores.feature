@@ -21,3 +21,12 @@ Característica: Contexto de usuario autenticado, miembros del club y creación 
       | nombre   | apellido | camiseta | posicion |
       | Bautista | Delguy   | 14       | Wing     |
     Entonces el sistema crea la persona y la asocia exitosamente a la división como jugador
+
+  Escenario: Rechazar registro de jugador con un email de contacto duplicado
+    Dado que el administrador de club con email "admin@club.com" y contraseña "administrador" ha iniciado sesión
+    Y que existe una división en el club
+    Y que ya existe una persona registrada con email "bautista.delguy@test.com"
+    Cuando registra un nuevo jugador con la siguiente información:
+      | nombre   | apellido | camiseta | posicion | email                    |
+      | Bautista | Delguy   | 14       | Wing     | bautista.delguy@test.com |
+    Entonces el sistema rechaza el registro con el mensaje de conflicto "Email ya registrado"

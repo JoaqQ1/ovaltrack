@@ -123,6 +123,26 @@ Given('que existe una división en el club', async function () {
   assert.ok(this.divisionId, 'No se pudo obtener ni crear una división');
 });
 
+Given('que ya existe una persona registrada con email {string}', async function (email) {
+  const createPersonRes = await fetch(`${BACKEND_URL}/person`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.token}`
+    },
+    body: JSON.stringify({
+      firstName: 'Bautista',
+      lastName: 'Existente',
+      contactEmail: email
+    })
+  });
+  // Podría ya existir o haber sido creada
+  assert.ok(
+    createPersonRes.ok || createPersonRes.status === 409,
+    `Error al preparar la persona existente: ${createPersonRes.status}`
+  );
+});
+
 When('registra un nuevo jugador con la siguiente información:', async function (dataTable) {
   const row = dataTable.hashes()[0];
   assert.ok(this.divisionId, 'ID de división no definido');
@@ -137,11 +157,18 @@ When('registra un nuevo jugador con la siguiente información:', async function 
       divisionId: this.divisionId,
       firstName: row.nombre,
       lastName: row.apellido,
-      jerseyNumber: parseInt(row.camiseta, 10),
-      position: row.posicion
+      jerseyNumber: row.camiseta ? parseInt(row.camiseta, 10) : null,
+      position: row.posicion,
+      contactEmail: row.email || null,
+      contactPhone: row.telefono || null
     })
   });
-  this.lastResponseBody = await this.lastResponse.json();
+
+  try {
+    this.lastResponseBody = await this.lastResponse.json();
+  } catch {
+    this.lastResponseBody = await this.lastResponse.text();
+  }
   this.registeredPlayerInput = row;
 });
 
@@ -154,4 +181,25 @@ Then('el sistema crea la persona y la asocia exitosamente a la división como ju
     `La posición debería ser ${this.registeredPlayerInput.posicion}`
   );
   assert.ok(this.lastResponseBody.personId, 'El objeto respuesta debe incluir el ID de la Persona creada');
+});
+
+Then('el sistema rechaza el registro con el mensaje de conflicto {string}', function (mensajeEsperado) {
+  assert.equal(
+    this.lastResponse.status,
+    409,
+    `Se esperaba código 409 Conflict pero se obtuvo ${this.lastResponse.status}`
+  );
+
+  let mensajeObtenido = '';
+  if (typeof this.lastResponseBody === 'string') {
+    mensajeObtenido = this.lastResponseBody;
+  } else if (this.lastResponseBody && this.lastResponseBody.message) {
+    mensajeObtenido = this.lastResponseBody.message;
+  }
+
+  assert.equal(
+    mensajeObtenido,
+    mensajeEsperado,
+    `Se esperaba mensaje '${mensajeEsperado}' pero se obtuvo '${mensajeObtenido}'`
+  );
 });

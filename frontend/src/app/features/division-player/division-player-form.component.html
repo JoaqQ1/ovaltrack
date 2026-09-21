@@ -101,7 +101,11 @@
               formControlName="contactPhone"
               class="form-control"
               placeholder="Ej: +54 9 280 4123456"
+              [class.is-invalid]="playerForm.get('contactPhone')?.touched && playerForm.get('contactPhone')?.invalid"
             />
+            <div class="field-error" *ngIf="playerForm.get('contactPhone')?.touched && playerForm.get('contactPhone')?.errors?.['serverError']">
+              {{ playerForm.get('contactPhone')?.errors?.['serverError'] }}
+            </div>
           </div>
         </div>
 
@@ -115,8 +119,11 @@
             placeholder="Ej: jugador@ejemplo.com"
             [class.is-invalid]="playerForm.get('contactEmail')?.touched && playerForm.get('contactEmail')?.invalid"
           />
-          <div class="field-error" *ngIf="playerForm.get('contactEmail')?.touched && playerForm.get('contactEmail')?.invalid">
+          <div class="field-error" *ngIf="playerForm.get('contactEmail')?.touched && playerForm.get('contactEmail')?.errors?.['email']">
             Formato de email inválido.
+          </div>
+          <div class="field-error" *ngIf="playerForm.get('contactEmail')?.touched && playerForm.get('contactEmail')?.errors?.['serverError']">
+            {{ playerForm.get('contactEmail')?.errors?.['serverError'] }}
           </div>
         </div>
 

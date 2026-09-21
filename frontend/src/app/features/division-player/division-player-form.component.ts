@@ -28,6 +28,8 @@ export class DivisionPlayerFormComponent implements OnInit {
   mensajeExito = '';
   mensajeError = '';
 
+  private autoDismissTimer: any = null;
+
   readonly currentClub = this.userContext.currentClub;
 
   ngOnInit(): void {
@@ -42,10 +44,18 @@ export class DivisionPlayerFormComponent implements OnInit {
 
   closeSuccess(): void {
     this.mensajeExito = '';
+    if (this.autoDismissTimer) {
+      clearTimeout(this.autoDismissTimer);
+      this.autoDismissTimer = null;
+    }
   }
 
   closeError(): void {
     this.mensajeError = '';
+    if (this.autoDismissTimer) {
+      clearTimeout(this.autoDismissTimer);
+      this.autoDismissTimer = null;
+    }
   }
 
   iniciarFormulario(): void {
@@ -58,6 +68,25 @@ export class DivisionPlayerFormComponent implements OnInit {
       divisionId: ['', Validators.required],
       jerseyNumber: [null, [Validators.min(1), Validators.max(99)]],
       position: ['', Validators.required]
+    });
+
+    // Limpiar errores de servidor al modificar los campos
+    this.playerForm.get('contactEmail')?.valueChanges.subscribe(() => {
+      const control = this.playerForm.get('contactEmail');
+      if (control?.hasError('serverError')) {
+        const errors = { ...control.errors };
+        delete errors['serverError'];
+        control.setErrors(Object.keys(errors).length ? errors : null);
+      }
+    });
+
+    this.playerForm.get('contactPhone')?.valueChanges.subscribe(() => {
+      const control = this.playerForm.get('contactPhone');
+      if (control?.hasError('serverError')) {
+        const errors = { ...control.errors };
+        delete errors['serverError'];
+        control.setErrors(Object.keys(errors).length ? errors : null);
+      }
     });
   }
 
@@ -83,8 +112,8 @@ export class DivisionPlayerFormComponent implements OnInit {
   }
 
   guardarJugador(): void {
-    this.mensajeExito = '';
-    this.mensajeError = '';
+    this.closeSuccess();
+    this.closeError();
 
     if (this.playerForm.valid) {
       this.guardando.set(true);
@@ -106,13 +135,38 @@ export class DivisionPlayerFormComponent implements OnInit {
           this.mensajeExito = 'Jugador creado y asignado a la división exitosamente.';
           this.iniciarFormulario();
           this.guardando.set(false);
+
+          this.autoDismissTimer = setTimeout(() => {
+            this.mensajeExito = '';
+          }, 5000);
         },
         error: (err) => {
           console.error('Error al registrar jugador', err);
-          this.mensajeError = typeof err.error === 'string'
+          const errorMsg = typeof err.error === 'string'
             ? err.error
             : (err.error?.message || 'Error al guardar el jugador.');
+
+          this.mensajeError = errorMsg;
           this.guardando.set(false);
+
+          // Asignar error in-line y focus al campo conflictivo
+          if (errorMsg.toLowerCase().includes('email')) {
+            const emailCtrl = this.playerForm.get('contactEmail');
+            emailCtrl?.setErrors({ serverError: 'Email ya registrado' });
+            emailCtrl?.markAsTouched();
+            const emailInput = document.getElementById('contactEmail');
+            emailInput?.focus();
+          } else if (errorMsg.toLowerCase().includes('teléfono') || errorMsg.toLowerCase().includes('telefono')) {
+            const phoneCtrl = this.playerForm.get('contactPhone');
+            phoneCtrl?.setErrors({ serverError: 'Teléfono ya registrado' });
+            phoneCtrl?.markAsTouched();
+            const phoneInput = document.getElementById('contactPhone');
+            phoneInput?.focus();
+          }
+
+          this.autoDismissTimer = setTimeout(() => {
+            this.mensajeError = '';
+          }, 5000);
         }
       });
     } else {

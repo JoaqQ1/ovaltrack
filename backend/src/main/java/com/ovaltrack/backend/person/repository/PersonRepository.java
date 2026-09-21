@@ -13,5 +13,9 @@ public interface PersonRepository extends JpaRepository<Person, UUID> {
 
     boolean existsByContactEmail(String contactEmail);
 
+    boolean existsByContactEmailIgnoreCase(String contactEmail);
+
+    boolean existsByContactPhone(String contactPhone);
+
     List<Person> findAllByClubId(UUID clubId);
 }
