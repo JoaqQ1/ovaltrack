@@ -30,3 +30,35 @@ Característica: Contexto de usuario autenticado, miembros del club y creación 
       | nombre   | apellido | camiseta | posicion | email                    |
       | Bautista | Delguy   | 14       | Wing     | bautista.delguy@test.com |
     Entonces el sistema rechaza el registro con el mensaje de conflicto "Email ya registrado"
+
+  Escenario: Un entrenador asignado a una división registra exitosamente a un jugador en su división
+    Dado que el usuario con rol entrenador con email "entrenador.asignado@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Y que el entrenador está asignado a una división activa del club
+    Cuando registra un nuevo jugador en su división asignada con los siguientes datos:
+      | nombre  | apellido | camiseta | posicion | email                  |
+      | Rodrigo | Bruni    | 8        | Octavo   | rodrigo.bruni@test.com |
+    Entonces el sistema crea la persona y la asocia exitosamente a la división como jugador
+
+  Escenario: Un entrenador no asignado a una división intenta registrar un jugador y es rechazado
+    Dado que el usuario con rol entrenador con email "entrenador.noasignado@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Y que existe una división en el club a la que el entrenador no está asignado
+    Cuando intenta registrar un jugador en dicha división con los siguientes datos:
+      | nombre | apellido | camiseta | posicion | email                |
+      | Juan   | Imhoff   | 11       | Wing     | juan.imhoff@test.com |
+    Entonces el sistema rechaza la acción con el mensaje "Acceso denegado: solo un entrenador asignado a esta división puede realizar esta acción"
+
+  Escenario: Un usuario con rol jugador no puede registrar jugadores en una división
+    Dado que el usuario con rol jugador con email "jugador.tres@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Y que existe una división en el club
+    Cuando intenta registrar un jugador en dicha división con los siguientes datos:
+      | nombre | apellido | camiseta | posicion | email                |
+      | Juan   | Imhoff   | 11       | Wing     | juan.imhoff@test.com |
+    Entonces el sistema rechaza la acción con el mensaje "Acceso denegado: solo el administrador del club puede realizar esta acción"
+
+  Escenario: Un usuario no autenticado no puede registrar jugadores en una división
+    Dado un usuario sin sesión iniciada en la plataforma
+    Y que existe una división en el club
+    Cuando intenta registrar un jugador en dicha división con los siguientes datos:
+      | nombre | apellido | camiseta | posicion | email                |
+      | Juan   | Imhoff   | 11       | Wing     | juan.imhoff@test.com |
+    Entonces el sistema rechaza la acción solicitando autenticación

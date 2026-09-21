@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -80,12 +82,16 @@ public class DivisionPlayerController {
         @ApiResponse(responseCode = "409", description = "The association cannot be created because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> saveDivisionPlayer(@Valid @RequestBody DivisionPlayerCreationDTO aDivisionPlayerRequest, BindingResult bindingResult) {
+    @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
+    public ResponseEntity<Object> saveDivisionPlayer(
+            @Valid @RequestBody DivisionPlayerCreationDTO aDivisionPlayerRequest,
+            BindingResult bindingResult,
+            Authentication authentication) {
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        return ResponseEntity.ok(divisionPlayerService.saveDivisionPlayer(aDivisionPlayerRequest));
+        return ResponseEntity.ok(divisionPlayerService.saveDivisionPlayer(aDivisionPlayerRequest, authentication));
     }
 
     @Operation(

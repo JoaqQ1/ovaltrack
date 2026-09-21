@@ -92,17 +92,35 @@ export class DivisionPlayerFormComponent implements OnInit {
 
   cargarDatosContextuales(): void {
     const club = this.currentClub();
-    if (!club?.id) {
+    const role = this.userContext.currentRole();
+
+    if (!club?.id && role !== 'ADMIN_OVALTRACK') {
       this.cargando.set(false);
       this.mensajeError = 'No se encontró un club asignado a tu usuario.';
       return;
     }
 
+    if (role === 'COACH_ANALYST') {
+      const misDivisiones = this.userContext.activeDivisions();
+      this.divisiones.set(misDivisiones);
+      this.cargando.set(false);
+
+      if (misDivisiones.length === 0) {
+        this.mensajeError = 'No tienes divisiones asignadas como entrenador en tu club.';
+      } else if (misDivisiones.length === 1) {
+        this.playerForm.patchValue({ divisionId: misDivisiones[0].id });
+      }
+      return;
+    }
+
     this.cargando.set(true);
-    this.divisionService.getDivisiones(club.id).subscribe({
+    this.divisionService.getDivisiones(club!.id).subscribe({
       next: (divs) => {
         this.divisiones.set(divs);
         this.cargando.set(false);
+        if (divs.length === 1) {
+          this.playerForm.patchValue({ divisionId: divs[0].id });
+        }
       },
       error: (err) => {
         console.error('Error al cargar divisiones', err);

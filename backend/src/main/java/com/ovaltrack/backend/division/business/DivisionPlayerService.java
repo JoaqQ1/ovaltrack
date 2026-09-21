@@ -4,8 +4,12 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.UUID;
 
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import com.ovaltrack.backend.club.business.ClubService;
+import com.ovaltrack.backend.club.domain.Club;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionPlayer;
@@ -13,9 +17,13 @@ import com.ovaltrack.backend.division.domain.dto.DivisionDTOMapper;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerUpdateDTO;
+import com.ovaltrack.backend.division.repository.DivisionCoachRepository;
 import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
 import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.Person;
+import com.ovaltrack.backend.user.business.UserService;
+import com.ovaltrack.backend.user.domain.User;
+import com.ovaltrack.backend.user.domain.UserRole;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +33,49 @@ import lombok.RequiredArgsConstructor;
 public class DivisionPlayerService {
 
     private final DivisionPlayerRepository divisionPlayerRepository;
+    private final DivisionCoachRepository divisionCoachRepository;
     private final DivisionService divisionService;
     private final PersonService personService;
+    private final UserService userService;
+    private final ClubService clubService;
+
+    public void validateCanManageDivisionPlayers(UUID divisionId, Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new AccessDeniedException("No autorizado: se requiere autenticación");
+        }
+
+        String email = authentication.getName();
+        User user = userService.findUserByEmail(email);
+        if (user == null) {
+            throw new AccessDeniedException("Acceso denegado: usuario no encontrado");
+        }
+
+        if (user.getRole() == UserRole.ADMIN_OVALTRACK) {
+            return;
+        }
+
+        Division aDivision = divisionService.findDivisionEntityById(divisionId);
+        if (aDivision == null) {
+            throw new BusinessException("No se puede asignar un jugador a una division que no existe");
+        }
+
+        if (user.getRole() == UserRole.ADMIN_CLUB) {
+            Club userClub = clubService.findClubEntityForAuthenticatedUser(authentication);
+            if (userClub == null || aDivision.getClub() == null || !userClub.getId().equals(aDivision.getClub().getId())) {
+                throw new AccessDeniedException("Acceso denegado: solo el administrador del club de la división puede realizar esta acción");
+            }
+            return;
+        }
+
+        if (user.getRole() == UserRole.COACH_ANALYST) {
+            if (user.getPerson() == null || !divisionCoachRepository.existsActiveAssociation(divisionId, user.getPerson().getId())) {
+                throw new AccessDeniedException("Acceso denegado: solo un entrenador asignado a esta división puede realizar esta acción");
+            }
+            return;
+        }
+
+        throw new AccessDeniedException("Acceso denegado: solo el administrador del club o el entrenador de la división pueden realizar esta acción");
+    }
 
     public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivision(UUID divisionId) {
         if (divisionService.findDivisionById(divisionId) == null) {
@@ -47,6 +96,15 @@ public class DivisionPlayerService {
 
     @Transactional
     public DivisionPlayerResponseDTO saveDivisionPlayer(DivisionPlayerCreationDTO divisionPlayerRequest) {
+        return saveDivisionPlayer(divisionPlayerRequest, null);
+    }
+
+    @Transactional
+    public DivisionPlayerResponseDTO saveDivisionPlayer(DivisionPlayerCreationDTO divisionPlayerRequest, Authentication authentication) {
+        if (authentication != null) {
+            validateCanManageDivisionPlayers(divisionPlayerRequest.divisionId(), authentication);
+        }
+
         Division aDivision = divisionService.findDivisionEntityById(divisionPlayerRequest.divisionId());
         if (aDivision == null) {
             throw new BusinessException("No se puede asignar un jugador a una division que no existe");

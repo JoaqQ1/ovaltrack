@@ -85,6 +85,39 @@ Given('que el usuario con email {string} y contraseña {string} ha iniciado sesi
   assert.ok(this.token, 'El usuario debe recibir un token de sesión');
 });
 
+Given('que el usuario con rol entrenador con email {string} y contraseña {string} ha iniciado sesión', async function (email, password) {
+  let response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+
+  if (!response.ok) {
+    await fetch(`${BACKEND_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email,
+        password: password,
+        firstName: 'Entrenador',
+        lastName: 'Prueba',
+        birthDate: '1985-06-15',
+        role: 'COACH_ANALYST'
+      })
+    });
+
+    response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+  }
+
+  const body = await response.json();
+  this.token = body.token;
+  assert.ok(this.token, 'El entrenador debe recibir un token de sesión');
+});
+
 When('solicita su información de contexto de usuario autenticado', async function () {
   this.lastResponse = await fetch(`${BACKEND_URL}/api/me`, {
     headers: {
@@ -118,7 +151,14 @@ Then('el sistema responde con la lista de miembros pertenecientes al club', func
 });
 
 Given('que existe una división en el club', async function () {
-  const { divisionId } = await ensureClubAndDivisionForUser(this.token);
+  // Login as admin to ensure club and division exist
+  const adminRes = await fetch(`${BACKEND_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@club.com', password: 'administrador' })
+  });
+  const adminBody = await adminRes.json();
+  const { divisionId } = await ensureClubAndDivisionForUser(adminBody.token);
   this.divisionId = divisionId;
   assert.ok(this.divisionId, 'No se pudo obtener ni crear una división');
 });
@@ -136,11 +176,80 @@ Given('que ya existe una persona registrada con email {string}', async function 
       contactEmail: email
     })
   });
-  // Podría ya existir o haber sido creada
   assert.ok(
     createPersonRes.ok || createPersonRes.status === 409,
     `Error al preparar la persona existente: ${createPersonRes.status}`
   );
+});
+
+Given('que el entrenador está asignado a una división activa del club', async function () {
+  // 1. Ensure club and division exist via admin
+  const adminLogin = await fetch(`${BACKEND_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@club.com', password: 'administrador' })
+  });
+  const adminData = await adminLogin.json();
+  const { divisionId } = await ensureClubAndDivisionForUser(adminData.token);
+  this.divisionId = divisionId;
+
+  // 2. Get coach's personId
+  const meRes = await fetch(`${BACKEND_URL}/api/me`, {
+    headers: { 'Authorization': `Bearer ${this.token}` }
+  });
+  const me = await meRes.json();
+  assert.ok(me.personId, 'El entrenador debe tener una persona asociada');
+
+  // 3. Assign coach to division via admin
+  await fetch(`${BACKEND_URL}/coaches`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${adminData.token}`
+    },
+    body: JSON.stringify({
+      divisionId: this.divisionId,
+      personId: me.personId
+    })
+  });
+});
+
+Given('que existe una división en el club a la que el entrenador no está asignado', async function () {
+  const adminLogin = await fetch(`${BACKEND_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@club.com', password: 'administrador' })
+  });
+  const adminData = await adminLogin.json();
+  const { clubId } = await ensureClubAndDivisionForUser(adminData.token);
+
+  // Crear una división específica no asignada
+  const createDivRes = await fetch(`${BACKEND_URL}/division`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${adminData.token}`
+    },
+    body: JSON.stringify({
+      clubId: clubId,
+      name: 'Division Externa No Asignada',
+      ageCategory: 'VETERAN',
+      gender: 'MALE'
+    })
+  });
+
+  if (createDivRes.ok) {
+    const divBody = await createDivRes.json();
+    this.divisionId = divBody.id;
+  } else {
+    // Si ya existía, buscarla
+    const divsRes = await fetch(`${BACKEND_URL}/division?clubId=${clubId}`, {
+      headers: { 'Authorization': `Bearer ${adminData.token}` }
+    });
+    const divs = await divsRes.json();
+    this.divisionId = divs[divs.length - 1].id;
+  }
+  assert.ok(this.divisionId, 'ID de división no disponible');
 });
 
 When('registra un nuevo jugador con la siguiente información:', async function (dataTable) {
@@ -153,6 +262,66 @@ When('registra un nuevo jugador con la siguiente información:', async function 
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.token}`
     },
+    body: JSON.stringify({
+      divisionId: this.divisionId,
+      firstName: row.nombre,
+      lastName: row.apellido,
+      jerseyNumber: row.camiseta ? parseInt(row.camiseta, 10) : null,
+      position: row.posicion,
+      contactEmail: row.email || null,
+      contactPhone: row.telefono || null
+    })
+  });
+
+  try {
+    this.lastResponseBody = await this.lastResponse.json();
+  } catch {
+    this.lastResponseBody = await this.lastResponse.text();
+  }
+  this.registeredPlayerInput = row;
+});
+
+When('registra un nuevo jugador en su división asignada con los siguientes datos:', async function (dataTable) {
+  const row = dataTable.hashes()[0];
+  assert.ok(this.divisionId, 'ID de división asignada no definido');
+
+  this.lastResponse = await fetch(`${BACKEND_URL}/players`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.token}`
+    },
+    body: JSON.stringify({
+      divisionId: this.divisionId,
+      firstName: row.nombre,
+      lastName: row.apellido,
+      jerseyNumber: row.camiseta ? parseInt(row.camiseta, 10) : null,
+      position: row.posicion,
+      contactEmail: row.email || null,
+      contactPhone: row.telefono || null
+    })
+  });
+
+  try {
+    this.lastResponseBody = await this.lastResponse.json();
+  } catch {
+    this.lastResponseBody = await this.lastResponse.text();
+  }
+  this.registeredPlayerInput = row;
+});
+
+When('intenta registrar un jugador en dicha división con los siguientes datos:', async function (dataTable) {
+  const row = dataTable.hashes()[0];
+  assert.ok(this.divisionId, 'ID de división no definido');
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (this.token) {
+    headers['Authorization'] = `Bearer ${this.token}`;
+  }
+
+  this.lastResponse = await fetch(`${BACKEND_URL}/players`, {
+    method: 'POST',
+    headers,
     body: JSON.stringify({
       divisionId: this.divisionId,
       firstName: row.nombre,

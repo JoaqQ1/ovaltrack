@@ -32,8 +32,11 @@ public class GlobalExceptionHandler {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "No autorizado: se requiere autenticación"));
         }
+        String message = (ex.getMessage() != null && !ex.getMessage().equals("Access Denied") && !ex.getMessage().isBlank())
+                ? ex.getMessage()
+                : "Acceso denegado: solo el administrador del club puede realizar esta acción";
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("message", "Acceso denegado: solo el administrador del club puede realizar esta acción"));
+                .body(Map.of("message", message));
     }
 
     @ExceptionHandler(AuthenticationException.class)
