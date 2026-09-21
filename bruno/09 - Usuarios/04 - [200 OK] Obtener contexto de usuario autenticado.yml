@@ -17,7 +17,8 @@ runtime:
       code: |-
         test("Debe responder 200 OK con contexto de usuario", function() {
           expect(res.getStatus()).to.equal(200);
-          expect(res.getBody()).to.have.property('user');
+          expect(res.getBody()).to.have.property('userId');
+          expect(res.getBody()).to.have.property('email');
         });
 
 settings:

@@ -28,7 +28,7 @@ runtime:
         test("Debe responder 200 OK y crear la persona junto a la asociacion de jugador", function() {
           expect(res.getStatus()).to.equal(200);
           expect(res.getBody().position).to.equal("Fullback");
-          expect(res.getBody().person.firstName).to.equal("Emiliano");
+          expect(res.getBody().personId).to.be.a('string');
         });
 
 settings:
