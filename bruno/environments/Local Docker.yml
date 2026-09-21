@@ -19,18 +19,18 @@ variables:
   - name: unassignedPersonId
     value: 11111111-1111-1111-1111-000000000127
   - name: adminToken
-    value: eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiQURNSU5fQ0xVQiIsInBlcnNvbklkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMDAwMDAwMDAwMDAxIiwidXNlcklkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMDAwMDAwMDAwMDAxIiwic3ViIjoiYWRtaW5AY2x1Yi5jb20iLCJpYXQiOjE3ODk0OTMyOTcsImV4cCI6MTc4OTU3OTY5N30.TJSBLGTzsiyO0AiF5DCDS3vzvSd_v-POGreBolNzf5KNd9NBkljMdqEMvSEaH8iQ1nH31Scd3uVAZG8uh_HlqQ
-  - name: playerToken
-    value: eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiUExBWUVSIiwicGVyc29uSWQiOiIxMTExMTExMS0xMTExLTExMTEtMTExMS0wMDAwMDAwMDAxMDEiLCJ1c2VySWQiOiIxMTExMTExMS0xMTExLTExMTEtMTExMS0wMDAwMDAwMDAxMDEiLCJzdWIiOiJwbGF5ZXIxQG92YWx0cmFjay5jb20iLCJpYXQiOjE3ODk0OTMyOTcsImV4cCI6MTc4OTU3OTY5N30.UecidsJkWIt1lKfKhrYJsbwzfv6YOtADNFEJ8SooJqpxJjt13zBSsbCis4MIMbeOevA8sqLF00i1esxaoFxwTQ
+    value: eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiQURNSU5fQ0xVQiIsInBlcnNvbklkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMDAwMDAwMDAwMDAxIiwidXNlcklkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMDAwMDAwMDAwMDAxIiwic3ViIjoiYWRtaW5AY2x1Yi5jb20iLCJpYXQiOjE3ODk1ODAxMjksImV4cCI6MTc4OTY2NjUyOX0.A5ah2vQt2_bMclhfod5tg0vzpWMg1TxFKJFdocI1pi34CSrgXqsLA1H9EmIaXl37iKq-SUT6tHglQ2VvSsOZSw
   - name: newClubId
-    value: aa0641fd-6267-436d-a352-9bc360a7910a
+    value: 9240c55c-8fc1-4e5e-aa14-25e34a321cd8
   - name: newDivisionId
-    value: 8f1c0ef5-c2c3-4e6c-a242-f2d1ea0dbc22
+    value: 79080b85-baaf-4136-a6d6-24d8568bf650
   - name: newPersonId
-    value: 194be7eb-a366-41d4-a036-1ba3731a9435
+    value: e404a88c-4064-4f48-bff5-a4d3392d7762
   - name: newDivisionPlayerId
-    value: a245b304-b0b7-4b55-bbf5-fb85dbb2b3a2
+    value: 41e0ee5c-ba56-4c61-b03a-b01bb9f3ded2
   - name: newDivisionCoachId
-    value: 01a87726-8dc4-48c8-92ef-4c52f5dae903
+    value: 5c3690b9-73bc-4b49-b14d-00adf0b6b355
   - name: newMatchId
-    value: 6ff5641c-f32a-4e61-a1ca-179bd8ca11fe
+    value: c5ed2162-4ca2-4009-9e61-b5c78916ecac
+  - name: playerToken
+    value: eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiUExBWUVSIiwicGVyc29uSWQiOiIxMTExMTExMS0xMTExLTExMTEtMTExMS0wMDAwMDAwMDAxMDEiLCJ1c2VySWQiOiIxMTExMTExMS0xMTExLTExMTEtMTExMS0wMDAwMDAwMDAxMDEiLCJzdWIiOiJwbGF5ZXIxQG92YWx0cmFjay5jb20iLCJpYXQiOjE3ODk1ODAxMzYsImV4cCI6MTc4OTY2NjUzNn0.k5sIpKDLPJpU71SzHHt67rtyPF0qdrBi6hQgsP_DJqTB1ZoyK11unsno2gu9FPeqk_Msojor0NFfv3KsrYTEvA
