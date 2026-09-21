@@ -50,6 +50,7 @@ export class MatchSelectComponent implements OnInit {
 
   /** Datos del formulario de alta, en curso de carga. */
   draft: NewMatchDraft = { date: '', opponent: '' };
+  errorMessage = '';
 
   /**
    * Se emite cuando el usuario toca un partido de la grilla. Quien use este
@@ -60,8 +61,9 @@ export class MatchSelectComponent implements OnInit {
   @Output() selectMatch = new EventEmitter<Match>();
 
   ngOnInit(): void {
-    this.matchService.getMatches().subscribe(matches => {
-      this.matches = matches;
+    this.matchService.getMatches().subscribe({
+      next: matches => this.matches = matches,
+      error: () => this.errorMessage = 'No se pudieron cargar los partidos.',
     });
   }
 
@@ -102,9 +104,12 @@ export class MatchSelectComponent implements OnInit {
       return;
     }
 
-    this.matchService.createMatch(this.draft).subscribe(newMatch => {
-      this.matches = [newMatch, ...this.matches];
-      this.isCreateOpen = false;
+    this.matchService.createMatch(this.draft).subscribe({
+      next: newMatch => {
+        this.matches = [newMatch, ...this.matches];
+        this.isCreateOpen = false;
+      },
+      error: () => this.errorMessage = 'No se pudo crear el partido.',
     });
   }
 
@@ -113,8 +118,11 @@ export class MatchSelectComponent implements OnInit {
       return;
     }
 
-    this.matchService.deleteMatch(match.id).subscribe(() => {
-      this.matches = this.matches.filter(currentMatch => currentMatch.id !== match.id);
+    this.matchService.deleteMatch(match.id).subscribe({
+      next: () => {
+        this.matches = this.matches.filter(currentMatch => currentMatch.id !== match.id);
+      },
+      error: () => this.errorMessage = 'No se pudo eliminar el partido.',
     });
   }
 

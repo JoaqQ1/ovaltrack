@@ -1,4 +1,7 @@
 <section class="match-select">
+    @if (errorMessage) {
+    <p class="match-select__error" role="alert">{{ errorMessage }}</p>
+    }
     <header class="match-select__header">
         <h1 class="match-select__title">Partidos</h1>
         <button type="button" class="btn btn--primary"

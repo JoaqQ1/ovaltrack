@@ -75,6 +75,7 @@ public class DivisionCoachPresenter {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Coach registered in the division successfully."),
+        @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
         @ApiResponse(responseCode = "409", description = "The association cannot be created because of a business or data-integrity conflict.")
     })
     @PostMapping

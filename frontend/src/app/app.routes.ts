@@ -27,10 +27,10 @@ export const routes: Routes = [
     },
     {
         path: 'carga-en-vivo/:matchId',
-        canActivate:[hasRoleGuard],
-        
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard],
         data: {
-            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB", "COACH_ANALYST"]
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
         },
         loadComponent: () =>
             import('./features/cargaEnVivo/carga-en-vivo/carga-en-vivo.component').then(
@@ -39,6 +39,11 @@ export const routes: Routes = [
     },
     {
         path: 'match-selection',
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+        },
         loadComponent: () =>
             import('./features/match-selection/match-selection.component').then(
                 m => m.MatchSelectComponent

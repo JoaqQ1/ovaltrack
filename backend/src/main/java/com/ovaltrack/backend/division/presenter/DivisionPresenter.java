@@ -77,6 +77,7 @@ public class DivisionPresenter {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Division created successfully."),
+        @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
         @ApiResponse(responseCode = "409", description = "The division cannot be saved because of a business or data-integrity conflict.")
     })
     @PostMapping
@@ -101,7 +102,7 @@ public class DivisionPresenter {
     @DeleteMapping("/{divisionId}")
     public ResponseEntity<Object> deleteDivision(@PathVariable UUID divisionId) {
         divisionService.deleteDivision(divisionId);
-        return ResponseEntity.ok("Division eliminada correctamente");
+        return ResponseEntity.ok("Division desactivada correctamente");
     }
 
     @Operation(
@@ -117,6 +118,7 @@ public class DivisionPresenter {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Division updated successfully."),
+        @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
         @ApiResponse(responseCode = "409", description = "The division cannot be updated because of a business or data-integrity conflict.")
     })
     @PutMapping("/{divisionId}")

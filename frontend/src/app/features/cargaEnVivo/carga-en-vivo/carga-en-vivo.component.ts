@@ -37,12 +37,6 @@ interface PendingPlayerSelection {
  * La vista breve de un evento que se muestra en el historial de la pantalla.
  */
 const POSSESSIONS: readonly Possession[] = ['OWN', 'NEUTRAL', 'OPPONENT'] as const;
-const LIVE_CAPTURE_QUERY = {
-  clubId: '550e8400-e29b-41d4-a716-446655440000',
-  divisionId: '550e8400-e29b-41d4-a716-446655440001',
-  matchId: '550e8400-e29b-41d4-a716-446655440002',
-} as const;
-
 /**
  * Pantalla de captura en vivo del partido.
  *
@@ -105,35 +99,49 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   currentPossession: Possession = 'OWN';
   categories: EventCategoryGroup[] = [];
   history: HistoryItem[] = [];
+  errorMessage = '';
+  isLoading = true;
   private events: LocalMatchEvent[] = [];
 
   ngOnInit(): void {
-    const matchId = this.route?.snapshot.paramMap.get('matchId') ?? LIVE_CAPTURE_QUERY.matchId;
-    const query = { ...LIVE_CAPTURE_QUERY, matchId };
-    this.matchId = query.matchId;
+    const matchId = this.route?.snapshot.paramMap.get('matchId');
+    if (!matchId) {
+      this.errorMessage = 'No se indicó un partido válido.';
+      this.isLoading = false;
+      return;
+    }
+    const query = { matchId };
+    this.matchId = matchId;
 
-    this.liveCaptureService.getLiveCaptureBootstrap(query).subscribe(response => {
-      const state = response.state;
-      this.homeTeam = state.homeTeam;
-      this.awayTeam = state.awayTeam;
-      this.scoreboard = { ...state.scoreboard };
-      this.gameClock = state.gameClock;
-      this.period = state.period ?? 1;
-      this.periodLabel = state.periodLabel;
-      this.synchronized = state.synchronized;
-      this.clockPaused = state.clockPaused;
-      this.clockElapsedSeconds = this.parseClock(state.gameClock);
-      this.currentPossession = state.currentPossession;
-      this.categories = this.groupEventTypes(response.eventTypes);
-      this.events = response.recentEvents;
-      this.rebuildStateFromEvents();
+    this.liveCaptureService.getLiveCaptureBootstrap(query).subscribe({
+      next: response => {
+        const state = response.state;
+        this.homeTeam = state.homeTeam;
+        this.awayTeam = state.awayTeam;
+        this.scoreboard = { ...state.scoreboard };
+        this.gameClock = state.gameClock;
+        this.period = state.period ?? 1;
+        this.periodLabel = state.periodLabel;
+        this.synchronized = state.synchronized;
+        this.clockPaused = state.clockPaused;
+        this.clockElapsedSeconds = this.parseClock(state.gameClock);
+        this.currentPossession = state.currentPossession;
+        this.categories = this.groupEventTypes(response.eventTypes);
+        this.events = response.recentEvents;
+        this.rebuildStateFromEvents();
 
-      if (!this.restorePersistedState(response.persistedState)) {
-        if (!this.clockPaused) {
-          this.startClock();
+        if (!this.restorePersistedState(response.persistedState)) {
+          if (!this.clockPaused) {
+            this.startClock();
+          }
+          this.persistState();
         }
-        this.persistState();
-      }
+        this.isLoading = false;
+      },
+      error: () => {
+        this.errorMessage = 'No se pudo cargar el partido. Inténtalo nuevamente.';
+        this.isLoading = false;
+      },
     });
   }
 
@@ -236,11 +244,16 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       localSequence: this.nextEventSequence(),
     };
 
-    this.liveCaptureService.saveEvent(localEvent).subscribe(() => {
-      this.events = [...this.events, localEvent];
-      this.rebuildStateFromEvents();
-      this.synchronized = false;
-      this.persistState();
+    this.liveCaptureService.saveEvent(localEvent).subscribe({
+      next: () => {
+        this.events = [...this.events, localEvent];
+        this.rebuildStateFromEvents();
+        this.synchronized = false;
+        this.persistState();
+      },
+      error: () => {
+        this.errorMessage = 'No se pudo guardar el evento. Inténtalo nuevamente.';
+      },
     });
   }
 
@@ -333,39 +346,59 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         : null,
       clockElapsedSeconds: this.parseClock(this.gameClock),
       savedAt: Date.now(),
+      currentPossession: this.currentPossession,
+      scoreboard: { ...this.scoreboard },
     };
 
-    this.liveCaptureService.saveLiveCaptureState(state).subscribe();
+    this.liveCaptureService.saveLiveCaptureState(state).subscribe({
+      error: () => {
+        this.errorMessage = 'No se pudo guardar el estado local del partido.';
+      },
+    });
   }
 
   private restorePersistedState(state: LiveCapturePersistedState | undefined): boolean {
-    try {
-      if (!state) {
-        return false;
-      }
-
-      this.periodLabel = state.periodLabel;
-      this.synchronized = state.synchronized;
-      this.pendingSelection = state.pendingSelection
-        ? { ...state.pendingSelection, event: { ...state.pendingSelection.event } }
-        : null;
-      this.clockPaused = state.clockPaused;
-      this.clockElapsedSeconds = state.clockElapsedSeconds ?? this.parseClock(state.gameClock);
-
-      if (this.clockPaused) {
-        this.gameClock = this.formatClock(this.clockElapsedSeconds);
-        this.stopClock();
-      } else {
-        const elapsedSinceSave = Math.max(0, Math.floor((Date.now() - state.savedAt) / 1000));
-        this.clockElapsedSeconds += elapsedSinceSave;
-        this.gameClock = this.formatClock(this.clockElapsedSeconds);
-        this.startClock();
-      }
-
-      return true;
-    } catch {
+    if (!state || state.matchId !== this.matchId || !this.isValidPersistedState(state)) {
       return false;
     }
+
+    this.period = state.period;
+    this.periodLabel = state.periodLabel;
+    this.synchronized = state.synchronized;
+    this.pendingSelection = state.pendingSelection
+      ? { ...state.pendingSelection, event: { ...state.pendingSelection.event } }
+      : null;
+    this.clockPaused = state.clockPaused;
+    this.clockElapsedSeconds = state.clockElapsedSeconds;
+    if (state.currentPossession) {
+      this.currentPossession = state.currentPossession;
+    }
+    if (state.scoreboard) {
+      this.scoreboard = { ...state.scoreboard };
+    }
+
+    if (this.clockPaused) {
+      this.gameClock = this.formatClock(this.clockElapsedSeconds);
+      this.stopClock();
+    } else {
+      const elapsedSinceSave = Math.max(0, Math.floor((Date.now() - state.savedAt) / 1000));
+      this.clockElapsedSeconds += elapsedSinceSave;
+      this.gameClock = this.formatClock(this.clockElapsedSeconds);
+      this.startClock();
+    }
+
+    return true;
+  }
+
+  private isValidPersistedState(state: LiveCapturePersistedState): boolean {
+    return Number.isInteger(state.period)
+      && state.period > 0
+      && Number.isFinite(state.clockElapsedSeconds)
+      && Number.isFinite(state.savedAt)
+      && typeof state.gameClock === 'string'
+      && typeof state.periodLabel === 'string'
+      && typeof state.clockPaused === 'boolean'
+      && typeof state.synchronized === 'boolean';
   }
 
   private parseClock(clock: string | undefined): number {
@@ -399,16 +432,21 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   private deleteEventAndRebuild(event: LocalMatchEvent): void {
     const deletingLatestEvent = this.latestEvent()?.id === event.id;
-    this.liveCaptureService.deleteEvent(event.id).subscribe(() => {
-      this.events = this.events.filter(currentEvent => currentEvent.id !== event.id);
-      this.rebuildStateFromEvents(!deletingLatestEvent);
-      this.synchronized = false;
-      this.persistState();
+    this.liveCaptureService.deleteEvent(event.id).subscribe({
+      next: () => {
+        this.events = this.events.filter(currentEvent => currentEvent.id !== event.id);
+        this.rebuildStateFromEvents(!deletingLatestEvent);
+        this.synchronized = false;
+        this.persistState();
+      },
+      error: () => {
+        this.errorMessage = 'No se pudo eliminar el evento. Inténtalo nuevamente.';
+      },
     });
   }
 
   private rebuildStateFromEvents(preservePossession = false): void {
-    let possession: Possession = 'OWN';
+    let possession: Possession = this.currentPossession;
     const scoreboard = { home: 0, away: 0 };
     const history: HistoryItem[] = [];
 
@@ -440,7 +478,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       });
 
       if (eventType.affectsPossession) {
-        possession = this.nextPossession(possession);
+        possession = this.nextPossession(event.teamPossession);
       }
     }
 
