@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
@@ -19,18 +18,15 @@ import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.Person;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class DivisionPlayerService {
 
-    @Autowired
-    private DivisionPlayerRepository divisionPlayerRepository;
-
-    @Autowired
-    private DivisionService divisionService;
-
-    @Autowired
-    private PersonService personService;
+    private final DivisionPlayerRepository divisionPlayerRepository;
+    private final DivisionService divisionService;
+    private final PersonService personService;
 
     public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivision(UUID divisionId) {
         if (divisionService.findDivisionById(divisionId) == null) {
@@ -51,14 +47,32 @@ public class DivisionPlayerService {
 
     @Transactional
     public DivisionPlayerResponseDTO saveDivisionPlayer(DivisionPlayerCreationDTO divisionPlayerRequest) {
-        Person aPerson = personService.findPersonEntityById(divisionPlayerRequest.personId());
-        if (aPerson == null) {
-            throw new BusinessException("La persona no existe");
-        }
         Division aDivision = divisionService.findDivisionEntityById(divisionPlayerRequest.divisionId());
         if (aDivision == null) {
             throw new BusinessException("No se puede asignar un jugador a una division que no existe");
         }
+
+        Person aPerson;
+        if (divisionPlayerRequest.personId() != null) {
+            aPerson = personService.findPersonEntityById(divisionPlayerRequest.personId());
+            if (aPerson == null) {
+                throw new BusinessException("La persona no existe");
+            }
+        } else {
+            if (divisionPlayerRequest.firstName() == null || divisionPlayerRequest.firstName().trim().isEmpty() ||
+                divisionPlayerRequest.lastName() == null || divisionPlayerRequest.lastName().trim().isEmpty()) {
+                throw new BusinessException("Debe seleccionar una persona existente o ingresar nombre y apellido para crear una nueva");
+            }
+            aPerson = new Person();
+            aPerson.setFirstName(divisionPlayerRequest.firstName().trim());
+            aPerson.setLastName(divisionPlayerRequest.lastName().trim());
+            aPerson.setBirthDate(divisionPlayerRequest.birthDate());
+            aPerson.setContactEmail(divisionPlayerRequest.contactEmail());
+            aPerson.setContactPhone(divisionPlayerRequest.contactPhone());
+            aPerson.setClub(aDivision.getClub());
+            aPerson = personService.savePersonEntity(aPerson);
+        }
+
         if (divisionPlayerRepository.existsActiveAssociation(aDivision.getId(), aPerson.getId())) {
             throw new BusinessException("La persona ya esta asociada como jugador en esta division");
         }
@@ -104,5 +118,4 @@ public class DivisionPlayerService {
 
         return DivisionDTOMapper.toResponseDTO(divisionPlayerRepository.save(divisionPlayer));
     }
-
 }

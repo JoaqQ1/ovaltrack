@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
@@ -17,18 +16,15 @@ import com.ovaltrack.backend.division.repository.DivisionCoachRepository;
 import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.Person;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class DivisionCoachService {
 
-    @Autowired
-    private DivisionCoachRepository divisionCoachRepository;
-
-    @Autowired
-    private DivisionService divisionService;
-
-    @Autowired
-    private PersonService personService;
+    private final DivisionCoachRepository divisionCoachRepository;
+    private final DivisionService divisionService;
+    private final PersonService personService;
 
     public Collection<DivisionCoachResponseDTO> findDivisionCoachesByDivisionId(UUID divisionId) {
         if (divisionService.findDivisionById(divisionId) == null) {

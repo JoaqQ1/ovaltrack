@@ -1,8 +1,7 @@
-package com.ovaltrack.backend.division.presenter;
+package com.ovaltrack.backend.division.controller;
 
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -26,14 +25,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("players")
 @Tag(name = "Division players", description = "Manage players registered in divisions")
-public class DivisionPlayerPresenter {
+@RequiredArgsConstructor
+public class DivisionPlayerController {
 
-    @Autowired 
-    private DivisionPlayerService divisionPlayerService;
+    private final DivisionPlayerService divisionPlayerService;
    
     @Operation(
         summary = "List players in a division",

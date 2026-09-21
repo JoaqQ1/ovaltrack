@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.club.business.ClubService;
@@ -20,22 +19,18 @@ import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class MatchService {
 
 	private static final int MATCH_DURATION_MINUTES = 90;
 
-	@Autowired
-	private MatchRepository matchRepository;
+	private final MatchRepository matchRepository;
+	private final DivisionService divisionService;
+	private final ClubService clubService;
 
-	@Autowired 
-	private DivisionService divisionService;
-
-	@Autowired 
-	private ClubService clubService;
-
-	//TODO: Exceptions for non-existent club and non-existent division
 	public Collection<MatchResponseDTO> findAllMatchesByClubId(UUID clubId) {
 		if (clubService.findClubEntityById(clubId) == null) {
 			throw new BusinessException("Club no encontrado");
@@ -98,7 +93,6 @@ public class MatchService {
 		return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
 	}
 
-	//TODO: functions to start and to finish match, add endpoints
 	@Transactional 
 	public MatchResponseDTO changeMatchStatus(UUID matchId, MatchStatus matchStatus) {
 		Match aMatch = findMatchEntityById(matchId);

@@ -1,8 +1,7 @@
-package com.ovaltrack.backend.event.presenter;
+package com.ovaltrack.backend.event.controller;
 
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -26,14 +25,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("event")
 @Tag(name = "Events", description = "Create, query, update, and delete match events")
-public class EventPresenter {
+@RequiredArgsConstructor
+public class EventController {
 
-    @Autowired
-    private EventService eventService;
+    private final EventService eventService;
 
     @Operation(
         summary = "List events for a club",
@@ -155,4 +155,3 @@ public class EventPresenter {
     }
 
 }
-

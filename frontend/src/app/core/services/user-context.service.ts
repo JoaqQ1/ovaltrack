@@ -18,6 +18,18 @@ export class UserContextService {
   readonly currentRole = computed<UserRole | null>(() => this.contextSignal()?.role ?? null);
   readonly activeDivisions = computed<Division[]>(() => this.contextSignal()?.activeDivisions ?? []);
 
+  readonly fullName = computed<string>(() => {
+    const ctx = this.contextSignal();
+    if (!ctx) return '';
+    const name = `${ctx.firstName || ''} ${ctx.lastName || ''}`.trim();
+    return name || ctx.email;
+  });
+
+  readonly hasClub = computed<boolean>(() => {
+    const ctx = this.contextSignal();
+    return ctx?.role === 'ADMIN_OVALTRACK' || (ctx?.club !== null && ctx?.club !== undefined);
+  });
+
   loadUserContext(): Observable<UserContext | null> {
     return this.http.get<UserContext>(`${this.apiUrl}/api/me`).pipe(
       tap(ctx => this.contextSignal.set(ctx)),

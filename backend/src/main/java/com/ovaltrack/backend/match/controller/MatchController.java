@@ -1,8 +1,7 @@
-package com.ovaltrack.backend.match.presenter;
+package com.ovaltrack.backend.match.controller;
 
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -27,14 +26,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("matches")
 @Tag(name = "Matches", description = "Create, query, update, and delete matches")
-public class MatchPresenter {
+@RequiredArgsConstructor
+public class MatchController {
 
-    @Autowired
-    private MatchService matchService;
+    private final MatchService matchService;
 
     @Operation(
         summary = "List matches for a club",

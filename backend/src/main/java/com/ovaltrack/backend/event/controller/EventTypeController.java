@@ -1,8 +1,7 @@
-package com.ovaltrack.backend.event.presenter;
+package com.ovaltrack.backend.event.controller;
 
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,14 +16,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("eventType")
 @Tag(name = "Event types", description = "Query event types available for match events")
-public class EventTypePresenter {
+@RequiredArgsConstructor
+public class EventTypeController {
 
-    @Autowired
-    private EventTypeService eventTypeService;
+    private final EventTypeService eventTypeService;
 
     @Operation(
         summary = "List all event types",
@@ -54,4 +54,3 @@ public class EventTypePresenter {
     }
 
 }
-

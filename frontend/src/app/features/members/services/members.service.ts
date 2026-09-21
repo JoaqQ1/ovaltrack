@@ -17,6 +17,7 @@ export class MembersService {
       map(users =>
         users.map(u => ({
           id: u.id,
+          personId: u.personId || u.person?.id || u.id,
           email: u.email || u.loginEmail || '',
           firstName: u.firstName || u.person?.firstName || '',
           lastName: u.lastName || u.person?.lastName || '',

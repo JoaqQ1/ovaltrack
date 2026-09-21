@@ -3,7 +3,6 @@ package com.ovaltrack.backend.club.business;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.club.domain.Club;
@@ -18,14 +17,14 @@ import com.ovaltrack.backend.user.business.UserService;
 import com.ovaltrack.backend.user.domain.User;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class ClubService {
-    @Autowired
-    private ClubRepository clubRepository;
 
-    @Autowired 
-    private UserService userService;
+    private final ClubRepository clubRepository;
+    private final UserService userService;
 
     public Collection<ClubResponseDTO> findAllClubs() {
 		return clubRepository.findAll().stream().map(ClubDTOMapper::toResponseDTO).toList();
@@ -71,16 +70,13 @@ public class ClubService {
         return ClubDTOMapper.toResponseDTO(clubRepository.save(club));
     }
 
-
     @Transactional
     public void deleteClub(UUID clubId) {
-        //Verifications
        if (findClubById(clubId) == null) {
             throw new BusinessException("Club no encontrado");
        }
         clubRepository.deleteById(clubId);
     }
-
 
     public ClubResponseDTO findClubByAdminUserId(UUID adminUserId) {
         return ClubDTOMapper.toResponseDTO(clubRepository.findByAdminUserId(adminUserId).orElse(null));
@@ -124,5 +120,3 @@ public class ClubService {
                 .orElseGet(() -> clubRepository.findByAdminUserId(user.getId()).orElse(null));
     }
 }
-
-

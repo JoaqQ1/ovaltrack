@@ -1,4 +1,4 @@
-package com.ovaltrack.backend.user.presenter;
+package com.ovaltrack.backend.user.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -13,17 +13,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/me")
 @Tag(name = "User Context", description = "Contextual information and club membership for the currently authenticated user")
-public class UserContextPresenter {
+@RequiredArgsConstructor
+public class UserContextController {
 
     private final UserContextService userContextService;
-
-    public UserContextPresenter(UserContextService userContextService) {
-        this.userContextService = userContextService;
-    }
 
     @Operation(summary = "Get current authenticated user context", description = "Returns identity, person details, assigned club, and active divisions for the authenticated user.")
     @ApiResponses({

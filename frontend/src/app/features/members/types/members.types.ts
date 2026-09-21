@@ -9,6 +9,7 @@ export type FilterCategory = 'ALL' | 'STAFF' | 'PLAYER' | 'NO_ROLE';
 
 export interface Member {
   id: string;
+  personId?: string;
   email: string;
   firstName: string;
   lastName: string;
