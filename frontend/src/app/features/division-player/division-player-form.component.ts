@@ -6,11 +6,7 @@ import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navba
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { DivisionService } from 'src/app/services/division.service';
 import { DivisionPlayerService } from 'src/app/services/division-player.service';
-import { MembersService } from '../members/services/members.service';
-import { Member } from '../members/types/members.types';
 import { Division } from '../division/types/division.types';
-
-export type PlayerCreationMode = 'NEW_PERSON' | 'EXISTING_MEMBER';
 
 @Component({
   selector: 'app-division-player-form',
@@ -23,13 +19,10 @@ export class DivisionPlayerFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly divisionService = inject(DivisionService);
   private readonly playerService = inject(DivisionPlayerService);
-  private readonly membersService = inject(MembersService);
   readonly userContext = inject(UserContextService);
 
   playerForm!: FormGroup;
-  readonly mode = signal<PlayerCreationMode>('NEW_PERSON');
   readonly divisiones = signal<Division[]>([]);
-  readonly miembros = signal<Member[]>([]);
   readonly cargando = signal<boolean>(true);
   readonly guardando = signal<boolean>(false);
   mensajeExito = '';
@@ -55,31 +48,17 @@ export class DivisionPlayerFormComponent implements OnInit {
     this.mensajeError = '';
   }
 
-  setMode(newMode: PlayerCreationMode): void {
-    this.mode.set(newMode);
-    this.iniciarFormulario();
-  }
-
   iniciarFormulario(): void {
-    if (this.mode() === 'NEW_PERSON') {
-      this.playerForm = this.fb.group({
-        firstName: ['', [Validators.required, Validators.minLength(2)]],
-        lastName: ['', [Validators.required, Validators.minLength(2)]],
-        birthDate: [''],
-        contactEmail: ['', [Validators.email]],
-        contactPhone: [''],
-        divisionId: ['', Validators.required],
-        jerseyNumber: [null, [Validators.min(1), Validators.max(99)]],
-        position: ['', Validators.required]
-      });
-    } else {
-      this.playerForm = this.fb.group({
-        personId: ['', Validators.required],
-        divisionId: ['', Validators.required],
-        jerseyNumber: [null, [Validators.min(1), Validators.max(99)]],
-        position: ['', Validators.required]
-      });
-    }
+    this.playerForm = this.fb.group({
+      firstName: ['', [Validators.required, Validators.minLength(2)]],
+      lastName: ['', [Validators.required, Validators.minLength(2)]],
+      birthDate: [''],
+      contactEmail: ['', [Validators.email]],
+      contactPhone: [''],
+      divisionId: ['', Validators.required],
+      jerseyNumber: [null, [Validators.min(1), Validators.max(99)]],
+      position: ['', Validators.required]
+    });
   }
 
   cargarDatosContextuales(): void {
@@ -91,20 +70,13 @@ export class DivisionPlayerFormComponent implements OnInit {
     }
 
     this.cargando.set(true);
-    // 1. Cargar divisiones del club actual
     this.divisionService.getDivisiones(club.id).subscribe({
-      next: (divs) => this.divisiones.set(divs),
-      error: (err) => console.error('Error al cargar divisiones', err)
-    });
-
-    // 2. Cargar miembros del club actual
-    this.membersService.getMembers().subscribe({
-      next: (mems) => {
-        this.miembros.set(mems);
+      next: (divs) => {
+        this.divisiones.set(divs);
         this.cargando.set(false);
       },
       error: (err) => {
-        console.error('Error al cargar miembros', err);
+        console.error('Error al cargar divisiones', err);
         this.cargando.set(false);
       }
     });
@@ -118,35 +90,22 @@ export class DivisionPlayerFormComponent implements OnInit {
       this.guardando.set(true);
       const val = this.playerForm.value;
 
-      let payload: any;
-      if (this.mode() === 'NEW_PERSON') {
-        payload = {
-          divisionId: val.divisionId,
-          firstName: val.firstName?.trim(),
-          lastName: val.lastName?.trim(),
-          birthDate: val.birthDate || null,
-          contactEmail: val.contactEmail?.trim() || null,
-          contactPhone: val.contactPhone?.trim() || null,
-          jerseyNumber: val.jerseyNumber ? Number(val.jerseyNumber) : null,
-          position: val.position || null
-        };
-      } else {
-        payload = {
-          divisionId: val.divisionId,
-          personId: val.personId,
-          jerseyNumber: val.jerseyNumber ? Number(val.jerseyNumber) : null,
-          position: val.position || null
-        };
-      }
+      const payload = {
+        divisionId: val.divisionId,
+        firstName: val.firstName?.trim(),
+        lastName: val.lastName?.trim(),
+        birthDate: val.birthDate || null,
+        contactEmail: val.contactEmail?.trim() || null,
+        contactPhone: val.contactPhone?.trim() || null,
+        jerseyNumber: val.jerseyNumber ? Number(val.jerseyNumber) : null,
+        position: val.position || null
+      };
 
       this.playerService.registerPlayer(payload).subscribe({
         next: () => {
-          this.mensajeExito = this.mode() === 'NEW_PERSON'
-            ? 'Jugador creado y asignado a la división exitosamente.'
-            : 'Miembro asignado a la división exitosamente.';
+          this.mensajeExito = 'Jugador creado y asignado a la división exitosamente.';
           this.iniciarFormulario();
           this.guardando.set(false);
-          this.cargarDatosContextuales();
         },
         error: (err) => {
           console.error('Error al registrar jugador', err);
