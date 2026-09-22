@@ -1,0 +1,37 @@
+info:
+  name: 10 - [403 Forbidden] Entrenador no asignado a division intenta fichar
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: "{{baseUrl}}/players"
+  headers:
+    - name: Authorization
+      value: Bearer {{coachToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "divisionId": "11111111-1111-1111-1111-000000000021",
+        "firstName": "Juan",
+        "lastName": "Imhoff",
+        "jerseyNumber": 11,
+        "position": "Wing"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 403 Forbidden cuando un entrenador no asignado intenta fichar", function() {
+          expect(res.getStatus()).to.equal(403);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

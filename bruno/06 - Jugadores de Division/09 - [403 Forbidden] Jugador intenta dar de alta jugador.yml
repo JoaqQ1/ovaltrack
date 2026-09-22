@@ -1,0 +1,37 @@
+info:
+  name: 09 - [403 Forbidden] Jugador intenta dar de alta jugador
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{baseUrl}}/players"
+  headers:
+    - name: Authorization
+      value: Bearer {{playerToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "divisionId": "{{divisionId}}",
+        "firstName": "Juan",
+        "lastName": "Imhoff",
+        "jerseyNumber": 11,
+        "position": "Wing"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 403 Forbidden cuando un jugador intenta dar de alta un jugador", function() {
+          expect(res.getStatus()).to.equal(403);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

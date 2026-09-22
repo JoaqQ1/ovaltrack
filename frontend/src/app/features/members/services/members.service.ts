@@ -13,13 +13,14 @@ export class MembersService {
   private readonly baseUrl = environment.apiUrl;
 
   getMembers(): Observable<Member[]> {
-    return this.http.get<BackendUserResponse[]>(`${this.baseUrl}/user`).pipe(
+    return this.http.get<BackendUserResponse[]>(`${this.baseUrl}/club/my-club/members`).pipe(
       map(users =>
         users.map(u => ({
           id: u.id,
+          personId: u.personId || u.person?.id || u.id,
           email: u.email || u.loginEmail || '',
-          firstName: u.person?.firstName || '',
-          lastName: u.person?.lastName || '',
+          firstName: u.firstName || u.person?.firstName || '',
+          lastName: u.lastName || u.person?.lastName || '',
           role: u.role,
           active: u.active ?? true,
           jersey: undefined,

@@ -1,0 +1,39 @@
+info:
+  name: 06 - [200 OK] Crear persona y registrar en division
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/players"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "divisionId": "{{divisionId}}",
+        "firstName": "Emiliano",
+        "lastName": "Boffelli",
+        "jerseyNumber": 15,
+        "position": "Fullback"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y crear la persona junto a la asociacion de jugador", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().position).to.equal("Fullback");
+          expect(res.getBody().personId).to.be.a('string');
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

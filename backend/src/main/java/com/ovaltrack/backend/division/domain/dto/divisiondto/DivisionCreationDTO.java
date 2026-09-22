@@ -14,7 +14,7 @@ public record DivisionCreationDTO(
     @NotBlank(message = "El nombre de la division es obligatorio")
     String name,
 
-    @NotNull(message = "La categoria del club es obligatoria")
+    @NotNull(message = "La categoria de la division es obligatoria")
     AgeCategory ageCategory,
 
     @NotNull(message = "El genero de la division es obligatorio")

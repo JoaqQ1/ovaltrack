@@ -34,6 +34,12 @@ public class UserService {
 		return userRepository.findAll();
 	}
 
+	public Collection<UserResponseDTO> findUsersByClubId(UUID clubId) {
+		return userRepository.findAllByClubId(clubId).stream()
+				.map(UserDTOMapper::toResponseDTO)
+				.toList();
+	}
+
 	public User findUserById(UUID userId) {
 		return userRepository.findById(userId).orElse(null);
 	}

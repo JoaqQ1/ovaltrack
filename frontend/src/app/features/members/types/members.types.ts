@@ -9,6 +9,7 @@ export type FilterCategory = 'ALL' | 'STAFF' | 'PLAYER' | 'NO_ROLE';
 
 export interface Member {
   id: string;
+  personId?: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -131,6 +132,9 @@ export interface BackendUserResponse {
   role: UserRole;
   active: boolean;
   createdAt?: string;
+  personId?: string;
+  firstName?: string;
+  lastName?: string;
   person?: {
     id?: string;
     firstName?: string;

@@ -14,10 +14,16 @@ public interface DivisionCoachRepository extends JpaRepository<DivisionCoach, UU
     @Query("SELECT dc FROM DivisionCoach dc WHERE dc.division.id = :divisionId")
     Collection<DivisionCoach> findDivisionCoachesByDivisionId(@Param("divisionId") UUID divisionId);
 
-    @Query("SELECT COUNT(dc) > 0 FROM DivisionCoach dc "
-            + "WHERE dc.division.id = :divisionId AND dc.person.id = :personId "
-            + "AND dc.endDate IS NULL")
+    @Query("""
+            SELECT COUNT(dc) > 0
+            FROM DivisionCoach dc 
+            WHERE dc.division.id = :divisionId
+            AND dc.person.id = :personId 
+            AND dc.endDate IS NULL
+        """)
     boolean existsActiveAssociation(@Param("divisionId") UUID divisionId,
             @Param("personId") UUID personId);
 
+    @Query("SELECT dc FROM DivisionCoach dc JOIN FETCH dc.division d WHERE dc.person.id = :personId AND dc.endDate IS NULL")
+    Collection<DivisionCoach> findActiveByPersonId(@Param("personId") UUID personId);
 }

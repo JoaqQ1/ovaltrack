@@ -1,11 +1,11 @@
 info:
-  name: 06 - [200 OK] Eliminar partido
+  name: 06 - [200 OK] Cancelar partido
   type: http
   seq: 6
 
 http:
   method: DELETE
-  url: "{{baseUrl}}/matches/{{newMatchId}}"
+  url: "{{baseUrl}}/matches/{{newMatchId}}/cancel"
   headers:
     - name: Authorization
       value: Bearer {{adminToken}}
@@ -15,7 +15,7 @@ runtime:
   scripts:
     - type: tests
       code: |-
-        test("Debe responder 200 OK al eliminar partido", function() {
+        test("Debe responder 200 OK al cancelar partido", function() {
           expect(res.getStatus()).to.equal(200);
         });
 

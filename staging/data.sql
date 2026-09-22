@@ -78,6 +78,9 @@ INSERT INTO users (id, login_email, password_hash, role, person_id, active, crea
 INSERT INTO clubs (id, name, created_at, status, admin_user_id, city, logo_url, contact_email, contact_phone) VALUES
     ('11111111-1111-1111-1111-000000000010', 'Puerto Madryn Rugby Club', CURRENT_TIMESTAMP, 'ACTIVE', '11111111-1111-1111-1111-000000000001', 'Puerto Madryn', 'http://logo.com/pmrc.png', 'contacto@pmrc.com', '123456789');
 
+-- Asociar todas las personas existentes al club creado
+UPDATE persons SET club_id = '11111111-1111-1111-1111-000000000010';
+
 
 -- =========================================
 -- DIVISIONS
@@ -145,13 +148,13 @@ INSERT INTO matches (id, date, division_id, opponent, status) VALUES
 -- EVENT_TYPES (Tipos de Eventos / Catálogo)
 -- =========================================
 
-INSERT INTO event_types (id, name, group_name, category, affects_possession, is_scoring, points, requires_player, created_at, active) VALUES
-    ('11111111-1111-1111-1111-000000000050', 'Try', 'Anotacion', 'ATTACK', false, true, 5, true, CURRENT_TIMESTAMP, true),
-    ('11111111-1111-1111-1111-000000000051', 'Tackle', 'Defensa', 'DEFENSE', false, false, 0, true, CURRENT_TIMESTAMP, true),
-    ('11111111-1111-1111-1111-000000000052', 'Line', 'Fijo', 'NEUTRAL', true, false, 0, false, CURRENT_TIMESTAMP, true),
-    ('11111111-1111-1111-1111-000000000053', 'Conversion', 'Anotacion', 'ATTACK', false, true, 2, true, CURRENT_TIMESTAMP, true),
-    ('11111111-1111-1111-1111-000000000054', 'Penal', 'Anotacion', 'ATTACK', true, false, 3, false, CURRENT_TIMESTAMP, true),
-    ('11111111-1111-1111-1111-000000000055', 'Scrum', 'Fijo', 'NEUTRAL', true, false, 0, false, CURRENT_TIMESTAMP, true);
+INSERT INTO event_types (id, name, group_name, category, affects_possession, is_scoring, points, requires_player, created_at) VALUES
+    ('11111111-1111-1111-1111-000000000050', 'Try', 'Anotacion', 'ATTACK', false, true, 5, true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000051', 'Tackle', 'Defensa', 'DEFENSE', false, false, 0, true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000052', 'Line', 'Fijo', 'NEUTRAL', true, false, 0, false, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000053', 'Conversion', 'Anotacion', 'ATTACK', false, true, 2, true, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000054', 'Penal', 'Anotacion', 'ATTACK', true, false, 3, false, CURRENT_TIMESTAMP),
+    ('11111111-1111-1111-1111-000000000055', 'Scrum', 'Fijo', 'NEUTRAL', true, false, 0, false, CURRENT_TIMESTAMP);
 
 
 -- =========================================
