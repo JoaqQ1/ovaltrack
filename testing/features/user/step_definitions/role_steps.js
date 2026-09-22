@@ -37,8 +37,20 @@ Given('un usuario sin sesión iniciada en la plataforma', function () {
 
 Given('que existe el usuario con email {string}', async function (email) {
   // Se llama al endpoint para obtener los usuarios que el frontend visualiza en la tabla
+  let lookupToken = this.token;
+  if (!lookupToken) {
+    const loginResponse = await fetch(`${BACKEND_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'admin@club.com', password: 'administrador' })
+    });
+    const loginBody = await loginResponse.json();
+    lookupToken = loginBody.token;
+    assert.ok(lookupToken, 'La sesión técnica para preparar el escenario debe recibir un token');
+  }
+
   const usersRes = await fetch(`${BACKEND_URL}/user`, {
-    headers: this.token ? { 'Authorization': `Bearer ${this.token}` } : {}
+    headers: { 'Authorization': `Bearer ${lookupToken}` }
   });
 
   assert.ok(
