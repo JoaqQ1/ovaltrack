@@ -16,3 +16,4 @@ Característica: Registro de nuevos usuarios y personas
     Cuando presiono el botón "Guardar" para registrar a cada usuario
     Entonces el sistema confirma el registro exitoso de todos los usuarios
     Y los usuarios quedan registrados en el sistema
+    Y el administrador "admin_puerto@test.com" puede ver a todos en su lista de miembros del club
