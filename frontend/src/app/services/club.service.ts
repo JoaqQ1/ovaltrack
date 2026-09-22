@@ -24,6 +24,10 @@ export class ClubService {
     return this.http.post<any>(this.apiUrl, club);
   }
 
+  updateClub(id: string, club: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, club);
+  }
+
   getUsuarios(): Observable<any> {
     return this.http.get<any>(`${environment.apiUrl}/user`);
   }

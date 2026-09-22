@@ -1,52 +1,92 @@
-<div class="club-form-container">
-  <h2>Registrar Nuevo Club</h2>
+<div class="topbar"></div>
+<app-navbar-auth></app-navbar-auth>
 
-  <div *ngIf="mensajeError" class="error-message">
-    {{ mensajeError }}
+<div class="app">
+  <div class="hud">
+    <div class="hud-brand">
+      <div class="crest">{{ getInitial(club?.name) }}</div>
+      <div class="brand-text">
+        <div class="club">Mi Club</div>
+        <div class="title">Configuración</div>
+      </div>
+    </div>
   </div>
 
-  <form (ngSubmit)="guardarClub()" #form="ngForm">
-    <div class="form-group">
-      <label for="name">Nombre:</label>
-      <input 
-        type="text" 
-        id="name" 
-        name="name" 
-        [(ngModel)]="club.name" 
-        required 
-        placeholder="Ej: Club Atlético..."
-      />
+  <div class="empty-state" *ngIf="cargando" style="margin-top: 24px;">
+    <div class="sk-row">
+      <div class="sk-avatar sk"></div>
+      <div class="sk-block sk"></div>
+    </div>
+    <div class="sk-row" style="margin-top: 16px;">
+      <div class="sk-block sk" style="height: 200px;"></div>
+    </div>
+  </div>
+
+  <div class="banner-region" *ngIf="error || exito" style="margin-top: 24px;">
+    <div *ngIf="error" class="banner banner-error">
+      <div class="banner-content">
+        <strong>Error</strong>
+        <p>{{ error }}</p>
+      </div>
+      <button class="close" (click)="error = ''">✕</button>
+    </div>
+    <div *ngIf="exito" class="banner banner-success">
+      <div class="banner-content">
+        <strong>Guardado exitoso</strong>
+        <p>{{ exito }}</p>
+      </div>
+      <button class="close" (click)="exito = ''">✕</button>
+    </div>
+  </div>
+
+  <div class="config-layout" *ngIf="!cargando && club">
+    <div class="config-sidebar">
+      <div class="club-photo-card">
+        <div class="club-logo-large">
+           <span *ngIf="!club.logoUrl">{{ getInitial(club.name) }}</span>
+           <img *ngIf="club.logoUrl" [src]="club.logoUrl" alt="Logo del club">
+        </div>
+        <h2 class="club-name-display">{{ club.name || 'Nombre del Club' }}</h2>
+        <p class="club-city-display">{{ club.city || 'Ciudad no especificada' }}</p>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="city">Localidad:</label>
-      <input 
-        type="text" 
-        id="city" 
-        name="city" 
-        [(ngModel)]="club.city" 
-        placeholder="Ej: Madryn"
-      />
-    </div>
+    <div class="config-main">
+      <form (ngSubmit)="guardarCambios()" #form="ngForm" class="club-form">
+        <div class="form-section">
+          <h3 class="section-title">Información Principal</h3>
+          
+          <div class="form-group">
+            <label for="name">Nombre del Club</label>
+            <input type="text" id="name" name="name" [(ngModel)]="club.name" required placeholder="Ej: Club Atlético..." class="form-control" />
+          </div>
 
-    <div class="form-group">
-      <label for="adminUserId">Administrador:</label>
-      <select 
-        id="adminUserId" 
-        name="adminUserId" 
-        [(ngModel)]="club.adminUserId" 
-        required
-      >
-        <option value="" disabled selected>Seleccione un administrador...</option>
-        <option *ngFor="let user of usuarios" [value]="user.id">
-          {{ user.name || user.email }}
-        </option>
-      </select>
-    </div>
+          <div class="form-group">
+            <label for="city">Localidad</label>
+            <input type="text" id="city" name="city" [(ngModel)]="club.city" placeholder="Ej: Puerto Madryn" class="form-control" />
+          </div>
+        </div>
 
-    <div class="form-actions">
-      <button type="submit" [disabled]="!form.valid" class="btn-submit">Guardar Club</button>
-      <a routerLink="/clubes" class="btn-cancel">Cancelar</a>
+        <div class="form-section">
+          <h3 class="section-title">Contacto</h3>
+          
+          <div class="form-group">
+            <label for="contactEmail">Email de Contacto</label>
+            <input type="email" id="contactEmail" name="contactEmail" [(ngModel)]="club.contactEmail" placeholder="contacto@club.com" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label for="contactPhone">Teléfono</label>
+            <input type="text" id="contactPhone" name="contactPhone" [(ngModel)]="club.contactPhone" placeholder="+54 9 11 1234-5678" class="form-control" />
+          </div>
+        </div>
+
+        <div class="form-actions-footer">
+           <button type="submit" [disabled]="!form.valid" class="btn btn-invite">
+              Guardar Cambios
+           </button>
+        </div>
+      </form>
     </div>
-  </form>
+  </div>
 </div>
