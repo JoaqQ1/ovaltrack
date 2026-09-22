@@ -87,6 +87,14 @@ describe('CargaEnVivoComponent', () => {
     expect(component.history).toEqual([]);
   });
 
+  it('should hide the history by default and toggle its visibility', () => {
+    expect(component.historyVisible).toBe(false);
+
+    component.toggleHistory();
+
+    expect(component.historyVisible).toBe(true);
+  });
+
   it('should cancel pending player selection without deleting an event', () => {
     const pendingEvent = {
       id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK' as const,

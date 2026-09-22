@@ -83,6 +83,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   periodLabel = '';
   synchronized = false;
   clockPaused = false;
+  historyVisible = false;
 
   private clockElapsedSeconds = 0;
   private clockStartedAt: number | null = null;
@@ -157,6 +158,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   /** Clase del ícono Tabler para el botón de pausa/reanudar del reloj, según el estado actual. */
   get pausaIcon(): string {
     return this.clockPaused ? 'ti ti-player-play' : 'ti ti-player-pause';
+  }
+
+  toggleHistory(): void {
+    this.historyVisible = !this.historyVisible;
   }
 
   /**
