@@ -73,4 +73,13 @@ public class AuthService {
         String token = jwtService.generateToken(user);
         return new AuthResponse(token);
     }
+
+    public boolean validEmail(String email){
+
+        if(email == null || email.split("@").length != 2){
+            return false;
+        }
+        
+        return true;
+    }
 }
