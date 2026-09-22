@@ -28,6 +28,8 @@ public record RegistroRequest(
     LocalDate birthDate,
 
     @NotNull(message = "El rol es obligatorio")
-    UserRole role
+    UserRole role,
+
+    java.util.UUID clubId
 ) {
 }

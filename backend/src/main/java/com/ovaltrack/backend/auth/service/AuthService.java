@@ -39,13 +39,13 @@ public class AuthService {
         if (userService.existsByEmail(request.email())) {
             throw new BusinessException("The email is alredy registered");
         }
-        Person person = Person.builder()
-                .firstName(request.firstName())
-                .lastName(request.lastName())
-                .birthDate(request.birthDate())
-                .contactEmail(request.email())
-                .build();
-        person = personService.savePersonEntity(person);
+        Person person = personService.createPersonFromRegistration(
+                request.firstName(),
+                request.lastName(),
+                request.birthDate(),
+                request.email(),
+                request.clubId()
+        );
 
         String passwordHasheada = passwordEncoder.encode(request.password());
         User user = User.builder()

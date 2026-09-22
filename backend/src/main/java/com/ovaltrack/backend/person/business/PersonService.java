@@ -7,6 +7,8 @@ import com.ovaltrack.backend.person.domain.dto.PersonDTOMapper;
 import com.ovaltrack.backend.person.domain.dto.PersonResponseDTO;
 import com.ovaltrack.backend.person.domain.dto.PersonUpdateDTO;
 import com.ovaltrack.backend.person.repository.PersonRepository;
+import com.ovaltrack.backend.club.domain.Club;
+import com.ovaltrack.backend.club.business.ClubService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -17,9 +19,11 @@ import java.util.UUID;
 public class PersonService {
 
     private final PersonRepository personRepository;
+    private final ClubService clubService;
 
-    public PersonService(PersonRepository personRepository) {
+    public PersonService(PersonRepository personRepository, ClubService clubService) {
         this.personRepository = personRepository;
+        this.clubService = clubService;
     }
 
     public Collection<PersonResponseDTO> findAllPersons() {
@@ -64,6 +68,23 @@ public class PersonService {
 
     @Transactional
     public Person savePersonEntity(Person person) {
+        return personRepository.save(person);
+    }
+
+    @Transactional
+    public Person createPersonFromRegistration(String firstName, String lastName, java.time.LocalDate birthDate, String email, java.util.UUID clubId) {
+        Person person = Person.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .birthDate(birthDate)
+                .contactEmail(email)
+                .build();
+
+        if (clubId != null) {
+            Club club = clubService.findClubEntityById(clubId);
+            person.setClub(club);
+        }
+
         return personRepository.save(person);
     }
 
