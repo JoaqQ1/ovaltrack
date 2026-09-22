@@ -181,3 +181,5 @@ Los servicios principales se ejecutan en contenedores aislados y se comunican a 
    * Servidor Spring Boot 3 expuesto en http://localhost:8080.
 4. **Base de Datos**:
    * PostgreSQL expuesto en el puerto 5432 para la red interna y acceso externo.
+5. **Swagger**
+   * Endpoints documentados mediante swagger expuesto en http://localhost:8080/swagger-ui/index.html#/
