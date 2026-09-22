@@ -11,8 +11,6 @@ import com.ovaltrack.backend.auth.security.JwtService;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.Person;
-import com.ovaltrack.backend.club.domain.Club;
-import com.ovaltrack.backend.club.repository.ClubRepository;
 import com.ovaltrack.backend.user.business.UserService;
 import com.ovaltrack.backend.user.domain.User;
 
@@ -24,18 +22,15 @@ public class AuthService {
     private final PersonService personService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final ClubRepository clubRepository;
 
     public AuthService(UserService userService,
             PersonService personService,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService,
-            ClubRepository clubRepository) {
+            JwtService jwtService) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.personService = personService;
-        this.clubRepository = clubRepository;
     }
 
     @Transactional
@@ -44,19 +39,13 @@ public class AuthService {
         if (userService.existsByEmail(request.email())) {
             throw new BusinessException("The email is alredy registered");
         }
-        Person person = Person.builder()
-                .firstName(request.firstName())
-                .lastName(request.lastName())
-                .birthDate(request.birthDate())
-                .contactEmail(request.email())
-                .build();
-        
-        if (request.clubId() != null) {
-            Club club = clubRepository.findById(request.clubId()).orElse(null);
-            person.setClub(club);
-        }
-
-        person = personService.savePersonEntity(person);
+        Person person = personService.createPersonFromRegistration(
+                request.firstName(),
+                request.lastName(),
+                request.birthDate(),
+                request.email(),
+                request.clubId()
+        );
 
         String passwordHasheada = passwordEncoder.encode(request.password());
         User user = User.builder()
