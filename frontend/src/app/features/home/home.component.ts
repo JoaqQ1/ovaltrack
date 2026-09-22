@@ -34,7 +34,7 @@ export class HomeComponent {
       description: 'Consulta de categorías, listados de equipos y gestión de convocatorias.',
       route: '/divisions',
       badge: 'Gestión',
-      allowedRoles: ['ADMIN', 'COACH_ANALYST', 'PLAYER', 'ADMIN_OVALTRACK'] as UserRole[],
+      allowedRoles: ['ADMIN_CLUB', 'COACH_ANALYST', 'PLAYER', 'ADMIN_OVALTRACK'] as UserRole[],
       icon: 'division'
     },
     {
