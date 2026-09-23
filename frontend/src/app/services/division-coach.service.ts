@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
-  DivisionCoach,
+  DivisionCoachResponse,
   DivisionCoachCreationRequest
 } from '../features/division-coach/types/division-coach.types';
 
@@ -14,17 +14,17 @@ export class DivisionCoachService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/coaches`;
 
-  getByDivisionId(divisionId: string): Observable<DivisionCoach[]> {
+  getByDivisionId(divisionId: string): Observable<DivisionCoachResponse[]> {
     const params = new HttpParams().set('divisionId', divisionId);
-    return this.http.get<DivisionCoach[]>(this.apiUrl, { params });
+    return this.http.get<DivisionCoachResponse[]>(this.apiUrl, { params });
   }
 
-  getById(divisionCoachId: string): Observable<DivisionCoach> {
-    return this.http.get<DivisionCoach>(`${this.apiUrl}/${divisionCoachId}`);
+  getById(divisionCoachId: string): Observable<DivisionCoachResponse> {
+    return this.http.get<DivisionCoachResponse>(`${this.apiUrl}/${divisionCoachId}`);
   }
 
-  create(request: DivisionCoachCreationRequest): Observable<DivisionCoach> {
-    return this.http.post<DivisionCoach>(this.apiUrl, request);
+  create(request: DivisionCoachCreationRequest): Observable<DivisionCoachResponse> {
+    return this.http.post<DivisionCoachResponse>(this.apiUrl, request);
   }
 
   remove(divisionCoachId: string): Observable<string> {
