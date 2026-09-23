@@ -296,8 +296,8 @@
 }
 
 .live-capture__number-circle {
-	width: calc(40px * var(--ot-live-scale));
-	height: calc(40px * var(--ot-live-scale));
+	/* width: calc(40px * var(--ot-live-scale)); */
+	height: calc(50px * var(--ot-live-scale));
 	border-radius: var(--ot-radius-lg);
 	display: flex;
 	align-items: center;
@@ -306,9 +306,11 @@
 	background: var(--surface-alt);
 	color: var(--text);
 	font-family: var(--font-space-grotesk);
-	font-size: calc(14px * var(--ot-live-scale));
+	font-size: calc(20px * var(--ot-live-scale));
 	font-weight: 600;
-	flex: 0 0 auto;
+	flex: 1 1 var(--ot-touch-target-min);
+	min-width: var(--ot-touch-target-min);
+	/* max-width: calc(72px * var(--ot-live-scale)); */
 	cursor: pointer;
 	transition: all 0.2s ease;
 	font-variant-numeric: tabular-nums;
@@ -608,6 +610,7 @@
 	.live-capture__number-circle {
 		width: var(--ot-touch-target-min);
 		height: var(--ot-touch-target-min);
+		flex: 0 0 var(--ot-touch-target-min);
 		font-size: var(--ot-size-body-md);
 	}
 
