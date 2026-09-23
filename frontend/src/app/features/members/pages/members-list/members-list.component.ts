@@ -225,6 +225,9 @@ export class MembersListComponent implements OnInit {
     }
   }
 
+  readonly memberToDeactivate = signal<Member | null>(null);
+  readonly isDeactivating = signal<boolean>(false);
+
   handleAction(member: Member, action: 'profile' | 'edit' | 'revoke', event: Event): void {
     event.stopPropagation();
     this.closeMenus();
@@ -232,11 +235,15 @@ export class MembersListComponent implements OnInit {
     const fullName = `${member.firstName} ${member.lastName}`.trim() || member.email;
 
     if (action === 'revoke') {
-      this.showBanner(
-        'warning',
-        `Revocar acceso — ${fullName}`,
-        'Esta acción eliminaría su acceso al sistema (fuera del alcance de esta maqueta).'
-      );
+      if (member.isProtected) {
+        this.showBanner(
+          'warning',
+          'No puedes dar de baja a este usuario',
+          'No tenés permisos para revocar el acceso de un administrador.'
+        );
+        return;
+      }
+      this.memberToDeactivate.set(member);
     } else if (action === 'profile') {
       this.showBanner(
         'info',
@@ -250,6 +257,44 @@ export class MembersListComponent implements OnInit {
         `Esta acción abriría la edición de datos de ${fullName} (fuera del alcance de esta maqueta).`
       );
     }
+  }
+
+  cancelDeactivate(): void {
+    this.memberToDeactivate.set(null);
+  }
+
+  confirmDeactivate(): void {
+    const target = this.memberToDeactivate();
+    if (!target || this.isDeactivating()) return;
+
+    this.isDeactivating.set(true);
+    this.membersService.deactivateUser(target.id).subscribe({
+      next: () => {
+        const updatedList = this.members().map(m => {
+          if (m.id === target.id) {
+            return { ...m, active: false };
+          }
+          return m;
+        });
+        this.members.set(updatedList);
+        this.isDeactivating.set(false);
+        this.memberToDeactivate.set(null);
+
+        const fullName = `${target.firstName} ${target.lastName}`.trim() || target.email;
+        this.showBanner(
+          'success',
+          'Acceso revocado',
+          `El usuario ${fullName} fue dado de baja correctamente.`
+        );
+      },
+      error: (err) => {
+        console.error('Error al dar de baja:', err);
+        this.isDeactivating.set(false);
+        this.memberToDeactivate.set(null);
+        const msg = err?.error?.message || 'Hubo un problema al dar de baja al usuario.';
+        this.showBanner('error', 'No se pudo dar de baja', msg);
+      }
+    });
   }
 
   onInviteClick(): void {

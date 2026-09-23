@@ -36,6 +36,7 @@ public class UserService {
 
 	public Collection<UserResponseDTO> findUsersByClubId(UUID clubId) {
 		return userRepository.findAllByClubId(clubId).stream()
+				.filter(user -> user.getRole() != UserRole.ADMIN_OVALTRACK)
 				.map(UserDTOMapper::toResponseDTO)
 				.toList();
 	}
@@ -70,12 +71,56 @@ public class UserService {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
+		if (Boolean.FALSE.equals(user.getActive())) {
+			throw new BusinessException("No se puede modificar el rol de un usuario dado de baja");
+		}
+
 		validateRoleAssignmentPermissions(newRole, authentication);
 		validateSelfDemotion(user, newRole, authentication);
 
 		user.setRole(newRole);
 		User savedUser = userRepository.save(user);
 		return UserDTOMapper.toResponseDTO(savedUser);
+	}
+
+	@Transactional
+	public UserResponseDTO deactivateUser(UUID userId, Authentication authentication) {
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+		if (Boolean.FALSE.equals(user.getActive())) {
+			throw new BusinessException("El usuario ya se encuentra dado de baja");
+		}
+
+		validateSelfDeactivation(user, authentication);
+		validateDeactivationPermissions(user, authentication);
+
+		user.setActive(false);
+		User savedUser = userRepository.save(user);
+		return UserDTOMapper.toResponseDTO(savedUser);
+	}
+
+	private void validateDeactivationPermissions(User user, Authentication authentication) {
+		boolean isSelf = authentication != null && user.getLoginEmail() != null
+				&& user.getLoginEmail().equalsIgnoreCase(authentication.getName());
+		boolean isTargetAdmin = user.getRole() == UserRole.ADMIN_CLUB || user.getRole() == UserRole.ADMIN_OVALTRACK;
+
+		if (!isSelf && isTargetAdmin && !isSuperAdmin(authentication)) {
+			throw new BusinessException("No tiene permisos para dar de baja a otro administrador");
+		}
+	}
+
+	private void validateSelfDeactivation(User user, Authentication authentication) {
+		if (authentication == null)
+			return;
+
+		boolean isSelf = user.getLoginEmail() != null
+				&& user.getLoginEmail().equalsIgnoreCase(authentication.getName());
+
+		if (isSelf && (user.getRole() == UserRole.ADMIN_CLUB || user.getRole() == UserRole.ADMIN_OVALTRACK || clubRepository.existsByAdminUserId(user.getId()))) {
+			throw new BusinessException(
+					"No puede darse de baja mientras sea el administrador designado de un club");
+		}
 	}
 
 	private void validateRoleAssignmentPermissions(UserRole newRole, Authentication authentication) {

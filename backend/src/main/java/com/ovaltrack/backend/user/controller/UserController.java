@@ -10,11 +10,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
@@ -87,7 +89,7 @@ public class UserController {
 			@ApiResponse(responseCode = "404", description = "Target user not found."),
 			@ApiResponse(responseCode = "409", description = "Business conflict (e.g. assigning ADMIN_OVALTRACK or self-demotion).")
 	})
-	@PutMapping("/{userId}/role")
+	@RequestMapping(value = {"/{userId}/role", "/{userId}"}, method = {RequestMethod.PUT, RequestMethod.PATCH})
 	@PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
 	public ResponseEntity<Object> updateUserRole(
 			@PathVariable UUID userId,
@@ -103,6 +105,29 @@ public class UserController {
 		try {
 			UserResponseDTO updatedUser = userService.updateUserRole(userId, request.role(), authentication);
 			return ResponseEntity.ok(updatedUser);
+		} catch (EntityNotFoundException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(java.util.Map.of("message", e.getMessage()));
+		} catch (BusinessException e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of("message", e.getMessage()));
+		}
+	}
+
+	@Operation(summary = "Deactivate user (Baja lógica)", description = "Deactivates the user access without deleting historical data.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "User deactivated successfully.", content = @Content(schema = @Schema(implementation = UserResponseDTO.class))),
+			@ApiResponse(responseCode = "401", description = "Unauthorized - Missing or invalid authentication token."),
+			@ApiResponse(responseCode = "403", description = "Forbidden - Caller does not have permissions to deactivate user."),
+			@ApiResponse(responseCode = "404", description = "Target user not found."),
+			@ApiResponse(responseCode = "409", description = "Business conflict (e.g. already deactivated or self-deactivation).")
+	})
+	@PatchMapping("/{userId}/baja")
+	@PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
+	public ResponseEntity<Object> deactivateUser(
+			@PathVariable UUID userId,
+			Authentication authentication) {
+		try {
+			UserResponseDTO deactivatedUser = userService.deactivateUser(userId, authentication);
+			return ResponseEntity.ok(deactivatedUser);
 		} catch (EntityNotFoundException e) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(java.util.Map.of("message", e.getMessage()));
 		} catch (BusinessException e) {

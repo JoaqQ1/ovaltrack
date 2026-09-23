@@ -151,10 +151,11 @@
             <button
               class="role-btn"
               type="button"
+              [disabled]="!member.active"
               [ngClass]="ROLE_META[member.role].cssClass"
               [style.--role-color]="ROLE_META[member.role].color"
               [style.--role-tint]="ROLE_META[member.role].tint"
-              (click)="toggleRoleMenu(member.id, $event)"
+              (click)="member.active ? toggleRoleMenu(member.id, $event) : null"
               aria-haspopup="listbox"
               [attr.aria-expanded]="openMenu()?.type === 'role' && openMenu()?.memberId === member.id"
             >
@@ -162,12 +163,14 @@
                 <span class="dot"></span>
                 <span class="name">{{ ROLE_META[member.role].label }}</span>
               </span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
-                <path d="M6 9l6 6 6-6" />
-              </svg>
+              @if (member.active) {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              }
             </button>
 
-            @if (openMenu()?.type === 'role' && openMenu()?.memberId === member.id) {
+            @if (member.active && openMenu()?.type === 'role' && openMenu()?.memberId === member.id) {
               <div class="role-menu" role="listbox">
                 @for (role of SELECTABLE_ROLES; track role) {
                   <button
@@ -207,7 +210,9 @@
               <div class="actions-menu">
                 <button class="action-opt" type="button" (click)="handleAction(member, 'profile', $event)">Ver perfil</button>
                 <button class="action-opt" type="button" (click)="handleAction(member, 'edit', $event)">Editar ficha</button>
-                <button class="action-opt danger" type="button" (click)="handleAction(member, 'revoke', $event)">Revocar acceso</button>
+                @if (member.active) {
+                  <button class="action-opt danger" type="button" (click)="handleAction(member, 'revoke', $event)">Revocar acceso</button>
+                }
               </div>
             }
           </div>
@@ -216,6 +221,33 @@
     </div>
   }
 </div>
+
+<!-- Modal de Confirmación de Baja Lógica -->
+@if (memberToDeactivate(); as target) {
+  <div class="modal-backdrop" (click)="cancelDeactivate()">
+    <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h3 id="modalTitle" class="modal-title">¿Dar de baja a este usuario?</h3>
+        <button class="close-btn" (click)="cancelDeactivate()" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Estás por revocar el acceso a la plataforma para
+          <strong>{{ target.firstName }} {{ target.lastName }}</strong> ({{ target.email }}).
+        </p>
+        <p class="modal-note">
+          Su historial de estadísticas, eventos de partido y datos de persona permanecerán intactos en la base de datos, pero el usuario no podrá volver a iniciar sesión.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" type="button" (click)="cancelDeactivate()" [disabled]="isDeactivating()">Cancelar</button>
+        <button class="btn btn-danger" type="button" (click)="confirmDeactivate()" [disabled]="isDeactivating()">
+          {{ isDeactivating() ? 'Procesando...' : 'Confirmar baja' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- Barra flotante de cambios pendientes -->
 @if (hasDirtyMembers()) {
