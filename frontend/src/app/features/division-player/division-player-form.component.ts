@@ -58,6 +58,10 @@ export class DivisionPlayerFormComponent implements OnInit {
     }
   }
 
+  get esCoach(): boolean {
+    return this.userContext.currentRole() === 'COACH_ANALYST';
+  }
+
   iniciarFormulario(): void {
     this.playerForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
