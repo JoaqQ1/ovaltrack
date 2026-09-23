@@ -1,4 +1,4 @@
-<section class="live-capture" aria-label="Captura en vivo del partido">
+<section class="live-capture" aria-label="Captura en vivo del partido" [attr.data-theme]="theme">
     @if (errorMessage) {
     <p class="live-capture__error" role="alert" aria-live="assertive">{{ errorMessage }}</p>
     }
@@ -39,6 +39,11 @@
                 (click)="undoLastEvent()">
                 <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
                 Deshacer
+            </button>
+            <button type="button" class="icon-btn"
+                (click)="toggleTheme()"
+                [attr.aria-label]="theme === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'">
+                <i [class]="theme === 'light' ? 'ti ti-moon' : 'ti ti-sun'" aria-hidden="true"></i>
             </button>
             <button type="button" class="icon-btn"
                 (click)="toggleHistory()"

@@ -16,22 +16,80 @@
 	--ot-size-body-md: calc(16px * var(--ot-live-scale));
 	--ot-size-label-caps: calc(12px * var(--ot-live-scale));
 	--ot-size-data-mono: calc(14px * var(--ot-live-scale));
-	--ot-touch-target-min: calc(48px * var(--ot-live-scale));
+	--ot-touch-target-min: calc(44px * var(--ot-live-scale));
 	--ot-gutter-match: calc(16px * var(--ot-live-scale));
 	--ot-margin-screen: calc(24px * var(--ot-live-scale));
 	--ot-stack-compact: calc(8px * var(--ot-live-scale));
 	--ot-stack-default: calc(16px * var(--ot-live-scale));
 	--ot-radius-default: calc(0.25rem * var(--ot-live-scale));
 	--ot-radius-lg: calc(0.5rem * var(--ot-live-scale));
+
+	/* Design Guide v1 Colors — Marca */
+	--navy-900: #0C2C47;
+	--navy-700: #17456B;
+	--navy-100: #E4EBF1;
+	--green-500: #57AD16;
+	--green-700: #3D8712;
+	--green-100: #E4F3D9;
+	--orange-500: #F5821F;
+	--orange-600: #D96A0A;
+	--orange-100: #FDE9D3;
+	--red-600: #C6403A;
+	--red-100: #FBE1DF;
+
+	/* Neutros — Modo claro (default en cancha) */
+	--bg: #F6F7F9;
+	--surface: #FFFFFF;
+	--surface-alt: #EEF1F4;
+	--text: #16191C;
+	--text-2: #5A6472;
+	--border: #DDE1E6;
+
+	/* Tipografías */
+	--font-manrope: 'Manrope', system-ui, sans-serif;
+	--font-space-grotesk: 'Space Grotesk', 'Courier New', monospace;
+
 	width: 100vw;
 	max-width: 100%;
 	height: 100dvh;
-	font-family: var(--ot-font-body);
-	background: var(--ot-bg-deep);
-	color: var(--ot-on-surface);
+	font-family: var(--font-manrope);
+	background: var(--bg);
+	color: var(--text);
 	border: 0;
 	border-radius: 0;
 	overflow: hidden;
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark),
+[data-theme="dark"] {
+	.live-capture {
+		--bg: #12161B;
+		--surface: #1B2027;
+		--surface-alt: #232931;
+		--text: #F2F4F6;
+		--text-2: #A7B0BA;
+		--border: #2E343C;
+	}
+}
+
+/* Override: si el elemento tiene data-theme, usa eso directamente sin media query */
+.live-capture[data-theme="dark"] {
+	--bg: #12161B;
+	--surface: #1B2027;
+	--surface-alt: #232931;
+	--text: #F2F4F6;
+	--text-2: #A7B0BA;
+	--border: #2E343C;
+}
+
+.live-capture[data-theme="light"] {
+	--bg: #F6F7F9;
+	--surface: #FFFFFF;
+	--surface-alt: #EEF1F4;
+	--text: #16191C;
+	--text-2: #5A6472;
+	--border: #DDE1E6;
 }
 
 .live-capture__header,
@@ -50,8 +108,8 @@
 	flex-wrap: wrap;
 	gap: var(--ot-stack-default);
 	padding: var(--ot-stack-default) var(--ot-margin-screen);
-	background: var(--ot-surface-card);
-	border-bottom: 1px solid var(--ot-outline);
+	background: var(--surface);
+	border-bottom: 1px solid var(--border);
 }
 
 .live-capture__brand {
@@ -71,14 +129,15 @@
 }
 
 .live-capture__brand-name {
-	font-family: var(--ot-font-headline);
+	font-family: var(--font-manrope);
 	font-weight: 800;
 	font-size: calc(17px * var(--ot-live-scale));
 	white-space: nowrap;
+	color: var(--navy-900);
 }
 
 .live-capture__brand-accent {
-	color: var(--ot-primary);
+	color: var(--green-500);
 }
 
 .live-capture__scoreboard {
@@ -94,34 +153,39 @@
 }
 
 .live-capture__score {
-	font-family: var(--ot-font-headline);
-	font-weight: 800;
+	font-family: var(--font-manrope);
+	font-weight: 700;
 	font-size: var(--ot-size-headline-md);
 	min-width: 0;
 	overflow-wrap: anywhere;
 	text-align: center;
+	color: var(--text);
 }
 
 .live-capture__score-value {
-	color: var(--ot-label-muted);
+	font-family: var(--font-space-grotesk);
+	color: var(--text);
 	font-weight: 700;
+	font-variant-numeric: tabular-nums;
 }
 
 .live-capture__clock {
 	display: flex;
 	align-items: center;
 	gap: var(--ot-stack-compact);
-	background: var(--ot-bg-deep);
-	border: 1px solid var(--ot-outline);
+	background: var(--surface-alt);
+	border: 1px solid var(--border);
 	border-radius: var(--ot-radius-default);
 	padding: 6px 14px;
 }
 
 .live-capture__clock-time {
-	font-family: var(--ot-font-display);
+	font-family: var(--font-space-grotesk);
 	font-weight: 700;
 	font-size: calc(26px * var(--ot-live-scale));
 	letter-spacing: -0.02em;
+	color: var(--navy-900);
+	font-variant-numeric: tabular-nums;
 }
 
 .live-capture__actions {
@@ -137,32 +201,49 @@
 }
 
 .live-capture__sync--ok {
-	color: var(--ot-success);
+	color: var(--green-500);
 }
 
 .live-capture__sync--off {
-	color: var(--ot-warning);
+	color: var(--orange-500);
 }
 
 .icon-btn {
-	width: calc(34px * var(--ot-live-scale));
-	height: calc(34px * var(--ot-live-scale));
+	width: calc(40px * var(--ot-live-scale));
+	height: calc(40px * var(--ot-live-scale));
 	min-width: var(--ot-touch-target-min);
 	min-height: var(--ot-touch-target-min);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--ot-surface-raised);
-	border: none;
+	background: var(--surface-alt);
+	border: 1px solid var(--border);
 	border-radius: var(--ot-radius-lg);
-	color: var(--ot-on-surface);
+	color: var(--navy-900);
 	cursor: pointer;
+	font-weight: 600;
+	transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+	background: var(--navy-100);
+	border-color: var(--navy-700);
 }
 
 .btn--outline {
 	background: transparent;
-	border: 1px solid var(--ot-outline-soft);
-	color: var(--ot-on-surface);
+	border: 1px solid var(--navy-900);
+	color: var(--navy-900);
+	font-family: var(--font-manrope);
+	font-weight: 600;
+	padding: calc(8px * var(--ot-live-scale)) calc(16px * var(--ot-live-scale));
+	cursor: pointer;
+	border-radius: var(--ot-radius-lg);
+	transition: all 0.2s ease;
+}
+
+.btn--outline:hover {
+	background: var(--navy-100);
 }
 
 .live-capture__body {
@@ -186,41 +267,53 @@
 	justify-content: space-between;
 	min-height: 0;
 	overflow: hidden;
+	background: var(--surface);
+	border-left: 1px solid var(--border);
+	border-right: 1px solid var(--border);
+}
+
+.live-capture__number-column:first-of-type {
+	border-left: none;
+}
+
+.live-capture__number-column:last-of-type {
+	border-right: none;
 }
 
 .live-capture__number-circle {
-	width: calc(34px * var(--ot-live-scale));
-	height: calc(34px * var(--ot-live-scale));
+	width: calc(44px * var(--ot-live-scale));
+	height: calc(44px * var(--ot-live-scale));
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	border: 1px solid var(--ot-outline-soft);
-	background: var(--ot-surface-raised);
-	color: var(--ot-on-surface);
-	font-family: var(--ot-font-display);
-	font-size: calc(13px * var(--ot-live-scale));
+	border: 2px solid var(--border);
+	background: var(--surface-alt);
+	color: var(--text);
+	font-family: var(--font-space-grotesk);
+	font-size: calc(14px * var(--ot-live-scale));
 	font-weight: 600;
 	flex: 0 0 auto;
 	cursor: pointer;
-	transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+	transition: all 0.2s ease;
+	font-variant-numeric: tabular-nums;
 }
 
 .live-capture__number-column--own .live-capture__number-circle {
-	background: var(--ot-team-own-fill);
-	border-color: var(--ot-team-own-strong);
-	color: var(--ot-team-own);
+	background: var(--green-100);
+	border-color: var(--green-500);
+	color: var(--green-700);
 }
 
 .live-capture__number-column--rival .live-capture__number-circle {
-	background: var(--ot-team-rival-fill);
-	border-color: var(--ot-team-rival-strong);
-	color: var(--ot-team-rival);
+	background: var(--red-100);
+	border-color: var(--red-600);
+	color: var(--red-600);
 }
 
 .live-capture__number-circle:hover {
-	transform: translateY(-1px);
-	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.04);
+	transform: scale(1.08);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .live-capture__number-circle:disabled {
@@ -237,6 +330,7 @@
 	min-height: 0;
 	height: 100%;
 	overflow: hidden;
+	background: var(--bg);
 }
 
 .event-catalog__category {
@@ -247,12 +341,12 @@
 }
 
 .event-catalog__label {
-	font-family: var(--ot-font-body);
+	font-family: var(--font-manrope);
 	font-weight: 700;
 	font-size: var(--ot-size-label-caps);
 	letter-spacing: 0.05em;
 	text-transform: uppercase;
-	color: var(--ot-label-muted);
+	color: var(--text-2);
 	margin: 0 0 var(--ot-stack-compact);
 }
 
@@ -271,57 +365,210 @@
 	align-items: center;
 	justify-content: center;
 	text-align: center;
-	padding: calc(14px * var(--ot-live-scale)) calc(10px * var(--ot-live-scale));
-	background: var(--ot-surface-raised);
-	border: 1px solid transparent;
-	border-radius: var(--ot-radius-default);
-	font-family: var(--ot-font-body);
-	font-weight: 500;
-	font-size: calc(14px * var(--ot-live-scale));
-	color: var(--ot-on-surface);
+	padding: calc(12px * var(--ot-live-scale)) calc(10px * var(--ot-live-scale));
+	background: var(--surface);
+	border: 2px solid var(--border);
+	border-radius: var(--ot-radius-lg);
+	font-family: var(--font-manrope);
+	font-weight: 600;
+	font-size: calc(13px * var(--ot-live-scale));
+	color: var(--text);
 	cursor: pointer;
 	min-width: 0;
 	overflow-wrap: anywhere;
+	transition: all 0.2s ease;
 }
 
-.event-chip--success { border-color: var(--ot-success); }
-.event-chip--danger { background: var(--ot-error-bg); border-color: var(--ot-error); }
-.event-chip--warning { background: var(--ot-tertiary-bg); border-color: var(--ot-tertiary); }
-.event-chip:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
-.event-chip--selected { outline: 2px solid currentColor; opacity: 1; }
+.event-chip:hover {
+	background: var(--surface-alt);
+	border-color: var(--navy-900);
+}
+
+.event-chip--success {
+	background: var(--green-100);
+	border-color: var(--green-500);
+	color: var(--green-700);
+}
+
+.event-chip--success:hover {
+	background: var(--green-500);
+	color: #FFFFFF;
+}
+
+.event-chip--danger {
+	background: var(--red-100);
+	border-color: var(--red-600);
+	color: var(--red-600);
+}
+
+.event-chip--danger:hover {
+	background: var(--red-600);
+	color: #FFFFFF;
+}
+
+.event-chip--warning {
+	background: var(--orange-100);
+	border-color: var(--orange-500);
+	color: var(--orange-600);
+}
+
+.event-chip--warning:hover {
+	background: var(--orange-500);
+	color: #FFFFFF;
+}
+
+.event-chip:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+.event-chip--selected {
+	background: var(--navy-900);
+	border-color: var(--navy-900);
+	color: #FFFFFF;
+	box-shadow: 0 0 0 3px var(--navy-100);
+}
 
 .history {
 	padding: var(--ot-margin-screen) calc(18px * var(--ot-live-scale));
-	background: var(--ot-surface-card);
-	border-left: 1px solid var(--ot-outline);
+	background: var(--surface);
+	border-left: 1px solid var(--border);
 	min-height: 0;
 	overflow: auto;
 }
 
 .history__label {
-	font-family: var(--ot-font-body);
+	font-family: var(--font-manrope);
 	font-weight: 700;
 	font-size: var(--ot-size-label-caps);
 	letter-spacing: 0.05em;
 	text-transform: uppercase;
-	color: var(--ot-label-muted);
+	color: var(--text-2);
 	margin: 0 0 calc(12px * var(--ot-live-scale));
 }
 
-.history__empty { margin: 0; color: var(--ot-on-surface-muted); font-size: calc(13px * var(--ot-live-scale)); line-height: 1.45; }
-.history__item { display: flex; flex-direction: column; padding: calc(10px * var(--ot-live-scale)) 0; border-bottom: 1px solid var(--ot-outline); gap: calc(6px * var(--ot-live-scale)); }
-.history__item:last-child { border-bottom: none; }
-.history__meta { display: flex; align-items: center; justify-content: space-between; gap: calc(8px * var(--ot-live-scale)); }
-.history__time { font-family: var(--ot-font-display); font-weight: 500; font-size: var(--ot-size-data-mono); color: var(--ot-primary); }
-.history__button { border: 1px solid var(--ot-outline); background: var(--ot-surface-raised); color: var(--ot-on-surface); border-radius: 999px; width: var(--ot-touch-target-min); height: var(--ot-touch-target-min); display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: calc(14px * var(--ot-live-scale)); cursor: pointer; }
-.history__desc { font-size: calc(13px * var(--ot-live-scale)); color: var(--ot-on-surface-muted); overflow-wrap: anywhere; }
+.history__empty {
+	margin: 0;
+	color: var(--text-2);
+	font-size: calc(13px * var(--ot-live-scale));
+	line-height: 1.45;
+	font-family: var(--font-manrope);
+}
 
-.possession-bar { display: flex; gap: var(--ot-stack-compact); padding: var(--ot-stack-default) var(--ot-margin-screen); background: var(--ot-surface-card); border-top: 1px solid var(--ot-outline); flex: 0 0 auto; }
-.possession-bar__btn { flex: 1; min-height: var(--ot-touch-target-min); padding: calc(16px * var(--ot-live-scale)); border: none; border-radius: var(--ot-radius-lg); font-family: var(--ot-font-body); font-weight: 700; font-size: calc(15px * var(--ot-live-scale)); letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; background: var(--ot-possession-inactive-bg); color: var(--ot-possession-inactive-fg); }
-.possession-bar__btn--own.is-active { background: var(--ot-possession-own); color: var(--ot-possession-own-fg); }
-.possession-bar__btn--neutral.is-active { background: var(--ot-possession-neutral); color: var(--ot-possession-neutral-fg); }
-.possession-bar__btn--opponent.is-active { background: var(--ot-possession-rival); color: var(--ot-possession-rival-fg); }
-.icon-btn:focus-visible, .btn:focus-visible, .event-chip:focus-visible, .history__button:focus-visible, .possession-bar__btn:focus-visible { outline: calc(2px * var(--ot-live-scale)) solid var(--ot-primary); outline-offset: calc(2px * var(--ot-live-scale)); }
+.history__item {
+	display: flex;
+	flex-direction: column;
+	padding: calc(10px * var(--ot-live-scale)) 0;
+	border-bottom: 1px solid var(--border);
+	gap: calc(6px * var(--ot-live-scale));
+}
+
+.history__item:last-child {
+	border-bottom: none;
+}
+
+.history__meta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: calc(8px * var(--ot-live-scale));
+}
+
+.history__time {
+	font-family: var(--font-space-grotesk);
+	font-weight: 600;
+	font-size: var(--ot-size-data-mono);
+	color: var(--green-700);
+	font-variant-numeric: tabular-nums;
+}
+
+.history__button {
+	border: 1px solid var(--border);
+	background: var(--surface-alt);
+	color: var(--text);
+	border-radius: 999px;
+	width: var(--ot-touch-target-min);
+	height: var(--ot-touch-target-min);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	font-size: calc(14px * var(--ot-live-scale));
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.history__button:hover {
+	background: var(--navy-100);
+	border-color: var(--navy-700);
+}
+
+.history__desc {
+	font-size: calc(13px * var(--ot-live-scale));
+	color: var(--text);
+	overflow-wrap: anywhere;
+	font-family: var(--font-manrope);
+}
+
+.possession-bar {
+	display: flex;
+	gap: var(--ot-stack-compact);
+	padding: var(--ot-stack-default) var(--ot-margin-screen);
+	background: var(--surface);
+	border-top: 1px solid var(--border);
+	flex: 0 0 auto;
+}
+
+.possession-bar__btn {
+	flex: 1;
+	min-height: var(--ot-touch-target-min);
+	padding: calc(12px * var(--ot-live-scale)) calc(16px * var(--ot-live-scale));
+	border: 2px solid var(--border);
+	border-radius: var(--ot-radius-lg);
+	font-family: var(--font-manrope);
+	font-weight: 700;
+	font-size: calc(14px * var(--ot-live-scale));
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	cursor: pointer;
+	background: var(--surface-alt);
+	color: var(--text-2);
+	transition: all 0.2s ease;
+}
+
+.possession-bar__btn:hover {
+	background: var(--navy-100);
+	border-color: var(--navy-700);
+	color: var(--navy-900);
+}
+
+.possession-bar__btn--own.is-active {
+	background: var(--green-500);
+	color: #FFFFFF;
+	border-color: var(--green-500);
+}
+
+.possession-bar__btn--neutral.is-active {
+	background: var(--navy-700);
+	color: #FFFFFF;
+	border-color: var(--navy-700);
+}
+
+.possession-bar__btn--opponent.is-active {
+	background: var(--red-600);
+	color: #FFFFFF;
+	border-color: var(--red-600);
+}
+
+.icon-btn:focus-visible,
+.btn:focus-visible,
+.event-chip:focus-visible,
+.history__button:focus-visible,
+.possession-bar__btn:focus-visible {
+	outline: calc(2px * var(--ot-live-scale)) solid var(--navy-900);
+	outline-offset: calc(2px * var(--ot-live-scale));
+}
 
 @media (max-width: 991px) {
 	.live-capture__body {
@@ -353,18 +600,11 @@
 	}
 }
 
-/*
- * Este breakpoint queda acá a propósito.
- * Angular scopea los selectores de este archivo agregándoles un atributo
- * único, lo que les da más especificidad que los selectores "planos" del
- * CSS global. Si el mismo breakpoint se define en ambos archivos, el de
- * acá siempre gana — así que definir el override final de mobile en
- * Las reglas globales no tienen efecto real por debajo de 991px.
- */
 @media (max-width: 768px) {
 	.live-capture__header {
 		align-items: stretch;
 		gap: calc(var(--ot-stack-compact) * 1.5);
+		flex-direction: column;
 	}
 
 	.live-capture__brand {
@@ -378,6 +618,7 @@
 		position: static;
 		transform: none;
 		width: 100%;
+		order: 2;
 	}
 
 	.live-capture__score {
@@ -394,49 +635,48 @@
 	.live-capture__actions {
 		width: 100%;
 		justify-content: stretch;
+		order: 3;
+		gap: calc(6px * var(--ot-live-scale));
 	}
 
-	.live-capture__actions .btn {
+	.live-capture__actions .btn--outline {
 		flex: 1 1 0;
 		justify-content: center;
 		min-width: 0;
+		padding: calc(8px * var(--ot-live-scale)) calc(12px * var(--ot-live-scale));
+		font-size: calc(12px * var(--ot-live-scale));
 	}
 
 	.live-capture__body {
-		/*
-		 * En celulares reales las columnas de números pasan a ser tiras
-		 * horizontales scrolleables en vez de columnas verticales
-		 * apretadas, así los círculos pueden tener un tamaño tocable
-		 * decente sin robarle ancho al catálogo de eventos.
-		 */
 		grid-template-columns: minmax(0, 1fr);
 		grid-template-rows: auto minmax(0, 1fr) auto auto;
 	}
 
 	.live-capture__number-column {
-		/* De columna vertical a fila horizontal scrolleable */
 		flex-direction: row;
 		justify-content: flex-start;
 		overflow-x: auto;
 		overflow-y: hidden;
 		padding: calc(var(--ot-margin-screen) * 0.35) var(--ot-margin-screen);
 		gap: calc(8px * var(--ot-live-scale));
-		/* Evita que el scroll horizontal rebote feo al llegar al final en iOS */
 		-webkit-overflow-scrolling: touch;
+		border: none;
+		background: var(--bg);
 	}
 
 	.live-capture__number-column--own {
 		grid-row: 1;
+		border-bottom: 1px solid var(--border);
 	}
 
-	.live-capture__number-column--opponent {
+	.live-capture__number-column--rival {
 		grid-row: 3;
+		border-top: 1px solid var(--border);
 	}
 
 	.event-catalog {
 		grid-row: 2;
 		padding-inline: calc(var(--ot-margin-screen) * 0.75);
-		/* El contenido puede ser más alto que la pantalla en un celular; que scrollee en vez de recortarse */
 		overflow-y: auto;
 	}
 
@@ -444,32 +684,35 @@
 		grid-row: 4;
 		grid-column: 1;
 		max-height: 30vh;
+		border: none;
+		border-top: 1px solid var(--border);
 	}
 
 	.live-capture__number-circle {
-		/*
-		 * En fila horizontal hay lugar para respetar el tamaño táctil
-		 * mínimo que ya definís para el resto de los botones, en vez del
-		 * tamaño reducido pensado para la columna vertical angosta.
-		 */
 		width: var(--ot-touch-target-min);
 		height: var(--ot-touch-target-min);
 		font-size: var(--ot-size-body-md);
 	}
 
 	.event-catalog__grid {
-		grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(132px * var(--ot-live-scale))), 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(120px * var(--ot-live-scale))), 1fr));
 		gap: calc(10px * var(--ot-live-scale));
 	}
 
 	.possession-bar {
 		flex-direction: row;
 		padding-inline: calc(var(--ot-margin-screen) * 0.75);
+		gap: calc(6px * var(--ot-live-scale));
 	}
 
 	.possession-bar__btn {
 		min-width: 0;
 		padding-inline: calc(8px * var(--ot-live-scale));
-		font-size: calc(12px * var(--ot-live-scale));
+		font-size: calc(11px * var(--ot-live-scale));
+	}
+
+	.icon-btn {
+		min-width: 44px;
+		min-height: 44px;
 	}
 }

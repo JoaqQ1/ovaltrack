@@ -102,9 +102,19 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   history: HistoryItem[] = [];
   errorMessage = '';
   isLoading = true;
+  theme: 'light' | 'dark' = 'light';
   private events: LocalMatchEvent[] = [];
 
   ngOnInit(): void {
+    // Cargar tema guardado o detectar preferencia del sistema
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      this.theme = savedTheme;
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      this.theme = 'dark';
+    }
+    this.applyTheme(this.theme);
+
     const matchId = this.route?.snapshot.paramMap.get('matchId');
     if (!matchId) {
       this.errorMessage = 'No se indicó un partido válido.';
@@ -162,6 +172,16 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   toggleHistory(): void {
     this.historyVisible = !this.historyVisible;
+  }
+
+  toggleTheme(): void {
+    this.theme = this.theme === 'light' ? 'dark' : 'light';
+    this.applyTheme(this.theme);
+    localStorage.setItem('theme', this.theme);
+  }
+
+  private applyTheme(theme: 'light' | 'dark'): void {
+    document.documentElement.setAttribute('data-theme', theme);
   }
 
   /**
