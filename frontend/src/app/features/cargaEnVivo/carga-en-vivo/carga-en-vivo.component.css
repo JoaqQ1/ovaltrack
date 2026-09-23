@@ -562,6 +562,13 @@
 	color: var(--navy-text);
 }
 
+.possession-bar__btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+	pointer-events: none;
+	filter: grayscale(0.7);
+}
+
 .possession-bar__btn--own.is-active {
 	background: var(--green-500);
 	color: #FFFFFF;

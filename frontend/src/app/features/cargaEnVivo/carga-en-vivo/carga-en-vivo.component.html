@@ -167,7 +167,8 @@
             [class.possession-bar__btn--opponent]="possession === 'OPPONENT'"
             [class.is-active]="currentPossession === possession"
             [attr.aria-pressed]="currentPossession === possession"
-            (click)="selectPossession(possession)">
+            (click)="selectPossession(possession)"
+            [disabled]="pendingSelection">
             {{ possession === 'OWN' ? 'Propia' : possession === 'OPPONENT' ?
             'Rival' : 'Neutral' }}
         </button>
