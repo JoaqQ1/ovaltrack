@@ -1,13 +1,16 @@
-<section class="live-capture" aria-label="Captura en vivo del partido" [attr.data-theme]="theme">
+<section class="live-capture" aria-label="Captura en vivo del partido"
+    [attr.data-theme]="theme">
     @if (errorMessage) {
-    <p class="live-capture__error" role="alert" aria-live="assertive">{{ errorMessage }}</p>
+    <p class="live-capture__error" role="alert" aria-live="assertive">{{
+        errorMessage }}</p>
     }
     @if (isLoading) {
-    <p class="live-capture__loading" role="status" aria-live="polite">Cargando partido...</p>
+    <p class="live-capture__loading" role="status" aria-live="polite">Cargando
+        partido...</p>
     }
     <header class="live-capture__header">
         <div class="live-capture__brand">
-            <img class="live-capture__brand-icon" 
+            <img class="live-capture__brand-icon"
                 [src]="theme === 'light' ? 'assets/brand/OvalTrack-fondo-claro.png' : 'assets/brand/OvalTrack-fondo-oscuro.png'"
                 alt="OvalTrack">
         </div>
@@ -44,13 +47,16 @@
             <button type="button" class="icon-btn"
                 (click)="toggleTheme()"
                 [attr.aria-label]="theme === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'">
-                <i [class]="theme === 'light' ? 'ti ti-moon' : 'ti ti-sun'" aria-hidden="true"></i>
+                <i [class]="theme === 'light' ? 'ti ti-moon' : 'ti ti-sun'"
+                    aria-hidden="true"></i>
             </button>
             <button type="button" class="icon-btn"
                 (click)="toggleHistory()"
                 [attr.aria-label]="historyVisible ? 'Ocultar historial' : 'Mostrar historial'"
                 [attr.aria-expanded]="historyVisible">
-                <i [class]="historyVisible ? 'ti ti-history-off' : 'ti ti-history'" aria-hidden="true"></i>
+                <i
+                    [class]="historyVisible ? 'ti ti-history-off' : 'ti ti-history'"
+                    aria-hidden="true"></i>
             </button>
             <i
                 class="ti live-capture__sync"
@@ -65,8 +71,12 @@
     </header>
 
     <div class="live-capture__body"
-        [class.live-capture__body--history-hidden]="!historyVisible" role="main">
+        [class.live-capture__body--history-hidden]="!historyVisible"
+        [class.live-capture__body--home-hidden]="!pendingSelection?.homeEnabled"
+        [class.live-capture__body--away-hidden]="!pendingSelection?.awayEnabled"
+        role="main">
 
+        @if (pendingSelection?.homeEnabled) {
         <aside
             class="live-capture__number-column live-capture__number-column--own"
             aria-label="Jugadores del equipo propio">
@@ -79,8 +89,10 @@
             </button>
             }
         </aside>
+        }
 
-        <div class="event-catalog" role="region" aria-label="Catálogo de eventos">
+        <div class="event-catalog" role="region"
+            aria-label="Catálogo de eventos">
 
             @for (category of categories; track category.name) {
             <div class="event-catalog__category">
@@ -105,6 +117,7 @@
             }
         </div>
 
+        @if (pendingSelection?.awayEnabled) {
         <aside
             class="live-capture__number-column live-capture__number-column--rival"
             aria-label="Jugadores del equipo rival">
@@ -117,6 +130,7 @@
             </button>
             }
         </aside>
+        }
 
         @if (historyVisible) {
         <aside class="history" aria-label="Historial de eventos">
@@ -154,7 +168,8 @@
             [class.is-active]="currentPossession === possession"
             [attr.aria-pressed]="currentPossession === possession"
             (click)="selectPossession(possession)">
-            {{ possession === 'OWN' ? 'Propia' : possession === 'OPPONENT' ? 'Rival' : 'Neutral' }}
+            {{ possession === 'OWN' ? 'Propia' : possession === 'OPPONENT' ?
+            'Rival' : 'Neutral' }}
         </button>
         }
     </footer>
