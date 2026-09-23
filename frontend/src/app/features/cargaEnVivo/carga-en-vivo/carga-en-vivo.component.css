@@ -28,6 +28,7 @@
 	--navy-900: #0C2C47;
 	--navy-700: #17456B;
 	--navy-100: #E4EBF1;
+	--navy-text: var(--navy-900);
 	--green-500: #57AD16;
 	--green-700: #3D8712;
 	--green-100: #E4F3D9;
@@ -68,6 +69,7 @@
 	--text: #F2F4F6;
 	--text-2: #A7B0BA;
 	--border: #2E343C;
+	--navy-text: var(--navy-100);
 }
 
 .live-capture[data-theme="light"] {
@@ -76,7 +78,7 @@
 	--surface-alt: #EEF1F4;
 	--text: #16191C;
 	--text-2: #5A6472;
-	--border: #DDE1E6;
+	--border: #949393;
 }
 
 .live-capture__header,
@@ -120,7 +122,7 @@
 	font-weight: 800;
 	font-size: calc(17px * var(--ot-live-scale));
 	white-space: nowrap;
-	color: var(--navy-900);
+	color: var(--navy-text);
 }
 
 .live-capture__brand-accent {
@@ -171,7 +173,7 @@
 	font-weight: 700;
 	font-size: calc(26px * var(--ot-live-scale));
 	letter-spacing: -0.02em;
-	color: var(--navy-900);
+	color: var(--navy-text);
 	font-variant-numeric: tabular-nums;
 }
 
@@ -206,7 +208,7 @@
 	background: var(--surface-alt);
 	border: 1px solid var(--border);
 	border-radius: var(--ot-radius-lg);
-	color: var(--navy-900);
+	color: var(--navy-text);
 	cursor: pointer;
 	font-weight: 600;
 	transition: all 0.2s ease;
@@ -220,7 +222,7 @@
 .btn--outline {
 	background: transparent;
 	border: 1px solid var(--navy-900);
-	color: var(--navy-900);
+	color: var(--navy-text);
 	font-family: var(--font-manrope);
 	font-weight: 600;
 	padding: calc(8px * var(--ot-live-scale)) calc(16px * var(--ot-live-scale));
@@ -557,7 +559,7 @@
 .possession-bar__btn:hover {
 	background: var(--navy-100);
 	border-color: var(--navy-700);
-	color: var(--navy-900);
+	color: var(--navy-text);
 }
 
 .possession-bar__btn--own.is-active {
