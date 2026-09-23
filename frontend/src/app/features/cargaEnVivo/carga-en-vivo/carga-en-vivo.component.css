@@ -370,8 +370,8 @@
 	border: 2px solid var(--border);
 	border-radius: var(--ot-radius-lg);
 	font-family: var(--font-manrope);
-	font-weight: 600;
-	font-size: calc(13px * var(--ot-live-scale));
+	font-weight: 1000;
+	font-size: calc(25px * var(--ot-live-scale));
 	color: var(--text);
 	cursor: pointer;
 	min-width: 0;
