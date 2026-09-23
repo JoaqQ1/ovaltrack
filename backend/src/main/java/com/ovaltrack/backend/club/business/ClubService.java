@@ -78,6 +78,10 @@ public class ClubService {
         clubRepository.deleteById(clubId);
     }
 
+    public boolean existsByAdminUserId(UUID userId) {
+        return clubRepository.existsByAdminUserId(userId);
+    }
+
     public ClubResponseDTO findClubByAdminUserId(UUID adminUserId) {
         return ClubDTOMapper.toResponseDTO(clubRepository.findByAdminUserId(adminUserId).orElse(null));
     }
