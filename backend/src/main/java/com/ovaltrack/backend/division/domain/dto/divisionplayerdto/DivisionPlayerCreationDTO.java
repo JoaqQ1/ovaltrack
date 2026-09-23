@@ -1,5 +1,6 @@
 package com.ovaltrack.backend.division.domain.dto.divisionplayerdto;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import jakarta.validation.constraints.NotBlank;
@@ -9,12 +10,21 @@ public record DivisionPlayerCreationDTO(
         @NotNull(message = "El ID de la division es obligatorio")
         UUID divisionId,
         
-        @NotNull(message = "El ID de la persona a asociar es obligatorio")
         UUID personId,
+
+        String firstName,
+
+        String lastName,
+
+        LocalDate birthDate,
+
+        String contactEmail,
+
+        String contactPhone,
         
         Integer jerseyNumber,
 
-        @NotBlank (message = "La posicion del jugador es obligatoria")
+        @NotBlank(message = "La posicion del jugador es obligatoria")
         String position
 ) {
 }

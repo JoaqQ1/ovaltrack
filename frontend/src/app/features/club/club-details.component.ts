@@ -1,51 +1,67 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
 import { ClubService } from 'src/app/services/club.service';
+import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
 
 @Component({
-  selector: 'app-club-form',
+  selector: 'app-club-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
-  templateUrl: './club-details.component.html'
+  imports: [CommonModule, FormsModule, NavbarAuthComponent],
+  templateUrl: './club-details.component.html',
+  styleUrls: ['./club-details.component.css']
 })
 export class ClubDetailsComponent implements OnInit {
   private clubService = inject(ClubService);
-  private router = inject(Router);
-
-  club = {
-    name: '',
-    city: '',
-    adminUserId: ''
-  };
-
-  usuarios: any[] = [];
-  mensajeError = '';
+  
+  club: any = null;
+  cargando: boolean = true;
+  error: string = '';
+  exito: string = '';
 
   ngOnInit(): void {
-    this.cargarUsuarios();
+    this.obtenerMiClub();
   }
 
-  cargarUsuarios() {
-    this.clubService.getUsuarios().subscribe({
+  obtenerMiClub() {
+    this.clubService.getMyClub().subscribe({
       next: (data) => {
-        this.usuarios = data;
+        this.club = data;
+        this.cargando = false;
       },
       error: (err) => {
-        console.error('Error al cargar los usuarios', err);
+        console.error('Error al cargar la información del club', err);
+        this.error = 'No se pudo cargar la información de tu club.';
+        this.cargando = false;
       }
     });
   }
 
-  guardarClub() {
-    this.clubService.createClub(this.club).subscribe({
-      next: () => {
-        this.router.navigate(['/clubes']);
+  getInitial(name: string): string {
+    if (!name) return 'C';
+    return name.charAt(0).toUpperCase();
+  }
+
+  guardarCambios() {
+    this.error = '';
+    this.exito = '';
+    if (!this.club.name) {
+      this.error = 'El nombre del club es obligatorio';
+      return;
+    }
+    
+    this.clubService.updateClub(this.club.id, this.club).subscribe({
+      next: (data) => {
+        this.exito = 'Información actualizada correctamente';
+        this.club = data;
       },
       error: (err) => {
-        console.error('Error al guardar el club', err);
-        this.mensajeError = err.error || 'No se pudo guardar el club.';
+        console.error('Error al actualizar club', err);
+        if (err.status === 409) {
+           this.error = err.error || 'Conflicto al actualizar la información del club.';
+        } else {
+           this.error = 'Error al actualizar el club. Intenta nuevamente.';
+        }
       }
     });
   }

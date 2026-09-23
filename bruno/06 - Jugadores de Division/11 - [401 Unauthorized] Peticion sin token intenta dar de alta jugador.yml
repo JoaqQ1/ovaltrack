@@ -1,0 +1,34 @@
+info:
+  name: 11 - [401 Unauthorized] Peticion sin token intenta dar de alta jugador
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{baseUrl}}/players"
+  body:
+    type: json
+    data: |-
+      {
+        "divisionId": "{{divisionId}}",
+        "firstName": "Juan",
+        "lastName": "Imhoff",
+        "jerseyNumber": 11,
+        "position": "Wing"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 401 Unauthorized cuando la peticion no tiene token", function() {
+          expect(res.getStatus()).to.equal(401);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

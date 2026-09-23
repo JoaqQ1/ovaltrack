@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from 'src/app/features/auth/services/auth.service';
+import { UserContextService } from 'src/app/core/services/user-context.service';
 
 @Component({
   selector: 'app-navbar-auth',
@@ -12,9 +13,14 @@ import { AuthService } from 'src/app/features/auth/services/auth.service';
         <!-- Brand Link al Home -->
         <a routerLink="/home" class="text-decoration-none d-flex align-items-center gap-2">
           <div class="brand-icon d-flex align-items-center justify-content-center">
-            O
+            {{ userContextService.currentClub()?.name ? userContextService.currentClub()!.name.charAt(0).toUpperCase() : 'O' }}
           </div>
-          <span class="fw-bold text-white tracking-wide fs-5">OvalTrack</span>
+          <div class="d-flex flex-column">
+            <span class="fw-bold text-white tracking-wide fs-5" style="line-height: 1.1;">OvalTrack</span>
+            @if (userContextService.currentClub()?.name) {
+              <small class="text-secondary" style="font-size: 0.72rem; line-height: 1;">{{ userContextService.currentClub()!.name }}</small>
+            }
+          </div>
         </a>
 
         <!-- Acciones a la derecha -->
@@ -123,6 +129,7 @@ import { AuthService } from 'src/app/features/auth/services/auth.service';
 })
 export class NavbarAuthComponent {
   private readonly authService = inject(AuthService);
+  readonly userContextService = inject(UserContextService);
   readonly currentUser = this.authService.currentUser;
 
   logout(): void {

@@ -1,6 +1,7 @@
-import { Component, computed, OnDestroy } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../auth/services/auth.service';
+import { UserContextService } from '../../core/services/user-context.service';
 import { CurrentUserSession, UserRole } from '../auth/types/auth.types';
 import { NavigationCard } from './types/home.types';
 
@@ -12,15 +13,12 @@ import { NavigationCard } from './types/home.types';
   styleUrl: './home.component.css'
 })
 export class HomeComponent {
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  readonly userContextService = inject(UserContextService);
 
-  currentUser: CurrentUserSession | null = null;
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {
-    this.currentUser = this.authService.currentUser();
-    console.log(this.currentUser);
-  }
+  readonly currentUser = this.authService.currentUser;
+
   // Catálogo de secciones protegidas con control de roles
   private readonly allNavigationCards: NavigationCard[] = [
     {
@@ -36,7 +34,7 @@ export class HomeComponent {
       description: 'Consulta de categorías, listados de equipos y gestión de convocatorias.',
       route: '/divisions',
       badge: 'Gestión',
-      allowedRoles: ['ADMIN', 'COACH_ANALYST', 'PLAYER', 'ADMIN_OVALTRACK'] as UserRole[],
+      allowedRoles: ['ADMIN_CLUB', 'COACH_ANALYST', 'PLAYER', 'ADMIN_OVALTRACK'] as UserRole[],
       icon: 'division'
     },
     {
@@ -64,10 +62,13 @@ export class HomeComponent {
       icon: 'player'
     }
   ];
+
+  readonly isPlayer = computed(() => this.currentUser()?.role === 'PLAYER');
+
   readonly visibleCards = computed(() => {
-    if (this.currentUser === null) return;
-    const role = this.currentUser?.role;
-    return this.allNavigationCards.filter(card => card.allowedRoles.includes(role));
+    const user = this.currentUser();
+    if (!user || user.role === 'PLAYER') return [];
+    return this.allNavigationCards.filter(card => card.allowedRoles.includes(user.role));
   });
 
   goToMembers(): void {
@@ -76,11 +77,9 @@ export class HomeComponent {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/auth/login']);
   }
 
   goToMatchSelection(): void {
     void this.router.navigate(['/match-selection']);
   }
-
 }

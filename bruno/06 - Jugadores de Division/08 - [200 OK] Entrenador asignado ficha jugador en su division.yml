@@ -1,0 +1,38 @@
+info:
+  name: 08 - [200 OK] Entrenador asignado ficha jugador en su division
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{baseUrl}}/players"
+  headers:
+    - name: Authorization
+      value: Bearer {{coachToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "divisionId": "{{divisionId}}",
+        "firstName": "Rodrigo",
+        "lastName": "Bruni",
+        "jerseyNumber": 8,
+        "position": "Octavo"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK cuando un entrenador asignado ficha en su division", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().position).to.equal("Octavo");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

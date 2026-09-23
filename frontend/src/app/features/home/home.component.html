@@ -1,14 +1,23 @@
 <!-- Navbar privado para usuarios autenticados -->
-@if (currentUser !== null) {
+@if (currentUser() !== null) {
   <nav class="navbar auth-navbar sticky-top px-3 py-2">
     <div class="container d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center gap-2">
         <div
           class="brand-icon d-flex align-items-center justify-content-center"
         >
-          O
+          {{ userContextService.currentClub()?.name ? userContextService.currentClub()!.name.charAt(0).toUpperCase() : 'O' }}
         </div>
-        <span class="fw-bold text-white fs-5 tracking-wide">OvalTrack</span>
+        <div class="d-flex flex-column">
+          <span class="fw-bold text-white fs-5 tracking-wide">
+            {{ userContextService.currentClub()?.name || 'OvalTrack' }}
+          </span>
+          @if (userContextService.currentClub()?.city) {
+            <small class="text-secondary" style="font-size: 0.75rem; line-height: 1;">
+              {{ userContextService.currentClub()!.city }}
+            </small>
+          }
+        </div>
       </div>
 
       <!-- Info de sesión y logout -->
@@ -16,7 +25,7 @@
         <div class="d-flex align-items-center gap-2">
           <span class="status-dot"></span>
           <span class="badge-role text-uppercase">{{
-            this.currentUser.role
+            currentUser()?.role
           }}</span>
         </div>
 
@@ -46,8 +55,8 @@
       </p>
     </header>
 
-    <!-- Si tiene un rol sin permisos asignados aún -->
-    @if (visibleCards()?.length === 0) {
+    <!-- Si tiene un rol sin permisos asignados aún o es PLAYER -->
+    @if (visibleCards().length === 0) {
       <section class="card-dark p-5 text-center my-4">
         <div
           class="icon-warning-wrapper mx-auto mb-3 d-flex align-items-center justify-content-center"
@@ -65,11 +74,18 @@
             <line x1="12" y1="16" x2="12.01" y2="16"></line>
           </svg>
         </div>
-        <h4 class="text-white fw-semibold">Cuenta pendiente de asignación</h4>
-        <p class="text-secondary mx-auto mb-0" style="max-width: 480px">
-          Tu usuario está registrado, pero un administrador del club aún debe
-          asignarte un rol deportivo o de gestión para habilitar las secciones.
-        </p>
+        @if (isPlayer()) {
+          <h4 class="text-white fw-semibold">Portal del Jugador en desarrollo</h4>
+          <p class="text-secondary mx-auto mb-0" style="max-width: 480px">
+            Próximamente podrás consultar tus convocatorias, estado de ficha médica y estadísticas personales de rendimiento en tu club.
+          </p>
+        } @else {
+          <h4 class="text-white fw-semibold">Cuenta pendiente de asignación</h4>
+          <p class="text-secondary mx-auto mb-0" style="max-width: 480px">
+            Tu usuario está registrado, pero un administrador del club aún debe
+            asignarte un rol deportivo o de gestión para habilitar las secciones.
+          </p>
+        }
       </section>
     } @else {
       <!-- Grid de tarjetas dinámicas según rol -->

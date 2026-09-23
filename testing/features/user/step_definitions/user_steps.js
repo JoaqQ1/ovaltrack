@@ -11,6 +11,23 @@ When('presiono el botón "Guardar" para registrar a cada usuario', async functio
   this.respuestasRegistro = [];
 
   for (const form of this.formulariosRegistro) {
+    // Intentar obtener el clubId del club creado previamente
+    let clubId = null;
+    const adminLoginRes = await fetch(`${BACKEND_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'admin_puerto@test.com', password: 'PassSegura123!' })
+    });
+    if (adminLoginRes.ok) {
+      const adminToken = (await adminLoginRes.json()).token;
+      const myClubRes = await fetch(`${BACKEND_URL}/club/my-club`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      if (myClubRes.ok) {
+        clubId = (await myClubRes.json()).id;
+      }
+    }
+
     const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -20,7 +37,8 @@ When('presiono el botón "Guardar" para registrar a cada usuario', async functio
         firstName: form.nombre,
         lastName: form.apellido,
         birthDate: form.fechaNacimiento,
-        role: form.rol
+        role: form.rol,
+        clubId: clubId
       })
     });
 
@@ -56,6 +74,31 @@ Then('los usuarios quedan registrados en el sistema', function () {
       typeof res.body.token,
       'string',
       `El usuario ${res.email} debe poseer un token válido generado por el sistema`
+    );
+  }
+});
+
+Then('el administrador {string} puede ver a todos en su lista de miembros del club', async function (adminEmail) {
+  const adminLoginRes = await fetch(`${BACKEND_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: adminEmail, password: 'PassSegura123!' })
+  });
+  assert.ok(adminLoginRes.ok, 'No se pudo iniciar sesión como administrador');
+  const adminToken = (await adminLoginRes.json()).token;
+
+  const membersRes = await fetch(`${BACKEND_URL}/club/my-club/members`, {
+    headers: { 'Authorization': `Bearer ${adminToken}` }
+  });
+  assert.ok(membersRes.ok, 'No se pudo obtener la lista de miembros del club');
+  
+  const members = await membersRes.json();
+  const membersEmails = members.map(m => m.email);
+
+  for (const form of this.formulariosRegistro) {
+    assert.ok(
+      membersEmails.includes(form.email),
+      `El usuario ${form.email} no aparece en la lista de miembros del club del administrador ${adminEmail}`
     );
   }
 });
