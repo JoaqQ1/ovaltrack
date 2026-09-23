@@ -60,19 +60,6 @@
 	overflow: hidden;
 }
 
-/* Modo oscuro */
-@media (prefers-color-scheme: dark),
-[data-theme="dark"] {
-	.live-capture {
-		--bg: #12161B;
-		--surface: #1B2027;
-		--surface-alt: #232931;
-		--text: #F2F4F6;
-		--text-2: #A7B0BA;
-		--border: #2E343C;
-	}
-}
-
 /* Override: si el elemento tiene data-theme, usa eso directamente sin media query */
 .live-capture[data-theme="dark"] {
 	--bg: #12161B;
@@ -281,9 +268,9 @@
 }
 
 .live-capture__number-circle {
-	width: calc(44px * var(--ot-live-scale));
-	height: calc(44px * var(--ot-live-scale));
-	border-radius: 50%;
+	width: calc(40px * var(--ot-live-scale));
+	height: calc(40px * var(--ot-live-scale));
+	border-radius: var(--ot-radius-lg);
 	display: flex;
 	align-items: center;
 	justify-content: center;
