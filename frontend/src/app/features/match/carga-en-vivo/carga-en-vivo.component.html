@@ -1,0 +1,145 @@
+<section class="live-capture">
+    @if (errorMessage) {
+    <p class="live-capture__error" role="alert">{{ errorMessage }}</p>
+    }
+    @if (isLoading) {
+    <p class="live-capture__loading" role="status">Cargando partido...</p>
+    }
+    <header class="live-capture__header">
+        <div class="live-capture__brand">
+            <svg class="live-capture__brand-icon" viewBox="0 0 24 24"
+                fill="none" aria-hidden="true">
+                <ellipse cx="12" cy="12" rx="9.5" ry="5.5"
+                    transform="rotate(-32 12 12)" stroke="currentColor"
+                    stroke-width="1.6" />
+            </svg>
+            <span class="live-capture__brand-name">OVAL<span
+                    class="live-capture__brand-accent">TRACK</span></span>
+        </div>
+
+        <div class="live-capture__scoreboard">
+            <span class="live-capture__score">
+                {{ homeTeam }}
+                <span class="live-capture__score-value">{{ scoreboard.home }}–{{
+                    scoreboard.away }}</span>
+                {{ awayTeam }}
+            </span>
+
+            <div class="live-capture__clock">
+                <span class="live-capture__clock-time">{{ gameClock }}</span>
+                <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="toggleClock()"
+                    [attr.aria-label]="pausaLabel">
+                    <i [class]="pausaIcon" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="live-capture__actions">
+            <button type="button" class="btn btn--outline">{{ periodLabel
+                }}</button>
+            <button type="button" class="btn btn--outline"
+                (click)="undoLastEvent()">
+                <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
+                Deshacer
+            </button>
+            <i
+                class="ti live-capture__sync"
+                [class.ti-cloud-check]="synchronized"
+                [class.ti-cloud-off]="!synchronized"
+                [class.live-capture__sync--ok]="synchronized"
+                [class.live-capture__sync--off]="!synchronized"
+                [attr.aria-label]="synchronized ? 'Sincronizado' : 'Sin conexión, guardando local'"
+                role="img"></i>
+        </div>
+    </header>
+
+    <div class="live-capture__body">
+
+        <aside
+            class="live-capture__number-column live-capture__number-column--own"
+            aria-label="Jugadores del equipo propio">
+            @for (numero of numeracionColumna; track numero) {
+            <button type="button" class="live-capture__number-circle"
+                [attr.aria-label]="'Seleccionar jugador ' + numero + ' del equipo propio'"
+                [disabled]="!pendingSelection?.homeEnabled"
+                (click)="onPlayerNumberTap(numero, 'OWN')">
+                {{ numero }}
+            </button>
+            }
+        </aside>
+
+        <div class="event-catalog">
+
+            @for (category of categories; track category.name) {
+            <div class="event-catalog__category">
+                <p class="event-catalog__label">{{ category.name }}</p>
+
+                <div class="event-catalog__grid">
+                    @for (event of category.events; track event.id) {
+                    <button
+                        type="button"
+                        class="event-chip"
+                        [class.event-chip--success]="eventVariant(event) === 'success'"
+                        [class.event-chip--danger]="eventVariant(event) === 'danger'"
+                        [class.event-chip--warning]="eventVariant(event) === 'warning'"
+                        [disabled]="pendingSelection !== null && pendingSelection.event.id !== event.id"
+                        [class.event-chip--selected]="pendingSelection?.event?.id === event.id"
+                        (click)="onEventTap(event)">
+                        {{ event.name }}
+                    </button>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+
+        <aside
+            class="live-capture__number-column live-capture__number-column--rival"
+            aria-label="Jugadores del equipo rival">
+            @for (numero of numeracionColumna; track numero) {
+            <button type="button" class="live-capture__number-circle"
+                [attr.aria-label]="'Seleccionar jugador ' + numero + ' del equipo rival'"
+                [disabled]="!pendingSelection?.awayEnabled"
+                (click)="onPlayerNumberTap(numero, 'OPPONENT')">
+                {{ numero }}
+            </button>
+            }
+        </aside>
+
+        <aside class="history">
+            <p class="history__label">Historial</p>
+
+            @for (item of history; track item.id) {
+            <div class="history__item">
+                <div class="history__meta">
+                    <span class="history__time">{{ item.minute }}</span>
+                    <button type="button" class="history__button"
+                        [attr.aria-label]="'Deshacer evento de ' + item.minute"
+                        (click)="undoHistoryEvent(item.id)">
+                        <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <span class="history__desc">{{ item.description }}</span>
+            </div>
+            }
+        </aside>
+    </div>
+
+    <footer class="possession-bar">
+        @for (possession of possessions; track possession) {
+        <button
+            type="button"
+            class="possession-bar__btn"
+            [class.possession-bar__btn--own]="possession === 'OWN'"
+            [class.possession-bar__btn--neutral]="possession === 'NEUTRAL'"
+            [class.possession-bar__btn--opponent]="possession === 'OPPONENT'"
+            [class.is-active]="currentPossession === possession"
+            (click)="selectPossession(possession)">
+            {{ possession }}
+        </button>
+        }
+    </footer>
+</section>
