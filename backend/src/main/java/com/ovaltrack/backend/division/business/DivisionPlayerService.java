@@ -77,13 +77,26 @@ public class DivisionPlayerService {
         throw new AccessDeniedException("Acceso denegado: solo el administrador del club o el entrenador de la división pueden realizar esta acción");
     }
 
-    public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivision(UUID divisionId) {
-        if (divisionService.findDivisionById(divisionId) == null) {
+    public Collection<DivisionPlayerResponseDTO> findActiveDivisionPlayersByDivision(UUID divisionId) {
+        if (divisionService.findDivisionEntityById(divisionId) == null) {
             throw new BusinessException("Division no encontrada");
         }
-        return divisionPlayerRepository.findDivisionPlayersByDivision(divisionId).stream()
+        return divisionPlayerRepository.findActiveDivisionPlayersByDivision(divisionId).stream()
                 .map(DivisionDTOMapper::toResponseDTO).toList();
     }
+
+    public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivisionIdAndPersonId(UUID divisionId, UUID personId) {
+        if (divisionService.findDivisionEntityById(divisionId) == null) {
+            throw new BusinessException("Division no encontrada");
+        }
+        if (personService.findPersonEntityById(personId) == null) {
+            throw new BusinessException("Persona no encontrada");
+        }
+        return divisionPlayerRepository.findDivisionPlayersByDivisionIdAndPersonId(divisionId, personId).stream()
+                .map(DivisionDTOMapper::toResponseDTO).toList();
+    }
+
+
 
     public DivisionPlayerResponseDTO findDivisionPlayerById(UUID divisionPlayerId) {
         DivisionPlayer result = divisionPlayerRepository.findById(divisionPlayerId).orElse(null);
