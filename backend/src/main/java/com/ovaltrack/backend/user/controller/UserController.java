@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
@@ -92,7 +91,7 @@ public class UserController {
 			@ApiResponse(responseCode = "404", description = "Target user not found."),
 			@ApiResponse(responseCode = "409", description = "Business conflict (e.g. assigning ADMIN_OVALTRACK or self-demotion).")
 	})
-	@RequestMapping(value = {"/{userId}/role", "/{userId}"}, method = {RequestMethod.PUT, RequestMethod.PATCH})
+	@PatchMapping("/{userId}/role")
 	@PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
 	public ResponseEntity<UserResponseDTO> updateUserRole(
 			@PathVariable UUID userId,

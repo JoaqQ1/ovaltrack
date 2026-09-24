@@ -136,7 +136,7 @@ public class UserService {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
-		if (Boolean.FALSE.equals(user.getActive())) {
+		if (user.isDeactivated()) {
 			throw new BusinessException("No se puede modificar el rol de un usuario dado de baja");
 		}
 
@@ -152,13 +152,13 @@ public class UserService {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
-		if (Boolean.FALSE.equals(user.getActive())) {
+		if (user.isDeactivated()) {
 			throw new BusinessException("El usuario ya se encuentra dado de baja");
 		}
 
 		userPermissionValidator.validateCanDeactivate(user, authentication);
 
-		user.setActive(false);
+		user.deactivate();
 		User savedUser = userRepository.save(user);
 		return UserDTOMapper.toResponseDTO(savedUser);
 	}

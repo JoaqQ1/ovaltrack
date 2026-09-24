@@ -33,7 +33,7 @@ export class MembersService {
   }
 
   updateUserRole(userId: string, newRole: UserRole): Observable<any> {
-    return this.http.put(`${this.baseUrl}/user/${userId}/role`, { role: newRole });
+    return this.http.patch(`${this.baseUrl}/user/${userId}/role`, { role: newRole });
   }
 
   deactivateUser(userId: string): Observable<BackendUserResponse> {

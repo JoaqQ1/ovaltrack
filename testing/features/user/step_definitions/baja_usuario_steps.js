@@ -49,7 +49,7 @@ Given('que el usuario {string} tiene el rol de administrador de club', async fun
 
   if (targetUser.role !== 'ADMIN_CLUB') {
     const roleRes = await fetch(`${BACKEND_URL}/user/${targetUser.id}/role`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${adminToken}`

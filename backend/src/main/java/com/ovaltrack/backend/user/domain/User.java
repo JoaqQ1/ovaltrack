@@ -62,4 +62,15 @@ public class User {
     public void setPassword(String password) {
         this.passwordHash = password;
     }
+
+    public boolean isDeactivated() {
+        return Boolean.FALSE.equals(this.active);
+    }
+
+    public void deactivate() {
+        if (isDeactivated()) {
+            throw new IllegalStateException("El usuario ya se encuentra dado de baja");
+        }
+        this.active = false;
+    }
 }
