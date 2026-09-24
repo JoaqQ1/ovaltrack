@@ -9,7 +9,7 @@ import {
   MatchFilter,
   MatchStatus,
   NewMatchDraft,
-} from '../types/live-capture.types';
+} from '../types/match.types';
 import { MatchService } from '../services/match.service';
 
 /**

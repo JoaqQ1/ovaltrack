@@ -10,9 +10,10 @@ import {
   LiveCapturePersistedState,
   LiveCaptureQuery,
   LocalMatchEvent,
-  Match,
-  MatchStatus,
 } from '../types/live-capture.types';
+import { Match } from '../types/match.types';
+import { MatchStatus } from '../types/match.types';
+import { environment } from '../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 
 const HOME_TEAM_NAME = 'PMRC';
@@ -96,7 +97,7 @@ export class LiveCaptureService {
     try {
       // Buscamos el partido directamente en PostgreSQL a través de Spring Boot
       const match = await firstValueFrom(
-        this.http.get<Match>(`http://localhost:8080/matches/${matchId}`)
+        this.http.get<Match>(`${environment.apiUrl}/matches/${matchId}`)
       );
       return match;
     } catch (err) {

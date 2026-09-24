@@ -5,8 +5,8 @@ import {
   LiveCaptureEventType,
   LiveCapturePersistedState,
   LocalMatchEvent,
-  Match,
 } from '../types/live-capture.types';
+import { Match } from '../types/match.types';
 
 export const MATCH_DATABASE_NAME = 'ovaltrack';
 export const MATCH_DATABASE_VERSION = 2;

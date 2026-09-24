@@ -1,19 +1,23 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, switchMap } from 'rxjs';
-import { Match, NewMatchDraft } from '../types/live-capture.types';
+import { environment } from '../../../../environments/environment';
+import { BackendMatchResponse, Match, MatchStatus, NewMatchDraft } from '../types/match.types';
+import { BackendRosterResponse, RosterPayload, SavedRoster } from '../types/roster.types';
 import { TEMPORARY_DIVISION_ID } from '../data/match.constants';
 
 @Injectable({ providedIn: 'root' })
 export class MatchService {
   private readonly http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/matches';
+  private readonly apiUrl = `${environment.apiUrl}/matches`;
 
   getMatches(): Observable<Match[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/division?divisionId=${TEMPORARY_DIVISION_ID}`).pipe(
+    return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${TEMPORARY_DIVISION_ID}`).pipe(
       map(matches => matches.map(match => ({
         ...match,
-        status: match.status.toLowerCase()
+        status: this.normalizeStatus(match.status),
+        opponent: match.opponent ?? '',
+        date: match.date ?? ''
       })))
     );
   }
@@ -29,40 +33,46 @@ export class MatchService {
       opponent: draft.opponent.trim()
     };
 
-    return this.http.post<any>(`${this.apiUrl}`, payload).pipe(
+    return this.http.post<BackendMatchResponse>(this.apiUrl, payload).pipe(
       map(match => ({
         ...match,
-        status: match.status.toLowerCase()
+        status: this.normalizeStatus(match.status),
+        opponent: match.opponent ?? '',
+        date: match.date ?? ''
       }))
     );
+  }
+
+  private normalizeStatus(status: BackendMatchResponse['status']): MatchStatus {
+    return status.toLowerCase() as MatchStatus;
   }
 
   deleteMatch(matchId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${matchId}`);
   }
 
-  getAvailablePlayers(matchId: string): Observable<any[]> {
+  getAvailablePlayers(matchId: string): Observable<unknown[]> {
     return this.http.get<Match>(`${this.apiUrl}/${matchId}`).pipe(
       switchMap(match => {
         if (!match) {
           throw new Error(`Partido ${matchId} no encontrado en el backend`);
         }
-        return this.http.get<any[]>(`http://localhost:8080/division/${match.divisionId}/players`);
+        return this.http.get<unknown[]>(`${environment.apiUrl}/division/${match.divisionId}/players`);
       })
     );
   }
 
-  saveRoster(payload: { matchId: string, startingPlayers: string[], substitutePlayers: string[] }) {
+  saveRoster(payload: RosterPayload): Observable<void> {
     const dtoParaJava = {
       titularesIds: payload.startingPlayers,
       suplentesIds: payload.substitutePlayers
     };
 
-    return this.http.post(`http://localhost:8080/matches/${payload.matchId}/roster`, dtoParaJava);
+    return this.http.post<void>(`${this.apiUrl}/${payload.matchId}/roster`, dtoParaJava);
   }
 
-  getSavedRoster(matchId: string): Observable<{ startingPlayers: string[], substitutePlayers: string[] } | null> {
-    return this.http.get<any>(`http://localhost:8080/matches/${matchId}/roster`).pipe(
+  getSavedRoster(matchId: string): Observable<SavedRoster | null> {
+    return this.http.get<BackendRosterResponse>(`${this.apiUrl}/${matchId}/roster`).pipe(
       map(response => ({
         startingPlayers: response.startingPlayers || response.titularesIds || [],
         substitutePlayers: response.substitutePlayers || response.suplentesIds || []
