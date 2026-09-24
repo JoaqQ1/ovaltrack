@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap, of, catchError } from 'rxjs';
 import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
+import { UserContextService } from 'src/app/core/services/user-context.service';
 import { DivisionService } from 'src/app/services/division.service';
 import { ClubService } from 'src/app/services/club.service';
 import { Division, ClubSummary } from './types/division.types';
@@ -18,6 +19,7 @@ import { Division, ClubSummary } from './types/division.types';
 export class DivisionListComponent implements OnInit {
   private readonly divisionService = inject(DivisionService);
   private readonly clubService = inject(ClubService);
+  private readonly userContextService = inject(UserContextService);
   private readonly destroyRef = inject(DestroyRef);
 
   myClub: ClubSummary | null = null;
@@ -61,9 +63,20 @@ export class DivisionListComponent implements OnInit {
     this.error = '';
   }
 
+  get esCoach(): boolean {
+    return this.userContextService.currentRole() === 'COACH_ANALYST';
+  }
+
   cargarClubYDivisiones(): void {
     this.cargando = true;
     this.error = '';
+
+    if (this.userContextService.currentRole() === 'COACH_ANALYST') {
+      this.myClub = this.userContextService.currentClub();
+      this.divisions = this.userContextService.activeDivisions();
+      this.cargando = false;
+      return;
+    }
 
     this.clubService.getMyClub()
       .pipe(

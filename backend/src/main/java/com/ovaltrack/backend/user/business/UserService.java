@@ -45,6 +45,10 @@ public class UserService {
 		return userRepository.findById(userId).orElse(null);
 	}
 
+	public User findUserByPersonId(UUID personId) {
+		return userRepository.findByPersonId(personId).orElse(null);
+	}
+
 	public User findUserByEmail(String email) {
 		return userRepository.findByLoginEmail(email).orElse(null);
 	}

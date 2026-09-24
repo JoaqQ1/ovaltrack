@@ -5,6 +5,7 @@ import { ClubCreateComponent } from './features/club/club-create.component';
 import { DivisionFormComponent } from './features/division/division-form.component';
 import { DivisionListComponent } from './features/division/division-list.component';
 import { DivisionPlayerFormComponent } from './features/division-player/division-player-form.component';
+import { DivisionCoachListComponent } from './features/division-coach/division-coach-list.component';
 import { hasRoleGuard } from './core/guards/has-role.guard';
 import { hasClubGuard } from './core/guards/has-club.guard';
 
@@ -84,6 +85,15 @@ export const routes: Routes = [
         },
         canMatch: [authGuard],
         component: DivisionListComponent
+    },
+    {
+        path: 'divisions/:divisionId/coaches',
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+        },
+        canMatch: [authGuard],
+        component: DivisionCoachListComponent
     },
     {
         path: 'players/new',

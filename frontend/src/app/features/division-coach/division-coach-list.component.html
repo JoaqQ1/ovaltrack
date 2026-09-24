@@ -1,0 +1,118 @@
+<app-navbar-auth></app-navbar-auth>
+<div class="topbar"></div>
+
+<div class="app">
+  <header class="hud">
+    <div class="hud-brand">
+      <div class="crest" aria-hidden="true">{{ division?.name?.charAt(0)?.toUpperCase() || 'D' }}</div>
+      <div class="brand-text">
+        <div class="club">{{ division?.name || 'División' }}</div>
+        <div class="title">Entrenadores asociados</div>
+      </div>
+    </div>
+
+    <div class="hud-actions">
+      <a routerLink="/divisions" class="btn btn-outline">Volver a divisiones</a>
+      <button type="button" class="btn btn-invite" *ngIf="!esCoach" (click)="mostrarAsociacion()" [disabled]="cargandoMiembros">
+        {{ cargandoMiembros ? 'Cargando entrenadores...' : 'Asociar entrenador' }}
+      </button>
+    </div>
+  </header>
+
+  <div class="banner-region" aria-live="polite" *ngIf="error || mensajeError">
+    <div class="banner banner-error" role="alert">
+      <div style="flex: 1">
+        <strong>Error de carga</strong>
+        <p>{{ mensajeError || error }}</p>
+      </div>
+      <button class="close" type="button" (click)="closeError()" aria-label="Cerrar aviso">✕</button>
+    </div>
+  </div>
+
+  <div class="form-card-wrapper" *ngIf="mostrarFormulario && !cargando">
+    <div class="form-card">
+      <div class="card-header">
+        <h3 class="card-title">Asociar entrenador a {{ division?.name }}</h3>
+        <p class="card-subtitle">Selecciona a un entrenador</p>
+      </div>
+
+      <form [formGroup]="coachForm" (ngSubmit)="guardarEntrenador()">
+        <div class="form-group">
+          <label for="personId" class="form-label">Entrenador *</label>
+          <select id="personId" formControlName="personId" class="form-control form-select"
+            [class.is-invalid]="coachForm.get('personId')?.touched && coachForm.get('personId')?.invalid">
+            <option value="" disabled>Selecciona un usuario...</option>
+            @for (coach of availableCoaches; track coach.personId || coach.id) {
+              <option [value]="coach.personId">
+                {{ coach.firstName }} {{ coach.lastName }} ({{ coach.email }})
+              </option>
+            }
+          </select>
+          <div class="field-error" *ngIf="coachForm.get('personId')?.touched && coachForm.get('personId')?.invalid">
+            Debes seleccionar un entrenador o analista.
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" (click)="cancelarAsociacion()">Cancelar</button>
+          <button type="submit" class="btn btn-invite" [disabled]="coachForm.invalid || guardando">
+            {{ guardando ? 'Guardando...' : 'Asociar entrenador' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="skeleton-state" *ngIf="cargando">
+    <div class="sk-row" *ngFor="let item of [1, 2, 3]">
+      <div style="flex: 1">
+        <div class="sk sk-line"></div>
+        <div class="sk sk-line s"></div>
+      </div>
+      <div class="sk sk-pill"></div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="!cargando && !error && coaches.length === 0">
+    <div class="empty-title">No hay entrenadores asociados</div>
+    <p class="empty-copy">Esta división todavía no tiene entrenadores o analistas asociados.</p>
+  </div>
+
+  <div class="division-list" *ngIf="!cargando && !error && coaches.length > 0">
+    <div class="division-card" *ngFor="let coach of coaches">
+      <div class="division-main">
+        <div class="division-badge-icon" aria-hidden="true">
+          <span>{{ getCoachName(coach).charAt(0).toUpperCase() }}</span>
+        </div>
+        <div class="division-info">
+          <div class="division-name">{{ getCoachName(coach) }}</div>
+          <div class="division-meta">
+            <span class="meta-gender">{{ getCoachEmail(coach) }}</span>
+            <span class="meta-dot">•</span>
+            <span class="meta-gender">{{ getCoachPhone(coach) }}</span>
+          </div>
+          <div class="division-meta">
+            <span class="meta-gender">Desde {{ formatDate(coach.startDate) }}</span>
+            <span class="meta-dot">•</span>
+            <span class="meta-gender">Hasta {{ formatDate(coach.endDate) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="division-status-zone">
+        <span class="status-badge" [ngClass]="coach.endDate ? 'status-inactive' : 'status-active'">
+          <span class="dot"></span>
+          {{ coach.endDate ? 'Finalizado' : 'Activo' }}
+        </span>
+        <button
+          *ngIf="!esCoach && !coach.endDate"
+          type="button"
+          class="btn btn-outline"
+          [disabled]="eliminandoId === coach.id"
+          (click)="desasociarEntrenador(coach)">
+          {{ eliminandoId === coach.id ? 'Desasociando...' : 'Desasociar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
