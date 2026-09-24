@@ -7,9 +7,3 @@ export interface DivisionPlayerResponse {
   startDate: string;
   endDate: string | null;
 }
-
-//just a reference, use registerPlayer with a form instead
-export interface DivisionPlayerCreationRequest {
-  divisionId: string;
-  personId: string;
-}
