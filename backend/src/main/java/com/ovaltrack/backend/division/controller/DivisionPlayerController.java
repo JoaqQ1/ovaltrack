@@ -38,8 +38,8 @@ public class DivisionPlayerController {
     private final DivisionPlayerService divisionPlayerService;
    
     @Operation(
-        summary = "List players in a division",
-        description = "Returns all players associated with the division identified by the divisionId query parameter."
+        summary = "List active players in a division",
+        description = "Returns all active players associated with the division identified by the divisionId query parameter."
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Division players returned successfully, even if there are none."),
@@ -51,6 +51,21 @@ public class DivisionPlayerController {
             Authentication authentication) {
         return ResponseEntity.ok(divisionPlayerService.findDivisionPlayersByDivision(divisionId, authentication));
     }
+
+    @Operation(
+        summary = "List the history of a DivisionPlayer",
+        description = "Returns all DivisionPlayers based on the request parameters divisionId and personId"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Division players returned successfully, even if there are none."),
+        @ApiResponse(responseCode = "409", description = "The division or request could not be processed because of a business conflict.")
+    })
+    @GetMapping("/history")
+    public ResponseEntity<Object> findDivisionPlayersByDivisionIdAndPersonId(@RequestParam UUID divisionId, @RequestParam UUID personId) {
+        return ResponseEntity.ok(divisionPlayerService.findDivisionPlayersByDivisionIdAndPersonId(divisionId, personId));
+    }
+
+
 
     @Operation(
         summary = "Find a division player",
