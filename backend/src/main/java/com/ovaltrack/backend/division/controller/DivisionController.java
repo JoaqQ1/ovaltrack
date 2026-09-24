@@ -18,17 +18,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.ovaltrack.backend.division.business.DivisionPlayerService;
 import com.ovaltrack.backend.division.business.DivisionSecurityValidator;
 import com.ovaltrack.backend.division.business.DivisionService;
 import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionUpdateDTO;
-import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
 
 import com.ovaltrack.backend.match.domain.dto.AvailablePlayerDTO;
-import com.ovaltrack.backend.person.domain.Person;
-import com.ovaltrack.backend.division.domain.DivisionPlayer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -47,7 +45,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 public class DivisionController {
 
     private final DivisionService divisionService;
-    private final DivisionPlayerRepository divisionPlayerRepository;
+    private final DivisionPlayerService divisionPlayerService;
     private final DivisionSecurityValidator divisionSecurityValidator;
 
     @Transactional (readOnly = true)
@@ -55,29 +53,7 @@ public class DivisionController {
     public ResponseEntity<List<AvailablePlayerDTO>> getDivisionPlayers(
             @PathVariable("divisionId") UUID divisionId,
             Authentication authentication) {
-        
-        Division division = divisionService.findDivisionEntityById(divisionId);
-        if (division != null && authentication != null) {
-            divisionSecurityValidator.validateCanAccessDivision(division, authentication);
-        }
-
-        List<DivisionPlayer> divisionPlayers = divisionPlayerRepository.findByDivisionId(divisionId);
-
-        List<AvailablePlayerDTO> dtos = divisionPlayers.stream()
-            .map((DivisionPlayer dp) -> {
-                Person person = dp.getPerson();
-                String fullName = person.getFirstName() + " " + person.getLastName();
-                
-                return new AvailablePlayerDTO(
-                    person.getId(), 
-                    fullName, 
-                    dp.getJerseyNumber(), 
-                    dp.getPosition()
-                );
-            })
-            .toList();
-            
-        return ResponseEntity.ok(dtos);
+        return ResponseEntity.ok(divisionPlayerService.findAvailablePlayersByDivisionId(divisionId, authentication));
     }
 
     @Operation(

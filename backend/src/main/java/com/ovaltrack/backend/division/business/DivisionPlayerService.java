@@ -2,14 +2,12 @@ package com.ovaltrack.backend.division.business;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import com.ovaltrack.backend.club.business.ClubService;
-import com.ovaltrack.backend.club.domain.Club;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionPlayer;
@@ -17,13 +15,11 @@ import com.ovaltrack.backend.division.domain.dto.DivisionDTOMapper;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerUpdateDTO;
-import com.ovaltrack.backend.division.repository.DivisionCoachRepository;
 import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
+import com.ovaltrack.backend.match.domain.dto.AvailablePlayerDTO;
 import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.Person;
-import com.ovaltrack.backend.user.business.UserService;
-import com.ovaltrack.backend.user.domain.User;
-import com.ovaltrack.backend.user.domain.UserRole;
+import com.ovaltrack.backend.person.domain.dto.PersonCreationDTO;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -65,6 +61,36 @@ public class DivisionPlayerService {
         return DivisionDTOMapper.toResponseDTO(result);
     }
 
+    public List<AvailablePlayerDTO> findAvailablePlayersByDivisionId(UUID divisionId) {
+        return findAvailablePlayersByDivisionId(divisionId, null);
+    }
+
+    public List<AvailablePlayerDTO> findAvailablePlayersByDivisionId(UUID divisionId, Authentication authentication) {
+        Division division = divisionService.findDivisionEntityById(divisionId);
+        if (division == null) {
+            throw new BusinessException("Division no encontrada");
+        }
+        if (authentication != null) {
+            divisionSecurityValidator.validateCanAccessDivision(division, authentication);
+        }
+
+        List<DivisionPlayer> divisionPlayers = divisionPlayerRepository.findByDivisionId(divisionId);
+
+        return divisionPlayers.stream()
+            .map((DivisionPlayer dp) -> {
+                Person person = dp.getPerson();
+                String fullName = person.getFirstName() + " " + person.getLastName();
+
+                return new AvailablePlayerDTO(
+                    person.getId(),
+                    fullName,
+                    dp.getJerseyNumber(),
+                    dp.getPosition()
+                );
+            })
+            .toList();
+    }
+
     public DivisionPlayer findDivisionPlayerEntityById(UUID divisionPlayerId) {
         return divisionPlayerRepository.findById(divisionPlayerId).orElse(null);
     }
@@ -92,49 +118,35 @@ public class DivisionPlayerService {
                 throw new BusinessException("La persona no existe");
             }
         } else {
-            if (divisionPlayerRequest.firstName() == null || divisionPlayerRequest.firstName().trim().isEmpty() ||
-                divisionPlayerRequest.lastName() == null || divisionPlayerRequest.lastName().trim().isEmpty()) {
-                throw new BusinessException("Debe seleccionar una persona existente o ingresar nombre y apellido para crear una nueva");
-            }
-
-            if (divisionPlayerRequest.contactEmail() != null && !divisionPlayerRequest.contactEmail().trim().isBlank()) {
-                String email = divisionPlayerRequest.contactEmail().trim();
-                if (personService.existsByContactEmail(email)) {
-                    throw new BusinessException("Email ya registrado");
-                }
-            }
-
-            if (divisionPlayerRequest.contactPhone() != null && !divisionPlayerRequest.contactPhone().trim().isBlank()) {
-                String phone = divisionPlayerRequest.contactPhone().trim();
-                if (personService.existsByContactPhone(phone)) {
-                    throw new BusinessException("Teléfono ya registrado");
-                }
-            }
-
-            aPerson = new Person();
-            aPerson.setFirstName(divisionPlayerRequest.firstName().trim());
-            aPerson.setLastName(divisionPlayerRequest.lastName().trim());
-            aPerson.setBirthDate(divisionPlayerRequest.birthDate());
-            aPerson.setContactEmail(divisionPlayerRequest.contactEmail() != null && !divisionPlayerRequest.contactEmail().trim().isBlank() ? divisionPlayerRequest.contactEmail().trim() : null);
-            aPerson.setContactPhone(divisionPlayerRequest.contactPhone() != null && !divisionPlayerRequest.contactPhone().trim().isBlank() ? divisionPlayerRequest.contactPhone().trim() : null);
-            aPerson.setClub(aDivision.getClub());
-            aPerson = personService.savePersonEntity(aPerson);
+            PersonCreationDTO personDto = new PersonCreationDTO(
+                    divisionPlayerRequest.firstName(),
+                    divisionPlayerRequest.lastName(),
+                    divisionPlayerRequest.birthDate(),
+                    divisionPlayerRequest.contactEmail(),
+                    divisionPlayerRequest.contactPhone()
+            );
+            aPerson = personService.createPerson(personDto, aDivision.getClub());
         }
 
         if (divisionPlayerRepository.existsActiveAssociation(aDivision.getId(), aPerson.getId())) {
             throw new BusinessException("La persona ya esta asociada como jugador en esta division");
         }
 
-        DivisionPlayer aDivisionPlayer = new DivisionPlayer();
-        aDivisionPlayer.setDivision(aDivision);
-        aDivisionPlayer.setPerson(aPerson);
-        aDivisionPlayer.setJerseyNumber(divisionPlayerRequest.jerseyNumber());
-        aDivisionPlayer.setPosition(divisionPlayerRequest.position());
-        aDivisionPlayer.setStartDate(LocalDate.now());
-        aDivisionPlayer.setEndDate(null);
+        DivisionPlayer aDivisionPlayer = buildDivisionPlayer(aDivision, aPerson, divisionPlayerRequest);
 
         aDivisionPlayer = divisionPlayerRepository.save(aDivisionPlayer);
         return DivisionDTOMapper.toResponseDTO(aDivisionPlayer);
+    }
+
+    private DivisionPlayer buildDivisionPlayer(Division division, Person person, DivisionPlayerCreationDTO request) {
+        return DivisionPlayer.builder()
+                .division(division)
+                .person(person)
+                .jerseyNumber(request.jerseyNumber())
+                .position(request.position())
+                .startDate(LocalDate.now())
+                .endDate(null)
+                .build();
     }
 
     @Transactional

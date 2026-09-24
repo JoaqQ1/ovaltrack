@@ -85,14 +85,18 @@ public class DivisionService {
 			throw new BusinessException("No se puede crear una division que ya esta activa");
 		}
 
-		Division aDivision = new Division();
-		aDivision.setName(aDivisionRequest.name());
-		aDivision.setAgeCategory(aDivisionRequest.ageCategory());
-		aDivision.setClub(aClub);
-		aDivision.setGender(aDivisionRequest.gender());
-		aDivision.setActive(true);
-
+		Division aDivision = buildDivision(aDivisionRequest, aClub);
 		return DivisionDTOMapper.toResponseDTO(divisionRepository.save(aDivision));
+	}
+
+	private Division buildDivision(DivisionCreationDTO request, Club club) {
+		return Division.builder()
+				.name(request.name())
+				.ageCategory(request.ageCategory())
+				.club(club)
+				.gender(request.gender())
+				.active(true)
+				.build();
 	}
 
 	@Transactional
@@ -121,9 +125,10 @@ public class DivisionService {
 	}
 
 	@Transactional
-	public DivisionResponseDTO updateDivision(UUID divisionId, DivisionUpdateDTO request, Authentication authentication) {
+	public DivisionResponseDTO updateDivision(UUID divisionId, DivisionUpdateDTO request,
+			Authentication authentication) {
 		Division aDivision = divisionRepository.findById(divisionId).orElse(null);
-		if (aDivision == null){
+		if (aDivision == null) {
 			throw new BusinessException("Division no encontrada");
 		}
 
