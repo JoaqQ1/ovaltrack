@@ -147,7 +147,7 @@ INSERT INTO matches (id, date, division_id, opponent, status) VALUES
 -- =========================================
 -- EVENT_TYPES (Tipos de Eventos / Catálogo)
 -- =========================================
-
+/* 
 INSERT INTO event_types (id, name, group_name, category, affects_possession, is_scoring, points, requires_player, created_at) VALUES
     ('11111111-1111-1111-1111-000000000050', 'Try', 'Anotacion', 'ATTACK', false, true, 5, true, CURRENT_TIMESTAMP),
     ('11111111-1111-1111-1111-000000000051', 'Tackle', 'Defensa', 'DEFENSE', false, false, 0, true, CURRENT_TIMESTAMP),
@@ -155,12 +155,12 @@ INSERT INTO event_types (id, name, group_name, category, affects_possession, is_
     ('11111111-1111-1111-1111-000000000053', 'Conversion', 'Anotacion', 'ATTACK', false, true, 2, true, CURRENT_TIMESTAMP),
     ('11111111-1111-1111-1111-000000000054', 'Penal', 'Anotacion', 'ATTACK', true, false, 3, false, CURRENT_TIMESTAMP),
     ('11111111-1111-1111-1111-000000000055', 'Scrum', 'Fijo', 'NEUTRAL', true, false, 0, false, CURRENT_TIMESTAMP);
-
+ */
 
 -- =========================================
 -- EVENTS (Eventos registrados en el partido)
 -- =========================================
-
+/* 
 INSERT INTO events (id, match_id, player_id, event_type_id, team_possession, match_time, real_time, period, origin, created_at, synchronized_at) VALUES
     ('11111111-1111-1111-1111-000000000300', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000104', '11111111-1111-1111-1111-000000000051', 'OPPONENT', 0, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('11111111-1111-1111-1111-000000000301', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000106', '11111111-1111-1111-1111-000000000052', 'NEUTRAL', 5, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
@@ -172,3 +172,4 @@ INSERT INTO events (id, match_id, player_id, event_type_id, team_possession, mat
     ('11111111-1111-1111-1111-000000000307', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000104', '11111111-1111-1111-1111-000000000052', 'NEUTRAL', 35, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('11111111-1111-1111-1111-000000000308', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000113', '11111111-1111-1111-1111-000000000051', 'OPPONENT', 40, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('11111111-1111-1111-1111-000000000309', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000112', '11111111-1111-1111-1111-000000000052', 'NEUTRAL', 45, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+     */
