@@ -83,6 +83,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   periodLabel = '';
   synchronized = false;
   clockPaused = false;
+  historyVisible = false;
 
   private clockElapsedSeconds = 0;
   private clockStartedAt: number | null = null;
@@ -101,9 +102,19 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   history: HistoryItem[] = [];
   errorMessage = '';
   isLoading = true;
+  theme: 'light' | 'dark' = 'light';
   private events: LocalMatchEvent[] = [];
 
   ngOnInit(): void {
+    // Cargar tema guardado o detectar preferencia del sistema
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      this.theme = savedTheme;
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      this.theme = 'dark';
+    }
+    this.applyTheme(this.theme);
+
     const matchId = this.route?.snapshot.paramMap.get('matchId');
     if (!matchId) {
       this.errorMessage = 'No se indicó un partido válido.';
@@ -157,6 +168,20 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   /** Clase del ícono Tabler para el botón de pausa/reanudar del reloj, según el estado actual. */
   get pausaIcon(): string {
     return this.clockPaused ? 'ti ti-player-play' : 'ti ti-player-pause';
+  }
+
+  toggleHistory(): void {
+    this.historyVisible = !this.historyVisible;
+  }
+
+  toggleTheme(): void {
+    this.theme = this.theme === 'light' ? 'dark' : 'light';
+    this.applyTheme(this.theme);
+    localStorage.setItem('theme', this.theme);
+  }
+
+  private applyTheme(theme: 'light' | 'dark'): void {
+    document.documentElement.setAttribute('data-theme', theme);
   }
 
   /**
