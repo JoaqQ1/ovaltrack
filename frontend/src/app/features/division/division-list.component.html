@@ -80,6 +80,9 @@
       </div>
 
       <div class="division-status-zone">
+        <a [routerLink]="['/divisions', division.id, 'players']" class="btn btn-outline">
+          Ver jugadores
+        </a>
         <a [routerLink]="['/divisions', division.id, 'coaches']" class="btn btn-outline">
           Ver entrenadores
         </a>
