@@ -30,6 +30,7 @@
         @for (match of visibleMatches; track match.id) {
         <div class="match-card-shell">
             <button type="button" class="match-card"
+                [disabled]="match.status === 'cancelled'"
                 (click)="openMatch(match); selectMatch.emit(match)">
                 <span class="match-card__status"
                     [class]="'match-card__status--' + match.status">
@@ -51,11 +52,13 @@
                     }
                 </div>
             </button>
+            @if (match.status !== 'cancelled') {
             <button type="button" class="match-card__delete"
                 [attr.aria-label]="'Eliminar partido contra ' + match.opponent"
                 (click)="confirmDeleteMatch(match)">
                 <i class="ti ti-trash" aria-hidden="true"></i>
             </button>
+            }
         </div>
         } @empty {
         <p class="match-select__empty">No hay partidos {{ activeFilter !== 'all'

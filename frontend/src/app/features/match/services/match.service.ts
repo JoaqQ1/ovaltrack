@@ -14,11 +14,11 @@ export class MatchService {
   getMatches(): Observable<Match[]> {
     return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${TEMPORARY_DIVISION_ID}`).pipe(
       map(matches => matches.map(match => ({
-        ...match,
-        status: this.normalizeStatus(match.status),
-        opponent: match.opponent ?? '',
-        date: match.date ?? ''
-      })))
+          ...match,
+          status: this.normalizeStatus(match.status),
+          opponent: match.opponent ?? '',
+          date: match.date ?? ''
+        })))
     );
   }
 

@@ -71,7 +71,7 @@ export class MatchSelectComponent implements OnInit {
   /** Partidos visibles según {@link activeFilter}. */
   get visibleMatches(): Match[] {
     if (this.activeFilter === 'all') {
-      return this.matches;
+      return this.matches.filter(match => match.status !== 'cancelled');
     }
 
     return this.matches.filter(match => match.status === this.activeFilter);
@@ -123,7 +123,9 @@ export class MatchSelectComponent implements OnInit {
 
     this.matchService.deleteMatch(match.id).subscribe({
       next: () => {
-        this.matches = this.matches.filter(currentMatch => currentMatch.id !== match.id);
+        this.matches = this.matches.map(currentMatch => currentMatch.id === match.id
+          ? { ...currentMatch, status: 'cancelled' }
+          : currentMatch);
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage = this.readBackendError(error) ?? 'No se pudo eliminar el partido.';
@@ -138,6 +140,10 @@ export class MatchSelectComponent implements OnInit {
   }
 
   openMatch(match: Match): void {
+    if (match.status === 'cancelled') {
+      return;
+    }
+
     if (match.status === 'not_started') {
       // Si no empezó, va a la pantalla nueva que acabas de crear
       void this.router.navigate(['/selection-roster', match.id]);
@@ -152,7 +158,7 @@ export class MatchSelectComponent implements OnInit {
    * que las opciones del filtro, ya que comparten los mismos textos.
    */
   statusLabel(status: MatchStatus): string {
-    return this.statusLabels[status];
+    return status === 'cancelled' ? 'Cancelado' : this.statusLabels[status];
   }
 
   /** Formatea la fecha ISO del partido como "sáb 20 sep", en español y sin depender del locale del navegador. */

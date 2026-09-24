@@ -59,6 +59,9 @@ export class LiveCaptureService {
     if (!match) {
       throw new Error(`Match ${query.matchId} was not found`);
     }
+    if (match.status === 'cancelled') {
+      throw new Error(`Match ${query.matchId} was cancelled`);
+    }
     const resolvedQuery = {
       ...query,
       divisionId: match.divisionId,
