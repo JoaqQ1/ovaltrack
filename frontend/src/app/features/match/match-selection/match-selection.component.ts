@@ -149,7 +149,7 @@ export class MatchSelectComponent implements OnInit {
       void this.router.navigate(['/selection-roster', match.id]);
     } else {
       // Si ya está en progreso o finalizado, va a la pantalla de la imagen
-      void this.router.navigate(['/carga-en-vivo', match.id]);
+      void this.router.navigate(['/live-capture', match.id]);
     }
   }
 

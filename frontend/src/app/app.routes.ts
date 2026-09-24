@@ -29,14 +29,14 @@ export const routes: Routes = [
             import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
     },
     {
-        path: 'carga-en-vivo/:matchId',
+        path: 'live-capture/:matchId',
         canMatch: [authGuard],
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
         },
         loadComponent: () =>
-            import('./features/match/carga-en-vivo/carga-en-vivo.component').then(
+            import('./features/match/live-capture/live-capture.component').then(
                 m => m.CargaEnVivoComponent
             )
     },
