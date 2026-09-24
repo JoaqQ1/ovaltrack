@@ -18,26 +18,15 @@ import {
   Member,
   ROLE_META,
   SELECTABLE_ROLES,
-  StatusFilter,
   UserRole,
   bucketOf,
-  getMemberDisplayName,
-  getMemberInitials,
-  matchesStatus
+  getMemberInitials
 } from '../../types/members.types';
-import { BatchActionBarComponent } from '../../components/batch-action-bar/batch-action-bar.component';
-import { DeactivateModalComponent } from '../../components/deactivate-modal/deactivate-modal.component';
 
 @Component({
   selector: 'app-members-list',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    NavbarAuthComponent,
-    BatchActionBarComponent,
-    DeactivateModalComponent
-  ],
+  imports: [CommonModule, FormsModule, NavbarAuthComponent],
   templateUrl: './members-list.component.html',
   styleUrl: './members-list.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -48,16 +37,6 @@ export class MembersListComponent implements OnInit {
   readonly ROLE_META = ROLE_META;
   readonly SELECTABLE_ROLES = SELECTABLE_ROLES;
   readonly getMemberInitials = getMemberInitials;
-  readonly getMemberDisplayName = getMemberDisplayName;
-
-  readonly statusFilterDefs: Array<{
-    key: StatusFilter;
-    label: string;
-  }> = [
-    { key: 'ACTIVE', label: 'Activos' },
-    { key: 'INACTIVE', label: 'Inactivos' },
-    { key: 'ALL', label: 'Todos' }
-  ];
 
   readonly filterDefs: Array<{
     key: FilterCategory;
@@ -77,7 +56,6 @@ export class MembersListComponent implements OnInit {
   readonly dirtyMembers = signal<Set<string>>(new Set());
   readonly searchQuery = signal<string>('');
   readonly activeFilter = signal<FilterCategory>('ALL');
-  readonly statusFilter = signal<StatusFilter>('ACTIVE');
   readonly isLoading = signal<boolean>(true);
   readonly isSaving = signal<boolean>(false);
   readonly banners = signal<BannerNotification[]>([]);
@@ -91,31 +69,15 @@ export class MembersListComponent implements OnInit {
     return name ? name.charAt(0).toUpperCase() : 'O';
   });
 
-  readonly statusCounts = computed(() => {
-    let active = 0;
-    let inactive = 0;
-    for (const member of this.members()) {
-      if (member.active) active++;
-      else inactive++;
-    }
-    return {
-      ACTIVE: active,
-      INACTIVE: inactive,
-      ALL: this.members().length
-    };
-  });
-
   readonly filterCounts = computed(() => {
-    const status = this.statusFilter();
-    const statusFiltered = this.members().filter(member => matchesStatus(member, status));
     const counts: Record<FilterCategory, number> = {
-      ALL: statusFiltered.length,
+      ALL: this.members().length,
       STAFF: 0,
       PLAYER: 0,
       NO_ROLE: 0
     };
-    for (const member of statusFiltered) {
-      const bucket = bucketOf(member.role);
+    for (const m of this.members()) {
+      const bucket = bucketOf(m.role);
       counts[bucket] = (counts[bucket] || 0) + 1;
     }
     return counts;
@@ -123,21 +85,19 @@ export class MembersListComponent implements OnInit {
 
   readonly filteredMembers = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
-    const category = this.activeFilter();
-    const status = this.statusFilter();
-    const memberList = this.members();
+    const filter = this.activeFilter();
+    const list = this.members();
 
-    return memberList.filter(member => {
-      const fullName = `${member.firstName} ${member.lastName}`.toLowerCase();
-      const email = (member.email || '').toLowerCase();
-      const jerseyStr = member.jersey != null ? `#${member.jersey}` : '';
+    return list.filter(m => {
+      const fullName = `${m.firstName} ${m.lastName}`.toLowerCase();
+      const email = (m.email || '').toLowerCase();
+      const jerseyStr = m.jersey != null ? `#${m.jersey}` : '';
       const textToSearch = `${fullName} ${email} ${jerseyStr}`;
 
       const matchesQuery = !query || textToSearch.includes(query);
-      const matchesCategory = category === 'ALL' || bucketOf(member.role) === category;
-      const matchesStatusFilter = matchesStatus(member, status);
+      const matchesFilter = filter === 'ALL' || bucketOf(m.role) === filter;
 
-      return matchesQuery && matchesCategory && matchesStatusFilter;
+      return matchesQuery && matchesFilter;
     });
   });
 
@@ -187,10 +147,6 @@ export class MembersListComponent implements OnInit {
 
   setFilter(filter: FilterCategory): void {
     this.activeFilter.set(filter);
-  }
-
-  setStatusFilter(filter: StatusFilter): void {
-    this.statusFilter.set(filter);
   }
 
   toggleRoleMenu(memberId: string, event: Event): void {
@@ -269,9 +225,6 @@ export class MembersListComponent implements OnInit {
     }
   }
 
-  readonly memberToDeactivate = signal<Member | null>(null);
-  readonly isDeactivating = signal<boolean>(false);
-
   handleAction(member: Member, action: 'profile' | 'edit' | 'revoke', event: Event): void {
     event.stopPropagation();
     this.closeMenus();
@@ -279,15 +232,11 @@ export class MembersListComponent implements OnInit {
     const fullName = `${member.firstName} ${member.lastName}`.trim() || member.email;
 
     if (action === 'revoke') {
-      if (member.isProtected) {
-        this.showBanner(
-          'warning',
-          'No puedes dar de baja a este usuario',
-          'No tenés permisos para revocar el acceso de un administrador.'
-        );
-        return;
-      }
-      this.memberToDeactivate.set(member);
+      this.showBanner(
+        'warning',
+        `Revocar acceso — ${fullName}`,
+        'Esta acción eliminaría su acceso al sistema (fuera del alcance de esta maqueta).'
+      );
     } else if (action === 'profile') {
       this.showBanner(
         'info',
@@ -301,44 +250,6 @@ export class MembersListComponent implements OnInit {
         `Esta acción abriría la edición de datos de ${fullName} (fuera del alcance de esta maqueta).`
       );
     }
-  }
-
-  cancelDeactivate(): void {
-    this.memberToDeactivate.set(null);
-  }
-
-  confirmDeactivate(): void {
-    const target = this.memberToDeactivate();
-    if (!target || this.isDeactivating()) return;
-
-    this.isDeactivating.set(true);
-    this.membersService.deactivateUser(target.id).subscribe({
-      next: () => {
-        const updatedList = this.members().map(m => {
-          if (m.id === target.id) {
-            return { ...m, active: false };
-          }
-          return m;
-        });
-        this.members.set(updatedList);
-        this.isDeactivating.set(false);
-        this.memberToDeactivate.set(null);
-
-        const fullName = `${target.firstName} ${target.lastName}`.trim() || target.email;
-        this.showBanner(
-          'success',
-          'Acceso revocado',
-          `El usuario ${fullName} fue dado de baja correctamente.`
-        );
-      },
-      error: (err) => {
-        console.error('Error al dar de baja:', err);
-        this.isDeactivating.set(false);
-        this.memberToDeactivate.set(null);
-        const msg = err?.error?.message || 'Hubo un problema al dar de baja al usuario.';
-        this.showBanner('error', 'No se pudo dar de baja', msg);
-      }
-    });
   }
 
   onInviteClick(): void {

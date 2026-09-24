@@ -4,7 +4,6 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,10 +42,8 @@ public class DivisionCoachController {
         @ApiResponse(responseCode = "409", description = "The division or request could not be processed because of a business conflict.")
     })
     @GetMapping
-    public ResponseEntity<Object> findDivisionCoachesByDivisionId(
-            @RequestParam UUID divisionId,
-            Authentication authentication) {
-        return ResponseEntity.ok(divisionCoachService.findDivisionCoachesByDivisionId(divisionId, authentication));
+    public ResponseEntity<Object> findDivisionCoachesByDivisionId(@RequestParam UUID divisionId) {
+        return ResponseEntity.ok(divisionCoachService.findDivisionCoachesByDivisionId(divisionId));
     }
 
     @Operation(
@@ -58,10 +55,8 @@ public class DivisionCoachController {
         @ApiResponse(responseCode = "404", description = "No coach association exists with the specified ID.")
     })
     @GetMapping("/{divisionCoachId}")
-    public ResponseEntity<Object> findDivisionCoachById(
-            @PathVariable UUID divisionCoachId,
-            Authentication authentication) {
-        DivisionCoachResponseDTO result = divisionCoachService.findDivisionCoachById(divisionCoachId, authentication);
+    public ResponseEntity<Object> findDivisionCoachById(@PathVariable UUID divisionCoachId) {
+        DivisionCoachResponseDTO result = divisionCoachService.findDivisionCoachById(divisionCoachId);
         return (result != null) ? ResponseEntity.ok(result)
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro al entrenador asociado a la division");
 
@@ -84,15 +79,12 @@ public class DivisionCoachController {
         @ApiResponse(responseCode = "409", description = "The association cannot be created because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> saveDivisionCoach(
-            @Valid @RequestBody DivisionCoachCreationDTO divisionCoach,
-            BindingResult bindingResult,
-            Authentication authentication) {
+    public ResponseEntity<Object> saveDivisionCoach(@Valid @RequestBody DivisionCoachCreationDTO divisionCoach, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        return ResponseEntity.ok(divisionCoachService.saveDivisionCoach(divisionCoach, authentication));
+        return ResponseEntity.ok(divisionCoachService.saveDivisionCoach(divisionCoach));
     }
 
     @Operation(
@@ -104,10 +96,8 @@ public class DivisionCoachController {
         @ApiResponse(responseCode = "409", description = "The association cannot be deleted because of a business or data-integrity conflict.")
     })
     @DeleteMapping("/{divisionCoachId}")
-    public ResponseEntity<Object> deleteDivisionCoach(
-            @PathVariable UUID divisionCoachId,
-            Authentication authentication) {
-        divisionCoachService.deleteDivisionCoach(divisionCoachId, authentication);
+    public ResponseEntity<Object> deleteDivisionCoach(@PathVariable UUID divisionCoachId) {
+        divisionCoachService.deleteDivisionCoach(divisionCoachId);
         return ResponseEntity.ok("Entrenador eliminado correctamente");
     }
 

@@ -6,7 +6,6 @@ export type UserRole =
   | 'NO_ROLE';
 
 export type FilterCategory = 'ALL' | 'STAFF' | 'PLAYER' | 'NO_ROLE';
-export type StatusFilter = 'ACTIVE' | 'INACTIVE' | 'ALL';
 
 export interface Member {
   id: string;
@@ -110,17 +109,6 @@ export function getMemberInitials(firstName: string, lastName: string, email: st
     return email.slice(0, 2).toUpperCase();
   }
   return '??';
-}
-
-export function matchesStatus(member: Member, filter: StatusFilter): boolean {
-  if (filter === 'ACTIVE') return member.active;
-  if (filter === 'INACTIVE') return !member.active;
-  return true;
-}
-
-export function getMemberDisplayName(member: Member): string {
-  const fullName = `${member.firstName || ''} ${member.lastName || ''}`.trim();
-  return fullName || member.email || '';
 }
 
 export interface BannerNotification {

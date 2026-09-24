@@ -6,8 +6,6 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.List;
-import java.util.ArrayList;
 
 @Entity
 @Table(name = "matches")
@@ -34,7 +32,4 @@ public class Match {
 
     @Enumerated(EnumType.STRING)
     private MatchStatus status;
-
-    @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MatchPlayer> roster = new ArrayList<>();
 }

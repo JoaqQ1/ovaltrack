@@ -16,8 +16,6 @@ import com.ovaltrack.backend.user.domain.User;
 
 import jakarta.transaction.Transactional;
 
-import com.ovaltrack.backend.common.config.exceptions.UserDeactivatedException;
-
 @Service
 public class AuthService {
     private final UserService userService;
@@ -71,9 +69,6 @@ public class AuthService {
         }
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BusinessException("Contraseña incorrecta");
-        }
-        if (Boolean.FALSE.equals(user.getActive())) {
-            throw new UserDeactivatedException("El usuario se encuentra dado de baja");
         }
         String token = jwtService.generateToken(user);
         return new AuthResponse(token);

@@ -45,14 +45,21 @@ public class User {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public boolean isDeactivated() {
-        return Boolean.FALSE.equals(this.active);
+    // Métodos temporales
+
+    public String getEmail() {
+        return loginEmail;
     }
 
-    public void deactivate() {
-        if (isDeactivated()) {
-            throw new IllegalStateException("El usuario ya se encuentra dado de baja");
-        }
-        this.active = false;
+    public void setEmail(String email) {
+        this.loginEmail = email;
+    }
+
+    public String getPassword() {
+        return passwordHash;
+    }
+
+    public void setPassword(String password) {
+        this.passwordHash = password;
     }
 }
