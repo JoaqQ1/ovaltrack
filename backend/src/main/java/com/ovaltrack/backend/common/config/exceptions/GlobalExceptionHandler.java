@@ -57,6 +57,12 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", ex.getMessage()));
     }
 
+    @ExceptionHandler(UserDeactivatedException.class)
+    public ResponseEntity<Map<String, String>> handleUserDeactivatedException(UserDeactivatedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, String>> handleHttpMessageNotReadable(
             HttpMessageNotReadableException ex) {

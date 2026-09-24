@@ -1,0 +1,108 @@
+<section class="roster-container">
+  <header class="roster-header">
+    <button class="btn-back" (click)="goBack()">
+      <i class="ti ti-arrow-left"></i> Volver
+    </button>
+    <h1>Armar Plantel</h1>
+    <div class="tabs">
+      <button [class.active]="currentStep === 'titulares'" (click)="goToTitulares()">Titulares</button>
+      <button [class.active]="currentStep === 'suplentes'" (click)="goToSuplentes()">Suplentes</button>
+    </div>
+    
+  </header>
+
+  @if (currentStep === 'titulares') {
+    <!-- ZONA SUPERIOR: Formación -->
+    <div class="slots-grid">
+      @for (slot of titularesSlots; track slot.number; let i = $index) {
+        <button 
+          class="slot-card" 
+          [class.filled]="slot.player"
+          [class.is-selected]="activeSlotIndex === i"
+          (click)="selectSlot(i)">
+          
+          <div class="slot-header">
+            <span class="slot-number">{{ slot.number }}</span>
+            <span class="slot-position">{{ slot.positionName }}</span>
+          </div>
+          
+          @if (slot.player) {
+            <span class="player-name">{{ slot.player.fullName }}</span>
+            <button class="btn-clear" (click)="clearSlot(i, $event)">
+              <i class="ti ti-x" aria-hidden="true"></i>
+            </button>
+          } @else {
+            <span class="empty-text">Tocar para asignar</span>
+          }
+        </button>
+      }
+    </div>
+
+    <!-- ZONA INFERIOR: Jugadores Disponibles -->
+    <div class="pool-section">
+      <h2 class="pool-title">Jugadores Disponibles</h2>
+      <div class="players-pool">
+        @for (player of availablePlayers; track player.id) {
+          <button 
+            class="player-item" 
+            [class.is-assigned]="isPlayerAssigned(player.id)"
+            (click)="selectAvailablePlayer(player)">
+            {{ player.fullName }}
+          </button>
+        }
+      </div>
+    </div>
+    
+  } @else if (currentStep === 'suplentes') {
+    <!-- ZONA SUPERIOR: Formación Suplentes -->
+    <div class="slots-grid">
+      @for (slot of suplentesSlots; track slot.number; let i = $index) {
+        <button 
+          class="slot-card" 
+          [class.filled]="slot.player"
+          [class.is-selected]="activeSlotIndex === i"
+          (click)="selectSlot(i)">
+          
+          <div class="slot-header">
+            <span class="slot-number">{{ slot.number }}</span>
+            <span class="slot-position">{{ slot.positionName }}</span>
+          </div>
+          
+          @if (slot.player) {
+            <span class="player-name">{{ slot.player.fullName }}</span>
+            <button class="btn-clear" (click)="clearSlot(i, $event)">
+              <i class="ti ti-x" aria-hidden="true"></i>
+            </button>
+          } @else {
+            <span class="empty-text">Tocar para asignar</span>
+          }
+        </button>
+      }
+    </div>
+
+    <!-- ZONA INFERIOR: Jugadores Disponibles (La misma bolsa para ambos) -->
+    <div class="pool-section">
+      <h2 class="pool-title">Jugadores Disponibles</h2>
+      <div class="players-pool">
+        @for (player of availablePlayers; track player.id) {
+          <button 
+            class="player-item" 
+            [class.is-assigned]="isPlayerAssigned(player.id)"
+            (click)="selectAvailablePlayer(player)">
+            {{ player.fullName }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- BOTONES DE ACCIÓN (Fuera de los if, siempre abajo) -->
+  <div class="actions">
+    @if (currentStep === 'titulares') {
+      <button class="btn-primary" (click)="goToSuplentes()">Continuar a Suplentes</button>
+    } @else {
+      <button class="btn-secondary" (click)="goToTitulares()">Volver a Titulares</button>
+      <button class="btn-primary" (click)="guardarPlantel()">Guardar Plantel</button>
+    }
+  </div>
+</section>

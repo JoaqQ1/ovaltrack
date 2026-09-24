@@ -1,24 +1,21 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, defer, firstValueFrom, forkJoin, from, map, switchMap } from 'rxjs';
+import { Observable, defer, firstValueFrom, from } from 'rxjs';
 import {
   liveCaptureDatabase,
   matchDatabase,
   seedEventTypes,
-  seedMissingMatches,
 } from '../data/local-databases';
 import {
   LiveCaptureBootstrap,
   LiveCapturePersistedState,
   LiveCaptureQuery,
   LocalMatchEvent,
-  Match,
-  MatchStatus,
-  NewMatchDraft
 } from '../types/live-capture.types';
-import { LIVE_CAPTURE_EVENT_TYPES } from '../data/live-capture.mock';
-import { MOCK_MATCHES } from '../data/match.mock';
+import { Match } from '../types/match.types';
+import { MatchStatus } from '../types/match.types';
+import { environment } from '../../../../environments/environment';
+import { HttpClient } from '@angular/common/http';
 
-export const TEMPORARY_DIVISION_ID = '550e8400-e29b-41d4-a716-446655440001';
 const HOME_TEAM_NAME = 'PMRC';
 
 export const LIVE_CAPTURE_BACKEND_CONTRACT = [
@@ -62,6 +59,9 @@ export class LiveCaptureService {
     if (!match) {
       throw new Error(`Match ${query.matchId} was not found`);
     }
+    if (match.status === 'cancelled') {
+      throw new Error(`Match ${query.matchId} was cancelled`);
+    }
     const resolvedQuery = {
       ...query,
       divisionId: match.divisionId,
@@ -93,8 +93,20 @@ export class LiveCaptureService {
     };
   }
 
-  private readMatch(matchId: string): Promise<Match | undefined> {
-    return seedMissingMatches().then(() => matchDatabase.matches.get(matchId));
+  // Asegúrate de inyectar HttpClient si no lo tienes en esta clase
+  private readonly http = inject(HttpClient);
+
+  private async readMatch(matchId: string): Promise<Match | undefined> {
+    try {
+      // Buscamos el partido directamente en PostgreSQL a través de Spring Boot
+      const match = await firstValueFrom(
+        this.http.get<Match>(`${environment.apiUrl}/matches/${matchId}`)
+      );
+      return match;
+    } catch (err) {
+      // Fallback temporal por si quedó algún dato viejo en Dexie
+      return matchDatabase.matches.get(matchId);
+    }
   }
 
   private async writeState(state: LiveCapturePersistedState): Promise<void> {
@@ -141,68 +153,5 @@ export class LiveCaptureService {
         await liveCaptureDatabase.events.where('matchId').equals(matchId).delete();
       },
     );
-  }
-}
-
-/**
- * Acceso a los datos de partidos.
- *
- * Persiste los partidos localmente mediante Dexie y expone una interfaz
- * asíncrona basada en `Observable`, lista para sustituirse por un backend
- * cuando exista el endpoint correspondiente.
- */
-@Injectable({ providedIn: 'root' })
-export class MatchService {
-  private readonly liveCaptureService = inject(LiveCaptureService);
-
-  /** Trae el listado de partidos. */
-  getMatches(): Observable<Match[]> {
-    return defer(() => from(this.seedMissingMatches().then(() => this.readMatches()))).pipe(
-      switchMap(matches => forkJoin(
-        matches.map(match => this.liveCaptureService.getMatchStatus(match.id)),
-      ).pipe(
-        map(statuses => matches.map((match, index) => ({
-          ...match,
-          status: statuses[index],
-        }))),
-      )),
-    );
-  }
-
-  /**
-   * Da de alta un partido nuevo a partir de los datos mínimos (fecha y
-   * oponente), asignándole id y arrancando siempre en estado "no iniciado".
-   */
-  createMatch(draft: NewMatchDraft): Observable<Match> {
-    const newMatch: Match = {
-      id: crypto.randomUUID(),
-      date: draft.date,
-      divisionId: TEMPORARY_DIVISION_ID,
-      opponent: draft.opponent.trim(),
-      status: 'not_started',
-    };
-
-    return defer(() => from(this.saveMatch(newMatch)));
-  }
-
-  deleteMatch(matchId: string): Observable<void> {
-    return defer(() => from(this.removeMatch(matchId)));
-  }
-
-  private readMatches(): Promise<Match[]> {
-    return matchDatabase.matches.toArray();
-  }
-
-  private seedMissingMatches(): Promise<void> {
-    return seedMissingMatches();
-  }
-
-  private saveMatch(match: Match): Promise<Match> {
-    return matchDatabase.matches.put(match).then(() => match);
-  }
-
-  private removeMatch(matchId: string): Promise<void> {
-    return firstValueFrom(this.liveCaptureService.deleteMatchData(matchId))
-      .then(() => matchDatabase.matches.delete(matchId));
   }
 }

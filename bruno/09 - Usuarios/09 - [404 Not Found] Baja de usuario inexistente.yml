@@ -1,0 +1,28 @@
+info:
+  name: 09 - [404 Not Found] Baja de usuario inexistente
+  type: http
+  seq: 9
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/user/00000000-0000-0000-0000-000000000000/baja"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 404 Not Found al intentar dar de baja un usuario inexistente", function() {
+          expect(res.getStatus()).to.equal(404);
+          expect(res.getBody().message).to.equal("Usuario no encontrado");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

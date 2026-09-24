@@ -4,7 +4,7 @@ info:
   seq: 5
 
 http:
-  method: PUT
+  method: PATCH
   url: "{{baseUrl}}/user/{{targetUserId}}/role"
   body:
     type: json

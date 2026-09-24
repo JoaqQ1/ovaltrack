@@ -1,5 +1,6 @@
-/** Identificador generado por el backend mediante UUID. */
-export type UUID = string;
+import { UUID } from './common.types';
+
+export type { UUID } from './common.types';
 
 /** Valores exactos del enum EventPossession del backend. */
 export type Possession = 'OWN' | 'NEUTRAL' | 'OPPONENT';
@@ -69,15 +70,6 @@ export interface BackendEventCreationRequest {
   period?: number | null;
   origin?: string | null;
   attributes?: Record<string, unknown>;
-}
-
-/** Respuesta JSON de un partido según MatchResponseDTO. */
-export interface BackendMatchResponse {
-  id: UUID;
-  date: string | null;
-  divisionId: UUID;
-  opponent: string | null;
-  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'FINISHED';
 }
 
 /**
@@ -152,39 +144,3 @@ export interface LiveCaptureBootstrap {
   eventTypes: LiveCaptureEventType[];
   persistedState?: LiveCapturePersistedState;
 }
-
-/** Estados posibles de un partido en el listado. */
-export type MatchStatus = 'not_started' | 'in_progress' | 'finished';
-
-/** Filtro del listado: los tres estados reales más la opción "ver todos". */
-export type MatchFilter = MatchStatus | 'all';
-
-/** Un partido tal como se muestra en el listado. */
-export interface Match {
-  id: string;
-  /** Fecha del partido en formato ISO (yyyy-mm-dd), tal como la entrega el input de tipo date. */
-  date: string;
-  /** Division temporal; se sustituira por la division de la sesion al sincronizar. */
-  divisionId: UUID;
-  opponent: string;
-  status: MatchStatus;
-  /** Marcador, solo tiene sentido mostrarlo si el partido está en progreso o finalizado. */
-  score?: { home: number; away: number };
-}
-
-/** Datos mínimos necesarios para dar de alta un partido nuevo. */
-export interface NewMatchDraft {
-  date: string;
-  opponent: string;
-}
-
-/** Filtros disponibles, en el orden en que se renderizan en el control segmentado. */
-export const MATCH_FILTERS: readonly MatchFilter[] = ['all', 'not_started', 'in_progress', 'finished'] as const;
-
-/** Etiquetas legibles para cada estado/filtro, compartidas entre el filtro y las cards. */
-export const MATCH_STATUS_LABELS: Record<MatchFilter, string> = {
-  all: 'Todos',
-  not_started: 'No iniciado',
-  in_progress: 'En progreso',
-  finished: 'Finalizado',
-};

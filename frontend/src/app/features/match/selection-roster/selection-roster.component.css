@@ -1,0 +1,329 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.roster-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ot-stack-default);
+  width: 100%;
+  min-height: 100dvh;
+  padding: var(--ot-margin-screen);
+  background: var(--ot-bg-deep); /* Fondo oscuro principal */
+  color: var(--ot-on-surface);
+  font-family: var(--ot-font-body);
+  box-sizing: border-box;
+}
+
+header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ot-stack-default);
+}
+
+h1 {
+  font-family: var(--ot-font-headline);
+  font-weight: 800;
+  font-size: var(--ot-size-headline-lg, 2rem);
+  margin: 0;
+}
+
+/* Reutilizamos el estilo de las 'tabs' de tu componente anterior */
+.tabs {
+  display: flex;
+  gap: var(--ot-stack-compact);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabs button {
+  flex: 0 0 auto;
+  min-height: calc(var(--ot-touch-target-min) * 0.75);
+  padding: 0 var(--ot-stack-default);
+  border-radius: var(--ot-radius-default);
+  border: 1px solid var(--ot-outline-variant, var(--ot-outline));
+  background: var(--ot-surface-container, var(--ot-surface-card));
+  color: var(--ot-on-surface-variant, var(--ot-on-surface));
+  font-family: var(--ot-font-body);
+  font-weight: 700;
+  font-size: var(--ot-size-label-caps, 0.75rem);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background: var(--ot-primary);
+  border-color: var(--ot-primary);
+  color: var(--ot-on-primary);
+}
+
+/* Grilla de los 15 huecos (similar a match-select__grid) */
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--ot-gutter-match);
+  margin-top: var(--ot-stack-default);
+}
+
+/* Estilo para cada hueco, imitando las match-cards */
+.slot-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ot-stack-compact);
+  padding: var(--ot-stack-default);
+  min-height: var(--ot-touch-target-min);
+  background: var(--ot-surface-card);
+  border: 1px solid var(--ot-outline-variant, var(--ot-outline));
+  border-radius: var(--ot-radius-default);
+  color: var(--ot-on-surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.slot-card:hover,
+.slot-card:focus-visible {
+  border-color: var(--ot-primary);
+  transform: translateY(-1px);
+}
+
+/* Cuando el hueco ya tiene un jugador asignado */
+.slot-card.filled {
+  border-color: var(--ot-primary);
+  background: rgba(var(--ot-primary-rgb), 0.1); /* Ligero tinte si tuvieras variable rgb, sino se mantiene igual */
+}
+
+.slot-number {
+  font-family: var(--ot-font-display, var(--ot-font-body));
+  font-size: var(--ot-size-data-mono, 0.875rem);
+  color: var(--ot-on-surface-variant, var(--ot-on-surface));
+  font-weight: 700;
+}
+
+.player-name {
+  font-family: var(--ot-font-headline);
+  font-weight: 800;
+  font-size: var(--ot-size-headline-md, 1.25rem);
+}
+
+.empty-text {
+  font-size: var(--ot-size-body-md, 1rem);
+  color: var(--ot-label-muted);
+  font-style: italic;
+}
+
+.actions {
+  margin-top: calc(var(--ot-stack-default) * 2);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Reutilizando tu botón primario */
+.btn-primary {
+  min-height: var(--ot-touch-target-min);
+  padding: 0 calc(var(--ot-stack-default) * 1.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ot-font-body);
+  font-weight: 700;
+  font-size: var(--ot-size-body-md, 1rem);
+  border-radius: var(--ot-radius-lg);
+  border: none;
+  cursor: pointer;
+  background: var(--ot-primary);
+  color: var(--ot-on-primary);
+}
+
+.btn-secondary {
+  min-height: var(--ot-touch-target-min);
+  padding: 0 calc(var(--ot-stack-default) * 1.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ot-font-body);
+  font-weight: 700;
+  font-size: var(--ot-size-body-md, 1rem);
+  border-radius: var(--ot-radius-lg);
+  border: 2px solid var(--ot-primary);
+  cursor: pointer;
+  background: none;
+  color: var(--ot-primary);
+}
+
+/* Modal heredado de tu código anterior */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 19, 32, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 20;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 420px;
+  background: var(--ot-surface-card);
+  border: 1px solid var(--ot-outline-variant, var(--ot-outline));
+  border-radius: var(--ot-radius-xl) var(--ot-radius-xl) 0 0;
+  padding: var(--ot-margin-screen);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ot-stack-default);
+  max-height: 80vh;
+}
+
+.modal-content h2 {
+  font-family: var(--ot-font-headline);
+  font-weight: 800;
+  font-size: var(--ot-size-headline-md, 1.5rem);
+  margin: 0;
+}
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ot-stack-compact);
+  overflow-y: auto;
+  padding-right: 10px; /* Para el scroll */
+}
+
+.player-item {
+  min-height: var(--ot-touch-target-min);
+  padding: 0 var(--ot-stack-default);
+  background: var(--ot-bg-deep);
+  border: 1px solid var(--ot-outline-variant, var(--ot-outline));
+  border-radius: var(--ot-radius-default);
+  color: var(--ot-on-surface);
+  font-family: var(--ot-font-body);
+  font-size: var(--ot-size-body-md, 1rem);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.player-item:hover {
+  border-color: var(--ot-primary);
+}
+
+.btn-cancel {
+  min-height: var(--ot-touch-target-min);
+  background: transparent;
+  border: 1px solid var(--ot-outline);
+  color: var(--ot-on-surface);
+  border-radius: var(--ot-radius-lg);
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: var(--ot-stack-default);
+}
+
+/* Estado del hueco esperando recibir un jugador */
+.slot-card.is-selected {
+  border-color: var(--ot-primary);
+  outline: 2px solid var(--ot-primary);
+  outline-offset: 2px;
+  background: rgba(var(--ot-primary-rgb), 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Botón para remover un jugador ya asignado */
+.btn-clear {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ot-surface-container);
+  color: var(--ot-on-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-clear:hover {
+  background: var(--ot-danger, #d94c4c);
+  color: white;
+}
+
+/* ZONA INFERIOR */
+.pool-section {
+  margin-top: calc(var(--ot-stack-default) * 2);
+  padding-top: var(--ot-stack-default);
+  border-top: 1px solid var(--ot-outline);
+}
+
+.pool-title {
+  font-family: var(--ot-font-body);
+  font-size: var(--ot-size-label-caps, 0.75rem);
+  color: var(--ot-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--ot-stack-default);
+}
+
+.players-pool {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--ot-stack-compact);
+}
+
+.player-item {
+  min-height: var(--ot-touch-target-min);
+  padding: 0 var(--ot-stack-default);
+  background: var(--ot-surface-card);
+  border: 1px solid var(--ot-outline-variant);
+  border-radius: var(--ot-radius-default);
+  color: var(--ot-on-surface);
+  font-family: var(--ot-font-body);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Estado apagado del jugador que ya está en la cancha */
+.player-item.is-assigned {
+  opacity: 0.3;
+  pointer-events: none;
+  background: var(--ot-bg-deep);
+  border-style: dashed;
+}
+
+.slot-header {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ot-stack-compact) * 1.5);
+  margin-bottom: calc(var(--ot-stack-compact) * 0.5);
+}
+
+.slot-position {
+  font-family: var(--ot-font-body);
+  font-size: var(--ot-size-label-caps, 0.75rem);
+  color: var(--ot-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.player-name {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #FFFFFF;
+}
+
+.empty-text {
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: #a0aab5;
+}
