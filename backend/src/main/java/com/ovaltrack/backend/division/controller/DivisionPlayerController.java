@@ -46,8 +46,10 @@ public class DivisionPlayerController {
         @ApiResponse(responseCode = "409", description = "The division or request could not be processed because of a business conflict.")
     })
     @GetMapping
-    public ResponseEntity<Object> findDivisionPlayersByDivisionId(@RequestParam UUID divisionId) {
-        return ResponseEntity.ok(divisionPlayerService.findDivisionPlayersByDivision(divisionId));
+    public ResponseEntity<Object> findDivisionPlayersByDivisionId(
+            @RequestParam UUID divisionId,
+            Authentication authentication) {
+        return ResponseEntity.ok(divisionPlayerService.findDivisionPlayersByDivision(divisionId, authentication));
     }
 
     @Operation(
@@ -59,8 +61,10 @@ public class DivisionPlayerController {
         @ApiResponse(responseCode = "404", description = "No player association exists with the specified ID.")
     })
     @GetMapping("/{divisionPlayerId}")
-    public ResponseEntity<Object> findDivisionPlayerById(@PathVariable UUID divisionPlayerId) {
-        DivisionPlayerResponseDTO result = divisionPlayerService.findDivisionPlayerById(divisionPlayerId);
+    public ResponseEntity<Object> findDivisionPlayerById(
+            @PathVariable UUID divisionPlayerId,
+            Authentication authentication) {
+        DivisionPlayerResponseDTO result = divisionPlayerService.findDivisionPlayerById(divisionPlayerId, authentication);
         return (result != null) ? ResponseEntity.ok(result)
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro al jugador asociado a la division");
     }
@@ -103,8 +107,10 @@ public class DivisionPlayerController {
         @ApiResponse(responseCode = "409", description = "The association cannot be deleted because of a business or data-integrity conflict.")
     })
     @DeleteMapping("/{divisionPlayerId}")
-    public ResponseEntity<Object> deleteDivisionPlayer(@PathVariable UUID divisionPlayerId) {
-        divisionPlayerService.deleteDivisionPlayer(divisionPlayerId);
+    public ResponseEntity<Object> deleteDivisionPlayer(
+            @PathVariable UUID divisionPlayerId,
+            Authentication authentication) {
+        divisionPlayerService.deleteDivisionPlayer(divisionPlayerId, authentication);
         return ResponseEntity.ok("Jugador eliminado correctamente");
     }
 
@@ -125,13 +131,16 @@ public class DivisionPlayerController {
         @ApiResponse(responseCode = "409", description = "The association cannot be updated because of a business or data-integrity conflict.")
     })
     @PutMapping("/{divisionPlayerId}")
-    public ResponseEntity<Object> updateDivisionPlayer(@PathVariable UUID divisionPlayerId,
-            @Valid @RequestBody DivisionPlayerUpdateDTO request, BindingResult bindingResult) {
+    public ResponseEntity<Object> updateDivisionPlayer(
+            @PathVariable UUID divisionPlayerId,
+            @Valid @RequestBody DivisionPlayerUpdateDTO request,
+            BindingResult bindingResult,
+            Authentication authentication) {
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        return ResponseEntity.ok(divisionPlayerService.updateDivisionPlayer(divisionPlayerId, request));
+        return ResponseEntity.ok(divisionPlayerService.updateDivisionPlayer(divisionPlayerId, request, authentication));
     }
 
 }

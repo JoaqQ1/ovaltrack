@@ -3,6 +3,7 @@ package com.ovaltrack.backend.division.business;
 import java.util.Collection;
 import java.util.UUID;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.club.business.ClubService;
@@ -24,18 +25,33 @@ public class DivisionService {
 
 	private final DivisionRepository divisionRepository;
 	private final ClubService clubService;
+	private final DivisionSecurityValidator divisionSecurityValidator;
 
 	public Collection<DivisionResponseDTO> findAllDivisionsByClubId(UUID clubId) {
+		return findAllDivisionsByClubId(clubId, null);
+	}
+
+	public Collection<DivisionResponseDTO> findAllDivisionsByClubId(UUID clubId, Authentication authentication) {
+		if (authentication != null) {
+			divisionSecurityValidator.validateCanAccessClubDivisions(clubId, authentication);
+		}
 		if (clubService.findClubById(clubId) == null) {
 			throw new BusinessException("Club no encontrado");
-        }
+		}
 		return divisionRepository.findAllDivisionsByClubId(clubId).stream()
 				.map(DivisionDTOMapper::toResponseDTO)
 				.toList();
 	}
 
 	public DivisionResponseDTO findDivisionById(UUID divisionId) {
+		return findDivisionById(divisionId, null);
+	}
+
+	public DivisionResponseDTO findDivisionById(UUID divisionId, Authentication authentication) {
 		Division result = divisionRepository.findById(divisionId).orElse(null);
+		if (result != null && authentication != null) {
+			divisionSecurityValidator.validateCanAccessDivision(result, authentication);
+		}
 		return DivisionDTOMapper.toResponseDTO(result);
 	}
 
@@ -49,7 +65,11 @@ public class DivisionService {
 	}
 
 	@Transactional
-	public DivisionResponseDTO saveDivision(DivisionCreationDTO aDivisionRequest, org.springframework.security.core.Authentication authentication) {
+	public DivisionResponseDTO saveDivision(DivisionCreationDTO aDivisionRequest, Authentication authentication) {
+		if (authentication != null) {
+			divisionSecurityValidator.validateCanCreateDivision(aDivisionRequest.clubId(), authentication);
+		}
+
 		Club aClub = null;
 		if (aDivisionRequest.clubId() != null) {
 			aClub = clubService.findClubEntityById(aDivisionRequest.clubId());
@@ -77,9 +97,18 @@ public class DivisionService {
 
 	@Transactional
 	public void deleteDivision(UUID divisionId) {
+		deleteDivision(divisionId, null);
+	}
+
+	@Transactional
+	public void deleteDivision(UUID divisionId, Authentication authentication) {
 		Division aDivision = findDivisionEntityById(divisionId);
 		if (aDivision == null) {
 			throw new BusinessException("No se puede eliminar una division que no existe");
+		}
+
+		if (authentication != null) {
+			divisionSecurityValidator.validateCanManageDivision(aDivision, authentication);
 		}
 
 		aDivision.setActive(false);
@@ -88,10 +117,18 @@ public class DivisionService {
 
 	@Transactional
 	public DivisionResponseDTO updateDivision(UUID divisionId, DivisionUpdateDTO request) {
+		return updateDivision(divisionId, request, null);
+	}
 
+	@Transactional
+	public DivisionResponseDTO updateDivision(UUID divisionId, DivisionUpdateDTO request, Authentication authentication) {
 		Division aDivision = divisionRepository.findById(divisionId).orElse(null);
 		if (aDivision == null){
 			throw new BusinessException("Division no encontrada");
+		}
+
+		if (authentication != null) {
+			divisionSecurityValidator.validateCanManageDivision(aDivision, authentication);
 		}
 
 		aDivision.setName(request.name());

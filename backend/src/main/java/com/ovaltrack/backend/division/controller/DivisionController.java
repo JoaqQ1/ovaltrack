@@ -3,9 +3,9 @@ package com.ovaltrack.backend.division.controller;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.ovaltrack.backend.division.business.DivisionSecurityValidator;
 import com.ovaltrack.backend.division.business.DivisionService;
+import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionUpdateDTO;
@@ -44,16 +46,21 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 @RequiredArgsConstructor 
 public class DivisionController {
 
-    @Autowired 
-    private DivisionService divisionService;
-
-    @Autowired
-    private DivisionPlayerRepository divisionPlayerRepository;
+    private final DivisionService divisionService;
+    private final DivisionPlayerRepository divisionPlayerRepository;
+    private final DivisionSecurityValidator divisionSecurityValidator;
 
     @Transactional (readOnly = true)
     @GetMapping("/{divisionId}/players")
-    public ResponseEntity<List<AvailablePlayerDTO>> getDivisionPlayers(@PathVariable("divisionId") UUID divisionId) {
+    public ResponseEntity<List<AvailablePlayerDTO>> getDivisionPlayers(
+            @PathVariable("divisionId") UUID divisionId,
+            Authentication authentication) {
         
+        Division division = divisionService.findDivisionEntityById(divisionId);
+        if (division != null && authentication != null) {
+            divisionSecurityValidator.validateCanAccessDivision(division, authentication);
+        }
+
         List<DivisionPlayer> divisionPlayers = divisionPlayerRepository.findByDivisionId(divisionId);
 
         List<AvailablePlayerDTO> dtos = divisionPlayers.stream()
@@ -82,8 +89,10 @@ public class DivisionController {
         @ApiResponse(responseCode = "409", description = "The club or request could not be processed because of a business conflict.")
     })
     @GetMapping
-    public ResponseEntity<Object> findAllDivisionsByClubId(@RequestParam UUID clubId) {
-        return ResponseEntity.ok(divisionService.findAllDivisionsByClubId(clubId));
+    public ResponseEntity<Object> findAllDivisionsByClubId(
+            @RequestParam UUID clubId,
+            Authentication authentication) {
+        return ResponseEntity.ok(divisionService.findAllDivisionsByClubId(clubId, authentication));
     }
 
     @Operation(
@@ -95,8 +104,10 @@ public class DivisionController {
         @ApiResponse(responseCode = "404", description = "No division exists with the specified ID.")
     })
     @GetMapping("/{divisionId}")
-    public ResponseEntity<Object> findDivisionById(@PathVariable UUID divisionId) {
-        DivisionResponseDTO result = divisionService.findDivisionById(divisionId);
+    public ResponseEntity<Object> findDivisionById(
+            @PathVariable UUID divisionId,
+            Authentication authentication) {
+        DivisionResponseDTO result = divisionService.findDivisionById(divisionId, authentication);
         return (result != null) ? ResponseEntity.ok(result) 
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
     }
@@ -118,8 +129,10 @@ public class DivisionController {
         @ApiResponse(responseCode = "409", description = "The division cannot be saved because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> saveDivision(@Valid @RequestBody DivisionCreationDTO aDivisionRequest, BindingResult bindingResult,
-            org.springframework.security.core.Authentication authentication) {
+    public ResponseEntity<Object> saveDivision(
+            @Valid @RequestBody DivisionCreationDTO aDivisionRequest,
+            BindingResult bindingResult,
+            Authentication authentication) {
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
@@ -137,8 +150,10 @@ public class DivisionController {
         @ApiResponse(responseCode = "409", description = "The division cannot be deleted because of a business or data-integrity conflict.")
     })
     @DeleteMapping("/{divisionId}")
-    public ResponseEntity<Object> deleteDivision(@PathVariable UUID divisionId) {
-        divisionService.deleteDivision(divisionId);
+    public ResponseEntity<Object> deleteDivision(
+            @PathVariable UUID divisionId,
+            Authentication authentication) {
+        divisionService.deleteDivision(divisionId, authentication);
         return ResponseEntity.ok("Division desactivada correctamente");
     }
 
@@ -159,13 +174,16 @@ public class DivisionController {
         @ApiResponse(responseCode = "409", description = "The division cannot be updated because of a business or data-integrity conflict.")
     })
     @PutMapping("/{divisionId}")
-    public ResponseEntity<Object> updateDivision(@PathVariable UUID divisionId, @Valid @RequestBody DivisionUpdateDTO request,
-            BindingResult bindingResult) {
+    public ResponseEntity<Object> updateDivision(
+            @PathVariable UUID divisionId,
+            @Valid @RequestBody DivisionUpdateDTO request,
+            BindingResult bindingResult,
+            Authentication authentication) {
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        return ResponseEntity.ok(divisionService.updateDivision(divisionId, request));
+        return ResponseEntity.ok(divisionService.updateDivision(divisionId, request, authentication));
     }
 
 }

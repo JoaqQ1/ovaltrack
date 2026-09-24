@@ -33,60 +33,35 @@ import lombok.RequiredArgsConstructor;
 public class DivisionPlayerService {
 
     private final DivisionPlayerRepository divisionPlayerRepository;
-    private final DivisionCoachRepository divisionCoachRepository;
+    private final DivisionSecurityValidator divisionSecurityValidator;
     private final DivisionService divisionService;
     private final PersonService personService;
-    private final UserService userService;
-    private final ClubService clubService;
-
-    public void validateCanManageDivisionPlayers(UUID divisionId, Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
-            throw new AccessDeniedException("No autorizado: se requiere autenticación");
-        }
-
-        String email = authentication.getName();
-        User user = userService.findUserByEmail(email);
-        if (user == null) {
-            throw new AccessDeniedException("Acceso denegado: usuario no encontrado");
-        }
-
-        if (user.getRole() == UserRole.ADMIN_OVALTRACK) {
-            return;
-        }
-
-        Division aDivision = divisionService.findDivisionEntityById(divisionId);
-        if (aDivision == null) {
-            throw new BusinessException("No se puede asignar un jugador a una division que no existe");
-        }
-
-        if (user.getRole() == UserRole.ADMIN_CLUB) {
-            Club userClub = clubService.findClubEntityForAuthenticatedUser(authentication);
-            if (userClub == null || aDivision.getClub() == null || !userClub.getId().equals(aDivision.getClub().getId())) {
-                throw new AccessDeniedException("Acceso denegado: solo el administrador del club de la división puede realizar esta acción");
-            }
-            return;
-        }
-
-        if (user.getRole() == UserRole.COACH_ANALYST) {
-            if (user.getPerson() == null || !divisionCoachRepository.existsActiveAssociation(divisionId, user.getPerson().getId())) {
-                throw new AccessDeniedException("Acceso denegado: solo un entrenador asignado a esta división puede realizar esta acción");
-            }
-            return;
-        }
-
-        throw new AccessDeniedException("Acceso denegado: solo el administrador del club o el entrenador de la división pueden realizar esta acción");
-    }
 
     public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivision(UUID divisionId) {
-        if (divisionService.findDivisionById(divisionId) == null) {
+        return findDivisionPlayersByDivision(divisionId, null);
+    }
+
+    public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivision(UUID divisionId, Authentication authentication) {
+        Division division = divisionService.findDivisionEntityById(divisionId);
+        if (division == null) {
             throw new BusinessException("Division no encontrada");
+        }
+        if (authentication != null) {
+            divisionSecurityValidator.validateCanAccessDivision(division, authentication);
         }
         return divisionPlayerRepository.findDivisionPlayersByDivision(divisionId).stream()
                 .map(DivisionDTOMapper::toResponseDTO).toList();
     }
 
     public DivisionPlayerResponseDTO findDivisionPlayerById(UUID divisionPlayerId) {
+        return findDivisionPlayerById(divisionPlayerId, null);
+    }
+
+    public DivisionPlayerResponseDTO findDivisionPlayerById(UUID divisionPlayerId, Authentication authentication) {
         DivisionPlayer result = divisionPlayerRepository.findById(divisionPlayerId).orElse(null);
+        if (result != null && authentication != null) {
+            divisionSecurityValidator.validateCanAccessDivision(result.getDivision(), authentication);
+        }
         return DivisionDTOMapper.toResponseDTO(result);
     }
 
@@ -101,13 +76,13 @@ public class DivisionPlayerService {
 
     @Transactional
     public DivisionPlayerResponseDTO saveDivisionPlayer(DivisionPlayerCreationDTO divisionPlayerRequest, Authentication authentication) {
-        if (authentication != null) {
-            validateCanManageDivisionPlayers(divisionPlayerRequest.divisionId(), authentication);
-        }
-
         Division aDivision = divisionService.findDivisionEntityById(divisionPlayerRequest.divisionId());
         if (aDivision == null) {
             throw new BusinessException("No se puede asignar un jugador a una division que no existe");
+        }
+
+        if (authentication != null) {
+            divisionSecurityValidator.validateCanManageDivisionPlayers(aDivision, authentication);
         }
 
         Person aPerson;
@@ -164,9 +139,18 @@ public class DivisionPlayerService {
 
     @Transactional
     public DivisionPlayerResponseDTO deleteDivisionPlayer(UUID divisionPlayerId) {
+        return deleteDivisionPlayer(divisionPlayerId, null);
+    }
+
+    @Transactional
+    public DivisionPlayerResponseDTO deleteDivisionPlayer(UUID divisionPlayerId, Authentication authentication) {
         DivisionPlayer aDivisionPlayer = this.findDivisionPlayerEntityById(divisionPlayerId);
         if (aDivisionPlayer == null) {
             throw new BusinessException("No se puede desasociar un jugador que no existe");
+        }
+
+        if (authentication != null) {
+            divisionSecurityValidator.validateCanManageDivisionPlayers(aDivisionPlayer.getDivision(), authentication);
         }
 
         if (aDivisionPlayer.getEndDate() != null) {
@@ -181,9 +165,18 @@ public class DivisionPlayerService {
 
     @Transactional
     public DivisionPlayerResponseDTO updateDivisionPlayer(UUID divisionPlayerId, DivisionPlayerUpdateDTO request) {
+        return updateDivisionPlayer(divisionPlayerId, request, null);
+    }
+
+    @Transactional
+    public DivisionPlayerResponseDTO updateDivisionPlayer(UUID divisionPlayerId, DivisionPlayerUpdateDTO request, Authentication authentication) {
         DivisionPlayer divisionPlayer = findDivisionPlayerEntityById(divisionPlayerId);
         if (divisionPlayer == null) {
             throw new BusinessException("Jugador no encontrado en la division");
+        }
+
+        if (authentication != null) {
+            divisionSecurityValidator.validateCanManageDivisionPlayers(divisionPlayer.getDivision(), authentication);
         }
 
         divisionPlayer.setJerseyNumber(request.jerseyNumber());
