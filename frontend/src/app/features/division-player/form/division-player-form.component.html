@@ -1,0 +1,201 @@
+<app-navbar-auth></app-navbar-auth>
+<div class="topbar"></div>
+
+<div class="app">
+  <!-- HUD / Header -->
+  <header class="hud">
+    <div class="hud-brand">
+      <div class="crest" aria-hidden="true">{{ getClubCrest() }}</div>
+      <div class="brand-text">
+        <div class="club">{{ currentClub()?.name || 'Mi Club' }}</div>
+        <div class="title">Alta de Jugador</div>
+      </div>
+    </div>
+
+    <div class="hud-actions" *ngIf="!esCoach">
+      <a routerLink="/divisions" class="btn btn-outline">
+        ← Volver a divisiones
+      </a>
+    </div>
+  </header>
+
+  <!-- Región de Banners -->
+  <div class="banner-region" aria-live="polite">
+    <div class="banner banner-success" role="alert" *ngIf="mensajeExito">
+      <div style="flex: 1">
+        <strong>¡Excelente!</strong>
+        <p>{{ mensajeExito }}</p>
+      </div>
+      <button class="close" (click)="closeSuccess()" aria-label="Cerrar aviso">✕</button>
+    </div>
+
+    <div class="banner banner-error" role="alert" *ngIf="mensajeError">
+      <div style="flex: 1">
+        <strong>Error</strong>
+        <p>{{ mensajeError }}</p>
+      </div>
+      <button class="close" (click)="closeError()" aria-label="Cerrar aviso">✕</button>
+    </div>
+  </div>
+
+  <!-- Formulario en Card Central -->
+  <div class="form-card-wrapper">
+    <div class="form-card">
+      <div class="card-header">
+        <h3 class="card-title">Registrar Nuevo Deportista</h3>
+        <p class="card-subtitle">
+          Ingresa los datos personales y deportivos para dar de alta al jugador en {{ currentClub()?.name || 'tu club' }}.
+        </p>
+      </div>
+
+      <form [formGroup]="playerForm" (ngSubmit)="guardarJugador()">
+        <!-- Campos de Persona Nueva -->
+        <div class="form-row">
+          <div class="form-group col-half">
+            <label for="firstName" class="form-label">Nombre *</label>
+            <input
+              type="text"
+              id="firstName"
+              formControlName="firstName"
+              class="form-control"
+              placeholder="Ej: Mateo"
+              [class.is-invalid]="playerForm.get('firstName')?.touched && playerForm.get('firstName')?.invalid"
+            />
+            <div class="field-error" *ngIf="playerForm.get('firstName')?.touched && playerForm.get('firstName')?.invalid">
+              El nombre es obligatorio.
+            </div>
+          </div>
+
+          <div class="form-group col-half">
+            <label for="lastName" class="form-label">Apellido *</label>
+            <input
+              type="text"
+              id="lastName"
+              formControlName="lastName"
+              class="form-control"
+              placeholder="Ej: González"
+              [class.is-invalid]="playerForm.get('lastName')?.touched && playerForm.get('lastName')?.invalid"
+            />
+            <div class="field-error" *ngIf="playerForm.get('lastName')?.touched && playerForm.get('lastName')?.invalid">
+              El apellido es obligatorio.
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-half">
+            <label for="birthDate" class="form-label">Fecha de Nacimiento</label>
+            <input
+              type="date"
+              id="birthDate"
+              formControlName="birthDate"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group col-half">
+            <label for="contactPhone" class="form-label">Teléfono de Contacto</label>
+            <input
+              type="tel"
+              id="contactPhone"
+              formControlName="contactPhone"
+              class="form-control"
+              placeholder="Ej: +54 9 280 4123456"
+              [class.is-invalid]="playerForm.get('contactPhone')?.touched && playerForm.get('contactPhone')?.invalid"
+            />
+            <div class="field-error" *ngIf="playerForm.get('contactPhone')?.touched && playerForm.get('contactPhone')?.errors?.['serverError']">
+              {{ playerForm.get('contactPhone')?.errors?.['serverError'] }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="contactEmail" class="form-label">Email de Contacto</label>
+          <input
+            type="email"
+            id="contactEmail"
+            formControlName="contactEmail"
+            class="form-control"
+            placeholder="Ej: jugador@ejemplo.com"
+            [class.is-invalid]="playerForm.get('contactEmail')?.touched && playerForm.get('contactEmail')?.invalid"
+          />
+          <div class="field-error" *ngIf="playerForm.get('contactEmail')?.touched && playerForm.get('contactEmail')?.errors?.['email']">
+            Formato de email inválido.
+          </div>
+          <div class="field-error" *ngIf="playerForm.get('contactEmail')?.touched && playerForm.get('contactEmail')?.errors?.['serverError']">
+            {{ playerForm.get('contactEmail')?.errors?.['serverError'] }}
+          </div>
+        </div>
+
+        <!-- Selección de División y Ficha Deportiva -->
+        <div class="form-group">
+          <label for="divisionId" class="form-label">División de Destino *</label>
+          <select
+            id="divisionId"
+            formControlName="divisionId"
+            class="form-control form-select"
+            [class.is-invalid]="playerForm.get('divisionId')?.touched && playerForm.get('divisionId')?.invalid"
+          >
+            <option value="" disabled selected>Selecciona una división...</option>
+            @for (div of divisiones(); track div.id) {
+              <option [value]="div.id">{{ div.name }} ({{ div.ageCategory }} - {{ div.gender }})</option>
+            }
+          </select>
+          <div class="field-error" *ngIf="playerForm.get('divisionId')?.touched && playerForm.get('divisionId')?.invalid">
+            Debes seleccionar una división.
+          </div>
+        </div>
+
+        <div class="form-row">
+          <!-- Número de Camiseta -->
+          <div class="form-group col-half">
+            <label for="jerseyNumber" class="form-label">Dorsal / Camiseta</label>
+            <input
+              type="number"
+              id="jerseyNumber"
+              formControlName="jerseyNumber"
+              class="form-control"
+              placeholder="Ej: 10"
+              min="1"
+              max="99"
+              [class.is-invalid]="playerForm.get('jerseyNumber')?.touched && playerForm.get('jerseyNumber')?.invalid"
+            />
+            <div class="field-error" *ngIf="playerForm.get('jerseyNumber')?.touched && playerForm.get('jerseyNumber')?.invalid">
+              El número debe estar entre 1 y 99.
+            </div>
+          </div>
+
+          <!-- Posición -->
+          <div class="form-group col-half">
+            <label for="position" class="form-label">Posición Táctica *</label>
+            <input
+              type="text"
+              id="position"
+              formControlName="position"
+              class="form-control"
+              placeholder="Ej: Apertura, Pilar, Fullback"
+              [class.is-invalid]="playerForm.get('position')?.touched && playerForm.get('position')?.invalid"
+            />
+            <div class="field-error" *ngIf="playerForm.get('position')?.touched && playerForm.get('position')?.invalid">
+              La posición táctica es obligatoria.
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones del Formulario -->
+        <div class="form-actions">
+          <a routerLink="/divisions" class="btn btn-ghost">
+            Cancelar
+          </a>
+          <button
+            type="submit"
+            [disabled]="playerForm.invalid || guardando() || cargando()"
+            class="btn btn-invite"
+          >
+            {{ guardando() ? 'Guardando...' : 'Crear y Fichar Jugador' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
