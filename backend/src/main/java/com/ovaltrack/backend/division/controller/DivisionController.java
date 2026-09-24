@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
@@ -36,75 +37,61 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 
-
 @RestController
 @RequestMapping("division")
 @Tag(name = "Divisions", description = "Create, query, update, and delete club divisions")
 @CrossOrigin(origins = "http://localhost:4200")
-@RequiredArgsConstructor 
+@RequiredArgsConstructor
 public class DivisionController {
 
     private final DivisionService divisionService;
     private final DivisionPlayerService divisionPlayerService;
-    private final DivisionSecurityValidator divisionSecurityValidator;
 
-    @Transactional (readOnly = true)
+    @Transactional(readOnly = true)
     @GetMapping("/{divisionId}/players")
+    @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
     public ResponseEntity<List<AvailablePlayerDTO>> getDivisionPlayers(
             @PathVariable("divisionId") UUID divisionId,
             Authentication authentication) {
         return ResponseEntity.ok(divisionPlayerService.findAvailablePlayersByDivisionId(divisionId, authentication));
     }
 
-    @Operation(
-        summary = "List divisions for a club",
-        description = "Returns all divisions associated with the club identified by the clubId query parameter."
-    )
+    @Operation(summary = "List divisions for a club", description = "Returns all divisions associated with the club identified by the clubId query parameter.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Divisions returned successfully, even if there are none."),
-        @ApiResponse(responseCode = "409", description = "The club or request could not be processed because of a business conflict.")
+            @ApiResponse(responseCode = "200", description = "Divisions returned successfully, even if there are none."),
+            @ApiResponse(responseCode = "409", description = "The club or request could not be processed because of a business conflict.")
     })
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
     public ResponseEntity<Object> findAllDivisionsByClubId(
             @RequestParam UUID clubId,
             Authentication authentication) {
         return ResponseEntity.ok(divisionService.findAllDivisionsByClubId(clubId, authentication));
     }
 
-    @Operation(
-        summary = "Find a division",
-        description = "Returns the division identified by the divisionId path parameter."
-    )
+    @Operation(summary = "Find a division", description = "Returns the division identified by the divisionId path parameter.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Division returned successfully."),
-        @ApiResponse(responseCode = "404", description = "No division exists with the specified ID.")
+            @ApiResponse(responseCode = "200", description = "Division returned successfully."),
+            @ApiResponse(responseCode = "404", description = "No division exists with the specified ID.")
     })
     @GetMapping("/{divisionId}")
+    @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
     public ResponseEntity<Object> findDivisionById(
             @PathVariable UUID divisionId,
             Authentication authentication) {
         DivisionResponseDTO result = divisionService.findDivisionById(divisionId, authentication);
-        return (result != null) ? ResponseEntity.ok(result) 
-        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+        return (result != null) ? ResponseEntity.ok(result)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
     }
 
-    @Operation(
-        summary = "Create a division",
-        description = "Creates a division from the request body and returns the created division.",
-        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            description = "Division data required to create a division.",
-            required = true,
-            content = @io.swagger.v3.oas.annotations.media.Content(
-                schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DivisionCreationDTO.class)
-            )
-        )
-    )
+    @Operation(summary = "Create a division", description = "Creates a division from the request body and returns the created division.", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Division data required to create a division.", required = true, content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DivisionCreationDTO.class))))
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Division created successfully."),
-        @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
-        @ApiResponse(responseCode = "409", description = "The division cannot be saved because of a business or data-integrity conflict.")
+            @ApiResponse(responseCode = "200", description = "Division created successfully."),
+            @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
+            @ApiResponse(responseCode = "409", description = "The division cannot be saved because of a business or data-integrity conflict.")
     })
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
     public ResponseEntity<Object> saveDivision(
             @Valid @RequestBody DivisionCreationDTO aDivisionRequest,
             BindingResult bindingResult,
@@ -117,15 +104,13 @@ public class DivisionController {
         return ResponseEntity.ok(divisionService.saveDivision(aDivisionRequest, authentication));
     }
 
-    @Operation(
-        summary = "Delete a division",
-        description = "Deletes the division identified by the divisionId path parameter."
-    )
+    @Operation(summary = "Delete a division", description = "Deletes the division identified by the divisionId path parameter.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Division deleted successfully."),
-        @ApiResponse(responseCode = "409", description = "The division cannot be deleted because of a business or data-integrity conflict.")
+            @ApiResponse(responseCode = "200", description = "Division deleted successfully."),
+            @ApiResponse(responseCode = "409", description = "The division cannot be deleted because of a business or data-integrity conflict.")
     })
     @DeleteMapping("/{divisionId}")
+    @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
     public ResponseEntity<Object> deleteDivision(
             @PathVariable UUID divisionId,
             Authentication authentication) {
@@ -133,23 +118,14 @@ public class DivisionController {
         return ResponseEntity.ok("Division desactivada correctamente");
     }
 
-    @Operation(
-        summary = "Update a division",
-        description = "Updates the division identified by the divisionId path parameter and returns the updated division.",
-        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            description = "Division data required to update a division.",
-            required = true,
-            content = @io.swagger.v3.oas.annotations.media.Content(
-                schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DivisionUpdateDTO.class)
-            )
-        )
-    )
+    @Operation(summary = "Update a division", description = "Updates the division identified by the divisionId path parameter and returns the updated division.", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Division data required to update a division.", required = true, content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DivisionUpdateDTO.class))))
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Division updated successfully."),
-        @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
-        @ApiResponse(responseCode = "409", description = "The division cannot be updated because of a business or data-integrity conflict.")
+            @ApiResponse(responseCode = "200", description = "Division updated successfully."),
+            @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
+            @ApiResponse(responseCode = "409", description = "The division cannot be updated because of a business or data-integrity conflict.")
     })
     @PutMapping("/{divisionId}")
+    @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
     public ResponseEntity<Object> updateDivision(
             @PathVariable UUID divisionId,
             @Valid @RequestBody DivisionUpdateDTO request,
