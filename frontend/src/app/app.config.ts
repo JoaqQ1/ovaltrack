@@ -4,7 +4,7 @@ import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideHttpClient, withInterceptors } from '@angular/common/http'; // 👈 Importar withInterceptors
 import { jwtInterceptor } from './core/interceptor/jwt.interceptor';          // 👈 Importar jwtInterceptor
-import { initializeLocalDatabases } from './features/match/data/local-databases';
+import { initializeLocalDatabases } from './features/cargaEnVivo/data/local-databases';
 
 export const appConfig: ApplicationConfig = {
   providers: [

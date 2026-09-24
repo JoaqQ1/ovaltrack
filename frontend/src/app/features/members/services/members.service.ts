@@ -15,29 +15,23 @@ export class MembersService {
   getMembers(): Observable<Member[]> {
     return this.http.get<BackendUserResponse[]>(`${this.baseUrl}/club/my-club/members`).pipe(
       map(users =>
-        users
-          .filter(u => u.role !== 'ADMIN_OVALTRACK')
-          .map(u => ({
-            id: u.id,
-            personId: u.personId || u.person?.id || u.id,
-            email: u.email || u.loginEmail || '',
-            firstName: u.firstName || u.person?.firstName || '',
-            lastName: u.lastName || u.person?.lastName || '',
-            role: u.role,
-            active: u.active ?? true,
-            jersey: undefined,
-            isProtected: u.role === 'ADMIN_CLUB' || u.role === 'ADMIN_OVALTRACK'
-          }))
+        users.map(u => ({
+          id: u.id,
+          personId: u.personId || u.person?.id || u.id,
+          email: u.email || u.loginEmail || '',
+          firstName: u.firstName || u.person?.firstName || '',
+          lastName: u.lastName || u.person?.lastName || '',
+          role: u.role,
+          active: u.active ?? true,
+          jersey: undefined,
+          isProtected: u.role === 'ADMIN_CLUB' || u.role === 'ADMIN_OVALTRACK'
+        }))
       )
     );
   }
 
   updateUserRole(userId: string, newRole: UserRole): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/user/${userId}/role`, { role: newRole });
-  }
-
-  deactivateUser(userId: string): Observable<BackendUserResponse> {
-    return this.http.patch<BackendUserResponse>(`${this.baseUrl}/user/${userId}/baja`, {});
+    return this.http.put(`${this.baseUrl}/user/${userId}/role`, { role: newRole });
   }
 
   updateBatchRoles(updates: Array<{ userId: string; newRole: UserRole }>): Observable<any[]> {

@@ -50,8 +50,6 @@ export class AuthService {
     }
 
     if (error.status === 401 || error.status === 403) {
-      const msg = this.readBackendMessage(error);
-      if (msg) return msg;
       return action === 'login'
         ? 'El correo o la contraseña no son correctos.'
         : 'No tienes permisos para realizar esta acción.';

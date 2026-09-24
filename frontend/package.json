@@ -20,7 +20,7 @@
     "@angular/router": "^18.2.0",
     "@angular/service-worker": "^18.2.0",
     "bootstrap": "^5.3.8",
-    "dexie": "^4.4.6",
+    "dexie": "^4.0.8",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.10"

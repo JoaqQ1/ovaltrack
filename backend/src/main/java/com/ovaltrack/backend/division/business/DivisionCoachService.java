@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
@@ -30,33 +29,16 @@ public class DivisionCoachService {
     private final DivisionService divisionService;
     private final PersonService personService;
     private final UserService userService;
-    private final DivisionSecurityValidator divisionSecurityValidator;
-
     public Collection<DivisionCoachResponseDTO> findDivisionCoachesByDivisionId(UUID divisionId) {
-        return findDivisionCoachesByDivisionId(divisionId, null);
-    }
-
-    public Collection<DivisionCoachResponseDTO> findDivisionCoachesByDivisionId(UUID divisionId, Authentication authentication) {
-        Division division = divisionService.findDivisionEntityById(divisionId);
-        if (division == null) {
+        if (divisionService.findDivisionById(divisionId) == null) {
             throw new BusinessException("Division no encontrada");
-        }
-        if (authentication != null) {
-            divisionSecurityValidator.validateCanAccessDivision(division, authentication);
         }
         return divisionCoachRepository.findDivisionCoachesByDivisionId(divisionId).stream()
                 .map(DivisionDTOMapper::toResponseDTO).toList();
     }
 
     public DivisionCoachResponseDTO findDivisionCoachById(UUID divisionCoachId) {
-        return findDivisionCoachById(divisionCoachId, null);
-    }
-
-    public DivisionCoachResponseDTO findDivisionCoachById(UUID divisionCoachId, Authentication authentication) {
         DivisionCoach result = divisionCoachRepository.findById(divisionCoachId).orElse(null);
-        if (result != null && authentication != null) {
-            divisionSecurityValidator.validateCanAccessDivision(result.getDivision(), authentication);
-        }
         return DivisionDTOMapper.toResponseDTO(result);
     }
 
@@ -66,22 +48,13 @@ public class DivisionCoachService {
 
     @Transactional
     public DivisionCoachResponseDTO saveDivisionCoach(DivisionCoachCreationDTO divisionCoachRequest) {
-        return saveDivisionCoach(divisionCoachRequest, null);
-    }
-
-    @Transactional
-    public DivisionCoachResponseDTO saveDivisionCoach(DivisionCoachCreationDTO divisionCoachRequest, Authentication authentication) {
-        Division aDivision = divisionService.findDivisionEntityById(divisionCoachRequest.divisionId());
-        if (aDivision == null) {
-            throw new BusinessException("No se puede asignar un entrenador a una division que no existe");
-        }
-        if (authentication != null) {
-            divisionSecurityValidator.validateCanManageDivisionCoaches(aDivision, authentication);
-        }
-
         Person aPerson = personService.findPersonEntityById(divisionCoachRequest.personId());
         if (aPerson == null) {
             throw new BusinessException("La persona no existe");
+        }
+        Division aDivision = divisionService.findDivisionEntityById(divisionCoachRequest.divisionId());
+        if (aDivision == null) {
+            throw new BusinessException("No se puede asignar un entrenador a una division que no existe");
         }
         if (divisionCoachRepository.existsActiveAssociation(aDivision.getId(), aPerson.getId())) {
             throw new BusinessException("La persona ya esta asociada como entrenador en esta division");
@@ -103,18 +76,10 @@ public class DivisionCoachService {
 
     @Transactional
     public DivisionCoachResponseDTO deleteDivisionCoach(UUID divisionCoachId) {
-        return deleteDivisionCoach(divisionCoachId, null);
-    }
-
-    @Transactional
-    public DivisionCoachResponseDTO deleteDivisionCoach(UUID divisionCoachId, Authentication authentication) {
         DivisionCoach aDivisionCoach = this.findDivisionCoachEntityById(divisionCoachId);
 
         if (aDivisionCoach == null) {
             throw new BusinessException("No se puede desasociar un entrenador que no existe");
-        }
-        if (authentication != null) {
-            divisionSecurityValidator.validateCanManageDivisionCoaches(aDivisionCoach.getDivision(), authentication);
         }
         if (aDivisionCoach.getEndDate() != null) {
             throw new BusinessException("No se puede desasociar un entrenador que ya no esta asociado a la division");

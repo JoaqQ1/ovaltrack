@@ -1,0 +1,18 @@
+import { LiveCaptureEventType } from '../types/live-capture.types';
+
+/** Catálogo local temporal de tipos de evento hasta conectarlo al backend. */
+export const LIVE_CAPTURE_EVENT_TYPES: LiveCaptureEventType[] = [
+    { id: '550e8400-e29b-41d4-a716-446655440101', name: 'Try', groupName: 'Ataque', category: 'ATTACK', affectsPossession: true, isScoring: true, points: 5, requiresPlayer: true, active: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+    { id: '550e8400-e29b-41d4-a716-446655440102', name: 'Penal a los palos', groupName: 'Ataque', category: 'ATTACK', affectsPossession: false, isScoring: true, points: 3, requiresPlayer: true, active: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+    { id: '550e8400-e29b-41d4-a716-446655440103', name: 'Drop gol', groupName: 'Ataque', category: 'ATTACK', affectsPossession: false, isScoring: true, points: 3, requiresPlayer: true, active: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+    { id: '550e8400-e29b-41d4-a716-446655440104', name: 'Tackle completado', groupName: 'Defensa', category: 'DEFENSE', affectsPossession: false, isScoring: false, points: 0, requiresPlayer: true, active: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+    { id: '550e8400-e29b-41d4-a716-446655440105', name: 'Tackle fallado', groupName: 'Defensa', category: 'DEFENSE', affectsPossession: true, isScoring: false, points: 0, requiresPlayer: true, active: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+    { id: '550e8400-e29b-41d4-a716-446655440106', name: 'Turnover', groupName: 'Cambio de posesión', category: 'POSSESSION', affectsPossession: true, isScoring: false, points: 0, requiresPlayer: false, active: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+    { id: '550e8400-e29b-41d4-a716-446655440107', name: 'Scrum', groupName: 'Formación fija', category: 'SET_PIECE', affectsPossession: false, isScoring: false, points: 0, requiresPlayer: false, active: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+    { id: '550e8400-e29b-41d4-a716-446655440108', name: 'Line-out', groupName: 'Formación fija', category: 'SET_PIECE', affectsPossession: false, isScoring: false, points: 0, requiresPlayer: false, active: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+    { id: '550e8400-e29b-41d4-a716-446655440109', name: 'Penal / infracción', groupName: 'Neutro', category: 'NEUTRAL', affectsPossession: false, isScoring: false, points: 0, requiresPlayer: false, active: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+    { id: '550e8400-e29b-41d4-a716-446655440110', name: 'Amonestación', groupName: 'Neutro', category: 'NEUTRAL', affectsPossession: false, isScoring: false, points: 0, requiresPlayer: true, active: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+    { id: '550e8400-e29b-41d4-a716-446655440111', name: 'Expulsión', groupName: 'Neutro', category: 'NEUTRAL', affectsPossession: false, isScoring: false, points: 0, requiresPlayer: true, active: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+    { id: '550e8400-e29b-41d4-a716-446655440112', name: 'Lesión', groupName: 'Neutro', category: 'NEUTRAL', affectsPossession: false, isScoring: false, points: 0, requiresPlayer: true, active: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+];
+ 

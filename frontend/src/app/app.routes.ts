@@ -7,7 +7,6 @@ import { DivisionListComponent } from './features/division/division-list.compone
 import { DivisionPlayerFormComponent } from './features/division-player/form/division-player-form.component';
 import { DivisionCoachListComponent } from './features/division-coach/division-coach-list.component';
 import { hasRoleGuard } from './core/guards/has-role.guard';
-import { SelectionRosterComponent } from './features/match/selection-roster/selection-roster.component';
 import { hasClubGuard } from './core/guards/has-club.guard';
 import { DivisionPlayerListComponent } from './features/division-player/list/division-player-list.component';
 
@@ -30,14 +29,14 @@ export const routes: Routes = [
             import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
     },
     {
-        path: 'live-capture/:matchId',
+        path: 'carga-en-vivo/:matchId',
         canMatch: [authGuard],
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
         },
         loadComponent: () =>
-            import('./features/match/carga-en-vivo/carga-en-vivo.component').then(
+            import('./features/cargaEnVivo/carga-en-vivo/carga-en-vivo.component').then(
                 m => m.CargaEnVivoComponent
             )
     },
@@ -49,7 +48,7 @@ export const routes: Routes = [
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
         },
         loadComponent: () =>
-            import('./features/match/match-selection/match-selection.component').then(
+            import('./features/match-selection/match-selection.component').then(
                 m => m.MatchSelectComponent
             )
     },
@@ -131,10 +130,6 @@ export const routes: Routes = [
         path: 'miembros',
         redirectTo: 'members',
         pathMatch: 'full'
-    },
-    {
-        path: 'selection-roster/:id',
-        component: SelectionRosterComponent
     },
     // Wildcard para rutas no encontradas
     {
