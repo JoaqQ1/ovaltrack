@@ -186,27 +186,6 @@ When('presiona el botón para cambiar el rol de {string} a {string}', async func
   }
 });
 
-Then('el sistema rechaza la acción con el mensaje {string}', function (mensajeEsperado) {
-  assert.equal(
-    this.lastResponse.status,
-    403,
-    `Se esperaba código 403 Forbidden pero se obtuvo ${this.lastResponse.status}`
-  );
-
-  let mensajeObtenido = '';
-  if (typeof this.lastResponseBody === 'string') {
-    mensajeObtenido = this.lastResponseBody;
-  } else if (this.lastResponseBody && this.lastResponseBody.message) {
-    mensajeObtenido = this.lastResponseBody.message;
-  }
-
-  assert.equal(
-    mensajeObtenido,
-    mensajeEsperado,
-    `Se esperaba mensaje '${mensajeEsperado}' pero se obtuvo '${mensajeObtenido}'`
-  );
-});
-
 When('intenta enviar la solicitud para cambiar el rol de {string} a {string}', async function (email, newRole) {
   const userId = this.targetUser?.id;
   assert.ok(userId, `Usuario ${email} no encontrado`);
@@ -218,14 +197,12 @@ When('intenta enviar la solicitud para cambiar el rol de {string} a {string}', a
     },
     body: JSON.stringify({ role: newRole })
   });
-});
 
-Then('el sistema rechaza la acción solicitando autenticación', function () {
-  const status = this.lastResponse.status;
-  assert.ok(
-    status === 401 || status === 403,
-    `Se esperaba rechazo por falta de autenticación (401 o 403) pero se recibió ${status}`
-  );
+  try {
+    this.lastResponseBody = await this.lastResponse.json();
+  } catch {
+    this.lastResponseBody = await this.lastResponse.text();
+  }
 });
 
 When('presiona el botón para cambiar el rol del usuario inexistente con ID {string} a {string}', async function (nonexistentId, newRole) {
@@ -245,23 +222,3 @@ When('presiona el botón para cambiar el rol del usuario inexistente con ID {str
   }
 });
 
-Then('el sistema muestra el mensaje de error {string}', function (mensajeEsperado) {
-  assert.equal(
-    this.lastResponse.status,
-    404,
-    `Se esperaba código 404 pero se obtuvo ${this.lastResponse.status}`
-  );
-
-  let mensajeObtenido = '';
-  if (typeof this.lastResponseBody === 'string') {
-    mensajeObtenido = this.lastResponseBody;
-  } else if (this.lastResponseBody && this.lastResponseBody.message) {
-    mensajeObtenido = this.lastResponseBody.message;
-  }
-
-  assert.equal(
-    mensajeObtenido,
-    mensajeEsperado,
-    `Se esperaba '${mensajeEsperado}' pero se obtuvo '${mensajeObtenido}'`
-  );
-});

@@ -60,6 +60,12 @@ When('intenta solicitar su información de contexto de usuario', async function 
   this.lastResponse = await fetch(`${BACKEND_URL}/api/me`, {
     // Sin header de Authorization
   });
+  try {
+    this.lastResponseBody = await this.lastResponse.json();
+  } catch {
+    this.lastResponseBody = await this.lastResponse.text();
+  }
 });
+
 
 

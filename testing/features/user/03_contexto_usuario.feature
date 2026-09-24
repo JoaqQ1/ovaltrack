@@ -17,4 +17,4 @@ Característica: Contexto de usuario autenticado y miembros del club
   Escenario: Consultar contexto sin sesión iniciada
     Dado un usuario sin sesión iniciada en la plataforma
     Cuando intenta solicitar su información de contexto de usuario
-    Entonces el sistema rechaza la acción solicitando autenticación
+    Entonces el sistema responde con código 401 y el mensaje "No autorizado"

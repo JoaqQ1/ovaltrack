@@ -81,18 +81,3 @@ Then('el sistema confirma la creación exitosa del club', function () {
     assert.equal(this.lastResponse.status, 200, `Se esperaba código 200 pero devolvió ${this.lastResponse.status}`);
 });
 
-Then('el sistema rechaza la operación informando que el nombre es obligatorio', function () {
-    assert.equal(this.lastResponse.status, 409, `Se esperaba 409 pero se devolvió ${this.lastResponse.status}`);
-    const errorMessage = typeof this.lastResponseBody === 'string'
-        ? this.lastResponseBody
-        : (this.lastResponseBody.message || JSON.stringify(this.lastResponseBody));
-    assert.ok(errorMessage.includes("El nombre del club es obligatorio"), `El mensaje fue: ${errorMessage}`);
-});
-
-Then('el sistema rechaza la operación por conflicto de administrador', function () {
-    assert.equal(this.lastResponse.status, 409, `Se esperaba rechazo por conflicto (409) pero devolvió ${this.lastResponse.status}`);
-    const errorMessage = typeof this.lastResponseBody === 'string'
-        ? this.lastResponseBody
-        : (this.lastResponseBody.message || JSON.stringify(this.lastResponseBody));
-    assert.ok(errorMessage.includes("viola una restricción de datos"), `El mensaje fue: ${errorMessage}`);
-});
