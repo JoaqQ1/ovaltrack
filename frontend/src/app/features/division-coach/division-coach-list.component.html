@@ -100,10 +100,6 @@
       </div>
 
       <div class="division-status-zone">
-        <span class="status-badge" [ngClass]="coach.endDate ? 'status-inactive' : 'status-active'">
-          <span class="dot"></span>
-          {{ coach.endDate ? 'Finalizado' : 'Activo' }}
-        </span>
         <button
           *ngIf="!esCoach && !coach.endDate"
           type="button"
@@ -112,6 +108,11 @@
           (click)="desasociarEntrenador(coach)">
           {{ eliminandoId === coach.id ? 'Desasociando...' : 'Desasociar' }}
         </button>
+        <span class="status-badge" [ngClass]="coach.endDate ? 'status-inactive' : 'status-active'">
+          <span class="dot"></span>
+          {{ coach.endDate ? 'Finalizado' : 'Activo' }}
+        </span>
+
       </div>
     </div>
   </div>
