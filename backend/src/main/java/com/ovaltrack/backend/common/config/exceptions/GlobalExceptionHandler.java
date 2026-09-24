@@ -12,6 +12,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -31,8 +32,11 @@ public class GlobalExceptionHandler {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "No autorizado: se requiere autenticación"));
         }
+        String message = (ex.getMessage() != null && !ex.getMessage().equals("Access Denied") && !ex.getMessage().isBlank())
+                ? ex.getMessage()
+                : "Acceso denegado: solo el administrador del club puede realizar esta acción";
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("message", "Acceso denegado: solo el administrador del club puede realizar esta acción"));
+                .body(Map.of("message", message));
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -51,5 +55,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleBusinessException(BusinessException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", "El cuerpo de la solicitud no contiene un JSON válido."));
     }
 }

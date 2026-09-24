@@ -3,7 +3,6 @@ package com.ovaltrack.backend.club.business;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.club.domain.Club;
@@ -18,14 +17,14 @@ import com.ovaltrack.backend.user.business.UserService;
 import com.ovaltrack.backend.user.domain.User;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class ClubService {
-    @Autowired
-    private ClubRepository clubRepository;
 
-    @Autowired 
-    private UserService userService;
+    private final ClubRepository clubRepository;
+    private final UserService userService;
 
     public Collection<ClubResponseDTO> findAllClubs() {
 		return clubRepository.findAll().stream().map(ClubDTOMapper::toResponseDTO).toList();
@@ -71,16 +70,17 @@ public class ClubService {
         return ClubDTOMapper.toResponseDTO(clubRepository.save(club));
     }
 
-
     @Transactional
     public void deleteClub(UUID clubId) {
-        //Verifications
        if (findClubById(clubId) == null) {
             throw new BusinessException("Club no encontrado");
        }
         clubRepository.deleteById(clubId);
     }
 
+    public boolean existsByAdminUserId(UUID userId) {
+        return clubRepository.existsByAdminUserId(userId);
+    }
 
     public ClubResponseDTO findClubByAdminUserId(UUID adminUserId) {
         return ClubDTOMapper.toResponseDTO(clubRepository.findByAdminUserId(adminUserId).orElse(null));
@@ -89,9 +89,17 @@ public class ClubService {
     public ClubResponseDTO findClubForAuthenticatedUser(org.springframework.security.core.Authentication authentication) {
         Club club = findClubEntityForAuthenticatedUser(authentication);
         if (club == null) {
-            throw new BusinessException("No se encontró un club asociado al usuario administrador autenticado");
+            throw new BusinessException("No se encontró un club asociado al usuario autenticado");
         }
         return ClubDTOMapper.toResponseDTO(club);
+    }
+
+    public Collection<com.ovaltrack.backend.user.domain.dto.UserResponseDTO> findMembersForAuthenticatedClub(org.springframework.security.core.Authentication authentication) {
+        Club club = findClubEntityForAuthenticatedUser(authentication);
+        if (club == null) {
+            throw new BusinessException("No se encontró un club asociado al usuario autenticado");
+        }
+        return userService.findUsersByClubId(club.getId());
     }
 
     public Club findClubEntityById(UUID clubId) {
@@ -103,13 +111,16 @@ public class ClubService {
             return null;
         }
         String email = authentication.getName();
+        User user = userService.findUserByEmail(email);
+        if (user == null) {
+            return null;
+        }
+
+        if (user.getPerson() != null && user.getPerson().getClub() != null) {
+            return user.getPerson().getClub();
+        }
+
         return clubRepository.findByAdminUserLoginEmail(email)
-                .orElseGet(() -> {
-                    User user = userService.findUserByEmail(email);
-                    return (user != null) ? clubRepository.findByAdminUserId(user.getId()).orElse(null) : null;
-                });
+                .orElseGet(() -> clubRepository.findByAdminUserId(user.getId()).orElse(null));
     }
-
 }
-
-

@@ -3,95 +3,126 @@ package com.ovaltrack.backend.event.business;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ovaltrack.backend.match.business.MatchService;
 import com.ovaltrack.backend.match.domain.Match;
+import com.ovaltrack.backend.person.business.PersonService;
+import com.ovaltrack.backend.person.domain.Person;
+import com.ovaltrack.backend.club.business.ClubService;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.event.domain.Event;
 import com.ovaltrack.backend.event.domain.EventType;
+import com.ovaltrack.backend.event.domain.dto.EventDTOMapper;
+import com.ovaltrack.backend.event.domain.dto.event.EventCreationDTO;
+import com.ovaltrack.backend.event.domain.dto.event.EventResponseDTO;
+import com.ovaltrack.backend.event.domain.dto.event.EventUpdateDTO;
 import com.ovaltrack.backend.event.repository.EventRepository;
-import com.ovaltrack.backend.event.repository.EventTypeRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class EventService {
 
-	@Autowired
-	private EventRepository eventRepository;
+	private final EventRepository eventRepository;
+	private final EventTypeService eventTypeService;
+	private final ClubService clubService;
+	private final MatchService matchService;
+	private final PersonService personService;
 
-	@Autowired 
-	private EventTypeRepository eventTypeRepository;
-
-    /*
-     * /////////////////////////////////////////////////////////////////////////////
-     * EVENT FUNCTIONS
-     * /////////////////////////////////////////////////////////////////////////////
-     */
-
-	public Collection<Event> findEventsByClubId(UUID clubId) {
-		return eventRepository.findEventsByClubId(clubId);
+	public Collection<EventResponseDTO> findEventsByClubId(UUID clubId) {
+		if (clubService.findClubById(clubId) == null) {
+			throw new BusinessException("Club no encontrado");
+        }
+		return eventRepository.findEventsByClubId(clubId).stream()
+				.map(EventDTOMapper::toResponseDTO)
+				.toList();
 	}
 
-	public Collection<Event> findEventsByDivisionId(UUID divisionId) {
-		return eventRepository.findEventsByDivisionId(divisionId);
+	public Collection<EventResponseDTO> findEventsByDivisionId(UUID divisionId) {
+		if (clubService.findClubById(divisionId) == null) {
+			throw new BusinessException("Division no encontrada");
+        }
+		return eventRepository.findEventsByDivisionId(divisionId).stream()
+				.map(EventDTOMapper::toResponseDTO)
+				.toList();
 	}
 
-	public Collection<Event> findEventsByMatchId(UUID matchId) {
-		return eventRepository.findEventsByMatchId(matchId);
+	public Collection<EventResponseDTO> findEventsByMatchId(UUID matchId) {
+		if (matchService.findMatchById(matchId) == null) {
+			throw new BusinessException("Partido no encontrado");
+        }
+		return eventRepository.findEventsByMatchId(matchId).stream()
+				.map(EventDTOMapper::toResponseDTO)
+				.toList();
 	}
 
-	public Event findEventByIdAndMatchId(UUID eventId, UUID matchId) {
-		return eventRepository.findEventByIdAndMatchId(eventId, matchId);
+	public EventResponseDTO findEventById(UUID eventId) {
+		Event result = eventRepository.findById(eventId).orElse(null);
+		return EventDTOMapper.toResponseDTO(result);
+	}
+
+	public Event findEventEntityById(UUID eventId) {
+		return eventRepository.findById(eventId).orElse(null);
 	}
 
 	@Transactional
-	public Event saveEvent(Match match, Event event) {
-		Event anEvent = findEventByIdAndMatchId(event.getId(), match.getId());
-		if (anEvent != null) {
-			//TODO: Update request logic for event, such as player inclusion in post-match analysis
+	public EventResponseDTO saveEvent(EventCreationDTO eventRequest) {
+		EventType aEventType = eventTypeService.findEventTypeEntityById(eventRequest.eventTypeId());
+		if (aEventType == null) {
+			throw new BusinessException("No se puede crear un nuevo evento a partir de un tipo de evento que no existe");
 		}
-		if (eventRepository.findById(event.getId()) != null) {
-			throw new BusinessException("No se puede asignar un evento de otro partido");
+
+		Match aMatch = matchService.findMatchEntityById(eventRequest.matchId());
+		if (aMatch == null) {
+			throw new BusinessException("No se puede asignar un evento a un partido que no existe");
 		}
-		event.setMatch(match);
-		return eventRepository.save(event);
+		Person aPerson = personService.findPersonEntityById(eventRequest.playerId());
+
+		Event result = new Event();
+		result.setEventType(aEventType);
+		result.setMatch(aMatch);
+		result.setPlayer(aPerson);
+		result.setTeamPossession(eventRequest.teamPossession());
+		result.setMatchTime(eventRequest.matchTime());
+		result.setRealTime(eventRequest.realTime());
+		result.setPeriod(eventRequest.period());
+		result.setOrigin(eventRequest.origin());
+		result.setAttributes(eventRequest.attributes());
+		result.setSynchronizedAt(eventRequest.synchronizedAt());
+		result.setActive(true);
+
+		return EventDTOMapper.toResponseDTO(eventRepository.save(result));
 	}
 
 	@Transactional
-	public void deleteEvent(UUID eventId, UUID matchId) {
-		Event anEvent = findEventByIdAndMatchId(eventId, matchId);
-		if (anEvent == null) {
+	public EventResponseDTO deleteEvent(UUID eventId) {
+		Event result = findEventEntityById(eventId);
+		if (result == null) {
 			throw new BusinessException("No se puede eliminar un evento que no existe");
 		}
 
-		//anEvent.setActive(false);
-		eventRepository.deleteById(eventId);
+		result.setActive(false);
+		return EventDTOMapper.toResponseDTO(eventRepository.save(result));
 	}
 
-    /*
-     * /////////////////////////////////////////////////////////////////////////////
-     * EVENT_TYPE FUNCTIONS
-     * /////////////////////////////////////////////////////////////////////////////
-     */
+	@Transactional
+	public EventResponseDTO updateEvent(UUID eventId, EventUpdateDTO eventRequest) {
+		Event result = findEventEntityById(eventId);
+		if (result == null) {
+			throw new BusinessException("No se puede modificar un evento que no existe");
+		}
 
-	public Collection<EventType> findAllEventTypes() {
-		return eventTypeRepository.findAll();
-	}
+		result.setTeamPossession(eventRequest.teamPossession());
+		result.setMatchTime(eventRequest.matchTime());
+		result.setPeriod(eventRequest.period());
+		result.setOrigin(eventRequest.origin());
+		result.setAttributes(eventRequest.attributes());
+		result.setSynchronizedAt(eventRequest.synchronizedAt());
 
-	public EventType findEventTypeById(UUID eventTypeId) {
-		return eventTypeRepository.findById(eventTypeId).orElse(null);
-	}
-
-	@Transactional 
-	public EventType saveEventType(EventType anEventType) {
-		return eventTypeRepository.save(anEventType);
-	}
-
-	@Transactional 
-	public void deleteEventType(UUID anEventTypeId) {
-		eventTypeRepository.deleteById(anEventTypeId);
+		return EventDTOMapper.toResponseDTO(eventRepository.save(result));
 	}
 
 }

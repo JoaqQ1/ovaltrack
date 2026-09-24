@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
@@ -16,20 +15,20 @@ import com.ovaltrack.backend.division.domain.dto.divisioncoachdto.DivisionCoachR
 import com.ovaltrack.backend.division.repository.DivisionCoachRepository;
 import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.Person;
+import com.ovaltrack.backend.user.business.UserService;
+import com.ovaltrack.backend.user.domain.UserRole;
+
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class DivisionCoachService {
 
-    @Autowired
-    private DivisionCoachRepository divisionCoachRepository;
-
-    @Autowired
-    private DivisionService divisionService;
-
-    @Autowired
-    private PersonService personService;
-
+    private final DivisionCoachRepository divisionCoachRepository;
+    private final DivisionService divisionService;
+    private final PersonService personService;
+    private final UserService userService;
     public Collection<DivisionCoachResponseDTO> findDivisionCoachesByDivisionId(UUID divisionId) {
         if (divisionService.findDivisionById(divisionId) == null) {
             throw new BusinessException("Division no encontrada");
@@ -61,6 +60,10 @@ public class DivisionCoachService {
             throw new BusinessException("La persona ya esta asociada como entrenador en esta division");
         }
 
+        if(userService.findUserByPersonId(aPerson.getId()).getRole() != UserRole.COACH_ANALYST) {
+            throw new BusinessException("La persona no puede ser asociada porque no es un entrenador/analista");
+        }
+
         DivisionCoach aDivisionCoach = new DivisionCoach();
         aDivisionCoach.setDivision(aDivision);
         aDivisionCoach.setPerson(aPerson);
@@ -72,7 +75,7 @@ public class DivisionCoachService {
     }
 
     @Transactional
-    public void deleteDivisionCoach(UUID divisionCoachId) {
+    public DivisionCoachResponseDTO deleteDivisionCoach(UUID divisionCoachId) {
         DivisionCoach aDivisionCoach = this.findDivisionCoachEntityById(divisionCoachId);
 
         if (aDivisionCoach == null) {
@@ -83,7 +86,7 @@ public class DivisionCoachService {
         }
 
         aDivisionCoach.setEndDate(LocalDate.now());
-        divisionCoachRepository.save(aDivisionCoach);
+        return DivisionDTOMapper.toResponseDTO(aDivisionCoach);
     }
 
 }

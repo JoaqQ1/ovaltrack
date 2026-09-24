@@ -2,6 +2,7 @@ package com.ovaltrack.backend.match.business;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
+import com.ovaltrack.backend.club.business.ClubService;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.division.business.DivisionService;
 import com.ovaltrack.backend.division.domain.Division;
@@ -26,14 +28,15 @@ import com.ovaltrack.backend.match.repository.MatchPlayerRepository;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor 
 public class MatchService {
 
-	@Autowired
-	private MatchRepository matchRepository;
+	private static final int MATCH_DURATION_MINUTES = 90;
 
-	@Autowired
+	@Autowired 
 	private DivisionPlayerRepository divisionPlayerRepository;
 
 	@Autowired 
@@ -42,17 +45,22 @@ public class MatchService {
 	@Autowired
     private MatchPlayerRepository matchPlayerRepository;
 
-	// Inyecta tu repositorio
-    public MatchService(MatchRepository matchRepository) {
-        this.matchRepository = matchRepository;
-    }
+	private final MatchRepository matchRepository;
 
 	//TODO: Exceptions for non-existent club and non-existent division
+	private final ClubService clubService;
+
 	public Collection<MatchResponseDTO> findAllMatchesByClubId(UUID clubId) {
-        return matchRepository.findAllMatchesByClubId(clubId).stream().map(MatchDTOMapper:: toResponseDTO).toList();
+		if (clubService.findClubEntityById(clubId) == null) {
+			throw new BusinessException("Club no encontrado");
+        }
+        return matchRepository.findAllMatchesByClubId(clubId).stream().map(MatchDTOMapper::toResponseDTO).toList();
     }
 
 	public Collection<MatchResponseDTO> findAllMatchesByDivisionId(UUID divisionId) {
+		if (divisionService.findDivisionEntityById(divisionId) == null) {
+			throw new BusinessException("Division no encontrada");
+        }
 		return matchRepository.findAllMatchesByDivisionId(divisionId).stream().map(MatchDTOMapper:: toResponseDTO).toList();
     }
 
@@ -71,11 +79,22 @@ public class MatchService {
 		if (aDivision == null) {
 			throw new BusinessException("No se puede asociar un partido a una division que no existe");
 		}
+
+		LocalDateTime startDate = aMatchRequest.date();
+		LocalDateTime endDate = startDate.plusMinutes(MATCH_DURATION_MINUTES);
+		LocalDateTime overlapStart = startDate.minusMinutes(MATCH_DURATION_MINUTES);
+
+		if (matchRepository.findByDivisionIdAndTimeFrame(
+				aDivision.getId(), overlapStart, endDate) != null) {
+			throw new BusinessException("Ya existe un partido planeado en esa franja horaria");
+		}
+
 		Match aMatch = new Match();
 		aMatch.setDate(aMatchRequest.date());
 		aMatch.setDivision(aDivision);
 		aMatch.setOpponent(aMatchRequest.opponent());
 		aMatch.setStatus(MatchStatus.NOT_STARTED);
+
 		aMatch = matchRepository.save(aMatch);
 		return MatchDTOMapper.toResponseDTO(aMatch);
 	}
@@ -89,7 +108,6 @@ public class MatchService {
 
 		match.setDate(request.date());
 		match.setOpponent(request.opponent());
-		match.setStatus(request.status());
 
 		return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
 	}
@@ -113,18 +131,31 @@ public class MatchService {
     }
 
 	@Transactional
-	public Match FinishMatch(UUID matchId) {
-		Match aMatch = findMatchEntityById(matchId);
-		aMatch.setStatus(MatchStatus.FINISHED);
-		return matchRepository.save(aMatch);
-	}
+    public Match FinishMatch(UUID matchId) {
+        Match aMatch = findMatchEntityById(matchId);
+        if (aMatch == null) {
+            throw new BusinessException("Partido no encontrado");
+        }
+        aMatch.setStatus(MatchStatus.FINISHED);
+        return matchRepository.save(aMatch);
+    }
 
 	@Transactional
-	public void deleteMatch(UUID matchId) {
-		if (findMatchEntityById(matchId) == null) {
+    public void deleteMatch(UUID matchId) {
+        if (findMatchEntityById(matchId) == null) {
+            throw new BusinessException("Partido no encontrado");
+        }
+        matchRepository.deleteById(matchId);
+    }
+			
+	@Transactional 
+	public MatchResponseDTO changeMatchStatus(UUID matchId, MatchStatus matchStatus) {
+		Match aMatch = findMatchEntityById(matchId);
+		if (aMatch == null) {
 			throw new BusinessException("Partido no encontrado");
 		}
-		matchRepository.deleteById(matchId);
+		aMatch.setStatus(matchStatus);
+		return MatchDTOMapper.toResponseDTO(matchRepository.save(aMatch));
 	}
 
     public Match findMatchByIdAndDivisionId(UUID matchId, UUID divisionId) {

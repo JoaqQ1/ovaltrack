@@ -1,12 +1,14 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
-import { ClubListComponent } from './features/club/club-list.component';
 import { ClubDetailsComponent } from './features/club/club-details.component';
-import { DivisionDetailsComponent } from './features/division/division-details.component';
+import { ClubCreateComponent } from './features/club/club-create.component';
+import { DivisionFormComponent } from './features/division/division-form.component';
 import { DivisionListComponent } from './features/division/division-list.component';
-import { DivisionPlayerDetailsComponent } from './features/division-player/division-player-details.component';
+import { DivisionPlayerFormComponent } from './features/division-player/division-player-form.component';
+import { DivisionCoachListComponent } from './features/division-coach/division-coach-list.component';
 import { hasRoleGuard } from './core/guards/has-role.guard';
 import { SelectionRosterComponent } from './selection-roster/selection-roster.component';
+import { hasClubGuard } from './core/guards/has-club.guard';
 
 export const routes: Routes = [
     // Raíz: redirige a /home
@@ -29,7 +31,7 @@ export const routes: Routes = [
     {
         path: 'carga-en-vivo/:matchId',
         canMatch: [authGuard],
-        canActivate: [hasRoleGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
         },
@@ -57,7 +59,7 @@ export const routes: Routes = [
             roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
         },
         path: 'club',
-        component: ClubListComponent
+        component: ClubDetailsComponent
     },
     {
         path: 'club/new',
@@ -65,39 +67,48 @@ export const routes: Routes = [
         data: {
             roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
         },
-        component: ClubDetailsComponent
+        component: ClubCreateComponent
     },
     {
         path: 'divisions/new',
-        canActivate:[hasRoleGuard],
+        canActivate:[hasRoleGuard, hasClubGuard],
         data: {
             roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
         },
         canMatch: [authGuard],
-        component: DivisionDetailsComponent
+        component: DivisionFormComponent
     },
     {
         path: 'divisions',
-        canActivate:[hasRoleGuard],
+        canActivate:[hasRoleGuard, hasClubGuard],
         data: {
-            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
+            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB", "COACH_ANALYST"]
         },
         canMatch: [authGuard],
         component: DivisionListComponent
     },
     {
+        path: 'divisions/:divisionId/coaches',
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+        },
+        canMatch: [authGuard],
+        component: DivisionCoachListComponent
+    },
+    {
         path: 'players/new',
-        canActivate:[hasRoleGuard],
+        canActivate:[hasRoleGuard, hasClubGuard],
         data: {
             roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB", "COACH_ANALYST"]
         },
         canMatch: [authGuard],
-        component: DivisionPlayerDetailsComponent
+        component: DivisionPlayerFormComponent
     },
     {
         path: 'members',
         canMatch: [authGuard],
-        canActivate: [hasRoleGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
         },

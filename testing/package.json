@@ -1,5 +1,3 @@
-
-
 {
     "name": "ovaltrack-testing",
     "version": "1.0.0",
@@ -9,6 +7,7 @@
         "test": "cucumber-js"
     },
     "devDependencies": {
-        "@cucumber/cucumber": "^13.2.1"
+        "@cucumber/cucumber": "^13.2.1",
+        "pg": "^8.23.0"
     }
 }

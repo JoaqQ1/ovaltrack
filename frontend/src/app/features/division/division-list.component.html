@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <div class="hud-actions">
+    <div class="hud-actions" *ngIf="!esCoach">
       <a routerLink="/divisions/new" class="btn btn-invite" id="newDivisionBtn">
         + Nueva División
       </a>
@@ -43,7 +43,7 @@
   </div>
 
   <!-- Estado Vacío -->
-  <div class="empty-state" *ngIf="!cargando && !error && divisions.length === 0">
+  <div class="empty-state" *ngIf="!esCoach && !cargando && !error && divisions.length === 0">
     <div class="empty-icon">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -80,6 +80,9 @@
       </div>
 
       <div class="division-status-zone">
+        <a [routerLink]="['/divisions', division.id, 'coaches']" class="btn btn-outline">
+          Ver entrenadores
+        </a>
         <span class="status-badge" [ngClass]="division.active !== false ? 'status-active' : 'status-inactive'">
           <span class="dot"></span>
           {{ division.active !== false ? 'Activa' : 'Inactiva' }}

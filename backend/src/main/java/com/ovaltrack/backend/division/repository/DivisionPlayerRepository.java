@@ -19,4 +19,6 @@ public interface DivisionPlayerRepository extends JpaRepository<DivisionPlayer, 
 	boolean existsActiveAssociation(@Param("divisionId") UUID divisionId, @Param("personId") UUID personId);
 	
 	List<DivisionPlayer> findByDivisionId(UUID divisionId);
+
+	List<DivisionPlayer> findActiveByPersonId(UUID personId);
 }
