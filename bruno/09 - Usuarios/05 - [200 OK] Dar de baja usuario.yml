@@ -1,29 +1,23 @@
 info:
-  name: 01 - [200 OK] Admin cambia rol a Coach
+  name: 05 - [200 OK] Dar de baja usuario
   type: http
-  seq: 2
+  seq: 5
 
 http:
   method: PATCH
-  url: "{{baseUrl}}/user/{{targetUserId}}/role"
+  url: "{{baseUrl}}/user/{{targetUserId}}/baja"
   headers:
     - name: Authorization
       value: Bearer {{adminToken}}
-  body:
-    type: json
-    data: |-
-      {
-        "role": "COACH_ANALYST"
-      }
   auth: inherit
 
 runtime:
   scripts:
     - type: tests
       code: |-
-        test("Debe responder 200 OK", function() {
+        test("Debe responder 200 OK y marcar usuario inactivo", function() {
           expect(res.getStatus()).to.equal(200);
-          expect(res.getBody().role).to.equal("COACH_ANALYST");
+          expect(res.getBody().active).to.equal(false);
         });
 
 settings:
