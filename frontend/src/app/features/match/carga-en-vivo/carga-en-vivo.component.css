@@ -446,12 +446,13 @@
 	border-radius: var(--ot-radius-lg);
 	font-family: var(--font-manrope);
 	font-weight: 1000;
-	font-size: calc(25px * var(--ot-live-scale));
+	font-size: calc(30px * var(--ot-live-scale));
 	color: #FFFFFF;
 	cursor: pointer;
 	min-width: 0;
 	overflow-wrap: anywhere;
 	transition: all 0.2s ease;
+	text-transform: uppercase;
 }
 
 .event-chip:hover {
