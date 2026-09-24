@@ -36,7 +36,7 @@ export const routes: Routes = [
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
         },
         loadComponent: () =>
-            import('./features/match/live-capture/live-capture.component').then(
+            import('./features/match/carga-en-vivo/carga-en-vivo.component').then(
                 m => m.CargaEnVivoComponent
             )
     },
