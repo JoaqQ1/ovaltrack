@@ -1,19 +1,8 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
+import { getAdminToken } from '../../support/auth_helper.js';
 
 const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
-
-// Helper para iniciar sesión de forma técnica
-async function getAdminToken() {
-  const loginRes = await fetch(`${BACKEND_URL}/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'admin@club.com', password: 'administrador' })
-  });
-  if (!loginRes.ok) return null;
-  const body = await loginRes.json();
-  return body.token;
-}
 
 Given('que el usuario con email {string} ha sido dado de baja previamente por el administrador', async function (email) {
   const adminToken = await getAdminToken();
@@ -72,13 +61,10 @@ Given('que el usuario {string} tiene el rol de administrador de club', async fun
 });
 
 When('solicita dar de baja al usuario con email {string}', async function (email) {
-  let lookupToken = this.token;
-  if (!lookupToken) {
-    lookupToken = await getAdminToken();
-  }
+  const setupToken = this.token || await getAdminToken();
 
   const usersRes = await fetch(`${BACKEND_URL}/user`, {
-    headers: { 'Authorization': `Bearer ${lookupToken}` }
+    headers: { 'Authorization': `Bearer ${setupToken}` }
   });
   assert.ok(usersRes.ok, 'Error al consultar usuarios');
   const users = await usersRes.json();

@@ -1,5 +1,6 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
+import { getAdminToken } from '../../support/auth_helper.js';
 
 const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
 
@@ -36,21 +37,11 @@ Given('un usuario sin sesión iniciada en la plataforma', function () {
 });
 
 Given('que existe el usuario con email {string}', async function (email) {
-  // Se llama al endpoint para obtener los usuarios que el frontend visualiza en la tabla
-  let lookupToken = this.token;
-  if (!lookupToken) {
-    const loginResponse = await fetch(`${BACKEND_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@club.com', password: 'administrador' })
-    });
-    const loginBody = await loginResponse.json();
-    lookupToken = loginBody.token;
-    assert.ok(lookupToken, 'La sesión técnica para preparar el escenario debe recibir un token');
-  }
+  const setupToken = await getAdminToken();
+  assert.ok(setupToken, 'La sesión técnica para preparar el escenario debe recibir un token');
 
   const usersRes = await fetch(`${BACKEND_URL}/user`, {
-    headers: { 'Authorization': `Bearer ${lookupToken}` }
+    headers: { 'Authorization': `Bearer ${setupToken}` }
   });
 
   assert.ok(

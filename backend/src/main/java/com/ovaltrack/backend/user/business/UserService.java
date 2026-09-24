@@ -30,15 +30,18 @@ public class UserService {
 	private final ClubRepository clubRepository;
 	private final PersonRepository personRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final UserPermissionValidator userPermissionValidator;
 
 	public UserService(UserRepository userRepository,
 			ClubRepository clubRepository,
 			PersonRepository personRepository,
-			PasswordEncoder passwordEncoder) {
+			PasswordEncoder passwordEncoder,
+			UserPermissionValidator userPermissionValidator) {
 		this.userRepository = userRepository;
 		this.clubRepository = clubRepository;
 		this.personRepository = personRepository;
 		this.passwordEncoder = passwordEncoder;
+		this.userPermissionValidator = userPermissionValidator;
 	}
 
 	public Collection<User> findAllUsers() {
@@ -137,8 +140,7 @@ public class UserService {
 			throw new BusinessException("No se puede modificar el rol de un usuario dado de baja");
 		}
 
-		validateRoleAssignmentPermissions(newRole, authentication);
-		validateSelfDemotion(user, newRole, authentication);
+		userPermissionValidator.validateCanAssignRole(user, newRole, authentication);
 
 		user.setRole(newRole);
 		User savedUser = userRepository.save(user);
@@ -154,61 +156,10 @@ public class UserService {
 			throw new BusinessException("El usuario ya se encuentra dado de baja");
 		}
 
-		validateSelfDeactivation(user, authentication);
-		validateDeactivationPermissions(user, authentication);
+		userPermissionValidator.validateCanDeactivate(user, authentication);
 
 		user.setActive(false);
 		User savedUser = userRepository.save(user);
 		return UserDTOMapper.toResponseDTO(savedUser);
-	}
-
-	private void validateDeactivationPermissions(User user, Authentication authentication) {
-		boolean isSelf = authentication != null && user.getLoginEmail() != null
-				&& user.getLoginEmail().equalsIgnoreCase(authentication.getName());
-		boolean isTargetAdmin = user.getRole() == UserRole.ADMIN_CLUB || user.getRole() == UserRole.ADMIN_OVALTRACK;
-
-		if (!isSelf && isTargetAdmin && !isSuperAdmin(authentication)) {
-			throw new BusinessException("No tiene permisos para dar de baja a otro administrador");
-		}
-	}
-
-	private void validateSelfDeactivation(User user, Authentication authentication) {
-		if (authentication == null)
-			return;
-
-		boolean isSelf = user.getLoginEmail() != null
-				&& user.getLoginEmail().equalsIgnoreCase(authentication.getName());
-
-		if (isSelf && (user.getRole() == UserRole.ADMIN_CLUB || user.getRole() == UserRole.ADMIN_OVALTRACK || clubRepository.existsByAdminUserId(user.getId()))) {
-			throw new BusinessException(
-					"No puede darse de baja mientras sea el administrador designado de un club");
-		}
-	}
-
-	private void validateRoleAssignmentPermissions(UserRole newRole, Authentication authentication) {
-		if (newRole == UserRole.ADMIN_OVALTRACK && !isSuperAdmin(authentication)) {
-			throw new BusinessException("El administrador de club no puede asignar el rol ADMIN_OVALTRACK");
-		}
-	}
-
-	private boolean isSuperAdmin(Authentication authentication) {
-		if (authentication == null)
-			return false;
-		String superAdminRole = "ROLE_" + UserRole.ADMIN_OVALTRACK.name();
-		return authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(superAdminRole)
-				|| a.getAuthority().equals(UserRole.ADMIN_OVALTRACK.name()));
-	}
-
-	private void validateSelfDemotion(User user, UserRole newRole, Authentication authentication) {
-		if (authentication == null || newRole == UserRole.ADMIN_CLUB)
-			return;
-
-		boolean isSelf = user.getLoginEmail() != null
-				&& user.getLoginEmail().equalsIgnoreCase(authentication.getName());
-
-		if (isSelf && clubRepository.existsByAdminUserId(user.getId())) {
-			throw new BusinessException(
-					"No puede cambiar su propio rol mientras sea el administrador designado de un club");
-		}
 	}
 }
