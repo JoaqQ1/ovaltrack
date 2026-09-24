@@ -15,11 +15,11 @@ Característica: Creación de Clubes (Soporte Multiclub)
       | nombre | ciudad | administrador         |
       |        | Ciudad | admin_puerto@test.com |
     Y presiono el botón "Guardar Club"
-    Entonces el sistema rechaza la operación informando que el nombre es obligatorio
+    Entonces el sistema rechaza la solicitud con código 409 y el mensaje "El nombre del club es obligatorio"
 
   Escenario: Un usuario no puede ser administrador de dos clubes distintos
     Cuando completo el formulario de creación de club con los siguientes datos:
       | nombre        | ciudad | administrador            |
       | Segundo Club  | Rawson | admin_multiclub@test.com |
     Y presiono el botón "Guardar Club"
-    Entonces el sistema rechaza la operación por conflicto de administrador
+    Entonces el sistema rechaza la solicitud con código 409 y el mensaje "viola una restricción de datos"

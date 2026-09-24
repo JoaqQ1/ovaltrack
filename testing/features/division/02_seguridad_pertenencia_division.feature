@@ -20,19 +20,19 @@ Característica: Validación de seguridad y pertenencia a división y club
   Escenario: Un entrenador no puede consultar los datos ni jugadores de una división que no tiene asignada
     Dado que el entrenador con email "jugador.uno@test.com" y contraseña "PassSegura123!" ha iniciado sesión
     Cuando intenta consultar los jugadores de la división "M19"
-    Entonces el sistema rechaza el acceso con error de autorización 403
+    Entonces el sistema rechaza la solicitud con código 403 y el mensaje "Acceso denegado: no es entrenador asignado a esta división"
 
   Escenario: Un administrador de club no puede consultar divisiones de otro club
     Dado que el administrador de club con email "admin@club.com" y contraseña "administrador" ha iniciado sesión
     Cuando intenta consultar los datos de la división "Plantel Superior" perteneciente al club de "admin_multiclub@test.com"
-    Entonces el sistema rechaza el acceso con error de autorización 403
+    Entonces el sistema rechaza la solicitud con código 403 y el mensaje "Acceso denegado: la división no pertenece a su club"
 
   Escenario: Un usuario con rol Jugador no puede acceder a las divisiones
     Dado que el usuario con rol jugador con email "usuario.norole@test.com" y contraseña "PassSegura123!" ha iniciado sesión
     Cuando intenta consultar las divisiones del club
-    Entonces el sistema rechaza el acceso con error de autorización 403
+    Entonces el sistema rechaza la solicitud con código 403 y el mensaje "Acceso denegado: solo el administrador del club puede realizar esta acción"
 
   Escenario: Una solicitud sin autenticación es rechazada
     Dado un usuario sin sesión iniciada en la plataforma
     Cuando intenta consultar los datos de la división "Primera"
-    Entonces el sistema rechaza la acción solicitando autenticación
+    Entonces el sistema responde con código 401 y el mensaje "No autorizado"

@@ -163,27 +163,6 @@ Then('el usuario con email {string} figura como inactivo en el sistema', async f
   assert.equal(userInDb.active, false, `El usuario ${email} debe tener active = false`);
 });
 
-Then('el sistema rechaza el inicio de sesión indicando {string}', function (mensajeEsperado) {
-  assert.equal(
-    this.lastResponse.status,
-    403,
-    `Se esperaba código 403 Forbidden al bloquear el login pero se obtuvo ${this.lastResponse.status}`
-  );
-
-  let mensajeObtenido = '';
-  if (typeof this.lastResponseBody === 'string') {
-    mensajeObtenido = this.lastResponseBody;
-  } else if (this.lastResponseBody && this.lastResponseBody.message) {
-    mensajeObtenido = this.lastResponseBody.message;
-  }
-
-  assert.equal(
-    mensajeObtenido,
-    mensajeEsperado,
-    `Se esperaba el mensaje '${mensajeEsperado}' pero se obtuvo '${mensajeObtenido}'`
-  );
-});
-
 Then('la persona asociada al usuario con email {string} y sus registros de eventos y divisiones permanecen en la base de datos', async function (email) {
   const adminToken = await getAdminToken();
   const usersRes = await fetch(`${BACKEND_URL}/user`, {
@@ -196,44 +175,3 @@ Then('la persona asociada al usuario con email {string} y sus registros de event
   assert.ok(user.personId || (user.person && (user.person.id || user.person.firstName)), `El usuario ${email} debe conservar su vinculación con Person`);
 });
 
-Then('el sistema rechaza la baja con el mensaje {string}', function (mensajeEsperado) {
-  const status = this.lastResponse.status;
-  assert.ok(
-    status === 409 || status === 403,
-    `Se esperaba código de rechazo (409 Conflict o 403 Forbidden) pero se obtuvo ${status}`
-  );
-
-  let mensajeObtenido = '';
-  if (typeof this.lastResponseBody === 'string') {
-    mensajeObtenido = this.lastResponseBody;
-  } else if (this.lastResponseBody && this.lastResponseBody.message) {
-    mensajeObtenido = this.lastResponseBody.message;
-  }
-
-  assert.equal(
-    mensajeObtenido,
-    mensajeEsperado,
-    `Se esperaba '${mensajeEsperado}' pero se obtuvo '${mensajeObtenido}'`
-  );
-});
-
-Then('el sistema rechaza la acción indicando {string}', function (mensajeEsperado) {
-  const status = this.lastResponse.status;
-  assert.ok(
-    status === 409 || status === 400 || status === 403,
-    `Se esperaba rechazo de acción pero se obtuvo status ${status}`
-  );
-
-  let mensajeObtenido = '';
-  if (typeof this.lastResponseBody === 'string') {
-    mensajeObtenido = this.lastResponseBody;
-  } else if (this.lastResponseBody && this.lastResponseBody.message) {
-    mensajeObtenido = this.lastResponseBody.message;
-  }
-
-  assert.equal(
-    mensajeObtenido,
-    mensajeEsperado,
-    `Se esperaba '${mensajeEsperado}' pero se obtuvo '${mensajeObtenido}'`
-  );
-});

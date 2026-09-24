@@ -109,14 +109,6 @@ When('intenta crear una división con nombre {string}, categoría {string} y gé
   }
 });
 
-Then('el sistema rechaza la creación de la división informando que ya existe', function () {
-  assert.equal(
-    this.lastResponse.status,
-    409,
-    `Se esperaba código 409 Conflict pero se obtuvo ${this.lastResponse.status}`
-  );
-});
-
 When('intenta crear una división {string} asignándola al club de {string}', async function (nombreDivision, emailOtroAdmin) {
   const otroToken = await getUserToken(emailOtroAdmin, 'PassSegura123!');
   const otroClubRes = await fetch(`${BACKEND_URL}/club/my-club`, {
@@ -165,14 +157,6 @@ When('intenta enviar la solicitud para crear la división {string} con categorí
   } catch {
     this.lastResponseBody = await this.lastResponse.text();
   }
-});
-
-Then('el sistema rechaza la acción con error de autorización 403', function () {
-  assert.equal(
-    this.lastResponse.status,
-    403,
-    `Se esperaba código 403 Forbidden pero se obtuvo ${this.lastResponse.status}`
-  );
 });
 
 When('consulta el listado de divisiones de su club', async function () {
@@ -287,14 +271,6 @@ When('intenta consultar los jugadores de la división {string}', async function 
   } catch {
     this.lastResponseBody = await this.lastResponse.text();
   }
-});
-
-Then('el sistema rechaza el acceso con error de autorización 403', function () {
-  assert.equal(
-    this.lastResponse.status,
-    403,
-    `Se esperaba código 403 Forbidden pero se obtuvo ${this.lastResponse.status}`
-  );
 });
 
 When('intenta consultar los datos de la división {string} perteneciente al club de {string}', async function (nombreDivision, emailOtroAdmin) {

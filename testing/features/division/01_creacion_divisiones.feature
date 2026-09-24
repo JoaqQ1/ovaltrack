@@ -22,19 +22,19 @@ Característica: Creación de divisiones y restricciones de rol y pertenencia a 
   Escenario: Error al intentar crear una división con nombre duplicado en el mismo club
     Dado que el administrador de club con email "admin@club.com" y contraseña "administrador" ha iniciado sesión
     Cuando intenta crear una división con nombre "Primera", categoría "SENIOR" y género "MALE"
-    Entonces el sistema rechaza la creación de la división informando que ya existe
+    Entonces el sistema rechaza la solicitud con código 409 y el mensaje "No se puede crear una division que ya esta activa"
 
   Escenario: Un administrador no puede crear una división en un club ajeno
     Dado que el administrador de club con email "admin@club.com" y contraseña "administrador" ha iniciado sesión
     Cuando intenta crear una división "M17" asignándola al club de "admin_multiclub@test.com"
-    Entonces el sistema rechaza la acción con error de autorización 403
+    Entonces el sistema rechaza la solicitud con código 403 y el mensaje "Acceso denegado: no puede crear divisiones en otro club"
 
   Escenario: Un usuario con rol jugador no puede crear divisiones
     Dado que el usuario con rol jugador con email "usuario.norole@test.com" y contraseña "PassSegura123!" ha iniciado sesión
     Cuando intenta enviar la solicitud para crear la división "Juveniles" con categoría "U18" y género "MALE"
-    Entonces el sistema rechaza la acción con error de autorización 403
+    Entonces el sistema rechaza la solicitud con código 403 y el mensaje "Acceso denegado: solo el administrador del club puede realizar esta acción"
 
   Escenario: Un usuario con rol entrenador no puede crear divisiones
     Dado que el usuario con rol entrenador con email "jugador.uno@test.com" y contraseña "PassSegura123!" ha iniciado sesión
     Cuando intenta enviar la solicitud para crear la división "M15" con categoría "U15" y género "MALE"
-    Entonces el sistema rechaza la acción con error de autorización 403
+    Entonces el sistema rechaza la solicitud con código 403 y el mensaje "Acceso denegado: solo el administrador del club puede realizar esta acción"

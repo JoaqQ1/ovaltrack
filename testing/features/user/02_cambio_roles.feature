@@ -30,15 +30,15 @@ Característica: Gestión de roles restringido a administrador de club
     Dado que el usuario con rol jugador con email "jugador.uno@test.com" y contraseña "PassSegura123!" ha iniciado sesión
     Y que existe el usuario con email "jugador.dos@test.com"
     Cuando presiona el botón para cambiar el rol de "jugador.dos@test.com" a "COACH_ANALYST"
-    Entonces el sistema rechaza la acción con el mensaje "Acceso denegado: solo el administrador del club puede realizar esta acción"
+    Entonces el sistema rechaza la solicitud con código 403 y el mensaje "Acceso denegado: solo el administrador del club puede realizar esta acción"
 
   Escenario: Un usuario no autenticado no puede modificar roles
     Dado un usuario sin sesión iniciada en la plataforma
     Y que existe el usuario con email "jugador.dos@test.com"
     Cuando intenta enviar la solicitud para cambiar el rol de "jugador.dos@test.com" a "COACH_ANALYST"
-    Entonces el sistema rechaza la acción solicitando autenticación
+    Entonces el sistema responde con código 401 y el mensaje "No autorizado"
 
   Escenario: Intentar modificar el rol de un usuario inexistente
     Dado que el administrador de club con email "admin@club.com" y contraseña "administrador" ha iniciado sesión
     Cuando presiona el botón para cambiar el rol del usuario inexistente con ID "00000000-0000-0000-0000-000000000000" a "COACH_ANALYST"
-    Entonces el sistema muestra el mensaje de error "Usuario no encontrado"
+    Entonces el sistema responde con código 404 y el mensaje "Usuario no encontrado"
