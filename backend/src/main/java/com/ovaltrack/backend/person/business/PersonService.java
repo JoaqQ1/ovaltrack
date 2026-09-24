@@ -72,6 +72,39 @@ public class PersonService {
     }
 
     @Transactional
+    public Person createPerson(PersonCreationDTO request, Club club) {
+        if (request == null || request.firstName() == null || request.firstName().trim().isEmpty() ||
+            request.lastName() == null || request.lastName().trim().isEmpty()) {
+            throw new BusinessException("Debe seleccionar una persona existente o ingresar nombre y apellido para crear una nueva");
+        }
+
+        if (request.contactEmail() != null && !request.contactEmail().trim().isBlank()) {
+            String email = request.contactEmail().trim();
+            if (existsByContactEmail(email)) {
+                throw new BusinessException("Email ya registrado");
+            }
+        }
+
+        if (request.contactPhone() != null && !request.contactPhone().trim().isBlank()) {
+            String phone = request.contactPhone().trim();
+            if (existsByContactPhone(phone)) {
+                throw new BusinessException("Teléfono ya registrado");
+            }
+        }
+
+        Person person = Person.builder()
+                .firstName(request.firstName().trim())
+                .lastName(request.lastName().trim())
+                .birthDate(request.birthDate())
+                .contactEmail(request.contactEmail() != null && !request.contactEmail().trim().isBlank() ? request.contactEmail().trim() : null)
+                .contactPhone(request.contactPhone() != null && !request.contactPhone().trim().isBlank() ? request.contactPhone().trim() : null)
+                .club(club)
+                .build();
+
+        return personRepository.save(person);
+    }
+
+    @Transactional
     public Person createPersonFromRegistration(String firstName, String lastName, java.time.LocalDate birthDate, String email, java.util.UUID clubId) {
         Person person = Person.builder()
                 .firstName(firstName)
