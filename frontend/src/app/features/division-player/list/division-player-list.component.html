@@ -1,0 +1,86 @@
+<app-navbar-auth></app-navbar-auth>
+
+<main class="app-shell">
+	<header class="page-hud">
+		<div class="heading-group">
+			<div class="division-mark" aria-hidden="true">
+				{{ division?.name?.charAt(0)?.toUpperCase() || 'D' }}
+			</div>
+			<div>
+				<p class="eyebrow">{{ division?.name || 'División' }}</p>
+				<h1>Jugadores asociados</h1>
+			</div>
+		</div>
+
+		<a routerLink="/divisions" class="back-link">Volver a divisiones</a>
+	</header>
+
+	<section class="content" aria-live="polite">
+		<div class="error-banner" *ngIf="mensajeError" role="alert">
+			<div>
+				<strong>Error de carga</strong>
+				<p>{{ mensajeError }}</p>
+			</div>
+		</div>
+
+		<div class="empty-state" *ngIf="!mensajeError && players.length === 0">
+			<div class="empty-mark" aria-hidden="true">--</div>
+			<h2>No hay jugadores asociados</h2>
+			<p>Esta división todavía no tiene jugadores registrados.</p>
+		</div>
+
+		<section class="players-panel" *ngIf="!mensajeError && players.length > 0" aria-labelledby="players-title">
+			<div class="panel-header">
+				<div>
+					<p class="eyebrow">Plantel de división</p>
+					<h2 id="players-title">{{ players.length }} jugador{{ players.length === 1 ? '' : 'es' }}</h2>
+				</div>
+			</div>
+
+			<div class="player-list">
+				<article class="player-row" *ngFor="let player of players; let index = index">
+					<div class="jersey" aria-label="Número de camiseta">
+						<span class="jersey-label">#</span>
+						<strong>{{ player.jerseyNumber || '--' }}</strong>
+					</div>
+
+					<div class="player-identity">
+						<div class="avatar" aria-hidden="true">
+							{{ persons[index]?.firstName?.charAt(0)?.toUpperCase() || '?' }}
+						</div>
+						<div class="identity-copy">
+							<h3>
+								{{ persons[index]?.firstName || 'Persona' }}
+								{{ persons[index]?.lastName || 'sin nombre' }}
+							</h3>
+							<p>{{ persons[index]?.contactEmail || 'Sin email registrado' }}</p>
+						</div>
+					</div>
+
+					<div class="player-detail">
+						<span class="detail-label">Posición</span>
+						<span class="detail-value">{{ player.position }}</span>
+					</div>
+
+					<div class="player-detail date-detail">
+						<span class="detail-label">Asociado desde</span>
+						<span class="detail-value">{{ player.startDate | date: 'dd/MM/yyyy' }}</span>
+						<span class="detail-label">hasta</span>
+						<span class="detail-value">{{ player.endDate | date: 'dd/MM/yyyy' }}</span>
+					</div>
+                    <button
+                        *ngIf="!player.endDate"
+                        type="button"
+                        class="btn btn-outline"
+                        (click)="desasociarJugador(player)">
+                        Desasociar
+                    </button>
+					<div class="player-status" [class.inactive]="player.endDate">
+						<span class="status-dot"></span>
+						{{ player.endDate ? 'Finalizado' : 'Activo' }}
+					</div>
+				</article>
+			</div>
+		</section>
+	</section>
+</main>
