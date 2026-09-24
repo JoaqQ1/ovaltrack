@@ -21,13 +21,23 @@ import {
   StatusFilter,
   UserRole,
   bucketOf,
-  getMemberInitials
+  getMemberDisplayName,
+  getMemberInitials,
+  matchesStatus
 } from '../../types/members.types';
+import { BatchActionBarComponent } from '../../components/batch-action-bar/batch-action-bar.component';
+import { DeactivateModalComponent } from '../../components/deactivate-modal/deactivate-modal.component';
 
 @Component({
   selector: 'app-members-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarAuthComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    NavbarAuthComponent,
+    BatchActionBarComponent,
+    DeactivateModalComponent
+  ],
   templateUrl: './members-list.component.html',
   styleUrl: './members-list.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -38,6 +48,7 @@ export class MembersListComponent implements OnInit {
   readonly ROLE_META = ROLE_META;
   readonly SELECTABLE_ROLES = SELECTABLE_ROLES;
   readonly getMemberInitials = getMemberInitials;
+  readonly getMemberDisplayName = getMemberDisplayName;
 
   readonly statusFilterDefs: Array<{
     key: StatusFilter;
@@ -83,8 +94,8 @@ export class MembersListComponent implements OnInit {
   readonly statusCounts = computed(() => {
     let active = 0;
     let inactive = 0;
-    for (const m of this.members()) {
-      if (m.active) active++;
+    for (const member of this.members()) {
+      if (member.active) active++;
       else inactive++;
     }
     return {
@@ -96,19 +107,15 @@ export class MembersListComponent implements OnInit {
 
   readonly filterCounts = computed(() => {
     const status = this.statusFilter();
-    const statusFiltered = this.members().filter(m => {
-      if (status === 'ACTIVE') return m.active;
-      if (status === 'INACTIVE') return !m.active;
-      return true;
-    });
+    const statusFiltered = this.members().filter(member => matchesStatus(member, status));
     const counts: Record<FilterCategory, number> = {
       ALL: statusFiltered.length,
       STAFF: 0,
       PLAYER: 0,
       NO_ROLE: 0
     };
-    for (const m of statusFiltered) {
-      const bucket = bucketOf(m.role);
+    for (const member of statusFiltered) {
+      const bucket = bucketOf(member.role);
       counts[bucket] = (counts[bucket] || 0) + 1;
     }
     return counts;
@@ -116,24 +123,21 @@ export class MembersListComponent implements OnInit {
 
   readonly filteredMembers = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
-    const filter = this.activeFilter();
+    const category = this.activeFilter();
     const status = this.statusFilter();
-    const list = this.members();
+    const memberList = this.members();
 
-    return list.filter(m => {
-      const fullName = `${m.firstName} ${m.lastName}`.toLowerCase();
-      const email = (m.email || '').toLowerCase();
-      const jerseyStr = m.jersey != null ? `#${m.jersey}` : '';
+    return memberList.filter(member => {
+      const fullName = `${member.firstName} ${member.lastName}`.toLowerCase();
+      const email = (member.email || '').toLowerCase();
+      const jerseyStr = member.jersey != null ? `#${member.jersey}` : '';
       const textToSearch = `${fullName} ${email} ${jerseyStr}`;
 
       const matchesQuery = !query || textToSearch.includes(query);
-      const matchesCategory = filter === 'ALL' || bucketOf(m.role) === filter;
-      const matchesStatus =
-        status === 'ALL' ||
-        (status === 'ACTIVE' && m.active) ||
-        (status === 'INACTIVE' && !m.active);
+      const matchesCategory = category === 'ALL' || bucketOf(member.role) === category;
+      const matchesStatusFilter = matchesStatus(member, status);
 
-      return matchesQuery && matchesCategory && matchesStatus;
+      return matchesQuery && matchesCategory && matchesStatusFilter;
     });
   });
 

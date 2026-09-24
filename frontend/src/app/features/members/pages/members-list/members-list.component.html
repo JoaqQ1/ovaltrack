@@ -30,35 +30,35 @@
   <div class="filter-toolbar">
     <!-- Segmento de Estado (Activos / Inactivos / Todos) -->
     <div class="status-segment" role="tablist" aria-label="Filtrar por estado de usuario">
-      @for (sDef of statusFilterDefs; track sDef.key) {
+      @for (statusDef of statusFilterDefs; track statusDef.key) {
         <button
           class="status-tab"
-          [class.active]="statusFilter() === sDef.key"
-          (click)="setStatusFilter(sDef.key)"
+          [class.active]="statusFilter() === statusDef.key"
+          (click)="setStatusFilter(statusDef.key)"
           role="tab"
-          [attr.aria-selected]="statusFilter() === sDef.key"
+          [attr.aria-selected]="statusFilter() === statusDef.key"
         >
-          {{ sDef.label }}
-          <span class="status-badge-count">{{ statusCounts()[sDef.key] }}</span>
+          {{ statusDef.label }}
+          <span class="status-badge-count">{{ statusCounts()[statusDef.key] }}</span>
         </button>
       }
     </div>
 
     <!-- Chips de Categoría de Rol -->
     <div class="filters" role="group" aria-label="Filtrar por categoría">
-      @for (def of filterDefs; track def.key) {
+      @for (categoryDef of filterDefs; track categoryDef.key) {
         <button
           class="chip"
-          [class.active]="activeFilter() === def.key"
-          (click)="setFilter(def.key)"
+          [class.active]="activeFilter() === categoryDef.key"
+          (click)="setFilter(categoryDef.key)"
         >
-          @if (def.dot) {
-            <span class="dot" [style.background]="def.dot"></span>
+          @if (categoryDef.dot) {
+            <span class="dot" [style.background]="categoryDef.dot"></span>
           }
-          @if (def.dashed) {
+          @if (categoryDef.dashed) {
             <span class="dot" style="border: 1.5px dashed var(--text-muted)"></span>
           }
-          {{ def.label }} <span class="count">{{ filterCounts()[def.key] }}</span>
+          {{ categoryDef.label }} <span class="count">{{ filterCounts()[categoryDef.key] }}</span>
         </button>
       }
     </div>
@@ -130,11 +130,7 @@
             <div class="avatar">{{ getMemberInitials(member.firstName, member.lastName, member.email) }}</div>
             <div class="id-text">
               <div class="id-name">
-                @if (member.firstName || member.lastName) {
-                  {{ member.firstName }} {{ member.lastName }}
-                } @else {
-                  {{ member.email }}
-                }
+                {{ getMemberDisplayName(member) }}
               </div>
               <div class="id-email">
                 {{ member.email }}
@@ -244,48 +240,20 @@
 
 <!-- Modal de Confirmación de Baja Lógica -->
 @if (memberToDeactivate(); as target) {
-  <div class="modal-backdrop" (click)="cancelDeactivate()">
-    <div class="modal-card" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="modalTitle">
-      <div class="modal-header">
-        <h3 id="modalTitle" class="modal-title">¿Dar de baja a este usuario?</h3>
-        <button class="close-btn" (click)="cancelDeactivate()" aria-label="Cerrar">✕</button>
-      </div>
-      <div class="modal-body">
-        <p>
-          Estás por revocar el acceso a la plataforma para
-          <strong>{{ target.firstName }} {{ target.lastName }}</strong> ({{ target.email }}).
-        </p>
-        <p class="modal-note">
-          Su historial de estadísticas, eventos de partido y datos de persona permanecerán intactos en la base de datos, pero el usuario no podrá volver a iniciar sesión.
-        </p>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-ghost" type="button" (click)="cancelDeactivate()" [disabled]="isDeactivating()">Cancelar</button>
-        <button class="btn btn-danger" type="button" (click)="confirmDeactivate()" [disabled]="isDeactivating()">
-          {{ isDeactivating() ? 'Procesando...' : 'Confirmar baja' }}
-        </button>
-      </div>
-    </div>
-  </div>
+  <app-deactivate-modal
+    [member]="target"
+    [isProcessing]="isDeactivating()"
+    (cancel)="cancelDeactivate()"
+    (confirm)="confirmDeactivate()"
+  ></app-deactivate-modal>
 }
 
 <!-- Barra flotante de cambios pendientes -->
 @if (hasDirtyMembers()) {
-  <div class="batch-bar">
-    <div class="batch-text">
-      <span>{{ dirtyCount() }}</span> cambios sin guardar
-    </div>
-    <div class="batch-actions">
-      <button class="btn-ghost" type="button" (click)="discardChanges()" [disabled]="isSaving()">Descartar</button>
-      <button
-        class="btn btn-invite"
-        type="button"
-        (click)="saveAllChanges()"
-        [disabled]="isSaving()"
-        style="height: 40px; box-shadow: none;"
-      >
-        {{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}
-      </button>
-    </div>
-  </div>
+  <app-batch-action-bar
+    [dirtyCount]="dirtyCount()"
+    [isSaving]="isSaving()"
+    (discard)="discardChanges()"
+    (save)="saveAllChanges()"
+  ></app-batch-action-bar>
 }

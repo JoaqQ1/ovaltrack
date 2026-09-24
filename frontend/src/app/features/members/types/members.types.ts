@@ -112,6 +112,17 @@ export function getMemberInitials(firstName: string, lastName: string, email: st
   return '??';
 }
 
+export function matchesStatus(member: Member, filter: StatusFilter): boolean {
+  if (filter === 'ACTIVE') return member.active;
+  if (filter === 'INACTIVE') return !member.active;
+  return true;
+}
+
+export function getMemberDisplayName(member: Member): string {
+  const fullName = `${member.firstName || ''} ${member.lastName || ''}`.trim();
+  return fullName || member.email || '';
+}
+
 export interface BannerNotification {
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';
