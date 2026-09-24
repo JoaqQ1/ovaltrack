@@ -15,7 +15,17 @@ export class DivisionPlayerService {
     return this.http.post<any>(this.apiUrl, playerData);
   }
 
-  getByDivisionId(divisionId: string): Observable<DivisionPlayerResponse[]> {
+  getByDivisionIdAndPersonId(divisionId: string, personId: string): Observable<DivisionPlayerResponse[]> {
+    const params = new HttpParams({
+      fromObject: {
+        divisionId,
+        personId
+      }
+    });
+    return this.http.get<DivisionPlayerResponse[]>(`${this.apiUrl}/history`, { params });
+  }
+
+  getActiveByDivisionId(divisionId: string): Observable<DivisionPlayerResponse[]> {
     const params = new HttpParams().set('divisionId', divisionId);
     return this.http.get<DivisionPlayerResponse[]>(this.apiUrl, { params });
   }
