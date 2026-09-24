@@ -1,0 +1,28 @@
+info:
+  name: 06 - [409 Conflict] Dar de baja usuario ya inactivo
+  type: http
+  seq: 6
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/user/{{targetUserId}}/baja"
+  headers:
+    - name: Authorization
+      value: Bearer {{adminToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe rechazar con 409 Conflict si el usuario ya esta inactivo", function() {
+          expect(res.getStatus()).to.equal(409);
+          expect(res.getBody().message).to.equal("El usuario ya se encuentra dado de baja");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

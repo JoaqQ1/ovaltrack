@@ -1,5 +1,6 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
+import { getAdminToken } from '../../support/auth_helper.js';
 
 const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
 
@@ -36,21 +37,11 @@ Given('un usuario sin sesión iniciada en la plataforma', function () {
 });
 
 Given('que existe el usuario con email {string}', async function (email) {
-  // Se llama al endpoint para obtener los usuarios que el frontend visualiza en la tabla
-  let lookupToken = this.token;
-  if (!lookupToken) {
-    const loginResponse = await fetch(`${BACKEND_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@club.com', password: 'administrador' })
-    });
-    const loginBody = await loginResponse.json();
-    lookupToken = loginBody.token;
-    assert.ok(lookupToken, 'La sesión técnica para preparar el escenario debe recibir un token');
-  }
+  const setupToken = await getAdminToken();
+  assert.ok(setupToken, 'La sesión técnica para preparar el escenario debe recibir un token');
 
   const usersRes = await fetch(`${BACKEND_URL}/user`, {
-    headers: { 'Authorization': `Bearer ${lookupToken}` }
+    headers: { 'Authorization': `Bearer ${setupToken}` }
   });
 
   assert.ok(
@@ -74,7 +65,7 @@ When('en la tabla de miembros selecciona el nuevo rol {string} para {string} y p
   assert.ok(userId, `El usuario ${email} no posee un ID válido`);
 
   this.lastResponse = await fetch(`${BACKEND_URL}/user/${userId}/role`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.token}`
@@ -137,7 +128,7 @@ When('modifica los roles en la tabla según los siguientes cambios y presiona "G
     assert.ok(targetUser, `Usuario ${row.emailUsuario} no encontrado en la tabla`);
 
     const res = await fetch(`${BACKEND_URL}/user/${targetUser.id}/role`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.token}`
@@ -171,7 +162,7 @@ When('presiona el botón para cambiar el rol de {string} a {string}', async func
   assert.ok(userId, `Usuario ${email} no encontrado`);
 
   this.lastResponse = await fetch(`${BACKEND_URL}/user/${userId}/role`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.token}`
@@ -212,7 +203,7 @@ When('intenta enviar la solicitud para cambiar el rol de {string} a {string}', a
   assert.ok(userId, `Usuario ${email} no encontrado`);
 
   this.lastResponse = await fetch(`${BACKEND_URL}/user/${userId}/role`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: {
       'Content-Type': 'application/json'
     },
@@ -230,7 +221,7 @@ Then('el sistema rechaza la acción solicitando autenticación', function () {
 
 When('presiona el botón para cambiar el rol del usuario inexistente con ID {string} a {string}', async function (nonexistentId, newRole) {
   this.lastResponse = await fetch(`${BACKEND_URL}/user/${nonexistentId}/role`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.token}`
