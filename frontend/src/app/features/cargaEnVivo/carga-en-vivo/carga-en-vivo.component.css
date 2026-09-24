@@ -40,6 +40,9 @@
 
 	/* Neutros — Modo claro (default en cancha) */
 	--bg: #F6F7F9;
+	--bg-own: #E4F3D9;
+	--bg-neutral: #EEF1F4;
+	--bg-away: #FBE1DF;
 	--surface: #FFFFFF;
 	--surface-alt: #EEF1F4;
 	--text: #16191C;
@@ -64,6 +67,9 @@
 /* Override: si el elemento tiene data-theme, usa eso directamente sin media query */
 .live-capture[data-theme="dark"] {
 	--bg: #12161B;
+	--bg-own: #1D3A27;
+	--bg-neutral: #232931;
+	--bg-away: #3D2929;
 	--surface: #1B2027;
 	--surface-alt: #232931;
 	--text: #F2F4F6;
@@ -74,6 +80,9 @@
 
 .live-capture[data-theme="light"] {
 	--bg: #F6F7F9;
+	--bg-own: #E4F3D9;
+	--bg-neutral: #EEF1F4;
+	--bg-away: #FBE1DF;
 	--surface: #FFFFFF;
 	--surface-alt: #EEF1F4;
 	--text: #16191C;
@@ -217,11 +226,12 @@
 .icon-btn:hover {
 	background: var(--navy-100);
 	border-color: var(--navy-700);
+	color: var(--navy-900);
 }
 
 .btn--outline {
 	background: transparent;
-	border: 1px solid var(--navy-900);
+	border: 1px solid var(--navy-100);
 	color: var(--navy-text);
 	font-family: var(--font-manrope);
 	font-weight: 600;
@@ -233,6 +243,7 @@
 
 .btn--outline:hover {
 	background: var(--navy-100);
+	color: var(--navy-900);
 }
 
 .live-capture__body {
@@ -242,6 +253,19 @@
 	flex: 1;
 	min-height: 0;
 	overflow: hidden;
+	background: var(--possession-bg, var(--bg));
+}
+
+.live-capture--own {
+	--possession-bg: var(--bg-own);
+}
+
+.live-capture--neutral {
+	--possession-bg: var(--bg-neutral);
+}
+
+.live-capture--opponent {
+	--possession-bg: var(--bg-away);
 }
 
 .live-capture__body--history-hidden {
@@ -350,6 +374,36 @@
 	height: 100%;
 	overflow: hidden;
 	background: var(--bg);
+}
+
+.event-catalog--own {
+	grid-column: 1;
+	grid-row: 2;
+	padding: var(--ot-margin-screen);
+	display: flex;
+	flex-direction: column;
+	gap: calc(18px * var(--ot-live-scale));
+	min-height: 0;
+	height: 100%;
+	overflow: hidden;
+	background: var(--bg-own);
+}
+
+.event-catalog--away {
+	grid-column: 1;
+	grid-row: 2;
+	padding: var(--ot-margin-screen);
+	display: flex;
+	flex-direction: column;
+	gap: calc(18px * var(--ot-live-scale));
+	min-height: 0;
+	height: 100%;
+	overflow: hidden;
+	background: var(--bg-away);
+}
+
+.event-catalog--neutral {
+	background: var(--bg-neutral);
 }
 
 .event-catalog__category {
