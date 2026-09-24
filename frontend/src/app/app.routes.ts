@@ -6,6 +6,7 @@ import { DivisionDetailsComponent } from './features/division/division-details.c
 import { DivisionListComponent } from './features/division/division-list.component';
 import { DivisionPlayerDetailsComponent } from './features/division-player/division-player-details.component';
 import { hasRoleGuard } from './core/guards/has-role.guard';
+import { SelectionRosterComponent } from './selection-roster/selection-roster.component';
 
 export const routes: Routes = [
     // Raíz: redirige a /home
@@ -109,6 +110,10 @@ export const routes: Routes = [
         path: 'miembros',
         redirectTo: 'members',
         pathMatch: 'full'
+    },
+    {
+        path: 'selection-roster/:id',
+        component: SelectionRosterComponent
     },
     // Wildcard para rutas no encontradas
     {

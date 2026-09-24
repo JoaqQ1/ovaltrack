@@ -1,40 +1,34 @@
 package com.ovaltrack.backend.match.domain;
 
-import com.ovaltrack.backend.division.domain.Division;
+import com.ovaltrack.backend.division.domain.DivisionPlayer;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.List;
-import java.util.ArrayList;
 
 @Entity
-@Table(name = "matches")
+@Table(name = "matches_players")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Match {
+public class MatchPlayer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
     private UUID id;
 
-    private LocalDateTime date;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "match_id", nullable = false)
+    private Match match;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "division_id", nullable = false)
-    private Division division;
-
-    private String opponent;
+    private DivisionPlayer divisionPlayer;
 
     @Enumerated(EnumType.STRING)
-    private MatchStatus status;
-
-    @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MatchPlayer> roster = new ArrayList<>();
+    @Column(nullable = false)
+    private MatchPlayerRole role;
 }

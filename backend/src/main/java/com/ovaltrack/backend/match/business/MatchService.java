@@ -1,23 +1,31 @@
 package com.ovaltrack.backend.match.business;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.division.business.DivisionService;
 import com.ovaltrack.backend.division.domain.Division;
+import com.ovaltrack.backend.division.domain.DivisionPlayer;
 import com.ovaltrack.backend.match.domain.Match;
+import com.ovaltrack.backend.match.domain.MatchPlayer;
+import com.ovaltrack.backend.match.domain.MatchPlayerRole;
 import com.ovaltrack.backend.match.domain.MatchStatus;
 import com.ovaltrack.backend.match.domain.dto.MatchCreationDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchDTOMapper;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
+import com.ovaltrack.backend.match.domain.dto.RosterDTO;
+import com.ovaltrack.backend.match.repository.MatchPlayerRepository;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class MatchService {
@@ -25,8 +33,19 @@ public class MatchService {
 	@Autowired
 	private MatchRepository matchRepository;
 
+	@Autowired
+	private DivisionPlayerRepository divisionPlayerRepository;
+
 	@Autowired 
 	private DivisionService divisionService;
+
+	@Autowired
+    private MatchPlayerRepository matchPlayerRepository;
+
+	// Inyecta tu repositorio
+    public MatchService(MatchRepository matchRepository) {
+        this.matchRepository = matchRepository;
+    }
 
 	//TODO: Exceptions for non-existent club and non-existent division
 	public Collection<MatchResponseDTO> findAllMatchesByClubId(UUID clubId) {
@@ -75,13 +94,23 @@ public class MatchService {
 		return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
 	}
 
-	//TODO: functions to start and to finish match, add endpoints and logic to check division association
 	@Transactional
-	public Match startMatch(UUID matchId) {
-		Match aMatch = findMatchEntityById(matchId);
-		aMatch.setStatus(MatchStatus.IN_PROGRESS);
-		return matchRepository.save(aMatch);
-	}
+    public Match startMatch(UUID matchId) {
+        Match aMatch = findMatchEntityById(matchId);
+        if (aMatch == null) {
+            throw new BusinessException("Partido no encontrado");
+        }
+
+        boolean hasTitular = aMatch.getRoster().stream()
+                .anyMatch(player -> player.getRole() == MatchPlayerRole.TITULAR);
+
+        if (!hasTitular) {
+            throw new BusinessException("No se puede iniciar el partido sin al menos un jugador titular registrado.");
+        }
+
+        aMatch.setStatus(MatchStatus.IN_PROGRESS);
+        return matchRepository.save(aMatch);
+    }
 
 	@Transactional
 	public Match FinishMatch(UUID matchId) {
@@ -102,4 +131,61 @@ public class MatchService {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'findMatchByIdAndDivisionId'");
     }
+
+	@Transactional
+    public void saveMatchRoster(UUID matchId, List<UUID> titularesIds, List<UUID> suplentesIds) {
+        Match match = findMatchEntityById(matchId);
+        if (match == null) {
+            throw new BusinessException("Partido no encontrado");
+        }
+        matchPlayerRepository.deleteByMatch(match);
+        List<MatchPlayer> nuevosJugadores = new ArrayList<>();
+
+        List<DivisionPlayer> todosLosJugadores = divisionPlayerRepository.findAll();
+
+        for (DivisionPlayer dp : todosLosJugadores) {
+            UUID personId = dp.getPerson().getId();
+            
+            if (titularesIds.contains(personId)) {
+                nuevosJugadores.add(MatchPlayer.builder()
+                        .match(match)
+                        .divisionPlayer(dp)
+                        .role(MatchPlayerRole.TITULAR)
+                        .build());
+            } else if (suplentesIds.contains(personId)) {
+                nuevosJugadores.add(MatchPlayer.builder()
+                        .match(match)
+                        .divisionPlayer(dp)
+                        .role(MatchPlayerRole.SUPLENTE)
+                        .build());
+            }
+        }
+        
+        // 4. Forzamos los INSERTS en la base de datos
+        matchPlayerRepository.saveAll(nuevosJugadores);
+    }
+
+    @Transactional(readOnly = true)
+    public RosterDTO getSavedRoster(UUID matchId) {
+        Match match = matchRepository.findById(matchId).orElse(null);
+
+        if (match == null || match.getRoster() == null || match.getRoster().isEmpty()) {
+            return new RosterDTO(List.of(), List.of()); 
+        }
+
+        // 👉 VOLVEMOS AL ORIGINAL: Devolvemos la Persona para que Angular la reconozca
+        List<UUID> startingPlayers = match.getRoster().stream()
+                .filter(mp -> mp.getRole() == MatchPlayerRole.TITULAR) 
+                .map(mp -> mp.getDivisionPlayer().getPerson().getId()) 
+                .toList();
+
+        List<UUID> substitutePlayers = match.getRoster().stream()
+                .filter(mp -> mp.getRole() == MatchPlayerRole.SUPLENTE)
+                .map(mp -> mp.getDivisionPlayer().getPerson().getId()) 
+                .toList();
+
+        return new RosterDTO(startingPlayers, substitutePlayers);
+    }
 }
+
+

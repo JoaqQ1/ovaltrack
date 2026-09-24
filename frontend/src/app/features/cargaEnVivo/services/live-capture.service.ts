@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, defer, firstValueFrom, forkJoin, from, map, switchMap } from 'rxjs';
+import { Observable, catchError, defer, firstValueFrom, forkJoin, from, map, of, switchMap } from 'rxjs';
 import {
   liveCaptureDatabase,
   matchDatabase,
@@ -17,8 +17,9 @@ import {
 } from '../types/live-capture.types';
 import { LIVE_CAPTURE_EVENT_TYPES } from '../data/live-capture.mock';
 import { MOCK_MATCHES } from '../data/match.mock';
+import { HttpClient } from '@angular/common/http'; // 1. Agrega este import arriba de todo
 
-export const TEMPORARY_DIVISION_ID = '550e8400-e29b-41d4-a716-446655440001';
+export const TEMPORARY_DIVISION_ID = '11111111-1111-1111-1111-000000000020';
 const HOME_TEAM_NAME = 'PMRC';
 
 export const LIVE_CAPTURE_BACKEND_CONTRACT = [
@@ -93,8 +94,20 @@ export class LiveCaptureService {
     };
   }
 
-  private readMatch(matchId: string): Promise<Match | undefined> {
-    return seedMissingMatches().then(() => matchDatabase.matches.get(matchId));
+  // Asegúrate de inyectar HttpClient si no lo tienes en esta clase
+  private readonly http = inject(HttpClient);
+
+  private async readMatch(matchId: string): Promise<Match | undefined> {
+    try {
+      // Buscamos el partido directamente en PostgreSQL a través de Spring Boot
+      const match = await firstValueFrom(
+        this.http.get<Match>(`http://localhost:8080/matches/${matchId}`)
+      );
+      return match;
+    } catch (err) {
+      // Fallback temporal por si quedó algún dato viejo en Dexie
+      return matchDatabase.matches.get(matchId);
+    }
   }
 
   private async writeState(state: LiveCapturePersistedState): Promise<void> {
@@ -153,56 +166,87 @@ export class LiveCaptureService {
  */
 @Injectable({ providedIn: 'root' })
 export class MatchService {
-  private readonly liveCaptureService = inject(LiveCaptureService);
+  private readonly http = inject(HttpClient);
+  
+  // Ajusta el puerto si es distinto a 8080
+  private apiUrl = 'http://localhost:8080/matches';
 
-  /** Trae el listado de partidos. */
+  /** 1. Trae el listado de partidos desde Spring Boot */
   getMatches(): Observable<Match[]> {
-    return defer(() => from(this.seedMissingMatches().then(() => this.readMatches()))).pipe(
-      switchMap(matches => forkJoin(
-        matches.map(match => this.liveCaptureService.getMatchStatus(match.id)),
-      ).pipe(
-        map(statuses => matches.map((match, index) => ({
-          ...match,
-          status: statuses[index],
-        }))),
-      )),
+    return this.http.get<any[]>(`${this.apiUrl}/division?divisionId=${TEMPORARY_DIVISION_ID}`).pipe(
+      map(matches => matches.map(m => ({
+        ...m,
+        status: m.status.toLowerCase() // Convertimos NOT_STARTED a not_started
+      })))
     );
   }
 
-  /**
-   * Da de alta un partido nuevo a partir de los datos mínimos (fecha y
-   * oponente), asignándole id y arrancando siempre en estado "no iniciado".
-   */
   createMatch(draft: NewMatchDraft): Observable<Match> {
-    const newMatch: Match = {
-      id: crypto.randomUUID(),
-      date: draft.date,
+    const formattedDate = draft.date.includes('T') 
+      ? draft.date 
+      : `${draft.date}T00:00:00`;
+
+    const payload = {
+      date: formattedDate,
       divisionId: TEMPORARY_DIVISION_ID,
-      opponent: draft.opponent.trim(),
-      status: 'not_started',
+      opponent: draft.opponent.trim()
+    };
+    
+    return this.http.post<any>('http://localhost:8080/matches', payload).pipe(
+      map(m => ({
+        ...m,
+        status: m.status.toLowerCase() // Lo mismo al crear uno nuevo
+      }))
+    );
+  } 
+
+  /** 3. Elimina un partido en el backend */
+  deleteMatch(matchId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${matchId}`);
+  }
+
+  /** 4. Trae los jugadores de la división para armar el plantel */
+  getAvailablePlayers(matchId: string): Observable<any[]> {
+    // Primero obtenemos el partido del backend para saber su divisionId
+    return this.http.get<Match>(`${this.apiUrl}/${matchId}`).pipe(
+      switchMap(match => {
+        if (!match) {
+          throw new Error(`Partido ${matchId} no encontrado en el backend`);
+        }
+        return this.http.get<any[]>(`http://localhost:8080/division/${match.divisionId}/players`);
+      })
+    );
+  }
+
+  saveRoster(payload: { matchId: string, startingPlayers: string[], substitutePlayers: string[] }) {
+    
+    // Armamos el objeto con los nombres exactos que espera tu DTO en Java
+    const dtoParaJava = {
+      titularesIds: payload.startingPlayers,
+      suplentesIds: payload.substitutePlayers
     };
 
-    return defer(() => from(this.saveMatch(newMatch)));
+    // Enviamos el dtoParaJava en lugar del payload original
+    return this.http.post(`http://localhost:8080/matches/${payload.matchId}/roster`, dtoParaJava);
   }
 
-  deleteMatch(matchId: string): Observable<void> {
-    return defer(() => from(this.removeMatch(matchId)));
-  }
-
-  private readMatches(): Promise<Match[]> {
-    return matchDatabase.matches.toArray();
-  }
-
-  private seedMissingMatches(): Promise<void> {
-    return seedMissingMatches();
-  }
-
-  private saveMatch(match: Match): Promise<Match> {
-    return matchDatabase.matches.put(match).then(() => match);
-  }
-
-  private removeMatch(matchId: string): Promise<void> {
-    return firstValueFrom(this.liveCaptureService.deleteMatchData(matchId))
-      .then(() => matchDatabase.matches.delete(matchId));
+  /** 6. Recupera el plantel guardado al volver a entrar a la pantalla */
+  getSavedRoster(matchId: string): Observable<{ startingPlayers: string[], substitutePlayers: string[] } | null> {
+    return this.http.get<any>(`http://localhost:8080/matches/${matchId}/roster`)
+      .pipe(
+        map(res => {
+          // Si Java lo manda en inglés o en español, Angular lo adapta
+          return {
+            startingPlayers: res.startingPlayers || res.titularesIds || [],
+            substitutePlayers: res.substitutePlayers || res.suplentesIds || []
+          };
+        }),
+        catchError(err => {
+          if (err.status === 404) {
+            return of(null);
+          }
+          throw err;
+        })
+      );
   }
 }

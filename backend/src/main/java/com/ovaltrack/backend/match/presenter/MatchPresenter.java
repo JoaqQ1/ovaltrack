@@ -1,11 +1,13 @@
 package com.ovaltrack.backend.match.presenter;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +22,8 @@ import com.ovaltrack.backend.match.business.MatchService;
 import com.ovaltrack.backend.match.domain.dto.MatchCreationDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
+import com.ovaltrack.backend.match.domain.dto.RosterDTO;
+import com.ovaltrack.backend.match.domain.dto.MatchRosterDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -27,9 +31,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
+
 @RestController
 @RequestMapping("matches")
 @Tag(name = "Matches", description = "Create, query, update, and delete matches")
+@CrossOrigin(origins = "http://localhost:4200")
 public class MatchPresenter {
 
     @Autowired
@@ -140,4 +147,26 @@ public class MatchPresenter {
         return ResponseEntity.ok("Partido eliminado correctamente");
     }
 
+    @PostMapping("/{matchId}/roster")
+    public ResponseEntity<Void> saveMatchRoster(
+            @PathVariable UUID matchId,
+            @RequestBody MatchRosterDTO request) {
+        
+        
+        matchService.saveMatchRoster(matchId, request.titularesIds(), request.suplentesIds());
+
+        return ResponseEntity.ok().build();
+    
+    }
+
+    @GetMapping("/{matchId}/roster")
+    public ResponseEntity<RosterDTO> getMatchRoster(@PathVariable UUID matchId) {
+        RosterDTO roster = matchService.getSavedRoster(matchId);
+        
+        if (roster.getStartingPlayers().isEmpty() && roster.getSubstitutePlayers().isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        return ResponseEntity.ok(roster);
+    }
 }
