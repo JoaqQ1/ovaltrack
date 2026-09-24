@@ -26,23 +26,42 @@
     <button class="btn btn-invite" id="inviteBtn" (click)="onInviteClick()">+ Invitar miembro</button>
   </header>
 
-  <!-- Filtros unificados con conteo -->
-  <div class="filters" role="group" aria-label="Filtrar por categoría">
-    @for (def of filterDefs; track def.key) {
-      <button
-        class="chip"
-        [class.active]="activeFilter() === def.key"
-        (click)="setFilter(def.key)"
-      >
-        @if (def.dot) {
-          <span class="dot" [style.background]="def.dot"></span>
-        }
-        @if (def.dashed) {
-          <span class="dot" style="border: 1.5px dashed var(--text-muted)"></span>
-        }
-        {{ def.label }} <span class="count">{{ filterCounts()[def.key] }}</span>
-      </button>
-    }
+  <!-- Filtros unificados con tabs de estado y categorías -->
+  <div class="filter-toolbar">
+    <!-- Segmento de Estado (Activos / Inactivos / Todos) -->
+    <div class="status-segment" role="tablist" aria-label="Filtrar por estado de usuario">
+      @for (sDef of statusFilterDefs; track sDef.key) {
+        <button
+          class="status-tab"
+          [class.active]="statusFilter() === sDef.key"
+          (click)="setStatusFilter(sDef.key)"
+          role="tab"
+          [attr.aria-selected]="statusFilter() === sDef.key"
+        >
+          {{ sDef.label }}
+          <span class="status-badge-count">{{ statusCounts()[sDef.key] }}</span>
+        </button>
+      }
+    </div>
+
+    <!-- Chips de Categoría de Rol -->
+    <div class="filters" role="group" aria-label="Filtrar por categoría">
+      @for (def of filterDefs; track def.key) {
+        <button
+          class="chip"
+          [class.active]="activeFilter() === def.key"
+          (click)="setFilter(def.key)"
+        >
+          @if (def.dot) {
+            <span class="dot" [style.background]="def.dot"></span>
+          }
+          @if (def.dashed) {
+            <span class="dot" style="border: 1.5px dashed var(--text-muted)"></span>
+          }
+          {{ def.label }} <span class="count">{{ filterCounts()[def.key] }}</span>
+        </button>
+      }
+    </div>
   </div>
 
   <!-- Región de Banners de Feedback -->
@@ -103,6 +122,7 @@
         <div
           class="member-row"
           [class.is-dirty]="dirtyMembers().has(member.id)"
+          [class.is-inactive]="!member.active"
           [style.--ring]="ROLE_META[member.role].color"
         >
           <!-- Identidad -->

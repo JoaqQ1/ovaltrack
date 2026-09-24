@@ -1,5 +1,6 @@
 package com.ovaltrack.backend.user.controller;
 
+import java.util.Collection;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,6 +24,8 @@ import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.common.config.exceptions.EntityNotFoundException;
 import com.ovaltrack.backend.user.business.UserService;
 import com.ovaltrack.backend.user.domain.User;
+import com.ovaltrack.backend.user.domain.dto.UserCreateRequestDTO;
+import com.ovaltrack.backend.user.domain.dto.UserDTOMapper;
 import com.ovaltrack.backend.user.domain.dto.UserResponseDTO;
 import com.ovaltrack.backend.user.domain.dto.UserRoleUpdateDTO;
 
@@ -48,8 +51,8 @@ public class UserController {
 			@ApiResponse(responseCode = "200", description = "Users returned successfully.")
 	})
 	@GetMapping
-	public ResponseEntity<Object> findAllUsers() {
-		return ResponseEntity.ok(userService.findAllUsers());
+	public ResponseEntity<Collection<UserResponseDTO>> findAllUsers() {
+		return ResponseEntity.ok(userService.findAllUsersDTO());
 	}
 
 	@Operation(summary = "Find a specific user by ID", description = "Returns the user identified by the userId path parameter.")
@@ -60,7 +63,7 @@ public class UserController {
 	@GetMapping("/{userId}")
 	public ResponseEntity<Object> findUserById(@PathVariable UUID userId) {
 		User user = userService.findUserById(userId);
-		return (user != null) ? ResponseEntity.ok(user)
+		return (user != null) ? ResponseEntity.ok(UserDTOMapper.toResponseDTO(user))
 				: ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
 	}
 
@@ -70,9 +73,9 @@ public class UserController {
 			@ApiResponse(responseCode = "409", description = "Business conflict or data integrity violation.")
 	})
 	@PostMapping
-	public ResponseEntity<Object> saveUser(@RequestBody User user) {
+	public ResponseEntity<Object> saveUser(@Valid @RequestBody UserCreateRequestDTO request) {
 		try {
-			return ResponseEntity.ok(userService.saveUser(user));
+			return ResponseEntity.ok(userService.createUser(request));
 		} catch (BusinessException anError) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
 		} catch (DataIntegrityViolationException anError) {
@@ -91,7 +94,7 @@ public class UserController {
 	})
 	@RequestMapping(value = {"/{userId}/role", "/{userId}"}, method = {RequestMethod.PUT, RequestMethod.PATCH})
 	@PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
-	public ResponseEntity<Object> updateUserRole(
+	public ResponseEntity<UserResponseDTO> updateUserRole(
 			@PathVariable UUID userId,
 			@Valid @RequestBody UserRoleUpdateDTO request,
 			BindingResult bindingResult,
@@ -100,16 +103,10 @@ public class UserController {
 			String message = bindingResult.getFieldError() != null
 					? bindingResult.getFieldError().getDefaultMessage()
 					: "Datos inválidos";
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of("message", message));
+			throw new BusinessException(message);
 		}
-		try {
-			UserResponseDTO updatedUser = userService.updateUserRole(userId, request.role(), authentication);
-			return ResponseEntity.ok(updatedUser);
-		} catch (EntityNotFoundException e) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(java.util.Map.of("message", e.getMessage()));
-		} catch (BusinessException e) {
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of("message", e.getMessage()));
-		}
+		UserResponseDTO updatedUser = userService.updateUserRole(userId, request.role(), authentication);
+		return ResponseEntity.ok(updatedUser);
 	}
 
 	@Operation(summary = "Deactivate user (Baja lógica)", description = "Deactivates the user access without deleting historical data.")
@@ -122,17 +119,11 @@ public class UserController {
 	})
 	@PatchMapping("/{userId}/baja")
 	@PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
-	public ResponseEntity<Object> deactivateUser(
+	public ResponseEntity<UserResponseDTO> deactivateUser(
 			@PathVariable UUID userId,
 			Authentication authentication) {
-		try {
-			UserResponseDTO deactivatedUser = userService.deactivateUser(userId, authentication);
-			return ResponseEntity.ok(deactivatedUser);
-		} catch (EntityNotFoundException e) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(java.util.Map.of("message", e.getMessage()));
-		} catch (BusinessException e) {
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of("message", e.getMessage()));
-		}
+		UserResponseDTO deactivatedUser = userService.deactivateUser(userId, authentication);
+		return ResponseEntity.ok(deactivatedUser);
 	}
 
 	@Operation(summary = "Delete a user", description = "Deletes the user identified by the UUID.")
@@ -141,7 +132,7 @@ public class UserController {
 			@ApiResponse(responseCode = "409", description = "The user cannot be deleted because of related entities.")
 	})
 	@DeleteMapping("/{userId}")
-	public ResponseEntity<Object> deleteUser(@PathVariable UUID userId) {
+	public ResponseEntity<String> deleteUser(@PathVariable UUID userId) {
 		try {
 			userService.deleteUser(userId);
 			return ResponseEntity.ok("Usuario eliminado correctamente");

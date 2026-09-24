@@ -18,20 +18,37 @@ import org.springframework.security.core.Authentication;
 
 import jakarta.transaction.Transactional;
 
+import com.ovaltrack.backend.person.domain.Person;
+import com.ovaltrack.backend.person.repository.PersonRepository;
+import com.ovaltrack.backend.user.domain.dto.UserCreateRequestDTO;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 @Service
 public class UserService {
 
 	private final UserRepository userRepository;
 	private final ClubRepository clubRepository;
+	private final PersonRepository personRepository;
+	private final PasswordEncoder passwordEncoder;
 
 	public UserService(UserRepository userRepository,
-			ClubRepository clubRepository) {
+			ClubRepository clubRepository,
+			PersonRepository personRepository,
+			PasswordEncoder passwordEncoder) {
 		this.userRepository = userRepository;
 		this.clubRepository = clubRepository;
+		this.personRepository = personRepository;
+		this.passwordEncoder = passwordEncoder;
 	}
 
 	public Collection<User> findAllUsers() {
 		return userRepository.findAll();
+	}
+
+	public Collection<UserResponseDTO> findAllUsersDTO() {
+		return userRepository.findAll().stream()
+				.map(UserDTOMapper::toResponseDTO)
+				.toList();
 	}
 
 	public Collection<UserResponseDTO> findUsersByClubId(UUID clubId) {
@@ -60,6 +77,47 @@ public class UserService {
 	@Transactional
 	public User saveUser(User user) {
 		return userRepository.save(user);
+	}
+
+	@Transactional
+	public UserResponseDTO createUser(UserCreateRequestDTO request) {
+		String email = request.getEffectiveEmail();
+		if (email == null || email.isBlank()) {
+			throw new BusinessException("El email es obligatorio");
+		}
+		if (userRepository.existsByLoginEmail(email)) {
+			throw new BusinessException("El email ya se encuentra registrado");
+		}
+
+		Person person = null;
+		if (request.personId() != null) {
+			person = personRepository.findById(request.personId()).orElse(null);
+		}
+		if (person == null) {
+			person = Person.builder()
+					.firstName(request.firstName() != null ? request.firstName() : "")
+					.lastName(request.lastName() != null ? request.lastName() : "")
+					.birthDate(request.birthDate())
+					.contactEmail(email)
+					.club(request.clubId() != null ? clubRepository.findById(request.clubId()).orElse(null) : null)
+					.build();
+			person = personRepository.save(person);
+		}
+
+		String encodedPassword = (request.password() != null && !request.password().isBlank())
+				? passwordEncoder.encode(request.password())
+				: passwordEncoder.encode("Default123!");
+
+		User user = User.builder()
+				.person(person)
+				.loginEmail(email)
+				.passwordHash(encodedPassword)
+				.role(request.role() != null ? request.role() : UserRole.NO_ROLE)
+				.active(request.active() != null ? request.active() : true)
+				.build();
+
+		User saved = userRepository.save(user);
+		return UserDTOMapper.toResponseDTO(saved);
 	}
 
 	@Transactional

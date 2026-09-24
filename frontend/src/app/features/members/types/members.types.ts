@@ -6,6 +6,7 @@ export type UserRole =
   | 'NO_ROLE';
 
 export type FilterCategory = 'ALL' | 'STAFF' | 'PLAYER' | 'NO_ROLE';
+export type StatusFilter = 'ACTIVE' | 'INACTIVE' | 'ALL';
 
 export interface Member {
   id: string;

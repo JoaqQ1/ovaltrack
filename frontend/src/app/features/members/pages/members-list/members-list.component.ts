@@ -18,6 +18,7 @@ import {
   Member,
   ROLE_META,
   SELECTABLE_ROLES,
+  StatusFilter,
   UserRole,
   bucketOf,
   getMemberInitials
@@ -38,6 +39,15 @@ export class MembersListComponent implements OnInit {
   readonly SELECTABLE_ROLES = SELECTABLE_ROLES;
   readonly getMemberInitials = getMemberInitials;
 
+  readonly statusFilterDefs: Array<{
+    key: StatusFilter;
+    label: string;
+  }> = [
+    { key: 'ACTIVE', label: 'Activos' },
+    { key: 'INACTIVE', label: 'Inactivos' },
+    { key: 'ALL', label: 'Todos' }
+  ];
+
   readonly filterDefs: Array<{
     key: FilterCategory;
     label: string;
@@ -56,6 +66,7 @@ export class MembersListComponent implements OnInit {
   readonly dirtyMembers = signal<Set<string>>(new Set());
   readonly searchQuery = signal<string>('');
   readonly activeFilter = signal<FilterCategory>('ALL');
+  readonly statusFilter = signal<StatusFilter>('ACTIVE');
   readonly isLoading = signal<boolean>(true);
   readonly isSaving = signal<boolean>(false);
   readonly banners = signal<BannerNotification[]>([]);
@@ -69,14 +80,34 @@ export class MembersListComponent implements OnInit {
     return name ? name.charAt(0).toUpperCase() : 'O';
   });
 
+  readonly statusCounts = computed(() => {
+    let active = 0;
+    let inactive = 0;
+    for (const m of this.members()) {
+      if (m.active) active++;
+      else inactive++;
+    }
+    return {
+      ACTIVE: active,
+      INACTIVE: inactive,
+      ALL: this.members().length
+    };
+  });
+
   readonly filterCounts = computed(() => {
+    const status = this.statusFilter();
+    const statusFiltered = this.members().filter(m => {
+      if (status === 'ACTIVE') return m.active;
+      if (status === 'INACTIVE') return !m.active;
+      return true;
+    });
     const counts: Record<FilterCategory, number> = {
-      ALL: this.members().length,
+      ALL: statusFiltered.length,
       STAFF: 0,
       PLAYER: 0,
       NO_ROLE: 0
     };
-    for (const m of this.members()) {
+    for (const m of statusFiltered) {
       const bucket = bucketOf(m.role);
       counts[bucket] = (counts[bucket] || 0) + 1;
     }
@@ -86,6 +117,7 @@ export class MembersListComponent implements OnInit {
   readonly filteredMembers = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
     const filter = this.activeFilter();
+    const status = this.statusFilter();
     const list = this.members();
 
     return list.filter(m => {
@@ -95,9 +127,13 @@ export class MembersListComponent implements OnInit {
       const textToSearch = `${fullName} ${email} ${jerseyStr}`;
 
       const matchesQuery = !query || textToSearch.includes(query);
-      const matchesFilter = filter === 'ALL' || bucketOf(m.role) === filter;
+      const matchesCategory = filter === 'ALL' || bucketOf(m.role) === filter;
+      const matchesStatus =
+        status === 'ALL' ||
+        (status === 'ACTIVE' && m.active) ||
+        (status === 'INACTIVE' && !m.active);
 
-      return matchesQuery && matchesFilter;
+      return matchesQuery && matchesCategory && matchesStatus;
     });
   });
 
@@ -147,6 +183,10 @@ export class MembersListComponent implements OnInit {
 
   setFilter(filter: FilterCategory): void {
     this.activeFilter.set(filter);
+  }
+
+  setStatusFilter(filter: StatusFilter): void {
+    this.statusFilter.set(filter);
   }
 
   toggleRoleMenu(memberId: string, event: Event): void {
