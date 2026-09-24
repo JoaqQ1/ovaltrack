@@ -1,25 +1,21 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, defer, firstValueFrom, forkJoin, from, map, of, switchMap } from 'rxjs';
+import { Observable, defer, firstValueFrom, from } from 'rxjs';
 import {
   liveCaptureDatabase,
   matchDatabase,
   seedEventTypes,
-  seedMissingMatches,
 } from '../data/local-databases';
 import {
   LiveCaptureBootstrap,
   LiveCapturePersistedState,
   LiveCaptureQuery,
   LocalMatchEvent,
-  Match,
-  MatchStatus,
-  NewMatchDraft
 } from '../types/live-capture.types';
-import { LIVE_CAPTURE_EVENT_TYPES } from '../data/live-capture.mock';
-import { MOCK_MATCHES } from '../data/match.mock';
-import { HttpClient } from '@angular/common/http'; // 1. Agrega este import arriba de todo
+import { Match } from '../types/match.types';
+import { MatchStatus } from '../types/match.types';
+import { environment } from '../../../../environments/environment';
+import { HttpClient } from '@angular/common/http';
 
-export const TEMPORARY_DIVISION_ID = '11111111-1111-1111-1111-000000000020';
 const HOME_TEAM_NAME = 'PMRC';
 
 export const LIVE_CAPTURE_BACKEND_CONTRACT = [
@@ -63,6 +59,9 @@ export class LiveCaptureService {
     if (!match) {
       throw new Error(`Match ${query.matchId} was not found`);
     }
+    if (match.status === 'cancelled') {
+      throw new Error(`Match ${query.matchId} was cancelled`);
+    }
     const resolvedQuery = {
       ...query,
       divisionId: match.divisionId,
@@ -101,7 +100,7 @@ export class LiveCaptureService {
     try {
       // Buscamos el partido directamente en PostgreSQL a través de Spring Boot
       const match = await firstValueFrom(
-        this.http.get<Match>(`http://localhost:8080/matches/${matchId}`)
+        this.http.get<Match>(`${environment.apiUrl}/matches/${matchId}`)
       );
       return match;
     } catch (err) {
@@ -154,99 +153,5 @@ export class LiveCaptureService {
         await liveCaptureDatabase.events.where('matchId').equals(matchId).delete();
       },
     );
-  }
-}
-
-/**
- * Acceso a los datos de partidos.
- *
- * Persiste los partidos localmente mediante Dexie y expone una interfaz
- * asíncrona basada en `Observable`, lista para sustituirse por un backend
- * cuando exista el endpoint correspondiente.
- */
-@Injectable({ providedIn: 'root' })
-export class MatchService {
-  private readonly http = inject(HttpClient);
-  
-  // Ajusta el puerto si es distinto a 8080
-  private apiUrl = 'http://localhost:8080/matches';
-
-  /** 1. Trae el listado de partidos desde Spring Boot */
-  getMatches(): Observable<Match[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/division?divisionId=${TEMPORARY_DIVISION_ID}`).pipe(
-      map(matches => matches.map(m => ({
-        ...m,
-        status: m.status.toLowerCase() // Convertimos NOT_STARTED a not_started
-      })))
-    );
-  }
-
-  createMatch(draft: NewMatchDraft): Observable<Match> {
-    const formattedDate = draft.date.includes('T') 
-      ? draft.date 
-      : `${draft.date}T00:00:00`;
-
-    const payload = {
-      date: formattedDate,
-      divisionId: TEMPORARY_DIVISION_ID,
-      opponent: draft.opponent.trim()
-    };
-    
-    return this.http.post<any>('http://localhost:8080/matches', payload).pipe(
-      map(m => ({
-        ...m,
-        status: m.status.toLowerCase() // Lo mismo al crear uno nuevo
-      }))
-    );
-  } 
-
-  /** 3. Elimina un partido en el backend */
-  deleteMatch(matchId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${matchId}`);
-  }
-
-  /** 4. Trae los jugadores de la división para armar el plantel */
-  getAvailablePlayers(matchId: string): Observable<any[]> {
-    // Primero obtenemos el partido del backend para saber su divisionId
-    return this.http.get<Match>(`${this.apiUrl}/${matchId}`).pipe(
-      switchMap(match => {
-        if (!match) {
-          throw new Error(`Partido ${matchId} no encontrado en el backend`);
-        }
-        return this.http.get<any[]>(`http://localhost:8080/division/${match.divisionId}/players`);
-      })
-    );
-  }
-
-  saveRoster(payload: { matchId: string, startingPlayers: string[], substitutePlayers: string[] }) {
-    
-    // Armamos el objeto con los nombres exactos que espera tu DTO en Java
-    const dtoParaJava = {
-      titularesIds: payload.startingPlayers,
-      suplentesIds: payload.substitutePlayers
-    };
-
-    // Enviamos el dtoParaJava en lugar del payload original
-    return this.http.post(`http://localhost:8080/matches/${payload.matchId}/roster`, dtoParaJava);
-  }
-
-  /** 6. Recupera el plantel guardado al volver a entrar a la pantalla */
-  getSavedRoster(matchId: string): Observable<{ startingPlayers: string[], substitutePlayers: string[] } | null> {
-    return this.http.get<any>(`http://localhost:8080/matches/${matchId}/roster`)
-      .pipe(
-        map(res => {
-          // Si Java lo manda en inglés o en español, Angular lo adapta
-          return {
-            startingPlayers: res.startingPlayers || res.titularesIds || [],
-            substitutePlayers: res.substitutePlayers || res.suplentesIds || []
-          };
-        }),
-        catchError(err => {
-          if (err.status === 404) {
-            return of(null);
-          }
-          throw err;
-        })
-      );
   }
 }

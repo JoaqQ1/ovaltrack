@@ -138,6 +138,22 @@ h1 {
   color: var(--ot-on-primary);
 }
 
+.btn-secondary {
+  min-height: var(--ot-touch-target-min);
+  padding: 0 calc(var(--ot-stack-default) * 1.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ot-font-body);
+  font-weight: 700;
+  font-size: var(--ot-size-body-md, 1rem);
+  border-radius: var(--ot-radius-lg);
+  border: 2px solid var(--ot-primary);
+  cursor: pointer;
+  background: none;
+  color: var(--ot-primary);
+}
+
 /* Modal heredado de tu código anterior */
 .modal-backdrop {
   position: fixed;

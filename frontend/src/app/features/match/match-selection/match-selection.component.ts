@@ -1,5 +1,6 @@
 import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -9,8 +10,8 @@ import {
   MatchFilter,
   MatchStatus,
   NewMatchDraft,
-} from '../cargaEnVivo/types/live-capture.types';
-import { MatchService } from '../cargaEnVivo/services/live-capture.service';
+} from '../types/match.types';
+import { MatchService } from '../services/match.service';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -70,7 +71,7 @@ export class MatchSelectComponent implements OnInit {
   /** Partidos visibles según {@link activeFilter}. */
   get visibleMatches(): Match[] {
     if (this.activeFilter === 'all') {
-      return this.matches;
+      return this.matches.filter(match => match.status !== 'cancelled');
     }
 
     return this.matches.filter(match => match.status === this.activeFilter);
@@ -109,7 +110,9 @@ export class MatchSelectComponent implements OnInit {
         this.matches = [newMatch, ...this.matches];
         this.isCreateOpen = false;
       },
-      error: () => this.errorMessage = 'No se pudo crear el partido.',
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.readBackendError(error) ?? 'No se pudo crear el partido.';
+      },
     });
   }
 
@@ -120,19 +123,33 @@ export class MatchSelectComponent implements OnInit {
 
     this.matchService.deleteMatch(match.id).subscribe({
       next: () => {
-        this.matches = this.matches.filter(currentMatch => currentMatch.id !== match.id);
+        this.matches = this.matches.map(currentMatch => currentMatch.id === match.id
+          ? { ...currentMatch, status: 'cancelled' }
+          : currentMatch);
       },
-      error: () => this.errorMessage = 'No se pudo eliminar el partido.',
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.readBackendError(error) ?? 'No se pudo eliminar el partido.';
+      },
     });
   }
 
+  private readBackendError(error: HttpErrorResponse): string | null {
+    return typeof error.error === 'string'
+      ? error.error
+      : error.error?.message ?? null;
+  }
+
   openMatch(match: Match): void {
+    if (match.status === 'cancelled') {
+      return;
+    }
+
     if (match.status === 'not_started') {
       // Si no empezó, va a la pantalla nueva que acabas de crear
       void this.router.navigate(['/selection-roster', match.id]);
     } else {
       // Si ya está en progreso o finalizado, va a la pantalla de la imagen
-      void this.router.navigate(['/carga-en-vivo', match.id]);
+      void this.router.navigate(['/live-capture', match.id]);
     }
   }
 
@@ -141,7 +158,7 @@ export class MatchSelectComponent implements OnInit {
    * que las opciones del filtro, ya que comparten los mismos textos.
    */
   statusLabel(status: MatchStatus): string {
-    return this.statusLabels[status];
+    return status === 'cancelled' ? 'Cancelado' : this.statusLabels[status];
   }
 
   /** Formatea la fecha ISO del partido como "sáb 20 sep", en español y sin depender del locale del navegador. */
