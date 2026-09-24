@@ -1,9 +1,12 @@
 package com.ovaltrack.backend.division.controller;
 
+import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +22,11 @@ import com.ovaltrack.backend.division.business.DivisionService;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionUpdateDTO;
+import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
 
+import com.ovaltrack.backend.match.domain.dto.AvailablePlayerDTO;
+import com.ovaltrack.backend.person.domain.Person;
+import com.ovaltrack.backend.division.domain.DivisionPlayer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -27,13 +34,44 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
+
+
 @RestController
 @RequestMapping("division")
 @Tag(name = "Divisions", description = "Create, query, update, and delete club divisions")
-@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:4200")
+@RequiredArgsConstructor 
 public class DivisionController {
 
-    private final DivisionService divisionService;
+    @Autowired 
+    private DivisionService divisionService;
+
+    @Autowired
+    private DivisionPlayerRepository divisionPlayerRepository;
+
+    @Transactional (readOnly = true)
+    @GetMapping("/{divisionId}/players")
+    public ResponseEntity<List<AvailablePlayerDTO>> getDivisionPlayers(@PathVariable("divisionId") UUID divisionId) {
+        
+        List<DivisionPlayer> divisionPlayers = divisionPlayerRepository.findByDivisionId(divisionId);
+
+        List<AvailablePlayerDTO> dtos = divisionPlayers.stream()
+            .map((DivisionPlayer dp) -> {
+                Person person = dp.getPerson();
+                String fullName = person.getFirstName() + " " + person.getLastName();
+                
+                return new AvailablePlayerDTO(
+                    person.getId(), 
+                    fullName, 
+                    dp.getJerseyNumber(), 
+                    dp.getPosition()
+                );
+            })
+            .toList();
+            
+        return ResponseEntity.ok(dtos);
+    }
 
     @Operation(
         summary = "List divisions for a club",

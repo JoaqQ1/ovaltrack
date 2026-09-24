@@ -7,6 +7,7 @@ import { DivisionListComponent } from './features/division/division-list.compone
 import { DivisionPlayerFormComponent } from './features/division-player/division-player-form.component';
 import { DivisionCoachListComponent } from './features/division-coach/division-coach-list.component';
 import { hasRoleGuard } from './core/guards/has-role.guard';
+import { SelectionRosterComponent } from './selection-roster/selection-roster.component';
 import { hasClubGuard } from './core/guards/has-club.guard';
 
 export const routes: Routes = [
@@ -120,6 +121,10 @@ export const routes: Routes = [
         path: 'miembros',
         redirectTo: 'members',
         pathMatch: 'full'
+    },
+    {
+        path: 'selection-roster/:id',
+        component: SelectionRosterComponent
     },
     // Wildcard para rutas no encontradas
     {

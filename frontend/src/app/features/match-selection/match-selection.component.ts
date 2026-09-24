@@ -127,7 +127,13 @@ export class MatchSelectComponent implements OnInit {
   }
 
   openMatch(match: Match): void {
-    void this.router.navigate(['/carga-en-vivo', match.id]);
+    if (match.status === 'not_started') {
+      // Si no empezó, va a la pantalla nueva que acabas de crear
+      void this.router.navigate(['/selection-roster', match.id]);
+    } else {
+      // Si ya está en progreso o finalizado, va a la pantalla de la imagen
+      void this.router.navigate(['/carga-en-vivo', match.id]);
+    }
   }
 
   /**
@@ -139,15 +145,26 @@ export class MatchSelectComponent implements OnInit {
   }
 
   /** Formatea la fecha ISO del partido como "sáb 20 sep", en español y sin depender del locale del navegador. */
-  formatMatchDate(isoDate: string): string {
+  formatMatchDate(dateInput: any): string {
+    if (!dateInput) return 'Fecha sin definir';
+
     const days = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
     const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
-    // Se parsea manualmente en vez de `new Date(isoDate)` para evitar corrimientos
-    // de huso horario: un string "yyyy-mm-dd" sin hora se interpreta en UTC,
-    // lo que puede mostrar el día anterior según la zona horaria del dispositivo.
-    const [year, month, day] = isoDate.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
+    let date: Date;
+
+    if (Array.isArray(dateInput)) {
+      // Si Spring Boot lo manda como array: [year, month, day, hour, minute]
+      // Recordar que en JavaScript los meses van de 0 a 11
+      date = new Date(dateInput[0], dateInput[1] - 1, dateInput[2]);
+    } else if (typeof dateInput === 'string') {
+      // Si llega como string (ej: "2026-09-23" o "2026-09-23T00:00:00")
+      const datePart = dateInput.split('T')[0]; // Nos quedamos solo con la parte de la fecha
+      const [year, month, day] = datePart.split('-').map(Number);
+      date = new Date(year, month - 1, day);
+    } else {
+      return 'Fecha inválida';
+    }
 
     return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
   }
