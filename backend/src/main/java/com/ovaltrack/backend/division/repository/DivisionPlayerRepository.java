@@ -11,8 +11,23 @@ import com.ovaltrack.backend.division.domain.DivisionPlayer;
 
 public interface DivisionPlayerRepository extends JpaRepository<DivisionPlayer, UUID> {
 
-	@Query("SELECT dp FROM DivisionPlayer dp WHERE dp.division.id = :divisionId")
-	Collection<DivisionPlayer> findDivisionPlayersByDivision(@Param("divisionId") UUID divisionId);
+	@Query("""
+                SELECT dp 
+                FROM DivisionPlayer dp 
+                WHERE dp.division.id = :divisionId 
+                AND dp.endDate IS NULL 
+                ORDER BY person.id, startDate
+            """)
+	Collection<DivisionPlayer> findActiveDivisionPlayersByDivision(@Param("divisionId") UUID divisionId);
+
+	@Query("""
+                SELECT dp 
+                FROM DivisionPlayer dp 
+                WHERE dp.division.id = :divisionId 
+                AND dp.person.id = :personId
+                ORDER BY startDate DESC
+            """)
+	Collection<DivisionPlayer> findDivisionPlayersByDivisionIdAndPersonId(@Param("divisionId") UUID divisionId, @Param ("personId") UUID personId);
 
     @Query("""
             SELECT COUNT(dp) > 0
@@ -24,6 +39,7 @@ public interface DivisionPlayerRepository extends JpaRepository<DivisionPlayer, 
 	boolean existsActiveAssociation(@Param("divisionId") UUID divisionId,
 			@Param("personId") UUID personId);
 
-	@Query("SELECT dp FROM DivisionPlayer dp JOIN FETCH dp.division d WHERE dp.person.id = :personId AND dp.endDate IS NULL")
-	Collection<DivisionPlayer> findActiveByPersonId(@Param("personId") UUID personId);
+    @Query("SELECT dp FROM DivisionPlayer dp JOIN FETCH dp.division d WHERE dp.person.id = :personId AND dp.endDate IS NULL")
+    Collection<DivisionPlayer> findActiveByPersonId(@Param("personId") UUID personId);
+
 }
