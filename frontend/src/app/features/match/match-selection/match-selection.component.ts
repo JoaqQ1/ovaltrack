@@ -1,5 +1,6 @@
 import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -109,7 +110,9 @@ export class MatchSelectComponent implements OnInit {
         this.matches = [newMatch, ...this.matches];
         this.isCreateOpen = false;
       },
-      error: () => this.errorMessage = 'No se pudo crear el partido.',
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.readBackendError(error) ?? 'No se pudo crear el partido.';
+      },
     });
   }
 
@@ -122,8 +125,16 @@ export class MatchSelectComponent implements OnInit {
       next: () => {
         this.matches = this.matches.filter(currentMatch => currentMatch.id !== match.id);
       },
-      error: () => this.errorMessage = 'No se pudo eliminar el partido.',
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.readBackendError(error) ?? 'No se pudo eliminar el partido.';
+      },
     });
+  }
+
+  private readBackendError(error: HttpErrorResponse): string | null {
+    return typeof error.error === 'string'
+      ? error.error
+      : error.error?.message ?? null;
   }
 
   openMatch(match: Match): void {

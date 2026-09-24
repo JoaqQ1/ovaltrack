@@ -48,7 +48,7 @@ export class MatchService {
   }
 
   deleteMatch(matchId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${matchId}`);
+    return this.http.delete<void>(`${this.apiUrl}/${matchId}/cancel`);
   }
 
   getAvailablePlayers(matchId: string): Observable<unknown[]> {
