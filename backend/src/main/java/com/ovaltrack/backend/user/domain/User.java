@@ -45,24 +45,6 @@ public class User {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // Métodos temporales
-
-    public String getEmail() {
-        return loginEmail;
-    }
-
-    public void setEmail(String email) {
-        this.loginEmail = email;
-    }
-
-    public String getPassword() {
-        return passwordHash;
-    }
-
-    public void setPassword(String password) {
-        this.passwordHash = password;
-    }
-
     public boolean isDeactivated() {
         return Boolean.FALSE.equals(this.active);
     }

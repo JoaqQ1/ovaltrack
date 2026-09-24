@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.ovaltrack.backend.club.domain.Club;
 import com.ovaltrack.backend.club.repository.ClubRepository;
 import com.ovaltrack.backend.user.domain.User;
 import com.ovaltrack.backend.user.repository.UserRepository;
@@ -92,35 +93,46 @@ public class UserService {
 			throw new BusinessException("El email ya se encuentra registrado");
 		}
 
-		Person person = null;
+		Person person = buildPerson(request, email);
+		User user = buildUser(request, person, email);
+
+		User saved = userRepository.save(user);
+		return UserDTOMapper.toResponseDTO(saved);
+	}
+
+	private Person buildPerson(UserCreateRequestDTO request, String email) {
 		if (request.personId() != null) {
-			person = personRepository.findById(request.personId()).orElse(null);
-		}
-		if (person == null) {
-			person = Person.builder()
-					.firstName(request.firstName() != null ? request.firstName() : "")
-					.lastName(request.lastName() != null ? request.lastName() : "")
-					.birthDate(request.birthDate())
-					.contactEmail(email)
-					.club(request.clubId() != null ? clubRepository.findById(request.clubId()).orElse(null) : null)
-					.build();
-			person = personRepository.save(person);
+			Person existing = personRepository.findById(request.personId()).orElse(null);
+			if (existing != null) {
+				return existing;
+			}
 		}
 
+		Club club = request.clubId() != null ? clubRepository.findById(request.clubId()).orElse(null) : null;
+
+		Person person = Person.builder()
+				.firstName(request.firstName() != null ? request.firstName() : "")
+				.lastName(request.lastName() != null ? request.lastName() : "")
+				.birthDate(request.birthDate())
+				.contactEmail(email)
+				.club(club)
+				.build();
+
+		return personRepository.save(person);
+	}
+
+	private User buildUser(UserCreateRequestDTO request, Person person, String email) {
 		String encodedPassword = (request.password() != null && !request.password().isBlank())
 				? passwordEncoder.encode(request.password())
 				: passwordEncoder.encode("Default123!");
 
-		User user = User.builder()
+		return User.builder()
 				.person(person)
 				.loginEmail(email)
 				.passwordHash(encodedPassword)
 				.role(request.role() != null ? request.role() : UserRole.NO_ROLE)
 				.active(request.active() != null ? request.active() : true)
 				.build();
-
-		User saved = userRepository.save(user);
-		return UserDTOMapper.toResponseDTO(saved);
 	}
 
 	@Transactional
