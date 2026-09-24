@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatchService } from '../features/cargaEnVivo/services/live-capture.service';
+import { MatchService } from '../services/match.service';
 
 interface RosterSlot {
   number: number;

@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { MatchSelectComponent } from './match-selection.component';
-import { MatchService } from '../cargaEnVivo/services/live-capture.service';
+import { MatchService } from '../services/match.service';
 
 describe('MatchSelectionComponent', () => {
   let component: MatchSelectComponent;

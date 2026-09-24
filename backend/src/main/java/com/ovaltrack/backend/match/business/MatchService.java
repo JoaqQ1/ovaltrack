@@ -169,6 +169,9 @@ public class MatchService {
         if (match == null) {
             throw new BusinessException("Partido no encontrado");
         }
+        if (match.getStatus() == MatchStatus.CANCELLED) {
+            throw new BusinessException("No se puede modificar el plantel de un partido cancelado");
+        }
         matchPlayerRepository.deleteByMatch(match);
         List<MatchPlayer> nuevosJugadores = new ArrayList<>();
 

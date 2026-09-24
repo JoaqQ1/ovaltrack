@@ -1,4 +1,4 @@
-import { Match } from '../types/live-capture.types';
+import { Match } from '../types/match.types';
 
 /** Partidos iniciales para desarrollo local hasta conectar el listado al backend. */
 export const MOCK_MATCHES: Match[] = [

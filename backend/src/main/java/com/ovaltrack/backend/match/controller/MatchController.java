@@ -190,11 +190,6 @@ public class MatchController {
     @GetMapping("/{matchId}/roster")
     public ResponseEntity<RosterDTO> getMatchRoster(@PathVariable UUID matchId) {
         RosterDTO roster = matchService.getSavedRoster(matchId);
-        
-        if (roster.getStartingPlayers().isEmpty() && roster.getSubstitutePlayers().isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        
         return ResponseEntity.ok(roster);
     }
 }
