@@ -1,52 +1,57 @@
-/* Division Meta Tags */
-.division-tags {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.tag {
-  background: var(--surface-subtle, rgba(0, 0, 0, 0.05));
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
+/* ==========================================================================
+   Division Player List Component Styles (Fase C - Estética Mi Club Elevada)
+   ========================================================================== */
 
 /* Alert Message */
 .alert-error {
-  background: rgba(240, 68, 56, 0.08);
-  border: 1px solid var(--error);
-  color: var(--error);
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
+  background: #fef3f2;
+  border: 1.5px solid #fecdca;
+  color: #b42318;
+  padding: 14px 18px;
+  border-radius: 12px;
   font-size: 13.5px;
   font-weight: 600;
   margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(180, 35, 24, 0.06);
 }
 
-/* Data Table Card Wrapper */
+/* Data Table Card Wrapper (Elevación y Borde Mi Club) */
 .table-card {
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 4px 20px rgba(27, 33, 22, 0.04);
+  background: #ffffff;
+  border: 2px solid rgba(32, 75, 34, 0.26);
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(15, 35, 15, 0.10), 0 3px 8px rgba(15, 35, 15, 0.05);
   overflow: hidden;
+  margin-bottom: 24px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-header {
+  background: linear-gradient(180deg, #edf5e9 0%, #e0ebd8 100%);
+  border-bottom: 2px solid rgba(32, 75, 34, 0.20);
+  padding: 20px 28px;
+  margin: 0;
+}
+
+.card-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 20px;
+  color: #111d0e;
+  margin: 0;
 }
 
 .history-card {
-  margin-top: 20px;
-  border-top: 1px solid var(--border);
+  margin-top: 24px;
+  border-top: 2px solid rgba(32, 75, 34, 0.18);
+  background: #fafcf9;
 }
 
 .history-header {
-  padding: 18px 20px 0;
+  background: linear-gradient(180deg, #f2f7ef 0%, #eaf3e6 100%);
+  border-bottom: 2px solid rgba(32, 75, 34, 0.16);
+  padding: 16px 24px;
 }
 
 .table-responsive {
@@ -54,36 +59,34 @@
   overflow-x: auto;
 }
 
-/* Table Styling */
+/* Data Table */
 .data-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
   font-family: var(--font-body);
 }
 
 .data-table th {
-  background: var(--bg);
-  color: var(--text-muted);
+  background: #f4f8f2;
+  color: #204b22;
   font-family: var(--font-head);
   font-size: 11.5px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  border-bottom: 2px solid rgba(32, 75, 34, 0.16);
+  white-space: nowrap;
 }
 
 .data-table td {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-primary);
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(32, 75, 34, 0.10);
+  color: #111d0e;
   font-size: 14px;
   vertical-align: middle;
-}
-
-.data-table tr:last-child td {
-  border-bottom: none;
 }
 
 .data-table tbody tr {
@@ -91,31 +94,49 @@
 }
 
 .data-table tbody tr:hover {
-  background-color: rgba(90, 150, 30, 0.02);
+  background-color: #f6faf4;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 /* Specific Table Cell Elements */
 .jersey-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: #edf5e9;
+  border: 1.5px solid rgba(32, 75, 34, 0.22);
+  color: #204b22;
   font-family: var(--font-mono, monospace);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--navy);
+  font-weight: 800;
+  font-size: 14px;
 }
 
 .player-name {
+  font-family: var(--font-head);
   font-weight: 700;
-  color: var(--text-primary);
+  font-size: 15px;
+  color: #111d0e;
+  margin-bottom: 2px;
 }
 
 .position-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  background: var(--bg);
-  border: 1px solid var(--border-strong);
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 8px;
+  background: #edf5e9;
+  border: 1.5px solid rgba(32, 75, 34, 0.20);
   font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: #204b22;
+  letter-spacing: 0.02em;
 }
 
 /* Status Indicators */
@@ -123,22 +144,31 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: 9999px;
+  padding: 5px 12px;
+  border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
 }
 
 .status-active {
-  background: rgba(90, 150, 30, 0.1);
-  color: var(--grass-border, #4e8218);
-  border: 1px solid rgba(90, 150, 30, 0.25);
+  background: #d6f2c4;
+  color: #1e4513;
+  border: 1.5px solid rgba(30, 69, 19, 0.3);
+}
+
+.status-active .status-dot {
+  background: #2a6119;
+  box-shadow: 0 0 6px rgba(42, 97, 25, 0.4);
 }
 
 .status-inactive {
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
+  background: #f1f3ed;
+  color: #6b7565;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+}
+
+.status-inactive .status-dot {
+  background: #8b9585;
 }
 
 .status-dot {
@@ -146,6 +176,25 @@
   height: 6px;
   border-radius: 50%;
   background-color: currentColor;
+}
+
+/* Form Controls Inside Association Table */
+.form-control {
+  height: 40px;
+  background: #ffffff;
+  border: 1.5px solid rgba(32, 75, 34, 0.24);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13.5px;
+  color: #111d0e;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus {
+  border-color: #204b22;
+  box-shadow: 0 0 0 3px rgba(32, 75, 34, 0.15);
+  background: #fafdf9;
 }
 
 /* Action Buttons */
@@ -164,64 +213,86 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: var(--hit);
+  height: 38px;
   padding: 0 16px;
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   font-family: var(--font-body);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   border: 1px solid transparent;
   transition: all 0.15s ease;
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.btn-secondary {
-  background: var(--surface);
-  border-color: var(--border-strong);
-  color: var(--text-primary);
+.btn-primary,
+.btn-invite {
+  background-color: #204b22;
+  color: #ffffff;
+  border: 1px solid #204b22;
+  box-shadow: 0 2px 8px rgba(32, 75, 34, 0.20);
 }
 
-.btn-secondary:hover {
-  background: var(--bg);
-  border-color: var(--navy);
-  color: var(--navy);
+.btn-primary:hover,
+.btn-invite:hover {
+  background-color: #163618;
+  border-color: #163618;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(32, 75, 34, 0.28);
+}
+
+.btn-secondary,
+.btn-outline {
+  background-color: #ffffff;
+  border: 1.5px solid rgba(32, 75, 34, 0.25);
+  color: #204b22;
+}
+
+.btn-secondary:hover,
+.btn-outline:hover {
+  background-color: #f2f7ef;
+  border-color: #204b22;
+  color: #142e15;
+  transform: translateY(-1px);
 }
 
 .btn-danger-outline {
   background: transparent;
-  border-color: var(--border-strong);
-  color: var(--error);
+  border: 1.5px solid rgba(180, 35, 24, 0.35);
+  color: #b42318;
 }
 
 .btn-danger-outline:hover {
-  background: rgba(240, 68, 56, 0.08);
-  border-color: var(--error);
+  background: rgba(180, 35, 24, 0.08);
+  border-color: #b42318;
+  transform: translateY(-1px);
 }
 
 /* Empty State */
 .empty-state {
   text-align: center;
-  padding: 48px 20px;
-  color: var(--text-muted);
+  padding: 48px 24px;
+  color: #4a6042;
+}
+
+.empty-state h2 {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 18px;
+  color: #111d0e;
+  margin-bottom: 6px;
+}
+
+.empty-state p {
   font-size: 14px;
+  color: #4a6042;
+  margin: 0;
 }
 
 /* Responsive Styles */
 @media (max-width: 760px) {
-  .app {
-    padding: 0 16px 130px;
-  }
-
-  .hud {
-    margin: 0 -16px 16px -16px;
-    padding: 14px 16px;
-  }
-
-  .brand-text .title {
-    font-size: 19px;
-  }
-
   .actions-cell {
     flex-direction: column;
     align-items: stretch;
@@ -229,5 +300,10 @@
 
   .actions-cell .btn {
     width: 100%;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 12px 16px;
   }
 }

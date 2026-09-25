@@ -18,7 +18,7 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './division-coach-list.component.html',
-  styleUrl: '../division/division-list.component.css'
+  styleUrl: './division-coach-list.component.css'
 })
 export class DivisionCoachListComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
