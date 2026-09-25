@@ -36,7 +36,7 @@ export class AppComponent {
 
   get showNavbar(): boolean {
     const url = this.currentUrl();
-    return !url.includes('/live-capture') && !url.includes('/match-selection');
+    return !url.includes('/live-capture');
   }
 
   ngOnInit(): void {
