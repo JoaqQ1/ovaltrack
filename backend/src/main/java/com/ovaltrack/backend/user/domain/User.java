@@ -37,14 +37,13 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "account_status")
     @Builder.Default
-    private UserStatus accountStatus = UserStatus.ACTIVE;
+    private UserStatus accountStatus = UserStatus.PENDING_APPROVAL;
 
     @OneToOne(optional = false)
     @JoinColumn(name = "person_id", nullable = false, unique = true)
     private Person person;
 
-    @Builder.Default
-    private Boolean active = true;
+    private Boolean active;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
