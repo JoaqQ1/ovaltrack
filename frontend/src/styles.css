@@ -71,21 +71,21 @@ body {
 }
 
 body {
-  background-color: #d6e6d0;
+  background-color: #e1edde;
   background-image: 
     /* Capa 1: Degradé radial que desvanece suavemente las líneas hacia el centro */
     radial-gradient(
       ellipse at 50% 30%,
-      rgba(214, 230, 208, 0.92) 0%,
-      rgba(214, 230, 208, 0.65) 35%,
-      rgba(214, 230, 208, 0.15) 65%,
+      rgba(225, 237, 222, 0.92) 0%,
+      rgba(225, 237, 222, 0.65) 35%,
+      rgba(225, 237, 222, 0.15) 65%,
       transparent 80%
     ),
-    /* Capa 2: Líneas diagonales a 135deg con separación (54px) y contraste moderado (15%) */
+    /* Capa 2: Líneas diagonales a 135deg con separación (54px) y contraste moderado (14%) */
     repeating-linear-gradient(
       135deg,
-      rgba(55, 75, 60, 0.15) 0px,
-      rgba(55, 75, 60, 0.15) 1.5px,
+      rgba(55, 75, 60, 0.14) 0px,
+      rgba(55, 75, 60, 0.14) 1.5px,
       transparent 1.5px,
       transparent 54px
     );
