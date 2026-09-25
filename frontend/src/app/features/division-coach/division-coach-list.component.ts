@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of, switchMap } from 'rxjs';
-import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
 import { DivisionService } from 'src/app/services/division.service';
 import { DivisionCoachService } from 'src/app/services/division-coach.service';
 import { MembersService } from '../members/services/members.service';
@@ -17,9 +16,9 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
 @Component({
   selector: 'app-division-coach-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, NavbarAuthComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './division-coach-list.component.html',
-  styleUrl: '../division/division-list.component.css'
+  styleUrl: './division-coach-list.component.css'
 })
 export class DivisionCoachListComponent implements OnInit {
   private readonly fb = inject(FormBuilder);

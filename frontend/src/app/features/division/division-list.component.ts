@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { switchMap, of, catchError } from 'rxjs';
-import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { DivisionService } from 'src/app/services/division.service';
 import { ClubService } from 'src/app/services/club.service';
@@ -12,7 +11,7 @@ import { Division, ClubSummary } from './types/division.types';
 @Component({
   selector: 'app-division-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, NavbarAuthComponent],
+  imports: [CommonModule, RouterLink],
   templateUrl: './division-list.component.html',
   styleUrl: './division-list.component.css'
 })

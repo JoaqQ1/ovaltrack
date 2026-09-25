@@ -87,16 +87,3 @@
   --ot-stack-compact: 0.5rem;
   --ot-stack-default: 1rem;
 }
-
-/* Modo oscuro — Design Guide v1 */
-@media (prefers-color-scheme: dark),
-[data-theme="dark"] {
-  :root {
-    --bg: #12161B;
-    --surface: #1B2027;
-    --surface-alt: #232931;
-    --text: #F2F4F6;
-    --text-2: #A7B0BA;
-    --border: #2E343C;
-  }
-}

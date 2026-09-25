@@ -1,316 +1,196 @@
-<!-- Navbar sticky superior -->
-<app-navbar-public [currentView]="'register'"></app-navbar-public>
-<main
-  class="register-wrapper d-flex align-items-center justify-content-center py-5"
->
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-12 col-sm-11 col-md-9 col-lg-7 col-xl-6">
-        <!-- Header con marca -->
-        <div class="text-center mb-4">
-          <a
-            routerLink="/home"
-            class="text-decoration-none d-inline-flex align-items-center gap-2 mb-2"
-          >
-            <div
-              class="brand-icon d-flex align-items-center justify-content-center"
-            >
-              O
-            </div>
-            <span class="fs-4 fw-bold text-white tracking-wide">OvalTrack</span>
-          </a>
-          <p class="text-secondary small mb-0">
-            Crea tu cuenta para comenzar a gestionar tu club
-          </p>
+<main class="register-wrapper">
+  <div class="auth-split-card">
+    <!-- Lateral Izquierdo: Identidad Deportiva de Rugby -->
+    <div class="auth-brand-side">
+      <div class="brand-top">
+        <a routerLink="/home" class="brand-glass-badge">
+          <div class="brand-icon-box">O</div>
+          <span class="brand-name">OvalTrack</span>
+        </a>
+
+        <div class="brand-pill">
+          <span class="pill-dot"></span>
+          <span>Plataforma Rugby Club OS</span>
         </div>
 
-        <!-- Tarjeta de Registro -->
-        <section class="auth-card p-4 p-md-5">
-          <h1 class="h4 text-white text-center fw-semibold mb-4">
-            Crear cuenta
-          </h1>
+        <h2 class="brand-headline">
+          Todo el rugby de tu club en una sola cancha digital.
+        </h2>
+        <p class="brand-subtext">
+          Planificación de divisiones, seguimiento de jugadores, captura de partidos minuto a minuto y métricas de rendimiento.
+        </p>
+      </div>
 
-          <form
-            [formGroup]="registerForm"
-            (ngSubmit)="onSubmit()"
-            class="row g-3"
-            novalidate
-          >
-            <div class="col-12 mb-2">
-              <label class="form-label custom-label d-block text-center mb-2"
-                >¿Cómo deseas registrarte?</label
-              >
-              <div class="btn-group w-100" role="group">
-                <input
-                  type="radio"
-                  class="btn-check"
-                  id="typeUser"
-                  value="NO_ROLE"
-                  formControlName="accountType"
-                />
-                <label class="btn btn-outline-secondary py-2" for="typeUser">
-                  Jugador / Coach
-                </label>
+      <div class="brand-footer">
+        <div class="category-avatars">
+          <span class="cat-pill cat-m19">M19</span>
+          <span class="cat-pill cat-ps">PS</span>
+          <span class="cat-pill cat-m16">M16</span>
+        </div>
+        <div class="brand-footer-text">
+          <strong>Control integral</strong>
+          <span>Planteles, entrenadores y analistas</span>
+        </div>
+      </div>
+    </div>
 
-                <input
-                  type="radio"
-                  class="btn-check"
-                  id="typeClub"
-                  value="ADMIN_CLUB"
-                  formControlName="accountType"
-                />
-                <label class="btn btn-outline-secondary py-2" for="typeClub">
-                  Administrador de Club
-                </label>
-              </div>
-            </div>
+    <!-- Lateral Derecho: Formulario de Registro -->
+    <div class="auth-form-side">
+      <div class="form-header">
+        <h1 class="auth-title">Crea tu cuenta</h1>
+        <p class="auth-subtitle">Comienza a administrar o formar parte de tu club</p>
+      </div>
 
-            <!-- Nombre -->
-            <div class="col-md-6">
-              <label for="firstName" class="form-label custom-label"
-                >Nombre</label
-              >
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
+        <!-- Selector de Tipo de Cuenta -->
+        <div class="form-field mb-3">
+          <label class="custom-label">¿CÓMO DESEAS REGISTRARTE?</label>
+          <div class="role-selector-grid">
+            <label class="role-card" [class.selected]="registerForm.controls.accountType.value === 'NO_ROLE'">
               <input
-                id="firstName"
-                formControlName="firstName"
-                type="text"
-                autocomplete="given-name"
-                placeholder="Ej. Juan"
-                class="form-control custom-input"
-                [class.is-invalid]="
-                  registerForm.controls.firstName.touched &&
-                  registerForm.controls.firstName.invalid
-                "
+                type="radio"
+                class="visually-hidden"
+                id="typeUser"
+                value="NO_ROLE"
+                formControlName="accountType"
               />
-              @if (
-                registerForm.controls.firstName.touched &&
-                registerForm.controls.firstName.invalid
-              ) {
-                <small class="error-text mt-1 d-block"
-                  >El nombre es obligatorio</small
-                >
-              }
-            </div>
-
-            <!-- Apellido -->
-            <div class="col-md-6">
-              <label for="lastName" class="form-label custom-label"
-                >Apellido</label
-              >
-              <input
-                id="lastName"
-                formControlName="lastName"
-                type="text"
-                autocomplete="family-name"
-                placeholder="Ej. Pérez"
-                class="form-control custom-input"
-                [class.is-invalid]="
-                  registerForm.controls.lastName.touched &&
-                  registerForm.controls.lastName.invalid
-                "
-              />
-              @if (
-                registerForm.controls.lastName.touched &&
-                registerForm.controls.lastName.invalid
-              ) {
-                <small class="error-text mt-1 d-block"
-                  >El apellido es obligatorio</small
-                >
-              }
-            </div>
-
-            <!-- Email -->
-            <div class="col-12">
-              <label for="email" class="form-label custom-label"
-                >Correo electrónico</label
-              >
-              <input
-                id="email"
-                formControlName="email"
-                type="email"
-                autocomplete="email"
-                placeholder="nombre@ejemplo.com"
-                class="form-control custom-input"
-                [class.is-invalid]="
-                  registerForm.controls.email.touched &&
-                  registerForm.controls.email.invalid
-                "
-              />
-              @if (
-                registerForm.controls.email.touched &&
-                registerForm.controls.email.invalid
-              ) {
-                <small class="error-text mt-1 d-block"
-                  >Ingresa un correo válido</small
-                >
-              }
-            </div>
-
-            <!-- Contraseña -->
-            <div class="col-md-6">
-              <label for="password" class="form-label custom-label"
-                >Contraseña</label
-              >
-              <input
-                id="password"
-                formControlName="password"
-                type="password"
-                autocomplete="new-password"
-                placeholder="Mínimo 8 caracteres"
-                class="form-control custom-input"
-                [class.is-invalid]="
-                  registerForm.controls.password.touched &&
-                  registerForm.controls.password.invalid
-                "
-              />
-              @if (
-                registerForm.controls.password.touched &&
-                registerForm.controls.password.invalid
-              ) {
-                <small class="error-text mt-1 d-block"
-                  >Debe tener mínimo 8 caracteres</small
-                >
-              }
-            </div>
-
-            <!-- Fecha de nacimiento -->
-            <div class="col-md-6">
-              <label for="birthDate" class="form-label custom-label"
-                >Fecha de nacimiento</label
-              >
-              <input
-                id="birthDate"
-                formControlName="birthDate"
-                type="date"
-                class="form-control custom-input"
-                [class.is-invalid]="
-                  registerForm.controls.birthDate.touched &&
-                  registerForm.controls.birthDate.invalid
-                "
-              />
-              @if (
-                registerForm.controls.birthDate.touched &&
-                registerForm.controls.birthDate.invalid
-              ) {
-                <small class="error-text mt-1 d-block"
-                  >La fecha es obligatoria</small
-                >
-              }
-            </div>
-            <!-- @if (registerForm.get("accountType")?.value === "ADMIN_CLUB") {
-              <div
-                class="col-12 mt-3 pt-3 border-top border-secondary border-opacity-25"
-              >
-                <h2 class="h6 text-white fw-semibold mb-3">Datos del Club</h2>
+              <div class="role-card-content">
+                <span class="role-card-title">Jugador / Coach</span>
+                <span class="role-card-desc">Para unirse a un plantel</span>
               </div>
+            </label>
 
-              <div class="col-md-8">
-                <label for="clubName" class="form-label custom-label"
-                  >Nombre del Club</label
-                >
-                <input
-                  id="clubName"
-                  formControlName="clubName"
-                  type="text"
-                  placeholder="Ej. Patoruzú Rugby Club"
-                  class="form-control custom-input"
-                  [class.is-invalid]="
-                    registerForm.get('clubName')?.touched &&
-                    registerForm.get('clubName')?.invalid
-                  "
-                />
-                @if (
-                  registerForm.get("clubName")?.touched &&
-                  registerForm.get("clubName")?.invalid
-                ) {
-                  <small class="error-text mt-1 d-block"
-                    >El nombre del club es obligatorio</small
-                  >
-                }
+            <label class="role-card" [class.selected]="registerForm.controls.accountType.value === 'ADMIN_CLUB'">
+              <input
+                type="radio"
+                class="visually-hidden"
+                id="typeClub"
+                value="ADMIN_CLUB"
+                formControlName="accountType"
+              />
+              <div class="role-card-content">
+                <span class="role-card-title">Admin de Club</span>
+                <span class="role-card-desc">Crea y gestiona un club</span>
               </div>
+            </label>
+          </div>
+        </div>
 
-              <div class="col-md-4">
-                <label for="clubCity" class="form-label custom-label"
-                  >Ciudad / Localidad</label
-                >
-                <input
-                  id="clubCity"
-                  formControlName="clubCity"
-                  type="text"
-                  placeholder="Ej. Trelew"
-                  class="form-control custom-input"
-                  [class.is-invalid]="
-                    registerForm.get('clubCity')?.touched &&
-                    registerForm.get('clubCity')?.invalid
-                  "
-                />
-                @if (
-                  registerForm.get("clubCity")?.touched &&
-                  registerForm.get("clubCity")?.invalid
-                ) {
-                  <small class="error-text mt-1 d-block"
-                    >La ciudad es obligatoria</small
-                  >
-                }
-              </div>
-            } -->
-
-            <!-- Mensaje de error backend -->
-            @if (errorMessage) {
-              <div class="col-12">
-                <div
-                  class="custom-alert d-flex align-items-center gap-2"
-                  role="alert"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                  </svg>
-                  <span>{{ errorMessage }}</span>
-                </div>
-              </div>
+        <!-- Nombre y Apellido (2 Columnas) -->
+        <div class="row g-2 mb-3">
+          <div class="col-md-6">
+            <label for="firstName" class="custom-label">NOMBRE</label>
+            <input
+              id="firstName"
+              formControlName="firstName"
+              type="text"
+              autocomplete="given-name"
+              placeholder="Ej. Juan"
+              class="form-control custom-input"
+              [class.is-invalid]="registerForm.controls.firstName.touched && registerForm.controls.firstName.invalid"
+            />
+            @if (registerForm.controls.firstName.touched && registerForm.controls.firstName.invalid) {
+              <small class="error-text">El nombre es obligatorio</small>
             }
+          </div>
 
-            <!-- Botón Submit -->
-            <div class="col-12 mt-4">
-              <button
-                type="submit"
-                class="btn btn-neon w-100 py-2"
-                [disabled]="registerForm.invalid || isSubmitting"
-              >
-                @if (isSubmitting) {
-                  <span
-                    class="spinner-border spinner-border-sm me-2"
-                    role="status"
-                    aria-hidden="true"
-                  ></span>
-                  <span>Registrando...</span>
-                } @else {
-                  <span>Registrarse</span>
-                }
-              </button>
-            </div>
-          </form>
+          <div class="col-md-6">
+            <label for="lastName" class="custom-label">APELLIDO</label>
+            <input
+              id="lastName"
+              formControlName="lastName"
+              type="text"
+              autocomplete="family-name"
+              placeholder="Ej. Pérez"
+              class="form-control custom-input"
+              [class.is-invalid]="registerForm.controls.lastName.touched && registerForm.controls.lastName.invalid"
+            />
+            @if (registerForm.controls.lastName.touched && registerForm.controls.lastName.invalid) {
+              <small class="error-text">El apellido es obligatorio</small>
+            }
+          </div>
+        </div>
 
-          <div class="auth-divider my-4"></div>
+        <!-- Correo Electrónico -->
+        <div class="form-field mb-3">
+          <label for="email" class="custom-label">CORREO ELECTRÓNICO</label>
+          <input
+            id="email"
+            formControlName="email"
+            type="email"
+            autocomplete="email"
+            placeholder="nombre@ejemplo.com"
+            class="form-control custom-input"
+            [class.is-invalid]="registerForm.controls.email.touched && registerForm.controls.email.invalid"
+          />
+          @if (registerForm.controls.email.touched && registerForm.controls.email.invalid) {
+            <small class="error-text">Ingresa un correo válido</small>
+          }
+        </div>
 
-          <p class="text-center text-secondary small mb-0">
-            ¿Ya tienes cuenta?
-            <a
-              routerLink="/auth/login"
-              class="link-neon text-decoration-none ms-1"
-              >Iniciar sesión</a
-            >
-          </p>
-        </section>
+        <!-- Contraseña y Fecha de Nacimiento (2 Columnas) -->
+        <div class="row g-2 mb-4">
+          <div class="col-md-6">
+            <label for="password" class="custom-label">CONTRASEÑA</label>
+            <input
+              id="password"
+              formControlName="password"
+              type="password"
+              autocomplete="new-password"
+              placeholder="Mínimo 8 caracteres"
+              class="form-control custom-input"
+              [class.is-invalid]="registerForm.controls.password.touched && registerForm.controls.password.invalid"
+            />
+            @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
+              <small class="error-text">Mínimo 8 caracteres</small>
+            }
+          </div>
+
+          <div class="col-md-6">
+            <label for="birthDate" class="custom-label">FECHA DE NACIMIENTO</label>
+            <input
+              id="birthDate"
+              formControlName="birthDate"
+              type="date"
+              class="form-control custom-input"
+              [class.is-invalid]="registerForm.controls.birthDate.touched && registerForm.controls.birthDate.invalid"
+            />
+            @if (registerForm.controls.birthDate.touched && registerForm.controls.birthDate.invalid) {
+              <small class="error-text">La fecha es obligatoria</small>
+            }
+          </div>
+        </div>
+
+        <!-- Error Backend -->
+        @if (errorMessage) {
+          <div class="custom-alert mb-4 d-flex align-items-center gap-2" role="alert">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ errorMessage }}</span>
+          </div>
+        }
+
+        <!-- Botón Submit -->
+        <button
+          type="submit"
+          class="btn btn-auth-submit"
+          [disabled]="registerForm.invalid || isSubmitting"
+        >
+          @if (isSubmitting) {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <span>Registrando...</span>
+          } @else {
+            <span>Registrarse</span>
+          }
+        </button>
+      </form>
+
+      <div class="auth-footer-prompt">
+        <span>¿Ya tienes cuenta?</span>
+        <a routerLink="/auth/login" class="auth-switch-link">Iniciar sesión</a>
       </div>
     </div>
   </div>

@@ -1,45 +1,4 @@
-<!-- Navbar privado para usuarios autenticados -->
 @if (currentUser() !== null) {
-  <nav class="navbar auth-navbar sticky-top px-3 py-2">
-    <div class="container d-flex justify-content-between align-items-center">
-      <div class="d-flex align-items-center gap-2">
-        <div
-          class="brand-icon d-flex align-items-center justify-content-center"
-        >
-          {{ userContextService.currentClub()?.name ? userContextService.currentClub()!.name.charAt(0).toUpperCase() : 'O' }}
-        </div>
-        <div class="d-flex flex-column">
-          <span class="fw-bold text-white fs-5 tracking-wide">
-            {{ userContextService.currentClub()?.name || 'OvalTrack' }}
-          </span>
-          @if (userContextService.currentClub()?.city) {
-            <small class="text-secondary" style="font-size: 0.75rem; line-height: 1;">
-              {{ userContextService.currentClub()!.city }}
-            </small>
-          }
-        </div>
-      </div>
-
-      <!-- Info de sesión y logout -->
-      <div class="d-flex align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <span class="status-dot"></span>
-          <span class="badge-role text-uppercase">{{
-            currentUser()?.role
-          }}</span>
-        </div>
-
-        <button
-          type="button"
-          class="btn btn-outline-danger-custom btn-sm px-3 py-1"
-          (click)="logout()"
-        >
-          Cerrar sesión
-        </button>
-      </div>
-    </div>
-  </nav>
-
   <!-- Dashboard / Panel principal -->
   <main class="container py-5">
     <!-- Header de bienvenida -->
@@ -49,15 +8,15 @@
       >
         <span>Panel de Control</span>
       </div>
-      <h1 class="display-6 fw-bold text-white mb-2">Bienvenido a tu Espacio</h1>
-      <p class="text-secondary mb-0">
+      <h1 class="home-title display-6 fw-bold mb-2">Bienvenido a tu Espacio</h1>
+      <p class="home-subtitle mb-0">
         Selecciona el módulo con el que deseas trabajar hoy según tus permisos.
       </p>
     </header>
 
     <!-- Si tiene un rol sin permisos asignados aún o es PLAYER -->
     @if (visibleCards().length === 0) {
-      <section class="card-dark p-5 text-center my-4">
+      <section class="card-dark warning-card p-5 text-center my-4">
         <div
           class="icon-warning-wrapper mx-auto mb-3 d-flex align-items-center justify-content-center"
         >
@@ -75,13 +34,13 @@
           </svg>
         </div>
         @if (isPlayer()) {
-          <h4 class="text-white fw-semibold">Portal del Jugador en desarrollo</h4>
-          <p class="text-secondary mx-auto mb-0" style="max-width: 480px">
+          <h4 class="warning-title fw-semibold">Portal del Jugador en desarrollo</h4>
+          <p class="warning-desc mx-auto mb-0" style="max-width: 480px">
             Próximamente podrás consultar tus convocatorias, estado de ficha médica y estadísticas personales de rendimiento en tu club.
           </p>
         } @else {
-          <h4 class="text-white fw-semibold">Cuenta pendiente de asignación</h4>
-          <p class="text-secondary mx-auto mb-0" style="max-width: 480px">
+          <h4 class="warning-title fw-semibold">Cuenta pendiente de asignación</h4>
+          <p class="warning-desc mx-auto mb-0" style="max-width: 480px">
             Tu usuario está registrado, pero un administrador del club aún debe
             asignarte un rol deportivo o de gestión para habilitar las secciones.
           </p>
@@ -97,7 +56,7 @@
               class="card-module-link text-decoration-none"
             >
               <div
-                class="card-dark h-100 p-4 d-flex flex-column justify-content-between"
+                class="card-dark card-module h-100 p-4 d-flex flex-column justify-content-between"
               >
                 <div>
                   <div
@@ -190,17 +149,22 @@
                         }
                       }
                     </div>
-                    <span class="badge-role-pill">{{ card.badge }}</span>
+                    <span class="badge-role-pill">
+                      @if (card.badge === 'En vivo') {
+                        <span class="badge-dot"></span>
+                      }
+                      {{ card.badge }}
+                    </span>
                   </div>
 
-                  <h5 class="fw-bold text-white mb-2">{{ card.title }}</h5>
-                  <p class="text-secondary small mb-0">
+                  <h3 class="card-module-title fw-bold mb-2">{{ card.title }}</h3>
+                  <p class="card-module-desc mb-0">
                     {{ card.description }}
                   </p>
                 </div>
 
                 <div
-                  class="d-flex align-items-center gap-2 mt-4 text-neon fw-semibold small"
+                  class="card-module-action d-flex align-items-center gap-2 mt-4 fw-semibold small"
                 >
                   <span>Ingresar al módulo</span>
                   <svg
@@ -222,35 +186,7 @@
     }
   </main>
 } @else {
-  <nav class="navbar landing-navbar sticky-top px-3 py-2">
-    <div class="container d-flex justify-content-between align-items-center">
-      <div class="d-flex align-items-center gap-2">
-        <div
-          class="brand-icon d-flex align-items-center justify-content-center"
-        >
-          O
-        </div>
-        <span class="fw-bold text-white tracking-wide fs-5">OvalTrack</span>
-      </div>
-
-      <div class="d-flex align-items-center gap-2">
-        <a
-          routerLink="/auth/login"
-          class="btn btn-outline-dark-theme btn-sm px-3 py-1 text-decoration-none"
-        >
-          Iniciar sesión
-        </a>
-        <a
-          routerLink="/auth/register"
-          class="btn btn-neon btn-sm px-3 py-1 text-decoration-none"
-        >
-          Crear cuenta
-        </a>
-      </div>
-    </div>
-  </nav>
-
-  <header class="container py-5 text-center my-md-4">
+  <header class="container py-5 text-center mb-md-4">
     <div
       class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill badge-tech mb-4"
     >
@@ -258,12 +194,12 @@
       <span>Plataforma de gestión deportiva & analítica</span>
     </div>
 
-    <h1 class="display-4 fw-bold text-white mb-3">
+    <h1 class="landing-title display-4 fw-bold mb-3">
       El control total de tu club <br />
-      <span style="color: #a3e635">en un solo lugar</span>
+      <span class="text-accent-highlight">en un solo lugar</span>
     </h1>
 
-    <p class="lead text-secondary mx-auto mb-4" style="max-width: 680px">
+    <p class="landing-subtitle lead mx-auto mb-4" style="max-width: 680px">
       Administra divisiones, centraliza rosters de jugadores y registra eventos
       en vivo minuto a minuto con métricas de alto rendimiento.
     </p>
@@ -271,13 +207,13 @@
     <div class="d-flex justify-content-center gap-3">
       <a
         routerLink="/auth/register"
-        class="btn btn-neon px-4 py-2 text-decoration-none"
+        class="btn btn-landing-cta px-4 py-2 text-decoration-none"
       >
         Comenzar ahora
       </a>
       <a
         href="#features"
-        class="btn btn-outline-dark-theme px-4 py-2 text-decoration-none"
+        class="btn btn-outline-dark-theme btn-landing-secondary px-4 py-2 text-decoration-none"
       >
         Ver funcionalidades
       </a>
@@ -287,7 +223,7 @@
   <section id="features" class="container py-5">
     <div class="row g-4">
       <div class="col-md-4">
-        <div class="card-dark p-4 h-100 d-flex flex-column">
+        <div class="card-dark card-feature p-4 h-100 d-flex flex-column">
           <div
             class="card-icon-wrapper d-flex align-items-center justify-content-center mb-3"
           >
@@ -305,8 +241,8 @@
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
           </div>
-          <h5 class="fw-bold text-white mb-2">Gestión de Planteles</h5>
-          <p class="text-secondary small mb-0">
+          <h5 class="feature-title fw-bold mb-2">Gestión de Planteles</h5>
+          <p class="feature-desc small mb-0">
             Control de roles (staff, entrenadores, analistas y jugadores),
             estados de ficha médica y asignación dinámica por divisiones.
           </p>
@@ -314,7 +250,7 @@
       </div>
 
       <div class="col-md-4">
-        <div class="card-dark p-4 h-100 d-flex flex-column">
+        <div class="card-dark card-feature p-4 h-100 d-flex flex-column">
           <div
             class="card-icon-wrapper d-flex align-items-center justify-content-center mb-3"
           >
@@ -331,8 +267,8 @@
               ></polygon>
             </svg>
           </div>
-          <h5 class="fw-bold text-white mb-2">Carga en Vivo</h5>
-          <p class="text-secondary small mb-0">
+          <h5 class="feature-title fw-bold mb-2">Carga en Vivo</h5>
+          <p class="feature-desc small mb-0">
             Tagging en tiempo real durante los partidos: puntos, infracciones,
             scrums, tackles y lineouts al alcance de un tap.
           </p>
@@ -340,7 +276,7 @@
       </div>
 
       <div class="col-md-4">
-        <div class="card-dark p-4 h-100 d-flex flex-column">
+        <div class="card-dark card-feature p-4 h-100 d-flex flex-column">
           <div
             class="card-icon-wrapper d-flex align-items-center justify-content-center mb-3"
           >
@@ -357,8 +293,8 @@
               <path d="M6 20v-6"></path>
             </svg>
           </div>
-          <h5 class="fw-bold text-white mb-2">Estadísticas Claras</h5>
-          <p class="text-secondary small mb-0">
+          <h5 class="feature-title fw-bold mb-2">Estadísticas Claras</h5>
+          <p class="feature-desc small mb-0">
             Métricas consolidadas post-partido para toma de decisiones tácticas
             del cuerpo técnico y seguimiento individual de rendimiento.
           </p>
