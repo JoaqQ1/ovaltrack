@@ -1,17 +1,20 @@
 <div class="app">
+  <!-- Page Header Integrado -->
   <header class="hud">
     <div class="hud-brand">
-      <div class="crest" aria-hidden="true">{{ division?.name?.charAt(0)?.toUpperCase() || 'D' }}</div>
+      <div class="badge-tech">
+        <span>🏉 Staff Técnico • {{ division?.name || 'División' }}</span>
+      </div>
       <div class="brand-text">
-        <div class="club">{{ division?.name || 'División' }}</div>
-        <div class="title">Entrenadores asociados</div>
+        <h1 class="title">Entrenadores Asociados</h1>
+        <p class="club">Cuerpo técnico y analistas a cargo de la categoría</p>
       </div>
     </div>
 
     <div class="hud-actions">
-      <a routerLink="/divisions" class="btn btn-outline">Volver a divisiones</a>
+      <a routerLink="/divisions" class="btn btn-outline">← Volver a divisiones</a>
       <button type="button" class="btn btn-invite" *ngIf="!esCoach" (click)="mostrarAsociacion()" [disabled]="cargandoMiembros">
-        {{ cargandoMiembros ? 'Cargando entrenadores...' : 'Asociar entrenador' }}
+        {{ cargandoMiembros ? 'Cargando entrenadores...' : '+ Asociar entrenador' }}
       </button>
     </div>
   </header>

@@ -1,13 +1,16 @@
 <div class="app">
-  <div class="hud">
+  <!-- Page Header Integrado -->
+  <header class="hud">
     <div class="hud-brand">
-      <div class="crest">{{ getInitial(club?.name) }}</div>
+      <div class="badge-tech">
+        <span>🏛️ Perfil Institucional</span>
+      </div>
       <div class="brand-text">
-        <div class="club">Mi Club</div>
-        <div class="title">Configuración</div>
+        <h1 class="title">Configuración del Club</h1>
+        <p class="club">Información general y parámetros de la institución</p>
       </div>
     </div>
-  </div>
+  </header>
 
   <div class="empty-state" *ngIf="cargando" style="margin-top: 24px;">
     <div class="sk-row">

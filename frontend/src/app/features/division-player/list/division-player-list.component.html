@@ -1,27 +1,26 @@
 <div class="app">
-  <!-- Sticky HUD Header -->
+  <!-- Page Header Integrado -->
   <header class="hud">
     <div class="hud-brand">
-      <div class="crest" aria-hidden="true">
-        {{ division?.name?.charAt(0)?.toUpperCase() || 'D' }}
+      <div class="badge-tech">
+        <span>🏉 Plantel • {{ division?.name || 'División' }}</span>
       </div>
       <div class="brand-text">
-        <span class="club">{{ division?.name || 'División' }}</span>
-        <h1 class="title">Jugadores asociados</h1>
+        <h1 class="title">Jugadores Asociados</h1>
+        <p class="club">Fichas de deportistas registrados en esta categoría</p>
       </div>
     </div>
 
     <div class="hud-actions">
-      <a routerLink="/divisions" class="btn btn-secondary">
-        &larr; Volver a divisiones
+      <a routerLink="/divisions" class="btn btn-outline">
+        ← Volver a divisiones
       </a>
       <!-- Toggle button for showing/hiding available players -->
       <button
         type="button"
-        class="btn"
-        [ngClass]="mostrarFormularioAsociacion ? 'btn-secondary' : 'btn-primary'"
+        class="btn btn-invite"
         (click)="mostrarJugadores()">
-        {{ mostrarFormularioAsociacion ? 'Ocultar registro' : 'Asociar jugadores' }}
+        {{ mostrarFormularioAsociacion ? 'Ocultar registro' : '+ Asociar jugadores' }}
       </button>
     </div>
   </header>

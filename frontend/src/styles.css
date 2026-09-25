@@ -145,76 +145,72 @@ button {
 }
 
 /* ==========================================================================
-   HUD (Header Sticky unificado)
+   Page Header (Cabecera Integrada de Página)
    ========================================================================== */
-.hud {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  margin: 0 -24px;
-  padding: 16px 24px;
-  background: rgba(246, 247, 241, 0.88);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
+.hud,
+.page-header {
+  position: static;
+  margin: 28px 0 24px 0;
+  padding: 0;
+  background: transparent;
+  border-bottom: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
 .hud::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-image: repeating-linear-gradient(
-    115deg,
-    rgba(90, 150, 30, 0.05) 0px,
-    rgba(90, 150, 30, 0.05) 2px,
-    transparent 2px,
-    transparent 26px
-  );
+  display: none;
 }
 
-.hud-brand {
+.hud-brand,
+.header-brand {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .crest {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(155deg, var(--grass), #6fae1f);
-  border: 1px solid var(--grass-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-head);
-  font-weight: 800;
-  font-size: 16px;
-  color: var(--on-grass);
+  display: none;
 }
 
-.brand-text .club {
+.badge-tech,
+.header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
   font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  background-color: #d6eac0;
+  border: 1px solid rgba(36, 76, 9, 0.25);
+  color: #244c09;
 }
 
-.brand-text .title {
-  font-family: var(--font-head);
+.brand-text .title,
+.page-title {
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
   font-weight: 800;
-  font-size: 22px;
-  color: var(--text-primary);
-  line-height: 1.2;
-  margin-top: 1px;
+  font-size: 2rem;
+  color: #111d0e;
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+.brand-text .club,
+.page-subtitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3b4e33;
+  margin: 2px 0 0 0;
 }
 
 .hud-actions {
@@ -224,15 +220,15 @@ button {
 }
 
 /* ==========================================================================
-   Botones Globales
+   Botones Globales Calibrados (Identidad Rugby OvalTrack)
    ========================================================================== */
 .btn {
-  height: var(--hit);
+  height: 44px;
   padding: 0 20px;
-  border-radius: var(--radius-md);
+  border-radius: 10px;
   border: 1px solid transparent;
   font-weight: 700;
-  font-size: 14.5px;
+  font-size: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -246,28 +242,38 @@ button {
   transform: translateY(1px);
 }
 
-.btn-invite {
-  background: var(--grass);
-  color: var(--on-grass);
-  font-size: 15px;
-  font-weight: 800;
-  box-shadow: 0 6px 16px rgba(90, 150, 30, 0.28);
+.btn-invite,
+.btn-primary-rugby {
+  background-color: #204b22;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid #204b22;
+  box-shadow: 0 4px 12px rgba(32, 75, 34, 0.20);
 }
 
-.btn-invite:hover {
-  background: var(--grass-hover);
+.btn-invite:hover,
+.btn-primary-rugby:hover {
+  background-color: #163618;
+  border-color: #163618;
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(32, 75, 34, 0.28);
+  transform: translateY(-1px);
 }
 
 .btn-outline {
-  background: transparent;
-  border-color: var(--border-strong);
-  color: var(--text-primary);
-  height: 44px;
+  background-color: #ffffff;
+  border: 1px solid rgba(32, 75, 34, 0.25);
+  color: #204b22;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(20, 45, 20, 0.04);
 }
 
 .btn-outline:hover {
-  background: var(--surface-hover);
-  border-color: var(--navy-border);
+  background-color: #f2f7ef;
+  border-color: #204b22;
+  color: #142e15;
+  transform: translateY(-1px);
 }
 
 .btn-ghost {
@@ -278,7 +284,52 @@ button {
 }
 
 .btn-ghost:hover {
+  background: var(--surface-hover);
   color: var(--text-primary);
+}
+
+/* Modo oscuro para Cabeceras y Botones */
+html[data-theme="dark"] .badge-tech,
+html[data-theme="dark"] .header-badge {
+  background-color: rgba(163, 230, 53, 0.12);
+  border-color: rgba(163, 230, 53, 0.28);
+  color: #a3e635;
+}
+
+html[data-theme="dark"] .brand-text .title,
+html[data-theme="dark"] .page-title {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .brand-text .club,
+html[data-theme="dark"] .page-subtitle {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .btn-invite {
+  background-color: #a3e635;
+  border-color: #a3e635;
+  color: #0b111e;
+  box-shadow: 0 0 16px rgba(163, 230, 53, 0.35);
+}
+
+html[data-theme="dark"] .btn-invite:hover {
+  background-color: #bef264;
+  border-color: #bef264;
+  color: #0b111e;
+}
+
+html[data-theme="dark"] .btn-outline {
+  background-color: #131c2e;
+  border-color: #1f2e47;
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .btn-outline:hover {
+  background-color: #162238;
+  border-color: #2a3c5a;
+  color: #ffffff;
 }
 
 .btn-logout {
@@ -303,37 +354,50 @@ button {
 }
 
 /* ==========================================================================
-   Formularios y Controles Globales
+   Formularios y Controles Globales (Cards Elevadas con Identidad Deportiva)
    ========================================================================== */
 .form-card-wrapper {
   max-width: 680px;
-  margin: 32px auto;
+  margin: 16px auto 48px;
 }
 
 .form-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 32px;
-  box-shadow: 0 4px 20px rgba(27, 33, 22, 0.04);
+  background: #ffffff;
+  border: 2px solid rgba(32, 75, 34, 0.28);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 16px 36px rgba(15, 35, 15, 0.12), 0 4px 12px rgba(15, 35, 15, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.card-header {
-  margin-bottom: 24px;
+.card-header,
+.form-card-header {
+  background: linear-gradient(180deg, #edf5e9 0%, #e0ebd8 100%);
+  border-bottom: 2px solid rgba(32, 75, 34, 0.20);
+  padding: 24px 32px 20px;
+  margin: 0;
 }
 
-.card-title {
-  font-family: var(--font-head);
+.card-title,
+.form-card-title {
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
   font-weight: 800;
   font-size: 20px;
-  color: var(--text-primary);
-  margin: 0 0 6px;
+  color: #111d0e;
+  margin: 0 0 4px;
 }
 
-.card-subtitle {
-  color: var(--text-secondary);
-  font-size: 14px;
+.card-subtitle,
+.form-card-subtitle {
+  color: #4a6042;
+  font-size: 13.5px;
   margin: 0;
+  line-height: 1.4;
+}
+
+.form-card form,
+.form-card-body {
+  padding: 28px 32px 32px;
 }
 
 .form-row {
@@ -348,46 +412,53 @@ button {
 }
 
 .form-group {
-  margin-bottom: 18px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
 }
 
 .form-label {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
+  color: #204b22;
+  margin-bottom: 7px;
+  letter-spacing: 0.01em;
 }
 
 .form-control {
   width: 100%;
-  height: var(--hit);
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
+  height: 46px;
+  background: #ffffff;
+  border: 1px solid rgba(32, 75, 34, 0.22);
+  border-radius: 10px;
+  color: #111d0e;
   padding: 0 14px;
   font-size: 14.5px;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.form-control::placeholder {
+  color: #7a8c74;
 }
 
 .form-control:focus {
-  border-color: var(--navy);
-  box-shadow: 0 0 0 3px var(--navy-tint);
+  border-color: #204b22;
+  box-shadow: 0 0 0 3px rgba(32, 75, 34, 0.15);
+  background: #fafdf9;
 }
 
 .form-control.is-invalid {
-  border-color: var(--error);
+  border-color: var(--error, #dc2626);
+  background: #fffafa;
 }
 
 .form-control.is-invalid:focus {
-  box-shadow: 0 0 0 3px var(--error-tint);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
 }
 
 .field-error {
-  color: var(--error);
+  color: #b91c1c;
   font-size: 12px;
   font-weight: 600;
   margin-top: 5px;
@@ -397,9 +468,56 @@ button {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 28px;
   padding-top: 20px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(32, 75, 34, 0.10);
+}
+
+/* Modo oscuro para Form Cards e Inputs */
+html[data-theme="dark"] .form-card {
+  background: #131c2e;
+  border: 2px solid #23364d;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme="dark"] .card-header,
+html[data-theme="dark"] .form-card-header {
+  background: #162238;
+  border-bottom: 2px solid #23364d;
+}
+
+html[data-theme="dark"] .card-title,
+html[data-theme="dark"] .form-card-title {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .card-subtitle,
+html[data-theme="dark"] .form-card-subtitle {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .form-label {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .form-control {
+  background: #0d1524;
+  border-color: #1f2e47;
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .form-control::placeholder {
+  color: #475569;
+}
+
+html[data-theme="dark"] .form-control:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background: #0d1524;
+}
+
+html[data-theme="dark"] .form-actions {
+  border-top-color: #1f2e47;
 }
 
 /* ==========================================================================
