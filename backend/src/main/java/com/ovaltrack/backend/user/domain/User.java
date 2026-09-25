@@ -34,6 +34,11 @@ public class User {
     @Column(nullable = false)
     private UserRole role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_status")
+    @Builder.Default
+    private UserStatus accountStatus = UserStatus.ACTIVE;
+
     @OneToOne(optional = false)
     @JoinColumn(name = "person_id", nullable = false, unique = true)
     private Person person;
