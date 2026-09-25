@@ -7,11 +7,11 @@ Este documento es la **fuente de verdad definitiva y obligatoria** para el dise�
 
 ---
 
-## 1. Tokens de Color Globales (`:root` y Temas)
+## 1. Tokens de Color Globales (`:root`) — Diseño Actual Activo
 
-Los tokens están centralizados en `frontend/src/styles.css` y `frontend/src/styles/ovaltrack-tokens.css`.
+Los tokens oficiales del sistema corresponden a la identidad visual **Sport Pro Salvia** actualmente implementada en el frontend.
 
-### 1.1 Paleta Principal (Modo Claro Deportivo — Vistas de Gestión)
+### 1.1 Paleta Activa (Modo Claro Deportivo — Vistas de Gestión)
 
 ```css
 :root {
@@ -40,11 +40,12 @@ Los tokens están centralizados en `frontend/src/styles.css` y `frontend/src/sty
   --text-muted: #7a8c74;                     /* Placeholders y contadores */
 
   /* Colores de Acento y Acción */
-  --rugby-green: #204b22;                    /* Verde rugby botella (CTA principal) */
-  --rugby-green-hover: #163618;              /* Hover de acción principal */
-  --grass-neon: #a3e635;                     /* Verde pasto neón (acento tech/dark) */
-  --grass-neon-hover: #bef264;               /* Hover de acento tech */
-  --on-grass: #1d3700;                       /* Texto oscuro sobre verde neón */
+  --btn-primary-bg: #204b22;                 /* Verde rugby botella (CTA principal) */
+  --btn-primary-fg: #ffffff;                 /* Texto blanco sobre verde botella */
+  --btn-primary-hover: #163618;              /* Hover de acción principal */
+  --btn-outline-bg: #ffffff;                 /* Fondo botón secundario */
+  --btn-outline-border: rgba(32, 75, 34, 0.25);
+  --btn-outline-fg: #204b22;
 
   /* Semántica de Roles y Estados */
   --navy: #16324f;                           /* Identidad Admin Club / Foco */
@@ -286,47 +287,26 @@ Inputs y selects con altura táctil accesible (46px), bordes salvia y foco verde
 
 ---
 
-## 5. Escalabilidad y Arquitectura para Modo Oscuro Futuro
+## 5. Escalabilidad y Futura Incorporación del Modo Oscuro
 
-### ¿Es necesario crear otro archivo de diseño o reescribir las pantallas?
-**No.** El sistema de diseño fue construido siguiendo el principio **Open/Closed** de SOLID y ya cuenta con la infraestructura técnica necesaria en Angular (`ThemeService`, que aplica el atributo `data-theme="dark"` o `data-theme="light"` en la raíz del documento).
+Actualmente, las vistas de gestión del club, divisiones, planteles y fixture operan bajo el **Modo Claro Deportivo (*Sport Salvia*)** como diseño base oficial y aprobado.
 
-### Procedimiento para habilitar Modo Oscuro Completo en el Futuro:
+Cuando decidas abordar y definir el **Modo Oscuro** para estas vistas en una etapa futura, el flujo de trabajo será el siguiente:
 
-1. **Abstraer los colores fijos a Tokens Temáticos en `:root` y `[data-theme="dark"]`:**
-   En lugar de escribir valores hex directos en los componentes (`#204b22`, `#d6e6d0`, `#ffffff`), se mapean a variables semánticas:
+### Pasos para cuando definas el Modo Oscuro:
 
+1. **Definir la paleta visual oscura**: Se eligen los tonos exactos (fondos oscuros, contraste de tarjetas, colores de texto y acento de botones).
+2. **Actualizar este documento (`DESIGN_SYSTEM.md`)**: Se agrega la sección oficial de tokens de Modo Oscuro con los valores aprobados.
+3. **Mapear los tokens en `frontend/src/styles.css` bajo `[data-theme="dark"]`**:
    ```css
-   /* frontend/src/styles.css */
-   :root, [data-theme="light"] {
-     --color-bg-canvas: #d6e6d0;
-     --color-bg-pattern: rgba(55, 75, 60, 0.15);
-     --color-surface-card: #ffffff;
-     --color-surface-header: linear-gradient(180deg, #edf5e9 0%, #e0ebd8 100%);
-     --color-border-card: rgba(32, 75, 34, 0.28);
-     --color-text-title: #111d0e;
-     --color-text-body: #3b4e33;
-     --color-btn-primary-bg: #204b22;
-     --color-btn-primary-fg: #ffffff;
-     --color-btn-primary-hover: #163618;
-   }
-
    [data-theme="dark"] {
-     --color-bg-canvas: #0b111e;
-     --color-bg-pattern: rgba(255, 255, 255, 0.04);
-     --color-surface-card: #131c2e;
-     --color-surface-header: linear-gradient(180deg, #1a273e 0%, #162238 100%);
-     --color-border-card: rgba(255, 255, 255, 0.12);
-     --color-text-title: #ffffff;
-     --color-text-body: #94a3b8;
-     --color-btn-primary-bg: #a3e635;
-     --color-btn-primary-fg: #0b111e;
-     --color-btn-primary-hover: #bef264;
+     --color-bg-canvas: [color-fondo-definido];
+     --color-surface-card: [color-tarjetas-definido];
+     --color-text-title: [color-titulos-definido];
+     --color-btn-primary-bg: [color-cta-definido];
    }
    ```
-
-2. **Reutilizar los componentes sin cambiar una sola línea de HTML:**
-   Los componentes seguirán utilizando las mismas clases (`.form-card`, `.btn-invite`, `.hud`, etc.), pero consumiendo las variables temáticas. Al presionar el botón de tema en la navbar, Angular alterna `data-theme`, y todo el árbol de componentes se repinta automáticamente sin duplicar estilos ni generar código redundante.
+4. **Reutilizar los componentes sin reescribir HTML**: Como la arquitectura ya utiliza `ThemeService` y las clases globales (`.form-card`, `.btn-invite`, `.hud`), todo el sistema se adaptará al nuevo modo oscuro de forma limpia y mantenible.
 
 ---
 
