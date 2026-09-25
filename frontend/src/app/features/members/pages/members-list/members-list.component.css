@@ -301,13 +301,71 @@
   align-items: center;
   justify-content: center;
   color: var(--icon-color, var(--player));
-  cursor: pointer;
+  position: relative;
+  cursor: help;
   padding: 0;
   transition: transform 0.15s ease;
 }
 
-.perm-icon:hover {
+.perm-icon:hover,
+.perm-icon:focus-visible {
   transform: scale(1.05);
+}
+
+/* Tooltip Flotante Elegante sobre el Escudo/Permiso */
+.perm-tooltip {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 0;
+  background: var(--navy, #162032);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 11.5px;
+  line-height: 1.45;
+  width: max-content;
+  max-width: 250px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  box-shadow: 0 10px 24px rgba(10, 18, 30, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 50;
+  text-align: left;
+}
+
+.perm-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 11px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--navy, #162032) transparent transparent transparent;
+}
+
+.perm-icon:hover .perm-tooltip,
+.perm-icon:focus-visible .perm-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.tooltip-title {
+  display: block;
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 3px;
+  color: #f7d070;
+}
+
+.tooltip-desc {
+  display: block;
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 400;
+  font-size: 11px;
 }
 
 .role-btn {
@@ -329,6 +387,16 @@
 
 .role-btn[aria-expanded="true"] {
   border-color: var(--navy-border);
+}
+
+.role-btn:disabled,
+.role-btn.is-locked {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.role-btn.is-locked {
+  border-style: dashed;
 }
 
 .role-btn .label {
@@ -447,8 +515,6 @@
 .menu-btn:hover {
   background: var(--surface-hover);
   color: var(--text-primary);
-}
-
 }
 
 /* ==========================================================================

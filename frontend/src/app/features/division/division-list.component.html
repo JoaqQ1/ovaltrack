@@ -23,7 +23,7 @@
   <div class="banner-region" aria-live="polite" *ngIf="error">
     <div class="banner banner-error" role="alert">
       <div style="flex: 1">
-        <strong>Error de carga</strong>
+        <strong>{{ errorTitle }}</strong>
         <p>{{ error }}</p>
       </div>
       <button class="close" (click)="closeError()" aria-label="Cerrar aviso">✕</button>
@@ -80,6 +80,9 @@
       </div>
 
       <div class="division-status-zone">
+        <a [routerLink]="['/divisions', division.id, 'players']" class="btn btn-outline">
+          Ver jugadores
+        </a>
         <a [routerLink]="['/divisions', division.id, 'coaches']" class="btn btn-outline">
           Ver entrenadores
         </a>

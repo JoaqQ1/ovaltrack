@@ -144,13 +144,13 @@
           <!-- Selector de Rol y Permiso -->
           <div class="role-zone">
             @if (ROLE_META[member.role].perm; as perm) {
-              <button
+              <div
                 class="perm-icon"
-                type="button"
+                tabindex="0"
+                role="img"
                 [style.--icon-tint]="ROLE_META[member.role].tint"
                 [style.--icon-color]="ROLE_META[member.role].color"
                 [attr.aria-label]="ROLE_META[member.role].label"
-                (click)="showPermTip(member.role, $event)"
               >
                 @if (perm.icon === 'shield') {
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -161,17 +161,26 @@
                     <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
                   </svg>
                 }
-              </button>
+
+                <div class="perm-tooltip" role="tooltip">
+                  <span class="tooltip-title">{{ ROLE_META[member.role].label }}</span>
+                  <span class="tooltip-desc">
+                    {{ member.isProtected ? 'Rol protegido: solo un Administrador de OvalTrack puede modificar este rol.' : perm.tip }}
+                  </span>
+                </div>
+              </div>
             }
 
             <button
               class="role-btn"
               type="button"
-              [disabled]="!member.active"
+              [disabled]="!member.active || member.isProtected"
+              [class.is-locked]="member.isProtected"
               [ngClass]="ROLE_META[member.role].cssClass"
               [style.--role-color]="ROLE_META[member.role].color"
               [style.--role-tint]="ROLE_META[member.role].tint"
-              (click)="member.active ? toggleRoleMenu(member.id, $event) : null"
+              [title]="member.isProtected ? 'Rol protegido: solo un administrador de OvalTrack puede modificarlo' : ''"
+              (click)="member.active && !member.isProtected ? toggleRoleMenu(member.id, $event) : null"
               aria-haspopup="listbox"
               [attr.aria-expanded]="openMenu()?.type === 'role' && openMenu()?.memberId === member.id"
             >
@@ -179,14 +188,14 @@
                 <span class="dot"></span>
                 <span class="name">{{ ROLE_META[member.role].label }}</span>
               </span>
-              @if (member.active) {
+              @if (member.active && !member.isProtected) {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
                   <path d="M6 9l6 6 6-6" />
                 </svg>
               }
             </button>
 
-            @if (member.active && openMenu()?.type === 'role' && openMenu()?.memberId === member.id) {
+            @if (member.active && !member.isProtected && openMenu()?.type === 'role' && openMenu()?.memberId === member.id) {
               <div class="role-menu" role="listbox">
                 @for (role of SELECTABLE_ROLES; track role) {
                   <button
@@ -212,24 +221,22 @@
 
           <!-- Menú de Acciones -->
           <div class="row-actions">
-            <button
-              class="menu-btn"
-              type="button"
-              (click)="toggleActionsMenu(member.id, $event)"
-              aria-haspopup="menu"
-              aria-label="Más acciones"
-            >
-              ⋯
-            </button>
+            @if (member.active) {
+              <button
+                class="menu-btn"
+                type="button"
+                (click)="toggleActionsMenu(member.id, $event)"
+                aria-haspopup="menu"
+                aria-label="Más acciones"
+              >
+                ⋯
+              </button>
 
-            @if (openMenu()?.type === 'actions' && openMenu()?.memberId === member.id) {
-              <div class="actions-menu">
-                <button class="action-opt" type="button" (click)="handleAction(member, 'profile', $event)">Ver perfil</button>
-                <button class="action-opt" type="button" (click)="handleAction(member, 'edit', $event)">Editar ficha</button>
-                @if (member.active) {
+              @if (openMenu()?.type === 'actions' && openMenu()?.memberId === member.id) {
+                <div class="actions-menu">
                   <button class="action-opt danger" type="button" (click)="handleAction(member, 'revoke', $event)">Revocar acceso</button>
-                }
-              </div>
+                </div>
+              }
             }
           </div>
         </div>

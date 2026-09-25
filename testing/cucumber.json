@@ -1,6 +1,10 @@
 {
   "default": {
-    "paths": ["features/**/*.feature"],
+    "paths": [
+      "features/club/**/*.feature",
+      "features/user/**/*.feature",
+      "features/division/**/*.feature"
+    ],
     "require": ["features/**/*.js"],
     "format": ["summary", "progress-bar"],
     "publishQuiet": true

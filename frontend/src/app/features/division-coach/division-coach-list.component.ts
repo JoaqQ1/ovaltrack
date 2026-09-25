@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of, switchMap } from 'rxjs';
 import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
 import { DivisionService } from 'src/app/services/division.service';
@@ -24,6 +24,7 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
 export class DivisionCoachListComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly divisionService = inject(DivisionService);
   private readonly divisionCoachService = inject(DivisionCoachService);
   private readonly membersService = inject(MembersService);
@@ -169,6 +170,24 @@ export class DivisionCoachListComponent implements OnInit {
         this.cargando = false;
         this.persons = [];
         this.availableCoaches = [];
+
+        if (err.status === 403) {
+          const msg = typeof err.error === 'string'
+            ? err.error
+            : (err.error?.message || 'Acceso denegado: no tienes permisos para acceder a esta división.');
+          this.router.navigate(['/divisions'], {
+            state: { errorMessage: msg, errorTitle: 'Acceso denegado' }
+          });
+          return;
+        }
+
+        if (err.status === 404) {
+          this.router.navigate(['/divisions'], {
+            state: { errorMessage: 'División no encontrada.', errorTitle: 'No encontrado' }
+          });
+          return;
+        }
+
         this.error = 'No se pudieron cargar los entrenadores de la división.';
       }
     });

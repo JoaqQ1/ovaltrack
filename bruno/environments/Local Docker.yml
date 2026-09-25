@@ -19,18 +19,20 @@ variables:
   - name: unassignedPersonId
     value: 11111111-1111-1111-1111-000000000127
   - name: adminToken
-    value: eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiQURNSU5fQ0xVQiIsInBlcnNvbklkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMDAwMDAwMDAwMDAxIiwidXNlcklkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMDAwMDAwMDAwMDAxIiwic3ViIjoiYWRtaW5AY2x1Yi5jb20iLCJpYXQiOjE3OTAyMTY5NjEsImV4cCI6MTc5MDMwMzM2MX0.bo5WERxP6u4lC9C0HRdCTlbPxs8i6A2ikXOaKi6kYyQK5eFF2ZL76Hrbwg4SPryU0nEhjMMuLUlTFRIyCh9RKA
+    value: eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiQURNSU5fQ0xVQiIsInBlcnNvbklkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMDAwMDAwMDAwMDAxIiwidXNlcklkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMDAwMDAwMDAwMDAxIiwic3ViIjoiYWRtaW5AY2x1Yi5jb20iLCJpYXQiOjE3OTAyOTYyODQsImV4cCI6MTc5MDM4MjY4NH0.-XJtFeTi3FNoycjELBvwe116hgPvPEmAIy8l5tICcoT9a2nqDyAoGkxwNNVQD7S-uLfnTspRAKSVA-qXqw07OA
   - name: newClubId
-    value: a9467c6e-4d93-402f-a3e0-d594a5649fd1
+    value: 08bb58de-c9a8-46ba-947d-140451e263fa
   - name: newDivisionId
-    value: 7198c251-2d81-49c2-9b2d-ea39572b7393
+    value: c79c1e8a-f97f-4cf8-89d7-18a9ee3e99fc
   - name: newPersonId
-    value: af5198f7-4618-4398-b3b6-f2fe5e26cc70
+    value: 1c087857-5620-430f-9d83-c6cf28dfdf39
   - name: newDivisionPlayerId
-    value: e0777179-6de7-4cde-97ac-8a6d43ee7026
+    value: 5ea758b7-63f2-4daf-bf62-9dcdbf1725bb
   - name: newDivisionCoachId
-    value: b68af9ab-e7c3-468e-be80-61682407b45f
+    value: df8f93bb-3c1a-40d1-8a54-a94c7a994434
   - name: newMatchId
-    value: e48df55a-e112-44d1-8a2e-ae3e5040e2b4
+    value: 6aaf58d7-8df5-480a-8d19-2eadca1e0fce
   - name: playerToken
-    value: eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiUExBWUVSIiwicGVyc29uSWQiOiIxMTExMTExMS0xMTExLTExMTEtMTExMS0wMDAwMDAwMDAxMDEiLCJ1c2VySWQiOiIxMTExMTExMS0xMTExLTExMTEtMTExMS0wMDAwMDAwMDAxMDEiLCJzdWIiOiJwbGF5ZXIxQG92YWx0cmFjay5jb20iLCJpYXQiOjE3OTAyMTY5NjEsImV4cCI6MTc5MDMwMzM2MX0.FV67sFDJQOXdvMln8ckPBcpP6WDr2VwI8J11z0xwhTKYfoWs7RouVWHe2Heg_FsiSQHQf-DagInffXxvUeZnsQ
+    value: eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiUExBWUVSIiwicGVyc29uSWQiOiIxMTExMTExMS0xMTExLTExMTEtMTExMS0wMDAwMDAwMDAxMDEiLCJ1c2VySWQiOiIxMTExMTExMS0xMTExLTExMTEtMTExMS0wMDAwMDAwMDAxMDEiLCJzdWIiOiJwbGF5ZXIxQG92YWx0cmFjay5jb20iLCJpYXQiOjE3OTAyOTYyODQsImV4cCI6MTc5MDM4MjY4NH0.2Altc8dsdekCe3gliJiKtu-dymWds2fzknzVwPSdJjyg3sVIjgyV3F7y2nTCIY8thiDEtebTYUtrYfJU-qVykw
+  - name: coachToken
+    value: eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiQ09BQ0hfQU5BTFlTVCIsInBlcnNvbklkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMDAwMDAwMDAwMDAyIiwidXNlcklkIjoiMTExMTExMTEtMTExMS0xMTExLTExMTEtMDAwMDAwMDAwMDAyIiwic3ViIjoiZ29uemFsb0BtYWlsLmNvbSIsImlhdCI6MTc5MDI5NjI4NCwiZXhwIjoxNzkwMzgyNjg0fQ.aLyLXY7HV08NMMrxx5-u04I2cu1Tn0uRiWUwqllVpk271phk1yTFSMUdqwMvyWLdq-PMPFOGYEZN17HNGfAS8A

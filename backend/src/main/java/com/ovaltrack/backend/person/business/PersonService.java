@@ -10,6 +10,9 @@ import com.ovaltrack.backend.person.repository.PersonRepository;
 import com.ovaltrack.backend.club.domain.Club;
 import com.ovaltrack.backend.club.business.ClubService;
 import jakarta.transaction.Transactional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -31,6 +34,19 @@ public class PersonService {
                 .map(PersonDTOMapper::toResponseDTO)
                 .toList();
     }
+
+    public Collection<PersonResponseDTO> findPlayersByClubId(UUID clubId) {
+        return personRepository.findPlayersByClubId(clubId).stream()
+                .map(PersonDTOMapper::toResponseDTO)
+                .toList();
+    }
+
+    //TODO: Check this Page<DTO> to List<DTO> problem
+/*     public Page<PersonResponseDTO> findPaginatedPlayersByClubId(UUID clubId, int page, int size) {
+        return personRepository.findPaginatedPlayersByClubId(clubId, PageRequest.of(page, size)).stream()
+                .map(PersonDTOMapper::toResponseDTO)
+                .toList();
+    } */
 
     public PersonResponseDTO findPersonById(UUID personId) {
         return PersonDTOMapper.toResponseDTO(findPersonEntityById(personId));
@@ -68,6 +84,39 @@ public class PersonService {
 
     @Transactional
     public Person savePersonEntity(Person person) {
+        return personRepository.save(person);
+    }
+
+    @Transactional
+    public Person createPerson(PersonCreationDTO request, Club club) {
+        if (request == null || request.firstName() == null || request.firstName().trim().isEmpty() ||
+            request.lastName() == null || request.lastName().trim().isEmpty()) {
+            throw new BusinessException("Debe seleccionar una persona existente o ingresar nombre y apellido para crear una nueva");
+        }
+
+        if (request.contactEmail() != null && !request.contactEmail().trim().isBlank()) {
+            String email = request.contactEmail().trim();
+            if (existsByContactEmail(email)) {
+                throw new BusinessException("Email ya registrado");
+            }
+        }
+
+        if (request.contactPhone() != null && !request.contactPhone().trim().isBlank()) {
+            String phone = request.contactPhone().trim();
+            if (existsByContactPhone(phone)) {
+                throw new BusinessException("Teléfono ya registrado");
+            }
+        }
+
+        Person person = Person.builder()
+                .firstName(request.firstName().trim())
+                .lastName(request.lastName().trim())
+                .birthDate(request.birthDate())
+                .contactEmail(request.contactEmail() != null && !request.contactEmail().trim().isBlank() ? request.contactEmail().trim() : null)
+                .contactPhone(request.contactPhone() != null && !request.contactPhone().trim().isBlank() ? request.contactPhone().trim() : null)
+                .club(club)
+                .build();
+
         return personRepository.save(person);
     }
 

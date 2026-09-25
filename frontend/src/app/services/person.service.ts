@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { PersonResponse, PersonCreationRequest, PersonUpdateRequest } from '../features/person/types/person.types';
@@ -18,6 +18,11 @@ export class PersonService {
 
   getPersonById(id: string): Observable<PersonResponse> {
     return this.http.get<PersonResponse>(`${this.apiUrl}/${id}`);
+  }
+
+  getPlayersByClubId(clubId: string): Observable<PersonResponse[]> {
+    const params = new HttpParams().set('clubId', clubId);
+    return this.http.get<PersonResponse[]>(`${this.apiUrl}/club`, {params});
   }
 
   createPerson(person: PersonCreationRequest): Observable<PersonResponse> {

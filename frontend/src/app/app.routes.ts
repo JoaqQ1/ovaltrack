@@ -4,12 +4,13 @@ import { ClubDetailsComponent } from './features/club/club-details.component';
 import { ClubCreateComponent } from './features/club/club-create.component';
 import { DivisionFormComponent } from './features/division/division-form.component';
 import { DivisionListComponent } from './features/division/division-list.component';
-import { DivisionPlayerFormComponent } from './features/division-player/division-player-form.component';
+import { DivisionPlayerFormComponent } from './features/division-player/form/division-player-form.component';
 import { DivisionCoachListComponent } from './features/division-coach/division-coach-list.component';
 import { hasRoleGuard } from './core/guards/has-role.guard';
 import { SelectionRosterComponent } from './features/match/selection-roster/selection-roster.component';
 import { hasClubGuard } from './core/guards/has-club.guard';
 import { PostMatchComponent } from './features/match/post-match/post-match.component';
+import { DivisionPlayerListComponent } from './features/division-player/list/division-player-list.component';
 
 export const routes: Routes = [
     // Raíz: redirige a /home
@@ -96,6 +97,15 @@ export const routes: Routes = [
         },
         canMatch: [authGuard],
         component: DivisionCoachListComponent
+    },
+    {
+        path: 'divisions/:divisionId/players',
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+        },
+        canMatch: [authGuard],
+        component: DivisionPlayerListComponent
     },
     {
         path: 'players/new',

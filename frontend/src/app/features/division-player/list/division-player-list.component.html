@@ -1,0 +1,212 @@
+<app-navbar-auth></app-navbar-auth>
+
+<div class="app">
+  <!-- Sticky HUD Header -->
+  <header class="hud">
+    <div class="hud-brand">
+      <div class="crest" aria-hidden="true">
+        {{ division?.name?.charAt(0)?.toUpperCase() || 'D' }}
+      </div>
+      <div class="brand-text">
+        <span class="club">{{ division?.name || 'División' }}</span>
+        <h1 class="title">Jugadores asociados</h1>
+      </div>
+    </div>
+
+    <div class="hud-actions">
+      <a routerLink="/divisions" class="btn btn-secondary">
+        &larr; Volver a divisiones
+      </a>
+      <!-- Toggle button for showing/hiding available players -->
+      <button
+        type="button"
+        class="btn"
+        [ngClass]="mostrarFormularioAsociacion ? 'btn-secondary' : 'btn-primary'"
+        (click)="mostrarJugadores()">
+        {{ mostrarFormularioAsociacion ? 'Ocultar registro' : 'Asociar jugadores' }}
+      </button>
+    </div>
+  </header>
+
+  <!-- Error Alert -->
+  <div class="alert-error" *ngIf="mensajeError" role="alert">
+    <strong>Error de carga:</strong> {{ mensajeError }}
+  </div>
+
+  <!-- Section: Available Club Players to Register (Visible when toggled ON) -->
+  <section class="table-card" *ngIf="mostrarFormularioAsociacion && allPlayers.length > 0">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <p class="brand-text club">Jugadores del club disponibles</p>
+        <h2 class="card-title">Seleccionar e ingresar posición</h2>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Persona</th>
+            <th>Email</th>
+            <th>Posición *</th>
+            <th>Nº Camiseta</th>
+            <th class="text-right">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let person of allPlayers">
+            <td>
+              <div class="player-name">{{ person.firstName }} {{ person.lastName }}</div>
+            </td>
+            <td>
+              <span class="brand-text club">{{ person.contactEmail || 'Sin email' }}</span>
+            </td>
+            <td>
+              <input
+                #posInput
+                type="text"
+                placeholder="Ej. Delantero"
+                class="form-control"
+              />
+            </td>
+            <td>
+              <input
+                #jerseyInput
+                type="number"
+                placeholder="Nº"
+                class="form-control"
+                style="width: 80px;"
+              />
+            </td>
+            <td class="text-right">
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="crearAsociacion(person.id, posInput.value, +jerseyInput.value)">
+                Asociar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Main Content Card (Active Players List) -->
+  <section class="table-card" aria-live="polite">
+    <!-- Header inside card displaying total count -->
+    <div class="card-header" *ngIf="!mensajeError && activePlayers.length > 0">
+      <p class="brand-text club">Plantel de división</p>
+      <h2 class="card-title" id="players-title">
+        {{ activePlayers.length }} jugador{{ activePlayers.length === 1 ? '' : 'es' }}
+      </h2>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!mensajeError && activePlayers.length === 0">
+      <h2>No hay jugadores asociados</h2>
+      <p>Esta división todavía no tiene jugadores registrados.</p>
+    </div>
+
+    <!-- Responsive Table -->
+    <div class="table-responsive" *ngIf="!mensajeError && activePlayers.length > 0">
+      <table class="data-table" aria-labelledby="players-title">
+        <thead>
+          <tr>
+            <th>Nº</th>
+            <th>Jugador</th>
+            <th>Posición</th>
+            <th>Estado</th>
+            <th class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let player of activePlayers; let index = index">
+            <!-- Jersey Number -->
+            <td>
+              <span class="jersey-number">#{{ player.jerseyNumber || '--' }}</span>
+            </td>
+
+            <!-- Player Identity -->
+            <td>
+              <div class="player-name">
+                {{ activePersons[index]?.firstName || 'Persona' }} {{ activePersons[index]?.lastName || 'sin nombre' }}
+              </div>
+              <div class="brand-text club">
+                {{ activePersons[index]?.contactEmail || 'Sin email registrado' }}
+              </div>
+            </td>
+
+            <!-- Position -->
+            <td>
+              <span class="position-badge">{{ player.position }}</span>
+            </td>
+
+            <!-- Active / Inactive Status Indicator -->
+            <td>
+              <span 
+                class="status-pill" 
+                [ngClass]="player.endDate ? 'status-inactive' : 'status-active'">
+                <span class="status-dot"></span>
+                {{ player.endDate ? 'Finalizado' : 'Activo' }}
+              </span>
+            </td>
+
+            <!-- Action Buttons -->
+            <td class="text-right">
+              <div class="actions-cell">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="mostrarAsociaciones(player)">
+                  Historial
+                </button>
+                <button
+                  *ngIf="!player.endDate"
+                  type="button"
+                  class="btn btn-danger-outline"
+                  (click)="desasociarJugador(player)">
+                  Desasociar
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- History Card -->
+    <div class="table-card history-card" *ngIf="playerHistory.length > 0">
+      <div class="card-header history-header">
+        <p class="brand-text club">Historial del jugador</p>
+        <h2 class="card-title">{{ playerHistory.length }} asociación{{ playerHistory.length === 1 ? '' : 'es' }}</h2>
+      </div>
+
+      <div class="table-responsive">
+        <table class="data-table history-table">
+          <thead>
+            <tr>
+              <th>Posición</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let historyItem of playerHistory">
+              <td><span class="position-badge">{{ historyItem.position }}</span></td>
+              <td>{{ historyItem.startDate | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ historyItem.endDate ? (historyItem.endDate | date: 'dd/MM/yyyy') : 'Actualidad' }}</td>
+              <td>
+                <span class="status-pill" [ngClass]="historyItem.endDate ? 'status-inactive' : 'status-active'">
+                  <span class="status-dot"></span>
+                  {{ historyItem.endDate ? 'Finalizado' : 'Activo' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>

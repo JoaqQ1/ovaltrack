@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -43,6 +44,18 @@ public class PersonController {
     @GetMapping
     public ResponseEntity<Object> findAllPersons() {
         return ResponseEntity.ok(personService.findAllPersons());
+    }
+
+    @Operation(
+        summary = "List all persons by club ID",
+        description = "Returns every person associated with a club based on the clubId request parameter"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Persons returned successfully, even if there are none.")
+    })
+    @GetMapping("/club")
+    public ResponseEntity<Object> findPlayersByClubId(@RequestParam UUID clubId) {
+        return ResponseEntity.ok(personService.findPlayersByClubId(clubId));
     }
 
     @Operation(

@@ -6,7 +6,7 @@ import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navba
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { DivisionService } from 'src/app/services/division.service';
 import { DivisionPlayerService } from 'src/app/services/division-player.service';
-import { Division } from '../division/types/division.types';
+import { Division } from '../../division/types/division.types';
 
 @Component({
   selector: 'app-division-player-form',

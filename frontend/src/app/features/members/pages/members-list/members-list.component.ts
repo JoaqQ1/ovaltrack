@@ -195,6 +195,10 @@ export class MembersListComponent implements OnInit {
 
   toggleRoleMenu(memberId: string, event: Event): void {
     event.stopPropagation();
+    const member = this.members().find(m => m.id === memberId);
+    if (!member || !member.active || member.isProtected) {
+      return;
+    }
     const current = this.openMenu();
     if (current && current.type === 'role' && current.memberId === memberId) {
       this.closeMenus();
@@ -205,6 +209,10 @@ export class MembersListComponent implements OnInit {
 
   toggleActionsMenu(memberId: string, event: Event): void {
     event.stopPropagation();
+    const member = this.members().find(m => m.id === memberId);
+    if (!member || !member.active) {
+      return;
+    }
     const current = this.openMenu();
     if (current && current.type === 'actions' && current.memberId === memberId) {
       this.closeMenus();
@@ -257,26 +265,12 @@ export class MembersListComponent implements OnInit {
     this.closeMenus();
   }
 
-  showPermTip(role: UserRole, event: Event): void {
-    event.stopPropagation();
-    const meta = this.ROLE_META[role];
-    if (meta && meta.perm) {
-      this.showBanner(
-        'info',
-        `Rol deportivo vs. permiso de sistema — ${meta.label}`,
-        meta.perm.tip
-      );
-    }
-  }
-
   readonly memberToDeactivate = signal<Member | null>(null);
   readonly isDeactivating = signal<boolean>(false);
 
-  handleAction(member: Member, action: 'profile' | 'edit' | 'revoke', event: Event): void {
+  handleAction(member: Member, action: 'revoke', event: Event): void {
     event.stopPropagation();
     this.closeMenus();
-
-    const fullName = `${member.firstName} ${member.lastName}`.trim() || member.email;
 
     if (action === 'revoke') {
       if (member.isProtected) {
@@ -288,18 +282,6 @@ export class MembersListComponent implements OnInit {
         return;
       }
       this.memberToDeactivate.set(member);
-    } else if (action === 'profile') {
-      this.showBanner(
-        'info',
-        'Ver perfil',
-        `Esta acción abriría la ficha completa de ${fullName} (fuera del alcance de esta maqueta).`
-      );
-    } else if (action === 'edit') {
-      this.showBanner(
-        'info',
-        'Editar ficha',
-        `Esta acción abriría la edición de datos de ${fullName} (fuera del alcance de esta maqueta).`
-      );
     }
   }
 
