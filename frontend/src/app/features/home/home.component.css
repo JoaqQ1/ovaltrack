@@ -200,9 +200,12 @@
    ========================================================================== */
 :host-context([data-theme="light"]),
 :host-context(.light-theme) {
-  background-color: #eaeee4;
+  /* Hereda el fondo global deportivo unificado en styles.css */
+  background-color: transparent;
+  background-image: none;
   color: #1b2116;
 }
+
 
 :host-context([data-theme="light"]) .home-title,
 :host-context(.light-theme) .home-title {

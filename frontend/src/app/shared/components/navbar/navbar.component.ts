@@ -293,111 +293,117 @@ import { ThemeService } from 'src/app/core/services/theme.service';
     }
 
     /* ==========================================================================
-       Modo Claro en Navbar: Verde Bosque Rugby Sofisticado y Calibrado
+       Modo Claro en Navbar: Verde Deportivo Suave (#d6e6d0) Liso con Borde Firme #204b22
        ========================================================================== */
     :host-context([data-theme="light"]) .navbar-global,
     :host-context(.light-theme) .navbar-global {
-      background-color: #204b22;
-      border-bottom: 1px solid #2a5f2e;
-      box-shadow: 0 2px 14px rgba(15, 38, 16, 0.12);
+      background-color: #d6e6d0;
+      border-bottom: 2px solid #204b22;
+      box-shadow: 0 4px 14px rgba(20, 45, 20, 0.08);
     }
 
     :host-context([data-theme="light"]) .navbar-global.landing-nav,
     :host-context(.light-theme) .navbar-global.landing-nav {
-      background-color: #204b22;
-      border-bottom: 1px solid #2a5f2e;
-      box-shadow: 0 2px 14px rgba(15, 38, 16, 0.12);
+      background-color: #d6e6d0;
+      border-bottom: 2px solid #204b22;
+      box-shadow: 0 4px 14px rgba(20, 45, 20, 0.08);
     }
 
     :host-context([data-theme="light"]) .brand-title,
     :host-context(.light-theme) .brand-title {
-      color: #ffffff;
+      color: #142410;
     }
 
     :host-context([data-theme="light"]) .brand-subtitle,
     :host-context(.light-theme) .brand-subtitle {
-      color: #b5d8b0;
+      color: #4a6042;
     }
 
     :host-context([data-theme="light"]) .brand-icon,
     :host-context(.light-theme) .brand-icon {
-      background-color: #2b5e2e;
-      border: 1px solid #3d7e41;
-      color: #ffffff;
+      background-color: #204b22;
+      border: 1px solid #2a5f2e;
+      color: #d6f2c4;
+      font-weight: 700;
     }
 
     :host-context([data-theme="light"]) .btn-theme-toggle,
     :host-context(.light-theme) .btn-theme-toggle {
-      background-color: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.22);
-      color: #ffffff;
+      background-color: #ffffff;
+      border: 1px solid rgba(32, 75, 34, 0.25);
+      color: #204b22;
     }
 
     :host-context([data-theme="light"]) .btn-theme-toggle:hover,
     :host-context(.light-theme) .btn-theme-toggle:hover {
-      background-color: rgba(255, 255, 255, 0.22);
-      border-color: rgba(255, 255, 255, 0.38);
-      color: #ffffff;
+      background-color: #f2f7ef;
+      border-color: #204b22;
+      color: #142e15;
     }
 
     :host-context([data-theme="light"]) .user-role-badge,
     :host-context(.light-theme) .user-role-badge {
-      background-color: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background-color: #ffffff;
+      border: 1px solid rgba(32, 75, 34, 0.25);
       border-radius: 999px;
-      padding: 4px 10px;
+      padding: 4px 12px;
     }
 
     :host-context([data-theme="light"]) .badge-role,
     :host-context(.light-theme) .badge-role {
-      color: #e2f2e0;
+      color: #204b22;
+      font-weight: 700;
     }
 
     :host-context([data-theme="light"]) .status-dot,
     :host-context(.light-theme) .status-dot {
-      background-color: #9fe64e;
-      box-shadow: 0 0 6px rgba(159, 230, 78, 0.6);
+      background-color: #204b22;
+      box-shadow: 0 0 6px rgba(32, 75, 34, 0.4);
     }
 
     :host-context([data-theme="light"]) .btn-outline-dark-theme,
     :host-context(.light-theme) .btn-outline-dark-theme {
-      background-color: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.22);
-      color: #ffffff;
+      background-color: #ffffff;
+      border: 1px solid rgba(32, 75, 34, 0.25);
+      color: #204b22;
+      font-weight: 600;
     }
 
     :host-context([data-theme="light"]) .btn-outline-dark-theme:hover,
     :host-context(.light-theme) .btn-outline-dark-theme:hover {
-      background-color: rgba(255, 255, 255, 0.22);
-      border-color: rgba(255, 255, 255, 0.38);
-      color: #ffffff;
+      background-color: #f2f7ef;
+      border-color: #204b22;
+      color: #142e15;
     }
 
     :host-context([data-theme="light"]) .btn-neon,
     :host-context(.light-theme) .btn-neon {
-      background-color: #9ee64e;
-      color: #143516;
+      background-color: #204b22;
+      color: #ffffff;
       font-weight: 700;
     }
 
     :host-context([data-theme="light"]) .btn-neon:hover,
     :host-context(.light-theme) .btn-neon:hover {
-      background-color: #aff062;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+      background-color: #173819;
+      box-shadow: 0 4px 14px rgba(32, 75, 34, 0.22);
     }
 
     :host-context([data-theme="light"]) .btn-outline-danger-custom,
     :host-context(.light-theme) .btn-outline-danger-custom {
-      background-color: rgba(255, 90, 90, 0.16);
-      border-color: rgba(255, 120, 120, 0.35);
-      color: #ffcccc;
+      background-color: #204b22;
+      border: 1px solid #204b22;
+      color: #ffffff;
+      font-weight: 600;
+      border-radius: 8px;
     }
 
     :host-context([data-theme="light"]) .btn-outline-danger-custom:hover,
     :host-context(.light-theme) .btn-outline-danger-custom:hover {
-      background-color: #dc3545;
-      border-color: #dc3545;
+      background-color: #163618;
+      border-color: #163618;
       color: #ffffff;
+      box-shadow: 0 4px 12px rgba(32, 75, 34, 0.20);
     }
   `]
 })
