@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
-import { ClubSummary } from '../features/division/types/division.types';
+import { Club, ClubCreateRequest, ClubUpdateRequest } from '../features/club/types/club.types';
 
 @Injectable({
   providedIn: 'root'
@@ -12,23 +12,31 @@ export class ClubService {
   
   private readonly apiUrl = `${environment.apiUrl}/club`; 
 
-  getClubes(): Observable<ClubSummary[]> {
-    return this.http.get<ClubSummary[]>(this.apiUrl);
+  getClubs(): Observable<Club[]> {
+    return this.http.get<Club[]>(this.apiUrl);
   }
 
-  getMyClub(): Observable<ClubSummary> {
-    return this.http.get<ClubSummary>(`${this.apiUrl}/my-club`);
+  getClubes(): Observable<Club[]> {
+    return this.getClubs();
   }
 
-  createClub(club : any): Observable<any> {
-    return this.http.post<any>(this.apiUrl, club);
+  getMyClub(): Observable<Club> {
+    return this.http.get<Club>(`${this.apiUrl}/my-club`);
   }
 
-  updateClub(id: string, club: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${id}`, club);
+  createClub(club: ClubCreateRequest): Observable<Club> {
+    return this.http.post<Club>(this.apiUrl, club);
   }
 
-  getUsuarios(): Observable<any> {
-    return this.http.get<any>(`${environment.apiUrl}/user`);
+  updateClub(id: string, club: ClubUpdateRequest): Observable<Club> {
+    return this.http.put<Club>(`${this.apiUrl}/${id}`, club);
+  }
+
+  getUsers(): Observable<unknown[]> {
+    return this.http.get<unknown[]>(`${environment.apiUrl}/user`);
+  }
+
+  getUsuarios(): Observable<unknown[]> {
+    return this.getUsers();
   }
 }

@@ -302,6 +302,23 @@
   box-shadow: 0 0 0 3px rgba(32, 75, 34, 0.15);
 }
 
+.custom-input.is-invalid {
+  border-color: var(--error, #b42318);
+  background: #fffafa;
+}
+
+.custom-input.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.15);
+}
+
+.field-error {
+  color: var(--error, #b42318);
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 5px;
+  display: block;
+}
+
 .custom-input::placeholder {
   color: #7c8571;
 }

@@ -13,7 +13,7 @@
   </header>
 
   <!-- Skeletons de Carga -->
-  <div class="empty-state" *ngIf="cargando" style="margin-top: 24px;">
+  <div class="empty-state" *ngIf="isLoading" style="margin-top: 24px;">
     <div class="sk-row">
       <div class="sk-avatar sk"></div>
       <div class="sk-block sk"></div>
@@ -24,25 +24,25 @@
   </div>
 
   <!-- Región de Banners de Retroalimentación -->
-  <div class="banner-region" *ngIf="error || exito" style="margin-top: 24px;" aria-live="polite">
-    <div *ngIf="error" class="banner banner-error" role="alert">
+  <div class="banner-region" *ngIf="errorMessage || successMessage" style="margin-top: 24px;" aria-live="polite">
+    <div *ngIf="errorMessage" class="banner banner-error" role="alert">
       <div style="flex: 1">
         <strong>Error</strong>
-        <p>{{ error }}</p>
+        <p>{{ errorMessage }}</p>
       </div>
-      <button class="close" type="button" (click)="error = ''" aria-label="Cerrar aviso">✕</button>
+      <button class="close" type="button" (click)="errorMessage = ''" aria-label="Cerrar aviso">✕</button>
     </div>
-    <div *ngIf="exito" class="banner banner-success" role="alert">
+    <div *ngIf="successMessage" class="banner banner-success" role="alert">
       <div style="flex: 1">
         <strong>Guardado exitoso</strong>
-        <p>{{ exito }}</p>
+        <p>{{ successMessage }}</p>
       </div>
-      <button class="close" type="button" (click)="exito = ''" aria-label="Cerrar aviso">✕</button>
+      <button class="close" type="button" (click)="successMessage = ''" aria-label="Cerrar aviso">✕</button>
     </div>
   </div>
 
   <!-- Contenedor Principal del Club -->
-  <div class="config-layout" *ngIf="!cargando && club">
+  <div class="config-layout" *ngIf="!isLoading && club">
     <!-- Columna Lateral: Identidad Visual del Club -->
     <aside class="config-sidebar">
       <div class="club-photo-card">
@@ -92,7 +92,7 @@
             <button
               type="button"
               class="btn btn-outline btn-edit-trigger"
-              (click)="iniciarEdicion()"
+              (click)="startEditing()"
             >
               <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -159,11 +159,11 @@
       }
 
       <!-- ======================================================================
-           2. MODO EDICIÓN (Condicional / isEditing)
+           2. MODO EDICIÓN (Condicional / isEditing && clubDraft)
            ====================================================================== -->
-      @if (isEditing) {
+      @if (isEditing && clubDraft) {
         <div class="edit-view">
-          <form (ngSubmit)="guardarCambios()" #form="ngForm" class="club-form" novalidate>
+          <form (ngSubmit)="saveChanges()" #form="ngForm" class="club-form" novalidate>
             <!-- Cabecera de Edición -->
             <div class="card-header-flex">
               <div>
@@ -187,22 +187,33 @@
                     id="name"
                     name="name"
                     [(ngModel)]="clubDraft.name"
+                    #nameCtrl="ngModel"
                     required
                     placeholder="Ej: Patoruzú Rugby Club"
                     class="form-control custom-input"
+                    [class.is-invalid]="nameCtrl.touched && (!clubDraft.name.trim() || nameCtrl.invalid)"
                   />
+                  @if (nameCtrl.touched && (!clubDraft.name.trim() || nameCtrl.invalid)) {
+                    <small class="field-error">El nombre del club es obligatorio</small>
+                  }
                 </div>
 
                 <div class="form-group col-half">
-                  <label for="city" class="form-label">Localidad / Sede</label>
+                  <label for="city" class="form-label">Localidad / Sede *</label>
                   <input
                     type="text"
                     id="city"
                     name="city"
                     [(ngModel)]="clubDraft.city"
+                    #cityCtrl="ngModel"
+                    required
                     placeholder="Ej: Trelew, Chubut"
                     class="form-control custom-input"
+                    [class.is-invalid]="cityCtrl.touched && (!clubDraft.city.trim() || cityCtrl.invalid)"
                   />
+                  @if (cityCtrl.touched && (!clubDraft.city.trim() || cityCtrl.invalid)) {
+                    <small class="field-error">La ciudad del club es obligatoria</small>
+                  }
                 </div>
               </div>
             </div>
@@ -219,9 +230,15 @@
                     id="contactEmail"
                     name="contactEmail"
                     [(ngModel)]="clubDraft.contactEmail"
+                    #emailCtrl="ngModel"
+                    email
                     placeholder="contacto@miclub.com"
                     class="form-control custom-input"
+                    [class.is-invalid]="emailCtrl.touched && emailCtrl.invalid"
                   />
+                  @if (emailCtrl.touched && emailCtrl.invalid) {
+                    <small class="field-error">Ingresa un correo electrónico válido</small>
+                  }
                 </div>
 
                 <div class="form-group col-half">
@@ -243,17 +260,17 @@
               <button
                 type="button"
                 class="btn btn-outline"
-                (click)="cancelarEdicion()"
-                [disabled]="guardando"
+                (click)="cancelEditing()"
+                [disabled]="isSaving"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                [disabled]="!clubDraft?.name?.trim() || guardando"
+                [disabled]="!clubDraft.name.trim() || !clubDraft.city.trim() || isSaving"
                 class="btn btn-invite"
               >
-                @if (guardando) {
+                @if (isSaving) {
                   <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                   <span>Guardando...</span>
                 } @else {

@@ -293,18 +293,18 @@ import { ThemeService } from 'src/app/core/services/theme.service';
     }
 
     /* ==========================================================================
-       Modo Claro en Navbar: Verde Deportivo Suave (#d6e6d0) Liso con Borde Firme #204b22
+       Modo Claro en Navbar: Verde Salvia Suave (#e1edde) Luminoso con Borde Firme #204b22
        ========================================================================== */
     :host-context([data-theme="light"]) .navbar-global,
     :host-context(.light-theme) .navbar-global {
-      background-color: #d6e6d0;
+      background-color: #e1edde;
       border-bottom: 2px solid #204b22;
       box-shadow: 0 4px 14px rgba(20, 45, 20, 0.08);
     }
 
     :host-context([data-theme="light"]) .navbar-global.landing-nav,
     :host-context(.light-theme) .navbar-global.landing-nav {
-      background-color: #d6e6d0;
+      background-color: #e1edde;
       border-bottom: 2px solid #204b22;
       box-shadow: 0 4px 14px rgba(20, 45, 20, 0.08);
     }
