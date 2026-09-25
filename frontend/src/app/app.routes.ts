@@ -9,6 +9,7 @@ import { DivisionCoachListComponent } from './features/division-coach/division-c
 import { hasRoleGuard } from './core/guards/has-role.guard';
 import { SelectionRosterComponent } from './features/match/selection-roster/selection-roster.component';
 import { hasClubGuard } from './core/guards/has-club.guard';
+import { PostMatchComponent } from './features/match/post-match/post-match.component';
 
 export const routes: Routes = [
     // Raíz: redirige a /home
@@ -125,6 +126,10 @@ export const routes: Routes = [
     {
         path: 'selection-roster/:id',
         component: SelectionRosterComponent
+    },
+    {
+        path: 'post-match/:id',
+        component: PostMatchComponent
     },
     // Wildcard para rutas no encontradas
     {

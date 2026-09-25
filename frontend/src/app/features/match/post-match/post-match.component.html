@@ -1,0 +1,15 @@
+<div style="padding: 20px;">
+  <h2>Eventos del Partido (ID: {{ matchId }})</h2>
+  
+  <p *ngIf="events.length === 0">No hay eventos para mostrar.</p>
+  
+  <ul style="list-style: none; padding: 0;">
+    <li *ngFor="let event of events" style="margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
+      <strong>Minuto {{ event.matchTime }}':</strong> 
+      <!-- Por ahora mostramos el ID en crudo -->
+      Tipo de Evento ID: {{ event.eventTypeId }} 
+      <br>
+      <small>Posesión: {{ event.teamPossession }} | Periodo: {{ event.period }}</small>
+    </li>
+  </ul>
+</div>
