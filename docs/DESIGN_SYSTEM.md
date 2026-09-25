@@ -1,189 +1,342 @@
-# OvalTrack — Sistema de diseño (tema claro)
+# OvalTrack — Sistema de Diseño Oficial (Design System)
 
-Este documento reemplaza a `guia-estilos-v4-claro.md`. Antes documentaba solo la pantalla de Gestión de Miembros; ahora es la **referencia única de estilo** para cualquier pantalla nueva del frontend, basada en los tres mockups ya construidos:
+> **Estado:** Activo y alineado al 100% con la interfaz del frontend.  
+> **Identidad Visual:** *Sport Pro Salvia & Dark Rugby Tech* (Estética deportiva de alto rendimiento, contrastes tácticos y elevación física).
 
-| Patrón de pantalla | Cuándo usarlo | Archivo de referencia |
-|---|---|---|
-| **Lista / gestión de registros** | Tablas o listados con filtros, acciones por fila, edición en lote | `gestion-miembros-v4-claro.html` |
-| **Dashboard / selector** | Pantallas de entrada, launchers, tarjetas de navegación | `panel-control-v4-claro.html` |
-| **Grilla de acciones densa** | Captura rápida, tagging, formularios de botones grandes | `carga-en-vivo-v4-claro.html` |
-
-Si una pantalla nueva no encaja 100% en ninguno de los tres, se arma combinando los **componentes base** (sección 3) de la forma que tenga más sentido — nunca inventando un color, radio o sombra nuevo.
-
-> **Nota de consistencia:** al construir los tres mockups por separado aparecieron micro-diferencias entre archivos (ej. `--error-tint` con 0.10 en uno y 0.14 en otro). Ya las corregí y dejé los tres alineados a los valores de este documento, que son los únicos válidos de acá en adelante.
+Este documento es la **fuente de verdad definitiva y obligatoria** para el diseño y desarrollo de todas las vistas del frontend de OvalTrack. Cualquier componente o pantalla nueva debe construirse respetando los tokens, patrones y lineamientos aquí descritos.
 
 ---
 
-## 1. Tokens de color (`:root`) — únicos y obligatorios
+## 1. Tokens de Color Globales (`:root` y Temas)
+
+Los tokens están centralizados en `frontend/src/styles.css` y `frontend/src/styles/ovaltrack-tokens.css`.
+
+### 1.1 Paleta Principal (Modo Claro Deportivo — Vistas de Gestión)
 
 ```css
-:root{
-  --bg:#f6f7f1; --surface:#ffffff; --surface-alt:#eef1e7; --surface-hover:#f1f3ea;
-  --border:rgba(27,33,22,0.10); --border-strong:rgba(27,33,22,0.22);
+:root {
+  /* Lienzo y Fondo de Cancha */
+  --bg: #f6f7f1;
+  --bg-canvas: #d6e6d0;                       /* Fondo base verde salvia deportivo */
+  --bg-canvas-pattern: rgba(55, 75, 60, 0.15); /* Líneas tácticas a 135deg */
 
-  --text-primary:#1b2116; --text-secondary:#4b5540; --text-muted:#7c8571;
+  /* Superficies y Tarjetas Elevadas */
+  --surface: #ffffff;                         /* Tarjetas principales, modales y tablas */
+  --surface-alt: #eef1e7;                     /* Fondos secundarios, chips y segmentos */
+  --surface-hover: #f1f3ea;                   /* Estados hover en filas y botones */
+  --surface-header-start: #edf5e9;            /* Degradado superior cabecera tarjeta */
+  --surface-header-end: #e0ebd8;              /* Degradado inferior cabecera tarjeta */
+  --surface-toolbar: #eaf3e6;                 /* Barra de filtros segmentada */
 
-  /* Verde pasto — SOLO acciones primarias / confirmar / estado activo */
-  --grass:#91da40; --grass-hover:#7fc932; --on-grass:#1d3700; --grass-deep:#3a6410;
-  --grass-tint:rgba(145,218,64,0.18); --grass-tint-strong:rgba(145,218,64,0.30); --grass-border:rgba(90,150,30,0.45);
+  /* Bordes de Elevación Deportiva */
+  --border: rgba(27, 33, 22, 0.10);          /* Separadores y bordes sutiles */
+  --border-strong: rgba(27, 33, 22, 0.22);   /* Bordes de inputs e interacción */
+  --border-sport: rgba(32, 75, 34, 0.28);    /* Borde firme 2px en tarjetas y modales */
+  --border-sport-subtle: rgba(32, 75, 34, 0.20); /* Separadores internos de tarjetas */
 
-  /* Azul — rol Admin, foco, enlaces, elementos "instrumento" (reloj, headers oscuros) */
-  --navy:#16324f; --navy-tint:rgba(22,50,79,0.08); --navy-border:rgba(22,50,79,0.30);
-  --blue-mid:#2b6ca3; --blue-mid-tint:rgba(43,108,163,0.08); --blue-mid-hover:#24567f;
+  /* Textos y Tipografías */
+  --text-primary: #111d0e;                   /* Títulos y textos de alto contraste */
+  --text-secondary: #3b4e33;                 /* Subtítulos, descripciones y labels */
+  --text-muted: #7a8c74;                     /* Placeholders y contadores */
 
-  /* Neutro — rol Jugador / "Staff" / sin rol */
-  --player:#6b6f5f; --player-tint:rgba(20,25,15,0.05);
+  /* Colores de Acento y Acción */
+  --rugby-green: #204b22;                    /* Verde rugby botella (CTA principal) */
+  --rugby-green-hover: #163618;              /* Hover de acción principal */
+  --grass-neon: #a3e635;                     /* Verde pasto neón (acento tech/dark) */
+  --grass-neon-hover: #bef264;               /* Hover de acento tech */
+  --on-grass: #1d3700;                       /* Texto oscuro sobre verde neón */
 
-  /* Semántica */
-  --warning:#8a5700; --warning-tint:rgba(253,176,34,0.20); --warning-border:rgba(154,104,0,0.4);
-  --error:#b42318; --error-tint:rgba(240,68,56,0.14); --error-border:rgba(180,35,24,0.35);
+  /* Semántica de Roles y Estados */
+  --navy: #16324f;                           /* Identidad Admin Club / Foco */
+  --navy-tint: rgba(22, 50, 79, 0.08);
+  --navy-border: rgba(22, 50, 79, 0.30);
+  --blue-mid: #2b6ca3;                       /* Identidad Coach / Analista */
+  --blue-mid-tint: rgba(43, 108, 163, 0.08);
+  --player: #6b6f5f;                         /* Identidad Jugador / Neutro */
+  --player-tint: rgba(20, 25, 15, 0.05);
 
-  --radius-sm:6px; --radius-md:10px; --radius-lg:14px; --radius-pill:999px;
-  --font-head:'Hanken Grotesk',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'JetBrains Mono',monospace;
-  --hit:48px; /* hit-target táctil mínimo, tablet-first */
+  /* Feedback y Alertas */
+  --success: #2e7d32;
+  --success-tint: rgba(46, 125, 50, 0.12);
+  --warning: #8a5700;
+  --warning-tint: rgba(253, 176, 34, 0.20);
+  --error: #b42318;
+  --error-tint: rgba(240, 68, 56, 0.14);
+  --error-border: rgba(180, 35, 24, 0.35);
+
+  /* Geometría y Sombras */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+  --shadow-elevation: 0 16px 36px rgba(15, 35, 15, 0.12), 0 4px 12px rgba(15, 35, 15, 0.06);
+  --shadow-button: 0 4px 12px rgba(32, 75, 34, 0.20);
+  --shadow-button-hover: 0 6px 16px rgba(32, 75, 34, 0.28);
 }
 ```
 
-**Regla semántica (no negociable):** verde = confirmar/activar/primario. Azul = identidad Admin, foco, enlaces. Ámbar = advertencia. Rojo = error/destructivo. Nunca usar un color fuera de su significado (ej. no hacer un botón de "eliminar" en verde, ni un CTA principal en azul).
+---
 
-## 2. Tipografía y bases globales
+## 2. Tipografía
+
+El sistema utiliza tres familias tipográficas de Google Fonts cargadas globalmente:
 
 ```html
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 ```
-- **Hanken Grotesk** (700/800): títulos, nombres de pantalla, nombres de tarjeta.
-- **Inter** (400–700): todo el resto de la UI.
-- **JetBrains Mono** (500–700): datos — emails, dorsales, contadores, reloj de partido.
+
+| Familia | Pesos | Uso principal |
+|---|---|---|
+| **Hanken Grotesk** (`--font-head`) | 700, 800 | Títulos de página (HUD), encabezados de tarjetas, títulos de modales y logos. |
+| **Inter** (`--font-body`) | 400, 500, 600, 700 | Textos de interfaz, inputs, tablas, botones, descripciones y badges. |
+| **JetBrains Mono** (`--font-mono`) | 500, 600, 700 | Dorsales, emails, contadores, timestamps y datos numéricos/estadísticos. |
+
+---
+
+## 3. Componentes Base Globales
+
+### 3.1 Fondo de Cancha Salvia Deportivo
+El fondo global de las pantallas de gestión aplica un lienzo verde suave `#d6e6d0` con líneas tácticas diagonales sutiles:
 
 ```css
-*{box-sizing:border-box;} html,body{margin:0;padding:0;}
-body{background:var(--bg); color:var(--text-primary); font-family:var(--font-body); font-size:16px; line-height:1.5; -webkit-font-smoothing:antialiased;}
-button,input{font-family:inherit; color:inherit;} button{cursor:pointer;}
-:focus-visible{outline:2px solid var(--navy); outline-offset:2px;}
-.topbar{height:4px; background:linear-gradient(90deg, var(--grass), var(--blue-mid));} /* firma de marca, va al tope de TODA pantalla */
+body {
+  background-color: #d6e6d0;
+  background-image: 
+    radial-gradient(ellipse at 50% 30%, rgba(214, 230, 208, 0.92) 0%, rgba(214, 230, 208, 0.65) 35%, rgba(214, 230, 208, 0.15) 65%, transparent 80%),
+    repeating-linear-gradient(135deg, rgba(55, 75, 60, 0.15) 0px, rgba(55, 75, 60, 0.15) 1.5px, transparent 1.5px, transparent 54px);
+  background-attachment: fixed;
+  color: #1b2116;
+  font-family: var(--font-body);
+}
+```
+
+### 3.2 Page Header (HUD Integrado)
+Cabecera estática superior (sin efecto glassmorphism flotante ni fondos oscuros pesados) que unifica el título y la acción principal:
+
+```html
+<header class="hud">
+  <div class="hud-brand">
+    <div class="badge-tech">
+      <span>Categorías & Planteles</span>
+    </div>
+    <div class="brand-text">
+      <h1 class="title">Divisiones & Planteles</h1>
+      <p class="club">Administra las categorías competitivas y planteles activos</p>
+    </div>
+  </div>
+
+  <div class="hud-actions">
+    <button type="button" class="btn btn-invite">+ Nueva División</button>
+  </div>
+</header>
+```
+
+- `.badge-tech`: Píldora en fondo `#d6eac0`, borde `1px solid rgba(36, 76, 9, 0.25)` y texto `#244c09`.
+- `.title`: Tipografía `Hanken Grotesk` 800, tamaño `2rem` (32px), color `#111d0e`.
+- `.club`: Tamaño `14px`, peso 500, color `#3b4e33`.
+
+### 3.3 Botones
+
+```css
+/* Botón de Acción Principal (CTA Rugby) */
+.btn-invite, .btn-primary-rugby {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 10px;
+  background-color: #204b22;
+  color: #ffffff;
+  font-weight: 700;
+  border: 1px solid #204b22;
+  box-shadow: 0 4px 12px rgba(32, 75, 34, 0.20);
+  transition: all 0.15s ease;
+}
+.btn-invite:hover {
+  background-color: #163618;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(32, 75, 34, 0.28);
+}
+
+/* Botón Secundario / Outline Deportivo */
+.btn-outline {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 10px;
+  background-color: #ffffff;
+  border: 1px solid rgba(32, 75, 34, 0.25);
+  color: #204b22;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(20, 45, 20, 0.04);
+}
+.btn-outline:hover {
+  background-color: #f2f7ef;
+  border-color: #204b22;
+  color: #142e15;
+  transform: translateY(-1px);
+}
+```
+
+### 3.4 Tarjetas Elevadas de Formulario y Contenido (`.form-card`, `.match-card-shell`, etc.)
+Estructura en dos capas con cabecera en degradé suave y cuerpo blanco puro con bordes de 2px:
+
+```css
+.form-card {
+  background: #ffffff;
+  border: 2px solid rgba(32, 75, 34, 0.28);
+  border-radius: 20px;
+  box-shadow: 0 16px 36px rgba(15, 35, 15, 0.12), 0 4px 12px rgba(15, 35, 15, 0.06);
+  overflow: hidden;
+}
+
+.form-card-header {
+  background: linear-gradient(180deg, #edf5e9 0%, #e0ebd8 100%);
+  border-bottom: 2px solid rgba(32, 75, 34, 0.20);
+  padding: 24px 32px 20px;
+}
+
+.form-card-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 20px;
+  color: #111d0e;
+}
+```
+
+### 3.5 Controles de Formulario (`.form-control`)
+Inputs y selects con altura táctil accesible (46px), bordes salvia y foco verde bosque:
+
+```css
+.form-control {
+  width: 100%;
+  height: 46px;
+  background: #ffffff;
+  border: 1px solid rgba(32, 75, 34, 0.22);
+  border-radius: 10px;
+  color: #111d0e;
+  padding: 0 14px;
+  font-size: 14.5px;
+}
+.form-control:focus {
+  border-color: #204b22;
+  box-shadow: 0 0 0 3px rgba(32, 75, 34, 0.15);
+  background: #fafdf9;
+}
 ```
 
 ---
 
-## 3. Componentes base (usar en cualquier pantalla)
+## 4. Patrones de Pantalla Implementados
 
-### Botones
-```css
-.btn{height:var(--hit); padding:0 20px; border-radius:var(--radius-md); border:1px solid transparent; font-weight:700; font-size:14.5px; display:inline-flex; align-items:center; justify-content:center; gap:8px; transition:all .15s ease;}
-.btn-invite{background:var(--grass); color:var(--on-grass); box-shadow:0 6px 16px rgba(90,150,30,0.28);} /* CTA de mayor jerarquía de la pantalla */
-.btn-invite:hover{background:var(--grass-hover);}
-.btn-outline{background:transparent; border-color:var(--border-strong); color:var(--text-primary);}
-.btn-outline:hover{background:var(--surface-hover); border-color:var(--navy-border);}
-.btn-ghost{background:transparent; color:var(--text-secondary); height:40px; padding:0 12px;}
-.btn-logout{background:var(--error-tint); border:1px solid var(--error-border); color:var(--error);} /* acción destructiva/salida */
-```
+### 4.1 Barra de Navegación Global (`NavbarComponent`)
+- **Posición:** `sticky-top` con `z-index: 1030`.
+- **Soporte de Tema Dual:**
+  - *Modo Oscuro:* Fondo `#0b111e`, borde `#1f2e47`, textos blancos, botón neón `#a3e635`.
+  - *Modo Claro:* Fondo `#d6e6d0`, borde inferior `2px solid #204b22`, sombra suave, botón de acción en verde rugby `#204b22`.
+- **Elementos Clave:**
+  - Isotipo dinámico con la inicial del club (o 'O' por defecto).
+  - Título del club actual reactivo vía `UserContextService`.
+  - Toggle de tema con ícono Sol / Luna.
+  - Botón inteligente `Volver al inicio` (visible únicamente cuando `currentUrl !== '/home'`).
+  - Badge de rol de usuario autenticado (`ADMIN_CLUB`, `COACH_ANALYST`, etc.).
+  - Botón de cierre de sesión con acento seguro.
 
-### Badges, pills y chips
-```css
-.status-pill{display:flex; align-items:center; gap:8px; background:var(--surface-alt); border:1px solid var(--border); border-radius:var(--radius-pill); padding:6px 14px; font-size:12.5px; font-weight:700; color:var(--text-secondary);}
-.eyebrow{display:inline-flex; background:var(--navy-tint); border:1px solid var(--navy-border); color:var(--navy); font-size:12px; font-weight:700; padding:5px 12px; border-radius:var(--radius-pill);}
-.chip{height:40px; padding:0 16px; border-radius:var(--radius-pill); border:1px solid transparent; color:var(--text-secondary); font-weight:700; font-size:13.5px; display:flex; align-items:center; gap:7px;}
-.chip.active{background:var(--surface); border-color:var(--border-strong); color:var(--text-primary); box-shadow:0 1px 2px rgba(20,25,15,0.06);}
-```
+### 4.2 Autenticación Split-Screen Pro Deportivo (`/login` y `/auth/register`)
+- **Columna Izquierda (Hero de Alto Impacto):**
+  - Fondo oscuro con gradiente deportivo, tramado sutil e iluminación radial verde neón.
+  - Badge tech brillante `"ALTO RENDIMIENTO EN RUGBY"`.
+  - Título enfático: `"Eleva la gestión de tu club al siguiente nivel"`.
+  - Tarjetas flotantes de métricas en vivo (Scrum efficiency, Live tagging, etc.).
+- **Columna Derecha (Formulario Flotante):**
+  - Botón flotante superior `← Volver a la portada`.
+  - Tarjeta de formulario con bordes firmes, soporte reactivo para tema Claro/Oscuro.
+  - Tabs de selección de rol (Administrador de Club vs. Entrenador / Analista).
+  - Todos los campos de validación requeridos intactos.
 
-### Tarjetas y superficies
-```css
-.card-base{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); transition:border-color .15s ease, transform .15s ease;}
-.card-base:hover{border-color:var(--border-strong); transform:translateY(-2px);} /* solo en tarjetas clicables, no en filas de lista */
-```
+### 4.3 Mi Club (`/club`)
+- **Modo Lectura por Defecto:**
+  - Hero card con logo del club, nombre en grande, ciudad, dirección y fecha de fundación.
+  - Tarjetas de información organizadas en grid (2px borders, headers en degradé salvia).
+  - Botón de activación: `✏️ Editar información`.
+- **Modo Edición Condicional:**
+  - Clona un borrador independiente (`clubDraft`) sin mutar el estado global hasta guardar.
+  - Inputs editables con focus verde rugby y feedback de validación.
+  - Botones de acción `Cancelar` y `Guardar cambios`.
+  - Sincronización instantánea con el `UserContextService` y la barra de navegación global al guardar.
 
-### Avatar / ícono con tinte
-```css
-.avatar{width:40px; height:40px; border-radius:50%; background:var(--surface-alt); display:flex; align-items:center; justify-content:center; font-family:var(--font-head); font-weight:700; border:2px solid var(--ring, var(--border-strong));}
-.icon-tinted{width:40px; height:40px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; background:var(--icon-tint); color:var(--icon-color); border:1px solid var(--border);}
-```
-`--ring`, `--icon-tint`, `--icon-color` se setean **inline por elemento** según el rol/categoría (mismo patrón en las tres pantallas).
+### 4.4 Listados y Tablas de Planteles (`/divisions/:id/players`, `/divisions/:id/coaches`, `/members`)
+- **Cabeceras de Tabla Salvia:** Fondo `#edf5e9`, borde `2px solid rgba(32, 75, 34, 0.20)`, títulos en uppercase y tracking deportivo.
+- **Filas Elevadas:** Fondo blanco `#ffffff`, hover `#f1f3ea`, borde inferior sutil.
+- **Avatares de Iniciales:** Círculos de 40px con borde de rol específico (Navy para Admin, Blue para Coach, Salvia para Jugador).
+- **Selector de Rol Personalizado:** Popover dropdown a medida (no `<select>` nativo del navegador).
+- **Barra de Guardado en Lote (`.batch-bar`):** Flotante en la parte inferior cuando existen cambios sin persistir (`is-dirty`).
 
-### Banners (4 variantes fijas)
-```css
-.banner{display:flex; gap:12px; background:var(--surface); border:1px solid var(--border); border-left:3px solid; border-radius:var(--radius-md); padding:13px 15px; font-size:14px;}
-.banner-success{border-left-color:var(--grass-deep);} .banner-error{border-left-color:var(--error);}
-.banner-warning{border-left-color:var(--warning);} .banner-info{border-left-color:var(--navy);}
-```
+### 4.5 Fixture y Selección de Partidos (`/match-selection`)
+- **Toolbar de Filtros:** Contenedor en `#eaf3e6` con pestañas segmentadas redondeadas (Todos, Por Jugar, En Curso, Finalizados, Cancelados).
+- **Tarjetas de Partidos (`.match-card-shell`):**
+  - Badge de estado con indicador luminoso pulsante para partidos `in_progress`.
+  - Sección central con tipografía destacada de rival `"VS CLUB_OPONENTE"`.
+  - Badges de fecha y marcador parcial/final con tipografía JetBrains Mono.
+  - Botón de eliminación discreto en la esquina superior.
+  - Acción contextual en pie de tarjeta (`Definir alineación →`, `Capturar en vivo →`, `Ver resumen →`).
 
-### Header sticky (HUD) — dos variantes
-- **Con buscador** (pantallas de lista): logo + buscador flexible + CTA principal. Ver `.hud` en `gestion-miembros-v4-claro.html`.
-- **Simple** (dashboards): logo + status pill + acción secundaria. Ver `.hud` en `panel-control-v4-claro.html`.
-- **Con instrumento** (captura en vivo): logo + marcador/reloj + acciones ghost. Ver `.hud` en `carga-en-vivo-v4-claro.html`.
-
-Las tres comparten: `position:sticky; top:0`, fondo `rgba(246,247,241,0.88–0.9)` con `backdrop-filter:blur(10px)`, borde inferior `1px solid var(--border)`.
-
----
-
-## 4. Componentes específicos por patrón
-
-Estos **no** son de uso universal — se toman del mockup correspondiente solo cuando la pantalla nueva es de ese tipo.
-
-- **Patrón lista** (`gestion-miembros-v4-claro.html`): `.member-row`, `.role-btn` + `.role-menu` (dropdown a medida, no `<select>` nativo), `.perm-icon` (permiso vía banner, no tooltip hover), `.actions-menu` ("···"), `.status-badge`, `.batch-bar` (guardado en lote, sin botón "Guardar" por fila), skeleton/empty state.
-- **Patrón dashboard** (`panel-control-v4-claro.html`): `.module-card`, `.module-icon` + `.module-tag` (color según categoría: verde=en vivo, azul marino=admin, azul medio=staff), `.module-link` con flecha animada al hover.
-- **Patrón grilla densa** (`carga-en-vivo-v4-claro.html`): `.ev-btn` (4 variantes: `outline-grass`, `solid-blue`, `outline-error`, `outline-warning`), `.clock-chip` (instrumento oscuro sobre fondo claro), `.rail-num`, `.historial-item`, `.possession-bar`.
-
----
-
-## 5. Estados e interacción (aplican siempre que el componente exista)
-
-1. Un solo popover abierto a la vez (rol, acciones, o cualquier menú futuro).
-2. `is-dirty` / cambios pendientes se marcan con borde izquierdo `var(--grass)`, nunca se autoguardan.
-3. Ícono de permiso o de ayuda = botón táctil que dispara un banner `info`, no un `title`/tooltip por hover (no funciona en tablet).
-4. Conteos en chips/filtros siempre calculados en vivo, nunca hardcodeados.
-5. `:focus-visible` con outline `var(--navy)` en todo elemento interactivo — no quitar el foco por estética.
-
-## 6. Breakpoints
-```css
-@media (max-width:980px){ /* grillas densas: colapsan a 1–2 columnas, ocultar rails decorativos */ }
-@media (max-width:820px){ /* filas de lista: pasan a columna única */ }
-@media (max-width:760px){ /* header: padding reducido, título más chico */ }
-```
+### 4.6 Captura en Vivo (`/live-capture/:matchId`)
+- **Entorno Especializado de Cancha:** Interfaz de alto contraste, táctil (hit-target mínimo de 48px), optimizada para tablets en tiempo real.
+- **Marcador e Instrumentos:** Cronómetro de partido y marcador en `Space Grotesk` / `JetBrains Mono`.
+- **Aislamiento:** No incluye la barra de navegación estándar para maximizar el área de control e impedir clics accidentales durante el juego.
 
 ---
 
-## 7. ¿Dónde va esto en el repo y cómo se referencia desde `AGENTS.md`?
+## 5. Escalabilidad y Arquitectura para Modo Oscuro Futuro
 
-**No lo seas pegues entero dentro de `AGENTS.md`.** `AGENTS.md`/`CLAUDE.md` están para cómo correr y construir el proyecto (Docker, comandos, convenciones de código); mezclarlo con la especificación visual completa lo hace más largo y más difícil de mantener — cada vez que ajustes un color tendrías que tocar el archivo que el agente lee para todo lo demás.
+### ¿Es necesario crear otro archivo de diseño o reescribir las pantallas?
+**No.** El sistema de diseño fue construido siguiendo el principio **Open/Closed** de SOLID y ya cuenta con la infraestructura técnica necesaria en Angular (`ThemeService`, que aplica el atributo `data-theme="dark"` o `data-theme="light"` en la raíz del documento).
 
-Lo que sí conviene:
+### Procedimiento para habilitar Modo Oscuro Completo en el Futuro:
 
-1. Guardar este documento como `frontend/DESIGN_SYSTEM.md` (vive junto al código que lo implementa).
-2. Guardar los tres HTML de referencia en `frontend/design-reference/` (o `mocks/`), versionados en el repo — no como adjuntos sueltos.
-3. Agregar **una sección corta** en `AGENTS.md` (y en `CLAUDE.md`, ya que mantenés ambos sincronizados) que apunte ahí:
+1. **Abstraer los colores fijos a Tokens Temáticos en `:root` y `[data-theme="dark"]`:**
+   En lugar de escribir valores hex directos en los componentes (`#204b22`, `#d6e6d0`, `#ffffff`), se mapean a variables semánticas:
 
-```markdown
-## Frontend — Sistema visual
+   ```css
+   /* frontend/src/styles.css */
+   :root, [data-theme="light"] {
+     --color-bg-canvas: #d6e6d0;
+     --color-bg-pattern: rgba(55, 75, 60, 0.15);
+     --color-surface-card: #ffffff;
+     --color-surface-header: linear-gradient(180deg, #edf5e9 0%, #e0ebd8 100%);
+     --color-border-card: rgba(32, 75, 34, 0.28);
+     --color-text-title: #111d0e;
+     --color-text-body: #3b4e33;
+     --color-btn-primary-bg: #204b22;
+     --color-btn-primary-fg: #ffffff;
+     --color-btn-primary-hover: #163618;
+   }
 
-Toda pantalla nueva o modificada del frontend debe seguir `frontend/DESIGN_SYSTEM.md`:
-tokens de color/tipografía fijos (no crear colores nuevos), y el patrón de layout
-más parecido entre los tres de referencia en `frontend/design-reference/`:
-- Lista/gestión → `gestion-miembros-v4-claro.html`
-- Dashboard/selector → `panel-control-v4-claro.html`
-- Grilla de acciones densa → `carga-en-vivo-v4-claro.html`
+   [data-theme="dark"] {
+     --color-bg-canvas: #0b111e;
+     --color-bg-pattern: rgba(255, 255, 255, 0.04);
+     --color-surface-card: #131c2e;
+     --color-surface-header: linear-gradient(180deg, #1a273e 0%, #162238 100%);
+     --color-border-card: rgba(255, 255, 255, 0.12);
+     --color-text-title: #ffffff;
+     --color-text-body: #94a3b8;
+     --color-btn-primary-bg: #a3e635;
+     --color-btn-primary-fg: #0b111e;
+     --color-btn-primary-hover: #bef264;
+   }
+   ```
 
-Si ninguno encaja, combinar los componentes base de la sección 3 del sistema de
-diseño. No introducir sombras pesadas, radios distintos, ni un color fuera de la
-paleta sin actualizar primero `DESIGN_SYSTEM.md`.
-```
-
-Así el agente lee `AGENTS.md` primero (como siempre), y ese archivo lo redirige al detalle solo cuando la tarea es de frontend/estilo — el resto de las tareas (backend, tests) no cargan contexto visual que no necesitan.
+2. **Reutilizar los componentes sin cambiar una sola línea de HTML:**
+   Los componentes seguirán utilizando las mismas clases (`.form-card`, `.btn-invite`, `.hud`, etc.), pero consumiendo las variables temáticas. Al presionar el botón de tema en la navbar, Angular alterna `data-theme`, y todo el árbol de componentes se repinta automáticamente sin duplicar estilos ni generar código redundante.
 
 ---
 
-## 8. Sobre el prompt "usar members-list como maqueta para todo"
+## 6. Reglas de Oro para Desarrolladores y Agentes
 
-**No te lo recomiendo tal cual lo planteás**, y por eso no te lo doy: `gestion-miembros-v4-claro.html` es el patrón **lista**. Si tu agente lo usa como maqueta única para, por ejemplo, el dashboard o la pantalla de captura en vivo, terminaría forzando filas de tabla y un buscador donde en realidad va una grilla de tarjetas o una grilla de botones grandes — mismo problema de fondo que ya resolvimos acá (drift entre pantallas), pero ahora por sobre-generalizar en vez de por sub-especificar.
-
-Con la guía actualizada (sección 4, tabla de arriba) alcanza: le decís al agente qué patrón corresponde y a qué archivo mirar. Si igual querés un prompt corto para pegarle cuando le pidas una pantalla nueva, este cubre el caso general sin forzar un solo componente:
-
-```
-Implementá [nombre de la pantalla] siguiendo frontend/DESIGN_SYSTEM.md.
-Usá los tokens de :root tal cual están, sin crear colores, radios ni sombras nuevos.
-Esta pantalla se parece más al patrón [lista / dashboard / grilla de acciones] —
-tomá frontend/design-reference/[archivo correspondiente].html como referencia visual
-y de componentes, pero adaptá el layout al contenido real de esta pantalla en vez
-de forzar el de la referencia.
-```
-
-Solo la parte entre corchetes cambia por pantalla.
+1. **Nunca inventar colores ni sombras:** Usar estrictamente los tokens definidos en este sistema.
+2. **Respetar la jerarquía visual de botones:**
+   - Verde Rugby / Botella (`#204b22` o `--btn-invite`): Únicamente para la acción principal más importante de la pantalla.
+   - Outline Blanco Deportivo (`.btn-outline`): Para acciones secundarias, filtros o cancelar.
+   - Rojo destructivo (`.btn-logout`, `.btn-delete`): Reservado para eliminar o cerrar sesión.
+3. **Mantener la consistencia de elevación:** Toda tarjeta, tabla o contenedor de datos debe tener borde de `2px` con radio redondeado (`16px` o `20px`) y sombra de elevación profunda.
+4. **Hit-targets mínimos de 44px a 48px:** Toda área interactiva debe ser fácilmente clickeable en tablet y móvil.
+5. **No romper la pantalla de Carga en Vivo (`/live-capture/:matchId`):** Dicha pantalla es un instrumento de captura en tiempo real y debe mantenerse enfocada en su diseño de alta densidad.
