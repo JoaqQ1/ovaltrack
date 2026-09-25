@@ -11,128 +11,125 @@ import { ThemeService } from 'src/app/core/services/theme.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <header class="navbar-global sticky-top" [class.landing-nav]="isLanding">
-      <div class="nav-container">
-        <!-- Brand Link al Home -->
-        <a routerLink="/home" class="brand-link">
-          <div class="brand-icon">
-            {{ userContextService.currentClub()?.name ? userContextService.currentClub()!.name.charAt(0).toUpperCase() : 'O' }}
-          </div>
-          <div class="brand-info">
-            <span class="brand-title">OvalTrack</span>
-            @if (userContextService.currentClub()?.name) {
-              <small class="brand-subtitle">{{ userContextService.currentClub()!.name }}</small>
-            }
-          </div>
-        </a>
-
-        <!-- Acciones según estado de autenticación -->
-        <div class="navbar-actions">
-          <!-- Botón de alternancia Modo Claro / Oscuro -->
-          <button
-            type="button"
-            class="btn-theme-toggle"
-            (click)="themeService.toggleTheme()"
-            [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
-            [title]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
-          >
-            @if (themeService.theme() === 'dark') {
-              <!-- Ícono de Sol para pasar a claro -->
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="5"></circle>
-                <line x1="12" y1="1" x2="12" y2="3"></line>
-                <line x1="12" y1="21" x2="12" y2="23"></line>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                <line x1="1" y1="12" x2="3" y2="12"></line>
-                <line x1="21" y1="12" x2="23" y2="12"></line>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-              </svg>
-            } @else {
-              <!-- Ícono de Luna para pasar a oscuro -->
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-              </svg>
-            }
-          </button>
-
-          @if (currentUser(); as user) {
-            <!-- Acciones Autenticadas -->
-            <a routerLink="/home" class="btn-outline-dark-theme btn-nav-action" *ngIf="currentUrl !== '/home' && currentUrl !== '/'">
-              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-              </svg>
-              <span>Volver al inicio</span>
-            </a>
-
-            <div class="user-role-badge">
-              <span class="status-dot"></span>
-              <span class="badge-role">{{ user.role }}</span>
+    <header class="navbar-wrapper sticky-top">
+      <nav class="navbar-global" [class.landing-nav]="isLanding">
+        <div class="container d-flex justify-content-between align-items-center">
+          <!-- Brand Link al Home -->
+          <a routerLink="/home" class="brand-link">
+            <div class="brand-icon">
+              {{ userContextService.currentClub()?.name ? userContextService.currentClub()!.name.charAt(0).toUpperCase() : 'O' }}
             </div>
+            <div class="brand-info">
+              <span class="brand-title">OvalTrack</span>
+              @if (userContextService.currentClub()?.name) {
+                <small class="brand-subtitle">{{ userContextService.currentClub()!.name }}</small>
+              }
+            </div>
+          </a>
 
+          <!-- Acciones según estado de autenticación -->
+          <div class="navbar-actions">
+            <!-- Botón de alternancia Modo Claro / Oscuro -->
             <button
               type="button"
-              class="btn-outline-danger-custom btn-nav-action"
-              (click)="logout()"
+              class="btn-theme-toggle"
+              (click)="themeService.toggleTheme()"
+              [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+              [title]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
             >
-              Cerrar sesión
+              @if (themeService.theme() === 'dark') {
+                <!-- Ícono de Sol para pasar a claro -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+              } @else {
+                <!-- Ícono de Luna para pasar a oscuro -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+              }
             </button>
-          } @else {
-            <!-- Acciones Públicas / No Autenticadas -->
-            <a routerLink="/home" class="btn-outline-dark-theme btn-nav-action" *ngIf="currentUrl !== '/home' && currentUrl !== '/'">
-              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-              </svg>
-              <span>Volver al inicio</span>
-            </a>
 
-            @if (currentUrl.includes('/auth/login') || currentUrl.includes('/login')) {
-              <a routerLink="/auth/register" class="btn-neon btn-nav-action">
-                Crear cuenta
+            @if (currentUser(); as user) {
+              <!-- Acciones Autenticadas -->
+              <a routerLink="/home" class="btn-outline-dark-theme btn-nav-action" *ngIf="currentUrl !== '/home' && currentUrl !== '/'">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                <span>Volver al inicio</span>
               </a>
-            } @else if (currentUrl.includes('/auth/register') || currentUrl.includes('/register')) {
-              <a routerLink="/auth/login" class="btn-neon btn-nav-action">
-                Iniciar sesión
-              </a>
+
+              <div class="user-role-badge">
+                <span class="status-dot"></span>
+                <span class="badge-role">{{ user.role }}</span>
+              </div>
+
+              <button
+                type="button"
+                class="btn-outline-danger-custom btn-nav-action"
+                (click)="logout()"
+              >
+                Cerrar sesión
+              </button>
             } @else {
-              <a routerLink="/auth/login" class="btn-outline-dark-theme btn-nav-action">
-                Iniciar sesión
+              <!-- Acciones Públicas / No Autenticadas -->
+              <a routerLink="/home" class="btn-outline-dark-theme btn-nav-action" *ngIf="currentUrl !== '/home' && currentUrl !== '/'">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                <span>Volver al inicio</span>
               </a>
-              <a routerLink="/auth/register" class="btn-neon btn-nav-action">
-                Crear cuenta
-              </a>
+
+              @if (currentUrl.includes('/auth/login') || currentUrl.includes('/login')) {
+                <a routerLink="/auth/register" class="btn-neon btn-nav-action">
+                  Crear cuenta
+                </a>
+              } @else if (currentUrl.includes('/auth/register') || currentUrl.includes('/register')) {
+                <a routerLink="/auth/login" class="btn-neon btn-nav-action">
+                  Iniciar sesión
+                </a>
+              } @else {
+                <a routerLink="/auth/login" class="btn-outline-dark-theme btn-nav-action">
+                  Iniciar sesión
+                </a>
+                <a routerLink="/auth/register" class="btn-neon btn-nav-action">
+                  Crear cuenta
+                </a>
+              }
             }
-          }
+          </div>
         </div>
-      </div>
+      </nav>
     </header>
   `,
   styles: [`
-    .navbar-global {
-      background-color: #0b111e;
+    .navbar-wrapper {
       position: sticky;
       top: 0;
       z-index: 1030;
+      width: 100%;
+    }
+
+    .navbar-global {
+      background-color: #0b111e;
       border-bottom: 1px solid #1f2e47;
-      min-height: 62px;
+      min-height: 64px;
+      padding: 8px 0;
       display: flex;
       align-items: center;
-      transition: background-color 0.2s ease, border-color 0.2s ease;
+      transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     .navbar-global.landing-nav {
       border-bottom: 1px solid transparent;
-    }
-
-    .nav-container {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 10px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
     }
 
     .brand-link {
@@ -289,9 +286,6 @@ import { ThemeService } from 'src/app/core/services/theme.service';
     }
 
     @media (max-width: 600px) {
-      .nav-container {
-        padding: 8px 16px;
-      }
       .brand-subtitle,
       .user-role-badge {
         display: none;
@@ -299,107 +293,110 @@ import { ThemeService } from 'src/app/core/services/theme.service';
     }
 
     /* ==========================================================================
-       Modo Claro en Navbar (Activo cuando data-theme="light")
+       Modo Claro en Navbar: Verde Bosque Rugby Sofisticado y Calibrado
        ========================================================================== */
     :host-context([data-theme="light"]) .navbar-global,
     :host-context(.light-theme) .navbar-global {
-      background-color: rgba(255, 255, 255, 0.95);
-      border-bottom: 1px solid rgba(27, 33, 22, 0.10);
+      background-color: #204b22;
+      border-bottom: 1px solid #2a5f2e;
+      box-shadow: 0 2px 14px rgba(15, 38, 16, 0.12);
     }
 
     :host-context([data-theme="light"]) .navbar-global.landing-nav,
     :host-context(.light-theme) .navbar-global.landing-nav {
-      background-color: transparent;
-      border-bottom: 1px solid transparent;
+      background-color: #204b22;
+      border-bottom: 1px solid #2a5f2e;
+      box-shadow: 0 2px 14px rgba(15, 38, 16, 0.12);
     }
 
     :host-context([data-theme="light"]) .brand-title,
     :host-context(.light-theme) .brand-title {
-      color: #1b2116;
+      color: #ffffff;
     }
 
     :host-context([data-theme="light"]) .brand-subtitle,
     :host-context(.light-theme) .brand-subtitle {
-      color: #7c8571;
+      color: #b5d8b0;
     }
 
     :host-context([data-theme="light"]) .brand-icon,
     :host-context(.light-theme) .brand-icon {
-      background: linear-gradient(155deg, #91da40, #6fae1f);
-      border-color: rgba(90, 150, 30, 0.45);
-      color: #1d3700;
+      background-color: #2b5e2e;
+      border: 1px solid #3d7e41;
+      color: #ffffff;
     }
 
     :host-context([data-theme="light"]) .btn-theme-toggle,
     :host-context(.light-theme) .btn-theme-toggle {
-      background-color: #eef1e7;
-      border-color: rgba(27, 33, 22, 0.15);
-      color: #16324f;
+      background-color: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.22);
+      color: #ffffff;
     }
 
     :host-context([data-theme="light"]) .btn-theme-toggle:hover,
     :host-context(.light-theme) .btn-theme-toggle:hover {
-      background-color: #e2e7d9;
-      border-color: rgba(27, 33, 22, 0.25);
+      background-color: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.38);
+      color: #ffffff;
     }
 
     :host-context([data-theme="light"]) .user-role-badge,
     :host-context(.light-theme) .user-role-badge {
-      background-color: #eef1e7;
-      border: 1px solid rgba(27, 33, 22, 0.12);
+      background-color: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 999px;
       padding: 4px 10px;
     }
 
     :host-context([data-theme="light"]) .badge-role,
     :host-context(.light-theme) .badge-role {
-      color: #4b5540;
+      color: #e2f2e0;
     }
 
     :host-context([data-theme="light"]) .status-dot,
     :host-context(.light-theme) .status-dot {
-      background-color: #3a6410;
-      box-shadow: 0 0 6px #3a6410;
+      background-color: #9fe64e;
+      box-shadow: 0 0 6px rgba(159, 230, 78, 0.6);
     }
 
     :host-context([data-theme="light"]) .btn-outline-dark-theme,
     :host-context(.light-theme) .btn-outline-dark-theme {
-      background-color: #eef1e7;
-      border-color: rgba(27, 33, 22, 0.15);
-      color: #1b2116;
+      background-color: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.22);
+      color: #ffffff;
     }
 
     :host-context([data-theme="light"]) .btn-outline-dark-theme:hover,
     :host-context(.light-theme) .btn-outline-dark-theme:hover {
-      background-color: #e2e7d9;
-      border-color: rgba(27, 33, 22, 0.25);
-      color: #1b2116;
+      background-color: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.38);
+      color: #ffffff;
     }
 
     :host-context([data-theme="light"]) .btn-neon,
     :host-context(.light-theme) .btn-neon {
-      background-color: #91da40;
-      color: #1d3700;
+      background-color: #9ee64e;
+      color: #143516;
       font-weight: 700;
     }
 
     :host-context([data-theme="light"]) .btn-neon:hover,
     :host-context(.light-theme) .btn-neon:hover {
-      background-color: #7fc932;
-      box-shadow: 0 6px 16px rgba(90, 150, 30, 0.28);
+      background-color: #aff062;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
     }
 
     :host-context([data-theme="light"]) .btn-outline-danger-custom,
     :host-context(.light-theme) .btn-outline-danger-custom {
-      background-color: rgba(180, 35, 24, 0.08);
-      border-color: rgba(180, 35, 24, 0.25);
-      color: #b42318;
+      background-color: rgba(255, 90, 90, 0.16);
+      border-color: rgba(255, 120, 120, 0.35);
+      color: #ffcccc;
     }
 
     :host-context([data-theme="light"]) .btn-outline-danger-custom:hover,
     :host-context(.light-theme) .btn-outline-danger-custom:hover {
-      background-color: #b42318;
-      border-color: #b42318;
+      background-color: #dc3545;
+      border-color: #dc3545;
       color: #ffffff;
     }
   `]
