@@ -187,10 +187,15 @@
                     id="name"
                     name="name"
                     [(ngModel)]="clubDraft.name"
+                    #nameCtrl="ngModel"
                     required
                     placeholder="Ej: Patoruzú Rugby Club"
                     class="form-control custom-input"
+                    [class.is-invalid]="nameCtrl.touched && (!clubDraft.name.trim() || nameCtrl.invalid)"
                   />
+                  @if (nameCtrl.touched && (!clubDraft.name.trim() || nameCtrl.invalid)) {
+                    <small class="field-error">El nombre del club es obligatorio</small>
+                  }
                 </div>
 
                 <div class="form-group col-half">
@@ -200,10 +205,15 @@
                     id="city"
                     name="city"
                     [(ngModel)]="clubDraft.city"
+                    #cityCtrl="ngModel"
                     required
                     placeholder="Ej: Trelew, Chubut"
                     class="form-control custom-input"
+                    [class.is-invalid]="cityCtrl.touched && (!clubDraft.city.trim() || cityCtrl.invalid)"
                   />
+                  @if (cityCtrl.touched && (!clubDraft.city.trim() || cityCtrl.invalid)) {
+                    <small class="field-error">La ciudad del club es obligatoria</small>
+                  }
                 </div>
               </div>
             </div>
@@ -220,9 +230,15 @@
                     id="contactEmail"
                     name="contactEmail"
                     [(ngModel)]="clubDraft.contactEmail"
+                    #emailCtrl="ngModel"
+                    email
                     placeholder="contacto@miclub.com"
                     class="form-control custom-input"
+                    [class.is-invalid]="emailCtrl.touched && emailCtrl.invalid"
                   />
+                  @if (emailCtrl.touched && emailCtrl.invalid) {
+                    <small class="field-error">Ingresa un correo electrónico válido</small>
+                  }
                 </div>
 
                 <div class="form-group col-half">
