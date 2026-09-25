@@ -2,7 +2,7 @@ import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   Match,
   MATCH_FILTERS,
@@ -29,7 +29,7 @@ import { MatchService } from '../services/match.service';
 @Component({
   selector: 'ot-match-select',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './match-selection.component.html',
   styleUrl: './match-selection.component.css',
 })

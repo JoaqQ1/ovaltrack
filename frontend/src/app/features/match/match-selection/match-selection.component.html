@@ -1,105 +1,192 @@
-<section class="match-select">
-    @if (errorMessage) {
-    <p class="match-select__error" role="alert">{{ errorMessage }}</p>
-    }
-    <header class="match-select__header">
-        <h1 class="match-select__title">Partidos</h1>
-        <button type="button" class="btn btn--primary"
-            (click)="openCreateModal()">
-            <i class="ti ti-plus" aria-hidden="true"></i>
-            Crear partido
-        </button>
-    </header>
+<div class="app">
+  <!-- Page Header Integrado OvalTrack -->
+  <header class="hud">
+    <div class="hud-brand">
+      <div class="badge-tech">
+        <span>Partidos & Fixture</span>
+      </div>
+      <div class="brand-text">
+        <h1 class="title">Selección de Partidos</h1>
+        <p class="club">Gestiona y accede a la captura en vivo o alineaciones de tu club</p>
+      </div>
+    </div>
 
-    <div class="match-select__filters" role="tablist"
-        aria-label="Filtrar partidos por estado">
-        @for (filter of filters; track filter) {
+    <div class="hud-actions">
+      <a routerLink="/home" class="btn btn-outline">
+        ← Volver al inicio
+      </a>
+      <button type="button" class="btn btn-invite" (click)="openCreateModal()">
+        + Crear partido
+      </button>
+    </div>
+  </header>
+
+  <!-- Banner de Error Backend -->
+  @if (errorMessage) {
+    <div class="custom-alert mb-4 d-flex align-items-center justify-content-between" role="alert">
+      <div class="d-flex align-items-center gap-2">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ errorMessage }}</span>
+      </div>
+      <button type="button" class="btn-close-alert" (click)="errorMessage = ''" aria-label="Cerrar aviso">✕</button>
+    </div>
+  }
+
+  <!-- Barra de Filtros Segmentados -->
+  <div class="filter-toolbar mb-4">
+    <div class="status-segment" role="tablist" aria-label="Filtrar partidos por estado">
+      @for (filter of filters; track filter) {
         <button
-            type="button"
-            class="filter-chip"
-            role="tab"
-            [attr.aria-selected]="activeFilter === filter"
-            [class.is-active]="activeFilter === filter"
-            (click)="setFilter(filter)">
-            {{ statusLabels[filter] }}
+          type="button"
+          class="status-tab"
+          role="tab"
+          [attr.aria-selected]="activeFilter === filter"
+          [class.active]="activeFilter === filter"
+          (click)="setFilter(filter)">
+          <span>{{ statusLabels[filter] }}</span>
         </button>
-        }
+      }
     </div>
+  </div>
 
-    <div class="match-select__grid">
-        @for (match of visibleMatches; track match.id) {
-        <div class="match-card-shell">
-            <button type="button" class="match-card"
-                [disabled]="match.status === 'cancelled'"
-                (click)="openMatch(match); selectMatch.emit(match)">
-                <span class="match-card__status"
-                    [class]="'match-card__status--' + match.status">
-                    @if (match.status === 'in_progress') {
-                    <span class="match-card__pulse" aria-hidden="true"></span>
-                    }
-                    {{ statusLabel(match.status) }}
-                </span>
-
-                <span class="match-card__opponent">{{ match.opponent }}</span>
-
-                <div class="match-card__meta">
-                    <span class="match-card__date">{{ formatMatchDate(match.date)
-                        }}</span>
-
-                    @if (match.score) {
-                    <span class="match-card__score">{{ match.score.home }}–{{
-                        match.score.away }}</span>
-                    }
-                </div>
-            </button>
-            @if (match.status !== 'cancelled') {
-            <button type="button" class="match-card__delete"
-                [attr.aria-label]="'Eliminar partido contra ' + match.opponent"
-                (click)="confirmDeleteMatch(match)">
-                <i class="ti ti-trash" aria-hidden="true"></i>
-            </button>
+  <!-- Grilla de Tarjetas de Partidos Elevadas -->
+  <div class="match-grid">
+    @for (match of visibleMatches; track match.id) {
+      <div class="match-card-shell">
+        <div class="match-card-header">
+          <span class="status-pill status-{{ match.status }}">
+            @if (match.status === 'in_progress') {
+              <span class="status-dot-pulse"></span>
+            } @else {
+              <span class="status-dot"></span>
             }
+            {{ statusLabel(match.status) }}
+          </span>
+
+          @if (match.status !== 'cancelled') {
+            <button
+              type="button"
+              class="btn-delete-match"
+              [attr.aria-label]="'Eliminar partido contra ' + match.opponent"
+              (click)="confirmDeleteMatch(match); $event.stopPropagation()"
+              title="Eliminar partido">
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          }
         </div>
-        } @empty {
-        <p class="match-select__empty">No hay partidos {{ activeFilter !== 'all'
-            ? ('en estado "' + statusLabels[activeFilter] + '"') : '' }}
-            todavía.</p>
-        }
-    </div>
 
-    @if (isCreateOpen) {
-    <div class="match-modal__backdrop" (click)="closeCreateModal()">
-        <div class="match-modal" role="dialog" aria-modal="true"
-            aria-labelledby="match-modal-title"
-            (click)="$event.stopPropagation()">
-            <h2 class="match-modal__title" id="match-modal-title">Crear
-                partido</h2>
+        <button
+          type="button"
+          class="match-card-body"
+          [disabled]="match.status === 'cancelled'"
+          (click)="openMatch(match); selectMatch.emit(match)">
+          <div class="match-opponent-row">
+            <span class="vs-label">VS</span>
+            <h2 class="match-opponent-name">{{ match.opponent }}</h2>
+          </div>
 
-            <label class="match-modal__field">
-                <span class="match-modal__label">Fecha</span>
-                <input type="date" class="match-modal__input"
-                    [(ngModel)]="draft.date" name="matchDate" />
-            </label>
-
-            <label class="match-modal__field">
-                <span class="match-modal__label">Oponente</span>
-                <input
-                    type="text"
-                    class="match-modal__input"
-                    placeholder="Nombre del rival"
-                    [(ngModel)]="draft.opponent"
-                    name="matchOpponent" />
-            </label>
-
-            <div class="match-modal__actions">
-                <button type="button" class="btn btn--outline"
-                    (click)="closeCreateModal()">Cancelar</button>
-                <button type="button" class="btn btn--primary"
-                    [disabled]="!canCreateMatch" (click)="confirmCreateMatch()">
-                    Crear partido
-                </button>
+          <div class="match-meta-row">
+            <div class="match-date-badge">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>{{ formatMatchDate(match.date) }}</span>
             </div>
+
+            @if (match.score) {
+              <div class="match-score-badge">
+                <span>{{ match.score.home }} – {{ match.score.away }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="match-card-action">
+            <span>
+              @if (match.status === 'not_started') {
+                Definir alineación →
+              } @else if (match.status === 'in_progress') {
+                Capturar en vivo →
+              } @else {
+                Ver resumen →
+              }
+            </span>
+          </div>
+        </button>
+      </div>
+    } @empty {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
         </div>
-    </div>
+        <h2 class="empty-title">No hay partidos registrados</h2>
+        <p class="empty-copy">
+          {{ activeFilter !== 'all' ? ('No se encontraron partidos en estado "' + statusLabels[activeFilter] + '".') : 'Aún no tienes partidos creados. Haz clic en "+ Crear partido" para programar el próximo encuentro.' }}
+        </p>
+      </div>
     }
-</section>
+  </div>
+
+  <!-- Modal de Creación de Partido -->
+  @if (isCreateOpen) {
+    <div class="match-modal__backdrop" (click)="closeCreateModal()">
+      <div class="match-modal" role="dialog" aria-modal="true" aria-labelledby="match-modal-title" (click)="$event.stopPropagation()">
+        <div class="modal-header-salvia">
+          <h2 class="modal-title" id="match-modal-title">Crear Nuevo Partido</h2>
+          <p class="modal-subtitle">Ingresa la fecha y el rival para agendar el encuentro</p>
+        </div>
+
+        <div class="modal-body-content">
+          <div class="form-group mb-3">
+            <label class="form-label" for="matchDate">Fecha del Encuentro *</label>
+            <input
+              id="matchDate"
+              type="date"
+              class="form-control custom-input"
+              [(ngModel)]="draft.date"
+              name="matchDate"
+            />
+          </div>
+
+          <div class="form-group mb-4">
+            <label class="form-label" for="matchOpponent">Club Rival / Oponente *</label>
+            <input
+              id="matchOpponent"
+              type="text"
+              class="form-control custom-input"
+              placeholder="Ej. Patoruzú RC, Chenque RC"
+              [(ngModel)]="draft.opponent"
+              name="matchOpponent"
+            />
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-outline" (click)="closeCreateModal()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-invite"
+              [disabled]="!canCreateMatch"
+              (click)="confirmCreateMatch()"
+            >
+              Crear partido
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
