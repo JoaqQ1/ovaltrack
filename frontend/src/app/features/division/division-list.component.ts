@@ -26,8 +26,15 @@ export class DivisionListComponent implements OnInit {
   divisions: Division[] = [];
   cargando: boolean = false;
   error: string = '';
+  errorTitle: string = 'Error de carga';
 
   ngOnInit(): void {
+    const navState = history.state;
+    if (navState?.errorMessage) {
+      this.error = navState.errorMessage;
+      this.errorTitle = navState.errorTitle || 'Acceso denegado';
+      history.replaceState({ ...navState, errorMessage: undefined, errorTitle: undefined }, '');
+    }
     this.cargarClubYDivisiones();
   }
 
@@ -61,6 +68,7 @@ export class DivisionListComponent implements OnInit {
 
   closeError(): void {
     this.error = '';
+    this.errorTitle = 'Error de carga';
   }
 
   get esCoach(): boolean {
