@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
 import { MembersService } from '../../services/members.service';
 import {
   BannerNotification,
@@ -34,7 +33,6 @@ import { DeactivateModalComponent } from '../../components/deactivate-modal/deac
   imports: [
     CommonModule,
     FormsModule,
-    NavbarAuthComponent,
     BatchActionBarComponent,
     DeactivateModalComponent
   ],

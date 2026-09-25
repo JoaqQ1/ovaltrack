@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { DivisionService } from 'src/app/services/division.service';
 import { DivisionPlayerService } from 'src/app/services/division-player.service';
@@ -11,7 +10,7 @@ import { Division } from '../../division/types/division.types';
 @Component({
   selector: 'app-division-player-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, NavbarAuthComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './division-player-form.component.html',
   styleUrl: './division-player-form.component.css'
 })

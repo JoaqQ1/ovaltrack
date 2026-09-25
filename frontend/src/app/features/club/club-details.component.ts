@@ -2,12 +2,11 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClubService } from 'src/app/services/club.service';
-import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
 
 @Component({
   selector: 'app-club-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarAuthComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './club-details.component.html',
   styleUrls: ['./club-details.component.css']
 })
