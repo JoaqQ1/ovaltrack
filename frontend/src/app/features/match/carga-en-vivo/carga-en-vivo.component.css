@@ -7,8 +7,8 @@
 .live-capture {
 	display: flex;
 	flex-direction: column;
-	/* --ot-live-scale: 1; */
-	--ot-live-scale: clamp(0.78, min(calc(100vw / 1440px), calc(100dvh / 900px)), 1.18);
+	--ot-live-scale: 1;
+	/* --ot-live-scale: clamp(0.78, min(calc(100vw / 1440px), calc(100dvh / 900px)), 1.18); */
 	--ot-size-clock: calc(48px * var(--ot-live-scale));
 	--ot-size-clock-mobile: calc(32px * var(--ot-live-scale));
 	--ot-size-headline-lg: calc(32px * var(--ot-live-scale));

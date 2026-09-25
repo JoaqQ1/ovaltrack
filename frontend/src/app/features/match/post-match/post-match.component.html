@@ -5,15 +5,19 @@
   
   <div class="timeline-board" *ngIf="timelineTracks.length > 0">
     
-    <div class="timeline-header">
-      <div class="header-sidebar">Eventos</div>
+    <!-- Cabecera de la línea de tiempo -->
+    <div class="timeline-header" style="display: flex; width: 100%;">
+      <div class="header-sidebar" style="width: 200px;">Eventos</div>
       
-      <div class="header-track ruler-track">
+      <!-- Contenedor de la regla que ocupa el espacio restante -->
+      <div class="header-track ruler-track" style="flex-grow: 1; position: relative;">
+        <!-- El ngFor genera cada marca -->
         <div class="ruler-tick" 
              *ngFor="let tick of timelineTicks" 
              [style.left.%]="(tick / maxMatchDuration) * 100"
              [ngClass]="{'milestone': tick === 0 || tick === 40 || tick === 80}">
           
+          <!-- Los números o etiquetas -->
           <span class="tick-label">
             <ng-container *ngIf="tick === 0">Inicio</ng-container>
             <ng-container *ngIf="tick === 40">E.T.</ng-container>
@@ -21,6 +25,7 @@
             <ng-container *ngIf="tick !== 0 && tick !== 40 && tick !== 80">{{ tick }}'</ng-container>
           </span>
           
+          <!-- La rayita vertical -->
           <div class="tick-mark"></div>
         </div>
       </div>
@@ -31,17 +36,19 @@
       
       <!-- Columna izquierda: Nombre y cantidad -->
       <div class="row-sidebar">
-        <span class="event-name">{{ track.eventName }}</span>
+        <!-- Modificamos aquí para que la barrita izquierda cambie de color -->
+        <span class="event-name" [style.borderLeftColor]="track.color">{{ track.eventName }}</span>
         <span class="event-count">{{ track.occurrences.length }}</span>
       </div>
       
       <!-- Columna derecha: Pista de tiempo -->
       <div class="row-track">
-        <!-- Generamos una marca por cada vez que ocurrió el evento -->
+        <!-- Iteramos sobre 'occurrence' en lugar de 'time' -->
         <div class="marker"
-             *ngFor="let time of track.occurrences"
-             [style.left.%]="(time / maxMatchDuration) * 100"
-             [title]="'Minuto ' + time">
+             *ngFor="let occurrence of track.occurrences"
+             [style.left.%]="(occurrence.time / maxMatchDuration) * 100"
+             [style.backgroundColor]="track.color"
+             [title]="'Minuto ' + occurrence.time + '\' - ' + occurrence.player">
         </div>
       </div>
       
