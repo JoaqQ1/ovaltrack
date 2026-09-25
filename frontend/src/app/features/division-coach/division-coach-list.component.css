@@ -1,0 +1,164 @@
+/* ==========================================================================
+   Division Coach List Component Styles (Fase C - Estética Mi Club Elevada)
+   ========================================================================== */
+
+/* Lista de Entrenadores */
+.division-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Tarjeta de Entrenador (Elevación y Borde Mi Club) */
+.division-card {
+  background: #ffffff;
+  border: 2px solid rgba(32, 75, 34, 0.26);
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(15, 35, 15, 0.10), 0 3px 8px rgba(15, 35, 15, 0.05);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.division-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(32, 75, 34, 0.40);
+  box-shadow: 0 16px 36px rgba(15, 35, 15, 0.14), 0 4px 12px rgba(15, 35, 15, 0.08);
+}
+
+.division-main {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Avatar con inicial */
+.division-badge-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: #edf5e9;
+  border: 1.5px solid rgba(32, 75, 34, 0.24);
+  color: #204b22;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(32, 75, 34, 0.08);
+}
+
+.division-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.division-name {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 17px;
+  color: #111d0e;
+  line-height: 1.25;
+  margin-bottom: 2px;
+}
+
+.division-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+  font-size: 13px;
+  color: #4a6042;
+}
+
+.meta-gender {
+  color: #4a6042;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.meta-dot {
+  color: rgba(32, 75, 34, 0.35);
+  font-size: 10px;
+}
+
+/* Zona de Estado y Acciones */
+.division-status-zone {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-active {
+  background: #d6f2c4;
+  color: #1e4513;
+  border: 1.5px solid rgba(30, 69, 19, 0.3);
+}
+
+.status-active .dot {
+  background: #2a6119;
+  box-shadow: 0 0 6px rgba(42, 97, 25, 0.4);
+}
+
+.status-inactive {
+  background: #f1f3ed;
+  color: #6b7565;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+}
+
+.status-inactive .dot {
+  background: #8b9585;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+/* Formulario de Asociación Inline */
+.form-card-wrapper {
+  margin-bottom: 24px;
+}
+
+.form-select {
+  cursor: pointer;
+  appearance: auto;
+}
+
+/* Responsive */
+@media (max-width: 760px) {
+  .division-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .division-status-zone {
+    justify-content: space-between;
+    width: 100%;
+    padding-top: 12px;
+    border-top: 1px solid rgba(32, 75, 34, 0.10);
+  }
+}

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of, switchMap } from 'rxjs';
-import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
 import { DivisionPlayerService } from 'src/app/services/division-player.service';
 import { DivisionService } from 'src/app/services/division.service';
 import { PersonService } from 'src/app/services/person.service';
@@ -14,7 +13,7 @@ import { PersonResponse } from '../../person/types/person.types';
 @Component({
   selector: 'app-division-player-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, NavbarAuthComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './division-player-list.component.html',
   styleUrl: './division-player-list.component.css'
 })

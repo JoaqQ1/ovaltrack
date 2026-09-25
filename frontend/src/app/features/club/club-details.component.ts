@@ -2,20 +2,24 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClubService } from 'src/app/services/club.service';
-import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
+import { UserContextService } from 'src/app/core/services/user-context.service';
 
 @Component({
   selector: 'app-club-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarAuthComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './club-details.component.html',
   styleUrls: ['./club-details.component.css']
 })
 export class ClubDetailsComponent implements OnInit {
-  private clubService = inject(ClubService);
+  private readonly clubService = inject(ClubService);
+  private readonly userContextService = inject(UserContextService);
   
   club: any = null;
+  clubDraft: any = null;
+  isEditing: boolean = false;
   cargando: boolean = true;
+  guardando: boolean = false;
   error: string = '';
   exito: string = '';
 
@@ -23,7 +27,7 @@ export class ClubDetailsComponent implements OnInit {
     this.obtenerMiClub();
   }
 
-  obtenerMiClub() {
+  obtenerMiClub(): void {
     this.clubService.getMyClub().subscribe({
       next: (data) => {
         this.club = data;
@@ -42,25 +46,45 @@ export class ClubDetailsComponent implements OnInit {
     return name.charAt(0).toUpperCase();
   }
 
-  guardarCambios() {
+  iniciarEdicion(): void {
     this.error = '';
     this.exito = '';
-    if (!this.club.name) {
+    this.clubDraft = { ...this.club };
+    this.isEditing = true;
+  }
+
+  cancelarEdicion(): void {
+    this.clubDraft = null;
+    this.error = '';
+    this.isEditing = false;
+  }
+
+  guardarCambios(): void {
+    this.error = '';
+    this.exito = '';
+
+    if (!this.clubDraft?.name?.trim()) {
       this.error = 'El nombre del club es obligatorio';
       return;
     }
     
-    this.clubService.updateClub(this.club.id, this.club).subscribe({
+    this.guardando = true;
+
+    this.clubService.updateClub(this.club.id, this.clubDraft).subscribe({
       next: (data) => {
-        this.exito = 'Información actualizada correctamente';
         this.club = data;
+        this.exito = 'Información actualizada correctamente';
+        this.guardando = false;
+        this.isEditing = false;
+        this.userContextService.loadUserContext().subscribe();
       },
       error: (err) => {
+        this.guardando = false;
         console.error('Error al actualizar club', err);
         if (err.status === 409) {
-           this.error = err.error || 'Conflicto al actualizar la información del club.';
+          this.error = err.error || 'Conflicto al actualizar la información del club.';
         } else {
-           this.error = 'Error al actualizar el club. Intenta nuevamente.';
+          this.error = 'Error al actualizar el club. Intenta nuevamente.';
         }
       }
     });
