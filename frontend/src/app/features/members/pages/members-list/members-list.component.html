@@ -26,23 +26,42 @@
     <button class="btn btn-invite" id="inviteBtn" (click)="onInviteClick()">+ Invitar miembro</button>
   </header>
 
-  <!-- Filtros unificados con conteo -->
-  <div class="filters" role="group" aria-label="Filtrar por categoría">
-    @for (def of filterDefs; track def.key) {
-      <button
-        class="chip"
-        [class.active]="activeFilter() === def.key"
-        (click)="setFilter(def.key)"
-      >
-        @if (def.dot) {
-          <span class="dot" [style.background]="def.dot"></span>
-        }
-        @if (def.dashed) {
-          <span class="dot" style="border: 1.5px dashed var(--text-muted)"></span>
-        }
-        {{ def.label }} <span class="count">{{ filterCounts()[def.key] }}</span>
-      </button>
-    }
+  <!-- Filtros unificados con tabs de estado y categorías -->
+  <div class="filter-toolbar">
+    <!-- Segmento de Estado (Activos / Inactivos / Todos) -->
+    <div class="status-segment" role="tablist" aria-label="Filtrar por estado de usuario">
+      @for (statusDef of statusFilterDefs; track statusDef.key) {
+        <button
+          class="status-tab"
+          [class.active]="statusFilter() === statusDef.key"
+          (click)="setStatusFilter(statusDef.key)"
+          role="tab"
+          [attr.aria-selected]="statusFilter() === statusDef.key"
+        >
+          {{ statusDef.label }}
+          <span class="status-badge-count">{{ statusCounts()[statusDef.key] }}</span>
+        </button>
+      }
+    </div>
+
+    <!-- Chips de Categoría de Rol -->
+    <div class="filters" role="group" aria-label="Filtrar por categoría">
+      @for (categoryDef of filterDefs; track categoryDef.key) {
+        <button
+          class="chip"
+          [class.active]="activeFilter() === categoryDef.key"
+          (click)="setFilter(categoryDef.key)"
+        >
+          @if (categoryDef.dot) {
+            <span class="dot" [style.background]="categoryDef.dot"></span>
+          }
+          @if (categoryDef.dashed) {
+            <span class="dot" style="border: 1.5px dashed var(--text-muted)"></span>
+          }
+          {{ categoryDef.label }} <span class="count">{{ filterCounts()[categoryDef.key] }}</span>
+        </button>
+      }
+    </div>
   </div>
 
   <!-- Región de Banners de Feedback -->
@@ -103,6 +122,7 @@
         <div
           class="member-row"
           [class.is-dirty]="dirtyMembers().has(member.id)"
+          [class.is-inactive]="!member.active"
           [style.--ring]="ROLE_META[member.role].color"
         >
           <!-- Identidad -->
@@ -110,11 +130,7 @@
             <div class="avatar">{{ getMemberInitials(member.firstName, member.lastName, member.email) }}</div>
             <div class="id-text">
               <div class="id-name">
-                @if (member.firstName || member.lastName) {
-                  {{ member.firstName }} {{ member.lastName }}
-                } @else {
-                  {{ member.email }}
-                }
+                {{ getMemberDisplayName(member) }}
               </div>
               <div class="id-email">
                 {{ member.email }}
@@ -151,10 +167,11 @@
             <button
               class="role-btn"
               type="button"
+              [disabled]="!member.active"
               [ngClass]="ROLE_META[member.role].cssClass"
               [style.--role-color]="ROLE_META[member.role].color"
               [style.--role-tint]="ROLE_META[member.role].tint"
-              (click)="toggleRoleMenu(member.id, $event)"
+              (click)="member.active ? toggleRoleMenu(member.id, $event) : null"
               aria-haspopup="listbox"
               [attr.aria-expanded]="openMenu()?.type === 'role' && openMenu()?.memberId === member.id"
             >
@@ -162,12 +179,14 @@
                 <span class="dot"></span>
                 <span class="name">{{ ROLE_META[member.role].label }}</span>
               </span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
-                <path d="M6 9l6 6 6-6" />
-              </svg>
+              @if (member.active) {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              }
             </button>
 
-            @if (openMenu()?.type === 'role' && openMenu()?.memberId === member.id) {
+            @if (member.active && openMenu()?.type === 'role' && openMenu()?.memberId === member.id) {
               <div class="role-menu" role="listbox">
                 @for (role of SELECTABLE_ROLES; track role) {
                   <button
@@ -207,7 +226,9 @@
               <div class="actions-menu">
                 <button class="action-opt" type="button" (click)="handleAction(member, 'profile', $event)">Ver perfil</button>
                 <button class="action-opt" type="button" (click)="handleAction(member, 'edit', $event)">Editar ficha</button>
-                <button class="action-opt danger" type="button" (click)="handleAction(member, 'revoke', $event)">Revocar acceso</button>
+                @if (member.active) {
+                  <button class="action-opt danger" type="button" (click)="handleAction(member, 'revoke', $event)">Revocar acceso</button>
+                }
               </div>
             }
           </div>
@@ -217,23 +238,22 @@
   }
 </div>
 
+<!-- Modal de Confirmación de Baja Lógica -->
+@if (memberToDeactivate(); as target) {
+  <app-deactivate-modal
+    [member]="target"
+    [isProcessing]="isDeactivating()"
+    (cancel)="cancelDeactivate()"
+    (confirm)="confirmDeactivate()"
+  ></app-deactivate-modal>
+}
+
 <!-- Barra flotante de cambios pendientes -->
 @if (hasDirtyMembers()) {
-  <div class="batch-bar">
-    <div class="batch-text">
-      <span>{{ dirtyCount() }}</span> cambios sin guardar
-    </div>
-    <div class="batch-actions">
-      <button class="btn-ghost" type="button" (click)="discardChanges()" [disabled]="isSaving()">Descartar</button>
-      <button
-        class="btn btn-invite"
-        type="button"
-        (click)="saveAllChanges()"
-        [disabled]="isSaving()"
-        style="height: 40px; box-shadow: none;"
-      >
-        {{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}
-      </button>
-    </div>
-  </div>
+  <app-batch-action-bar
+    [dirtyCount]="dirtyCount()"
+    [isSaving]="isSaving()"
+    (discard)="discardChanges()"
+    (save)="saveAllChanges()"
+  ></app-batch-action-bar>
 }

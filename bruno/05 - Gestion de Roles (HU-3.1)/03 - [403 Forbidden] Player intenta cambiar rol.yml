@@ -4,7 +4,7 @@ info:
   seq: 4
 
 http:
-  method: PUT
+  method: PATCH
   url: "{{baseUrl}}/user/{{targetUserId}}/role"
   headers:
     - name: Authorization

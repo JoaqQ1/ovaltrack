@@ -79,7 +79,9 @@ export class DivisionFormComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error al crear la división', err);
-          this.mensajeError = typeof err.error === 'string' ? err.error : 'Error al crear la división.';
+          this.mensajeError = typeof err.error === 'string'
+            ? err.error
+            : (err.error?.message || err.error?.mensaje || 'Error al crear la división.');
           this.guardando = false;
         }
       });
