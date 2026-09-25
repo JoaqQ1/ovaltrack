@@ -1,0 +1,142 @@
+.post-match-container {
+  padding: 20px;
+  background-color: #111111; /* Fondo oscuro estilo editor de video */
+  color: #eeeeee;
+  min-height: 100vh;
+  font-family: sans-serif;
+}
+
+.timeline-board {
+  margin-top: 20px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background-color: #1a1a1a;
+  overflow: hidden;
+}
+
+.timeline-header, .timeline-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.timeline-header {
+  background-color: #0f0f0f;
+  color: #888;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 10px 0;
+}
+
+.header-sidebar, .row-sidebar {
+  width: 220px;
+  min-width: 220px;
+  padding: 0 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-right: 1px solid #333;
+}
+
+.event-name {
+  font-size: 14px;
+  font-weight: 500;
+  border-left: 3px solid #e6c820; /* Marca de color a la izquierda */
+  padding-left: 8px;
+}
+
+.event-count {
+  color: #666;
+  font-size: 12px;
+}
+
+.header-track, .row-track {
+  flex-grow: 1;
+  position: relative;
+}
+
+.header-track {
+  padding-left: 15px;
+}
+
+.row-track {
+  height: 45px;
+  background-color: #1f1f1f; /* Fondo de los carriles ligeramente más claro */
+}
+
+/* El truco principal: Las marcas absolutas */
+.marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%); /* Centra el punto exactamente en el % calculado */
+  width: 3px;
+  height: 18px;
+  background-color: #e6c820; /* Color amarillo estilo Veo */
+  border-radius: 2px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.marker:hover {
+  transform: translate(-50%, -50%) scale(1.5);
+  background-color: #ffffff;
+}
+
+/* Contenedor de la regla */
+.ruler-track {
+  flex-grow: 1;
+  position: relative;
+  min-height: 35px;
+}
+
+/* Cada marca individual */
+.ruler-tick {
+  position: absolute;
+  bottom: -11px; /* Toca el borde inferior de la cabecera */
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+
+/* Texto de la marca (10', 20', etc.) */
+.tick-label {
+  font-size: 11px;
+  color: #666;
+  white-space: nowrap;
+  margin-bottom: 3px;
+  font-family: monospace;
+}
+
+/* La rayita vertical */
+.tick-mark {
+  width: 1px;
+  height: 6px;
+  background-color: #444;
+}
+
+/* Estilos especiales para Inicio, Entretiempo y Fin */
+.ruler-tick.milestone .tick-label {
+  color: #aaa;
+  font-weight: bold;
+  font-family: sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.ruler-tick.milestone .tick-mark {
+  height: 10px;
+  width: 2px;
+  background-color: #888;
+}
+
+/* Ajuste sutil para que el texto de la marca del Inicio y Fin no se corte en los bordes de la pantalla */
+.ruler-tick:first-child {
+  transform: translateX(0%);
+  align-items: flex-start;
+}
+.ruler-tick:last-child {
+  transform: translateX(-100%);
+  align-items: flex-end;
+}

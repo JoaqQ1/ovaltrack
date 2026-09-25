@@ -89,4 +89,13 @@ export class MatchService {
   getEventsMatch(matchId: string): Observable<any[]>{
     return this.http.get<any[]>(`http://localhost:8080/event/match?matchId=${matchId}`);
   }
+
+  getEventTypes(): Observable<any[]> {
+    return this.http.get<any[]>('http://localhost:8080/eventType');
+  }
+
+  getMatchById(matchId: string): Observable<Match>{
+    return this.http.get<Match>(`${environment.apiUrl}/matches/${matchId}`);
+  }
+
 }

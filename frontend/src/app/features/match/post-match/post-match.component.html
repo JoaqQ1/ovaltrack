@@ -1,15 +1,50 @@
-<div style="padding: 20px;">
-  <h2>Eventos del Partido (ID: {{ matchId }})</h2>
+<div class="post-match-container">
+  <h2>Mi Club vs {{ opponent }}</h2>
   
-  <p *ngIf="events.length === 0">No hay eventos para mostrar.</p>
+  <p *ngIf="timelineTracks.length === 0">No hay eventos para mostrar.</p>
   
-  <ul style="list-style: none; padding: 0;">
-    <li *ngFor="let event of events" style="margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
-      <strong>Minuto {{ event.matchTime }}':</strong> 
-      <!-- Por ahora mostramos el ID en crudo -->
-      Tipo de Evento ID: {{ event.eventTypeId }} 
-      <br>
-      <small>Posesión: {{ event.teamPossession }} | Periodo: {{ event.period }}</small>
-    </li>
-  </ul>
+  <div class="timeline-board" *ngIf="timelineTracks.length > 0">
+    
+    <div class="timeline-header">
+      <div class="header-sidebar">Eventos</div>
+      
+      <div class="header-track ruler-track">
+        <div class="ruler-tick" 
+             *ngFor="let tick of timelineTicks" 
+             [style.left.%]="(tick / maxMatchDuration) * 100"
+             [ngClass]="{'milestone': tick === 0 || tick === 40 || tick === 80}">
+          
+          <span class="tick-label">
+            <ng-container *ngIf="tick === 0">Inicio</ng-container>
+            <ng-container *ngIf="tick === 40">E.T.</ng-container>
+            <ng-container *ngIf="tick === 80">Fin</ng-container>
+            <ng-container *ngIf="tick !== 0 && tick !== 40 && tick !== 80">{{ tick }}'</ng-container>
+          </span>
+          
+          <div class="tick-mark"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filas agrupadas por evento -->
+    <div class="timeline-row" *ngFor="let track of timelineTracks; let i = index">
+      
+      <!-- Columna izquierda: Nombre y cantidad -->
+      <div class="row-sidebar">
+        <span class="event-name">{{ track.eventName }}</span>
+        <span class="event-count">{{ track.occurrences.length }}</span>
+      </div>
+      
+      <!-- Columna derecha: Pista de tiempo -->
+      <div class="row-track">
+        <!-- Generamos una marca por cada vez que ocurrió el evento -->
+        <div class="marker"
+             *ngFor="let time of track.occurrences"
+             [style.left.%]="(time / maxMatchDuration) * 100"
+             [title]="'Minuto ' + time">
+        </div>
+      </div>
+      
+    </div>
+  </div>
 </div>
