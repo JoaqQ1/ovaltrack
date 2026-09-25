@@ -2,14 +2,13 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NavbarAuthComponent } from 'src/app/shared/components/navbar-auth/navbar-auth.component';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { DivisionService } from 'src/app/services/division.service';
 
 @Component({
   selector: 'app-division-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, NavbarAuthComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './division-form.component.html',
   styleUrl: './division-form.component.css'
 })

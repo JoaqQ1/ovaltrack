@@ -1,176 +1,343 @@
-/* Contenedor general */
-.app {
-  max-width: 1180px; 
-  margin: 0 auto; 
-  padding: 0 24px 100px;
-}
-
-/* HUD (Header Sticky) reutilizado de estilos generales */
-.hud {
-  position: sticky; top: 0; z-index: 20; margin: 0 -24px; padding: 16px 24px;
-  background: rgba(246, 247, 241, 0.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-}
-.hud::before {
-  content: ""; position: absolute; inset: 0; z-index: -1;
-  background-image: repeating-linear-gradient(115deg, rgba(90, 150, 30, 0.05) 0px, rgba(90, 150, 30, 0.05) 2px, transparent 2px, transparent 26px);
-}
-.hud-brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-.crest {
-  width: 38px; height: 38px; border-radius: var(--radius-sm);
-  background: linear-gradient(155deg, var(--grass), #6fae1f); border: 1px solid var(--grass-border);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-head); font-weight: 800; font-size: 16px; color: var(--on-grass);
-}
-.brand-text .club { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
-.brand-text .title { font-family: var(--font-head); font-weight: 800; font-size: 22px; color: var(--text-primary); line-height: 1.2; margin-top: 1px; }
+/* ==========================================================================
+   Club Details Component Styles (Modo Lectura + Edición Condicional)
+   ========================================================================== */
 
 /* Layout General */
 .config-layout {
   display: grid;
   grid-template-columns: 320px 1fr;
   gap: 32px;
-  margin-top: 24px;
+  margin-top: 16px;
+  margin-bottom: 48px;
 }
 
-@media (max-width: 820px) {
-  .config-layout {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-}
-
-/* Sidebar / Tarjeta de Foto */
+/* Sidebar / Tarjeta de Identidad de Club */
 .config-sidebar {
   display: flex;
   flex-direction: column;
 }
 
 .club-photo-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 40px 24px;
+  background: #eaf3e6;
+  border: 2px solid rgba(32, 75, 34, 0.28);
+  border-radius: 20px;
+  padding: 36px 24px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-shadow: 0 16px 36px rgba(15, 35, 15, 0.12), 0 4px 12px rgba(15, 35, 15, 0.06);
+}
+
+/* Contenedor del Logo con Affordance de Hover */
+.club-logo-wrapper {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin-bottom: 20px;
+  border-radius: 24px;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.club-logo-wrapper.editable {
+  cursor: pointer;
+}
+
+.club-logo-wrapper.editable:hover {
+  transform: scale(1.02);
 }
 
 .club-logo-large {
-  width: 140px;
-  height: 140px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.club-logo-large img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 18px rgba(15, 35, 15, 0.20));
+}
+
+.club-logo-large span {
+  width: 100%;
+  height: 100%;
   border-radius: 24px;
-  background: linear-gradient(155deg, var(--grass), #6fae1f);
-  border: 2px solid var(--grass-border);
+  background: #204b22;
+  border: 2px solid #2a5f2e;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-head);
   font-weight: 800;
-  font-size: 56px;
-  color: var(--on-grass);
-  margin-bottom: 24px;
-  box-shadow: 0 12px 24px rgba(90, 150, 30, 0.2);
-  overflow: hidden;
+  font-size: 52px;
+  color: #d6f2c4;
+  box-shadow: 0 8px 20px rgba(32, 75, 34, 0.20);
 }
 
-.club-logo-large img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+/* Superposición visual en Modo Edición (Affordance de Hover) */
+.logo-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 36, 16, 0.82);
+  backdrop-filter: blur(2px);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #ffffff;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  border: 2px dashed rgba(214, 242, 196, 0.6);
+}
+
+.club-logo-wrapper.editable:hover .logo-overlay {
+  opacity: 1;
 }
 
 .club-name-display {
   font-family: var(--font-head);
   font-weight: 800;
-  font-size: 24px;
-  color: var(--text-primary);
-  margin: 0 0 8px;
+  font-size: 22px;
+  color: #111d0e;
+  margin: 0 0 4px;
   line-height: 1.2;
 }
 
 .club-city-display {
-  color: var(--text-secondary);
-  font-size: 15px;
+  color: #4a6042;
+  font-size: 14.5px;
+  font-weight: 600;
   margin: 0;
 }
 
-/* Formulario Principal */
+/* ==========================================================================
+   Tarjeta Principal de Ficha / Edición
+   ========================================================================== */
 .config-main {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 32px;
+  background: #ffffff;
+  border: 2px solid rgba(32, 75, 34, 0.28);
+  border-radius: 20px;
+  padding: 36px;
+  box-shadow: 0 16px 36px rgba(15, 35, 15, 0.12), 0 4px 12px rgba(15, 35, 15, 0.06);
+}
+
+.card-header-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid rgba(32, 75, 34, 0.16);
+  flex-wrap: wrap;
+}
+
+.section-title-main {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 22px;
+  color: #111d0e;
+  margin: 0 0 3px;
+}
+
+.section-subtitle {
+  font-size: 13.5px;
+  color: #4a6042;
+  margin: 0;
+}
+
+.btn-edit-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+
+.badge-mode-edit {
+  background: #d6eac0;
+  border: 1.5px solid rgba(36, 76, 9, 0.35);
+  color: #244c09;
+  font-weight: 800;
 }
 
 .form-section {
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
 .form-section:last-of-type {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .section-title {
   font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 16.5px;
+  color: #111d0e;
+  margin: 0 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid rgba(32, 75, 34, 0.14);
+}
+
+/* ==========================================================================
+   Modo Lectura (Data Grid)
+   ========================================================================== */
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.data-item {
+  background: #f8faf6;
+  border: 1.5px solid rgba(32, 75, 34, 0.16);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.data-item:hover {
+  background: #f2f7ef;
+  border-color: rgba(32, 75, 34, 0.28);
+}
+
+.data-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: #4a6042;
+  text-transform: uppercase;
+}
+
+.data-value {
+  font-family: var(--font-head);
   font-weight: 700;
-  font-size: 18px;
-  color: var(--text-primary);
-  margin: 0 0 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
+  font-size: 16px;
+  color: #111d0e;
+  word-break: break-word;
+}
+
+.data-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #204b22;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 15px;
+  transition: color 0.15s ease;
+}
+
+.data-link:hover {
+  color: #143216;
+  text-decoration: underline;
+}
+
+.data-empty {
+  color: #7c8571;
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   Modo Edición (Form Controls)
+   ========================================================================== */
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.col-half {
+  flex: 1;
+  min-width: 0;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
-.form-group label {
+.form-label {
   display: block;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #142410;
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
 }
 
-.form-control {
+.custom-input {
   width: 100%;
-  height: 48px;
-  background: var(--bg);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  padding: 0 16px;
-  font-size: 15px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-control:focus {
+  height: 44px;
+  background: #f8faf6;
+  border: 2px solid rgba(32, 75, 34, 0.22);
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #111d0e;
   outline: none;
-  border-color: var(--navy);
-  box-shadow: 0 0 0 3px var(--navy-tint);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
-.form-control::placeholder {
-  color: var(--text-muted);
+.custom-input:focus {
+  border-color: #204b22;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(32, 75, 34, 0.15);
+}
+
+.custom-input::placeholder {
+  color: #7c8571;
 }
 
 /* Actions Footer */
 .form-actions-footer {
   display: flex;
   justify-content: flex-end;
+  gap: 12px;
   padding-top: 24px;
-  border-top: 1px solid var(--border);
+  margin-top: 24px;
+  border-top: 1px solid rgba(32, 75, 34, 0.12);
 }
 
-.form-actions-footer .btn {
-  min-width: 160px;
-}
+/* Responsive */
+@media (max-width: 820px) {
+  .config-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
 
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
+  .config-main {
+    padding: 24px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .form-actions-footer {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .form-actions-footer .btn {
+    width: 100%;
+  }
 }
