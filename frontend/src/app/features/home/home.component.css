@@ -1,6 +1,6 @@
 :host {
-  display: block;
-  min-height: 100vh;
+  display: flow-root;
+  min-height: calc(100vh - 64px);
   background-color: #0b111e;
   color: #e2e8f0;
   transition: background-color 0.2s ease, color 0.2s ease;
