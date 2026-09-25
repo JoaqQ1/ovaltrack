@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClubService } from 'src/app/services/club.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
+import { Club, ClubUpdateRequest } from './types/club.types';
 
 @Component({
   selector: 'app-club-details',
@@ -15,76 +16,117 @@ export class ClubDetailsComponent implements OnInit {
   private readonly clubService = inject(ClubService);
   private readonly userContextService = inject(UserContextService);
   
-  club: any = null;
-  clubDraft: any = null;
+  club: Club | null = null;
+  clubDraft: ClubUpdateRequest | null = null;
   isEditing: boolean = false;
-  cargando: boolean = true;
-  guardando: boolean = false;
-  error: string = '';
-  exito: string = '';
+  isLoading: boolean = true;
+  isSaving: boolean = false;
+  errorMessage: string = '';
+  successMessage: string = '';
 
   ngOnInit(): void {
-    this.obtenerMiClub();
+    this.loadMyClub();
   }
 
-  obtenerMiClub(): void {
+  loadMyClub(): void {
     this.clubService.getMyClub().subscribe({
-      next: (data) => {
+      next: (data: Club) => {
         this.club = data;
-        this.cargando = false;
+        this.isLoading = false;
       },
       error: (err) => {
         console.error('Error al cargar la información del club', err);
-        this.error = 'No se pudo cargar la información de tu club.';
-        this.cargando = false;
+        this.errorMessage = 'No se pudo cargar la información de tu club.';
+        this.isLoading = false;
       }
     });
   }
 
-  getInitial(name: string): string {
-    if (!name) return 'C';
-    return name.charAt(0).toUpperCase();
+  getInitial(name?: string): string {
+    if (!name?.trim()) return 'C';
+    return name.trim().charAt(0).toUpperCase();
   }
 
-  iniciarEdicion(): void {
-    this.error = '';
-    this.exito = '';
-    this.clubDraft = { ...this.club };
+  startEditing(): void {
+    this.errorMessage = '';
+    this.successMessage = '';
+    if (this.club) {
+      this.clubDraft = {
+        name: this.club.name || '',
+        city: this.club.city || '',
+        logoUrl: this.club.logoUrl || '',
+        contactEmail: this.club.contactEmail || '',
+        contactPhone: this.club.contactPhone || ''
+      };
+    }
     this.isEditing = true;
   }
 
-  cancelarEdicion(): void {
+  cancelEditing(): void {
     this.clubDraft = null;
-    this.error = '';
+    this.errorMessage = '';
     this.isEditing = false;
   }
 
-  guardarCambios(): void {
-    this.error = '';
-    this.exito = '';
+  saveChanges(): void {
+    this.errorMessage = '';
+    this.successMessage = '';
 
-    if (!this.clubDraft?.name?.trim()) {
-      this.error = 'El nombre del club es obligatorio';
+    if (!this.clubDraft || !this.club) return;
+
+    const trimmedName = this.clubDraft.name?.trim();
+    if (!trimmedName) {
+      this.errorMessage = 'El nombre del club es obligatorio';
       return;
     }
-    
-    this.guardando = true;
 
-    this.clubService.updateClub(this.club.id, this.clubDraft).subscribe({
-      next: (data) => {
+    const trimmedCity = this.clubDraft.city?.trim();
+    if (!trimmedCity) {
+      this.errorMessage = 'La ciudad del club es obligatoria';
+      return;
+    }
+
+    const email = this.clubDraft.contactEmail?.trim();
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        this.errorMessage = 'Formato de email de contacto inválido';
+        return;
+      }
+    }
+    
+    this.isSaving = true;
+
+    const updatePayload: ClubUpdateRequest = {
+      name: trimmedName,
+      city: trimmedCity,
+      logoUrl: this.clubDraft.logoUrl?.trim() || undefined,
+      contactEmail: email || undefined,
+      contactPhone: this.clubDraft.contactPhone?.trim() || undefined
+    };
+
+    this.clubService.updateClub(this.club.id, updatePayload).subscribe({
+      next: (data: Club) => {
         this.club = data;
-        this.exito = 'Información actualizada correctamente';
-        this.guardando = false;
+        this.successMessage = 'Información actualizada correctamente';
+        this.isSaving = false;
         this.isEditing = false;
-        this.userContextService.loadUserContext().subscribe();
+
+        const currentCtx = this.userContextService.userContext();
+        if (currentCtx) {
+          this.userContextService.setContext({
+            ...currentCtx,
+            club: data
+          });
+        }
       },
       error: (err) => {
-        this.guardando = false;
+        this.isSaving = false;
         console.error('Error al actualizar club', err);
-        if (err.status === 409) {
-          this.error = err.error || 'Conflicto al actualizar la información del club.';
+        if (err.status === 409 || err.status === 400) {
+          this.errorMessage = err.error?.message || (typeof err.error === 'string' ? err.error : 'Conflicto al actualizar la información del club.');
         } else {
-          this.error = 'Error al actualizar el club. Intenta nuevamente.';
+          this.errorMessage = 'Error al actualizar el club. Intenta nuevamente.';
         }
       }
     });
