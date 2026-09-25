@@ -1,6 +1,7 @@
 package com.ovaltrack.backend.division.repository;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,15 +30,10 @@ public interface DivisionPlayerRepository extends JpaRepository<DivisionPlayer, 
             """)
 	Collection<DivisionPlayer> findDivisionPlayersByDivisionIdAndPersonId(@Param("divisionId") UUID divisionId, @Param ("personId") UUID personId);
 
-    @Query("""
-            SELECT COUNT(dp) > 0
-            FROM DivisionPlayer dp
-            WHERE dp.division.id = :divisionId
-            AND dp.person.id = :personId
-            AND dp.endDate IS NULL
-        """)
-	boolean existsActiveAssociation(@Param("divisionId") UUID divisionId,
-			@Param("personId") UUID personId);
+	@Query("SELECT COUNT(dp) > 0 FROM DivisionPlayer dp " + "WHERE dp.division.id = :divisionId AND dp.person.id = :personId " + "AND dp.endDate IS NULL")
+	boolean existsActiveAssociation(@Param("divisionId") UUID divisionId, @Param("personId") UUID personId);
+	
+	List<DivisionPlayer> findByDivisionId(UUID divisionId);
 
     @Query("SELECT dp FROM DivisionPlayer dp JOIN FETCH dp.division d WHERE dp.person.id = :personId AND dp.endDate IS NULL")
     Collection<DivisionPlayer> findActiveByPersonId(@Param("personId") UUID personId);

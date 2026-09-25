@@ -1,0 +1,306 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.match-select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ot-stack-default);
+  width: 100%;
+  min-height: 100dvh;
+  padding: var(--ot-margin-screen);
+  background: var(--ot-bg-deep);
+  color: var(--ot-on-surface);
+  font-family: var(--ot-font-body);
+  box-sizing: border-box;
+}
+
+.match-select__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ot-stack-default);
+}
+
+.match-select__title {
+  font-family: var(--ot-font-headline);
+  font-weight: 800;
+  font-size: var(--ot-size-headline-lg, 2rem);
+  margin: 0;
+}
+
+.btn {
+  min-height: var(--ot-touch-target-min);
+  padding: 0 calc(var(--ot-stack-default) * 1.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ot-stack-compact);
+  font-family: var(--ot-font-body);
+  font-weight: 700;
+  font-size: var(--ot-size-body-md, 1rem);
+  border-radius: var(--ot-radius-lg);
+  border: none;
+  cursor: pointer;
+}
+
+.btn--primary {
+  background: var(--ot-primary);
+  color: var(--ot-on-primary);
+}
+
+.btn--primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn--outline {
+  background: transparent;
+  border: 1px solid var(--ot-outline);
+  color: var(--ot-on-surface);
+}
+
+.match-select__filters {
+  display: flex;
+  gap: var(--ot-stack-compact);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-chip {
+  flex: 0 0 auto;
+  min-height: calc(var(--ot-touch-target-min) * 0.75);
+  padding: 0 var(--ot-stack-default);
+  border-radius: var(--ot-radius-default);
+  border: 1px solid var(--ot-outline-variant, var(--ot-outline));
+  background: var(--ot-surface-container, var(--ot-surface-card));
+  color: var(--ot-on-surface-variant, var(--ot-on-surface));
+  font-family: var(--ot-font-body);
+  font-weight: 700;
+  font-size: var(--ot-size-label-caps, 0.75rem);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.filter-chip.is-active {
+  background: var(--ot-primary);
+  border-color: var(--ot-primary);
+  color: var(--ot-on-primary);
+}
+
+.match-select__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--ot-gutter-match);
+}
+
+.match-card-shell {
+  position: relative;
+  min-height: var(--ot-touch-target-min);
+  background: var(--ot-surface-card);
+  border: 1px solid var(--ot-outline-variant, var(--ot-outline));
+  border-radius: var(--ot-radius-default);
+  color: var(--ot-on-surface);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.match-card-shell:hover,
+.match-card-shell:focus-within {
+  border-color: var(--ot-primary);
+  transform: translateY(-1px);
+}
+
+.match-select__empty {
+  grid-column: 1 / -1;
+  color: var(--ot-on-surface-variant, var(--ot-on-surface));
+  font-size: var(--ot-size-body-md, 1rem);
+  text-align: center;
+  padding: calc(var(--ot-margin-screen) * 2) 0;
+}
+
+.match-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ot-stack-compact);
+  padding: var(--ot-stack-default);
+  width: 100%;
+  min-height: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.match-card__delete {
+  position: absolute;
+  top: var(--ot-stack-compact);
+  right: var(--ot-stack-compact);
+  width: var(--ot-touch-target-min);
+  height: var(--ot-touch-target-min);
+  border: 0;
+  border-radius: var(--ot-radius-default);
+  background: transparent;
+  color: var(--ot-label-muted);
+  cursor: pointer;
+}
+
+.match-card__delete:hover,
+.match-card__delete:focus-visible {
+  color: var(--ot-danger, #d94c4c);
+  background: var(--ot-bg-deep);
+}
+
+.match-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--ot-stack-compact) * 0.5);
+  font-family: var(--ot-font-body);
+  font-weight: 700;
+  font-size: var(--ot-size-label-caps, 0.75rem);
+  letter-spacing: 0.02em;
+}
+
+.match-card__status--not_started {
+  color: var(--ot-label-muted);
+}
+
+.match-card__status--in_progress {
+  color: var(--ot-warning);
+}
+
+.match-card__status--finished {
+  color: var(--ot-success);
+}
+
+.match-card__pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--ot-radius-full, 9999px);
+  background: var(--ot-warning);
+  animation: match-card-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes match-card-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.match-card__opponent {
+  font-family: var(--ot-font-headline);
+  font-weight: 800;
+  font-size: var(--ot-size-headline-md, 1.5rem);
+}
+
+.match-card__meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ot-stack-default);
+}
+
+.match-card__date {
+  font-family: var(--ot-font-display, var(--ot-font-body));
+  font-size: var(--ot-size-data-mono, 0.875rem);
+  color: var(--ot-on-surface-variant, var(--ot-on-surface));
+}
+
+.match-card__score {
+  font-family: var(--ot-font-display, var(--ot-font-body));
+  font-weight: 700;
+  font-size: var(--ot-size-data-mono, 0.875rem);
+  color: var(--ot-on-surface);
+}
+
+.match-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 19, 32, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 20;
+}
+
+.match-modal {
+  width: 100%;
+  max-width: 420px;
+  background: var(--ot-surface-card);
+  border: 1px solid var(--ot-outline-variant, var(--ot-outline));
+  border-radius: var(--ot-radius-xl) var(--ot-radius-xl) 0 0;
+  padding: var(--ot-margin-screen);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ot-stack-default);
+}
+
+.match-modal__title {
+  font-family: var(--ot-font-headline);
+  font-weight: 800;
+  font-size: var(--ot-size-headline-md, 1.5rem);
+  margin: 0;
+}
+
+.match-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--ot-stack-compact) * 0.5);
+}
+
+.match-modal__label {
+  font-family: var(--ot-font-body);
+  font-weight: 700;
+  font-size: var(--ot-size-label-caps, 0.75rem);
+  letter-spacing: 0.02em;
+  color: var(--ot-on-surface-variant, var(--ot-on-surface));
+}
+
+.match-modal__input {
+  min-height: var(--ot-touch-target-min);
+  padding: 0 var(--ot-stack-default);
+  background: var(--ot-bg-deep);
+  border: 1px solid var(--ot-outline-variant, var(--ot-outline));
+  border-radius: var(--ot-radius-default);
+  color: var(--ot-on-surface);
+  font-family: var(--ot-font-body);
+  font-size: var(--ot-size-body-md, 1rem);
+}
+
+.match-modal__input:focus-visible {
+  outline: 2px solid var(--ot-primary);
+  outline-offset: 2px;
+}
+
+.match-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ot-stack-compact);
+}
+
+/*
+ * Único breakpoint del componente, definido acá mismo (y no en un CSS
+ * global) para que Angular no le agregue especificidad extra a un archivo
+ * distinto del que gana la cascada — ver el problema que tuvimos con
+ * estilos gxlobales vs. carga-en-vivo.component.css.
+ */
+@media (max-width: 600px) {
+  .match-select__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .match-select__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .match-modal__actions {
+    flex-direction: column-reverse;
+  }
+
+  .match-modal__actions .btn {
+    width: 100%;
+  }
+}
