@@ -12,6 +12,7 @@
     </div>
   </header>
 
+  <!-- Skeletons de Carga -->
   <div class="empty-state" *ngIf="cargando" style="margin-top: 24px;">
     <div class="sk-row">
       <div class="sk-avatar sk"></div>
@@ -22,71 +23,247 @@
     </div>
   </div>
 
-  <div class="banner-region" *ngIf="error || exito" style="margin-top: 24px;">
-    <div *ngIf="error" class="banner banner-error">
-      <div class="banner-content">
+  <!-- Región de Banners de Retroalimentación -->
+  <div class="banner-region" *ngIf="error || exito" style="margin-top: 24px;" aria-live="polite">
+    <div *ngIf="error" class="banner banner-error" role="alert">
+      <div style="flex: 1">
         <strong>Error</strong>
         <p>{{ error }}</p>
       </div>
-      <button class="close" (click)="error = ''">✕</button>
+      <button class="close" type="button" (click)="error = ''" aria-label="Cerrar aviso">✕</button>
     </div>
-    <div *ngIf="exito" class="banner banner-success">
-      <div class="banner-content">
+    <div *ngIf="exito" class="banner banner-success" role="alert">
+      <div style="flex: 1">
         <strong>Guardado exitoso</strong>
         <p>{{ exito }}</p>
       </div>
-      <button class="close" (click)="exito = ''">✕</button>
+      <button class="close" type="button" (click)="exito = ''" aria-label="Cerrar aviso">✕</button>
     </div>
   </div>
 
+  <!-- Contenedor Principal del Club -->
   <div class="config-layout" *ngIf="!cargando && club">
-    <div class="config-sidebar">
+    <!-- Columna Lateral: Identidad Visual del Club -->
+    <aside class="config-sidebar">
       <div class="club-photo-card">
-        <div class="club-logo-large">
-           <span *ngIf="!club.logoUrl">{{ getInitial(club.name) }}</span>
-           <img *ngIf="club.logoUrl" [src]="club.logoUrl" alt="Logo del club">
+        <div class="club-logo-wrapper" [class.editable]="isEditing">
+          <div class="club-logo-large">
+            <span *ngIf="!club.logoUrl">{{ getInitial(isEditing ? (clubDraft?.name || club.name) : club.name) }}</span>
+            <img *ngIf="club.logoUrl" [src]="club.logoUrl" alt="Logo del club">
+          </div>
+
+          <!-- Affordance Visual de Carga de Imagen (Hover en Modo Edición) -->
+          @if (isEditing) {
+            <div class="logo-overlay" title="Cargar nuevo escudo o logo desde la computadora">
+              <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+              <span>Cambiar logo</span>
+            </div>
+          }
         </div>
-        <h2 class="club-name-display">{{ club.name || 'Nombre del Club' }}</h2>
-        <p class="club-city-display">{{ club.city || 'Ciudad no especificada' }}</p>
+
+        <h2 class="club-name-display">{{ isEditing ? (clubDraft?.name || club.name) : (club.name || 'Nombre del Club') }}</h2>
+        <p class="club-city-display">{{ isEditing ? (clubDraft?.city || club.city) : (club.city || 'Ciudad no especificada') }}</p>
+
+        <div class="club-status-pill mt-3">
+          <span class="status-badge status-active">
+            <span class="dot"></span>
+            Club Registrado
+          </span>
+        </div>
       </div>
-    </div>
+    </aside>
 
-    <div class="config-main">
-      <form (ngSubmit)="guardarCambios()" #form="ngForm" class="club-form">
-        <div class="form-section">
-          <h3 class="section-title">Información Principal</h3>
-          
-          <div class="form-group">
-            <label for="name">Nombre del Club</label>
-            <input type="text" id="name" name="name" [(ngModel)]="club.name" required placeholder="Ej: Club Atlético..." class="form-control" />
+    <!-- Columna Principal: Ficha de Datos / Formulario de Edición -->
+    <main class="config-main">
+      <!-- ======================================================================
+           1. MODO LECTURA (Predeterminado / !isEditing)
+           ====================================================================== -->
+      @if (!isEditing) {
+        <div class="read-only-view">
+          <!-- Cabecera de Ficha con Botón de Edición -->
+          <div class="card-header-flex">
+            <div>
+              <h2 class="section-title-main">Ficha Institucional</h2>
+              <p class="section-subtitle">Información general y canales de contacto oficial</p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-outline btn-edit-trigger"
+              (click)="iniciarEdicion()"
+            >
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              <span>Editar información</span>
+            </button>
           </div>
 
-          <div class="form-group">
-            <label for="city">Localidad</label>
-            <input type="text" id="city" name="city" [(ngModel)]="club.city" placeholder="Ej: Puerto Madryn" class="form-control" />
+          <!-- Sección: Información Principal -->
+          <div class="form-section">
+            <h3 class="section-title">Información Principal</h3>
+            
+            <div class="data-grid">
+              <div class="data-item">
+                <span class="data-label">NOMBRE DEL CLUB</span>
+                <span class="data-value">{{ club.name || 'Sin nombre registrado' }}</span>
+              </div>
+
+              <div class="data-item">
+                <span class="data-label">LOCALIDAD / SEDE</span>
+                <span class="data-value" *ngIf="club.city">{{ club.city }}</span>
+                <span class="data-empty" *ngIf="!club.city">No especificada</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección: Contacto Institucional -->
+          <div class="form-section">
+            <h3 class="section-title">Contacto Institucional</h3>
+            
+            <div class="data-grid">
+              <div class="data-item">
+                <span class="data-label">CORREO ELECTRÓNICO</span>
+                @if (club.contactEmail) {
+                  <a [href]="'mailto:' + club.contactEmail" class="data-link">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    <span>{{ club.contactEmail }}</span>
+                  </a>
+                } @else {
+                  <span class="data-empty">No especificado</span>
+                }
+              </div>
+
+              <div class="data-item">
+                <span class="data-label">TELÉFONO DE CONTACTO</span>
+                @if (club.contactPhone) {
+                  <a [href]="'tel:' + club.contactPhone" class="data-link">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                    <span>{{ club.contactPhone }}</span>
+                  </a>
+                } @else {
+                  <span class="data-empty">No especificado</span>
+                }
+              </div>
+            </div>
           </div>
         </div>
+      }
 
-        <div class="form-section">
-          <h3 class="section-title">Contacto</h3>
-          
-          <div class="form-group">
-            <label for="contactEmail">Email de Contacto</label>
-            <input type="email" id="contactEmail" name="contactEmail" [(ngModel)]="club.contactEmail" placeholder="contacto@club.com" class="form-control" />
-          </div>
+      <!-- ======================================================================
+           2. MODO EDICIÓN (Condicional / isEditing)
+           ====================================================================== -->
+      @if (isEditing) {
+        <div class="edit-view">
+          <form (ngSubmit)="guardarCambios()" #form="ngForm" class="club-form" novalidate>
+            <!-- Cabecera de Edición -->
+            <div class="card-header-flex">
+              <div>
+                <h2 class="section-title-main">Editar Información del Club</h2>
+                <p class="section-subtitle">Modifica los datos institucionales y canales de contacto</p>
+              </div>
+              <span class="badge-tech badge-mode-edit">
+                <span>Modo Edición</span>
+              </span>
+            </div>
 
-          <div class="form-group">
-            <label for="contactPhone">Teléfono</label>
-            <input type="text" id="contactPhone" name="contactPhone" [(ngModel)]="club.contactPhone" placeholder="+54 9 11 1234-5678" class="form-control" />
-          </div>
+            <!-- Sección: Información Principal -->
+            <div class="form-section">
+              <h3 class="section-title">Información Principal</h3>
+              
+              <div class="form-row">
+                <div class="form-group col-half">
+                  <label for="name" class="form-label">Nombre del Club *</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    [(ngModel)]="clubDraft.name"
+                    required
+                    placeholder="Ej: Patoruzú Rugby Club"
+                    class="form-control custom-input"
+                  />
+                </div>
+
+                <div class="form-group col-half">
+                  <label for="city" class="form-label">Localidad / Sede</label>
+                  <input
+                    type="text"
+                    id="city"
+                    name="city"
+                    [(ngModel)]="clubDraft.city"
+                    placeholder="Ej: Trelew, Chubut"
+                    class="form-control custom-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección: Contacto -->
+            <div class="form-section">
+              <h3 class="section-title">Contacto</h3>
+              
+              <div class="form-row">
+                <div class="form-group col-half">
+                  <label for="contactEmail" class="form-label">Email de Contacto</label>
+                  <input
+                    type="email"
+                    id="contactEmail"
+                    name="contactEmail"
+                    [(ngModel)]="clubDraft.contactEmail"
+                    placeholder="contacto@miclub.com"
+                    class="form-control custom-input"
+                  />
+                </div>
+
+                <div class="form-group col-half">
+                  <label for="contactPhone" class="form-label">Teléfono de Contacto</label>
+                  <input
+                    type="tel"
+                    id="contactPhone"
+                    name="contactPhone"
+                    [(ngModel)]="clubDraft.contactPhone"
+                    placeholder="+54 9 280 4123456"
+                    class="form-control custom-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Acciones al Pie -->
+            <div class="form-actions-footer">
+              <button
+                type="button"
+                class="btn btn-outline"
+                (click)="cancelarEdicion()"
+                [disabled]="guardando"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                [disabled]="!clubDraft?.name?.trim() || guardando"
+                class="btn btn-invite"
+              >
+                @if (guardando) {
+                  <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  <span>Guardando...</span>
+                } @else {
+                  <span>Guardar Cambios</span>
+                }
+              </button>
+            </div>
+          </form>
         </div>
-
-        <div class="form-actions-footer">
-           <button type="submit" [disabled]="!form.valid" class="btn btn-invite">
-              Guardar Cambios
-           </button>
-        </div>
-      </form>
-    </div>
+      }
+    </main>
   </div>
 </div>
