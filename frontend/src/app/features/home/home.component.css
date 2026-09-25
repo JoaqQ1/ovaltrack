@@ -3,23 +3,19 @@
   min-height: 100vh;
   background-color: #0b111e;
   color: #e2e8f0;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Navbar de usuario autenticado */
-.auth-navbar {
-  background-color: rgba(11, 17, 30, 0.9);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid #1f2e47;
+/* ==========================================================================
+   Modo Oscuro (Original Predeterminado)
+   ========================================================================== */
+.home-title {
+  color: #ffffff;
+  font-family: inherit;
 }
 
-.brand-icon {
-  width: 34px;
-  height: 34px;
-  background-color: #162238;
-  border: 1px solid #2a3c5a;
-  color: #a3e635;
-  font-weight: 700;
-  border-radius: 8px;
+.home-subtitle {
+  color: #94a3b8;
 }
 
 /* Badges e indicadores */
@@ -37,13 +33,7 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
   font-size: 0.75rem;
   letter-spacing: 0.5px;
-}
-
-.badge-role {
-  font-size: 0.75rem;
-  color: #94a3b8;
   font-weight: 600;
-  letter-spacing: 0.5px;
 }
 
 .badge-role-pill {
@@ -53,6 +43,18 @@
   border: 1px solid #1f2e47;
   padding: 0.2rem 0.6rem;
   border-radius: 20px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #a3e635;
+  box-shadow: 0 0 6px #a3e635;
 }
 
 /* Tarjetas de módulo */
@@ -60,7 +62,7 @@
   background-color: #131c2e;
   border: 1px solid #1f2e47;
   border-radius: 12px;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .card-module-link {
@@ -80,7 +82,7 @@
   border: 1px solid #2a3c5a;
   border-radius: 8px;
   color: #60a5fa;
-  transition: color 0.2s ease, border-color 0.2s ease;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .card-module-link:hover .card-icon-wrapper {
@@ -88,29 +90,90 @@
   border-color: #a3e635;
 }
 
-/* Enlaces y botones de acción */
-.text-neon {
-  color: #a3e635;
-  transition: gap 0.2s ease;
+.card-module-title {
+  color: #ffffff;
+  font-size: 1.25rem;
+  transition: color 0.2s ease;
 }
 
-.card-module-link:hover .text-neon {
+.card-module-desc {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  transition: color 0.2s ease;
+}
+
+.card-module-action {
+  color: #a3e635;
+  transition: color 0.2s ease;
+}
+
+.card-module-action svg {
+  transition: transform 0.2s ease;
+}
+
+.card-module-link:hover .card-module-action {
   color: #bef264;
 }
 
-.btn-outline-danger-custom {
-  background-color: transparent;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  color: #f87171;
+.card-module-link:hover .card-module-action svg {
+  transform: translateX(4px);
+}
+
+/* Landing Modo Oscuro */
+.landing-title {
+  color: #ffffff;
+}
+
+.text-accent-highlight {
+  color: #a3e635;
+}
+
+.landing-subtitle {
+  color: #94a3b8;
+}
+
+.btn-landing-cta {
+  background-color: #a3e635;
+  color: #0b111e;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-landing-cta:hover {
+  background-color: #bef264;
+  color: #0b111e;
+  box-shadow: 0 0 16px rgba(163, 230, 53, 0.35);
+}
+
+.btn-outline-dark-theme {
+  background-color: #131c2e;
+  border: 1px solid #2a3c5a;
+  color: #cbd5e1;
   font-weight: 500;
   border-radius: 8px;
   transition: all 0.2s ease;
 }
 
-.btn-outline-danger-custom:hover {
-  background-color: rgba(239, 68, 68, 0.15);
-  border-color: #ef4444;
+.btn-outline-dark-theme:hover {
+  background-color: #1a273e;
+  border-color: #3b82f6;
   color: #ffffff;
+}
+
+.feature-title {
+  color: #ffffff;
+}
+
+.feature-desc {
+  color: #94a3b8;
+}
+
+.landing-footer {
+  color: #64748b;
+  border-top: 1px solid #1f2e47;
 }
 
 /* Alerta estado pendiente */
@@ -121,4 +184,225 @@
   border: 1px solid rgba(234, 179, 8, 0.3);
   border-radius: 50%;
   color: #facc15;
+}
+
+.warning-title {
+  color: #ffffff;
+}
+
+.warning-desc {
+  color: #94a3b8;
+}
+
+
+/* ==========================================================================
+   Modo Claro (Verde más Intenso, Rico y Presente)
+   ========================================================================== */
+:host-context([data-theme="light"]),
+:host-context(.light-theme) {
+  background-color: #f6f7f1;
+  color: #1b2116;
+}
+
+:host-context([data-theme="light"]) .home-title,
+:host-context(.light-theme) .home-title {
+  color: #1b2116;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-weight: 800;
+  font-size: 2.25rem;
+  letter-spacing: -0.01em;
+}
+
+:host-context([data-theme="light"]) .home-subtitle,
+:host-context(.light-theme) .home-subtitle {
+  color: #4b5540;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 1.05rem;
+}
+
+:host-context([data-theme="light"]) .badge-tech,
+:host-context(.light-theme) .badge-tech {
+  background-color: #d8efbe;
+  color: #264e09;
+  border: 1px solid rgba(75, 130, 25, 0.40);
+  font-weight: 700;
+}
+
+/* Tarjetas Verdes Más Intensas con Presencia y Volumen */
+:host-context([data-theme="light"]) .card-dark,
+:host-context(.light-theme) .card-dark {
+  background: linear-gradient(165deg, #c5e796 0%, #b2dc7d 100%);
+  border: 1px solid rgba(65, 120, 20, 0.38);
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(45, 80, 15, 0.09);
+}
+
+:host-context([data-theme="light"]) .card-module-link:hover .card-dark,
+:host-context(.light-theme) .card-module-link:hover .card-dark {
+  transform: translateY(-4px);
+  background: linear-gradient(165deg, #cbeba0 0%, #b9e187 100%);
+  border-color: rgba(65, 120, 20, 0.65);
+  box-shadow: 0 12px 30px rgba(45, 80, 15, 0.16);
+}
+
+/* Ícono oscuro como ancla visual */
+:host-context([data-theme="light"]) .card-icon-wrapper,
+:host-context(.light-theme) .card-icon-wrapper {
+  background-color: #15260f;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  color: #ffffff;
+  width: 42px;
+  height: 42px;
+}
+
+:host-context([data-theme="light"]) .card-module-link:hover .card-icon-wrapper,
+:host-context(.light-theme) .card-module-link:hover .card-icon-wrapper {
+  background-color: #0e1a0a;
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+}
+
+/* Badge de rol / tipo en pastilla oscura */
+:host-context([data-theme="light"]) .badge-role-pill,
+:host-context(.light-theme) .badge-role-pill {
+  background-color: #15260f;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+:host-context([data-theme="light"]) .badge-dot,
+:host-context(.light-theme) .badge-dot {
+  background-color: #91da40;
+  box-shadow: 0 0 6px #91da40;
+}
+
+/* Títulos y descripciones con alto contraste */
+:host-context([data-theme="light"]) .card-module-title,
+:host-context(.light-theme) .card-module-title {
+  color: #0f180c;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-weight: 800;
+  font-size: 1.25rem;
+}
+
+:host-context([data-theme="light"]) .card-module-desc,
+:host-context(.light-theme) .card-module-desc {
+  color: #283620;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+:host-context([data-theme="light"]) .card-module-action,
+:host-context(.light-theme) .card-module-action {
+  color: #1a3e06;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+:host-context([data-theme="light"]) .card-module-link:hover .card-module-action,
+:host-context(.light-theme) .card-module-link:hover .card-module-action {
+  color: #0f2603;
+}
+
+/* Landing Page Modo Claro */
+:host-context([data-theme="light"]) .landing-title,
+:host-context(.light-theme) .landing-title {
+  color: #1b2116;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-weight: 800;
+}
+
+:host-context([data-theme="light"]) .text-accent-highlight,
+:host-context(.light-theme) .text-accent-highlight {
+  color: #2d550b;
+}
+
+:host-context([data-theme="light"]) .landing-subtitle,
+:host-context(.light-theme) .landing-subtitle {
+  color: #4b5540;
+  font-size: 1.15rem;
+}
+
+:host-context([data-theme="light"]) .btn-landing-cta,
+:host-context(.light-theme) .btn-landing-cta {
+  background-color: #91da40;
+  color: #1d3700;
+  font-weight: 800;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(90, 150, 30, 0.25);
+}
+
+:host-context([data-theme="light"]) .btn-landing-cta:hover,
+:host-context(.light-theme) .btn-landing-cta:hover {
+  background-color: #7fc932;
+  color: #1d3700;
+  box-shadow: 0 8px 20px rgba(90, 150, 30, 0.35);
+}
+
+:host-context([data-theme="light"]) .btn-landing-secondary,
+:host-context(.light-theme) .btn-landing-secondary {
+  background-color: #eef1e7;
+  border: 1px solid rgba(27, 33, 22, 0.15);
+  color: #1b2116;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+:host-context([data-theme="light"]) .btn-landing-secondary:hover,
+:host-context(.light-theme) .btn-landing-secondary:hover {
+  background-color: #e2e7d9;
+  border-color: rgba(27, 33, 22, 0.25);
+  color: #1b2116;
+}
+
+:host-context([data-theme="light"]) .card-feature,
+:host-context(.light-theme) .card-feature {
+  background: linear-gradient(165deg, #c5e796 0%, #b2dc7d 100%);
+  border: 1px solid rgba(65, 120, 20, 0.38);
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(45, 80, 15, 0.09);
+}
+
+:host-context([data-theme="light"]) .feature-title,
+:host-context(.light-theme) .feature-title {
+  color: #0f180c;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-weight: 800;
+}
+
+:host-context([data-theme="light"]) .feature-desc,
+:host-context(.light-theme) .feature-desc {
+  color: #283620;
+}
+
+:host-context([data-theme="light"]) .landing-footer,
+:host-context(.light-theme) .landing-footer {
+  color: #7c8571;
+  border-top: 1px solid rgba(27, 33, 22, 0.14);
+}
+
+/* Warning en modo claro */
+:host-context([data-theme="light"]) .warning-card,
+:host-context(.light-theme) .warning-card {
+  background: #ffffff;
+  border: 1px solid rgba(27, 33, 22, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(27, 33, 22, 0.04);
+}
+
+:host-context([data-theme="light"]) .warning-title,
+:host-context(.light-theme) .warning-title {
+  color: #1b2116;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+}
+
+:host-context([data-theme="light"]) .warning-desc,
+:host-context(.light-theme) .warning-desc {
+  color: #4b5540;
 }

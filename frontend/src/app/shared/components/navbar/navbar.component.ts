@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from 'src/app/features/auth/services/auth.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
+import { ThemeService } from 'src/app/core/services/theme.service';
 
 @Component({
   selector: 'app-navbar',
@@ -27,6 +28,35 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
 
         <!-- Acciones según estado de autenticación -->
         <div class="navbar-actions">
+          <!-- Botón de alternancia Modo Claro / Oscuro -->
+          <button
+            type="button"
+            class="btn-theme-toggle"
+            (click)="themeService.toggleTheme()"
+            [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+            [title]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+          >
+            @if (themeService.theme() === 'dark') {
+              <!-- Ícono de Sol para pasar a claro -->
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            } @else {
+              <!-- Ícono de Luna para pasar a oscuro -->
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            }
+          </button>
+
           @if (currentUser(); as user) {
             <!-- Acciones Autenticadas -->
             <a routerLink="/home" class="btn-outline-dark-theme btn-nav-action" *ngIf="currentUrl !== '/home' && currentUrl !== '/'">
@@ -126,6 +156,7 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      transition: all 0.2s ease;
     }
 
     .brand-info {
@@ -139,6 +170,7 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
       color: #ffffff;
       line-height: 1.1;
       letter-spacing: 0.5px;
+      transition: color 0.2s ease;
     }
 
     .brand-subtitle {
@@ -147,6 +179,7 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
       color: #94a3b8;
       line-height: 1;
       margin-top: 3px;
+      transition: color 0.2s ease;
     }
 
     .navbar-actions {
@@ -155,10 +188,33 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
       gap: 12px;
     }
 
+    .btn-theme-toggle {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background-color: #131c2e;
+      border: 1px solid #2a3c5a;
+      color: #a3e635;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-theme-toggle:hover {
+      background-color: #1a273e;
+      border-color: #3b82f6;
+      color: #ffffff;
+      transform: scale(1.05);
+    }
+
     .user-role-badge {
       display: flex;
       align-items: center;
       gap: 8px;
+      transition: all 0.2s ease;
     }
 
     .status-dot {
@@ -167,6 +223,7 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
       background-color: #a3e635;
       border-radius: 50%;
       box-shadow: 0 0 8px #a3e635;
+      transition: all 0.2s ease;
     }
 
     .badge-role {
@@ -175,6 +232,7 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
       color: #94a3b8;
       letter-spacing: 0.5px;
       text-transform: uppercase;
+      transition: color 0.2s ease;
     }
 
     .btn-nav-action {
@@ -240,11 +298,19 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
       }
     }
 
-    /* Soporte preparado para modo claro cuando data-theme="light" se active */
+    /* ==========================================================================
+       Modo Claro en Navbar (Activo cuando data-theme="light")
+       ========================================================================== */
     :host-context([data-theme="light"]) .navbar-global,
     :host-context(.light-theme) .navbar-global {
       background-color: rgba(255, 255, 255, 0.95);
       border-bottom: 1px solid rgba(27, 33, 22, 0.10);
+    }
+
+    :host-context([data-theme="light"]) .navbar-global.landing-nav,
+    :host-context(.light-theme) .navbar-global.landing-nav {
+      background-color: transparent;
+      border-bottom: 1px solid transparent;
     }
 
     :host-context([data-theme="light"]) .brand-title,
@@ -264,6 +330,38 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
       color: #1d3700;
     }
 
+    :host-context([data-theme="light"]) .btn-theme-toggle,
+    :host-context(.light-theme) .btn-theme-toggle {
+      background-color: #eef1e7;
+      border-color: rgba(27, 33, 22, 0.15);
+      color: #16324f;
+    }
+
+    :host-context([data-theme="light"]) .btn-theme-toggle:hover,
+    :host-context(.light-theme) .btn-theme-toggle:hover {
+      background-color: #e2e7d9;
+      border-color: rgba(27, 33, 22, 0.25);
+    }
+
+    :host-context([data-theme="light"]) .user-role-badge,
+    :host-context(.light-theme) .user-role-badge {
+      background-color: #eef1e7;
+      border: 1px solid rgba(27, 33, 22, 0.12);
+      border-radius: 999px;
+      padding: 4px 10px;
+    }
+
+    :host-context([data-theme="light"]) .badge-role,
+    :host-context(.light-theme) .badge-role {
+      color: #4b5540;
+    }
+
+    :host-context([data-theme="light"]) .status-dot,
+    :host-context(.light-theme) .status-dot {
+      background-color: #3a6410;
+      box-shadow: 0 0 6px #3a6410;
+    }
+
     :host-context([data-theme="light"]) .btn-outline-dark-theme,
     :host-context(.light-theme) .btn-outline-dark-theme {
       background-color: #eef1e7;
@@ -275,6 +373,34 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
     :host-context(.light-theme) .btn-outline-dark-theme:hover {
       background-color: #e2e7d9;
       border-color: rgba(27, 33, 22, 0.25);
+      color: #1b2116;
+    }
+
+    :host-context([data-theme="light"]) .btn-neon,
+    :host-context(.light-theme) .btn-neon {
+      background-color: #91da40;
+      color: #1d3700;
+      font-weight: 700;
+    }
+
+    :host-context([data-theme="light"]) .btn-neon:hover,
+    :host-context(.light-theme) .btn-neon:hover {
+      background-color: #7fc932;
+      box-shadow: 0 6px 16px rgba(90, 150, 30, 0.28);
+    }
+
+    :host-context([data-theme="light"]) .btn-outline-danger-custom,
+    :host-context(.light-theme) .btn-outline-danger-custom {
+      background-color: rgba(180, 35, 24, 0.08);
+      border-color: rgba(180, 35, 24, 0.25);
+      color: #b42318;
+    }
+
+    :host-context([data-theme="light"]) .btn-outline-danger-custom:hover,
+    :host-context(.light-theme) .btn-outline-danger-custom:hover {
+      background-color: #b42318;
+      border-color: #b42318;
+      color: #ffffff;
     }
   `]
 })
@@ -282,6 +408,7 @@ export class NavbarComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   readonly userContextService = inject(UserContextService);
+  readonly themeService = inject(ThemeService);
   readonly currentUser = this.authService.currentUser;
 
   currentUrl = this.router.url;
