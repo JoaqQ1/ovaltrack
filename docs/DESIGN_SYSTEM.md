@@ -17,8 +17,8 @@ Los tokens oficiales del sistema corresponden a la identidad visual **Sport Pro 
 :root {
   /* Lienzo y Fondo de Cancha */
   --bg: #f6f7f1;
-  --bg-canvas: #d6e6d0;                       /* Fondo base verde salvia deportivo */
-  --bg-canvas-pattern: rgba(55, 75, 60, 0.15); /* Líneas tácticas a 135deg */
+  --bg-canvas: #e1edde;                       /* Fondo base verde salvia deportivo suave (luminoso hacia blanco) */
+  --bg-canvas-pattern: rgba(55, 75, 60, 0.14); /* Líneas tácticas a 135deg */
 
   /* Superficies y Tarjetas Elevadas */
   --surface: #ffffff;                         /* Tarjetas principales, modales y tablas */
@@ -98,14 +98,14 @@ El sistema utiliza tres familias tipográficas de Google Fonts cargadas globalme
 ## 3. Componentes Base Globales
 
 ### 3.1 Fondo de Cancha Salvia Deportivo
-El fondo global de las pantallas de gestión aplica un lienzo verde suave `#d6e6d0` con líneas tácticas diagonales sutiles:
+El fondo global de las pantallas de gestión aplica un lienzo verde salvia suave y luminoso `#e1edde` con líneas tácticas diagonales sutiles:
 
 ```css
 body {
-  background-color: #d6e6d0;
+  background-color: #e1edde;
   background-image: 
-    radial-gradient(ellipse at 50% 30%, rgba(214, 230, 208, 0.92) 0%, rgba(214, 230, 208, 0.65) 35%, rgba(214, 230, 208, 0.15) 65%, transparent 80%),
-    repeating-linear-gradient(135deg, rgba(55, 75, 60, 0.15) 0px, rgba(55, 75, 60, 0.15) 1.5px, transparent 1.5px, transparent 54px);
+    radial-gradient(ellipse at 50% 30%, rgba(225, 237, 222, 0.92) 0%, rgba(225, 237, 222, 0.65) 35%, rgba(225, 237, 222, 0.15) 65%, transparent 80%),
+    repeating-linear-gradient(135deg, rgba(55, 75, 60, 0.14) 0px, rgba(55, 75, 60, 0.14) 1.5px, transparent 1.5px, transparent 54px);
   background-attachment: fixed;
   color: #1b2116;
   font-family: var(--font-body);
@@ -232,7 +232,7 @@ Inputs y selects con altura táctil accesible (46px), bordes salvia y foco verde
 - **Posición:** `sticky-top` con `z-index: 1030`.
 - **Soporte de Tema Dual:**
   - *Modo Oscuro:* Fondo `#0b111e`, borde `#1f2e47`, textos blancos, botón neón `#a3e635`.
-  - *Modo Claro:* Fondo `#d6e6d0`, borde inferior `2px solid #204b22`, sombra suave, botón de acción en verde rugby `#204b22`.
+  - *Modo Claro:* Fondo `#e1edde`, borde inferior `2px solid #204b22`, sombra suave, botón de acción en verde rugby `#204b22`.
 - **Elementos Clave:**
   - Isotipo dinámico con la inicial del club (o 'O' por defecto).
   - Título del club actual reactivo vía `UserContextService`.
