@@ -71,19 +71,6 @@ body {
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* ==========================================================================
-   Fondo Global Modo Claro (Identidad Rugby OvalTrack)
-   ========================================================================== */
-html[data-theme="light"] body,
-body.light-theme {
   background-color: #d6e6d0;
   background-image: 
     /* Capa 1: Degradé radial que desvanece suavemente las líneas hacia el centro */
@@ -104,12 +91,10 @@ body.light-theme {
     );
   background-attachment: fixed;
   color: #1b2116;
-}
-
-html[data-theme="dark"] body {
-  background-color: #0b111e;
-  background-image: none;
-  color: #e2e8f0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
 
@@ -288,49 +273,7 @@ button {
   color: var(--text-primary);
 }
 
-/* Modo oscuro para Cabeceras y Botones */
-html[data-theme="dark"] .badge-tech,
-html[data-theme="dark"] .header-badge {
-  background-color: rgba(163, 230, 53, 0.12);
-  border-color: rgba(163, 230, 53, 0.28);
-  color: #a3e635;
-}
 
-html[data-theme="dark"] .brand-text .title,
-html[data-theme="dark"] .page-title {
-  color: #f8fafc;
-}
-
-html[data-theme="dark"] .brand-text .club,
-html[data-theme="dark"] .page-subtitle {
-  color: #94a3b8;
-}
-
-html[data-theme="dark"] .btn-invite {
-  background-color: #a3e635;
-  border-color: #a3e635;
-  color: #0b111e;
-  box-shadow: 0 0 16px rgba(163, 230, 53, 0.35);
-}
-
-html[data-theme="dark"] .btn-invite:hover {
-  background-color: #bef264;
-  border-color: #bef264;
-  color: #0b111e;
-}
-
-html[data-theme="dark"] .btn-outline {
-  background-color: #131c2e;
-  border-color: #1f2e47;
-  color: #e2e8f0;
-  box-shadow: none;
-}
-
-html[data-theme="dark"] .btn-outline:hover {
-  background-color: #162238;
-  border-color: #2a3c5a;
-  color: #ffffff;
-}
 
 .btn-logout {
   background: var(--error-tint);
@@ -473,52 +416,7 @@ html[data-theme="dark"] .btn-outline:hover {
   border-top: 1px solid rgba(32, 75, 34, 0.10);
 }
 
-/* Modo oscuro para Form Cards e Inputs */
-html[data-theme="dark"] .form-card {
-  background: #131c2e;
-  border: 2px solid #23364d;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
-}
 
-html[data-theme="dark"] .card-header,
-html[data-theme="dark"] .form-card-header {
-  background: #162238;
-  border-bottom: 2px solid #23364d;
-}
-
-html[data-theme="dark"] .card-title,
-html[data-theme="dark"] .form-card-title {
-  color: #f8fafc;
-}
-
-html[data-theme="dark"] .card-subtitle,
-html[data-theme="dark"] .form-card-subtitle {
-  color: #94a3b8;
-}
-
-html[data-theme="dark"] .form-label {
-  color: #cbd5e1;
-}
-
-html[data-theme="dark"] .form-control {
-  background: #0d1524;
-  border-color: #1f2e47;
-  color: #f8fafc;
-}
-
-html[data-theme="dark"] .form-control::placeholder {
-  color: #475569;
-}
-
-html[data-theme="dark"] .form-control:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-  background: #0d1524;
-}
-
-html[data-theme="dark"] .form-actions {
-  border-top-color: #1f2e47;
-}
 
 /* ==========================================================================
    Filtros, Tabs y Chips
