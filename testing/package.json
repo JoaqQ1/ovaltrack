@@ -7,7 +7,6 @@
         "test": "cucumber-js"
     },
     "devDependencies": {
-        "@cucumber/cucumber": "^13.2.1",
-        "pg": "^8.23.0"
+        "@cucumber/cucumber": "^13.2.1"
     }
 }
