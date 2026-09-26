@@ -24,14 +24,14 @@ public class RegistrationRequestService {
 
     public List<RegistrationRequest> findAllByStatusOrderByCreatedAtAsc(RegistrationRequestStatus status) {
         if (status == null) {
-            throw new BusinessException("El estado de la solicitud no puede ser nulo");
+            throw new IllegalArgumentException("El estado de la solicitud no puede ser nulo");
         }
         return this.repository.findAllByStatusOrderByCreatedAtAsc(status);
     }
 
     public List<RegistrationRequest> findAllByUserIdOrderByCreatedAtDesc(UUID userId) {
         if (userId == null) {
-            throw new BusinessException("El id del usuario no puede ser nulo");
+            throw new IllegalArgumentException("El id del usuario no puede ser nulo");
         }
         return this.repository.findAllByUserIdOrderByCreatedAtDesc(userId);
     }
@@ -40,18 +40,18 @@ public class RegistrationRequestService {
             UUID userId,
             RegistrationRequestStatus status) {
         if (userId == null || status == null)
-            throw new BusinessException("Los campos de id o estado vinieron nulos");
+            throw new IllegalArgumentException("Los campos de id o estado vinieron nulos");
 
         return this.repository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, status).orElse(null);
     }
 
     public RegistrationRequest save(RegistrationRequest aRegistrationRequest) {
         if (aRegistrationRequest == null)
-            throw new BusinessException("La solicitud de registro vino nula");
+            throw new IllegalArgumentException("La solicitud de registro vino nula");
         
         if (aRegistrationRequest.getUser() == null
                 || aRegistrationRequest.getUser().getId() == null) {
-            throw new BusinessException("La solicitud debe tener un usuario persistido");
+            throw new IllegalArgumentException("La solicitud debe tener un usuario persistido");
         }
 
         RegistrationRequest requestPending = findFirstByUserIdAndStatusOrderByCreatedAtDesc(
