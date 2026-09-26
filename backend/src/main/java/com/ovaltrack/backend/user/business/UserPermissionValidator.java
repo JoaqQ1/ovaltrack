@@ -1,5 +1,7 @@
 package com.ovaltrack.backend.user.business;
 
+import java.util.UUID;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -7,6 +9,7 @@ import com.ovaltrack.backend.club.repository.ClubRepository;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.user.domain.User;
 import com.ovaltrack.backend.user.domain.UserRole;
+import com.ovaltrack.backend.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,15 +20,40 @@ public class UserPermissionValidator {
 	private static final String SUPER_ADMIN_ROLE = "ROLE_" + UserRole.ADMIN_OVALTRACK.name();
 
 	private final ClubRepository clubRepository;
+	private final UserRepository userRepository;
 
 	public void validateCanAssignRole(User targetUser, UserRole newRole, Authentication authentication) {
 		validateRoleAssignmentPermissions(newRole, authentication);
 		validateSelfDemotion(targetUser, newRole, authentication);
+		validateSingleClubAdmin(targetUser, newRole);
 	}
 
 	public void validateCanDeactivate(User targetUser, Authentication authentication) {
 		validateSelfDeactivation(targetUser, authentication);
 		validateDeactivationPermissions(targetUser, authentication);
+	}
+
+	private void validateSingleClubAdmin(User targetUser, UserRole newRole) {
+		if (newRole != UserRole.ADMIN_CLUB) {
+			return;
+		}
+
+		if (targetUser.getPerson() == null || targetUser.getPerson().getClub() == null) {
+			return;
+		}
+
+		UUID clubId = targetUser.getPerson().getClub().getId();
+		boolean alreadyHasAdmin = userRepository.existsActiveAdminInClubExcludingUser(
+				clubId,
+				UserRole.ADMIN_CLUB,
+				targetUser.getId()
+		);
+
+		if (alreadyHasAdmin) {
+			throw new BusinessException(
+					"El club ya cuenta con un administrador activo. Solo puede haber un administrador por club."
+			);
+		}
 	}
 
 	private void validateRoleAssignmentPermissions(UserRole newRole, Authentication authentication) {

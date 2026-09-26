@@ -10,8 +10,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MembersService } from '../../services/members.service';
+import { ToastService, ToastType } from '../../../../core/services/toast.service';
 import {
-  BannerNotification,
   ClubInfo,
   FilterCategory,
   Member,
@@ -22,6 +22,7 @@ import {
   bucketOf,
   getMemberDisplayName,
   getMemberInitials,
+  matchesSearchQuery,
   matchesStatus
 } from '../../types/members.types';
 import { BatchActionBarComponent } from '../../components/batch-action-bar/batch-action-bar.component';
@@ -42,6 +43,7 @@ import { DeactivateModalComponent } from '../../components/deactivate-modal/deac
 })
 export class MembersListComponent implements OnInit {
   private readonly membersService = inject(MembersService);
+  private readonly toastService = inject(ToastService);
 
   readonly ROLE_META = ROLE_META;
   readonly SELECTABLE_ROLES = SELECTABLE_ROLES;
@@ -78,7 +80,6 @@ export class MembersListComponent implements OnInit {
   readonly statusFilter = signal<StatusFilter>('ACTIVE');
   readonly isLoading = signal<boolean>(true);
   readonly isSaving = signal<boolean>(false);
-  readonly banners = signal<BannerNotification[]>([]);
   readonly openMenu = signal<{ type: 'role' | 'actions'; memberId: string } | null>(null);
   readonly club = signal<ClubInfo | null>(null);
 
@@ -123,24 +124,23 @@ export class MembersListComponent implements OnInit {
     const query = this.searchQuery().trim().toLowerCase();
     const category = this.activeFilter();
     const status = this.statusFilter();
-    const memberList = this.members();
 
-    return memberList.filter(member => {
-      const fullName = `${member.firstName} ${member.lastName}`.toLowerCase();
-      const email = (member.email || '').toLowerCase();
-      const jerseyStr = member.jersey != null ? `#${member.jersey}` : '';
-      const textToSearch = `${fullName} ${email} ${jerseyStr}`;
-
-      const matchesQuery = !query || textToSearch.includes(query);
-      const matchesCategory = category === 'ALL' || bucketOf(member.role) === category;
-      const matchesStatusFilter = matchesStatus(member, status);
-
-      return matchesQuery && matchesCategory && matchesStatusFilter;
-    });
+    return this.members().filter(member =>
+      matchesSearchQuery(member, query) &&
+      (category === 'ALL' || bucketOf(member.role) === category) &&
+      matchesStatus(member, status)
+    );
   });
 
   readonly dirtyCount = computed(() => this.dirtyMembers().size);
   readonly hasDirtyMembers = computed(() => this.dirtyMembers().size > 0);
+  readonly hasActiveAdmin = computed(() =>
+    this.members().some(m => m.active && m.role === 'ADMIN_CLUB')
+  );
+
+  isRoleOptionDisabled(member: Member, role: UserRole): boolean {
+    return role === 'ADMIN_CLUB' && this.hasActiveAdmin() && member.role !== 'ADMIN_CLUB';
+  }
 
   ngOnInit(): void {
     this.loadData();
@@ -241,14 +241,18 @@ export class MembersListComponent implements OnInit {
       return;
     }
 
+    if (newRole === 'ADMIN_CLUB' && this.hasActiveAdmin() && member.role !== 'ADMIN_CLUB') {
+      this.closeMenus();
+      this.showBanner(
+        'warning',
+        'Límite de administradores alcanzado',
+        'El club ya cuenta con un administrador activo. Solo puede haber un administrador por club.'
+      );
+      return;
+    }
+
     // Actualizar rol localmente en el signal
-    const updatedList = this.members().map(m => {
-      if (m.id === memberId) {
-        return { ...m, role: newRole };
-      }
-      return m;
-    });
-    this.members.set(updatedList);
+    this.updateMember(memberId, { role: newRole });
 
     // Actualizar dirty set
     const initialRole = this.initialRoles().get(memberId);
@@ -261,6 +265,12 @@ export class MembersListComponent implements OnInit {
     this.dirtyMembers.set(updatedDirty);
 
     this.closeMenus();
+  }
+
+  private updateMember(memberId: string, patch: Partial<Member>): void {
+    this.members.update(list =>
+      list.map(member => (member.id === memberId ? { ...member, ...patch } : member))
+    );
   }
 
   readonly memberToDeactivate = signal<Member | null>(null);
@@ -294,13 +304,7 @@ export class MembersListComponent implements OnInit {
     this.isDeactivating.set(true);
     this.membersService.deactivateUser(target.id).subscribe({
       next: () => {
-        const updatedList = this.members().map(m => {
-          if (m.id === target.id) {
-            return { ...m, active: false };
-          }
-          return m;
-        });
-        this.members.set(updatedList);
+        this.updateMember(target.id, { active: false });
         this.isDeactivating.set(false);
         this.memberToDeactivate.set(null);
 
@@ -379,19 +383,8 @@ export class MembersListComponent implements OnInit {
     });
   }
 
-  showBanner(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string): void {
-    const newBanner: BannerNotification = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type,
-      title,
-      message
-    };
-    // Reemplaza o apila según sea necesario
-    this.banners.set([newBanner]);
-  }
-
-  removeBanner(id: string): void {
-    this.banners.set(this.banners().filter(b => b.id !== id));
+  showBanner(type: ToastType, title: string, message: string): void {
+    this.toastService.show(type, message, title);
   }
 
   @HostListener('document:click')

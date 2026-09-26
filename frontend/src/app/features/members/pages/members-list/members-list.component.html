@@ -64,19 +64,6 @@
     </div>
   </div>
 
-  <!-- Región de Banners de Feedback -->
-  <div class="banner-region" aria-live="polite">
-    @for (banner of banners(); track banner.id) {
-      <div class="banner banner-{{ banner.type }}" role="alert">
-        <div style="flex: 1">
-          <strong>{{ banner.title }}</strong>
-          <p>{{ banner.message }}</p>
-        </div>
-        <button class="close" (click)="removeBanner(banner.id)" aria-label="Cerrar aviso">✕</button>
-      </div>
-    }
-  </div>
-
   <!-- Contenido Principal: Skeleton, Vacío o Lista de Miembros -->
   @if (isLoading()) {
     <div class="skeleton-state">
@@ -123,6 +110,7 @@
           class="member-row"
           [class.is-dirty]="dirtyMembers().has(member.id)"
           [class.is-inactive]="!member.active"
+          [class.has-open-menu]="openMenu()?.memberId === member.id"
           [style.--ring]="ROLE_META[member.role].color"
         >
           <!-- Identidad -->
@@ -201,10 +189,16 @@
                   <button
                     class="role-opt"
                     type="button"
-                    (click)="selectRole(member.id, role, $event)"
+                    [class.is-disabled]="isRoleOptionDisabled(member, role)"
+                    [disabled]="isRoleOptionDisabled(member, role)"
+                    [title]="isRoleOptionDisabled(member, role) ? 'El club ya cuenta con un administrador activo. Solo puede haber un administrador por club.' : ''"
+                    (click)="!isRoleOptionDisabled(member, role) ? selectRole(member.id, role, $event) : null"
                   >
                     <span class="dot" [style.background]="ROLE_META[role].color"></span>
-                    {{ ROLE_META[role].label }}
+                    <span>{{ ROLE_META[role].label }}</span>
+                    @if (isRoleOptionDisabled(member, role)) {
+                      <span class="limit-badge">Límite alcanzado</span>
+                    }
                   </button>
                 }
               </div>

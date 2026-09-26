@@ -12,11 +12,11 @@ Característica: Gestión de roles restringido a administrador de club
     Y la tabla de miembros muestra al usuario "<emailUsuario>" con el rol "<rolFinal>"
 
     Ejemplos:
-      | emailUsuario            | nuevoRol        | mensajeEsperado                                                  | rolFinal      |
-      | jugador.uno@test.com    | COACH_ANALYST   | Rol actualizado correctamente                                    | COACH_ANALYST |
-      | jugador.dos@test.com    | ADMIN_CLUB      | Rol actualizado correctamente                                    | ADMIN_CLUB    |
-      | usuario.norole@test.com | PLAYER          | Rol actualizado correctamente                                    | PLAYER        |
-      | jugador.tres@test.com   | ADMIN_OVALTRACK | El administrador de club no puede asignar el rol ADMIN_OVALTRACK | PLAYER        |
+      | emailUsuario            | nuevoRol        | mensajeEsperado                                                                                | rolFinal      |
+      | jugador.uno@test.com    | COACH_ANALYST   | Rol actualizado correctamente                                                                  | COACH_ANALYST |
+      | jugador.dos@test.com    | ADMIN_CLUB      | El club ya cuenta con un administrador activo. Solo puede haber un administrador por club.     | PLAYER        |
+      | usuario.norole@test.com | PLAYER          | Rol actualizado correctamente                                                                  | PLAYER        |
+      | jugador.tres@test.com   | ADMIN_OVALTRACK | El administrador de club no puede asignar el rol ADMIN_OVALTRACK                               | PLAYER        |
 
   Escenario: Modificación múltiple de roles desde la tabla
     Dado que el administrador de club con email "admin@club.com" y contraseña "administrador" ha iniciado sesión
