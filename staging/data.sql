@@ -1,7 +1,7 @@
 -- OvalTrack Data Seeder
 -- =========================================
 
-TRUNCATE TABLE events, event_types, matches, division_players, division_coaches, divisions, clubs, users, persons RESTART IDENTITY CASCADE;
+TRUNCATE TABLE events, event_types, matches, division_players, division_coaches, divisions, registration_requests, clubs, users, persons RESTART IDENTITY CASCADE;
 
 -- =========================================
 -- PERSONS (30 personas en total)
