@@ -123,6 +123,15 @@ export function getMemberDisplayName(member: Member): string {
   return fullName || member.email || '';
 }
 
+export function matchesSearchQuery(member: Member, query: string): boolean {
+  if (!query) return true;
+  const fullName = `${member.firstName} ${member.lastName}`.toLowerCase();
+  const email = (member.email || '').toLowerCase();
+  const jerseyStr = member.jersey != null ? `#${member.jersey}` : '';
+  const textToSearch = `${fullName} ${email} ${jerseyStr}`;
+  return textToSearch.includes(query);
+}
+
 export interface BannerNotification {
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';

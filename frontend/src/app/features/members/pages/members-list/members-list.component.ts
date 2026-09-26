@@ -22,6 +22,7 @@ import {
   bucketOf,
   getMemberDisplayName,
   getMemberInitials,
+  matchesSearchQuery,
   matchesStatus
 } from '../../types/members.types';
 import { BatchActionBarComponent } from '../../components/batch-action-bar/batch-action-bar.component';
@@ -123,20 +124,12 @@ export class MembersListComponent implements OnInit {
     const query = this.searchQuery().trim().toLowerCase();
     const category = this.activeFilter();
     const status = this.statusFilter();
-    const memberList = this.members();
 
-    return memberList.filter(member => {
-      const fullName = `${member.firstName} ${member.lastName}`.toLowerCase();
-      const email = (member.email || '').toLowerCase();
-      const jerseyStr = member.jersey != null ? `#${member.jersey}` : '';
-      const textToSearch = `${fullName} ${email} ${jerseyStr}`;
-
-      const matchesQuery = !query || textToSearch.includes(query);
-      const matchesCategory = category === 'ALL' || bucketOf(member.role) === category;
-      const matchesStatusFilter = matchesStatus(member, status);
-
-      return matchesQuery && matchesCategory && matchesStatusFilter;
-    });
+    return this.members().filter(member =>
+      matchesSearchQuery(member, query) &&
+      (category === 'ALL' || bucketOf(member.role) === category) &&
+      matchesStatus(member, status)
+    );
   });
 
   readonly dirtyCount = computed(() => this.dirtyMembers().size);
@@ -259,13 +252,7 @@ export class MembersListComponent implements OnInit {
     }
 
     // Actualizar rol localmente en el signal
-    const updatedList = this.members().map(m => {
-      if (m.id === memberId) {
-        return { ...m, role: newRole };
-      }
-      return m;
-    });
-    this.members.set(updatedList);
+    this.updateMember(memberId, { role: newRole });
 
     // Actualizar dirty set
     const initialRole = this.initialRoles().get(memberId);
@@ -278,6 +265,12 @@ export class MembersListComponent implements OnInit {
     this.dirtyMembers.set(updatedDirty);
 
     this.closeMenus();
+  }
+
+  private updateMember(memberId: string, patch: Partial<Member>): void {
+    this.members.update(list =>
+      list.map(member => (member.id === memberId ? { ...member, ...patch } : member))
+    );
   }
 
   readonly memberToDeactivate = signal<Member | null>(null);
@@ -311,13 +304,7 @@ export class MembersListComponent implements OnInit {
     this.isDeactivating.set(true);
     this.membersService.deactivateUser(target.id).subscribe({
       next: () => {
-        const updatedList = this.members().map(m => {
-          if (m.id === target.id) {
-            return { ...m, active: false };
-          }
-          return m;
-        });
-        this.members.set(updatedList);
+        this.updateMember(target.id, { active: false });
         this.isDeactivating.set(false);
         this.memberToDeactivate.set(null);
 
