@@ -78,6 +78,8 @@ case "$cmd" in
     ;;
   test)
     echo "Ejecutando tests (Cucumber.js) contra la API del backend..."
+    echo "Limpiando la base de datos mediante staging antes de ejecutar los tests..."
+    "$0" staging clean.sql
     docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" --profile test run --rm testing
     ;;
   reset)
