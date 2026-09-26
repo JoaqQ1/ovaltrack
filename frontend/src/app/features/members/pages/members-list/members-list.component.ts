@@ -141,6 +141,13 @@ export class MembersListComponent implements OnInit {
 
   readonly dirtyCount = computed(() => this.dirtyMembers().size);
   readonly hasDirtyMembers = computed(() => this.dirtyMembers().size > 0);
+  readonly hasActiveAdmin = computed(() =>
+    this.members().some(m => m.active && m.role === 'ADMIN_CLUB')
+  );
+
+  isRoleOptionDisabled(member: Member, role: UserRole): boolean {
+    return role === 'ADMIN_CLUB' && this.hasActiveAdmin() && member.role !== 'ADMIN_CLUB';
+  }
 
   ngOnInit(): void {
     this.loadData();
@@ -237,6 +244,16 @@ export class MembersListComponent implements OnInit {
         'warning',
         'No tenés permisos suficientes',
         'Solo un Administrador de OvalTrack puede reasignar el rol de otro Administrador de club.'
+      );
+      return;
+    }
+
+    if (newRole === 'ADMIN_CLUB' && this.hasActiveAdmin() && member.role !== 'ADMIN_CLUB') {
+      this.closeMenus();
+      this.showBanner(
+        'warning',
+        'Límite de administradores alcanzado',
+        'El club ya cuenta con un administrador activo. Solo puede haber un administrador por club.'
       );
       return;
     }

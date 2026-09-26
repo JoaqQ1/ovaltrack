@@ -48,9 +48,9 @@ Característica: Modificación o baja de rol de usuario
 
   Escenario: El administrador de club no puede dar de baja a otro administrador
     Dado que el administrador de club con email "admin@club.com" y contraseña "administrador" ha iniciado sesión
-    Y que existe el usuario con email "jugador.dos@test.com"
-    Y que el usuario "jugador.dos@test.com" tiene el rol de administrador de club
-    Cuando solicita dar de baja al usuario con email "jugador.dos@test.com"
+    Y que existe el usuario con email "admin_multiclub@test.com"
+    Y que el usuario "admin_multiclub@test.com" tiene el rol de administrador de club
+    Cuando solicita dar de baja al usuario con email "admin_multiclub@test.com"
     Entonces el sistema rechaza la solicitud con código 409 y el mensaje "No tiene permisos para dar de baja a otro administrador"
 
   Escenario: Un usuario sin rol de administrador no puede dar de baja a otros usuarios
