@@ -45,7 +45,7 @@ public class RegistrationRequestService {
         return this.repository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, status).orElse(null);
     }
 
-    public RegistrationRequest save(RegistrationRequest aRegistrationRequest) {
+    public RegistrationRequest createRequest(RegistrationRequest aRegistrationRequest) {
         if (aRegistrationRequest == null)
             throw new IllegalArgumentException("La solicitud de registro vino nula");
         
@@ -54,10 +54,14 @@ public class RegistrationRequestService {
             throw new IllegalArgumentException("La solicitud debe tener un usuario persistido");
         }
 
-        RegistrationRequest requestPending = findFirstByUserIdAndStatusOrderByCreatedAtDesc(
-                aRegistrationRequest.getUser().getId(), RegistrationRequestStatus.PENDING);
-        if (requestPending != null)
-            throw new BusinessException("No pueden haber dos peticiones del mismo usuario en pendientes");
+        UUID userId = aRegistrationRequest.getUser().getId();
+        boolean hasOpenRequest = findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+                userId, RegistrationRequestStatus.PENDING) != null
+                || findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+                        userId, RegistrationRequestStatus.NEEDS_INFORMATION) != null;
+        if (hasOpenRequest)
+            throw new BusinessException("El usuario ya tiene una solicitud de registro abierta");
+
         return this.repository.save(aRegistrationRequest);
     }
 }
