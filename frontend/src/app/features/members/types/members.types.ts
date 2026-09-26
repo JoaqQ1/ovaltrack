@@ -132,13 +132,6 @@ export function matchesSearchQuery(member: Member, query: string): boolean {
   return textToSearch.includes(query);
 }
 
-export interface BannerNotification {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  message: string;
-}
-
 export interface ClubInfo {
   id?: string;
   name: string;

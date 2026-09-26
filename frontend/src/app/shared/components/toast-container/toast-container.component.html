@@ -1,0 +1,20 @@
+<div class="toast-viewport" aria-live="polite" aria-atomic="true">
+  @for (toast of toasts(); track toast.id) {
+    <div class="banner banner-{{ toast.type }} toast-item" role="alert">
+      <div style="flex: 1">
+        @if (toast.title) {
+          <strong>{{ toast.title }}</strong>
+        }
+        <p>{{ toast.message }}</p>
+      </div>
+      <button
+        class="close"
+        type="button"
+        (click)="toastService.dismiss(toast.id)"
+        aria-label="Cerrar notificación"
+      >
+        ✕
+      </button>
+    </div>
+  }
+</div>

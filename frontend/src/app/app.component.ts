@@ -5,6 +5,7 @@ import { filter } from 'rxjs';
 import { environment } from '@environments/environment.docker';
 import { HttpClient } from '@angular/common/http';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
+import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
 
 interface PingResponse {
   status: string;
@@ -14,7 +15,7 @@ interface PingResponse {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, NavbarComponent],
+  imports: [RouterOutlet, CommonModule, NavbarComponent, ToastContainerComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

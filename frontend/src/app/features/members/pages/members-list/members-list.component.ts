@@ -10,8 +10,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MembersService } from '../../services/members.service';
+import { ToastService, ToastType } from '../../../../core/services/toast.service';
 import {
-  BannerNotification,
   ClubInfo,
   FilterCategory,
   Member,
@@ -43,6 +43,7 @@ import { DeactivateModalComponent } from '../../components/deactivate-modal/deac
 })
 export class MembersListComponent implements OnInit {
   private readonly membersService = inject(MembersService);
+  private readonly toastService = inject(ToastService);
 
   readonly ROLE_META = ROLE_META;
   readonly SELECTABLE_ROLES = SELECTABLE_ROLES;
@@ -79,7 +80,6 @@ export class MembersListComponent implements OnInit {
   readonly statusFilter = signal<StatusFilter>('ACTIVE');
   readonly isLoading = signal<boolean>(true);
   readonly isSaving = signal<boolean>(false);
-  readonly banners = signal<BannerNotification[]>([]);
   readonly openMenu = signal<{ type: 'role' | 'actions'; memberId: string } | null>(null);
   readonly club = signal<ClubInfo | null>(null);
 
@@ -383,19 +383,8 @@ export class MembersListComponent implements OnInit {
     });
   }
 
-  showBanner(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string): void {
-    const newBanner: BannerNotification = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type,
-      title,
-      message
-    };
-    // Reemplaza o apila según sea necesario
-    this.banners.set([newBanner]);
-  }
-
-  removeBanner(id: string): void {
-    this.banners.set(this.banners().filter(b => b.id !== id));
+  showBanner(type: ToastType, title: string, message: string): void {
+    this.toastService.show(type, message, title);
   }
 
   @HostListener('document:click')

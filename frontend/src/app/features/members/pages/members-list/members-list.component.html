@@ -64,19 +64,6 @@
     </div>
   </div>
 
-  <!-- Región de Banners de Feedback -->
-  <div class="banner-region" aria-live="polite">
-    @for (banner of banners(); track banner.id) {
-      <div class="banner banner-{{ banner.type }}" role="alert">
-        <div style="flex: 1">
-          <strong>{{ banner.title }}</strong>
-          <p>{{ banner.message }}</p>
-        </div>
-        <button class="close" (click)="removeBanner(banner.id)" aria-label="Cerrar aviso">✕</button>
-      </div>
-    }
-  </div>
-
   <!-- Contenido Principal: Skeleton, Vacío o Lista de Miembros -->
   @if (isLoading()) {
     <div class="skeleton-state">
