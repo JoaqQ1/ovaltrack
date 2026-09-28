@@ -48,7 +48,7 @@
              *ngFor="let occurrence of track.occurrences"
              [style.left.%]="(occurrence.time / maxMatchDuration) * 100"
              [style.backgroundColor]="track.color"
-             [title]="'Minuto ' + occurrence.time + '\' - ' + occurrence.player">
+             [title]="'Minuto: ' + occurrence.time + '\'\nJugador: ' + occurrence.player">
         </div>
       </div>
       
