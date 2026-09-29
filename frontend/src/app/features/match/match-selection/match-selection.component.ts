@@ -29,7 +29,7 @@ import { MatchService } from '../services/match.service';
 @Component({
   selector: 'ot-match-select',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './match-selection.component.html',
   styleUrl: './match-selection.component.css',
 })
