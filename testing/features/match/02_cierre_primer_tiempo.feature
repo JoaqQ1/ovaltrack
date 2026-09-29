@@ -18,7 +18,7 @@ Característica: Cierre del primer tiempo y transición al segundo tiempo
 
   Escenario: Inicio exitoso del segundo tiempo tras el entretiempo
     Dado que el entrenador con email "jugador.uno@test.com" y contraseña "PassSegura123!" ha iniciado sesión
-    Y que el partido contra "Comodoro Rugby Club" se encuentra en estado de entretiempo
+    Y que el partido contra "Calafate RC" se encuentra en estado de entretiempo
     Cuando el entrenador solicita iniciar el segundo tiempo del partido
     Entonces el sistema responde con código 200 y devuelve el partido con estado "IN_PROGRESS" y periodo 2
     Cuando el entrenador registra el evento "Try" para el equipo propio en el minuto 45 del periodo 2
@@ -33,13 +33,13 @@ Característica: Cierre del primer tiempo y transición al segundo tiempo
 
   Escenario: Rechazo al intentar cerrar el primer tiempo por segunda vez
     Dado que el entrenador con email "jugador.uno@test.com" y contraseña "PassSegura123!" ha iniciado sesión
-    Y que el partido contra "Comodoro Rugby Club" se encuentra en el segundo tiempo
+    Y que el partido contra "Chenque Rugby Club" se encuentra en el segundo tiempo
     Cuando el entrenador solicita cerrar el primer tiempo del partido
     Entonces el sistema rechaza la solicitud con código 409 y el mensaje "El primer tiempo ya ha sido cerrado"
 
   Escenario: Rechazo al intentar cerrar el primer tiempo por un usuario no autorizado
     Dado que el usuario con rol jugador con email "usuario.norole@test.com" y contraseña "PassSegura123!" ha iniciado sesión
-    Y que existe un partido en curso para la división "Primera" contra "Comodoro Rugby Club"
+    Y que existe un partido en curso para la división "Primera" contra "Draig Goch RC"
     Cuando el usuario intenta solicitar el cierre del primer tiempo del partido
     Entonces el sistema rechaza la solicitud con código 403 y el mensaje "Acceso denegado: solo el entrenador asignado o el administrador del club pueden gestionar este partido"
 

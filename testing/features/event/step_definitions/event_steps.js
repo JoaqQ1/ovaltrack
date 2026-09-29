@@ -5,6 +5,16 @@ import { findEventTypeIdByName } from '../../support/event_helper.js';
 
 const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
 
+const matchDates = {
+  'Trelew Rugby Club': '2026-10-15T15:30:00',
+  'Comodoro Rugby Club': '2026-10-20T15:30:00',
+  'Calafate RC': '2026-10-21T15:30:00',
+  'Puerto Madryn RC': '2026-10-22T17:00:00',
+  'Chenque Rugby Club': '2026-10-23T15:30:00',
+  'Draig Goch RC': '2026-10-24T15:30:00',
+  'Rival Cancelado': '2026-12-15T10:00:00'
+};
+
 Given('que existe un partido en curso para la división {string} contra {string}', async function (divisionNombre, rival) {
   const divisionId = await findDivisionIdByName(divisionNombre, this.token);
   assert.ok(divisionId, `No se encontró la división con nombre "${divisionNombre}"`);
@@ -21,6 +31,7 @@ Given('que existe un partido en curso para la división {string} contra {string}
 
   // 2. Si no existe, crearlo
   if (!match) {
+    const matchDate = matchDates[rival] || '2026-11-01T15:30:00';
     const createRes = await fetch(`${BACKEND_URL}/matches`, {
       method: 'POST',
       headers: {
@@ -28,12 +39,12 @@ Given('que existe un partido en curso para la división {string} contra {string}
         'Authorization': `Bearer ${this.token}`
       },
       body: JSON.stringify({
-        date: '2026-10-15T15:30:00',
+        date: matchDate,
         divisionId: divisionId,
         opponent: rival
       })
     });
-    assert.equal(createRes.status, 200, 'No se pudo crear el partido base');
+    assert.equal(createRes.status, 200, `No se pudo crear el partido base contra ${rival}`);
     match = await createRes.json();
   }
 

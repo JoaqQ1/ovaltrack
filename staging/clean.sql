@@ -14,6 +14,9 @@ TRUNCATE TABLE
     persons
 RESTART IDENTITY CASCADE;
 
+ALTER TABLE matches DROP CONSTRAINT IF EXISTS matches_status_check;
+ALTER TABLE matches ADD CONSTRAINT matches_status_check CHECK (status IN ('NOT_STARTED', 'IN_PROGRESS', 'HALFTIME', 'FINISHED', 'CANCELLED'));
+
 -- =========================================================================
 -- Sembrado del Catálogo Estándar de Tipos de Eventos (Event Types)
 -- =========================================================================

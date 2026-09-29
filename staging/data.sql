@@ -3,6 +3,9 @@
 
 TRUNCATE TABLE events, event_types, matches, division_players, division_coaches, divisions, registration_requests, clubs, users, persons RESTART IDENTITY CASCADE;
 
+ALTER TABLE matches DROP CONSTRAINT IF EXISTS matches_status_check;
+ALTER TABLE matches ADD CONSTRAINT matches_status_check CHECK (status IN ('NOT_STARTED', 'IN_PROGRESS', 'HALFTIME', 'FINISHED', 'CANCELLED'));
+
 -- =========================================
 -- PERSONS (30 personas en total)
 -- =========================================
@@ -170,8 +173,8 @@ INSERT INTO division_players (id, person_id, division_id, jersey_number, positio
 -- MATCHES (Partidos)
 -- =========================================
 
-INSERT INTO matches (id, date, division_id, opponent, status) VALUES
-    ('11111111-1111-1111-1111-000000000040', '2024-10-10 15:30:00', '11111111-1111-1111-1111-000000000020', 'Trelew Rugby Club', 'FINISHED');
+INSERT INTO matches (id, date, division_id, opponent, status, current_period) VALUES
+    ('11111111-1111-1111-1111-000000000040', '2024-10-10 15:30:00', '11111111-1111-1111-1111-000000000020', 'Trelew Rugby Club', 'FINISHED', 2);
 
 
 -- =========================================

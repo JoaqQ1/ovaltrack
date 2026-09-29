@@ -10,6 +10,7 @@ public record MatchResponseDTO(
     LocalDateTime date,
     UUID divisionId,
     String opponent,
-    MatchStatus status
+    MatchStatus status,
+    Integer currentPeriod
 ) {
 }

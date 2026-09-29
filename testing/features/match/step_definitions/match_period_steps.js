@@ -5,6 +5,14 @@ import { findEventTypeIdByName } from '../../support/event_helper.js';
 
 const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
 
+const matchDates = {
+  'Comodoro Rugby Club': '2026-10-20T15:30:00',
+  'Calafate RC': '2026-10-21T15:30:00',
+  'Puerto Madryn RC': '2026-10-22T17:00:00',
+  'Chenque Rugby Club': '2026-10-23T15:30:00',
+  'Draig Goch RC': '2026-10-24T15:30:00'
+};
+
 Given('que se han registrado los siguientes eventos en el primer tiempo:', async function (dataTable) {
   assert.ok(this.currentMatch, 'No hay un partido en curso en el contexto');
   const rows = dataTable.hashes();
@@ -49,7 +57,7 @@ When('el entrenador solicita cerrar el primer tiempo del partido', async functio
 });
 
 Then('el sistema responde con código {int} y devuelve el partido con estado {string} y periodo {int}', function (statusCode, estadoEsperado, periodoEsperado) {
-  assert.equal(this.lastResponse.status, statusCode, `Se esperaba código ${statusCode} pero se obtuvo ${this.lastResponse.status}`);
+  assert.equal(this.lastResponse.status, statusCode, `Se esperaba código ${statusCode} pero se obtuvo ${this.lastResponse.status}: ${JSON.stringify(this.lastResponseBody)}`);
   assert.equal(this.lastResponseBody.status, estadoEsperado, `Se esperaba estado "${estadoEsperado}" pero se obtuvo "${this.lastResponseBody.status}"`);
   assert.equal(this.lastResponseBody.currentPeriod, periodoEsperado, `Se esperaba periodo ${periodoEsperado} pero se obtuvo ${this.lastResponseBody.currentPeriod}`);
 });
@@ -70,6 +78,7 @@ Given('que el partido contra {string} se encuentra en estado de entretiempo', as
 
   // 2. Si no existe, crearlo
   if (!match) {
+    const matchDate = matchDates[rival] || '2026-10-25T15:30:00';
     const createRes = await fetch(`${BACKEND_URL}/matches`, {
       method: 'POST',
       headers: {
@@ -77,12 +86,12 @@ Given('que el partido contra {string} se encuentra en estado de entretiempo', as
         'Authorization': `Bearer ${this.token}`
       },
       body: JSON.stringify({
-        date: '2026-10-15T15:30:00',
+        date: matchDate,
         divisionId: divisionId,
         opponent: rival
       })
     });
-    assert.equal(createRes.status, 200, 'No se pudo crear el partido base');
+    assert.equal(createRes.status, 200, `No se pudo crear el partido base contra ${rival}`);
     match = await createRes.json();
   }
 
@@ -98,12 +107,33 @@ Given('que el partido contra {string} se encuentra en estado de entretiempo', as
 
   // 4. Cerrar el primer tiempo si está en IN_PROGRESS
   if (match.status === 'IN_PROGRESS' && match.currentPeriod !== 2) {
+    const tryTypeId = await findEventTypeIdByName('Try', this.token);
+    const tackleTypeId = await findEventTypeIdByName('Tackle completado', this.token);
+    const penalTypeId = await findEventTypeIdByName('Penal a los palos', this.token);
+
+    await fetch(`${BACKEND_URL}/event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` },
+      body: JSON.stringify({ eventTypeId: tryTypeId, matchId: match.id, teamPossession: 'OWN', matchTime: 300, period: 1, origin: 'live-capture' })
+    });
+    await fetch(`${BACKEND_URL}/event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` },
+      body: JSON.stringify({ eventTypeId: tackleTypeId, matchId: match.id, teamPossession: 'OPPONENT', matchTime: 600, period: 1, origin: 'live-capture' })
+    });
+    await fetch(`${BACKEND_URL}/event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` },
+      body: JSON.stringify({ eventTypeId: penalTypeId, matchId: match.id, teamPossession: 'OWN', matchTime: 1200, period: 1, origin: 'live-capture' })
+    });
+
     const closeRes = await fetch(`${BACKEND_URL}/matches/${match.id}/close-first-half`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${this.token}` }
     });
-    assert.equal(closeRes.status, 200, 'No se pudo cerrar el primer tiempo para dejarlo en entretiempo');
-    match = await closeRes.json();
+    const closeText = await closeRes.text();
+    assert.equal(closeRes.status, 200, `No se pudo cerrar el primer tiempo para dejarlo en entretiempo: ${closeText}`);
+    match = JSON.parse(closeText);
   }
 
   this.currentMatch = match;
@@ -158,6 +188,7 @@ Given('que existe un partido programado para la división {string} contra {strin
   const divisionId = await findDivisionIdByName(divisionNombre, this.token);
   assert.ok(divisionId, `No se encontró la división "${divisionNombre}"`);
 
+  const matchDate = matchDates[rival] || '2026-11-20T17:00:00';
   const createRes = await fetch(`${BACKEND_URL}/matches`, {
     method: 'POST',
     headers: {
@@ -165,12 +196,12 @@ Given('que existe un partido programado para la división {string} contra {strin
       'Authorization': `Bearer ${this.token}`
     },
     body: JSON.stringify({
-      date: '2026-11-20T17:00:00',
+      date: matchDate,
       divisionId: divisionId,
       opponent: rival
     })
   });
-  assert.equal(createRes.status, 200, 'No se pudo crear el partido programado');
+  assert.equal(createRes.status, 200, `No se pudo crear el partido programado contra ${rival}`);
   this.scheduledMatch = await createRes.json();
 });
 
@@ -205,6 +236,7 @@ Given('que el partido contra {string} se encuentra en el segundo tiempo', async 
   }
 
   if (!match) {
+    const matchDate = matchDates[rival] || '2026-10-23T15:30:00';
     const createRes = await fetch(`${BACKEND_URL}/matches`, {
       method: 'POST',
       headers: {
@@ -212,12 +244,12 @@ Given('que el partido contra {string} se encuentra en el segundo tiempo', async 
         'Authorization': `Bearer ${this.token}`
       },
       body: JSON.stringify({
-        date: '2026-10-15T15:30:00',
+        date: matchDate,
         divisionId: divisionId,
         opponent: rival
       })
     });
-    assert.equal(createRes.status, 200, 'No se pudo crear el partido base');
+    assert.equal(createRes.status, 200, `No se pudo crear el partido base contra ${rival}`);
     match = await createRes.json();
   }
 
@@ -237,7 +269,8 @@ Given('que el partido contra {string} se encuentra en el segundo tiempo', async 
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${this.token}` }
     });
-    assert.equal(closeRes.status, 200, 'No se pudo cerrar 1T');
+    const closeText = await closeRes.text();
+    assert.equal(closeRes.status, 200, `No se pudo cerrar 1T: ${closeText}`);
     match.status = 'HALFTIME';
   }
 

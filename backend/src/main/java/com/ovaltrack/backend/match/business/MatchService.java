@@ -27,6 +27,11 @@ import com.ovaltrack.backend.match.domain.dto.RosterDTO;
 import com.ovaltrack.backend.match.repository.MatchPlayerRepository;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.core.Authentication;
+import com.ovaltrack.backend.common.config.exceptions.EntityNotFoundException;
+import com.ovaltrack.backend.match.domain.event.MatchPeriodClosedEvent;
+
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -46,6 +51,8 @@ public class MatchService {
     private MatchPlayerRepository matchPlayerRepository;
 
 	private final MatchRepository matchRepository;
+	private final MatchSecurityValidator matchSecurityValidator;
+	private final ApplicationEventPublisher eventPublisher;
 
 	//TODO: Exceptions for non-existent club and non-existent division
 	private final ClubService clubService;
@@ -219,6 +226,52 @@ public class MatchService {
                 .toList();
 
         return new RosterDTO(startingPlayers, substitutePlayers);
+    }
+
+    @Transactional
+    public MatchResponseDTO closeFirstHalf(UUID matchId, Authentication authentication) {
+        Match match = findMatchEntityById(matchId);
+        if (match == null) {
+            throw new EntityNotFoundException("Partido no encontrado");
+        }
+
+        matchSecurityValidator.validateCanManageMatch(match, authentication);
+
+        if (match.getStatus() == MatchStatus.HALFTIME || (match.getCurrentPeriod() != null && match.getCurrentPeriod() == 2)) {
+            throw new BusinessException("El primer tiempo ya ha sido cerrado");
+        }
+
+        if (match.getStatus() != MatchStatus.IN_PROGRESS) {
+            throw new BusinessException("El partido no se encuentra en curso en el primer tiempo");
+        }
+
+        match.setStatus(MatchStatus.HALFTIME);
+        match.setCurrentPeriod(1);
+        Match updated = matchRepository.save(match);
+
+        eventPublisher.publishEvent(new MatchPeriodClosedEvent(updated.getId(), 1, LocalDateTime.now()));
+
+        return MatchDTOMapper.toResponseDTO(updated);
+    }
+
+    @Transactional
+    public MatchResponseDTO startSecondHalf(UUID matchId, Authentication authentication) {
+        Match match = findMatchEntityById(matchId);
+        if (match == null) {
+            throw new EntityNotFoundException("Partido no encontrado");
+        }
+
+        matchSecurityValidator.validateCanManageMatch(match, authentication);
+
+        if (match.getStatus() != MatchStatus.HALFTIME) {
+            throw new BusinessException("El partido no se encuentra en el entretiempo");
+        }
+
+        match.setStatus(MatchStatus.IN_PROGRESS);
+        match.setCurrentPeriod(2);
+        Match updated = matchRepository.save(match);
+
+        return MatchDTOMapper.toResponseDTO(updated);
     }
 }
 

@@ -35,6 +35,11 @@ public class Match {
     @Enumerated(EnumType.STRING)
     private MatchStatus status;
 
+    @Column(name = "current_period", nullable = false)
+    @Builder.Default
+    private Integer currentPeriod = 1;
+
     @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<MatchPlayer> roster = new ArrayList<>();
 }
