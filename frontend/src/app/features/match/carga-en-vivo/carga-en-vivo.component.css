@@ -677,24 +677,31 @@
 
 @media (max-width: 768px) {
 	.live-capture__header {
-		align-items: stretch;
-		gap: calc(var(--ot-stack-compact) * 1.5);
-		flex-direction: column;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+		grid-template-rows: auto auto;
+		align-items: center;
 	}
 
 	.live-capture__brand {
-		justify-content: center;
+		justify-content: flex-start;
+		grid-column: 1;
+		grid-row: 1;
+	}
+
+	.live-capture__brand-icon {
+		width: 160px;
+		height: 58px;
 	}
 
 	.live-capture__scoreboard {
-		justify-content: space-between;
-		gap: var(--ot-stack-compact);
-		min-width: 0;
 		position: static;
 		transform: none;
-		width: 100%;
-		order: 2;
-	}
+		width: auto;
+		grid-column: 2;
+		grid-row: 1;
+		justify-content: center;
+    }
 
 	.live-capture__score {
 		min-width: 0;
@@ -709,8 +716,9 @@
 
 	.live-capture__actions {
 		width: 100%;
+		grid-column: 1 / -1;
+		grid-row: 2;
 		justify-content: stretch;
-		order: 3;
 		gap: calc(6px * var(--ot-live-scale));
 	}
 
