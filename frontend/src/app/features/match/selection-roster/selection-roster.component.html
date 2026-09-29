@@ -1,14 +1,12 @@
 <section class="roster-container">
   <header class="roster-header">
-    <button class="btn-back" (click)="goBack()">
-      <i class="ti ti-arrow-left"></i> Volver
-    </button>
+    
     <h1>Armar Plantel</h1>
     <div class="tabs">
       <button [class.active]="currentStep === 'titulares'" (click)="goToTitulares()">Titulares</button>
       <button [class.active]="currentStep === 'suplentes'" (click)="goToSuplentes()">Suplentes</button>
+      <button class="btn-primary" (click)="goBack()"> <i class="ti ti-arrow-left"></i> Volver</button>
     </div>
-    
   </header>
 
   @if (currentStep === 'titulares') {
