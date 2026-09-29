@@ -1,6 +1,10 @@
 <div class="post-match-container">
   <h2>Mi Club vs {{ opponent }}</h2>
-  
+  <div class="hud-actions">
+      <button type="button" class="btn btn-invite" (click)="comeBack()">
+        Volver atras
+      </button>
+    </div>
   <p *ngIf="timelineTracks.length === 0">No hay eventos para mostrar.</p>
   
   <div class="timeline-board" *ngIf="timelineTracks.length > 0">
