@@ -1,7 +1,9 @@
 package com.ovaltrack.backend.statistic.domain.dto;
 
 import java.util.UUID;
+import lombok.Builder;
 
+@Builder(builderClassName = "Builder", toBuilder = true)
 public record PeriodStatisticDTO(
     UUID matchId,
     Integer period,
