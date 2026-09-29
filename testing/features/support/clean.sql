@@ -1,14 +1,14 @@
--- Limpieza de la base de datos para pruebas automatizadas.
--- La estructura se conserva; solo se eliminan los datos.
+-- OvalTrack - Limpieza de datos
+-- Vacia todas las tablas preservando la estructura, tablas y restricciones.
+-- =========================================================================
 
-TRUNCATE TABLE
+TRUNCATE TABLE 
     events,
     event_types,
     matches,
     division_players,
     division_coaches,
     divisions,
-    registration_requests,
     clubs,
     users,
     persons

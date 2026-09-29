@@ -53,6 +53,9 @@ public class PersonService {
     }
 
     public Person findPersonEntityById(UUID personId) {
+        if (personId == null) {
+            return null;
+        }
         return personRepository.findById(personId).orElse(null);
     }
 
