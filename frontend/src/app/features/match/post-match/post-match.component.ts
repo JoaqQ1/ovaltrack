@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatchService } from '../services/match.service';
+import { EventService } from '../services/event.service';
+import { EventTypeService } from '../services/event-type.service';
 import { PersonService } from 'src/app/services/person.service';
 
 @Component({
@@ -15,6 +17,8 @@ export class PostMatchComponent implements OnInit{
 
   private route = inject(ActivatedRoute);
   private matchService = inject(MatchService);
+  private eventService = inject(EventService);
+  private eventTypeService = inject(EventTypeService);
   private personService = inject(PersonService);
   private readonly router = inject(Router);
 
@@ -46,7 +50,7 @@ export class PostMatchComponent implements OnInit{
   }
 
   loadEventTypesAndEvents(): void {
-    this.matchService.getEventTypes().subscribe({
+    this.eventTypeService.getAll().subscribe({
       next: (types) => {
         types.forEach(type => {
           this.eventTypesDiccionario[type.id] = type.name; 
@@ -59,7 +63,7 @@ export class PostMatchComponent implements OnInit{
   }
 
   loadEvents(): void {
-    this.matchService.getEventsMatch(this.matchId).subscribe({
+    this.eventService.getByMatch(this.matchId).subscribe({
       next: (data) => {
         this.events = data;
         this.buildTimeline();

@@ -5,10 +5,10 @@ import {
   EventVariant,
   HistoryItem,
   LiveCapturePersistedState,
-  LiveCaptureEventType,
-  LocalMatchEvent,
   Possession,
 } from '../types/live-capture.types';
+import { LiveCaptureEventType } from '../types/event-type.types';
+import { LocalMatchEvent } from '../types/event.types';
 import { LiveCaptureService } from '../services/live-capture.service';
 
 /**

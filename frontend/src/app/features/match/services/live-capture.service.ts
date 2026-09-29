@@ -1,20 +1,14 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, defer, firstValueFrom, from } from 'rxjs';
-import {
-  liveCaptureDatabase,
-  matchDatabase,
-  seedEventTypes,
-} from '../data/local-databases';
+import { Observable, catchError, defer, firstValueFrom, from } from 'rxjs';
 import {
   LiveCaptureBootstrap,
   LiveCapturePersistedState,
   LiveCaptureQuery,
-  LocalMatchEvent,
 } from '../types/live-capture.types';
-import { Match } from '../types/match.types';
+import { LocalMatchEvent } from '../types/event.types';
 import { MatchStatus } from '../types/match.types';
-import { environment } from '../../../../environments/environment';
-import { HttpClient } from '@angular/common/http';
+import { LiveCaptureCacheService } from './live-capture-cache.service';
+import { MatchService } from './match.service';
 
 const HOME_TEAM_NAME = 'PMRC';
 
@@ -30,24 +24,27 @@ export const LIVE_CAPTURE_BACKEND_CONTRACT = [
   providedIn: 'root',
 })
 export class LiveCaptureService {
+  private readonly cache = inject(LiveCaptureCacheService);
+  private readonly matchService = inject(MatchService);
+
   getLiveCaptureBootstrap(query: LiveCaptureQuery): Observable<LiveCaptureBootstrap> {
     return defer(() => from(this.readBootstrap(query)));
   }
 
   saveLiveCaptureState(state: LiveCapturePersistedState): Observable<void> {
-    return defer(() => from(this.writeState(state)));
+    return defer(() => from(this.cache.saveState(state)));
   }
 
   saveEvent(event: LocalMatchEvent): Observable<LocalMatchEvent> {
-    return defer(() => from(this.writeEvent(event)));
+    return defer(() => from(this.cache.saveEvent(event)));
   }
 
   deleteEvent(eventId: string): Observable<void> {
-    return defer(() => from(this.removeEvent(eventId)));
+    return defer(() => from(this.cache.deleteEvent(eventId)));
   }
 
   deleteMatchData(matchId: string): Observable<void> {
-    return defer(() => from(this.removeMatchData(matchId)));
+    return defer(() => from(this.cache.deleteMatchData(matchId)));
   }
 
   getMatchStatus(matchId: string): Observable<MatchStatus> {
@@ -55,7 +52,9 @@ export class LiveCaptureService {
   }
 
   private async readBootstrap(query: LiveCaptureQuery): Promise<LiveCaptureBootstrap> {
-    const match = await this.readMatch(query.matchId);
+    const match = await firstValueFrom(this.matchService.getMatchById(query.matchId).pipe(
+      catchError(() => from(this.cache.getMatch(query.matchId)))
+    ));
     if (!match) {
       throw new Error(`Match ${query.matchId} was not found`);
     }
@@ -66,12 +65,7 @@ export class LiveCaptureService {
       ...query,
       divisionId: match.divisionId,
     };
-    await seedEventTypes();
-    const [persistedState, eventTypes, events] = await Promise.all([
-      liveCaptureDatabase.states.get(query.matchId),
-      liveCaptureDatabase.eventTypes.toArray(),
-      liveCaptureDatabase.events.where('matchId').equals(query.matchId).sortBy('localSequence'),
-    ]);
+    const { persistedState, eventTypes, events } = await this.cache.getBootstrapData(query);
 
     return {
       query: resolvedQuery,
@@ -93,31 +87,9 @@ export class LiveCaptureService {
     };
   }
 
-  // Asegúrate de inyectar HttpClient si no lo tienes en esta clase
-  private readonly http = inject(HttpClient);
-
-  private async readMatch(matchId: string): Promise<Match | undefined> {
-    try {
-      // Buscamos el partido directamente en PostgreSQL a través de Spring Boot
-      const match = await firstValueFrom(
-        this.http.get<Match>(`${environment.apiUrl}/matches/${matchId}`)
-      );
-      return match;
-    } catch (err) {
-      // Fallback temporal por si quedó algún dato viejo en Dexie
-      return matchDatabase.matches.get(matchId);
-    }
-  }
-
-  private async writeState(state: LiveCapturePersistedState): Promise<void> {
-    await liveCaptureDatabase.states.put(state);
-  }
-
   private readLiveCaptureStatus(matchId: string): Promise<MatchStatus> {
-    return Promise.all([
-      liveCaptureDatabase.states.get(matchId),
-      liveCaptureDatabase.events.where('matchId').equals(matchId).toArray(),
-    ]).then(([state, events]) => this.resolveMatchStatus(state, events));
+    return this.cache.getStatusData(matchId)
+      .then(({ state, events }) => this.resolveMatchStatus(state, events));
   }
 
   private resolveMatchStatus(
@@ -135,23 +107,4 @@ export class LiveCaptureService {
     return 'not_started';
   }
 
-  private writeEvent(event: LocalMatchEvent): Promise<LocalMatchEvent> {
-    return liveCaptureDatabase.events.put(event).then(() => event);
-  }
-
-  private removeEvent(eventId: string): Promise<void> {
-    return liveCaptureDatabase.events.delete(eventId);
-  }
-
-  private async removeMatchData(matchId: string): Promise<void> {
-    await liveCaptureDatabase.transaction(
-      'rw',
-      liveCaptureDatabase.states,
-      liveCaptureDatabase.events,
-      async () => {
-        await liveCaptureDatabase.states.delete(matchId);
-        await liveCaptureDatabase.events.where('matchId').equals(matchId).delete();
-      },
-    );
-  }
 }
