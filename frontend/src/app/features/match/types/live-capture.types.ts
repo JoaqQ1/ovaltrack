@@ -103,6 +103,7 @@ export interface LiveCaptureState {
   clockPaused: boolean;
   currentPossession: Possession;
   synchronized: boolean;
+  isHalftime?: boolean;
   history: HistoryItem[];
 }
 
@@ -113,6 +114,7 @@ export interface LiveCapturePersistedState {
   periodLabel: string;
   synchronized: boolean;
   clockPaused: boolean;
+  isHalftime?: boolean;
   pendingSelection: {
     event: LiveCaptureEventType;
     eventId: string;

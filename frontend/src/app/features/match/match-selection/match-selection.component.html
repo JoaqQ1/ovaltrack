@@ -56,7 +56,7 @@
       <div class="match-card-shell">
         <div class="match-card-header">
           <span class="status-pill status-{{ match.status }}">
-            @if (match.status === 'in_progress') {
+            @if (match.status === 'in_progress' || match.status === 'halftime') {
               <span class="status-dot-pulse"></span>
             } @else {
               <span class="status-dot"></span>

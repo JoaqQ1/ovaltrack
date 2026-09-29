@@ -74,6 +74,10 @@ export class MatchSelectComponent implements OnInit {
       return this.matches.filter(match => match.status !== 'cancelled');
     }
 
+    if (this.activeFilter === 'in_progress') {
+      return this.matches.filter(match => match.status === 'in_progress' || match.status === 'halftime');
+    }
+
     return this.matches.filter(match => match.status === this.activeFilter);
   }
 

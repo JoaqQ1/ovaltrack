@@ -4,6 +4,7 @@ import { Observable, catchError, map, of, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { BackendMatchResponse, Match, MatchStatus, NewMatchDraft } from '../types/match.types';
 import { BackendRosterResponse, RosterPayload, SavedRoster } from '../types/roster.types';
+import { PeriodStatisticDTO } from '../types/statistic.types';
 import { TEMPORARY_DIVISION_ID } from '../data/match.constants';
 
 @Injectable({ providedIn: 'root' })
@@ -11,8 +12,8 @@ export class MatchService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/matches`;
 
-  getMatches(): Observable<Match[]> {
-    return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${TEMPORARY_DIVISION_ID}`).pipe(
+  getMatches(divisionId: string = TEMPORARY_DIVISION_ID): Observable<Match[]> {
+    return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${divisionId}`).pipe(
       map(matches => matches.map(match => ({
           ...match,
           status: this.normalizeStatus(match.status),
@@ -22,14 +23,14 @@ export class MatchService {
     );
   }
 
-  createMatch(draft: NewMatchDraft): Observable<Match> {
+  createMatch(draft: NewMatchDraft, divisionId: string = TEMPORARY_DIVISION_ID): Observable<Match> {
     const formattedDate = draft.date.includes('T')
       ? draft.date
       : `${draft.date}T00:00:00`;
 
     const payload = {
       date: formattedDate,
-      divisionId: TEMPORARY_DIVISION_ID,
+      divisionId: divisionId,
       opponent: draft.opponent.trim()
     };
 
@@ -41,6 +42,18 @@ export class MatchService {
         date: match.date ?? ''
       }))
     );
+  }
+
+  closeFirstHalf(matchId: string): Observable<BackendMatchResponse> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/close-first-half`, {});
+  }
+
+  startSecondHalf(matchId: string): Observable<BackendMatchResponse> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start-second-half`, {});
+  }
+
+  getPeriodStatistics(matchId: string, period: number = 1): Observable<PeriodStatisticDTO> {
+    return this.http.get<PeriodStatisticDTO>(`${environment.apiUrl}/statistics/match/${matchId}?period=${period}`);
   }
 
   private normalizeStatus(status: BackendMatchResponse['status']): MatchStatus {
