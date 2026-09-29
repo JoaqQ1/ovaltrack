@@ -1,23 +1,23 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, from, map, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { BackendMatchResponse, Match, MatchStatus, NewMatchDraft } from '../types/match.types';
 import { TEMPORARY_DIVISION_ID } from '../data/match.constants';
+import { LiveCaptureCacheService } from './live-capture-cache.service';
 
 @Injectable({ providedIn: 'root' })
 export class MatchService {
   private readonly http = inject(HttpClient);
+  private readonly cache = inject(LiveCaptureCacheService);
   private readonly apiUrl = `${environment.apiUrl}/matches`;
 
   getMatches(): Observable<Match[]> {
     return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${TEMPORARY_DIVISION_ID}`).pipe(
-      map(matches => matches.map(match => ({
-          ...match,
-          status: this.normalizeStatus(match.status),
-          opponent: match.opponent ?? '',
-          date: match.date ?? ''
-        })))
+      map(matches => matches.map(match => this.normalizeMatch(match))),
+      switchMap(matches => from(this.cache.saveMatches(matches)).pipe(
+        map(() => matches)
+      ))
     );
   }
 
@@ -33,13 +33,20 @@ export class MatchService {
     };
 
     return this.http.post<BackendMatchResponse>(this.apiUrl, payload).pipe(
-      map(match => ({
-        ...match,
-        status: this.normalizeStatus(match.status),
-        opponent: match.opponent ?? '',
-        date: match.date ?? ''
-      }))
+      map(match => this.normalizeMatch(match)),
+      switchMap(match => from(this.cache.saveMatches([match])).pipe(
+        map(() => match)
+      ))
     );
+  }
+
+  private normalizeMatch(match: BackendMatchResponse): Match {
+    return {
+      ...match,
+      status: this.normalizeStatus(match.status),
+      opponent: match.opponent ?? '',
+      date: match.date ?? ''
+    };
   }
 
   private normalizeStatus(status: BackendMatchResponse['status']): MatchStatus {
@@ -51,7 +58,12 @@ export class MatchService {
   }
 
   getMatchById(matchId: string): Observable<Match>{
-    return this.http.get<Match>(`${environment.apiUrl}/matches/${matchId}`);
+    return this.http.get<BackendMatchResponse>(`${this.apiUrl}/${matchId}`).pipe(
+      map(match => this.normalizeMatch(match)),
+      switchMap(match => from(this.cache.saveMatches([match])).pipe(
+        map(() => match)
+      ))
+    );
   }
 
 }

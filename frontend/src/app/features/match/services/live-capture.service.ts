@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, defer, firstValueFrom, from } from 'rxjs';
+import { Observable, defer, firstValueFrom, from } from 'rxjs';
 import {
   LiveCaptureBootstrap,
   LiveCapturePersistedState,
@@ -52,12 +52,7 @@ export class LiveCaptureService {
   }
 
   private async readBootstrap(query: LiveCaptureQuery): Promise<LiveCaptureBootstrap> {
-    const match = await firstValueFrom(this.matchService.getMatchById(query.matchId).pipe(
-      catchError(() => from(this.cache.getMatch(query.matchId)))
-    ));
-    if (!match) {
-      throw new Error(`Match ${query.matchId} was not found`);
-    }
+    const match = await firstValueFrom(this.matchService.getMatchById(query.matchId));
     if (match.status === 'cancelled') {
       throw new Error(`Match ${query.matchId} was cancelled`);
     }
