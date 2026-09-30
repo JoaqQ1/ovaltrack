@@ -1,15 +1,20 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
   EventCategoryGroup,
   EventVariant,
   HistoryItem,
   LiveCapturePersistedState,
-  LiveCaptureEventType,
-  LocalMatchEvent,
   Possession,
 } from '../types/live-capture.types';
+import { LiveCaptureEventType } from '../types/event-type.types';
+import { LocalMatchEvent } from '../types/event.types';
 import { LiveCaptureService } from '../services/live-capture.service';
+import { MatchService } from '../services/match.service';
+import { StatisticCalculationService } from '../services/statistic-calculation.service';
+import { HalftimeStatsModalComponent } from './components/halftime-stats-modal/halftime-stats-modal.component';
+import { PeriodStatisticDTO } from '../types/statistic.types';
 
 /**
  * Representa un evento que ya fue tocado pero todavía está esperando a que
@@ -60,12 +65,15 @@ const POSSESSIONS: readonly Possession[] = ['OWN', 'NEUTRAL', 'OPPONENT'] as con
 @Component({
   selector: 'ot-live-capture',
   standalone: true,
+  imports: [CommonModule, HalftimeStatsModalComponent],
   templateUrl: './carga-en-vivo.component.html',
   styleUrl: './carga-en-vivo.component.css'
 })
 export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   private readonly liveCaptureService = inject(LiveCaptureService);
+  private readonly matchService = inject(MatchService);
+  private readonly statisticCalculationService = inject(StatisticCalculationService);
   private readonly route = inject(ActivatedRoute, { optional: true });
   private matchId = '';
 
@@ -74,6 +82,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   /** Números de camiseta del 1 al 15, renderizados en ambas columnas de jugadores. */
   readonly numeracionColumna = Array.from({ length: 15 }, (_, index) => index + 1);
+
+  readonly periods = ['inicio', '1er tiempo', '2do tiempo'];
 
   homeTeam = '';
   awayTeam = '';
@@ -84,6 +94,15 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   synchronized = false;
   clockPaused = false;
   historyVisible = false;
+
+  isHalftime = false;
+  showConfirmHalftime = false;
+  showConfirmFinish = false;
+  isFinished = false;
+  showHalftimeModal = false;
+  isCalculatingStats = false;
+  isOfflineMode = false;
+  halftimeStats: PeriodStatisticDTO | null = null;
 
   private clockElapsedSeconds = 0;
   private clockStartedAt: number | null = null;
@@ -132,7 +151,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.scoreboard = { ...state.scoreboard };
         this.gameClock = state.gameClock;
         this.period = state.period ?? 1;
-        this.periodLabel = state.periodLabel;
+        this.isHalftime = state.isHalftime ?? false;
+        this.periodLabel = state.periodLabel || (this.isHalftime ? 'Entretiempo' : (this.period === 2 ? '2T' : '1T'));
         this.synchronized = state.synchronized;
         this.clockPaused = state.clockPaused;
         this.clockElapsedSeconds = this.parseClock(state.gameClock);
@@ -142,7 +162,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.rebuildStateFromEvents();
 
         if (!this.restorePersistedState(response.persistedState)) {
-          if (!this.clockPaused) {
+          if (!this.clockPaused && !this.isHalftime) {
             this.startClock();
           }
           this.persistState();
@@ -261,7 +281,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       teamPossession: this.currentPossession,
       matchTime: this.parseClock(this.gameClock),
       realTime: timestamp,
-      period: null,
+      period: this.period,
       origin: 'live-capture',
       attributes: player == null ? null : { playerNumber: player },
       createdAt: timestamp,
@@ -270,10 +290,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     };
 
     this.liveCaptureService.saveEvent(localEvent).subscribe({
-      next: () => {
-        this.events = [...this.events, localEvent];
+      next: savedEvent => {
+        this.events = [...this.events, savedEvent];
         this.rebuildStateFromEvents();
-        this.synchronized = false;
+        this.synchronized = true;
         this.persistState();
       },
       error: () => {
@@ -326,6 +346,125 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.persistState();
   }
 
+  onPeriodButtonClick(): void {
+    if (this.isFinished) {
+      return;
+    }
+
+    if (this.period === 1 && !this.isHalftime) {
+      this.showConfirmHalftime = true;
+    } else if (this.isHalftime) {
+      this.openHalftimeModal();
+    } else if (this.period === 2) {
+      this.showConfirmFinish = true;
+    }
+  }
+
+  cancelConfirmHalftime(): void {
+    this.showConfirmHalftime = false;
+  }
+
+  cancelConfirmFinish(): void {
+    this.showConfirmFinish = false;
+  }
+
+  confirmFinishMatch(): void {
+    this.showConfirmFinish = false;
+    this.stopClock();
+    this.clockPaused = true;
+    this.clockElapsedSeconds = this.parseClock(this.gameClock);
+    this.persistState();
+
+    this.matchService.finishMatch(this.matchId).subscribe({
+      next: () => {
+        this.isFinished = true;
+        this.synchronized = true;
+        this.isOfflineMode = false;
+      },
+      error: () => {
+        this.synchronized = false;
+        this.errorMessage = 'No se pudo finalizar el partido. Inténtalo nuevamente.';
+      },
+    });
+  }
+
+  async confirmCloseFirstHalf(): Promise<void> {
+    this.showConfirmHalftime = false;
+    this.isHalftime = true;
+    this.periodLabel = 'Entretiempo';
+
+    // 1. Pausar el reloj inmediatamente
+    this.stopClock();
+    this.clockPaused = true;
+    this.clockElapsedSeconds = this.parseClock(this.gameClock);
+
+    // 2. Persistir localmente
+    this.persistState();
+
+    // 3. Abrir el modal y calcular estadísticas tácticas
+    await this.openHalftimeModal();
+
+    // 4. Sincronizar en segundo plano con el backend
+    this.matchService.closeFirstHalf(this.matchId).subscribe({
+      next: () => {
+        this.synchronized = true;
+        this.isOfflineMode = false;
+      },
+      error: () => {
+        // En offline la experiencia continúa sin interrupciones
+        this.synchronized = false;
+        this.isOfflineMode = true;
+      },
+    });
+  }
+
+  async openHalftimeModal(): Promise<void> {
+    this.showHalftimeModal = true;
+    this.isCalculatingStats = true;
+
+    try {
+      const allEventTypes = this.categories.flatMap(category => category.events);
+      this.halftimeStats = await this.statisticCalculationService.calculatePeriodStatistics(
+        this.matchId,
+        1,
+        this.events,
+        allEventTypes
+      );
+    } catch (error) {
+      console.error('Error al calcular estadísticas tácticas:', error);
+    } finally {
+      this.isCalculatingStats = false;
+    }
+  }
+
+  closeHalftimeModal(): void {
+    this.showHalftimeModal = false;
+  }
+
+  onStartSecondHalf(): void {
+    this.showHalftimeModal = false;
+    this.isHalftime = false;
+    this.period = 2;
+    this.periodLabel = '2T';
+
+    // En rugby profesional el reloj del segundo tiempo continúa acumulado desde 40:00 (2400s)
+    this.clockElapsedSeconds = Math.max(2400, this.parseClock(this.gameClock));
+    this.gameClock = this.formatClock(this.clockElapsedSeconds);
+    this.clockPaused = false;
+    this.startClock();
+
+    this.persistState();
+
+    this.matchService.startSecondHalf(this.matchId).subscribe({
+      next: () => {
+        this.synchronized = true;
+      },
+      error: () => {
+        this.synchronized = false;
+      },
+    });
+  }
+
   private startClock(): void {
     this.stopClock();
     this.clockStartedAt = Date.now();
@@ -364,6 +503,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       gameClock: this.gameClock,
       periodLabel: this.periodLabel,
       period: this.period,
+      isHalftime: this.isHalftime,
       synchronized: this.synchronized,
       clockPaused: this.clockPaused,
       pendingSelection: this.pendingSelection
@@ -389,6 +529,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     this.period = state.period;
     this.periodLabel = state.periodLabel;
+    this.isHalftime = state.isHalftime ?? (state.periodLabel === 'Entretiempo');
     this.synchronized = state.synchronized;
     this.pendingSelection = state.pendingSelection
       ? { ...state.pendingSelection, event: { ...state.pendingSelection.event } }
@@ -620,5 +761,23 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
         return categories;
       }, []);
+  }
+
+  togglePeriod() {
+    if (this.period >= this.periods.length) {
+      return;
+    }
+
+    this.period += 1;
+    this.periodLabel = this.periods[this.period - 1];
+    this.pendingSelection = null;
+    this.synchronized = false;
+
+    if (this.period === this.periods.length) {
+      this.clockPaused = true;
+      this.stopClock();
+    }
+
+    this.persistState();
   }
 }

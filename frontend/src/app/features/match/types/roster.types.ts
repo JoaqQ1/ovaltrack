@@ -1,3 +1,10 @@
+export interface AvailablePlayer {
+  id: string;
+  fullName: string;
+  jerseyNumber: number | null;
+  position: string | null;
+}
+
 export interface RosterPayload {
   matchId: string;
   startingPlayers: string[];

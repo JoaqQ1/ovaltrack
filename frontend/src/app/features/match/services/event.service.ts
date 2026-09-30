@@ -1,0 +1,41 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+import { BackendEventCreationRequest, BackendEventResponse, LocalMatchEvent } from '../types/event.types';
+
+@Injectable({ providedIn: 'root' })
+export class EventService {
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/event`;
+
+  getByMatch(matchId: string): Observable<BackendEventResponse[]> {
+    return this.http.get<BackendEventResponse[]>(`${this.apiUrl}/match?matchId=${matchId}`);
+  }
+
+  create(request: BackendEventCreationRequest): Observable<BackendEventResponse> {
+    return this.http.post<BackendEventResponse>(this.apiUrl, request);
+  }
+
+  createFromLocal(event: LocalMatchEvent): Observable<BackendEventResponse> {
+    const request: BackendEventCreationRequest = {
+      eventTypeId: event.eventTypeId,
+      matchId: event.matchId,
+      clientEventId: event.id,
+      playerId: event.playerId,
+      teamPossession: event.teamPossession,
+      matchTime: event.matchTime,
+      realTime: event.realTime,
+      period: event.period,
+      origin: event.origin,
+      attributes: event.attributes ?? undefined,
+      synchronizedAt: event.synchronizedAt,
+    };
+
+    return this.create(request);
+  }
+
+  delete(eventId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${eventId}`);
+  }
+}

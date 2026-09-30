@@ -1,7 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { switchMap } from 'rxjs';
 import { MatchService } from '../services/match.service';
+import { RosterService } from '../services/roster.service';
 
 interface RosterSlot {
   number: number;
@@ -20,6 +22,7 @@ export class SelectionRosterComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private matchService = inject(MatchService);
+  private rosterService = inject(RosterService);
 
   matchId = '';
   currentStep: 'titulares' | 'suplentes' = 'titulares';
@@ -62,7 +65,7 @@ export class SelectionRosterComponent implements OnInit {
   }
 
   loadData(): void {
-    this.matchService.getAvailablePlayers(this.matchId).subscribe({
+    this.rosterService.getAvailablePlayers(this.matchId).subscribe({
       next: (players) => {
         this.availablePlayers = players;
         this.loadSavedRoster();
@@ -74,7 +77,7 @@ export class SelectionRosterComponent implements OnInit {
   }
 
   loadSavedRoster(): void {
-    this.matchService.getSavedRoster(this.matchId).subscribe({
+    this.rosterService.getSavedRoster(this.matchId).subscribe({
       next: (savedRoster) => {
         if (savedRoster) {
           this.populateSlots(savedRoster.startingPlayers, this.titularesSlots);
@@ -164,11 +167,13 @@ export class SelectionRosterComponent implements OnInit {
       substitutePlayers: suplentesIds
     };
 
-    this.matchService.saveRoster(payload).subscribe({
-      next: (response) => {
-        console.log('Plantel guardado con éxito', response);
+    this.rosterService.saveRoster(payload).pipe(
+      switchMap(() => this.matchService.startMatch(this.matchId))
+    ).subscribe({
+      next: () => {
+        console.log('Plantel guardado y partido iniciado con éxito');
         alert('¡Plantel guardado! Iniciando partido...');
-        this.router.navigate(['/live-capture', this.matchId]); 
+        this.router.navigate(['/match-selection']); 
       },
       error: (err) => {
         console.error('Error al guardar el plantel:', err);

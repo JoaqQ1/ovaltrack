@@ -1,4 +1,4 @@
-import { LiveCaptureEventType } from '../types/live-capture.types';
+import { LiveCaptureEventType } from '../types/event-type.types';
 
 /** Catálogo local temporal de tipos de evento hasta conectarlo al backend. */
 export const LIVE_CAPTURE_EVENT_TYPES: LiveCaptureEventType[] = [

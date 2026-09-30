@@ -56,7 +56,7 @@
       <div class="match-card-shell">
         <div class="match-card-header">
           <span class="status-pill status-{{ match.status }}">
-            @if (match.status === 'in_progress') {
+            @if (match.status === 'in_progress' || match.status === 'halftime') {
               <span class="status-dot-pulse"></span>
             } @else {
               <span class="status-dot"></span>
@@ -99,23 +99,26 @@
               <span>{{ formatMatchDate(match.date) }}</span>
             </div>
 
-            @if (match.score) {
+            @if (match.status !== 'not_started') {
               <div class="match-score-badge">
-                <span>{{ match.score.home }} – {{ match.score.away }}</span>
+                <span>{{ match.homeScore}} – {{ match.awayScore }}</span>
               </div>
             }
           </div>
-
           <div class="match-card-action">
-            <span>
-              @if (match.status === 'not_started') {
-                Definir alineación →
-              } @else if (match.status === 'in_progress') {
-                Capturar en vivo →
-              } @else {
-                Ver resumen →
-              }
-            </span>
+            @if (match.status === 'not_started') {
+              <div class="match-actions-group">
+                <span class="action-link">Definir alineación →</span>
+                <button
+                  type="button"
+                  class="btn btn-invite"
+                  (click)="startMatch(match.id); $event.stopPropagation()">
+                  Empezar partido
+                </button>
+              </div>
+            } @else {
+              <span>Capturar en vivo →</span>
+            }
           </div>
         </button>
       </div>

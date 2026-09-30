@@ -103,6 +103,23 @@
   border-color: #fecdca;
 }
 
+.match-actions-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.75rem;
+}
+
+.action-link {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.btn-start-match:active {
+  transform: scale(0.97);
+}
+
 .match-card-body {
   background: transparent;
   border: none;
@@ -204,6 +221,12 @@
   background: #fef08a;
   color: #854d0e;
   border: 1px solid rgba(202, 138, 4, 0.4);
+}
+
+.status-halftime {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid rgba(2, 132, 199, 0.4);
 }
 
 .status-not_started {
