@@ -16,7 +16,7 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     @Query("SELECT e FROM Event e WHERE e.active = true AND e.match.division.id = :divisionId")
     Collection<Event> findEventsByDivisionId(@Param("divisionId") UUID divisionId);
 
-    @Query("SELECT e FROM Event e WHERE e.active = true AND e.match.id = :matchId ORDER BY e.period, e.matchTime, e.createdAt")
+    @Query("SELECT e FROM Event e WHERE e.active = true AND e.match.id = :matchId ORDER BY e.period, e.matchTime, e.realTime")
     Collection<Event> findEventsByMatchId(@Param("matchId") UUID matchId);
 
     @Query("SELECT e FROM Event e WHERE e.active = true AND e.id = :eventId AND e.match.id = :matchId")
