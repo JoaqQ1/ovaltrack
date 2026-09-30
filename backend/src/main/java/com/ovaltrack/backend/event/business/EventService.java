@@ -62,12 +62,12 @@ public class EventService {
 	}
 
 	public EventResponseDTO findEventById(UUID eventId) {
-		Event result = eventRepository.findById(eventId).orElse(null);
+		Event result = eventRepository.findActiveEventById(eventId);
 		return EventDTOMapper.toResponseDTO(result);
 	}
 
 	public Event findEventEntityById(UUID eventId) {
-		return eventRepository.findById(eventId).orElse(null);
+		return eventRepository.findActiveEventById(eventId);
 	}
 
 	@Transactional
