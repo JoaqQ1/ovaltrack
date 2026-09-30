@@ -43,7 +43,7 @@ export class MatchService {
       }))
     );
   }
-
+ 
   closeFirstHalf(matchId: string): Observable<BackendMatchResponse> {
     return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/close-first-half`, {});
   }
@@ -60,8 +60,12 @@ export class MatchService {
     return status.toLowerCase() as MatchStatus;
   }
 
-  deleteMatch(matchId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${matchId}/cancel`);
+  startMatch(matchId: string): Observable<BackendMatchResponse> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start`, {});
+  }
+
+  deleteMatch(matchId: string): Observable<BackendMatchResponse> {
+    return this.http.delete<BackendMatchResponse>(`${this.apiUrl}/${matchId}/cancel`);
   }
 
   getAvailablePlayers(matchId: string): Observable<unknown[]> {
