@@ -173,7 +173,7 @@ export class SelectionRosterComponent implements OnInit {
       next: () => {
         console.log('Plantel guardado y partido iniciado con éxito');
         alert('¡Plantel guardado! Iniciando partido...');
-        this.router.navigate(['/live-capture', this.matchId]); 
+        this.router.navigate(['/match-selection']); 
       },
       error: (err) => {
         console.error('Error al guardar el plantel:', err);

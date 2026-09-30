@@ -99,9 +99,9 @@
               <span>{{ formatMatchDate(match.date) }}</span>
             </div>
 
-            @if (match.score) {
+            @if (match.status !== 'not_started') {
               <div class="match-score-badge">
-                <span>{{ match.score.home }} – {{ match.score.away }}</span>
+                <span>{{ match.homeScore}} – {{ match.awayScore }}</span>
               </div>
             }
           </div>
@@ -109,17 +109,15 @@
             @if (match.status === 'not_started') {
               <div class="match-actions-group">
                 <span class="action-link">Definir alineación →</span>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   class="btn btn-invite"
                   (click)="startMatch(match.id); $event.stopPropagation()">
                   Empezar partido
                 </button>
               </div>
-            } @else if (match.status === 'in_progress') {
-              <span>Capturar en vivo →</span>
             } @else {
-              <span>Ver resumen →</span>
+              <span>Capturar en vivo →</span>
             }
           </div>
         </button>

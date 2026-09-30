@@ -7,14 +7,15 @@ export interface Match {
   divisionId: UUID;
   opponent: string;
   status: MatchStatus;
-  currentPeriod?: number;
-  clockElapsedSeconds?: number;
-  clockPaused?: boolean;
+  currentPeriod: number;
+  clockElapsedSeconds: number;
+  clockPaused: boolean;
   clockUpdatedAt?: string | null;
-  currentPossession?: 'OWN' | 'OPPONENT' | 'NEUTRAL';
-  homeScore?: number;
-  awayScore?: number;
-  score?: { home: number; away: number };
+  currentPossession: 'OWN' | 'OPPONENT' | 'NEUTRAL';
+  homeScore: number;
+  awayScore: number;
+  startedAt?: string | null;
+  finishedAt?: string | null;
 }
 
 /** Respuesta JSON de un partido según MatchResponseDTO. */
@@ -24,13 +25,13 @@ export interface BackendMatchResponse {
   divisionId: UUID;
   opponent: string | null;
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'HALFTIME' | 'FINISHED' | 'CANCELLED';
-  currentPeriod?: number;
-  clockElapsedSeconds?: number;
-  clockPaused?: boolean;
+  currentPeriod: number;
+  clockElapsedSeconds: number;
+  clockPaused: boolean;
   clockUpdatedAt?: string | null;
-  currentPossession?: 'OWN' | 'OPPONENT' | 'NEUTRAL';
-  homeScore?: number;
-  awayScore?: number;
+  currentPossession: 'OWN' | 'OPPONENT' | 'NEUTRAL';
+  homeScore: number;
+  awayScore: number;
   startedAt?: string | null;
   finishedAt?: string | null;
 }

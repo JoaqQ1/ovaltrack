@@ -172,7 +172,7 @@ export class MatchSelectComponent implements OnInit {
     } else{
       // Si ya está en progreso, va a la pantalla de la imagen
       void this.router.navigate(['/live-capture', match.id]);
-    
+
     }
 
   }
