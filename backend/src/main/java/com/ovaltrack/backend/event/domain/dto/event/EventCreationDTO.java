@@ -14,6 +14,8 @@ public record EventCreationDTO(
         
         @NotNull
         UUID matchId,
+
+        UUID clientEventId,
         
         UUID playerId,
 

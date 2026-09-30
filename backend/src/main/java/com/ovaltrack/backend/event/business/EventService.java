@@ -72,6 +72,11 @@ public class EventService {
 
 	@Transactional
 	public EventResponseDTO saveEvent(EventCreationDTO eventRequest) {
+		Event existingEvent = findExistingClientEvent(eventRequest.clientEventId(), eventRequest.matchId());
+		if (existingEvent != null) {
+			return EventDTOMapper.toResponseDTO(existingEvent);
+		}
+
 		EventType aEventType = eventTypeService.findEventTypeEntityById(eventRequest.eventTypeId());
 		if (aEventType == null) {
 			throw new BusinessException("No se puede crear un nuevo evento a partir de un tipo de evento que no existe");
@@ -87,6 +92,7 @@ public class EventService {
 		Person aPerson = resolveEventPlayer(eventRequest.playerId(), aMatch);
 
 		Event result = new Event();
+		result.setClientEventId(eventRequest.clientEventId());
 		result.setEventType(aEventType);
 		result.setMatch(aMatch);
 		result.setPlayer(aPerson);
@@ -102,6 +108,19 @@ public class EventService {
 		Event savedEvent = eventRepository.save(result);
 		recalculateMatchScore(aMatch);
 		return EventDTOMapper.toResponseDTO(savedEvent);
+	}
+
+	private Event findExistingClientEvent(UUID clientEventId, UUID matchId) {
+		if (clientEventId == null) {
+			return null;
+		}
+
+		Event existingEvent = eventRepository.findByClientEventId(clientEventId);
+		if (existingEvent != null && !existingEvent.getMatch().getId().equals(matchId)) {
+			throw new BusinessException("El identificador del evento ya pertenece a otro partido");
+		}
+
+		return existingEvent;
 	}
 
 	private Person resolveEventPlayer(UUID playerId, Match match) {

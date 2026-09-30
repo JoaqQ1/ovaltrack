@@ -14,6 +14,7 @@ ALTER TABLE matches ADD COLUMN IF NOT EXISTS home_score INTEGER NOT NULL DEFAULT
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_score INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS started_at TIMESTAMP;
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS finished_at TIMESTAMP;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS client_event_id UUID;
 
 -- =========================================
 -- PERSONS (30 personas en total)

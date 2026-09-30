@@ -21,6 +21,7 @@ export class EventService {
     const request: BackendEventCreationRequest = {
       eventTypeId: event.eventTypeId,
       matchId: event.matchId,
+      clientEventId: event.id,
       playerId: event.playerId,
       teamPossession: event.teamPossession,
       matchTime: event.matchTime,

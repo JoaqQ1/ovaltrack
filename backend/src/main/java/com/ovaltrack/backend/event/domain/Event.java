@@ -28,6 +28,9 @@ public class Event {
     @EqualsAndHashCode.Include
     private UUID id;
 
+    @Column(name = "client_event_id", unique = true)
+    private UUID clientEventId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_type_id", nullable = false)
     private EventType eventType;

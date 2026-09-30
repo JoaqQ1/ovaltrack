@@ -3,6 +3,7 @@ import { Possession } from './live-capture.types';
 
 export interface BackendEventResponse {
   id: UUID;
+  clientEventId?: UUID | null;
   eventTypeId: UUID;
   matchId: UUID;
   playerId: UUID | null;
@@ -19,6 +20,7 @@ export interface BackendEventResponse {
 export interface BackendEventCreationRequest {
   eventTypeId: UUID;
   matchId: UUID;
+  clientEventId?: UUID | null;
   playerId?: UUID | null;
   teamPossession?: Possession | null;
   matchTime?: number | null;

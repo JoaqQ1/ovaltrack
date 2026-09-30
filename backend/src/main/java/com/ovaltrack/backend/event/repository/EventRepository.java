@@ -25,4 +25,6 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     @Query("SELECT e FROM Event e WHERE e.active = true AND e.id = :eventId")
     Event findActiveEventById(@Param("eventId") UUID eventId);
 
+    Event findByClientEventId(UUID clientEventId);
+
 }
