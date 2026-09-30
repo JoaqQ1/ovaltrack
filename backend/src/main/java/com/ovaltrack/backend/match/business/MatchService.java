@@ -9,6 +9,9 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
 import com.ovaltrack.backend.club.business.ClubService;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
@@ -39,6 +42,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor 
 public class MatchService {
 
+    private static final Logger logger = LoggerFactory.getLogger(MatchService.class);
+
 	private static final int MATCH_DURATION_MINUTES = 90;
 
 	@Autowired 
@@ -54,7 +59,6 @@ public class MatchService {
 	private final MatchSecurityValidator matchSecurityValidator;
 	private final ApplicationEventPublisher eventPublisher;
 
-	//TODO: Exceptions for non-existent club and non-existent division
 	private final ClubService clubService;
 
 	public Collection<MatchResponseDTO> findAllMatchesByClubId(UUID clubId) {
@@ -119,56 +123,35 @@ public class MatchService {
 		return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
 	}
 
-	@Transactional
-    public Match startMatch(UUID matchId) {
-        Match aMatch = findMatchEntityById(matchId);
-        if (aMatch == null) {
-            throw new BusinessException("Partido no encontrado");
-        }
-
-        boolean hasTitular = aMatch.getRoster().stream()
-                .anyMatch(player -> player.getRole() == MatchPlayerRole.TITULAR);
-
-        if (!hasTitular) {
-            throw new BusinessException("No se puede iniciar el partido sin al menos un jugador titular registrado.");
-        }
-
-        aMatch.setStatus(MatchStatus.IN_PROGRESS);
-        return matchRepository.save(aMatch);
-    }
-
-	@Transactional
-    public Match FinishMatch(UUID matchId) {
-        Match aMatch = findMatchEntityById(matchId);
-        if (aMatch == null) {
-            throw new BusinessException("Partido no encontrado");
-        }
-        aMatch.setStatus(MatchStatus.FINISHED);
-        return matchRepository.save(aMatch);
-    }
-
-	@Transactional
-    public void deleteMatch(UUID matchId) {
-        if (findMatchEntityById(matchId) == null) {
-            throw new BusinessException("Partido no encontrado");
-        }
-        matchRepository.deleteById(matchId);
-    }
-			
 	@Transactional 
 	public MatchResponseDTO changeMatchStatus(UUID matchId, MatchStatus matchStatus) {
 		Match aMatch = findMatchEntityById(matchId);
 		if (aMatch == null) {
 			throw new BusinessException("Partido no encontrado");
 		}
+
+        if (aMatch.getStatus() == MatchStatus.NOT_STARTED) {
+/* 
+            boolean hasTitular = aMatch.getRoster().stream()
+                    .anyMatch(player -> player.getRole() == MatchPlayerRole.TITULAR);
+ */
+
+            boolean hasTitular = this.getSavedRoster(aMatch.getId()).getStartingPlayers().size() >= 1;
+/* 
+            if (aMatch.getRoster().isEmpty()) {
+                logger.error("CLARAMENTE EXISTE LAZY LOADINGDSADASDASDASDADSADASDASDASDASDASDASDSADSADSADSADASDSA");
+                throw new BusinessException("Existe lazy loading");
+            }
+ */
+            if (!hasTitular) {
+                throw new BusinessException("No se puede iniciar el partido sin al menos un jugador titular registrado.");
+            }
+        }
+
 		aMatch.setStatus(matchStatus);
 		return MatchDTOMapper.toResponseDTO(matchRepository.save(aMatch));
 	}
 
-    public Match findMatchByIdAndDivisionId(UUID matchId, UUID divisionId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findMatchByIdAndDivisionId'");
-    }
 
 	@Transactional
     public void saveMatchRoster(UUID matchId, List<UUID> titularesIds, List<UUID> suplentesIds) {
