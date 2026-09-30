@@ -105,17 +105,22 @@
               </div>
             }
           </div>
-
           <div class="match-card-action">
-            <span>
-              @if (match.status === 'not_started') {
-                Definir alineación →
-              } @else if (match.status === 'in_progress') {
-                Capturar en vivo →
-              } @else {
-                Ver resumen →
-              }
-            </span>
+            @if (match.status === 'not_started') {
+              <div class="match-actions-group">
+                <span class="action-link">Definir alineación →</span>
+                <button 
+                  type="button" 
+                  class="btn btn-invite"
+                  (click)="startMatch(match.id); $event.stopPropagation()">
+                  Empezar partido
+                </button>
+              </div>
+            } @else if (match.status === 'in_progress') {
+              <span>Capturar en vivo →</span>
+            } @else {
+              <span>Ver resumen →</span>
+            }
           </div>
         </button>
       </div>
