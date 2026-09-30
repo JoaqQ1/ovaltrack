@@ -28,3 +28,18 @@ export interface PeriodStatisticDTO {
   lineoutsTotal: number;
   ownPossessionPercentage: number;
 }
+
+export interface PlayerPeriodStatistic {
+  playerId: string;
+  jerseyNumber: number;
+  playerName: string;
+  isStarter: boolean;
+  minutesPlayed: number;
+  tries: number;
+  conversions: number;
+  penaltyKicks: number;
+  dropGoals: number;
+  totalPoints: number;
+  yellowCards: number;
+  redCards: number;
+}
