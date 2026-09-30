@@ -33,6 +33,7 @@ export interface PlayerPeriodStatistic {
   playerId: string;
   jerseyNumber: number;
   playerName: string;
+  position?: string;
   isStarter: boolean;
   minutesPlayed: number;
   tries: number;

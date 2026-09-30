@@ -5,6 +5,7 @@ export interface RosterPlayerInfo {
   playerId: string;
   jerseyNumber: number;
   playerName: string;
+  position?: string;
   isStarter: boolean;
 }
 
@@ -18,18 +19,49 @@ export function computePlayerPeriodStats(
 ): PlayerPeriodStatistic[] {
   const getName = (e: LocalMatchEvent) => eventTypeMap.get(e.eventTypeId)?.name ?? '';
 
-  // Agrupamos eventos por playerId para consultas instantáneas
-  const eventsByPlayer = new Map<string, LocalMatchEvent[]>();
+  const readJerseyNumber = (event: LocalMatchEvent): number | null => {
+    const value = event.attributes?.['playerNumber'];
+    if (typeof value === 'number' && !isNaN(value)) return value;
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number(value);
+      return isNaN(parsed) ? null : parsed;
+    }
+    return null;
+  };
+
+  // Agrupamos eventos por playerId y por número de camiseta para el equipo propio
+  const eventsByPlayerId = new Map<string, LocalMatchEvent[]>();
+  const eventsByJersey = new Map<number, LocalMatchEvent[]>();
+
   for (const event of events) {
     if (event.playerId) {
-      const list = eventsByPlayer.get(event.playerId) ?? [];
+      const list = eventsByPlayerId.get(event.playerId) ?? [];
       list.push(event);
-      eventsByPlayer.set(event.playerId, list);
+      eventsByPlayerId.set(event.playerId, list);
+    }
+
+    if (event.teamPossession !== 'OPPONENT') {
+      const jersey = readJerseyNumber(event);
+      if (jersey !== null) {
+        const list = eventsByJersey.get(jersey) ?? [];
+        list.push(event);
+        eventsByJersey.set(jersey, list);
+      }
     }
   }
 
   return roster.map(player => {
-    const playerEvents = eventsByPlayer.get(player.playerId) ?? [];
+    const playerEventsMap = new Map<string, LocalMatchEvent>();
+
+    if (player.playerId) {
+      const byId = eventsByPlayerId.get(player.playerId) ?? [];
+      for (const e of byId) playerEventsMap.set(e.id, e);
+    }
+
+    const byJersey = eventsByJersey.get(player.jerseyNumber) ?? [];
+    for (const e of byJersey) playerEventsMap.set(e.id, e);
+
+    const playerEvents = Array.from(playerEventsMap.values());
 
     let tries = 0;
     let conversions = 0;
@@ -70,6 +102,7 @@ export function computePlayerPeriodStats(
       playerId: player.playerId,
       jerseyNumber: player.jerseyNumber,
       playerName: player.playerName,
+      position: player.position,
       isStarter: player.isStarter,
       minutesPlayed,
       tries,

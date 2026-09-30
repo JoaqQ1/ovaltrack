@@ -331,13 +331,46 @@
           
           <div class="players-table-card">
             <div class="table-card-header">
-              <div>
-                <h2 class="table-title">Planilla Individual de Jugadores — 1° Tiempo</h2>
-                <p class="table-subtitle">Tantos, minutos jugados y sanciones registradas</p>
+              <div class="table-header-titles">
+                <div class="table-title-group">
+                  <span class="card-icon card-icon--tackle">
+                    <i class="ti ti-users" aria-hidden="true"></i>
+                  </span>
+                  <h2 class="table-title">Planilla de Jugadores</h2>
+                </div>
+                <p class="table-subtitle">Tantos, minutos jugados y disciplina del 1° Tiempo</p>
               </div>
-              <div class="table-legend">
-                <span class="legend-badge legend-badge--starter">Titular (40')</span>
-                <span class="legend-badge legend-badge--sub">Suplente (0')</span>
+
+              <!-- SELECTOR RÁPIDO DE FILTROS -->
+              <div class="player-filters" role="tablist" aria-label="Filtro de jugadores">
+                <button
+                  type="button"
+                  class="filter-pill"
+                  [class.filter-pill--active]="playerFilter() === 'all'"
+                  (click)="setPlayerFilter('all')">
+                  Todos ({{ playerStats().length }})
+                </button>
+                <button
+                  type="button"
+                  class="filter-pill"
+                  [class.filter-pill--active]="playerFilter() === 'starters'"
+                  (click)="setPlayerFilter('starters')">
+                  Titulares ({{ startersCount() }})
+                </button>
+                <button
+                  type="button"
+                  class="filter-pill"
+                  [class.filter-pill--active]="playerFilter() === 'subs'"
+                  (click)="setPlayerFilter('subs')">
+                  Suplentes ({{ subsCount() }})
+                </button>
+                <button
+                  type="button"
+                  class="filter-pill"
+                  [class.filter-pill--active]="playerFilter() === 'active'"
+                  (click)="setPlayerFilter('active')">
+                  Con actividad ({{ activeCount() }})
+                </button>
               </div>
             </div>
 
@@ -345,6 +378,11 @@
               <div class="empty-state">
                 <i class="ti ti-users" aria-hidden="true"></i>
                 <p>No se encontraron jugadores registrados en el plantel de este partido.</p>
+              </div>
+            } @else if (filteredPlayerStats().length === 0) {
+              <div class="empty-state">
+                <i class="ti ti-filter" aria-hidden="true"></i>
+                <p>No hay jugadores que coincidan con el filtro seleccionado.</p>
               </div>
             } @else {
               <div class="table-container">
@@ -363,13 +401,18 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @for (player of playerStats(); track player.playerId) {
+                    @for (player of filteredPlayerStats(); track player.playerId) {
                       <tr [class.row--has-points]="player.totalPoints > 0" [class.row--sub]="!player.isStarter">
                         <td class="col-num">
                           <span class="jersey-badge">{{ player.jerseyNumber }}</span>
                         </td>
                         <td class="col-name">
-                          <span class="player-fullname">{{ player.playerName }}</span>
+                          <div class="player-info-cell">
+                            <span class="player-fullname">{{ player.playerName }}</span>
+                            @if (player.position) {
+                              <span class="player-position-tag">{{ player.position }}</span>
+                            }
+                          </div>
                         </td>
                         <td class="col-condition">
                           @if (player.isStarter) {
@@ -382,20 +425,28 @@
                           <span class="stat-mono">{{ player.minutesPlayed }}'</span>
                         </td>
                         <td class="col-stat">
-                          <span class="stat-mono" [class.stat-highlight]="player.tries > 0">{{ player.tries }}</span>
+                          <span class="stat-mono" [class.stat-highlight]="player.tries > 0" [class.stat-zero]="player.tries === 0">
+                            {{ player.tries > 0 ? player.tries : '—' }}
+                          </span>
                         </td>
                         <td class="col-stat">
-                          <span class="stat-mono" [class.stat-highlight]="player.conversions > 0">{{ player.conversions }}</span>
+                          <span class="stat-mono" [class.stat-highlight]="player.conversions > 0" [class.stat-zero]="player.conversions === 0">
+                            {{ player.conversions > 0 ? player.conversions : '—' }}
+                          </span>
                         </td>
                         <td class="col-stat">
-                          <span class="stat-mono" [class.stat-highlight]="(player.penaltyKicks + player.dropGoals) > 0">
-                            {{ player.penaltyKicks }} / {{ player.dropGoals }}
+                          <span class="stat-mono" [class.stat-highlight]="(player.penaltyKicks + player.dropGoals) > 0" [class.stat-zero]="(player.penaltyKicks + player.dropGoals) === 0">
+                            {{ (player.penaltyKicks + player.dropGoals) > 0 ? (player.penaltyKicks + ' / ' + player.dropGoals) : '—' }}
                           </span>
                         </td>
                         <td class="col-pts">
-                          <span class="total-points-badge" [class.total-points-badge--active]="player.totalPoints > 0">
-                            {{ player.totalPoints }} pts
-                          </span>
+                          @if (player.totalPoints > 0) {
+                            <span class="total-points-badge total-points-badge--active">
+                              {{ player.totalPoints }} pts
+                            </span>
+                          } @else {
+                            <span class="stat-mono stat-zero">—</span>
+                          }
                         </td>
                         <td class="col-cards">
                           @if (player.yellowCards > 0 || player.redCards > 0) {
@@ -408,7 +459,7 @@
                               }
                             </div>
                           } @else {
-                            <span class="text-muted">-</span>
+                            <span class="stat-mono stat-zero">—</span>
                           }
                         </td>
                       </tr>
@@ -424,7 +475,7 @@
           <footer class="bottom-actions-row">
             <button type="button" class="btn-action-back" (click)="goBackToLiveCapture()" title="Volver a la pantalla de captura en vivo">
               <i class="ti ti-arrow-left" aria-hidden="true"></i>
-              <span>Volver a Carga en Vivo</span>
+              <span>Carga en Vivo</span>
             </button>
 
             <button type="button" class="btn-action-start" (click)="openSecondHalfConfirmation()">

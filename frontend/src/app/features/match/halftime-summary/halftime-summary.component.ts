@@ -34,6 +34,27 @@ export class HalftimeSummaryComponent implements OnInit {
   readonly isConfirmingSecondHalf = signal<boolean>(false);
   readonly isStartingSecondHalf = signal<boolean>(false);
 
+  readonly playerFilter = signal<'all' | 'starters' | 'subs' | 'active'>('all');
+
+  readonly startersCount = computed(() => this.playerStats().filter(p => p.isStarter).length);
+  readonly subsCount = computed(() => this.playerStats().filter(p => !p.isStarter).length);
+  readonly activeCount = computed(() => this.playerStats().filter(p => p.totalPoints > 0 || p.yellowCards > 0 || p.redCards > 0).length);
+
+  readonly filteredPlayerStats = computed(() => {
+    const stats = this.playerStats();
+    const filter = this.playerFilter();
+    switch (filter) {
+      case 'starters':
+        return stats.filter(p => p.isStarter);
+      case 'subs':
+        return stats.filter(p => !p.isStarter);
+      case 'active':
+        return stats.filter(p => p.totalPoints > 0 || p.yellowCards > 0 || p.redCards > 0);
+      default:
+        return stats;
+    }
+  });
+
   readonly opponentPossessionPercentage = computed(() => {
     const own = this.generalStats()?.ownPossessionPercentage ?? 0;
     return Math.max(0, 100 - own);
@@ -146,49 +167,89 @@ export class HalftimeSummaryComponent implements OnInit {
       // Offline fallback
     }
 
-    const rosterMap = new Map<string, RosterPlayerInfo>();
+    const rosterMap = new Map<number, RosterPlayerInfo>();
 
     if (savedRoster && (savedRoster.startingPlayers.length > 0 || savedRoster.substitutePlayers.length > 0)) {
       // Titulares 1 al 15
       savedRoster.startingPlayers.forEach((playerId, index) => {
-        if (!playerId) return;
-        const playerObj = availablePlayers.find(p => p.id === playerId);
-        rosterMap.set(playerId, {
-          playerId,
-          jerseyNumber: index + 1,
-          playerName: playerObj?.fullName ?? `Titular #${index + 1}`,
+        const jerseyNumber = index + 1;
+        const playerObj = playerId ? availablePlayers.find(p => p.id === playerId) : null;
+        rosterMap.set(jerseyNumber, {
+          playerId: playerId ?? `starter-${jerseyNumber}`,
+          jerseyNumber,
+          playerName: playerObj?.fullName ?? `Titular #${jerseyNumber}`,
+          position: playerObj?.position,
           isStarter: true,
         });
       });
 
       // Suplentes 16 al 23
       savedRoster.substitutePlayers.forEach((playerId, index) => {
-        if (!playerId) return;
-        const playerObj = availablePlayers.find(p => p.id === playerId);
-        rosterMap.set(playerId, {
-          playerId,
-          jerseyNumber: index + 16,
-          playerName: playerObj?.fullName ?? `Suplente #${index + 16}`,
+        const jerseyNumber = index + 16;
+        const playerObj = playerId ? availablePlayers.find(p => p.id === playerId) : null;
+        rosterMap.set(jerseyNumber, {
+          playerId: playerId ?? `sub-${jerseyNumber}`,
+          jerseyNumber,
+          playerName: playerObj?.fullName ?? `Suplente #${jerseyNumber}`,
+          position: playerObj?.position,
           isStarter: false,
         });
       });
+    } else if (availablePlayers.length > 0) {
+      // Fallback con jugadores de la división ordenados por número de camiseta
+      availablePlayers.forEach((playerObj, index) => {
+        const jerseyNumber = playerObj.jerseyNumber ?? (index + 1);
+        if (!rosterMap.has(jerseyNumber) && jerseyNumber <= 23) {
+          const isStarter = jerseyNumber <= 15;
+          rosterMap.set(jerseyNumber, {
+            playerId: playerObj.id ?? `player-${jerseyNumber}`,
+            jerseyNumber,
+            playerName: playerObj.fullName ?? (isStarter ? `Titular #${jerseyNumber}` : `Suplente #${jerseyNumber}`),
+            position: playerObj.position,
+            isStarter,
+          });
+        }
+      });
     }
 
-    // Incluir jugadores de eventos en caso de no estar en el roster guardado
+    // Asegurar las 23 plazas reglamentarias de rugby
+    for (let num = 1; num <= 23; num++) {
+      if (!rosterMap.has(num)) {
+        const isStarter = num <= 15;
+        const playerObj = availablePlayers.find(p => p.jerseyNumber === num);
+        rosterMap.set(num, {
+          playerId: playerObj?.id ?? `slot-${num}`,
+          jerseyNumber: num,
+          playerName: playerObj?.fullName ?? (isStarter ? `Titular #${num}` : `Suplente #${num}`),
+          position: playerObj?.position,
+          isStarter,
+        });
+      }
+    }
+
+    // Incluir camisetas adicionales de eventos si existieran
     const events = await liveCaptureDatabase.events.where('matchId').equals(matchId).toArray();
     for (const event of events) {
-      if (event.playerId && !rosterMap.has(event.playerId)) {
-        const playerObj = availablePlayers.find(p => p.id === event.playerId);
-        rosterMap.set(event.playerId, {
-          playerId: event.playerId,
-          jerseyNumber: playerObj?.jerseyNumber ?? (rosterMap.size + 1),
-          playerName: playerObj?.fullName ?? `Jugador #${rosterMap.size + 1}`,
-          isStarter: true,
+      const playerNum = event.attributes?.['playerNumber'];
+      const num = typeof playerNum === 'number' ? playerNum : (playerNum ? Number(playerNum) : null);
+      if (num && !isNaN(num) && !rosterMap.has(num)) {
+        const playerObj = availablePlayers.find(p => p.jerseyNumber === num || p.id === event.playerId);
+        const isStarter = num <= 15;
+        rosterMap.set(num, {
+          playerId: event.playerId ?? playerObj?.id ?? `event-player-${num}`,
+          jerseyNumber: num,
+          playerName: playerObj?.fullName ?? (isStarter ? `Titular #${num}` : `Suplente #${num}`),
+          position: playerObj?.position,
+          isStarter,
         });
       }
     }
 
     return Array.from(rosterMap.values()).sort((a, b) => a.jerseyNumber - b.jerseyNumber);
+  }
+
+  setPlayerFilter(filter: 'all' | 'starters' | 'subs' | 'active'): void {
+    this.playerFilter.set(filter);
   }
 
   toggleTheme(): void {
