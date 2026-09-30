@@ -84,9 +84,7 @@ public class EventService {
 		if (aMatch.getStatus() == com.ovaltrack.backend.match.domain.MatchStatus.CANCELLED) {
 			throw new BusinessException("No se puede asignar un evento a un partido cancelado");
 		}
-		Person aPerson = eventRequest.playerId() != null 
-				? personService.findPersonEntityById(eventRequest.playerId()) 
-				: null;
+		Person aPerson = resolveEventPlayer(eventRequest.playerId(), aMatch);
 
 		Event result = new Event();
 		result.setEventType(aEventType);
@@ -104,6 +102,25 @@ public class EventService {
 		Event savedEvent = eventRepository.save(result);
 		recalculateMatchScore(aMatch);
 		return EventDTOMapper.toResponseDTO(savedEvent);
+	}
+
+	private Person resolveEventPlayer(UUID playerId, Match match) {
+		if (playerId == null) {
+			return null;
+		}
+
+		Person player = personService.findPersonEntityById(playerId);
+		if (player == null) {
+			throw new BusinessException("No se puede asignar un evento a un jugador que no existe");
+		}
+
+		boolean playerInRoster = match.getRoster().stream()
+				.anyMatch(matchPlayer -> matchPlayer.getDivisionPlayer().getPerson().getId().equals(playerId));
+		if (!playerInRoster) {
+			throw new BusinessException("No se puede asignar un evento a un jugador que no pertenece al plantel del partido");
+		}
+
+		return player;
 	}
 
 	@Transactional
