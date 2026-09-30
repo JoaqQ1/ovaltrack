@@ -17,17 +17,12 @@ public class PossessionStatisticStrategy implements PeriodStatisticStrategy {
 
     @Override
     public void calculate(Collection<Event> periodEvents, PeriodStatisticDTO.Builder builder) {
-        int ownPossessionCount = 0;
-        int opponentPossessionCount = 0;
-
-        for (Event event : periodEvents) {
-            EventPossession possession = event.getTeamPossession();
-            if (possession == EventPossession.OWN) {
-                ownPossessionCount++;
-            } else if (possession == EventPossession.OPPONENT) {
-                opponentPossessionCount++;
-            }
-        }
+        int ownPossessionCount = (int) periodEvents.stream()
+                .filter(e -> e.getTeamPossession() == EventPossession.OWN)
+                .count();
+        int opponentPossessionCount = (int) periodEvents.stream()
+                .filter(e -> e.getTeamPossession() == EventPossession.OPPONENT)
+                .count();
 
         int totalPossession = ownPossessionCount + opponentPossessionCount;
         double ownPossessionPercentage = StatisticMathUtils.calculatePercentage(
