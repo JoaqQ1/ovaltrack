@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, defer, firstValueFrom, from } from 'rxjs';
+import { Observable, defer, firstValueFrom, forkJoin, from, map, switchMap } from 'rxjs';
 import {
   LiveCaptureBootstrap,
   LiveCapturePersistedState,
@@ -9,6 +9,10 @@ import { LocalMatchEvent } from '../types/event.types';
 import { MatchStatus } from '../types/match.types';
 import { LiveCaptureCacheService } from './live-capture-cache.service';
 import { MatchService } from './match.service';
+import { EventService } from './event.service';
+import { EventTypeService } from './event-type.service';
+import { RosterService } from './roster.service';
+import { AvailablePlayer } from '../types/roster.types';
 
 const HOME_TEAM_NAME = 'PMRC';
 
@@ -26,6 +30,10 @@ export const LIVE_CAPTURE_BACKEND_CONTRACT = [
 export class LiveCaptureService {
   private readonly cache = inject(LiveCaptureCacheService);
   private readonly matchService = inject(MatchService);
+  private readonly eventService = inject(EventService);
+  private readonly eventTypeService = inject(EventTypeService);
+  private readonly rosterService = inject(RosterService);
+  private readonly playersByMatch = new Map<string, AvailablePlayer[]>();
 
   getLiveCaptureBootstrap(query: LiveCaptureQuery): Observable<LiveCaptureBootstrap> {
     return defer(() => from(this.readBootstrap(query)));
@@ -36,11 +44,19 @@ export class LiveCaptureService {
   }
 
   saveEvent(event: LocalMatchEvent): Observable<LocalMatchEvent> {
-    return defer(() => from(this.cache.saveEvent(event)));
+    return this.eventService.createFromLocal(this.resolvePlayer(event)).pipe(
+      map(response => ({ ...response, localSequence: event.localSequence })),
+      // La caché se actualiza después de una respuesta exitosa del backend.
+      switchMap(savedEvent => from(this.cache.saveEvent(savedEvent)).pipe(
+        map(() => savedEvent)
+      ))
+    );
   }
 
   deleteEvent(eventId: string): Observable<void> {
-    return defer(() => from(this.cache.deleteEvent(eventId)));
+    return this.eventService.delete(eventId).pipe(
+      switchMap(() => from(this.cache.deleteEvent(eventId)))
+    );
   }
 
   deleteMatchData(matchId: string): Observable<void> {
@@ -60,7 +76,21 @@ export class LiveCaptureService {
       ...query,
       divisionId: match.divisionId,
     };
-    const { persistedState, eventTypes, events } = await this.cache.getBootstrapData(query);
+    const { eventTypes, events: backendEvents, players } = await firstValueFrom(forkJoin({
+      eventTypes: this.eventTypeService.getAll(),
+      events: this.eventService.getByMatch(query.matchId),
+      players: this.rosterService.getAvailablePlayers(query.matchId),
+    }));
+    this.playersByMatch.set(query.matchId, players);
+    const events = backendEvents.map((event, index) => ({
+      ...event,
+      localSequence: index + 1,
+    }));
+    await Promise.all([
+      this.cache.saveEventTypes(eventTypes),
+      this.cache.replaceEvents(query.matchId, events),
+    ]);
+    const { persistedState } = await this.cache.getBootstrapData(query);
 
     return {
       query: resolvedQuery,
@@ -85,6 +115,22 @@ export class LiveCaptureService {
   private readLiveCaptureStatus(matchId: string): Promise<MatchStatus> {
     return this.cache.getStatusData(matchId)
       .then(({ state, events }) => this.resolveMatchStatus(state, events));
+  }
+
+  private resolvePlayer(event: LocalMatchEvent): LocalMatchEvent {
+    if (event.playerId || event.teamPossession !== 'OWN') {
+      return event;
+    }
+
+    const playerNumber = event.attributes?.['playerNumber'];
+    if (typeof playerNumber !== 'number') {
+      return event;
+    }
+
+    const player = this.playersByMatch.get(event.matchId)
+      ?.find(currentPlayer => currentPlayer.jerseyNumber === playerNumber);
+
+    return player ? { ...event, playerId: player.id } : event;
   }
 
   private resolveMatchStatus(

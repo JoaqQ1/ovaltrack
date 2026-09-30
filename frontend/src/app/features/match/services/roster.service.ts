@@ -3,20 +3,20 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Match } from '../types/match.types';
-import { BackendRosterResponse, RosterPayload, SavedRoster } from '../types/roster.types';
+import { AvailablePlayer, BackendRosterResponse, RosterPayload, SavedRoster } from '../types/roster.types';
 
 @Injectable({ providedIn: 'root' })
 export class RosterService {
   private readonly http = inject(HttpClient);
   private readonly matchesUrl = `${environment.apiUrl}/matches`;
 
-  getAvailablePlayers(matchId: string): Observable<unknown[]> {
+  getAvailablePlayers(matchId: string): Observable<AvailablePlayer[]> {
     return this.http.get<Match>(`${this.matchesUrl}/${matchId}`).pipe(
       switchMap(match => {
         if (!match) {
           throw new Error(`Partido ${matchId} no encontrado en el backend`);
         }
-        return this.http.get<unknown[]>(`${environment.apiUrl}/division/${match.divisionId}/players`);
+        return this.http.get<AvailablePlayer[]>(`${environment.apiUrl}/division/${match.divisionId}/players`);
       })
     );
   }

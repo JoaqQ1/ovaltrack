@@ -41,7 +41,8 @@
         </div>
 
         <div class="live-capture__actions">
-            <button type="button" class="btn btn--outline">{{ periodLabel
+            <button type="button" class="btn btn--outline"
+                (click)="togglePeriod()">{{ periodLabel
                 }}</button>
             <button type="button" class="btn btn--outline"
                 (click)="undoLastEvent()">

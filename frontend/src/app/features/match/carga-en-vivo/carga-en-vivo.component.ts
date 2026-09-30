@@ -75,6 +75,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   /** Números de camiseta del 1 al 15, renderizados en ambas columnas de jugadores. */
   readonly numeracionColumna = Array.from({ length: 15 }, (_, index) => index + 1);
 
+  readonly periods = ['inicio', '1er tiempo', '2do tiempo'];
+
   homeTeam = '';
   awayTeam = '';
   scoreboard = { home: 0, away: 0 };
@@ -270,10 +272,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     };
 
     this.liveCaptureService.saveEvent(localEvent).subscribe({
-      next: () => {
-        this.events = [...this.events, localEvent];
+      next: savedEvent => {
+        this.events = [...this.events, savedEvent];
         this.rebuildStateFromEvents();
-        this.synchronized = false;
+        this.synchronized = true;
         this.persistState();
       },
       error: () => {
@@ -620,5 +622,23 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
         return categories;
       }, []);
+  }
+
+  togglePeriod() {
+    if (this.period >= this.periods.length) {
+      return;
+    }
+
+    this.period += 1;
+    this.periodLabel = this.periods[this.period - 1];
+    this.pendingSelection = null;
+    this.synchronized = false;
+
+    if (this.period === this.periods.length) {
+      this.clockPaused = true;
+      this.stopClock();
+    }
+
+    this.persistState();
   }
 }

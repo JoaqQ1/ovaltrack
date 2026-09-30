@@ -57,6 +57,10 @@ export class MatchService {
     return this.http.delete<void>(`${this.apiUrl}/${matchId}/cancel`);
   }
 
+  startMatch(matchId: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${matchId}/start`, null);
+  }
+
   getMatchById(matchId: string): Observable<Match>{
     return this.http.get<BackendMatchResponse>(`${this.apiUrl}/${matchId}`).pipe(
       map(match => this.normalizeMatch(match)),

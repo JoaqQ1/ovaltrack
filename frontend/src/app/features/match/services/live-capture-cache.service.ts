@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  liveCaptureDatabase,
-  matchDatabase,
-  seedEventTypes,
-} from '../data/local-databases';
+import { liveCaptureDatabase, matchDatabase } from '../data/local-databases';
 import { LiveCapturePersistedState, LiveCaptureQuery } from '../types/live-capture.types';
 import { LiveCaptureEventType } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
@@ -36,11 +32,11 @@ export class LiveCaptureCacheService {
     eventTypes: LiveCaptureEventType[];
     events: LocalMatchEvent[];
   }> {
-    return seedEventTypes().then(() => Promise.all([
+    return Promise.all([
       liveCaptureDatabase.states.get(query.matchId),
       this.getEventTypes(),
       liveCaptureDatabase.events.where('matchId').equals(query.matchId).sortBy('localSequence'),
-    ])).then(([persistedState, eventTypes, events]) => ({ persistedState, eventTypes, events }));
+    ]).then(([persistedState, eventTypes, events]) => ({ persistedState, eventTypes, events }));
   }
 
   saveState(state: LiveCapturePersistedState): Promise<void> {
@@ -49,6 +45,15 @@ export class LiveCaptureCacheService {
 
   saveEvent(event: LocalMatchEvent): Promise<LocalMatchEvent> {
     return liveCaptureDatabase.events.put(event).then(() => event);
+  }
+
+  replaceEvents(matchId: string, events: LocalMatchEvent[]): Promise<void> {
+    return liveCaptureDatabase.transaction('rw', liveCaptureDatabase.events, async () => {
+      await liveCaptureDatabase.events.where('matchId').equals(matchId).delete();
+      if (events.length > 0) {
+        await liveCaptureDatabase.events.bulkPut(events);
+      }
+    });
   }
 
   deleteEvent(eventId: string): Promise<void> {

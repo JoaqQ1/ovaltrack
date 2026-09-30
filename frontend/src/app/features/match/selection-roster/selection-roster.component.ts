@@ -1,6 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { switchMap } from 'rxjs';
+import { MatchService } from '../services/match.service';
 import { RosterService } from '../services/roster.service';
 
 interface RosterSlot {
@@ -19,6 +21,7 @@ interface RosterSlot {
 export class SelectionRosterComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private matchService = inject(MatchService);
   private rosterService = inject(RosterService);
 
   matchId = '';
@@ -164,9 +167,11 @@ export class SelectionRosterComponent implements OnInit {
       substitutePlayers: suplentesIds
     };
 
-    this.rosterService.saveRoster(payload).subscribe({
-      next: (response) => {
-        console.log('Plantel guardado con éxito', response);
+    this.rosterService.saveRoster(payload).pipe(
+      switchMap(() => this.matchService.startMatch(this.matchId))
+    ).subscribe({
+      next: () => {
+        console.log('Plantel guardado y partido iniciado con éxito');
         alert('¡Plantel guardado! Iniciando partido...');
         this.router.navigate(['/live-capture', this.matchId]); 
       },

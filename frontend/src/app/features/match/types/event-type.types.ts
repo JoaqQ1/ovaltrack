@@ -4,14 +4,12 @@ export interface BackendEventTypeResponse {
   id: UUID;
   name: string;
   groupName: string | null;
-  category: 'ATTACK' | 'DEFENSE' | 'NEUTRAL' | null;
-  affectsPossession: boolean | null;
-  isScoring: boolean | null;
+  category: 'ATTACK' | 'DEFENSE' | 'NEUTRAL' | 'SET_PIECE' | null;
+  affectsPossession: boolean;
+  isScoring: boolean;
   points: number | null;
-  requiresPlayer: boolean | null;
+  requiresPlayer: boolean;
   templateEventFields: Record<string, unknown> | null;
-  createdAt: string;
-  active: boolean | null;
 }
 
 export type LiveCaptureEventType = Omit<BackendEventTypeResponse,
@@ -24,4 +22,5 @@ export type LiveCaptureEventType = Omit<BackendEventTypeResponse,
   points: number;
   requiresPlayer: boolean;
   active: boolean;
+  createdAt: string;
 };
