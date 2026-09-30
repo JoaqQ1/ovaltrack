@@ -24,6 +24,7 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
         WHERE m.division.id = :divisionId
         AND m.date > :overlapStart
         AND m.date < :newEnd
+        AND m.status != MatchStatus.CANCELLED
     """)
     Match findByDivisionIdAndTimeFrame(
         @Param("divisionId") UUID divisionId,
