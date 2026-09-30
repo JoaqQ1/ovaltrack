@@ -39,11 +39,12 @@ public class User {
     @Builder.Default
     private UserStatus accountStatus = UserStatus.PENDING_APPROVAL;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "person_id", nullable = false, unique = true)
+    @OneToOne(optional = true)
+    @JoinColumn(name = "person_id", nullable = true, unique = true)
     private Person person;
-
-    private Boolean active;
+    
+    @Builder.Default
+    private Boolean active = false;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
