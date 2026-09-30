@@ -73,6 +73,10 @@ export class MatchService {
     return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start`, {});
   }
 
+  finishMatch(matchId: string): Observable<BackendMatchResponse> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/finish`, {});
+  }
+
   deleteMatch(matchId: string): Observable<BackendMatchResponse> {
     return this.http.delete<BackendMatchResponse>(`${this.apiUrl}/${matchId}/cancel`);
   }

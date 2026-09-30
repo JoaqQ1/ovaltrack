@@ -175,6 +175,12 @@ public class MatchService {
         }
 
 		aMatch.setStatus(matchStatus);
+        if (matchStatus == MatchStatus.IN_PROGRESS && aMatch.getStartedAt() == null) {
+            aMatch.setStartedAt(LocalDateTime.now());
+        }
+        if (matchStatus == MatchStatus.FINISHED) {
+            aMatch.setFinishedAt(LocalDateTime.now());
+        }
 		return MatchDTOMapper.toResponseDTO(matchRepository.save(aMatch));
 	}
 

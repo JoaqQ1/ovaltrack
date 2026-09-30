@@ -97,6 +97,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   isHalftime = false;
   showConfirmHalftime = false;
+  showConfirmFinish = false;
+  isFinished = false;
   showHalftimeModal = false;
   isCalculatingStats = false;
   isOfflineMode = false;
@@ -345,15 +347,45 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   }
 
   onPeriodButtonClick(): void {
+    if (this.isFinished) {
+      return;
+    }
+
     if (this.period === 1 && !this.isHalftime) {
       this.showConfirmHalftime = true;
     } else if (this.isHalftime) {
       this.openHalftimeModal();
+    } else if (this.period === 2) {
+      this.showConfirmFinish = true;
     }
   }
 
   cancelConfirmHalftime(): void {
     this.showConfirmHalftime = false;
+  }
+
+  cancelConfirmFinish(): void {
+    this.showConfirmFinish = false;
+  }
+
+  confirmFinishMatch(): void {
+    this.showConfirmFinish = false;
+    this.stopClock();
+    this.clockPaused = true;
+    this.clockElapsedSeconds = this.parseClock(this.gameClock);
+    this.persistState();
+
+    this.matchService.finishMatch(this.matchId).subscribe({
+      next: () => {
+        this.isFinished = true;
+        this.synchronized = true;
+        this.isOfflineMode = false;
+      },
+      error: () => {
+        this.synchronized = false;
+        this.errorMessage = 'No se pudo finalizar el partido. Inténtalo nuevamente.';
+      },
+    });
   }
 
   async confirmCloseFirstHalf(): Promise<void> {
