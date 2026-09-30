@@ -6,7 +6,7 @@ import {
   LiveCaptureQuery,
 } from '../types/live-capture.types';
 import { LocalMatchEvent } from '../types/event.types';
-import { MatchStatus } from '../types/match.types';
+import { LiveMatchStateRequest, MatchStatus } from '../types/match.types';
 import { LiveCaptureCacheService } from './live-capture-cache.service';
 import { MatchService } from './match.service';
 import { EventService } from './event.service';
@@ -40,7 +40,17 @@ export class LiveCaptureService {
   }
 
   saveLiveCaptureState(state: LiveCapturePersistedState): Observable<void> {
-    return defer(() => from(this.cache.saveState(state)));
+    const request: LiveMatchStateRequest = {
+      clockElapsedSeconds: state.clockElapsedSeconds,
+      clockPaused: state.clockPaused,
+      currentPossession: state.currentPossession ?? 'OWN',
+      homeScore: state.scoreboard?.home ?? 0,
+      awayScore: state.scoreboard?.away ?? 0,
+    };
+
+    return this.matchService.updateLiveMatchState(state.matchId, request).pipe(
+      map(() => undefined),
+    );
   }
 
   saveEvent(event: LocalMatchEvent): Observable<LocalMatchEvent> {
@@ -68,7 +78,7 @@ export class LiveCaptureService {
   }
 
   private async readBootstrap(query: LiveCaptureQuery): Promise<LiveCaptureBootstrap> {
-    const match = await firstValueFrom(this.matchService.getMatchById(query.matchId));
+    const match = await firstValueFrom(this.matchService.getLiveMatchState(query.matchId));
     if (match.status === 'cancelled') {
       throw new Error(`Match ${query.matchId} was cancelled`);
     }
@@ -86,12 +96,6 @@ export class LiveCaptureService {
       ...event,
       localSequence: index + 1,
     }));
-    await Promise.all([
-      this.cache.saveEventTypes(eventTypes),
-      this.cache.replaceEvents(query.matchId, events),
-    ]);
-    const { persistedState } = await this.cache.getBootstrapData(query);
-
     const isHalftime = match.status === 'halftime';
     const period = match.currentPeriod ?? 1;
     const periodLabel = isHalftime ? 'Entretiempo' : (period === 2 ? '2T' : '1T');
@@ -101,20 +105,28 @@ export class LiveCaptureService {
       state: {
         homeTeam: HOME_TEAM_NAME,
         awayTeam: match.opponent,
-        scoreboard: { home: 0, away: 0 },
-        gameClock: '00:00',
+        scoreboard: {
+          home: match.homeScore ?? 0,
+          away: match.awayScore ?? 0,
+        },
+        gameClock: this.formatClock(match.clockElapsedSeconds ?? 0),
         period,
         periodLabel,
-        clockPaused: true,
-        currentPossession: 'OWN',
+        clockPaused: match.clockPaused ?? true,
+        currentPossession: match.currentPossession ?? 'OWN',
         synchronized: true,
         isHalftime,
         history: [],
       },
       recentEvents: events,
       eventTypes,
-      persistedState,
     };
+  }
+
+  private formatClock(totalSeconds: number): string {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 
   private readLiveCaptureStatus(matchId: string): Promise<MatchStatus> {

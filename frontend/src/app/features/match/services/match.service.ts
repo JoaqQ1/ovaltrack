@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, from, map, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { BackendMatchResponse, Match, MatchStatus, NewMatchDraft } from '../types/match.types';
+import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, NewMatchDraft } from '../types/match.types';
 import { BackendRosterResponse, RosterPayload, SavedRoster } from '../types/roster.types';
 import { PeriodStatisticDTO } from '../types/statistic.types';
 import { TEMPORARY_DIVISION_ID } from '../data/match.constants';
@@ -84,6 +84,16 @@ export class MatchService {
         map(() => match)
       ))
     );
+  }
+
+  getLiveMatchState(matchId: string): Observable<Match> {
+    return this.http.get<BackendMatchResponse>(`${this.apiUrl}/${matchId}/live-state`).pipe(
+      map(match => this.normalizeMatch(match)),
+    );
+  }
+
+  updateLiveMatchState(matchId: string, state: LiveMatchStateRequest): Observable<BackendMatchResponse> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/live-state`, state);
   }
 
 }

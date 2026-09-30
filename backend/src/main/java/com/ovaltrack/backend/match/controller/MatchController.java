@@ -25,6 +25,7 @@ import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
 import com.ovaltrack.backend.match.domain.dto.RosterDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchRosterDTO;
+import com.ovaltrack.backend.match.domain.dto.LiveMatchStateDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -83,6 +84,31 @@ public class MatchController {
         MatchResponseDTO result = matchService.findMatchById(matchId);
         return (result != null) ? ResponseEntity.ok(result)
         : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro el partido");
+    }
+
+    @Operation(
+        summary = "Get the persisted live state of a match",
+        description = "Returns the operational state currently persisted for the match."
+    )
+    @GetMapping("/{matchId}/live-state")
+    public ResponseEntity<Object> getLiveMatchState(@PathVariable UUID matchId) {
+        return ResponseEntity.ok(matchService.getLiveMatchState(matchId));
+    }
+
+    @Operation(
+        summary = "Update the persisted live state of a match",
+        description = "Persists the operational state of the match using last-write-wins semantics."
+    )
+    @PutMapping("/{matchId}/live-state")
+    public ResponseEntity<Object> updateLiveMatchState(
+            @PathVariable UUID matchId,
+            @Valid @RequestBody LiveMatchStateDTO request,
+            BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            String message = bindingResult.getFieldError().getDefaultMessage();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
+        }
+        return ResponseEntity.ok(matchService.updateLiveMatchState(matchId, request));
     }
 
     @Operation(

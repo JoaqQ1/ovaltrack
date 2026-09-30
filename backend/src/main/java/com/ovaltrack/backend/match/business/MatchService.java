@@ -27,6 +27,7 @@ import com.ovaltrack.backend.match.domain.dto.MatchDTOMapper;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
 import com.ovaltrack.backend.match.domain.dto.RosterDTO;
+import com.ovaltrack.backend.match.domain.dto.LiveMatchStateDTO;
 import com.ovaltrack.backend.match.repository.MatchPlayerRepository;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 
@@ -79,6 +80,33 @@ public class MatchService {
 		Match result = matchRepository.findById(matchId).orElse(null);
         return MatchDTOMapper.toResponseDTO(result);
 	}
+
+    @Transactional(readOnly = true)
+    public MatchResponseDTO getLiveMatchState(UUID matchId) {
+        Match match = findMatchEntityById(matchId);
+        if (match == null) {
+            throw new EntityNotFoundException("Partido no encontrado");
+        }
+
+        return MatchDTOMapper.toResponseDTO(match);
+    }
+
+    @Transactional
+    public MatchResponseDTO updateLiveMatchState(UUID matchId, LiveMatchStateDTO request) {
+        Match match = findMatchEntityById(matchId);
+        if (match == null) {
+            throw new EntityNotFoundException("Partido no encontrado");
+        }
+
+        match.setClockElapsedSeconds(request.clockElapsedSeconds());
+        match.setClockPaused(request.clockPaused());
+        match.setCurrentPossession(request.currentPossession());
+        match.setHomeScore(request.homeScore());
+        match.setAwayScore(request.awayScore());
+        match.setClockUpdatedAt(LocalDateTime.now());
+
+        return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
+    }
 
 	public Match findMatchEntityById(UUID matchId) {
         return matchRepository.findById(matchId).orElse(null);
