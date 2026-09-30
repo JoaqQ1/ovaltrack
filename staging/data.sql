@@ -6,6 +6,15 @@ TRUNCATE TABLE events, event_types, matches, division_players, division_coaches,
 ALTER TABLE matches DROP CONSTRAINT IF EXISTS matches_status_check;
 ALTER TABLE matches ADD CONSTRAINT matches_status_check CHECK (status IN ('NOT_STARTED', 'IN_PROGRESS', 'HALFTIME', 'FINISHED', 'CANCELLED'));
 
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS clock_elapsed_seconds INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS clock_paused BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS clock_updated_at TIMESTAMP;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS current_possession VARCHAR(255) NOT NULL DEFAULT 'OWN';
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS home_score INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_score INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS started_at TIMESTAMP;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS finished_at TIMESTAMP;
+
 -- =========================================
 -- PERSONS (30 personas en total)
 -- =========================================
@@ -173,19 +182,23 @@ INSERT INTO division_players (id, person_id, division_id, jersey_number, positio
 -- MATCHES (Partidos)
 -- =========================================
 
-INSERT INTO matches (id, date, division_id, opponent, status, current_period) VALUES
+INSERT INTO matches (
+  id, date, division_id, opponent, status, current_period,
+  clock_elapsed_seconds, clock_paused, clock_updated_at,
+  current_possession, home_score, away_score, started_at, finished_at
+) VALUES
     -- 1: Trelew RC (En progreso, 1T -> ideal para probar captura en vivo y pasar a entretiempo)
-    ('11111111-1111-1111-1111-000000000040', '2026-09-28 15:30:00', '11111111-1111-1111-1111-000000000020', 'Trelew Rugby Club', 'IN_PROGRESS', 1),
+  ('11111111-1111-1111-1111-000000000040', '2026-09-28 15:30:00', '11111111-1111-1111-1111-000000000020', 'Trelew Rugby Club', 'IN_PROGRESS', 1, 0, false, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
     -- 2: Bigornia Club (No iniciado -> ideal para probar alineación/roster y comienzo de partido)
-    ('11111111-1111-1111-1111-000000000041', '2026-10-05 16:00:00', '11111111-1111-1111-1111-000000000020', 'Bigornia Club', 'NOT_STARTED', 1),
+  ('11111111-1111-1111-1111-000000000041', '2026-10-05 16:00:00', '11111111-1111-1111-1111-000000000020', 'Bigornia Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL),
     -- 3: Chenque RC (Entretiempo -> ideal para probar resumen táctico e Iniciar 2T)
-    ('11111111-1111-1111-1111-000000000042', '2026-09-28 14:00:00', '11111111-1111-1111-1111-000000000020', 'Chenque Rugby Club', 'HALFTIME', 1),
+  ('11111111-1111-1111-1111-000000000042', '2026-09-28 14:00:00', '11111111-1111-1111-1111-000000000020', 'Chenque Rugby Club', 'HALFTIME', 1, 2400, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
     -- 4: Patoruzú RC (En progreso, 2T -> ideal para probar eventos durante el segundo tiempo)
-    ('11111111-1111-1111-1111-000000000043', '2026-09-28 16:45:00', '11111111-1111-1111-1111-000000000020', 'Patoruzú Rugby Club', 'IN_PROGRESS', 2),
+  ('11111111-1111-1111-1111-000000000043', '2026-09-28 16:45:00', '11111111-1111-1111-1111-000000000020', 'Patoruzú Rugby Club', 'IN_PROGRESS', 2, 2400, false, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
     -- 5: Deportivo Portugués (Finalizado -> ideal para probar consulta de partidos concluidos)
-    ('11111111-1111-1111-1111-000000000044', '2026-09-21 15:30:00', '11111111-1111-1111-1111-000000000020', 'Deportivo Portugués', 'FINISHED', 2),
+  ('11111111-1111-1111-1111-000000000044', '2026-09-21 15:30:00', '11111111-1111-1111-1111-000000000020', 'Deportivo Portugués', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     -- 6: Calafate RC (División M19, no iniciado)
-    ('11111111-1111-1111-1111-000000000045', '2026-10-12 14:00:00', '11111111-1111-1111-1111-000000000021', 'Calafate Rugby Club', 'NOT_STARTED', 1);
+  ('11111111-1111-1111-1111-000000000045', '2026-10-12 14:00:00', '11111111-1111-1111-1111-000000000021', 'Calafate Rugby Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL);
 
 
 -- =========================================
