@@ -131,40 +131,28 @@
   justify-content: space-between;
   height: 52px;
   flex-shrink: 0;
+  position: relative;
+  width: 100%;
 }
 
 .bar-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+  z-index: 1;
 }
 
-.btn-back {
-  display: inline-flex;
+.brand-logo-container {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 18px;
-  background-color: #ffffff;
-  border: 1.5px solid var(--surface-card-border);
-  border-radius: 11px;
-  color: var(--text-secondary);
-  font-family: var(--font-ui);
-  font-size: 1.05rem;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 1px 4px rgba(15, 35, 15, 0.06);
-  transition: all 0.15s ease;
 }
 
-.halftime-page[data-theme="dark"] .btn-back {
-  background-color: #14281b;
-  color: #d6e8d2;
-}
-
-.btn-back:hover {
-  background-color: var(--surface-alt);
-  color: var(--text-primary);
+.brand-logo {
+  display: block;
+  height: 38px;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
 }
 
 .period-pill {
@@ -184,6 +172,17 @@
   font-size: 1.15rem;
 }
 
+.bar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: auto;
+}
+
 .match-heading {
   margin: 0;
   font-size: 1.38rem;
@@ -191,23 +190,32 @@
   color: var(--text-primary);
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
+  white-space: nowrap;
 }
 
-.team-name--bold {
+.team-name--home-highlight {
   font-weight: 800;
+  color: var(--home-color);
+}
+
+.team-name--away-highlight {
+  font-weight: 800;
+  color: var(--text-primary);
 }
 
 .vs-text {
   color: var(--text-secondary);
-  font-size: 1.08rem;
+  font-size: 1.05rem;
   font-weight: 600;
+  opacity: 0.8;
 }
 
 .bar-right {
   display: flex;
   align-items: center;
   gap: 14px;
+  justify-self: end;
 }
 
 .offline-pill {
@@ -1294,6 +1302,12 @@
     height: auto;
     gap: 10px;
     align-items: flex-start;
+  }
+
+  .bar-center {
+    position: static;
+    transform: none;
+    align-self: center;
   }
 
   .tactical-grid {

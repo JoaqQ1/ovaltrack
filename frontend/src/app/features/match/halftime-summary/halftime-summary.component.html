@@ -3,20 +3,24 @@
   <!-- 1. Header Táctico Superior Flotante -->
   <header class="page-top-bar">
     <div class="bar-left">
-      <button type="button" class="btn-back" (click)="goBackToLiveCapture()" title="Volver a la pantalla de captura">
-        <i class="ti ti-arrow-left" aria-hidden="true"></i>
-        <span>Volver</span>
-      </button>
+      <div class="brand-logo-container">
+        <img
+          class="brand-logo"
+          [src]="currentTheme() === 'light' ? 'assets/brand/OvalTrack-fondo-claro.png' : 'assets/brand/OvalTrack-fondo-oscuro.png'"
+          alt="OvalTrack" />
+      </div>
 
       <div class="period-pill">
         <i class="ti ti-clock-pause" aria-hidden="true"></i>
         <span>ENTRETIEMPO</span>
       </div>
+    </div>
 
+    <div class="bar-center">
       <h1 class="match-heading">
-        <span class="team-name">{{ homeTeam() }}</span>
+        <span class="team-name team-name--home-highlight">{{ homeTeam() }}</span>
         <span class="vs-text">vs</span>
-        <span class="team-name team-name--bold">{{ opponent() }}</span>
+        <span class="team-name team-name--away-highlight">{{ opponent() }}</span>
       </h1>
     </div>
 
