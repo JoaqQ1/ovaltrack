@@ -48,8 +48,8 @@ public class AuthController {
             if(bindingResult.hasErrors())
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", "Campos invalidos"));
-            AuthResponse response = authService.register(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            authService.register(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Solicitud de registro creada con éxito. Pendiente de aprobación");
         } catch (BusinessException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", e.getMessage() != null ? e.getMessage() : "Error en el registro"));
