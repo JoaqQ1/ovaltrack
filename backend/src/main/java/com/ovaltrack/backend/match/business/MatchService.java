@@ -276,21 +276,12 @@ public class MatchService {
 
         matchSecurityValidator.validateCanManageMatch(match, authentication);
 
-        if (match.getStatus() == MatchStatus.HALFTIME || (match.getCurrentPeriod() != null && match.getCurrentPeriod() == 2)) {
-            throw new BusinessException("El primer tiempo ya ha sido cerrado");
-        }
+        match.closeFirstHalf();
+        Match updatedMatch = matchRepository.save(match);
 
-        if (match.getStatus() != MatchStatus.IN_PROGRESS) {
-            throw new BusinessException("El partido no se encuentra en curso en el primer tiempo");
-        }
+        eventPublisher.publishEvent(new MatchPeriodClosedEvent(updatedMatch.getId(), 1, LocalDateTime.now()));
 
-        match.setStatus(MatchStatus.HALFTIME);
-        match.setCurrentPeriod(1);
-        Match updated = matchRepository.save(match);
-
-        eventPublisher.publishEvent(new MatchPeriodClosedEvent(updated.getId(), 1, LocalDateTime.now()));
-
-        return MatchDTOMapper.toResponseDTO(updated);
+        return MatchDTOMapper.toResponseDTO(updatedMatch);
     }
 
     @Transactional
@@ -302,15 +293,10 @@ public class MatchService {
 
         matchSecurityValidator.validateCanManageMatch(match, authentication);
 
-        if (match.getStatus() != MatchStatus.HALFTIME) {
-            throw new BusinessException("El partido no se encuentra en el entretiempo");
-        }
+        match.startSecondHalf();
+        Match updatedMatch = matchRepository.save(match);
 
-        match.setStatus(MatchStatus.IN_PROGRESS);
-        match.setCurrentPeriod(2);
-        Match updated = matchRepository.save(match);
-
-        return MatchDTOMapper.toResponseDTO(updated);
+        return MatchDTOMapper.toResponseDTO(updatedMatch);
     }
 }
 
