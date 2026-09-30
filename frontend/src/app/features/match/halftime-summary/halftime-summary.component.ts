@@ -39,6 +39,48 @@ export class HalftimeSummaryComponent implements OnInit {
     return Math.max(0, 100 - own);
   });
 
+  readonly tackleStatus = computed(() => {
+    const stats = this.generalStats();
+    if (!stats || (stats.ownTacklesCompleted + stats.ownTacklesMissed === 0)) {
+      return { label: 'Sin datos', type: 'neutral' };
+    }
+    return stats.ownTackleEffectiveness >= 70
+      ? { label: 'Bien', type: 'success' }
+      : { label: 'A mejorar', type: 'warning' };
+  });
+
+  readonly turnoverStatus = computed(() => {
+    const stats = this.generalStats();
+    if (!stats || (stats.ownTurnoversWon === 0 && stats.ownTurnoversLost === 0)) {
+      return { label: 'Sin datos', type: 'neutral' };
+    }
+    const diff = stats.ownTurnoversWon - stats.ownTurnoversLost;
+    if (diff > 0) return { label: 'Favorable', type: 'success' };
+    if (diff === 0) return { label: 'Parejo', type: 'neutral' };
+    return { label: 'Desfavorable', type: 'warning' };
+  });
+
+  readonly disciplineStatus = computed(() => {
+    const stats = this.generalStats();
+    if (!stats) return { label: 'Bien', type: 'success' };
+    if (stats.ownRedCards > 0 || stats.ownPenaltiesConceded > 6) {
+      return { label: 'Crítico', type: 'danger' };
+    }
+    if (stats.ownYellowCards > 0 || stats.ownPenaltiesConceded > 3) {
+      return { label: 'Atención', type: 'warning' };
+    }
+    return { label: 'Bien', type: 'success' };
+  });
+
+  readonly setPieceStatus = computed(() => {
+    const stats = this.generalStats();
+    if (!stats || (stats.scrumsTotal + stats.lineoutsTotal === 0)) {
+      return { label: 'Sin datos', type: 'neutral' };
+    }
+    return { label: 'Registradas', type: 'neutral' };
+  });
+
+
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('matchId') || '';
     this.matchId.set(id);
