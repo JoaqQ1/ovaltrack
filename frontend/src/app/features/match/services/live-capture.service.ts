@@ -44,8 +44,6 @@ export class LiveCaptureService {
       clockElapsedSeconds: state.clockElapsedSeconds,
       clockPaused: state.clockPaused,
       currentPossession: state.currentPossession ?? 'OWN',
-      homeScore: state.scoreboard?.home ?? 0,
-      awayScore: state.scoreboard?.away ?? 0,
     };
 
     return this.matchService.updateLiveMatchState(state.matchId, request).pipe(

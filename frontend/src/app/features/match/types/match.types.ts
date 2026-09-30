@@ -39,8 +39,6 @@ export interface LiveMatchStateRequest {
   clockElapsedSeconds: number;
   clockPaused: boolean;
   currentPossession: 'OWN' | 'OPPONENT' | 'NEUTRAL';
-  homeScore: number;
-  awayScore: number;
 }
 
 /** Datos mínimos necesarios para dar de alta un partido nuevo. */

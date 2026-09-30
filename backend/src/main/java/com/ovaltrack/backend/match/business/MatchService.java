@@ -101,8 +101,6 @@ public class MatchService {
         match.setClockElapsedSeconds(request.clockElapsedSeconds());
         match.setClockPaused(request.clockPaused());
         match.setCurrentPossession(request.currentPossession());
-        match.setHomeScore(request.homeScore());
-        match.setAwayScore(request.awayScore());
         match.setClockUpdatedAt(LocalDateTime.now());
 
         return MatchDTOMapper.toResponseDTO(matchRepository.save(match));

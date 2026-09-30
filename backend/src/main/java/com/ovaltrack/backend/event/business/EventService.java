@@ -18,6 +18,7 @@ import com.ovaltrack.backend.event.domain.dto.event.EventCreationDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventResponseDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventUpdateDTO;
 import com.ovaltrack.backend.event.repository.EventRepository;
+import com.ovaltrack.backend.match.repository.MatchRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class EventService {
 	private final ClubService clubService;
 	private final MatchService matchService;
 	private final PersonService personService;
+	private final MatchRepository matchRepository;
 
 	public Collection<EventResponseDTO> findEventsByClubId(UUID clubId) {
 		if (clubService.findClubById(clubId) == null) {
@@ -99,7 +101,9 @@ public class EventService {
 		result.setSynchronizedAt(eventRequest.synchronizedAt());
 		result.setActive(true);
 
-		return EventDTOMapper.toResponseDTO(eventRepository.save(result));
+		Event savedEvent = eventRepository.save(result);
+		recalculateMatchScore(aMatch);
+		return EventDTOMapper.toResponseDTO(savedEvent);
 	}
 
 	@Transactional
@@ -110,7 +114,9 @@ public class EventService {
 		}
 
 		result.setActive(false);
-		return EventDTOMapper.toResponseDTO(eventRepository.save(result));
+		Event savedEvent = eventRepository.save(result);
+		recalculateMatchScore(result.getMatch());
+		return EventDTOMapper.toResponseDTO(savedEvent);
 	}
 
 	@Transactional
@@ -127,7 +133,32 @@ public class EventService {
 		result.setAttributes(eventRequest.attributes());
 		result.setSynchronizedAt(eventRequest.synchronizedAt());
 
-		return EventDTOMapper.toResponseDTO(eventRepository.save(result));
+		Event savedEvent = eventRepository.save(result);
+		recalculateMatchScore(result.getMatch());
+		return EventDTOMapper.toResponseDTO(savedEvent);
+	}
+
+	private void recalculateMatchScore(Match match) {
+		int homeScore = 0;
+		int awayScore = 0;
+
+		for (Event event : eventRepository.findEventsByMatchId(match.getId())) {
+			EventType eventType = event.getEventType();
+			if (!Boolean.TRUE.equals(eventType.getIsScoring())) {
+				continue;
+			}
+
+			int points = eventType.getPoints() != null ? eventType.getPoints() : 0;
+			if (event.getTeamPossession() == com.ovaltrack.backend.event.domain.EventPossession.OPPONENT) {
+				awayScore += points;
+			} else {
+				homeScore += points;
+			}
+		}
+
+		match.setHomeScore(homeScore);
+		match.setAwayScore(awayScore);
+		matchRepository.save(match);
 	}
 
 }
