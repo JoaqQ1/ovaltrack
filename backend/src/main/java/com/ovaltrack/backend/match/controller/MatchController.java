@@ -96,6 +96,15 @@ public class MatchController {
     }
 
     @Operation(
+        summary = "Get the complete live capture bootstrap",
+        description = "Returns the persisted match state, active match events, and event catalog needed to initialize live capture."
+    )
+    @GetMapping("/{matchId}/live-bootstrap")
+    public ResponseEntity<Object> getLiveMatchBootstrap(@PathVariable UUID matchId) {
+        return ResponseEntity.ok(matchService.getLiveMatchBootstrap(matchId));
+    }
+
+    @Operation(
         summary = "Update the persisted live state of a match",
         description = "Persists the operational state of the match using last-write-wins semantics."
     )

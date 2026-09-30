@@ -1,6 +1,8 @@
 import { UUID } from './common.types';
 import { LiveCaptureEventType } from './event-type.types';
-import { LocalMatchEvent } from './event.types';
+import { BackendEventResponse, LocalMatchEvent } from './event.types';
+import { BackendEventTypeResponse } from './event-type.types';
+import { Match } from './match.types';
 
 export type { UUID } from './common.types';
 
@@ -28,6 +30,12 @@ export interface LiveCaptureQuery {
   matchId: UUID;
   clubId?: UUID;
   divisionId?: UUID;
+}
+
+export interface LiveCaptureBootstrapResponse {
+  match: Match;
+  events: BackendEventResponse[];
+  eventTypes: BackendEventTypeResponse[];
 }
 
 /** Estado calculado o compuesto que necesita la pantalla de captura en vivo. */

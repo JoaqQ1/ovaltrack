@@ -5,6 +5,7 @@ import { environment } from '../../../../environments/environment';
 import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, NewMatchDraft } from '../types/match.types';
 import { BackendRosterResponse, RosterPayload, SavedRoster } from '../types/roster.types';
 import { PeriodStatisticDTO } from '../types/statistic.types';
+import { LiveCaptureBootstrapResponse } from '../types/live-capture.types';
 import { TEMPORARY_DIVISION_ID } from '../data/match.constants';
 import { LiveCaptureCacheService } from './live-capture-cache.service';
 
@@ -93,6 +94,19 @@ export class MatchService {
   getLiveMatchState(matchId: string): Observable<Match> {
     return this.http.get<BackendMatchResponse>(`${this.apiUrl}/${matchId}/live-state`).pipe(
       map(match => this.normalizeMatch(match)),
+    );
+  }
+
+  getLiveMatchBootstrap(matchId: string): Observable<LiveCaptureBootstrapResponse> {
+    return this.http.get<{
+      match: BackendMatchResponse;
+      events: LiveCaptureBootstrapResponse['events'];
+      eventTypes: LiveCaptureBootstrapResponse['eventTypes'];
+    }>(`${this.apiUrl}/${matchId}/live-bootstrap`).pipe(
+      map(response => ({
+        ...response,
+        match: this.normalizeMatch(response.match),
+      })),
     );
   }
 

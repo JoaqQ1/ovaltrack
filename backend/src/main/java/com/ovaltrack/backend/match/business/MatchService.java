@@ -18,6 +18,9 @@ import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.division.business.DivisionService;
 import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionPlayer;
+import com.ovaltrack.backend.event.domain.dto.EventDTOMapper;
+import com.ovaltrack.backend.event.repository.EventRepository;
+import com.ovaltrack.backend.event.repository.EventTypeRepository;
 import com.ovaltrack.backend.match.domain.Match;
 import com.ovaltrack.backend.match.domain.MatchPlayer;
 import com.ovaltrack.backend.match.domain.MatchPlayerRole;
@@ -28,6 +31,7 @@ import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
 import com.ovaltrack.backend.match.domain.dto.RosterDTO;
 import com.ovaltrack.backend.match.domain.dto.LiveMatchStateDTO;
+import com.ovaltrack.backend.match.domain.dto.LiveMatchBootstrapDTO;
 import com.ovaltrack.backend.match.repository.MatchPlayerRepository;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 
@@ -57,6 +61,8 @@ public class MatchService {
     private MatchPlayerRepository matchPlayerRepository;
 
 	private final MatchRepository matchRepository;
+    private final EventRepository eventRepository;
+    private final EventTypeRepository eventTypeRepository;
 	private final MatchSecurityValidator matchSecurityValidator;
 	private final ApplicationEventPublisher eventPublisher;
 
@@ -89,6 +95,24 @@ public class MatchService {
         }
 
         return MatchDTOMapper.toResponseDTO(match);
+    }
+
+    @Transactional(readOnly = true)
+    public LiveMatchBootstrapDTO getLiveMatchBootstrap(UUID matchId) {
+        Match match = findMatchEntityById(matchId);
+        if (match == null) {
+            throw new EntityNotFoundException("Partido no encontrado");
+        }
+
+        return new LiveMatchBootstrapDTO(
+                MatchDTOMapper.toResponseDTO(match),
+                eventRepository.findEventsByMatchId(matchId).stream()
+                        .map(EventDTOMapper::toResponseDTO)
+                        .toList(),
+                eventTypeRepository.findAll().stream()
+                        .map(EventDTOMapper::toResponseDTO)
+                        .toList()
+        );
     }
 
     @Transactional

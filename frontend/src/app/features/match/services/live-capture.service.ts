@@ -10,7 +10,6 @@ import { LiveMatchStateRequest, MatchStatus } from '../types/match.types';
 import { LiveCaptureCacheService } from './live-capture-cache.service';
 import { MatchService } from './match.service';
 import { EventService } from './event.service';
-import { EventTypeService } from './event-type.service';
 import { RosterService } from './roster.service';
 import { AvailablePlayer } from '../types/roster.types';
 
@@ -31,7 +30,6 @@ export class LiveCaptureService {
   private readonly cache = inject(LiveCaptureCacheService);
   private readonly matchService = inject(MatchService);
   private readonly eventService = inject(EventService);
-  private readonly eventTypeService = inject(EventTypeService);
   private readonly rosterService = inject(RosterService);
   private readonly playersByMatch = new Map<string, AvailablePlayer[]>();
 
@@ -76,7 +74,11 @@ export class LiveCaptureService {
   }
 
   private async readBootstrap(query: LiveCaptureQuery): Promise<LiveCaptureBootstrap> {
-    const match = await firstValueFrom(this.matchService.getLiveMatchState(query.matchId));
+    const { bootstrap, players } = await firstValueFrom(forkJoin({
+      bootstrap: this.matchService.getLiveMatchBootstrap(query.matchId),
+      players: this.rosterService.getAvailablePlayers(query.matchId),
+    }));
+    const match = bootstrap.match;
     if (match.status === 'cancelled') {
       throw new Error(`Match ${query.matchId} was cancelled`);
     }
@@ -84,15 +86,18 @@ export class LiveCaptureService {
       ...query,
       divisionId: match.divisionId,
     };
-    const { eventTypes, events: backendEvents, players } = await firstValueFrom(forkJoin({
-      eventTypes: this.eventTypeService.getAll(),
-      events: this.eventService.getByMatch(query.matchId),
-      players: this.rosterService.getAvailablePlayers(query.matchId),
-    }));
     this.playersByMatch.set(query.matchId, players);
-    const events = backendEvents.map((event, index) => ({
+    const events = bootstrap.events.map((event, index) => ({
       ...event,
       localSequence: index + 1,
+    }));
+    const eventTypes = bootstrap.eventTypes.map(eventType => ({
+      ...eventType,
+      groupName: eventType.groupName ?? 'General',
+      category: eventType.category ?? 'NEUTRAL',
+      points: eventType.points ?? 0,
+      active: true,
+      createdAt: new Date().toISOString(),
     }));
     const isHalftime = match.status === 'halftime';
     const period = match.currentPeriod ?? 1;
