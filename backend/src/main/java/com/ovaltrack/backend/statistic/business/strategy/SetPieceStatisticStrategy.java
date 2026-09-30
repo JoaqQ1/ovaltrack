@@ -19,7 +19,7 @@ public class SetPieceStatisticStrategy implements PeriodStatisticStrategy {
         int lineoutsTotal = 0;
 
         for (Event event : periodEvents) {
-            String typeName = event.getEventType() != null ? event.getEventType().getName() : "";
+            String typeName = event.getEventTypeName();
             if ("Scrum".equals(typeName)) {
                 scrumsTotal++;
             } else if ("Line-out".equals(typeName) || "Line".equals(typeName)) {

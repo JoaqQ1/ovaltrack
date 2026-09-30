@@ -28,10 +28,9 @@ public class ScoreStatisticStrategy implements PeriodStatisticStrategy {
         int opponentDropGoals = 0;
 
         for (Event event : periodEvents) {
-            String typeName = event.getEventType() != null ? event.getEventType().getName() : "";
             EventPossession possession = event.getTeamPossession();
 
-            switch (typeName) {
+            switch (event.getEventTypeName()) {
                 case "Try" -> {
                     if (possession == EventPossession.OWN) {
                         ownTries++;

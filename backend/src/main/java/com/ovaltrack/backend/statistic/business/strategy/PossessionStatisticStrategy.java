@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.ovaltrack.backend.event.domain.Event;
 import com.ovaltrack.backend.event.domain.EventPossession;
+import com.ovaltrack.backend.statistic.business.util.StatisticMathUtils;
 import com.ovaltrack.backend.statistic.domain.dto.PeriodStatisticDTO;
 
 /**
@@ -29,9 +30,8 @@ public class PossessionStatisticStrategy implements PeriodStatisticStrategy {
         }
 
         int totalPossession = ownPossessionCount + opponentPossessionCount;
-        double ownPossessionPercentage = totalPossession > 0
-                ? Math.round(((double) ownPossessionCount / totalPossession) * 1000.0) / 10.0
-                : 50.0;
+        double ownPossessionPercentage = StatisticMathUtils.calculatePercentage(
+                ownPossessionCount, totalPossession, 50.0);
 
         builder.ownPossessionPercentage(ownPossessionPercentage);
     }
