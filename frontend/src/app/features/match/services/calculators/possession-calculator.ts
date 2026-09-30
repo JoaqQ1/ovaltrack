@@ -1,5 +1,6 @@
 import { LocalMatchEvent } from '../../types/event.types';
 import { PeriodStatisticDTO } from '../../types/statistic.types';
+import { calculatePercentage } from './math-utils';
 
 export type PossessionStats = Pick<PeriodStatisticDTO, 'ownPossessionPercentage'>;
 
@@ -19,9 +20,7 @@ export function computePossessionStats(events: LocalMatchEvent[]): PossessionSta
   }
 
   const total = ownPossessionCount + opponentPossessionCount;
-  const ownPossessionPercentage = total > 0
-    ? Math.round(((ownPossessionCount / total) * 100) * 10) / 10
-    : 50.0;
+  const ownPossessionPercentage = calculatePercentage(ownPossessionCount, total, 50.0);
 
   return {
     ownPossessionPercentage,

@@ -1,6 +1,7 @@
 import { LiveCaptureEventType } from '../../types/event-type.types';
 import { LocalMatchEvent } from '../../types/event.types';
 import { PeriodStatisticDTO } from '../../types/statistic.types';
+import { calculatePercentage } from './math-utils';
 
 export type TackleStats = Pick<
   PeriodStatisticDTO,
@@ -31,9 +32,7 @@ export function computeTackleStats(
   }
 
   const totalTackles = ownTacklesCompleted + ownTacklesMissed;
-  const ownTackleEffectiveness = totalTackles > 0
-    ? Math.round(((ownTacklesCompleted / totalTackles) * 100) * 10) / 10
-    : 0.0;
+  const ownTackleEffectiveness = calculatePercentage(ownTacklesCompleted, totalTackles, 0.0);
 
   return {
     ownTacklesCompleted,
