@@ -146,8 +146,7 @@ public class MatchController {
     })
     @PutMapping("/{matchId}/start")
     public ResponseEntity<Object> startMatch(@PathVariable UUID matchId) {
-        matchService.changeMatchStatus(matchId, MatchStatus.IN_PROGRESS);
-        return ResponseEntity.ok("Partido empezado correctamente");
+        return ResponseEntity.ok(matchService.changeMatchStatus(matchId, MatchStatus.IN_PROGRESS));
     }
 
     @Operation(
@@ -159,8 +158,7 @@ public class MatchController {
     })
     @PutMapping("/{matchId}/finish")
     public ResponseEntity<Object> finishMatch(@PathVariable UUID matchId) {
-        matchService.changeMatchStatus(matchId, MatchStatus.FINISHED);
-        return ResponseEntity.ok("Partido terminado correctamente");
+        return ResponseEntity.ok(matchService.changeMatchStatus(matchId, MatchStatus.FINISHED));
     }
 
     @Operation(
@@ -172,8 +170,7 @@ public class MatchController {
     })
     @DeleteMapping("/{matchId}/cancel")
     public ResponseEntity<Object> cancelMatch(@PathVariable UUID matchId) {
-        matchService.changeMatchStatus(matchId, MatchStatus.CANCELLED);
-        return ResponseEntity.ok("Partido cancelado correctamente");
+        return ResponseEntity.ok(matchService.changeMatchStatus(matchId, MatchStatus.CANCELLED));
     }
 
     @PostMapping("/{matchId}/roster")
