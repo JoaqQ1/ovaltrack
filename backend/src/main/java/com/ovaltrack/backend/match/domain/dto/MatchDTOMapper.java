@@ -18,7 +18,15 @@ public final class MatchDTOMapper {
                 match.getDivision() == null ? null : match.getDivision().getId(),
                 match.getOpponent(),
                 match.getStatus(),
-                match.getCurrentPeriod() != null ? match.getCurrentPeriod() : 1
+                match.getCurrentPeriod() != null ? match.getCurrentPeriod() : 1,
+                match.getClockElapsedSeconds() != null ? match.getClockElapsedSeconds() : 0,
+                match.getClockPaused() != null ? match.getClockPaused() : true,
+                match.getClockUpdatedAt(),
+                match.getCurrentPossession(),
+                match.getHomeScore() != null ? match.getHomeScore() : 0,
+                match.getAwayScore() != null ? match.getAwayScore() : 0,
+                match.getStartedAt(),
+                match.getFinishedAt()
         );
     }
 }

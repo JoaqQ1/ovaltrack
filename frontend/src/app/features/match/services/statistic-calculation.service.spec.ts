@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { StatisticCalculationService } from './statistic-calculation.service';
-import { LocalMatchEvent, LiveCaptureEventType } from '../types/live-capture.types';
+import { LiveCaptureEventType } from '../types/event-type.types';
+import { LocalMatchEvent } from '../types/event.types';
 import {
   computeScoreStats,
   computeTackleStats,

@@ -1,4 +1,4 @@
-import { LocalMatchEvent } from '../../types/live-capture.types';
+import { LocalMatchEvent } from '../../types/event.types';
 import { PeriodStatisticDTO } from '../../types/statistic.types';
 
 export type PossessionStats = Pick<PeriodStatisticDTO, 'ownPossessionPercentage'>;

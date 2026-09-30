@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { liveCaptureDatabase } from '../data/local-databases';
-import { LocalMatchEvent, LiveCaptureEventType } from '../types/live-capture.types';
+import { LiveCaptureEventType } from '../types/event-type.types';
+import { LocalMatchEvent } from '../types/event.types';
 import { PeriodStatisticDTO } from '../types/statistic.types';
 import {
   computeScoreStats,
