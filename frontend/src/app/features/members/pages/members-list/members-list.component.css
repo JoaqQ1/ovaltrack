@@ -163,8 +163,15 @@
   grid-template-columns: minmax(220px, 2.2fr) minmax(190px, 1.5fr) 116px 44px;
   gap: 16px;
   align-items: center;
+  position: relative;
+  z-index: 1;
   box-shadow: 0 8px 24px rgba(15, 35, 15, 0.08), 0 2px 6px rgba(15, 35, 15, 0.04);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.member-row.has-open-menu {
+  z-index: 30;
+  border-color: rgba(32, 75, 34, 0.45);
 }
 
 .member-row:hover {
@@ -457,10 +464,30 @@
   cursor: pointer;
 }
 
-.role-opt:hover,
+.role-opt:hover:not(:disabled):not(.is-disabled),
 .action-opt:hover {
   background: #edf5e9;
   color: #143216;
+}
+
+.role-opt:disabled,
+.role-opt.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: transparent !important;
+  color: var(--text-muted, #718096) !important;
+}
+
+.role-opt .limit-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.07);
+  color: var(--text-muted, #718096);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 .role-opt .dot {

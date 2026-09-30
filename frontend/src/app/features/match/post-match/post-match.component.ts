@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatchService } from '../services/match.service';
 import { PersonService } from 'src/app/services/person.service';
 
@@ -16,6 +16,7 @@ export class PostMatchComponent implements OnInit{
   private route = inject(ActivatedRoute);
   private matchService = inject(MatchService);
   private personService = inject(PersonService);
+  private readonly router = inject(Router);
 
   matchId = '';
   events: any[] = [];
@@ -165,5 +166,9 @@ export class PostMatchComponent implements OnInit{
 
   getEventName(eventTypeId: string): string {
     return this.eventTypesDiccionario[eventTypeId] || 'Evento Desconocido';
+  }
+
+  comeBack(): void {
+    this.router.navigate(['/match-selection']);
   }
 }

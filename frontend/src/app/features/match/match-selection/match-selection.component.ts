@@ -29,7 +29,7 @@ import { MatchService } from '../services/match.service';
 @Component({
   selector: 'ot-match-select',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './match-selection.component.html',
   styleUrl: './match-selection.component.css',
 })
@@ -147,10 +147,14 @@ export class MatchSelectComponent implements OnInit {
     if (match.status === 'not_started') {
       // Si no empezó, va a la pantalla nueva que acabas de crear
       void this.router.navigate(['/selection-roster', match.id]);
-    } else {
-      // Si ya está en progreso o finalizado, va a la pantalla de la imagen
+    } else if (match.status === 'finished'){
+      void this.router.navigate(['/post-match', match.id])
+    } else{
+      // Si ya está en progreso, va a la pantalla de la imagen
       void this.router.navigate(['/live-capture', match.id]);
+    
     }
+
   }
 
   /**
