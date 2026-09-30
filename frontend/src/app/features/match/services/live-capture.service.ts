@@ -92,6 +92,10 @@ export class LiveCaptureService {
     ]);
     const { persistedState } = await this.cache.getBootstrapData(query);
 
+    const isHalftime = match.status === 'halftime';
+    const period = match.currentPeriod ?? 1;
+    const periodLabel = isHalftime ? 'Entretiempo' : (period === 2 ? '2T' : '1T');
+
     return {
       query: resolvedQuery,
       state: {
@@ -99,11 +103,12 @@ export class LiveCaptureService {
         awayTeam: match.opponent,
         scoreboard: { home: 0, away: 0 },
         gameClock: '00:00',
-        period: 1,
-        periodLabel: 'Inicio',
+        period,
+        periodLabel,
         clockPaused: true,
         currentPossession: 'OWN',
         synchronized: true,
+        isHalftime,
         history: [],
       },
       recentEvents: events,

@@ -170,8 +170,21 @@ export class DivisionPlayerFormComponent implements OnInit {
           this.mensajeError = errorMsg;
           this.guardando.set(false);
 
-          // Asignar error in-line y focus al campo conflictivo
-          if (errorMsg.toLowerCase().includes('email')) {
+          if (errorMsg.toLowerCase().includes('menor de edad')) {
+            const emailCtrl = this.playerForm.get('contactEmail');
+            const phoneCtrl = this.playerForm.get('contactPhone');
+
+            emailCtrl?.setErrors({ serverError: 'Requerido para menores de edad' });
+            phoneCtrl?.setErrors({ serverError: 'Requerido para menores de edad' });
+
+            emailCtrl?.markAsTouched();
+            phoneCtrl?.markAsTouched();
+
+            // Focus the first missing field
+            const emailInput = document.getElementById('contactEmail');
+            emailInput?.focus();
+            // Asignar error in-line y focus al campo conflictivo
+          } else if (errorMsg.toLowerCase().includes('email')) {
             const emailCtrl = this.playerForm.get('contactEmail');
             emailCtrl?.setErrors({ serverError: 'Email ya registrado' });
             emailCtrl?.markAsTouched();

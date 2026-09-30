@@ -74,6 +74,10 @@ export class MatchSelectComponent implements OnInit {
       return this.matches.filter(match => match.status !== 'cancelled');
     }
 
+    if (this.activeFilter === 'in_progress') {
+      return this.matches.filter(match => match.status === 'in_progress' || match.status === 'halftime');
+    }
+
     return this.matches.filter(match => match.status === this.activeFilter);
   }
 
@@ -131,6 +135,22 @@ export class MatchSelectComponent implements OnInit {
         this.errorMessage = this.readBackendError(error) ?? 'No se pudo eliminar el partido.';
       },
     });
+  }
+
+  /**
+   * Inicia un partido que está en estado 'not_started', actualizando su estado 
+   * o navegando a la pantalla de captura en vivo.
+   */
+  startMatch(matchId: string): void {
+    this.matchService.startMatch(matchId).subscribe({
+      next: () => {
+        void this.router.navigate(['/live-capture', matchId]);
+      },
+      error: (error) => {
+        this.errorMessage = this.readBackendError(error) ?? 'No se pudo iniciar el partido.';
+      }
+    });
+
   }
 
   private readBackendError(error: HttpErrorResponse): string | null {

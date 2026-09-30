@@ -82,9 +82,9 @@ public class EventService {
 		if (aMatch.getStatus() == com.ovaltrack.backend.match.domain.MatchStatus.CANCELLED) {
 			throw new BusinessException("No se puede asignar un evento a un partido cancelado");
 		}
-		Person aPerson = eventRequest.playerId() == null
-				? null
-				: personService.findPersonEntityById(eventRequest.playerId());
+		Person aPerson = eventRequest.playerId() != null 
+				? personService.findPersonEntityById(eventRequest.playerId()) 
+				: null;
 
 		Event result = new Event();
 		result.setEventType(aEventType);

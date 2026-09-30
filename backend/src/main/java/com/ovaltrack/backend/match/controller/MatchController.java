@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -145,8 +146,7 @@ public class MatchController {
     })
     @PutMapping("/{matchId}/start")
     public ResponseEntity<Object> startMatch(@PathVariable UUID matchId) {
-        matchService.changeMatchStatus(matchId, MatchStatus.IN_PROGRESS);
-        return ResponseEntity.ok("Partido empezado correctamente");
+        return ResponseEntity.ok(matchService.changeMatchStatus(matchId, MatchStatus.IN_PROGRESS));
     }
 
     @Operation(
@@ -158,8 +158,7 @@ public class MatchController {
     })
     @PutMapping("/{matchId}/finish")
     public ResponseEntity<Object> finishMatch(@PathVariable UUID matchId) {
-        matchService.changeMatchStatus(matchId, MatchStatus.FINISHED);
-        return ResponseEntity.ok("Partido terminado correctamente");
+        return ResponseEntity.ok(matchService.changeMatchStatus(matchId, MatchStatus.FINISHED));
     }
 
     @Operation(
@@ -171,8 +170,7 @@ public class MatchController {
     })
     @DeleteMapping("/{matchId}/cancel")
     public ResponseEntity<Object> cancelMatch(@PathVariable UUID matchId) {
-        matchService.changeMatchStatus(matchId, MatchStatus.CANCELLED);
-        return ResponseEntity.ok("Partido cancelado correctamente");
+        return ResponseEntity.ok(matchService.changeMatchStatus(matchId, MatchStatus.CANCELLED));
     }
 
     @PostMapping("/{matchId}/roster")
@@ -191,5 +189,35 @@ public class MatchController {
     public ResponseEntity<RosterDTO> getMatchRoster(@PathVariable UUID matchId) {
         RosterDTO roster = matchService.getSavedRoster(matchId);
         return ResponseEntity.ok(roster);
+    }
+
+    @Operation(
+        summary = "Close first half of a match",
+        description = "Closes the first half of an in-progress match, transitioning to HALFTIME."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "First half closed successfully."),
+        @ApiResponse(responseCode = "403", description = "Access denied: insufficient permissions."),
+        @ApiResponse(responseCode = "404", description = "Match not found."),
+        @ApiResponse(responseCode = "409", description = "Match not in valid state to close first half.")
+    })
+    @PutMapping("/{matchId}/close-first-half")
+    public ResponseEntity<Object> closeFirstHalf(@PathVariable UUID matchId, Authentication authentication) {
+        return ResponseEntity.ok(matchService.closeFirstHalf(matchId, authentication));
+    }
+
+    @Operation(
+        summary = "Start second half of a match",
+        description = "Starts the second half of a match that is in HALFTIME, transitioning to IN_PROGRESS with period 2."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Second half started successfully."),
+        @ApiResponse(responseCode = "403", description = "Access denied: insufficient permissions."),
+        @ApiResponse(responseCode = "404", description = "Match not found."),
+        @ApiResponse(responseCode = "409", description = "Match not in HALFTIME state.")
+    })
+    @PutMapping("/{matchId}/start-second-half")
+    public ResponseEntity<Object> startSecondHalf(@PathVariable UUID matchId, Authentication authentication) {
+        return ResponseEntity.ok(matchService.startSecondHalf(matchId, authentication));
     }
 }
