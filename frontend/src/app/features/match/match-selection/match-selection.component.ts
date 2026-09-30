@@ -137,6 +137,22 @@ export class MatchSelectComponent implements OnInit {
     });
   }
 
+  /**
+   * Inicia un partido que está en estado 'not_started', actualizando su estado 
+   * o navegando a la pantalla de captura en vivo.
+   */
+  startMatch(matchId: string): void {
+    this.matchService.startMatch(matchId).subscribe({
+      next: () => {
+        void this.router.navigate(['/live-capture', matchId]);
+      },
+      error: (error) => {
+        this.errorMessage = this.readBackendError(error) ?? 'No se pudo iniciar el partido.';
+      }
+    });
+
+  }
+
   private readBackendError(error: HttpErrorResponse): string | null {
     return typeof error.error === 'string'
       ? error.error
