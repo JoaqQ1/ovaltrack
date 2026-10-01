@@ -52,6 +52,7 @@ export interface LiveCaptureState {
   period: number;
   periodLabel: string;
   clockPaused: boolean;
+  clockUpdatedAt?: string | null;
   currentPossession: Possession;
   synchronized: boolean;
   isHalftime?: boolean;

@@ -116,6 +116,7 @@ export class LiveCaptureService {
         period,
         periodLabel,
         clockPaused: match.clockPaused ?? true,
+        clockUpdatedAt: match.clockUpdatedAt,
         currentPossession: match.currentPossession ?? 'OWN',
         synchronized: true,
         isHalftime,

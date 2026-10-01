@@ -34,7 +34,8 @@
                     class="icon-btn"
                     (click)="toggleClock()"
                     [attr.aria-label]="pausaLabel"
-                    [attr.aria-pressed]="clockPaused">
+                    [attr.aria-pressed]="clockPaused"
+                    [disabled]="isHalftime">
                     <i [class]="pausaIcon" aria-hidden="true"></i>
                 </button>
             </div>
