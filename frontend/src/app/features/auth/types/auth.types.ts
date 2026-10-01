@@ -8,6 +8,9 @@ export interface RegistroRequest {
   lastName: string;
   birthDate: string; // Formato YYYY-MM-DD
   role: UserRole;
+  clubName?: string;     // Obligatorio si es ADMIN_CLUB
+  clubRegion?: string;   // Obligatorio si es ADMIN_CLUB
+  clubId?: string;       // Obligatorio si es COACH_ANALYST
 }
 
 export interface LoginRequest {
@@ -17,6 +20,10 @@ export interface LoginRequest {
 
 export interface AuthResponse {
   token: string;
+}
+
+export interface RegistrationResponse {
+  message: string;
 }
 
 export interface TokenPayload {
