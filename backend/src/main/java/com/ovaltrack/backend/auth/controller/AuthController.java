@@ -36,7 +36,7 @@ public class AuthController {
 
     @Operation(
         summary = "Register a new user",
-        description = "Creates a user account and returns a JWT token when registration succeeds."
+        description = "Creates a user account and registration request pending approval."
     )
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "User registered successfully."),
@@ -49,7 +49,8 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", "Campos invalidos"));
             authService.register(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Solicitud de registro creada con éxito. Pendiente de aprobación");
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(Map.of("message", "Solicitud de registro creada con éxito. Pendiente de aprobación"));
         } catch (BusinessException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", e.getMessage() != null ? e.getMessage() : "Error en el registro"));
