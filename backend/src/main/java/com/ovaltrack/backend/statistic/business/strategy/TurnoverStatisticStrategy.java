@@ -20,8 +20,7 @@ public class TurnoverStatisticStrategy implements PeriodStatisticStrategy {
         int ownTurnoversLost = 0;
 
         for (Event event : periodEvents) {
-            String typeName = event.getEventType() != null ? event.getEventType().getName() : "";
-            if ("Turnover".equals(typeName)) {
+            if ("Turnover".equals(event.getEventTypeName())) {
                 if (event.getTeamPossession() == EventPossession.OWN) {
                     ownTurnoversWon++;
                 } else {

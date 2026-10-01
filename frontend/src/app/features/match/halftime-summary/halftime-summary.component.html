@@ -1,0 +1,527 @@
+<div class="halftime-page" [attr.data-theme]="currentTheme()">
+  
+  <!-- 1. Header Táctico Superior Flotante -->
+  <header class="page-top-bar">
+    <div class="bar-left">
+      <div class="brand-logo-container">
+        <img
+          class="brand-logo"
+          [src]="currentTheme() === 'light' ? 'assets/brand/OvalTrack-fondo-claro.png' : 'assets/brand/OvalTrack-fondo-oscuro.png'"
+          alt="OvalTrack" />
+      </div>
+
+      <div class="period-pill">
+        <i class="ti ti-clock-pause" aria-hidden="true"></i>
+        <span>ENTRETIEMPO</span>
+      </div>
+    </div>
+
+    <div class="bar-center">
+      <h1 class="match-heading">
+        <span class="team-name team-name--home-highlight">{{ homeTeam() }}</span>
+        <span class="vs-text">vs</span>
+        <span class="team-name team-name--away-highlight">{{ opponent() }}</span>
+      </h1>
+    </div>
+
+    <div class="bar-right">
+      @if (isOffline()) {
+        <div class="offline-pill" title="Estadísticas calculadas en el dispositivo sin conexión">
+          <i class="ti ti-cloud-off" aria-hidden="true"></i>
+          <span>Offline</span>
+        </div>
+      }
+
+      <!-- Selector de Modo Claro / Oscuro -->
+      <button type="button" class="btn-theme-toggle" (click)="toggleTheme()" [title]="currentTheme() === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'">
+        @if (currentTheme() === 'light') {
+          <i class="ti ti-moon" aria-hidden="true"></i>
+        } @else {
+          <i class="ti ti-sun" aria-hidden="true"></i>
+        }
+      </button>
+
+      <!-- Segmented Control de Pestañas [Equipo] [Jugadores] -->
+      <nav class="segmented-control" role="tablist" aria-label="Secciones del resumen">
+        <button
+          type="button"
+          role="tab"
+          class="segment-btn"
+          [class.segment-btn--active]="activeTab() === 'general'"
+          [attr.aria-selected]="activeTab() === 'general'"
+          (click)="switchTab('general')">
+          <i class="ti ti-layout-grid" aria-hidden="true"></i>
+          <span>Equipo</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          class="segment-btn"
+          [class.segment-btn--active]="activeTab() === 'players'"
+          [attr.aria-selected]="activeTab() === 'players'"
+          (click)="switchTab('players')">
+          <i class="ti ti-users" aria-hidden="true"></i>
+          <span>Jugadores</span>
+          @if (playerStats().length > 0) {
+            <span class="segment-badge">({{ playerStats().length }})</span>
+          }
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 2. Contenedor Principal HUD -->
+  <main class="page-main-area">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Calculando estadísticas del primer tiempo...</p>
+      </div>
+    } @else {
+
+      <!-- TAB 1: ESTADÍSTICAS GENERALES (EQUIPO) -->
+      @if (activeTab() === 'general') {
+        @if (generalStats(); as stats) {
+          <div class="tactical-layout animate-fade-in">
+            
+            <!-- PANEL SUPERIOR: TELEMETRÍA Y MARCADOR PANORÁMICO -->
+            <section class="telemetry-card">
+              
+              <!-- Local Score -->
+              <div class="telemetry-team telemetry-team--home">
+                <span class="team-label">{{ homeTeam() }}</span>
+                <span class="team-score text-home">{{ stats.ownScore }}</span>
+              </div>
+
+              <!-- Centro: Posesión + Desglose Comparativo -->
+              <div class="telemetry-center">
+                
+                <!-- Fila Superior de Posesión y Pastilla Central -->
+                <div class="possession-header">
+                  <span class="possession-val val--home">Posesión {{ stats.ownPossessionPercentage }}%</span>
+                  <div class="period-pill-center">1T final · min 40</div>
+                  <span class="possession-val val--away">{{ opponentPossessionPercentage() }}% Posesión</span>
+                </div>
+
+                <!-- Barra Bicolor Continua de Posesión -->
+                <div class="possession-bar" role="progressbar" [attr.aria-valuenow]="stats.ownPossessionPercentage" aria-valuemin="0" aria-valuemax="100">
+                  <div class="possession-fill fill--home" [style.width.%]="stats.ownPossessionPercentage"></div>
+                  <div class="possession-fill fill--away" [style.width.%]="opponentPossessionPercentage()"></div>
+                </div>
+
+                <!-- Cápsulas Comparativas de Tantos -->
+                <div class="breakdown-capsules">
+                  <div class="capsule" title="Tries: Local vs Rival (5 pts c/u)">
+                    <div class="capsule-nums">
+                      <strong class="text-home">{{ stats.ownTries }}</strong>
+                      <span class="capsule-dot">·</span>
+                      <strong class="text-away">{{ stats.opponentTries }}</strong>
+                    </div>
+                    <span class="capsule-label">Tries</span>
+                  </div>
+
+                  <div class="capsule" title="Conversiones: Local vs Rival (2 pts c/u)">
+                    <div class="capsule-nums">
+                      <strong class="text-home">{{ stats.ownConversions }}</strong>
+                      <span class="capsule-dot">·</span>
+                      <strong class="text-away">{{ stats.opponentConversions }}</strong>
+                    </div>
+                    <span class="capsule-label">Conversiones</span>
+                  </div>
+
+                  <div class="capsule" title="Penales a los palos: Local vs Rival (3 pts c/u)">
+                    <div class="capsule-nums">
+                      <strong class="text-home">{{ stats.ownPenalties }}</strong>
+                      <span class="capsule-dot">·</span>
+                      <strong class="text-away">{{ stats.opponentPenalties }}</strong>
+                    </div>
+                    <span class="capsule-label">Penales</span>
+                  </div>
+
+                  <div class="capsule" title="Drop Goals: Local vs Rival (3 pts c/u)">
+                    <div class="capsule-nums">
+                      <strong class="text-home">{{ stats.ownDropGoals }}</strong>
+                      <span class="capsule-dot">·</span>
+                      <strong class="text-away">{{ stats.opponentDropGoals }}</strong>
+                    </div>
+                    <span class="capsule-label">Drops</span>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Rival Score -->
+              <div class="telemetry-team telemetry-team--away">
+                <span class="team-label">{{ opponent() }}</span>
+                <span class="team-score text-away">{{ stats.opponentScore }}</span>
+              </div>
+
+            </section>
+
+            <!-- GRILLA CENTRAL: 4 TARJETAS TÁCTICAS -->
+            <div class="tactical-grid">
+
+              <!-- Tarjeta 1: Tackles -->
+              <section class="metric-card">
+                <div class="card-head">
+                  <div class="card-title-group">
+                    <span class="card-icon card-icon--tackle">
+                      <i class="ti ti-shield" aria-hidden="true"></i>
+                    </span>
+                    <h3 class="card-name">Tackles</h3>
+                  </div>
+                  <span class="status-pill status-pill--{{ tackleStatus().type }}">
+                    {{ tackleStatus().label }}
+                  </span>
+                </div>
+
+                <div class="card-hero">
+                  <div class="hero-number">{{ stats.ownTackleEffectiveness }}%</div>
+                  <div class="hero-label">Efectividad</div>
+                </div>
+
+                <!-- Mini Barra Bicolor de Efectividad -->
+                <div class="mini-bar">
+                  <div class="mini-fill fill--home" [style.width.%]="stats.ownTackleEffectiveness"></div>
+                  <div class="mini-fill fill--away" [style.width.%]="100 - stats.ownTackleEffectiveness"></div>
+                </div>
+
+                <div class="card-details">
+                  <div class="detail-row">
+                    <span class="detail-name">Completados</span>
+                    <span class="detail-val text-home">{{ stats.ownTacklesCompleted }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-name">Fallados</span>
+                    <span class="detail-val text-away">{{ stats.ownTacklesMissed }}</span>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Tarjeta 2: Turnovers (Preservando terminología Rugby) -->
+              <section class="metric-card">
+                <div class="card-head">
+                  <div class="card-title-group">
+                    <span class="card-icon card-icon--turnovers">
+                      <i class="ti ti-arrows-exchange" aria-hidden="true"></i>
+                    </span>
+                    <h3 class="card-name">Turnovers</h3>
+                  </div>
+                  <span class="status-pill status-pill--{{ turnoverStatus().type }}">
+                    {{ turnoverStatus().label }}
+                  </span>
+                </div>
+
+                <div class="card-hero">
+                  <div class="hero-number text-home">
+                    {{ (stats.ownTurnoversWon - stats.ownTurnoversLost) > 0 ? '+' : '' }}{{ stats.ownTurnoversWon - stats.ownTurnoversLost }}
+                  </div>
+                  <div class="hero-label">Balance Neto</div>
+                </div>
+
+                <!-- Mini Barra Bicolor de Turnovers -->
+                <div class="mini-bar">
+                  <div class="mini-fill fill--home" [style.width.%]="stats.ownTurnoversWon + stats.ownTurnoversLost === 0 ? 50 : (stats.ownTurnoversWon / (stats.ownTurnoversWon + stats.ownTurnoversLost)) * 100"></div>
+                  <div class="mini-fill fill--away" [style.width.%]="stats.ownTurnoversWon + stats.ownTurnoversLost === 0 ? 50 : (stats.ownTurnoversLost / (stats.ownTurnoversWon + stats.ownTurnoversLost)) * 100"></div>
+                </div>
+
+                <div class="card-details">
+                  <div class="detail-row">
+                    <span class="detail-name">Ganados</span>
+                    <span class="detail-val text-home">{{ stats.ownTurnoversWon }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-name">Perdidos</span>
+                    <span class="detail-val text-away">{{ stats.ownTurnoversLost }}</span>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Tarjeta 3: Disciplina -->
+              <section class="metric-card">
+                <div class="card-head">
+                  <div class="card-title-group">
+                    <span class="card-icon card-icon--discipline">
+                      <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+                    </span>
+                    <h3 class="card-name">Disciplina</h3>
+                  </div>
+                  <span class="status-pill status-pill--{{ disciplineStatus().type }}">
+                    {{ disciplineStatus().label }}
+                  </span>
+                </div>
+
+                <div class="card-hero">
+                  <div class="hero-number text-home">{{ stats.ownPenaltiesConceded }}</div>
+                  <div class="hero-label">Penales Cometidos</div>
+                </div>
+
+                <!-- Mini Gráfico de Tarjetas Física Amarilla y Roja -->
+                <div class="cards-visual-box">
+                  <div class="visual-card visual-card--yellow" title="Tarjetas amarillas propias"></div>
+                  <div class="visual-card visual-card--red" title="Tarjetas rojas propias"></div>
+                </div>
+
+                <div class="card-details">
+                  <div class="detail-row">
+                    <span class="detail-name">Penales del rival</span>
+                    <span class="detail-val">{{ stats.opponentPenaltiesConceded }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-name">Tarjetas (A / R)</span>
+                    <span class="detail-val">{{ stats.ownYellowCards }} / {{ stats.ownRedCards }}</span>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Tarjeta 4: Fijas -->
+              <section class="metric-card">
+                <div class="card-head">
+                  <div class="card-title-group">
+                    <span class="card-icon card-icon--setpieces">
+                      <i class="ti ti-users-group" aria-hidden="true"></i>
+                    </span>
+                    <h3 class="card-name">Fijas</h3>
+                  </div>
+                  <span class="status-pill status-pill--neutral">
+                    {{ setPieceStatus().label }}
+                  </span>
+                </div>
+
+                <div class="card-hero">
+                  <div class="hero-number">{{ stats.scrumsTotal + stats.lineoutsTotal }}</div>
+                  <div class="hero-label">Jugadas Disputadas</div>
+                </div>
+
+                <!-- Línea Indicadora punteada -->
+                <div class="mini-bar mini-bar--dashed"></div>
+
+                <div class="card-details">
+                  <div class="detail-row">
+                    <span class="detail-name">Scrums</span>
+                    <span class="detail-val">{{ stats.scrumsTotal }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-name">Line-outs</span>
+                    <span class="detail-val">{{ stats.lineoutsTotal }}</span>
+                  </div>
+                </div>
+              </section>
+
+            </div>
+
+
+            <!-- BARRA INFERIOR DE ACCIONES (FLOTANTE DIRECTA EN CANVAS) -->
+            <footer class="bottom-actions-row">
+              <button type="button" class="btn-action-back" (click)="goBackToLiveCapture()" title="Volver a la pantalla de captura en vivo">
+                <i class="ti ti-arrow-left" aria-hidden="true"></i>
+                <span>Carga en Vivo</span>
+              </button>
+
+              <button type="button" class="btn-action-start" (click)="openSecondHalfConfirmation()">
+                <i class="ti ti-player-play-filled" aria-hidden="true"></i>
+                <span>Comenzar 2º tiempo (min 40)</span>
+              </button>
+            </footer>
+
+          </div>
+        }
+      }
+
+      <!-- TAB 2: RENDIMIENTO POR JUGADOR -->
+      @if (activeTab() === 'players') {
+        <div class="tab-pane-players animate-fade-in">
+          
+          <div class="players-table-card">
+            <div class="table-card-header">
+              <div class="table-header-titles">
+                <div class="table-title-group">
+                  <span class="card-icon card-icon--tackle">
+                    <i class="ti ti-users" aria-hidden="true"></i>
+                  </span>
+                  <h2 class="table-title">Planilla de Jugadores</h2>
+                </div>
+                <p class="table-subtitle">Tantos, minutos jugados y disciplina del 1° Tiempo</p>
+              </div>
+
+              <!-- SELECTOR RÁPIDO DE FILTROS -->
+              <div class="player-filters" role="tablist" aria-label="Filtro de jugadores">
+                <button
+                  type="button"
+                  class="filter-pill"
+                  [class.filter-pill--active]="playerFilter() === 'all'"
+                  (click)="setPlayerFilter('all')">
+                  Todos ({{ playerStats().length }})
+                </button>
+                <button
+                  type="button"
+                  class="filter-pill"
+                  [class.filter-pill--active]="playerFilter() === 'starters'"
+                  (click)="setPlayerFilter('starters')">
+                  Titulares ({{ startersCount() }})
+                </button>
+                <button
+                  type="button"
+                  class="filter-pill"
+                  [class.filter-pill--active]="playerFilter() === 'subs'"
+                  (click)="setPlayerFilter('subs')">
+                  Suplentes ({{ subsCount() }})
+                </button>
+                <button
+                  type="button"
+                  class="filter-pill"
+                  [class.filter-pill--active]="playerFilter() === 'active'"
+                  (click)="setPlayerFilter('active')">
+                  Con actividad ({{ activeCount() }})
+                </button>
+              </div>
+            </div>
+
+            @if (playerStats().length === 0) {
+              <div class="empty-state">
+                <i class="ti ti-users" aria-hidden="true"></i>
+                <p>No se encontraron jugadores registrados en el plantel de este partido.</p>
+              </div>
+            } @else if (filteredPlayerStats().length === 0) {
+              <div class="empty-state">
+                <i class="ti ti-filter" aria-hidden="true"></i>
+                <p>No hay jugadores que coincidan con el filtro seleccionado.</p>
+              </div>
+            } @else {
+              <div class="table-container">
+                <table class="players-table">
+                  <thead>
+                    <tr>
+                      <th class="col-num">#</th>
+                      <th class="col-name">Jugador</th>
+                      <th class="col-condition">Condición</th>
+                      <th class="col-min">Minutos 1T</th>
+                      <th class="col-stat">Tries</th>
+                      <th class="col-stat">Conversiones</th>
+                      <th class="col-stat">Penales / Drops</th>
+                      <th class="col-pts">Puntos</th>
+                      <th class="col-cards">Tarjetas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (player of filteredPlayerStats(); track player.playerId) {
+                      <tr [class.row--has-points]="player.totalPoints > 0" [class.row--sub]="!player.isStarter">
+                        <td class="col-num">
+                          <span class="jersey-badge">{{ player.jerseyNumber }}</span>
+                        </td>
+                        <td class="col-name">
+                          <div class="player-info-cell">
+                            <span class="player-fullname">{{ player.playerName }}</span>
+                            @if (player.position) {
+                              <span class="player-position-tag">{{ player.position }}</span>
+                            }
+                          </div>
+                        </td>
+                        <td class="col-condition">
+                          @if (player.isStarter) {
+                            <span class="badge badge--starter">Titular</span>
+                          } @else {
+                            <span class="badge badge--sub">Suplente</span>
+                          }
+                        </td>
+                        <td class="col-min">
+                          <span class="stat-mono">{{ player.minutesPlayed }}'</span>
+                        </td>
+                        <td class="col-stat">
+                          <span class="stat-mono" [class.stat-highlight]="player.tries > 0" [class.stat-zero]="player.tries === 0">
+                            {{ player.tries > 0 ? player.tries : '—' }}
+                          </span>
+                        </td>
+                        <td class="col-stat">
+                          <span class="stat-mono" [class.stat-highlight]="player.conversions > 0" [class.stat-zero]="player.conversions === 0">
+                            {{ player.conversions > 0 ? player.conversions : '—' }}
+                          </span>
+                        </td>
+                        <td class="col-stat">
+                          <span class="stat-mono" [class.stat-highlight]="(player.penaltyKicks + player.dropGoals) > 0" [class.stat-zero]="(player.penaltyKicks + player.dropGoals) === 0">
+                            {{ (player.penaltyKicks + player.dropGoals) > 0 ? (player.penaltyKicks + ' / ' + player.dropGoals) : '—' }}
+                          </span>
+                        </td>
+                        <td class="col-pts">
+                          @if (player.totalPoints > 0) {
+                            <span class="total-points-badge total-points-badge--active">
+                              {{ player.totalPoints }} pts
+                            </span>
+                          } @else {
+                            <span class="stat-mono stat-zero">—</span>
+                          }
+                        </td>
+                        <td class="col-cards">
+                          @if (player.yellowCards > 0 || player.redCards > 0) {
+                            <div class="cards-wrapper">
+                              @if (player.yellowCards > 0) {
+                                <span class="card-badge card-badge--yellow" title="Amonestación">🟨 {{ player.yellowCards }}</span>
+                              }
+                              @if (player.redCards > 0) {
+                                <span class="card-badge card-badge--red" title="Expulsión">🟥 {{ player.redCards }}</span>
+                              }
+                            </div>
+                          } @else {
+                            <span class="stat-mono stat-zero">—</span>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+          </div>
+
+          <!-- Acciones del Tab Jugadores -->
+          <footer class="bottom-actions-row">
+            <button type="button" class="btn-action-back" (click)="goBackToLiveCapture()" title="Volver a la pantalla de captura en vivo">
+              <i class="ti ti-arrow-left" aria-hidden="true"></i>
+              <span>Carga en Vivo</span>
+            </button>
+
+            <button type="button" class="btn-action-start" (click)="openSecondHalfConfirmation()">
+              <i class="ti ti-player-play-filled" aria-hidden="true"></i>
+              <span>Comenzar 2º tiempo (min 40)</span>
+            </button>
+          </footer>
+
+        </div>
+      }
+
+    }
+  </main>
+
+  <!-- Modal / Diálogo de Confirmación para 2° Tiempo -->
+  @if (isConfirmingSecondHalf()) {
+    <div class="modal-backdrop" (click)="closeSecondHalfConfirmation()">
+      <div class="confirmation-modal" (click)="$event.stopPropagation()">
+        <div class="modal-icon-badge">
+          <i class="ti ti-clock-play" aria-hidden="true"></i>
+        </div>
+        <h3 class="modal-title">¿Comenzar el Segundo Tiempo?</h3>
+        <p class="modal-description">
+          El cronómetro del partido iniciará en el minuto 40. Las estadísticas del primer tiempo quedarán registradas de manera permanente.
+        </p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" (click)="closeSecondHalfConfirmation()" [disabled]="isStartingSecondHalf()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-confirm" (click)="confirmStartSecondHalf()" [disabled]="isStartingSecondHalf()">
+            @if (isStartingSecondHalf()) {
+              <div class="spinner-sm"></div>
+              <span>Iniciando...</span>
+            } @else {
+              <i class="ti ti-player-play-filled" aria-hidden="true"></i>
+              <span>Confirmar y Comenzar 2T</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

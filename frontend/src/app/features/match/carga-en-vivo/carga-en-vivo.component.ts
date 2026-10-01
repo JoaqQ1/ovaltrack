@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   EventCategoryGroup,
   EventVariant,
@@ -75,6 +75,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   private readonly matchService = inject(MatchService);
   private readonly statisticCalculationService = inject(StatisticCalculationService);
   private readonly route = inject(ActivatedRoute, { optional: true });
+  private readonly router = inject(Router, { optional: true });
   private matchId = '';
 
   /** Estados de posesión, en el orden en que se renderizan en la barra de posesión. */
@@ -354,9 +355,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     if (this.period === 1 && !this.isHalftime) {
       this.showConfirmHalftime = true;
     } else if (this.isHalftime) {
-      this.openHalftimeModal();
-    } else if (this.period === 2) {
-      this.showConfirmFinish = true;
+      this.router?.navigate(['/live-capture', this.matchId, 'halftime']);
     }
   }
 
@@ -401,10 +400,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     // 2. Persistir localmente
     this.persistState();
 
-    // 3. Abrir el modal y calcular estadísticas tácticas
-    await this.openHalftimeModal();
-
-    // 4. Sincronizar en segundo plano con el backend
+    // 3. Sincronizar en segundo plano con el backend
     this.matchService.closeFirstHalf(this.matchId).subscribe({
       next: () => {
         this.synchronized = true;
@@ -416,6 +412,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.isOfflineMode = true;
       },
     });
+
+    // 4. Redirigir a la pantalla dedicada de estadísticas de entretiempo
+    this.router?.navigate(['/live-capture', this.matchId, 'halftime']);
   }
 
   async openHalftimeModal(): Promise<void> {

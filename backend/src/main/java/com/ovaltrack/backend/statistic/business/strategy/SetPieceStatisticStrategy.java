@@ -15,17 +15,12 @@ public class SetPieceStatisticStrategy implements PeriodStatisticStrategy {
 
     @Override
     public void calculate(Collection<Event> periodEvents, PeriodStatisticDTO.Builder builder) {
-        int scrumsTotal = 0;
-        int lineoutsTotal = 0;
-
-        for (Event event : periodEvents) {
-            String typeName = event.getEventType() != null ? event.getEventType().getName() : "";
-            if ("Scrum".equals(typeName)) {
-                scrumsTotal++;
-            } else if ("Line-out".equals(typeName) || "Line".equals(typeName)) {
-                lineoutsTotal++;
-            }
-        }
+        int scrumsTotal = (int) periodEvents.stream()
+                .filter(e -> "Scrum".equals(e.getEventTypeName()))
+                .count();
+        int lineoutsTotal = (int) periodEvents.stream()
+                .filter(e -> "Line-out".equals(e.getEventTypeName()) || "Line".equals(e.getEventTypeName()))
+                .count();
 
         builder.scrumsTotal(scrumsTotal)
                .lineoutsTotal(lineoutsTotal);

@@ -66,4 +66,8 @@ public class Event {
     private LocalDateTime synchronizedAt;
 
     private Boolean active;
+
+    public String getEventTypeName() {
+        return this.eventType != null && this.eventType.getName() != null ? this.eventType.getName() : "";
+    }
 }

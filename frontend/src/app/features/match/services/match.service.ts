@@ -8,21 +8,23 @@ import { PeriodStatisticDTO } from '../types/statistic.types';
 import { LiveCaptureBootstrapResponse } from '../types/live-capture.types';
 import { TEMPORARY_DIVISION_ID } from '../data/match.constants';
 import { LiveCaptureCacheService } from './live-capture-cache.service';
+import { StatisticApiService } from './statistic-api.service';
 
 @Injectable({ providedIn: 'root' })
 export class MatchService {
   private readonly http = inject(HttpClient);
   private readonly cache = inject(LiveCaptureCacheService);
+  private readonly statisticApiService = inject(StatisticApiService);
   private readonly apiUrl = `${environment.apiUrl}/matches`;
 
   getMatches(divisionId: string = TEMPORARY_DIVISION_ID): Observable<Match[]> {
     return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${divisionId}`).pipe(
       map(matches => matches.map(match => ({
-          ...match,
-          status: this.normalizeStatus(match.status),
-          opponent: match.opponent ?? '',
-          date: match.date ?? ''
-        })))
+        ...match,
+        status: this.normalizeStatus(match.status),
+        opponent: match.opponent ?? '',
+        date: match.date ?? ''
+      })))
     );
   }
 
@@ -44,7 +46,7 @@ export class MatchService {
       ))
     );
   }
- 
+
   closeFirstHalf(matchId: string): Observable<BackendMatchResponse> {
     return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/close-first-half`, {});
   }
@@ -54,7 +56,7 @@ export class MatchService {
   }
 
   getPeriodStatistics(matchId: string, period: number = 1): Observable<PeriodStatisticDTO> {
-    return this.http.get<PeriodStatisticDTO>(`${environment.apiUrl}/statistics/match/${matchId}?period=${period}`);
+    return this.statisticApiService.getPeriodStatistics(matchId, period);
   }
 
   private normalizeMatch(match: BackendMatchResponse): Match {
@@ -82,7 +84,7 @@ export class MatchService {
     return this.http.delete<BackendMatchResponse>(`${this.apiUrl}/${matchId}/cancel`);
   }
 
-  getMatchById(matchId: string): Observable<Match>{
+  getMatchById(matchId: string): Observable<Match> {
     return this.http.get<BackendMatchResponse>(`${this.apiUrl}/${matchId}`).pipe(
       map(match => this.normalizeMatch(match)),
       switchMap(match => from(this.cache.saveMatches([match])).pipe(

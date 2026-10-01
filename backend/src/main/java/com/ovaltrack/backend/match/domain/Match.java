@@ -1,5 +1,6 @@
 package com.ovaltrack.backend.match.domain;
 
+import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.event.domain.EventPossession;
 import jakarta.persistence.*;
@@ -74,4 +75,23 @@ public class Match {
     @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<MatchPlayer> roster = new ArrayList<>();
+
+    public void closeFirstHalf() {
+        if (this.status == MatchStatus.HALFTIME || (this.currentPeriod != null && this.currentPeriod == 2)) {
+            throw new BusinessException("El primer tiempo ya ha sido cerrado");
+        }
+        if (this.status != MatchStatus.IN_PROGRESS) {
+            throw new BusinessException("El partido no se encuentra en curso en el primer tiempo");
+        }
+        this.status = MatchStatus.HALFTIME;
+        this.currentPeriod = 1;
+    }
+
+    public void startSecondHalf() {
+        if (this.status != MatchStatus.HALFTIME) {
+            throw new BusinessException("El partido no se encuentra en el entretiempo");
+        }
+        this.status = MatchStatus.IN_PROGRESS;
+        this.currentPeriod = 2;
+    }
 }

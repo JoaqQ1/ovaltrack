@@ -24,10 +24,9 @@ public class DisciplineStatisticStrategy implements PeriodStatisticStrategy {
         int opponentRedCards = 0;
 
         for (Event event : periodEvents) {
-            String typeName = event.getEventType() != null ? event.getEventType().getName() : "";
             boolean isOwn = event.getTeamPossession() == EventPossession.OWN;
 
-            switch (typeName) {
+            switch (event.getEventTypeName()) {
                 case "Penal / infracción" -> {
                     if (isOwn) {
                         ownPenaltiesConceded++;

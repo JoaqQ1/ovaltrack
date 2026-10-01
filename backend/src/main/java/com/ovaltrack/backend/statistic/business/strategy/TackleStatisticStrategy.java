@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.ovaltrack.backend.event.domain.Event;
 import com.ovaltrack.backend.event.domain.EventPossession;
+import com.ovaltrack.backend.statistic.business.util.StatisticMathUtils;
 import com.ovaltrack.backend.statistic.domain.dto.PeriodStatisticDTO;
 
 /**
@@ -24,18 +25,16 @@ public class TackleStatisticStrategy implements PeriodStatisticStrategy {
                 continue;
             }
 
-            String typeName = event.getEventType() != null ? event.getEventType().getName() : "";
-            if ("Tackle completado".equals(typeName)) {
+            if ("Tackle completado".equals(event.getEventTypeName())) {
                 ownTacklesCompleted++;
-            } else if ("Tackle fallado".equals(typeName)) {
+            } else if ("Tackle fallado".equals(event.getEventTypeName())) {
                 ownTacklesMissed++;
             }
         }
 
         int totalTackles = ownTacklesCompleted + ownTacklesMissed;
-        double ownTackleEffectiveness = totalTackles > 0
-                ? Math.round(((double) ownTacklesCompleted / totalTackles) * 1000.0) / 10.0
-                : 0.0;
+        double ownTackleEffectiveness = StatisticMathUtils.calculatePercentage(
+                ownTacklesCompleted, totalTackles, 0.0);
 
         builder.ownTacklesCompleted(ownTacklesCompleted)
                .ownTacklesMissed(ownTacklesMissed)

@@ -14,22 +14,13 @@ export function computeSetPieceStats(
   events: LocalMatchEvent[],
   eventTypeMap: Map<string, LiveCaptureEventType>
 ): SetPieceStats {
-  let scrumsTotal = 0;
-  let lineoutsTotal = 0;
-
-  for (const event of events) {
-    const et = eventTypeMap.get(event.eventTypeId);
-    const typeName = et ? et.name : '';
-
-    if (typeName === 'Scrum') {
-      scrumsTotal++;
-    } else if (typeName === 'Line-out' || typeName === 'Line') {
-      lineoutsTotal++;
-    }
-  }
+  const getName = (e: LocalMatchEvent) => eventTypeMap.get(e.eventTypeId)?.name ?? '';
 
   return {
-    scrumsTotal,
-    lineoutsTotal,
+    scrumsTotal: events.filter(e => getName(e) === 'Scrum').length,
+    lineoutsTotal: events.filter(e => {
+      const name = getName(e);
+      return name === 'Line-out' || name === 'Line';
+    }).length,
   };
 }

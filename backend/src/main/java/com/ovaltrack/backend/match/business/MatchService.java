@@ -44,48 +44,49 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor 
+@RequiredArgsConstructor
 public class MatchService {
 
     private static final Logger logger = LoggerFactory.getLogger(MatchService.class);
 
-	private static final int MATCH_DURATION_MINUTES = 90;
+    private static final int MATCH_DURATION_MINUTES = 90;
 
-	@Autowired 
-	private DivisionPlayerRepository divisionPlayerRepository;
+    @Autowired
+    private DivisionPlayerRepository divisionPlayerRepository;
 
-	@Autowired 
-	private DivisionService divisionService;
+    @Autowired
+    private DivisionService divisionService;
 
-	@Autowired
+    @Autowired
     private MatchPlayerRepository matchPlayerRepository;
 
-	private final MatchRepository matchRepository;
+    private final MatchRepository matchRepository;
     private final EventRepository eventRepository;
     private final EventTypeRepository eventTypeRepository;
-	private final MatchSecurityValidator matchSecurityValidator;
-	private final ApplicationEventPublisher eventPublisher;
+    private final MatchSecurityValidator matchSecurityValidator;
+    private final ApplicationEventPublisher eventPublisher;
 
-	private final ClubService clubService;
+    private final ClubService clubService;
 
-	public Collection<MatchResponseDTO> findAllMatchesByClubId(UUID clubId) {
-		if (clubService.findClubEntityById(clubId) == null) {
-			throw new BusinessException("Club no encontrado");
+    public Collection<MatchResponseDTO> findAllMatchesByClubId(UUID clubId) {
+        if (clubService.findClubEntityById(clubId) == null) {
+            throw new BusinessException("Club no encontrado");
         }
         return matchRepository.findAllMatchesByClubId(clubId).stream().map(MatchDTOMapper::toResponseDTO).toList();
     }
 
-	public Collection<MatchResponseDTO> findAllMatchesByDivisionId(UUID divisionId) {
-		if (divisionService.findDivisionEntityById(divisionId) == null) {
-			throw new BusinessException("Division no encontrada");
+    public Collection<MatchResponseDTO> findAllMatchesByDivisionId(UUID divisionId) {
+        if (divisionService.findDivisionEntityById(divisionId) == null) {
+            throw new BusinessException("Division no encontrada");
         }
-		return matchRepository.findAllMatchesByDivisionId(divisionId).stream().map(MatchDTOMapper:: toResponseDTO).toList();
+        return matchRepository.findAllMatchesByDivisionId(divisionId).stream().map(MatchDTOMapper::toResponseDTO)
+                .toList();
     }
 
-	public MatchResponseDTO findMatchById(UUID matchId) {
-		Match result = matchRepository.findById(matchId).orElse(null);
+    public MatchResponseDTO findMatchById(UUID matchId) {
+        Match result = matchRepository.findById(matchId).orElse(null);
         return MatchDTOMapper.toResponseDTO(result);
-	}
+    }
 
     @Transactional(readOnly = true)
     public MatchResponseDTO getLiveMatchState(UUID matchId) {
@@ -111,8 +112,7 @@ public class MatchService {
                         .toList(),
                 eventTypeRepository.findAll().stream()
                         .map(EventDTOMapper::toResponseDTO)
-                        .toList()
-        );
+                        .toList());
     }
 
     @Transactional
@@ -130,86 +130,88 @@ public class MatchService {
         return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
     }
 
-	public Match findMatchEntityById(UUID matchId) {
+    public Match findMatchEntityById(UUID matchId) {
         return matchRepository.findById(matchId).orElse(null);
-	}
+    }
 
-	@Transactional
-	public MatchResponseDTO saveMatch(MatchCreationDTO aMatchRequest) {
-		Division aDivision = divisionService.findDivisionEntityById(aMatchRequest.divisionId());
-		if (aDivision == null) {
-			throw new BusinessException("No se puede asociar un partido a una division que no existe");
-		}
+    @Transactional
+    public MatchResponseDTO saveMatch(MatchCreationDTO request) {
+        Division division = divisionService.findDivisionEntityById(request.divisionId());
+        if (division == null) {
+            throw new BusinessException("No se puede asociar un partido a una division que no existe");
+        }
 
-		LocalDateTime startDate = aMatchRequest.date();
-		LocalDateTime endDate = startDate.plusMinutes(MATCH_DURATION_MINUTES);
-		LocalDateTime overlapStart = startDate.minusMinutes(MATCH_DURATION_MINUTES);
+        LocalDateTime startDate = request.date();
+        LocalDateTime endDate = startDate.plusMinutes(MATCH_DURATION_MINUTES);
+        LocalDateTime overlapStart = startDate.minusMinutes(MATCH_DURATION_MINUTES);
 
-		if (matchRepository.findByDivisionIdAndTimeFrame(
-				aDivision.getId(), overlapStart, endDate) != null) {
-			throw new BusinessException("Ya existe un partido planeado en esa franja horaria");
-		}
+        if (matchRepository.findByDivisionIdAndTimeFrame(
+                division.getId(), overlapStart, endDate) != null) {
+            throw new BusinessException("Ya existe un partido planeado en esa franja horaria");
+        }
 
-		Match aMatch = new Match();
-		aMatch.setDate(aMatchRequest.date());
-		aMatch.setDivision(aDivision);
-		aMatch.setOpponent(aMatchRequest.opponent());
-		aMatch.setStatus(MatchStatus.NOT_STARTED);
+        Match match = new Match();
+        match.setDate(request.date());
+        match.setDivision(division);
+        match.setOpponent(request.opponent());
+        match.setStatus(MatchStatus.NOT_STARTED);
 
-		aMatch = matchRepository.save(aMatch);
-		return MatchDTOMapper.toResponseDTO(aMatch);
-	}
+        match = matchRepository.save(match);
+        return MatchDTOMapper.toResponseDTO(match);
+    }
 
-	@Transactional
-	public MatchResponseDTO updateMatch(UUID matchId, MatchUpdateDTO request) {
-		Match match = findMatchEntityById(matchId);
-		if (match == null) {
-			throw new BusinessException("Partido no encontrado");
-		}
+    @Transactional
+    public MatchResponseDTO updateMatch(UUID matchId, MatchUpdateDTO request) {
+        Match match = findMatchEntityById(matchId);
+        if (match == null) {
+            throw new BusinessException("Partido no encontrado");
+        }
 
-		match.setDate(request.date());
-		match.setOpponent(request.opponent());
+        match.setDate(request.date());
+        match.setOpponent(request.opponent());
 
-		return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
-	}
+        return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
+    }
 
-	@Transactional 
-	public MatchResponseDTO changeMatchStatus(UUID matchId, MatchStatus matchStatus) {
-		Match aMatch = findMatchEntityById(matchId);
-		if (aMatch == null) {
-			throw new BusinessException("Partido no encontrado");
-		}
+    @Transactional
+    public MatchResponseDTO changeMatchStatus(UUID matchId, MatchStatus matchStatus) {
+        Match match = findMatchEntityById(matchId);
+        if (match == null) {
+            throw new BusinessException("Partido no encontrado");
+        }
 
         if (aMatch.getStatus() == MatchStatus.NOT_STARTED) {
-/* 
-            boolean hasTitular = aMatch.getRoster().stream()
-                    .anyMatch(player -> player.getRole() == MatchPlayerRole.TITULAR);
- */
+            /*
+             * boolean hasTitular = aMatch.getRoster().stream()
+             * .anyMatch(player -> player.getRole() == MatchPlayerRole.TITULAR);
+             */
 
             boolean hasTitular = this.getSavedRoster(aMatch.getId()).getStartingPlayers().size() >= 1;
-/* 
-            if (aMatch.getRoster().isEmpty()) {
-                logger.error("CLARAMENTE EXISTE LAZY LOADINGDSADASDASDASDADSADASDASDASDASDASDASDSADSADSADSADASDSA");
-                throw new BusinessException("Existe lazy loading");
-            }
- */
+            /*
+             * if (aMatch.getRoster().isEmpty()) {
+             * logger.
+             * error("CLARAMENTE EXISTE LAZY LOADINGDSADASDASDASDADSADASDASDASDASDASDASDSADSADSADSADASDSA"
+             * );
+             * throw new BusinessException("Existe lazy loading");
+             * }
+             */
             if (!hasTitular) {
-                throw new BusinessException("No se puede iniciar el partido sin al menos un jugador titular registrado.");
+                throw new BusinessException(
+                        "No se puede iniciar el partido sin al menos un jugador titular registrado.");
             }
         }
 
-		aMatch.setStatus(matchStatus);
+        aMatch.setStatus(matchStatus);
         if (matchStatus == MatchStatus.IN_PROGRESS && aMatch.getStartedAt() == null) {
             aMatch.setStartedAt(LocalDateTime.now());
         }
         if (matchStatus == MatchStatus.FINISHED) {
             aMatch.setFinishedAt(LocalDateTime.now());
         }
-		return MatchDTOMapper.toResponseDTO(matchRepository.save(aMatch));
-	}
+        return MatchDTOMapper.toResponseDTO(matchRepository.save(aMatch));
+    }
 
-
-	@Transactional
+    @Transactional
     public void saveMatchRoster(UUID matchId, List<UUID> titularesIds, List<UUID> suplentesIds) {
         Match match = findMatchEntityById(matchId);
         if (match == null) {
@@ -225,7 +227,7 @@ public class MatchService {
 
         for (DivisionPlayer dp : todosLosJugadores) {
             UUID personId = dp.getPerson().getId();
-            
+
             if (titularesIds.contains(personId)) {
                 nuevosJugadores.add(MatchPlayer.builder()
                         .match(match)
@@ -240,7 +242,7 @@ public class MatchService {
                         .build());
             }
         }
-        
+
         // 4. Forzamos los INSERTS en la base de datos
         matchPlayerRepository.saveAll(nuevosJugadores);
     }
@@ -250,18 +252,18 @@ public class MatchService {
         Match match = matchRepository.findById(matchId).orElse(null);
 
         if (match == null || match.getRoster() == null || match.getRoster().isEmpty()) {
-            return new RosterDTO(List.of(), List.of()); 
+            return new RosterDTO(List.of(), List.of());
         }
 
         // 👉 VOLVEMOS AL ORIGINAL: Devolvemos la Persona para que Angular la reconozca
         List<UUID> startingPlayers = match.getRoster().stream()
-                .filter(mp -> mp.getRole() == MatchPlayerRole.TITULAR) 
-                .map(mp -> mp.getDivisionPlayer().getPerson().getId()) 
+                .filter(mp -> mp.getRole() == MatchPlayerRole.TITULAR)
+                .map(mp -> mp.getDivisionPlayer().getPerson().getId())
                 .toList();
 
         List<UUID> substitutePlayers = match.getRoster().stream()
                 .filter(mp -> mp.getRole() == MatchPlayerRole.SUPLENTE)
-                .map(mp -> mp.getDivisionPlayer().getPerson().getId()) 
+                .map(mp -> mp.getDivisionPlayer().getPerson().getId())
                 .toList();
 
         return new RosterDTO(startingPlayers, substitutePlayers);
@@ -276,21 +278,12 @@ public class MatchService {
 
         matchSecurityValidator.validateCanManageMatch(match, authentication);
 
-        if (match.getStatus() == MatchStatus.HALFTIME || (match.getCurrentPeriod() != null && match.getCurrentPeriod() == 2)) {
-            throw new BusinessException("El primer tiempo ya ha sido cerrado");
-        }
+        match.closeFirstHalf();
+        Match updatedMatch = matchRepository.save(match);
 
-        if (match.getStatus() != MatchStatus.IN_PROGRESS) {
-            throw new BusinessException("El partido no se encuentra en curso en el primer tiempo");
-        }
+        eventPublisher.publishEvent(new MatchPeriodClosedEvent(updatedMatch.getId(), 1, LocalDateTime.now()));
 
-        match.setStatus(MatchStatus.HALFTIME);
-        match.setCurrentPeriod(1);
-        Match updated = matchRepository.save(match);
-
-        eventPublisher.publishEvent(new MatchPeriodClosedEvent(updated.getId(), 1, LocalDateTime.now()));
-
-        return MatchDTOMapper.toResponseDTO(updated);
+        return MatchDTOMapper.toResponseDTO(updatedMatch);
     }
 
     @Transactional
@@ -302,16 +295,9 @@ public class MatchService {
 
         matchSecurityValidator.validateCanManageMatch(match, authentication);
 
-        if (match.getStatus() != MatchStatus.HALFTIME) {
-            throw new BusinessException("El partido no se encuentra en el entretiempo");
-        }
+        match.startSecondHalf();
+        Match updatedMatch = matchRepository.save(match);
 
-        match.setStatus(MatchStatus.IN_PROGRESS);
-        match.setCurrentPeriod(2);
-        Match updated = matchRepository.save(match);
-
-        return MatchDTOMapper.toResponseDTO(updated);
+        return MatchDTOMapper.toResponseDTO(updatedMatch);
     }
 }
-
-
