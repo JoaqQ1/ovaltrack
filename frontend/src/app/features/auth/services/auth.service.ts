@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { AuthResponse, CurrentUserSession, LoginRequest, RegistroRequest, TokenPayload } from '../types/auth.types';
+import { AuthResponse, CurrentUserSession, LoginRequest, RegistrationResponse, RegistroRequest, TokenPayload } from '../types/auth.types';
 import { environment } from '@environments/environment.docker';
 import { TokenService } from '../../../core/services/token.service';
 import { UserContextService } from '../../../core/services/user-context.service';
@@ -25,10 +25,8 @@ export class AuthService {
     }
   }
 
-  register(data: RegistroRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data).pipe(
-      tap(res => this.handleAuthSuccess(res.token))
-    );
+  register(data: RegistroRequest): Observable<RegistrationResponse> {
+    return this.http.post<RegistrationResponse>(`${this.apiUrl}/register`, data);
   }
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials).pipe(
