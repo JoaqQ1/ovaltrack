@@ -180,15 +180,15 @@ public class MatchService {
             throw new BusinessException("Partido no encontrado");
         }
 
-        if (aMatch.getStatus() == MatchStatus.NOT_STARTED) {
+        if (match.getStatus() == MatchStatus.NOT_STARTED) {
             /*
-             * boolean hasTitular = aMatch.getRoster().stream()
+             * boolean hasTitular = match.getRoster().stream()
              * .anyMatch(player -> player.getRole() == MatchPlayerRole.TITULAR);
              */
 
-            boolean hasTitular = this.getSavedRoster(aMatch.getId()).getStartingPlayers().size() >= 1;
+            boolean hasTitular = this.getSavedRoster(match.getId()).getStartingPlayers().size() >= 1;
             /*
-             * if (aMatch.getRoster().isEmpty()) {
+             * if (match.getRoster().isEmpty()) {
              * logger.
              * error("CLARAMENTE EXISTE LAZY LOADINGDSADASDASDASDADSADASDASDASDASDASDASDSADSADSADSADASDSA"
              * );
@@ -201,14 +201,14 @@ public class MatchService {
             }
         }
 
-        aMatch.setStatus(matchStatus);
-        if (matchStatus == MatchStatus.IN_PROGRESS && aMatch.getStartedAt() == null) {
-            aMatch.setStartedAt(LocalDateTime.now());
+        match.setStatus(matchStatus);
+        if (matchStatus == MatchStatus.IN_PROGRESS && match.getStartedAt() == null) {
+            match.setStartedAt(LocalDateTime.now());
         }
         if (matchStatus == MatchStatus.FINISHED) {
-            aMatch.setFinishedAt(LocalDateTime.now());
+            match.setFinishedAt(LocalDateTime.now());
         }
-        return MatchDTOMapper.toResponseDTO(matchRepository.save(aMatch));
+        return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
     }
 
     @Transactional

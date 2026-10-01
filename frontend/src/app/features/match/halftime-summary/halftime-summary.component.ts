@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { MatchService } from '../services/match.service';
+import { RosterService } from '../services/roster.service';
 import { StatisticCalculationService } from '../services/statistic-calculation.service';
 import { PeriodStatisticDTO, PlayerPeriodStatistic } from '../types/statistic.types';
 import { RosterPlayerInfo } from '../services/calculators';
@@ -20,6 +21,7 @@ export class HalftimeSummaryComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly matchService = inject(MatchService);
+  private readonly rosterService = inject(RosterService);
   private readonly statisticCalculationService = inject(StatisticCalculationService);
 
   readonly matchId = signal<string>('');
@@ -158,8 +160,8 @@ export class HalftimeSummaryComponent implements OnInit {
 
     try {
       const [rosterRes, playersRes] = await Promise.all([
-        firstValueFrom(this.matchService.getSavedRoster(matchId)).catch(() => null),
-        firstValueFrom(this.matchService.getAvailablePlayers(matchId)).catch(() => []),
+        firstValueFrom(this.rosterService.getSavedRoster(matchId)).catch(() => null),
+        firstValueFrom(this.rosterService.getAvailablePlayers(matchId)).catch(() => []),
       ]);
       savedRoster = rosterRes;
       availablePlayers = Array.isArray(playersRes) ? playersRes : [];

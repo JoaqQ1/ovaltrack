@@ -5,6 +5,8 @@ import { BackendEventTypeResponse } from './event-type.types';
 import { Match } from './match.types';
 
 export type { UUID } from './common.types';
+export type { LiveCaptureEventType, BackendEventTypeResponse } from './event-type.types';
+export type { BackendEventResponse, LocalMatchEvent } from './event.types';
 
 /** Valores exactos del enum EventPossession del backend. */
 export type Possession = 'OWN' | 'NEUTRAL' | 'OPPONENT';
