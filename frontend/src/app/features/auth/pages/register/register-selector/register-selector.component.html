@@ -1,0 +1,85 @@
+<div class="register-selector-wrapper">
+  <div class="container py-5">
+    <!-- Cabecera / HUD Integrado -->
+    <div class="row justify-content-center text-center mb-5">
+      <div class="col-lg-8">
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill badge-tech mb-3">
+          <span>Plataforma de Registro OvalTrack</span>
+        </div>
+        <h1 class="selector-title fw-bold mb-2">¿Cómo deseas unirte a la plataforma?</h1>
+        <p class="selector-subtitle mb-0">
+          Selecciona el perfil correspondiente a tu rol institucional o técnico para comenzar tu solicitud.
+        </p>
+      </div>
+    </div>
+
+    <!-- Tarjetas de Selección Dual -->
+    <div class="row g-4 justify-content-center">
+      
+      <!-- Opción 1: Administrador de Club -->
+      <div class="col-12 col-md-6 col-lg-5">
+        <a routerLink="/auth/register/club" class="text-decoration-none h-100 d-block">
+          <div class="selector-card h-100 p-4 d-flex flex-column justify-content-between">
+            <div>
+              <div class="card-icon-wrapper d-flex align-items-center justify-content-center mb-3">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="9" y1="3" x2="9" y2="21"></line>
+                </svg>
+              </div>
+              <span class="badge-role-pill mb-2 d-inline-block">Institucional</span>
+              <h3 class="card-title fw-bold mb-2">Registrar mi Club</h3>
+              <p class="card-desc mb-0">
+                Ideal si eres responsable de una institución y deseas dar de alta tu club para administrar planteles, divisiones y solicitudes.
+              </p>
+            </div>
+            <div class="card-action d-flex align-items-center gap-2 mt-4 fw-semibold small">
+              <span>Iniciar alta de club</span>
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Opción 2: Entrenador / Analista -->
+      <div class="col-12 col-md-6 col-lg-5">
+        <a routerLink="/auth/register/coach" class="text-decoration-none h-100 d-block">
+          <div class="selector-card h-100 p-4 d-flex flex-column justify-content-between">
+            <div>
+              <div class="card-icon-wrapper d-flex align-items-center justify-content-center mb-3">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
+              <span class="badge-role-pill badge-coach mb-2 d-inline-block">Cuerpo Técnico</span>
+              <h3 class="card-title fw-bold mb-2">Entrenador / Analista</h3>
+              <p class="card-desc mb-0">
+                Si formas parte del staff técnico y deseas solicitar acceso para utilizar las herramientas de análisis y gestión en vivo en tu club.
+              </p>
+            </div>
+            <div class="card-action d-flex align-items-center gap-2 mt-4 fw-semibold small">
+              <span>Solicitar acceso a club</span>
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Enlace de Retorno -->
+    <div class="text-center mt-5">
+      <a routerLink="/auth/login" class="text-decoration-none small fw-semibold return-link-item">
+        ← ¿Ya tienes una cuenta aprobada? Inicia sesión aquí
+      </a>
+    </div>
+
+  </div>
+</div>
