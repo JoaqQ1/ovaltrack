@@ -10,6 +10,7 @@ import com.ovaltrack.backend.club.domain.ClubStatus;
 import com.ovaltrack.backend.club.domain.dto.ClubCreationDTO;
 import com.ovaltrack.backend.club.domain.dto.ClubDTOMapper;
 import com.ovaltrack.backend.club.domain.dto.ClubResponseDTO;
+import com.ovaltrack.backend.club.domain.dto.ClubRegistrationOptionDTO;
 import com.ovaltrack.backend.club.domain.dto.ClubUpdateDTO;
 import com.ovaltrack.backend.club.repository.ClubRepository;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
@@ -29,6 +30,13 @@ public class ClubService {
     public Collection<ClubResponseDTO> findAllClubs() {
 		return clubRepository.findAll().stream().map(ClubDTOMapper::toResponseDTO).toList();
     }
+
+        public Collection<ClubRegistrationOptionDTO> findRegistrationOptions() {
+                return clubRepository.findAll().stream()
+                                .filter(club -> club.getStatus() == ClubStatus.ACTIVE)
+                                .map(club -> new ClubRegistrationOptionDTO(club.getId(), club.getName(), club.getCity()))
+                                .toList();
+        }
 
     public ClubResponseDTO findClubById(UUID clubId) {
         return ClubDTOMapper.toResponseDTO(clubRepository.findById(clubId).orElse(null));

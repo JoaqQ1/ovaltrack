@@ -76,6 +76,15 @@ public class ClubController {
     }
 
     @Operation(
+        summary = "List active clubs available for registration",
+        description = "Returns public club identification details for registration forms."
+    )
+    @GetMapping("/registration-options")
+    public ResponseEntity<Object> findRegistrationOptions() {
+        return ResponseEntity.ok(clubService.findRegistrationOptions());
+    }
+
+    @Operation(
         summary = "Find a specific club in the system",
         description = "Return the specified club in the path variable."
     )
