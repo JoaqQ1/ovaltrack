@@ -11,6 +11,12 @@ export interface Club {
   contactPhone?: string;
 }
 
+export interface ClubRegistrationOption {
+  id: string;
+  name: string;
+  city: string;
+}
+
 export interface ClubUpdateRequest {
   name: string;
   city: string;
