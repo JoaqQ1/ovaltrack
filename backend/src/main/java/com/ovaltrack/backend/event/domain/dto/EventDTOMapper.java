@@ -22,6 +22,7 @@ public final class EventDTOMapper {
                 event.getPlayer() == null ? null : event.getPlayer().getId(),
                 event.getTeamPossession(),
                 event.getMatchTime(),
+                event.getAbsoluteMatchTime(),
                 event.getRealTime(),
                 event.getPeriod(),
                 event.getOrigin(),

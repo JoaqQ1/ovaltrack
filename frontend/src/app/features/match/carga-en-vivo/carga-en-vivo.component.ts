@@ -297,6 +297,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       playerId: null,
       teamPossession: this.currentPossession,
       matchTime: this.parseClock(this.gameClock),
+      absoluteMatchTime: this.parseClock(this.gameClock),
       realTime: timestamp,
       period: this.period,
       origin: 'live-capture',

@@ -21,6 +21,8 @@ public record EventResponseDTO(
 
         Integer matchTime,
 
+        Integer absoluteMatchTime,
+
         LocalDateTime realTime,
 
         Integer period,

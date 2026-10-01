@@ -9,6 +9,7 @@ export interface BackendEventResponse {
   playerId: UUID | null;
   teamPossession: Possession;
   matchTime: number | null;
+  absoluteMatchTime: number | null;
   realTime: string | null;
   period: number | null;
   origin: string | null;
@@ -24,6 +25,7 @@ export interface BackendEventCreationRequest {
   playerId?: UUID | null;
   teamPossession?: Possession | null;
   matchTime?: number | null;
+  absoluteMatchTime?: number | null;
   realTime?: string | null;
   period?: number | null;
   origin?: string | null;
