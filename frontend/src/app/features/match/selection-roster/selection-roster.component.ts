@@ -172,7 +172,7 @@ export class SelectionRosterComponent implements OnInit {
     ).subscribe({
       next: () => {
         console.log('Plantel guardado y partido iniciado con éxito');
-        alert('¡Plantel guardado! Iniciando partido...');
+        alert('¡Plantel guardado!');
         this.router.navigate(['/match-selection']); 
       },
       error: (err) => {
