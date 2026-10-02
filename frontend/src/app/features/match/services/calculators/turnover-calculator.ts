@@ -21,9 +21,9 @@ export function computeTurnoverStats(
     const et = eventTypeMap.get(event.eventTypeId);
     if (et?.name === 'Turnover') {
       if (event.teamPossession === 'OWN') {
-        ownTurnoversWon++;
-      } else {
         ownTurnoversLost++;
+      } else {
+        ownTurnoversWon++;
       }
     }
   }

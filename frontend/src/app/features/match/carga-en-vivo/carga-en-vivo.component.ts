@@ -14,8 +14,8 @@ import { LocalMatchEvent } from '../types/event.types';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../services/statistic-calculation.service';
-import { HalftimeStatsModalComponent } from './components/halftime-stats-modal/halftime-stats-modal.component';
 import { PeriodStatisticDTO } from '../types/statistic.types';
+import { CurrentStatsModalComponent } from './components/current-stats-modal/current-stats-modal.component';
 
 /**
  * Representa un evento que ya fue tocado pero todavía está esperando a que
@@ -66,7 +66,7 @@ const POSSESSIONS: readonly Possession[] = ['OWN', 'NEUTRAL', 'OPPONENT'] as con
 @Component({
   selector: 'ot-live-capture',
   standalone: true,
-  imports: [CommonModule, HalftimeStatsModalComponent],
+  imports: [CommonModule, CurrentStatsModalComponent],
   templateUrl: './carga-en-vivo.component.html',
   styleUrl: './carga-en-vivo.component.css'
 })
@@ -101,10 +101,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   showConfirmHalftime = false;
   showConfirmFinish = false;
   isFinished = false;
-  showHalftimeModal = false;
+  showCurrentStatisticsModal = false;
   isCalculatingStats = false;
   isOfflineMode = false;
-  halftimeStats: PeriodStatisticDTO | null = null;
+  currentStats: PeriodStatisticDTO | null = null;
 
   private clockElapsedSeconds = 0;
   private clockStartedAt: number | null = null;
@@ -426,13 +426,13 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.router?.navigate(['/live-capture', this.matchId, 'halftime']);
   }
 
-  async openHalftimeModal(): Promise<void> {
-    this.showHalftimeModal = true;
+  async openCurrentStatisticsModal(): Promise<void> {
+    this.showCurrentStatisticsModal = true;
     this.isCalculatingStats = true;
 
     try {
       const allEventTypes = this.categories.flatMap(category => category.events);
-      this.halftimeStats = await this.statisticCalculationService.calculatePeriodStatistics(
+      this.currentStats = await this.statisticCalculationService.calculatePeriodStatistics(
         this.matchId,
         1,
         this.events,
@@ -445,8 +445,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     }
   }
 
-  closeHalftimeModal(): void {
-    this.showHalftimeModal = false;
+  closeCurrentStatisticsModal(): void {
+    this.showCurrentStatisticsModal = false;
   }
 
   private startClock(): void {
