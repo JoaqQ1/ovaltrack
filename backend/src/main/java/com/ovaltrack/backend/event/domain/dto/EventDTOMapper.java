@@ -16,11 +16,13 @@ public final class EventDTOMapper {
 
         return new EventResponseDTO(
                 event.getId(),
+                event.getClientEventId(),
                 event.getEventType() == null ? null : event.getEventType().getId(),
                 event.getMatch() == null ? null : event.getMatch().getId(),
                 event.getPlayer() == null ? null : event.getPlayer().getId(),
                 event.getTeamPossession(),
                 event.getMatchTime(),
+                event.getAbsoluteMatchTime(),
                 event.getRealTime(),
                 event.getPeriod(),
                 event.getOrigin(),

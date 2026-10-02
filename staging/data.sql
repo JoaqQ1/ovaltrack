@@ -3,6 +3,19 @@
 
 TRUNCATE TABLE events, event_types, matches, division_players, division_coaches, divisions, registration_requests, clubs, users, persons RESTART IDENTITY CASCADE;
 
+ALTER TABLE matches DROP CONSTRAINT IF EXISTS matches_status_check;
+ALTER TABLE matches ADD CONSTRAINT matches_status_check CHECK (status IN ('NOT_STARTED', 'IN_PROGRESS', 'HALFTIME', 'FINISHED', 'CANCELLED'));
+
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS clock_elapsed_seconds INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS clock_paused BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS clock_updated_at TIMESTAMP;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS current_possession VARCHAR(255) NOT NULL DEFAULT 'OWN';
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS home_score INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_score INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS started_at TIMESTAMP;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS finished_at TIMESTAMP;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS client_event_id UUID;
+
 -- =========================================
 -- PERSONS (30 personas en total)
 -- =========================================
@@ -170,22 +183,206 @@ INSERT INTO division_players (id, person_id, division_id, jersey_number, positio
 -- MATCHES (Partidos)
 -- =========================================
 
-INSERT INTO matches (id, date, division_id, opponent, status) VALUES
-    ('11111111-1111-1111-1111-000000000040', '2024-10-10 15:30:00', '11111111-1111-1111-1111-000000000020', 'Trelew Rugby Club', 'FINISHED');
+INSERT INTO matches (
+  id, date, division_id, opponent, status, current_period,
+  clock_elapsed_seconds, clock_paused, clock_updated_at,
+  current_possession, home_score, away_score, started_at, finished_at
+) VALUES
+    -- 1: Trelew RC (En progreso, 1T -> ideal para probar captura en vivo y pasar a entretiempo)
+  ('11111111-1111-1111-1111-000000000040', '2026-09-28 15:30:00', '11111111-1111-1111-1111-000000000020', 'Trelew Rugby Club', 'IN_PROGRESS', 1, 0, false, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
+    -- 2: Bigornia Club (No iniciado -> ideal para probar alineación/roster y comienzo de partido)
+  ('11111111-1111-1111-1111-000000000041', '2026-10-05 16:00:00', '11111111-1111-1111-1111-000000000020', 'Bigornia Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL),
+    -- 3: Chenque RC (Entretiempo -> ideal para probar resumen táctico e Iniciar 2T)
+  ('11111111-1111-1111-1111-000000000042', '2026-09-28 14:00:00', '11111111-1111-1111-1111-000000000020', 'Chenque Rugby Club', 'HALFTIME', 1, 2400, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
+    -- 4: Patoruzú RC (En progreso, 2T -> ideal para probar eventos durante el segundo tiempo)
+  ('11111111-1111-1111-1111-000000000043', '2026-09-28 16:45:00', '11111111-1111-1111-1111-000000000020', 'Patoruzú Rugby Club', 'IN_PROGRESS', 2, 2400, false, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
+    -- 5: Deportivo Portugués (Finalizado -> ideal para probar consulta de partidos concluidos)
+  ('11111111-1111-1111-1111-000000000044', '2026-09-21 15:30:00', '11111111-1111-1111-1111-000000000020', 'Deportivo Portugués', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    -- 6: Calafate RC (División M19, no iniciado)
+  ('11111111-1111-1111-1111-000000000045', '2026-10-12 14:00:00', '11111111-1111-1111-1111-000000000021', 'Calafate Rugby Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL);
 
 
 -- =========================================
--- EVENT_TYPES (Tipos de Eventos / Catálogo)
+-- EVENT_TYPES (Catálogo Estándar de Tipos de Eventos)
 -- =========================================
-/* 
-INSERT INTO event_types (id, name, group_name, category, affects_possession, is_scoring, points, requires_player, created_at) VALUES
-    ('11111111-1111-1111-1111-000000000050', 'Try', 'Anotacion', 'ATTACK', false, true, 5, true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000051', 'Tackle', 'Defensa', 'DEFENSE', false, false, 0, true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000052', 'Line', 'Fijo', 'NEUTRAL', true, false, 0, false, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000053', 'Conversion', 'Anotacion', 'ATTACK', false, true, 2, true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000054', 'Penal', 'Anotacion', 'ATTACK', true, false, 3, false, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000055', 'Scrum', 'Fijo', 'NEUTRAL', true, false, 0, false, CURRENT_TIMESTAMP);
- */
+
+INSERT INTO event_types
+(id, name, group_name, category, affects_possession, is_scoring, points,
+ requires_player, template_event_fields, created_at)
+VALUES
+(
+    '550e8400-e29b-41d4-a716-446655440101',
+    'Try',
+    'Ataque',
+    'ATTACK',
+    true,
+    true,
+    5,
+    true,
+    $${
+      "wasSuccessful": { "type": "boolean", "required": true },
+      "wasConverted": { "type": "boolean", "required": true }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440102',
+    'Penal a los palos',
+    'Ataque',
+    'ATTACK',
+    false,
+    true,
+    3,
+    true,
+    $${
+      "wasSuccessful": { "type": "boolean", "required": true },
+      "distanceMeters": { "type": "number", "required": false }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440103',
+    'Drop gol',
+    'Ataque',
+    'ATTACK',
+    false,
+    true,
+    3,
+    true,
+    $${
+      "wasSuccessful": { "type": "boolean", "required": true },
+      "distanceMeters": { "type": "number", "required": false }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440104',
+    'Tackle completado',
+    'Defensa',
+    'DEFENSE',
+    false,
+    false,
+    0,
+    true,
+    $${
+      "forcedTurnover": { "type": "boolean", "required": false }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440105',
+    'Tackle fallado',
+    'Defensa',
+    'DEFENSE',
+    false,
+    false,
+    0,
+    true,
+    $${
+      "failReason": { "type": "string", "required": false }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440106',
+    'Turnover',
+    'Cambio de posesión',
+    'NEUTRAL',
+    true,
+    false,
+    0,
+    false,
+    '{
+      "turnoverType": {"type": "string", "required":false}
+    }'::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440107',
+    'Scrum',
+    'Formación fija',
+    'NEUTRAL',
+    false,
+    false,
+    0,
+    false,
+    $${
+      "scrumResult": { "type": "string", "required": true },
+      "resetCount": { "type": "integer", "required": false }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440108',
+    'Line-out',
+    'Formación fija',
+    'NEUTRAL',
+    false,
+    false,
+    0,
+    false,
+    $${
+      "lineResult": { "type": "string", "required": true }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440109',
+    'Penal / infracción',
+    'Neutro',
+    'NEUTRAL',
+    false,
+    false,
+    0,
+    false,
+    $${
+      "penaltyType": { "type": "string", "required": false }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440110',
+    'Amonestación',
+    'Neutro',
+    'NEUTRAL',
+    false,
+    false,
+    0,
+    true,
+    $${
+      "reason": { "type": "string", "required": false },
+      "durationMinutes": { "type": "integer", "required": false }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440111',
+    'Expulsión',
+    'Neutro',
+    'NEUTRAL',
+    false,
+    false,
+    0,
+    true,
+    $${
+      "reason": { "type": "string", "required": false }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440112',
+    'Lesión',
+    'Neutro',
+    'NEUTRAL',
+    false,
+    false,
+    0,
+    true,
+    $${
+      "injury": { "type": "string", "required": false }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
+);
 
 -- =========================================
 -- EVENTS (Eventos registrados en el partido)

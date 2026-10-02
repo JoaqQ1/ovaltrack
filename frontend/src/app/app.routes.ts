@@ -31,6 +31,18 @@ export const routes: Routes = [
             import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
     },
     {
+        path: 'live-capture/:matchId/halftime',
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+        },
+        loadComponent: () =>
+            import('./features/match/halftime-summary/halftime-summary.component').then(
+                m => m.HalftimeSummaryComponent
+            )
+    },
+    {
         path: 'live-capture/:matchId',
         canMatch: [authGuard],
         canActivate: [hasRoleGuard, hasClubGuard],

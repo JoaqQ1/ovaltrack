@@ -16,9 +16,16 @@
             <img class="live-capture__brand-icon"
                 [src]="theme === 'light' ? 'assets/brand/OvalTrack-fondo-claro.png' : 'assets/brand/OvalTrack-fondo-oscuro.png'"
                 alt="OvalTrack">
+            <button
+                type="button"
+                class="btn btn--outline"
+                (click)="openCurrentStatisticsModal()"
+                [attr.aria-label]="'Abrir estadísticas tácticas'">
+                <i class="ti ti-chart-bar" aria-hidden="true"></i>
+                Estadísticas
+            </button>
         </div>
-
-        <div class="live-capture__scoreboard">
+        <div class="live-capture__scoreboard">            
             <span class="live-capture__score">
                 {{ homeTeam }}
                 <span class="live-capture__score-value">{{ scoreboard.home }}–{{
@@ -33,17 +40,32 @@
                     class="icon-btn"
                     (click)="toggleClock()"
                     [attr.aria-label]="pausaLabel"
-                    [attr.aria-pressed]="clockPaused">
+                    [attr.aria-pressed]="clockPaused"
+                    [disabled]="!isStarted || isHalftime">
                     <i [class]="pausaIcon" aria-hidden="true"></i>
                 </button>
+
+            </div>
+            <div>
+                <span class="live-capture__score">
+                    {{ periodLabel }}
+                </span>
             </div>
         </div>
 
         <div class="live-capture__actions">
-            <button type="button" class="btn btn--outline">{{ periodLabel
-                }}</button>
+            <button
+                type="button"
+                class="btn btn--outline"
+                [class.btn--active]="isHalftime"
+                [attr.aria-label]="!isStarted ? 'Iniciar partido' : (isHalftime ? 'Ver resumen táctico del entretiempo' : 'Gestionar período del partido')"
+                (click)="onPeriodButtonClick()"
+                [disabled]="isStartingMatch">
+                {{ periodLabelAction }}
+            </button>
             <button type="button" class="btn btn--outline"
-                (click)="undoLastEvent()">
+                (click)="undoLastEvent()"
+                [disabled]="!isStarted">
                 <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
                 Deshacer
             </button>
@@ -113,7 +135,7 @@
                         [class.event-chip--success]="eventVariant(event) === 'success'"
                         [class.event-chip--danger]="eventVariant(event) === 'danger'"
                         [class.event-chip--warning]="eventVariant(event) === 'warning'"
-                        [disabled]="pendingSelection !== null && pendingSelection.event.id !== event.id"
+                        [disabled]="!isStarted || (pendingSelection !== null && pendingSelection.event.id !== event.id)"
                         [class.event-chip--selected]="pendingSelection?.event?.id === event.id"
                         (click)="onEventTap(event)">
                         {{ event.name }}
@@ -153,7 +175,8 @@
                     <span class="history__time">{{ item.minute }}</span>
                     <button type="button" class="history__button"
                         [attr.aria-label]="'Deshacer evento de ' + item.minute"
-                        (click)="undoHistoryEvent(item.id)">
+                        (click)="undoHistoryEvent(item.id)"
+                        [disabled]="!isStarted">
                         <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -175,10 +198,71 @@
             [class.is-active]="currentPossession === possession"
             [attr.aria-pressed]="currentPossession === possession"
             (click)="selectPossession(possession)"
-            [disabled]="pendingSelection">
+            [disabled]="!isStarted || pendingSelection">
             {{ possession === 'OWN' ? 'Propia' : possession === 'OPPONENT' ?
             'Rival' : 'Neutral' }}
         </button>
         }
     </footer>
+
+    @if (showConfirmHalftime) {
+    <div class="confirm-backdrop" (click)="cancelConfirmHalftime()">
+      <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-halftime-title" (click)="$event.stopPropagation()">
+        <div class="confirm-icon">
+          <i class="ti ti-clock-pause" aria-hidden="true"></i>
+        </div>
+        <h3 id="confirm-halftime-title" class="confirm-title">¿Cerrar Primer Tiempo?</h3>
+        <p class="confirm-text">
+          El reloj se pausará automáticamente y se calcularán las estadísticas tácticas del período (posesión, tackles, tantos y disciplina).
+        </p>
+        <div class="confirm-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelConfirmHalftime()">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" (click)="confirmCloseFirstHalf()">
+            <i class="ti ti-check" aria-hidden="true"></i>
+            Confirmar Entretiempo
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+
+        @if (showConfirmFinish) {
+        <div class="confirm-backdrop" (click)="cancelConfirmFinish()">
+            <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-finish-title" (click)="$event.stopPropagation()">
+                <div class="confirm-icon">
+                    <i class="ti ti-flag-check" aria-hidden="true"></i>
+                </div>
+                <h3 id="confirm-finish-title" class="confirm-title">¿Finalizar partido?</h3>
+                <p class="confirm-text">
+                    El reloj se pausará y el partido quedará finalizado. Los eventos podrán seguir editándose desde el historial.
+                </p>
+                <div class="confirm-actions">
+                    <button type="button" class="btn btn-secondary" (click)="cancelConfirmFinish()">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" (click)="confirmFinishMatch()">
+                        <i class="ti ti-check" aria-hidden="true"></i>
+                        Finalizar partido
+                    </button>
+                </div>
+            </div>
+        </div>
+        }
+
+    @if (showCurrentStatisticsModal) {
+    <ot-current-stats-modal
+      [stats]="currentStats"
+      [homeTeam]="homeTeam"
+      [awayTeam]="awayTeam"
+      [isLoading]="isCalculatingStats"
+      [isOffline]="isOfflineMode"
+      [theme]="theme"
+      [gameClock]="gameClock"
+      [clockPaused]="clockPaused"
+      (toggleClock)="toggleClock()"
+      (closeModal)="closeCurrentStatisticsModal()">
+    </ot-current-stats-modal>
+    }
 </section>

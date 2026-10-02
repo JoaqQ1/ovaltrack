@@ -1,6 +1,7 @@
 package com.ovaltrack.backend.division.business;
 
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -145,6 +146,21 @@ public class DivisionPlayerService {
                 throw new BusinessException("La persona no existe");
             }
         } else {
+            
+            if (divisionPlayerRequest.birthDate() == null) {
+                throw new BusinessException("La fecha de nacimiento es requerida.");
+            }
+
+            int playerAge = Period.between(divisionPlayerRequest.birthDate(), LocalDate.now()).getYears();
+            boolean hasValidEmail = divisionPlayerRequest.contactEmail() != null && !divisionPlayerRequest.contactEmail().trim().isEmpty();
+            boolean hasValidPhoneNumber = divisionPlayerRequest.contactPhone() != null && !divisionPlayerRequest.contactPhone().trim().isEmpty();
+
+            if (playerAge < 18) {
+                if (!hasValidEmail || !hasValidPhoneNumber) {
+                    throw new BusinessException("La persona es menor de edad, se requieren metodos de contacto validos.");
+                }
+            }
+
             PersonCreationDTO personDto = new PersonCreationDTO(
                     divisionPlayerRequest.firstName(),
                     divisionPlayerRequest.lastName(),

@@ -14,7 +14,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "events",
-       uniqueConstraints = {@UniqueConstraint(name = "uk_event_snapshot", columnNames = { "event_type_id", "match_id", "matchTime" })})
+       uniqueConstraints = {@UniqueConstraint(name = "uk_event_snapshot", columnNames = { "event_type_id", "match_id", "realTime" })})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -27,6 +27,9 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
     private UUID id;
+
+    @Column(name = "client_event_id", unique = true)
+    private UUID clientEventId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_type_id", nullable = false)
@@ -46,6 +49,8 @@ public class Event {
 
     private Integer matchTime;
 
+    private Integer absoluteMatchTime;
+
     private LocalDateTime realTime;
 
     private Integer period;
@@ -63,4 +68,8 @@ public class Event {
     private LocalDateTime synchronizedAt;
 
     private Boolean active;
+
+    public String getEventTypeName() {
+        return this.eventType != null && this.eventType.getName() != null ? this.eventType.getName() : "";
+    }
 }

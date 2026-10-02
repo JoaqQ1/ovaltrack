@@ -13,6 +13,7 @@ import {
 } from '../types/match.types';
 import { MatchService } from '../services/match.service';
 import { DivisionService } from 'src/app/services/division.service';
+import { RosterService } from '../services/roster.service';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -30,12 +31,13 @@ import { DivisionService } from 'src/app/services/division.service';
 @Component({
   selector: 'ot-match-select',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './match-selection.component.html',
   styleUrl: './match-selection.component.css',
 })
 export class MatchSelectComponent implements OnInit {
   private readonly matchService = inject(MatchService);
+  private readonly rosterService = inject(RosterService);
   private readonly router = inject(Router);
   private readonly divisionService = inject(DivisionService);
 
@@ -75,6 +77,11 @@ export class MatchSelectComponent implements OnInit {
     if (this.activeFilter === 'all') {
       return this.matches.filter(match => match.status !== 'cancelled');
     }
+
+    if (this.activeFilter === 'in_progress') {
+      return this.matches.filter(match => match.status === 'in_progress' || match.status === 'halftime');
+    }
+
     return this.matches.filter(match => match.status === this.activeFilter);
   }
 
@@ -134,6 +141,27 @@ export class MatchSelectComponent implements OnInit {
     });
   }
 
+  /** Navega a la captura en vivo solo si el partido tiene titulares completos. */
+  startMatch(matchId: string): void {
+    this.navigateToLiveCaptureIfRosterIsValid(matchId);
+  }
+
+
+  onSelectMatch(match: Match) {
+    this.openMatch(match);
+    this.selectMatch.emit(match);
+  }
+
+  isLive(match: Match): boolean {
+    return match.status === 'in_progress' || match.status === 'halftime';
+  }
+
+  get emptyMessage(): string {
+    return this.activeFilter !== 'all'
+      ? `No se encontraron partidos en estado "${this.statusLabels[this.activeFilter]}".`
+      : 'Aún no tienes partidos creados. Haz clic en "+ Crear partido" para programar el próximo encuentro.';
+  }
+
   private readBackendError(error: HttpErrorResponse): string | null {
     return typeof error.error === 'string' ? error.error : error.error?.message ?? null;
   }
@@ -143,11 +171,36 @@ export class MatchSelectComponent implements OnInit {
 
     if (match.status === 'not_started') {
       void this.router.navigate(['/selection-roster', match.id]);
+    } else if (match.status === 'halftime') {
+      void this.router.navigate(['/live-capture/', match.id, 'halftime'])
     } else if (match.status === 'finished'){
       void this.router.navigate(['/post-match', match.id])
     } else{
-      void this.router.navigate(['/live-capture', match.id]);
+      this.navigateToLiveCaptureIfRosterIsValid(match.id);
     }
+  }
+
+  private navigateToLiveCaptureIfRosterIsValid(matchId: string): void {
+    this.rosterService.getSavedRoster(matchId).subscribe({
+      next: roster => {
+        if (this.hasValidRoster(roster?.startingPlayers)) {
+          void this.router.navigate(['/live-capture', matchId]);
+          return;
+        }
+
+        this.errorMessage = 'Debes completar los 15 titulares antes de capturar el partido.';
+        //void this.router.navigate(['/selection-roster', matchId]);
+      },
+      error: () => {
+        this.errorMessage = 'No se pudo validar la alineación del partido.';
+      },
+    });
+  }
+
+  private hasValidRoster(startingPlayers: string[] | undefined): boolean {
+    return startingPlayers !== undefined
+      && startingPlayers.length === 15
+      && new Set(startingPlayers).size === 15;
   }
 
   /**

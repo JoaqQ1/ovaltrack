@@ -1,24 +1,30 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, map, of, switchMap } from 'rxjs';
+import { Observable, from, map, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { BackendMatchResponse, Match, MatchStatus, NewMatchDraft } from '../types/match.types';
+import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, NewMatchDraft } from '../types/match.types';
 import { BackendRosterResponse, RosterPayload, SavedRoster } from '../types/roster.types';
+import { PeriodStatisticDTO } from '../types/statistic.types';
+import { LiveCaptureBootstrapResponse } from '../types/live-capture.types';
 import { TEMPORARY_DIVISION_ID } from '../data/match.constants';
+import { LiveCaptureCacheService } from './live-capture-cache.service';
+import { StatisticApiService } from './statistic-api.service';
 
 @Injectable({ providedIn: 'root' })
 export class MatchService {
   private readonly http = inject(HttpClient);
+  private readonly cache = inject(LiveCaptureCacheService);
+  private readonly statisticApiService = inject(StatisticApiService);
   private readonly apiUrl = `${environment.apiUrl}/matches`;
 
   getAllMatchesByDivisionId(divisionId: string): Observable<Match[]> {
     return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${divisionId}`).pipe(
       map(matches => matches.map(match => ({
-          ...match,
-          status: this.normalizeStatus(match.status),
-          opponent: match.opponent ?? '',
-          date: match.date ?? ''
-        })))
+        ...match,
+        status: this.normalizeStatus(match.status),
+        opponent: match.opponent ?? '',
+        date: match.date ?? ''
+      })))
     );
   }
 
@@ -34,31 +40,64 @@ export class MatchService {
     };
 
     return this.http.post<BackendMatchResponse>(this.apiUrl, payload).pipe(
-      map(match => ({
-        ...match,
-        status: this.normalizeStatus(match.status),
-        opponent: match.opponent ?? '',
-        date: match.date ?? ''
-      }))
+      map(match => this.normalizeMatch(match)),
+      switchMap(match => from(this.cache.saveMatches([match])).pipe(
+        map(() => match)
+      ))
     );
+  }
+
+  closeFirstHalf(matchId: string): Observable<Match> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/close-first-half`, {}).pipe(
+      map(match => this.normalizeMatch(match))
+    );
+  }
+
+  startSecondHalf(matchId: string): Observable<Match> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start-second-half`, {}).pipe(
+      map(match => this.normalizeMatch(match))
+    );
+  }
+
+  getPeriodStatistics(matchId: string, period: number = 1): Observable<PeriodStatisticDTO> {
+    return this.statisticApiService.getPeriodStatistics(matchId, period);
+  }
+
+  private normalizeMatch(match: BackendMatchResponse): Match {
+    return {
+      ...match,
+      status: this.normalizeStatus(match.status),
+      opponent: match.opponent ?? '',
+      date: match.date ?? ''
+    };
   }
 
   private normalizeStatus(status: BackendMatchResponse['status']): MatchStatus {
     return status.toLowerCase() as MatchStatus;
   }
 
-  deleteMatch(matchId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${matchId}/cancel`);
+  startMatch(matchId: string): Observable<Match> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start`, {}).pipe(
+      map(match => this.normalizeMatch(match))
+    );
   }
 
-  getAvailablePlayers(matchId: string): Observable<unknown[]> {
-    return this.http.get<Match>(`${this.apiUrl}/${matchId}`).pipe(
-      switchMap(match => {
-        if (!match) {
-          throw new Error(`Partido ${matchId} no encontrado en el backend`);
-        }
-        return this.http.get<unknown[]>(`${environment.apiUrl}/division/${match.divisionId}/players`);
-      })
+  finishMatch(matchId: string): Observable<Match> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/finish`, {}).pipe(
+      map(match => this.normalizeMatch(match))
+    );
+  }
+
+  deleteMatch(matchId: string): Observable<BackendMatchResponse> {
+    return this.http.delete<BackendMatchResponse>(`${this.apiUrl}/${matchId}/cancel`);
+  }
+
+  getMatchById(matchId: string): Observable<Match> {
+    return this.http.get<BackendMatchResponse>(`${this.apiUrl}/${matchId}`).pipe(
+      map(match => this.normalizeMatch(match)),
+      switchMap(match => from(this.cache.saveMatches([match])).pipe(
+        map(() => match)
+      ))
     );
   }
 
@@ -70,31 +109,29 @@ export class MatchService {
     return this.http.post<void>(`${this.apiUrl}/${payload.matchId}/roster`, dtoParaJava);
   }
 
-  getSavedRoster(matchId: string): Observable<SavedRoster | null> {
-    return this.http.get<BackendRosterResponse>(`${this.apiUrl}/${matchId}/roster`).pipe(
-      map(response => ({
-        startingPlayers: response.startingPlayers || response.titularesIds || [],
-        substitutePlayers: response.substitutePlayers || response.suplentesIds || []
-      })),
-      catchError(error => {
-        if (error.status === 404) {
-          return of(null);
-        }
-        throw error;
-      })
+  getLiveMatchState(matchId: string): Observable<Match> {
+    return this.http.get<BackendMatchResponse>(`${this.apiUrl}/${matchId}/live-state`).pipe(
+      map(match => this.normalizeMatch(match)),
     );
   }
 
-  getEventsMatch(matchId: string): Observable<any[]>{
-    return this.http.get<any[]>(`http://localhost:8080/event/match?matchId=${matchId}`);
+  getLiveMatchBootstrap(matchId: string): Observable<LiveCaptureBootstrapResponse> {
+    return this.http.get<{
+      match: BackendMatchResponse;
+      events: LiveCaptureBootstrapResponse['events'];
+      eventTypes: LiveCaptureBootstrapResponse['eventTypes'];
+    }>(`${this.apiUrl}/${matchId}/live-bootstrap`).pipe(
+      map(response => ({
+        ...response,
+        match: this.normalizeMatch(response.match),
+      })),
+    );
   }
 
-  getEventTypes(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:8080/eventType');
-  }
-
-  getMatchById(matchId: string): Observable<Match>{
-    return this.http.get<Match>(`${environment.apiUrl}/matches/${matchId}`);
+  updateLiveMatchState(matchId: string, state: LiveMatchStateRequest): Observable<Match> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/live-state`, state).pipe(
+      map(match => this.normalizeMatch(match))
+    );
   }
 
 }

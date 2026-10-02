@@ -1,11 +1,9 @@
 import Dexie, { Table } from 'dexie';
 import { LIVE_CAPTURE_EVENT_TYPES } from './live-capture.mock';
 import { MOCK_MATCHES } from './match.mock';
-import {
-  LiveCaptureEventType,
-  LiveCapturePersistedState,
-  LocalMatchEvent,
-} from '../types/live-capture.types';
+import { LiveCapturePersistedState } from '../types/live-capture.types';
+import { LiveCaptureEventType } from '../types/event-type.types';
+import { LocalMatchEvent } from '../types/event.types';
 import { Match } from '../types/match.types';
 
 export const MATCH_DATABASE_NAME = 'ovaltrack';
