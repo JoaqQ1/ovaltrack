@@ -11,6 +11,11 @@ export interface RosterPayload {
   substitutePlayers: string[];
 }
 
+export interface SaveRosterRequestDTO {
+  titularesIds: string[];
+  suplentesIds: string[];
+}
+
 export interface BackendRosterResponse {
   startingPlayers?: string[];
   substitutePlayers?: string[];
