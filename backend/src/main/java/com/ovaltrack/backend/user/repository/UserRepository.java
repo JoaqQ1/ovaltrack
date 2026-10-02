@@ -16,6 +16,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByLoginEmail(String loginEmail);
 
+    boolean existsByRole(UserRole role);
+
+    List<User> findAllByActiveTrueOrderByCreatedAtDesc();
+
     Optional<User> findByPersonId(UUID personId);
 
     @Query("SELECT u FROM User u WHERE u.person.club.id = :clubId")
