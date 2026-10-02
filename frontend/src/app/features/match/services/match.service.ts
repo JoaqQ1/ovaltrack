@@ -17,7 +17,7 @@ export class MatchService {
   private readonly statisticApiService = inject(StatisticApiService);
   private readonly apiUrl = `${environment.apiUrl}/matches`;
 
-  getMatches(divisionId: string = TEMPORARY_DIVISION_ID): Observable<Match[]> {
+  getAllMatchesByDivisionId(divisionId: string): Observable<Match[]> {
     return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${divisionId}`).pipe(
       map(matches => matches.map(match => ({
         ...match,
@@ -28,7 +28,7 @@ export class MatchService {
     );
   }
 
-  createMatch(draft: NewMatchDraft, divisionId: string = TEMPORARY_DIVISION_ID): Observable<Match> {
+  createMatch(draft: NewMatchDraft, divisionId: string): Observable<Match> {
     const formattedDate = draft.date.includes('T')
       ? draft.date
       : `${draft.date}T00:00:00`;
@@ -47,12 +47,16 @@ export class MatchService {
     );
   }
 
-  closeFirstHalf(matchId: string): Observable<BackendMatchResponse> {
-    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/close-first-half`, {});
+  closeFirstHalf(matchId: string): Observable<Match> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/close-first-half`, {}).pipe(
+      map(match => this.normalizeMatch(match))
+    );
   }
 
-  startSecondHalf(matchId: string): Observable<BackendMatchResponse> {
-    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start-second-half`, {});
+  startSecondHalf(matchId: string): Observable<Match> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start-second-half`, {}).pipe(
+      map(match => this.normalizeMatch(match))
+    );
   }
 
   getPeriodStatistics(matchId: string, period: number = 1): Observable<PeriodStatisticDTO> {
@@ -72,12 +76,16 @@ export class MatchService {
     return status.toLowerCase() as MatchStatus;
   }
 
-  startMatch(matchId: string): Observable<BackendMatchResponse> {
-    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start`, {});
+  startMatch(matchId: string): Observable<Match> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start`, {}).pipe(
+      map(match => this.normalizeMatch(match))
+    );
   }
 
-  finishMatch(matchId: string): Observable<BackendMatchResponse> {
-    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/finish`, {});
+  finishMatch(matchId: string): Observable<Match> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/finish`, {}).pipe(
+      map(match => this.normalizeMatch(match))
+    );
   }
 
   deleteMatch(matchId: string): Observable<BackendMatchResponse> {
@@ -91,6 +99,14 @@ export class MatchService {
         map(() => match)
       ))
     );
+  }
+
+  saveRoster(payload: RosterPayload): Observable<void> {
+    const dtoParaJava = {
+      titularesIds: payload.startingPlayers,
+      suplentesIds: payload.substitutePlayers
+    };
+    return this.http.post<void>(`${this.apiUrl}/${payload.matchId}/roster`, dtoParaJava);
   }
 
   getLiveMatchState(matchId: string): Observable<Match> {
@@ -112,8 +128,10 @@ export class MatchService {
     );
   }
 
-  updateLiveMatchState(matchId: string, state: LiveMatchStateRequest): Observable<BackendMatchResponse> {
-    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/live-state`, state);
+  updateLiveMatchState(matchId: string, state: LiveMatchStateRequest): Observable<Match> {
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/live-state`, state).pipe(
+      map(match => this.normalizeMatch(match))
+    );
   }
 
 }

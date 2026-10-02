@@ -32,16 +32,38 @@ public class DivisionService {
 	}
 
 	public Collection<DivisionResponseDTO> findAllDivisionsByClubId(UUID clubId, Authentication authentication) {
-		if (authentication != null) {
-			divisionSecurityValidator.validateCanAccessClubDivisions(clubId, authentication);
-		}
-		if (clubService.findClubById(clubId) == null) {
-			throw new BusinessException("Club no encontrado");
-		}
-		return divisionRepository.findAllDivisionsByClubId(clubId).stream()
-				.map(DivisionDTOMapper::toResponseDTO)
-				.toList();
-	}
+        if (authentication != null) {
+            divisionSecurityValidator.validateCanAccessClubDivisions(clubId, authentication);
+        }
+        if (clubService.findClubById(clubId) == null) {
+            throw new BusinessException("Club no encontrado");
+        }
+
+        // 1. Traemos todas las divisiones del club
+        Collection<Division> allDivisions = divisionRepository.findAllDivisionsByClubId(clubId);
+
+        // 2. Verificamos si el usuario actual tiene el rol de entrenador
+        boolean isCoach = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_COACH_ANALYST") || a.getAuthority().equals("COACH_ANALYST"));
+
+        if (isCoach) {
+            return allDivisions.stream()
+                    .filter(division -> {
+                        try {
+                            divisionSecurityValidator.validateCanAccessDivision(division, authentication);
+                            return true;
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    })
+                    .map(DivisionDTOMapper::toResponseDTO)
+                    .toList();
+        }
+
+        return allDivisions.stream()
+                .map(DivisionDTOMapper::toResponseDTO)
+                .toList();
+    }
 
 	public DivisionResponseDTO findDivisionById(UUID divisionId) {
 		return findDivisionById(divisionId, null);
