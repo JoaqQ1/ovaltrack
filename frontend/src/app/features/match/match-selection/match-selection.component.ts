@@ -12,6 +12,7 @@ import {
   NewMatchDraft,
 } from '../types/match.types';
 import { MatchService } from '../services/match.service';
+import { DivisionService } from 'src/app/services/division.service';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -36,12 +37,15 @@ import { MatchService } from '../services/match.service';
 export class MatchSelectComponent implements OnInit {
   private readonly matchService = inject(MatchService);
   private readonly router = inject(Router);
+  private readonly divisionService = inject(DivisionService);
 
   /** Filtros disponibles, en el orden en que se renderizan en el control segmentado. */
   readonly filters = MATCH_FILTERS;
   readonly statusLabels = MATCH_STATUS_LABELS;
 
   matches: Match[] = [];
+  userDivisions: any[] = [];
+  selectedDivisionId: string = '';
 
   /** Filtro actualmente seleccionado en el control segmentado. */
   activeFilter: MatchFilter = 'all';
@@ -62,10 +66,8 @@ export class MatchSelectComponent implements OnInit {
   @Output() selectMatch = new EventEmitter<Match>();
 
   ngOnInit(): void {
-    this.matchService.getMatches().subscribe({
-      next: matches => this.matches = matches,
-      error: () => this.errorMessage = 'No se pudieron cargar los partidos.',
-    });
+    // Solo cargamos las divisiones al iniciar. Los partidos se cargan después.
+    this.loadUserDivisions();
   }
 
   /** Partidos visibles según {@link activeFilter}. */
@@ -73,13 +75,12 @@ export class MatchSelectComponent implements OnInit {
     if (this.activeFilter === 'all') {
       return this.matches.filter(match => match.status !== 'cancelled');
     }
-
     return this.matches.filter(match => match.status === this.activeFilter);
   }
 
   /** Si el formulario de alta tiene los dos campos requeridos completos. */
   get canCreateMatch(): boolean {
-    return this.draft.date.trim().length > 0 && this.draft.opponent.trim().length > 0;
+    return this.draft.date.trim().length > 0 && this.draft.opponent.trim().length > 0 && this.selectedDivisionId.length > 0;
   }
 
   setFilter(filter: MatchFilter): void {
@@ -105,7 +106,7 @@ export class MatchSelectComponent implements OnInit {
       return;
     }
 
-    this.matchService.createMatch(this.draft).subscribe({
+    this.matchService.createMatch(this.draft, this.selectedDivisionId).subscribe({
       next: newMatch => {
         this.matches = [newMatch, ...this.matches];
         this.isCreateOpen = false;
@@ -134,27 +135,19 @@ export class MatchSelectComponent implements OnInit {
   }
 
   private readBackendError(error: HttpErrorResponse): string | null {
-    return typeof error.error === 'string'
-      ? error.error
-      : error.error?.message ?? null;
+    return typeof error.error === 'string' ? error.error : error.error?.message ?? null;
   }
 
   openMatch(match: Match): void {
-    if (match.status === 'cancelled') {
-      return;
-    }
+    if (match.status === 'cancelled') return;
 
     if (match.status === 'not_started') {
-      // Si no empezó, va a la pantalla nueva que acabas de crear
       void this.router.navigate(['/selection-roster', match.id]);
     } else if (match.status === 'finished'){
       void this.router.navigate(['/post-match', match.id])
     } else{
-      // Si ya está en progreso, va a la pantalla de la imagen
       void this.router.navigate(['/live-capture', match.id]);
-    
     }
-
   }
 
   /**
@@ -171,16 +164,12 @@ export class MatchSelectComponent implements OnInit {
 
     const days = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
     const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-
     let date: Date;
 
     if (Array.isArray(dateInput)) {
-      // Si Spring Boot lo manda como array: [year, month, day, hour, minute]
-      // Recordar que en JavaScript los meses van de 0 a 11
       date = new Date(dateInput[0], dateInput[1] - 1, dateInput[2]);
     } else if (typeof dateInput === 'string') {
-      // Si llega como string (ej: "2026-09-23" o "2026-09-23T00:00:00")
-      const datePart = dateInput.split('T')[0]; // Nos quedamos solo con la parte de la fecha
+      const datePart = dateInput.split('T')[0];
       const [year, month, day] = datePart.split('-').map(Number);
       date = new Date(year, month - 1, day);
     } else {
@@ -188,5 +177,62 @@ export class MatchSelectComponent implements OnInit {
     }
 
     return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+  }
+
+  loadUserDivisions() {
+    const token = localStorage.getItem('auth_token'); // Usamos el nombre exacto de tu imagen
+
+    if (!token) {
+      console.error("No se encontró el token de sesión");
+      return;
+    }
+
+    try {
+      // Un JWT tiene 3 partes separadas por puntos. La del medio [1] es el Payload (los datos).
+      const payloadBase64 = token.split('.')[1];
+      
+      // Decodificamos el Base64 a texto y lo convertimos en un objeto JSON
+      const decodedPayload = JSON.parse(atob(payloadBase64));
+      
+      // Intentamos obtener el clubId (revisa la consola si el nombre de la propiedad es distinto)
+      const currentClubId = decodedPayload.clubId || decodedPayload.club_id;
+
+      if (!currentClubId) {
+        console.error("El token es válido, pero no contiene el ID del club. Contenido del token:", decodedPayload);
+        return;
+      }
+
+      this.divisionService.getDivisiones(currentClubId).subscribe(divisions => {
+        this.userDivisions = divisions;
+
+        if (this.userDivisions.length > 0) {
+          // Autoseleccionar la primera división
+          this.selectedDivisionId = this.userDivisions[0].id;
+          this.loadMatchesForDivision(this.selectedDivisionId);
+        }
+      });
+
+    } catch (error) {
+      console.error("Error al decodificar el token de sesión", error);
+    }
+  }
+
+  onDivisionChange(divisionId: string) {
+    this.selectedDivisionId = divisionId;
+    this.loadMatchesForDivision(divisionId);
+  }
+
+  loadMatchesForDivision(divisionId: string) {
+    // Usamos el servicio y asignamos el resultado a this.matches
+    this.matchService.getAllMatchesByDivisionId(divisionId).subscribe({
+      next: (matches) => {
+        this.matches = matches;
+        this.errorMessage = '';
+      },
+      error: () => {
+        this.errorMessage = 'No se pudieron cargar los partidos de esta división.';
+        this.matches = [];
+      }
+    });
   }
 }

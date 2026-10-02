@@ -11,8 +11,8 @@ export class MatchService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/matches`;
 
-  getMatches(): Observable<Match[]> {
-    return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${TEMPORARY_DIVISION_ID}`).pipe(
+  getAllMatchesByDivisionId(divisionId: string): Observable<Match[]> {
+    return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${divisionId}`).pipe(
       map(matches => matches.map(match => ({
           ...match,
           status: this.normalizeStatus(match.status),
@@ -22,14 +22,14 @@ export class MatchService {
     );
   }
 
-  createMatch(draft: NewMatchDraft): Observable<Match> {
+  createMatch(draft: NewMatchDraft, divisionId: string): Observable<Match> {
     const formattedDate = draft.date.includes('T')
       ? draft.date
       : `${draft.date}T00:00:00`;
 
     const payload = {
       date: formattedDate,
-      divisionId: TEMPORARY_DIVISION_ID,
+      divisionId: divisionId,
       opponent: draft.opponent.trim()
     };
 
@@ -67,7 +67,6 @@ export class MatchService {
       titularesIds: payload.startingPlayers,
       suplentesIds: payload.substitutePlayers
     };
-
     return this.http.post<void>(`${this.apiUrl}/${payload.matchId}/roster`, dtoParaJava);
   }
 
