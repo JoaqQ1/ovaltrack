@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   EventCategoryGroup,
@@ -170,8 +171,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         }
         this.isLoading = false;
       },
-      error: () => {
-        this.errorMessage = 'No se pudo cargar el partido. Inténtalo nuevamente.';
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
         this.isLoading = false;
       },
     });
@@ -189,6 +190,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   /** Clase del ícono Tabler para el botón de pausa/reanudar del reloj, según el estado actual. */
   get pausaIcon(): string {
     return this.clockPaused ? 'ti ti-player-play' : 'ti ti-player-pause';
+  }
+
+  get periodLabelAction(): string {
+    return this.period === 1 ? 'Cerrar primer tiempo' : 'Finalizar partido';
   }
 
   toggleHistory(): void {
@@ -297,8 +302,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.synchronized = true;
         this.persistState();
       },
-      error: () => {
-        this.errorMessage = 'No se pudo guardar el evento. Inténtalo nuevamente.';
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
       },
     });
   }
@@ -354,6 +359,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     if (this.period === 1 && !this.isHalftime) {
       this.showConfirmHalftime = true;
+    } else if (this.period === 2 && !this.isHalftime) {
+      this.showConfirmFinish = true;
     } else if (this.isHalftime) {
       this.router?.navigate(['/live-capture', this.matchId, 'halftime']);
     }
@@ -372,6 +379,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.stopClock();
     this.clockPaused = true;
     this.clockElapsedSeconds = this.parseClock(this.gameClock);
+    this.periodLabel = 'Finalizado';
     this.persistState();
 
     this.matchService.finishMatch(this.matchId).subscribe({
@@ -380,11 +388,12 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.synchronized = true;
         this.isOfflineMode = false;
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.synchronized = false;
-        this.errorMessage = 'No se pudo finalizar el partido. Inténtalo nuevamente.';
+        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
       },
     });
+    this.router?.navigate(['/post-match/', this.matchId]);
   }
 
   async confirmCloseFirstHalf(): Promise<void> {
@@ -515,8 +524,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     };
 
     this.liveCaptureService.saveLiveCaptureState(state).subscribe({
-      error: () => {
-        this.errorMessage = 'No se pudo guardar el estado local del partido.';
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
       },
     });
   }
@@ -604,8 +613,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.synchronized = false;
         this.persistState();
       },
-      error: () => {
-        this.errorMessage = 'No se pudo eliminar el evento. Inténtalo nuevamente.';
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
       },
     });
   }
@@ -779,4 +788,16 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     this.persistState();
   }
+
+  private readBackendError(error: HttpErrorResponse): string | null {
+  if (typeof error.error === 'string' && error.error.trim()) {
+    return error.error;
+  }
+
+  if (typeof error.error?.message === 'string') {
+    return error.error.message;
+  }
+
+  return null;
+}
 }
