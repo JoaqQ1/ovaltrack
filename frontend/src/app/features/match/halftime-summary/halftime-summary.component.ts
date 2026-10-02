@@ -10,6 +10,10 @@ import { PeriodStatisticDTO, PlayerPeriodStatistic } from '../types/statistic.ty
 import { RosterPlayerInfo } from '../services/calculators';
 import { AvailablePlayer, SavedRoster } from '../types/roster.types';
 
+const TACKLE_SUCCESS_THRESHOLD = 70;
+const DISCIPLINE_CRITICAL_PENALTIES = 6;
+const DISCIPLINE_WARNING_PENALTIES = 3;
+
 @Component({
   selector: 'ot-halftime-summary',
   standalone: true,
@@ -64,12 +68,19 @@ export class HalftimeSummaryComponent implements OnInit {
     return Math.max(0, 100 - own);
   });
 
+  readonly turnoverHomeRatio = computed(() => {
+    const stats = this.generalStats();
+    if (!stats) return 50;
+    const total = stats.ownTurnoversWon + stats.ownTurnoversLost;
+    return total === 0 ? 50 : Math.round((stats.ownTurnoversWon / total) * 100);
+  });
+
   readonly tackleStatus = computed(() => {
     const stats = this.generalStats();
     if (!stats || (stats.ownTacklesCompleted + stats.ownTacklesMissed === 0)) {
       return { label: 'Sin datos', type: 'neutral' };
     }
-    return stats.ownTackleEffectiveness >= 70
+    return stats.ownTackleEffectiveness >= TACKLE_SUCCESS_THRESHOLD
       ? { label: 'Bien', type: 'success' }
       : { label: 'A mejorar', type: 'warning' };
   });
@@ -88,10 +99,10 @@ export class HalftimeSummaryComponent implements OnInit {
   readonly disciplineStatus = computed(() => {
     const stats = this.generalStats();
     if (!stats) return { label: 'Bien', type: 'success' };
-    if (stats.ownRedCards > 0 || stats.ownPenaltiesConceded > 6) {
+    if (stats.ownRedCards > 0 || stats.ownPenaltiesConceded > DISCIPLINE_CRITICAL_PENALTIES) {
       return { label: 'Crítico', type: 'danger' };
     }
-    if (stats.ownYellowCards > 0 || stats.ownPenaltiesConceded > 3) {
+    if (stats.ownYellowCards > 0 || stats.ownPenaltiesConceded > DISCIPLINE_WARNING_PENALTIES) {
       return { label: 'Atención', type: 'warning' };
     }
     return { label: 'Bien', type: 'success' };
@@ -104,6 +115,11 @@ export class HalftimeSummaryComponent implements OnInit {
     }
     return { label: 'Registradas', type: 'neutral' };
   });
+
+  formatKickingStats(player: PlayerPeriodStatistic): string {
+    const totalKicks = player.penaltyKicks + player.dropGoals;
+    return totalKicks > 0 ? `${player.penaltyKicks} / ${player.dropGoals}` : '—';
+  }
 
 
   async ngOnInit(): Promise<void> {
