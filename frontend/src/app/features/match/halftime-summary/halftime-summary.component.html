@@ -32,6 +32,12 @@
         </div>
       }
 
+
+      <button type="button" class="btn-action-start" (click)="goToHome()">
+        <i class="ti ti-arrow-left" aria-hidden="true"></i>
+        <span>Volver al inicio</span>
+      </button>
+
       <!-- Selector de Modo Claro / Oscuro -->
       <button type="button" class="btn-theme-toggle" (click)="toggleTheme()" [title]="currentTheme() === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'">
         @if (currentTheme() === 'light') {
