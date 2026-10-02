@@ -22,6 +22,14 @@ export class HomeComponent {
   // Catálogo de secciones protegidas con control de roles
   private readonly allNavigationCards: NavigationCard[] = [
     {
+      title: 'Administración de OvalTrack',
+      description: 'Revisa solicitudes de acceso y consulta las cuentas activas de la plataforma.',
+      route: '/admin/ovaltrack',
+      badge: 'Global',
+      allowedRoles: ['ADMIN_OVALTRACK'],
+      icon: 'members'
+    },
+    {
       title: 'Seleccion de partidos',
       description: 'Tagging y registro en tiempo real de eventos de partido y métricas tácticas.',
       route: '/match-selection',
@@ -68,7 +76,10 @@ export class HomeComponent {
   readonly visibleCards = computed(() => {
     const user = this.currentUser();
     if (!user || user.role === 'PLAYER') return [];
-    return this.allNavigationCards.filter(card => card.allowedRoles.includes(user.role));
+    const roleCards = this.allNavigationCards.filter(card => card.allowedRoles.includes(user.role));
+    return user.role === 'ADMIN_OVALTRACK'
+      ? roleCards.filter(card => card.route === '/admin/ovaltrack')
+      : roleCards;
   });
 
   goToMembers(): void {
