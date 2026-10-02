@@ -7,8 +7,12 @@ import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.auth.registration.domain.RegistrationRequest;
 import com.ovaltrack.backend.auth.registration.domain.RegistrationRequestStatus;
+import com.ovaltrack.backend.auth.registration.domain.dto.PendingRegistrationRequestDTO;
 import com.ovaltrack.backend.auth.registration.repository.RegistrationRequestRepository;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
+import com.ovaltrack.backend.person.domain.Person;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class RegistrationRequestService {
@@ -27,6 +31,31 @@ public class RegistrationRequestService {
             throw new IllegalArgumentException("El estado de la solicitud no puede ser nulo");
         }
         return this.repository.findAllByStatusOrderByCreatedAtAsc(status);
+    }
+
+    @Transactional
+    public List<PendingRegistrationRequestDTO> findOpenRequests() {
+        return this.repository.findAllByStatusInOrderByCreatedAtAsc(List.of(
+                RegistrationRequestStatus.PENDING,
+                RegistrationRequestStatus.NEEDS_INFORMATION))
+                .stream()
+                .map(this::toPendingRequestDTO)
+                .toList();
+    }
+
+    private PendingRegistrationRequestDTO toPendingRequestDTO(RegistrationRequest request) {
+        Person person = request.getUser().getPerson();
+        return new PendingRegistrationRequestDTO(
+                request.getId(),
+                request.getUser().getId(),
+                request.getUser().getLoginEmail(),
+                person == null ? null : person.getFirstName(),
+                person == null ? null : person.getLastName(),
+                request.getRequestedRole(),
+                request.getClub() == null ? null : request.getClub().getId(),
+                request.getClub() == null ? null : request.getClub().getName(),
+                request.getStatus(),
+                request.getCreatedAt());
     }
 
     public List<RegistrationRequest> findAllByUserIdOrderByCreatedAtDesc(UUID userId) {
