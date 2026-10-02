@@ -37,6 +37,12 @@
                     [attr.aria-pressed]="clockPaused">
                     <i [class]="pausaIcon" aria-hidden="true"></i>
                 </button>
+
+            </div>
+            <div>
+                <span class="live-capture__score">
+                    {{ periodLabel }}
+                </span>
             </div>
         </div>
 
@@ -47,7 +53,7 @@
                 [class.btn--active]="isHalftime"
                 [attr.aria-label]="isHalftime ? 'Ver resumen táctico del entretiempo' : 'Gestionar período del partido'"
                 (click)="onPeriodButtonClick()">
-                {{ periodLabel }}
+                {{ periodLabelAction }}
             </button>
             <button type="button" class="btn btn--outline"
                 (click)="undoLastEvent()">

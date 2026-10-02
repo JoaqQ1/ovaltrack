@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.match.business.MatchService;
 import com.ovaltrack.backend.match.domain.Match;
+import com.ovaltrack.backend.match.domain.MatchStatus;
 import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.Person;
 import com.ovaltrack.backend.club.business.ClubService;
@@ -89,6 +90,10 @@ public class EventService {
 		if (aMatch.getStatus() == com.ovaltrack.backend.match.domain.MatchStatus.CANCELLED) {
 			throw new BusinessException("No se puede asignar un evento a un partido cancelado");
 		}
+		if (aMatch.getStatus() == MatchStatus.FINISHED && !eventRequest.origin().equals("post_capture")) {
+			throw new BusinessException("No se puede cargar eventos mediante esta pantalla para un partido que ya termino");
+		}
+
 		Person aPerson = resolveEventPlayer(eventRequest.playerId(), aMatch);
 
 		Event result = new Event();
