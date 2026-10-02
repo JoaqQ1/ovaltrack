@@ -1,0 +1,120 @@
+<main class="admin-page container py-5">
+  <header class="admin-header">
+    <div>
+      <p class="admin-eyebrow">OvalTrack / Administración</p>
+      <h1>Panel global</h1>
+      <p class="admin-subtitle">Solicitudes de acceso y cuentas de la plataforma.</p>
+    </div>
+    <button type="button" class="refresh-button" (click)="loadOverview()" [disabled]="isLoading">
+      Actualizar
+    </button>
+  </header>
+
+  @if (overview; as data) {
+    <nav class="section-tabs" aria-label="Secciones del panel global">
+      <button
+        type="button"
+        [class.is-selected]="selectedSection === 'requests'"
+        [attr.aria-pressed]="selectedSection === 'requests'"
+        (click)="showRequests()"
+      >
+        Solicitudes abiertas <span>{{ data.pendingRequests.length }}</span>
+      </button>
+      <button
+        type="button"
+        [class.is-selected]="selectedSection === 'accounts'"
+        [attr.aria-pressed]="selectedSection === 'accounts'"
+        (click)="showAccounts()"
+      >
+        Cuentas activas <span>{{ data.activeAccounts.length }}</span>
+      </button>
+    </nav>
+
+    @if (selectedSection === 'requests') {
+      <section class="data-section" aria-labelledby="requests-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="requests-title">Solicitudes abiertas</h2>
+            <p>Usuarios pendientes de revisión.</p>
+          </div>
+        </div>
+
+        @if (data.pendingRequests.length === 0) {
+          <div class="empty-state">No hay solicitudes abiertas.</div>
+        } @else {
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Solicitante</th>
+                  <th>Rol solicitado</th>
+                  <th>Club</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (request of data.pendingRequests; track request.requestId) {
+                  <tr>
+                    <td>
+                      <strong>{{ request.firstName || '' }} {{ request.lastName || '' }}</strong>
+                      <span class="secondary-cell">{{ request.email }}</span>
+                    </td>
+                    <td>{{ request.requestedRole }}</td>
+                    <td>{{ request.clubName || 'Alta de club' }}</td>
+                    <td><span class="status-label">{{ request.status }}</span></td>
+                    <td>{{ request.createdAt | date:'mediumDate' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    } @else {
+      <section class="data-section" aria-labelledby="accounts-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="accounts-title">Cuentas activas</h2>
+            <p>Accesos habilitados en OvalTrack.</p>
+          </div>
+        </div>
+
+        @if (data.activeAccounts.length === 0) {
+          <div class="empty-state">No hay cuentas activas.</div>
+        } @else {
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th>Rol</th>
+                  <th>Alta</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (account of data.activeAccounts; track account.id) {
+                  <tr>
+                    <td>
+                      <strong>{{ account.firstName || '' }} {{ account.lastName || '' }}</strong>
+                      <span class="secondary-cell">{{ account.email }}</span>
+                    </td>
+                    <td>{{ account.role }}</td>
+                    <td>{{ account.createdAt | date:'mediumDate' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+  } @else if (isLoading) {
+    <div class="empty-state" role="status">Cargando panel…</div>
+  } @else {
+    <div class="error-state" role="alert">
+      {{ errorMessage }}
+      <button type="button" class="refresh-button" (click)="loadOverview()">Reintentar</button>
+    </div>
+  }
+</main>
