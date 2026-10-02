@@ -1,22 +1,29 @@
-<div class="halftime-backdrop" [attr.data-theme]="theme" (click)="onClose()">
-  <div class="halftime-dialog" [attr.data-theme]="theme" role="dialog" aria-modal="true" aria-labelledby="halftime-title" (click)="$event.stopPropagation()">
+<div class="current-stats-backdrop" [attr.data-theme]="theme" (click)="onClose()">
+  <div class="current-stats-dialog" [attr.data-theme]="theme" role="dialog" aria-modal="true" aria-labelledby="current-stats-title" (click)="$event.stopPropagation()">
     
     <!-- Header -->
-    <header class="halftime-header">
-      <div class="halftime-header__left">
-        <div class="halftime-tag">
-          <i class="ti ti-clock-pause" aria-hidden="true"></i>
-          <span>Entretiempo</span>
-        </div>
-        <h2 id="halftime-title" class="halftime-title">Resumen Táctico — 1° Tiempo</h2>
+    <header class="current-stats-header">
+      <div class="current-stats-header__left">
+        <h2 id="current-stats-title" class="current-stats-title">Resumen táctico actual</h2>
       </div>
 
-      <div class="halftime-header__right">
+      <div class="current-stats-header__right">
         @if (isOffline) {
           <span class="offline-badge" title="Estadísticas calculadas en el dispositivo sin conexión">
             <i class="ti ti-cloud-off" aria-hidden="true"></i> Modo Offline
           </span>
         }
+        <div class="current-stats-clock">
+          <span class="current-stats-clock__time">{{ gameClock }}</span>
+          <button
+            type="button"
+            class="current-stats-clock__button"
+            (click)="toggleClock.emit()"
+            [attr.aria-label]="clockPaused ? 'Reanudar reloj' : 'Pausar reloj'"
+            [attr.aria-pressed]="clockPaused">
+            <i [class]="clockPaused ? 'ti ti-player-play' : 'ti ti-player-pause'" aria-hidden="true"></i>
+          </button>
+        </div>
         <button type="button" class="btn-close" (click)="onClose()" aria-label="Cerrar modal">
           <i class="ti ti-x" aria-hidden="true"></i>
         </button>
@@ -24,29 +31,27 @@
     </header>
 
     @if (isLoading) {
-      <div class="halftime-loading">
+      <div class="current-stats-loading">
         <div class="spinner"></div>
         <p>Calculando estadísticas del período...</p>
       </div>
     } @else if (stats) {
-      <div class="halftime-content">
+      <div class="current-stats-content">
 
         <!-- Marcador Principal -->
+
+        
         <section class="scoreboard-banner">
           <div class="team-side team-side--home">
             <span class="team-name">{{ homeTeam }}</span>
             <span class="team-score">{{ stats.ownScore }}</span>
           </div>
-
-          <div class="vs-divider">
-            <span class="vs-text">1T FINAL</span>
-          </div>
-
           <div class="team-side team-side--away">
             <span class="team-score">{{ stats.opponentScore }}</span>
             <span class="team-name">{{ awayTeam }}</span>
           </div>
         </section>
+
 
         <!-- Desglose de Tantos -->
         <section class="metric-section">
@@ -54,22 +59,22 @@
           <div class="breakdown-grid">
             <div class="breakdown-item">
               <span class="stat-val stat-val--home">{{ stats.ownTries }}</span>
-              <span class="stat-label">Tries (5 pts)</span>
+              <span class="stat-label">Tries</span>
               <span class="stat-val stat-val--away">{{ stats.opponentTries }}</span>
             </div>
             <div class="breakdown-item">
               <span class="stat-val stat-val--home">{{ stats.ownConversions }}</span>
-              <span class="stat-label">Conversiones (2 pts)</span>
+              <span class="stat-label">Conversiones</span>
               <span class="stat-val stat-val--away">{{ stats.opponentConversions }}</span>
             </div>
             <div class="breakdown-item">
               <span class="stat-val stat-val--home">{{ stats.ownPenalties }}</span>
-              <span class="stat-label">Penales a palos (3 pts)</span>
+              <span class="stat-label">Penales a palos</span>
               <span class="stat-val stat-val--away">{{ stats.opponentPenalties }}</span>
             </div>
             <div class="breakdown-item">
               <span class="stat-val stat-val--home">{{ stats.ownDropGoals }}</span>
-              <span class="stat-label">Drops (3 pts)</span>
+              <span class="stat-label">Drops</span>
               <span class="stat-val stat-val--away">{{ stats.opponentDropGoals }}</span>
             </div>
           </div>
@@ -123,7 +128,12 @@
               <h4>Obtención / Turnovers</h4>
             </div>
             <div class="stat-card__big">
-              <span class="stat-big-val text-success">+{{ stats.ownTurnoversWon - stats.ownTurnoversLost }}</span>
+              <span
+                class="stat-big-val"
+                [class.text-success]="stats.ownTurnoversWon - stats.ownTurnoversLost > 0"
+                [class.text-danger]="stats.ownTurnoversWon - stats.ownTurnoversLost < 0">
+                {{ stats.ownTurnoversWon - stats.ownTurnoversLost }}
+              </span>
               <span class="stat-big-sub">Balance neto</span>
             </div>
             <div class="stat-card__details">
@@ -133,7 +143,7 @@
               </div>
               <div class="detail-row">
                 <span>Perdidos</span>
-                <strong class="text-warning">{{ stats.ownTurnoversLost }}</strong>
+                <strong class="text-danger">{{ stats.ownTurnoversLost }}</strong>
               </div>
             </div>
           </div>
@@ -150,7 +160,7 @@
             </div>
             <div class="stat-card__details">
               <div class="detail-row">
-                <span>Penales del rival</span>
+                <span>Penales concedidos del rival</span>
                 <strong>{{ stats.opponentPenaltiesConceded }}</strong>
               </div>
               <div class="detail-row">
@@ -188,17 +198,17 @@
     }
 
     <!-- Footer Acciones -->
-    <footer class="halftime-footer">
+<!--      
+    <footer class="current-stats-footer">
       <button type="button" class="btn btn-secondary" (click)="onClose()">
         <i class="ti ti-layout-grid" aria-hidden="true"></i>
         Ver grilla de captura
       </button>
-
       <button type="button" class="btn btn-primary" (click)="onStartSecondHalf()">
         <i class="ti ti-player-play" aria-hidden="true"></i>
         Iniciar 2° Tiempo (Minuto 40)
       </button>
     </footer>
-
+ -->
   </div>
 </div>
