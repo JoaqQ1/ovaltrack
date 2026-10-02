@@ -16,10 +16,16 @@
             <img class="live-capture__brand-icon"
                 [src]="theme === 'light' ? 'assets/brand/OvalTrack-fondo-claro.png' : 'assets/brand/OvalTrack-fondo-oscuro.png'"
                 alt="OvalTrack">
+            <button
+                type="button"
+                class="btn btn--outline"
+                (click)="openCurrentStatisticsModal()"
+                [attr.aria-label]="'Abrir estadísticas tácticas'">
+                <i class="ti ti-chart-bar" aria-hidden="true"></i>
+                Estadísticas
+            </button>
         </div>
-
-        <div class="live-capture__scoreboard">
-            
+        <div class="live-capture__scoreboard">            
             <span class="live-capture__score">
                 {{ homeTeam }}
                 <span class="live-capture__score-value">{{ scoreboard.home }}–{{
@@ -241,15 +247,18 @@
         </div>
         }
 
-    @if (showHalftimeModal) {
-    <ot-halftime-stats-modal
-      [stats]="halftimeStats"
+    @if (showCurrentStatisticsModal) {
+    <ot-current-stats-modal
+      [stats]="currentStats"
       [homeTeam]="homeTeam"
       [awayTeam]="awayTeam"
       [isLoading]="isCalculatingStats"
       [isOffline]="isOfflineMode"
       [theme]="theme"
-      (closeModal)="closeHalftimeModal()">
-    </ot-halftime-stats-modal>
+      [gameClock]="gameClock"
+      [clockPaused]="clockPaused"
+      (toggleClock)="toggleClock()"
+      (closeModal)="closeCurrentStatisticsModal()">
+    </ot-current-stats-modal>
     }
 </section>
