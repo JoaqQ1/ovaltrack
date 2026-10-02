@@ -226,7 +226,7 @@ describe('CargaEnVivoComponent', () => {
     expect(component.showConfirmHalftime).toBe(true);
   });
 
-  it('should close first half, pause clock, calculate stats, and open modal on confirm', async () => {
+  it('should close first half and pause clock on confirm', async () => {
     component.period = 1;
     component.clockPaused = false;
     component.gameClock = '40:15';
@@ -236,24 +236,5 @@ describe('CargaEnVivoComponent', () => {
     expect(component.isHalftime).toBe(true);
     expect(component.periodLabel).toBe('Entretiempo');
     expect(component.clockPaused).toBe(true);
-    expect(component.showHalftimeModal).toBe(true);
-    expect(component.halftimeStats).not.toBe(null);
-    expect(component.halftimeStats?.ownScore).toBe(10);
-  });
-
-  it('should start second half with clock set to 40:00 when onStartSecondHalf is called', () => {
-    component.showHalftimeModal = true;
-    component.isHalftime = true;
-    component.period = 1;
-    component.gameClock = '39:50';
-
-    component.onStartSecondHalf();
-
-    expect(component.showHalftimeModal).toBe(false);
-    expect(component.isHalftime).toBe(false);
-    expect(component.period).toBe(2);
-    expect(component.periodLabel).toBe('2T');
-    expect(component.gameClock).toBe('40:00');
-    expect(component.clockPaused).toBe(false);
   });
 });

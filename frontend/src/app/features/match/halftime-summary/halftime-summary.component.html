@@ -32,6 +32,12 @@
         </div>
       }
 
+
+      <button type="button" class="btn-action-start" (click)="goToHome()">
+        <i class="ti ti-arrow-left" aria-hidden="true"></i>
+        <span>Volver al inicio</span>
+      </button>
+
       <!-- Selector de Modo Claro / Oscuro -->
       <button type="button" class="btn-theme-toggle" (click)="toggleTheme()" [title]="currentTheme() === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'">
         @if (currentTheme() === 'light') {
@@ -222,8 +228,8 @@
 
                 <!-- Mini Barra Bicolor de Turnovers -->
                 <div class="mini-bar">
-                  <div class="mini-fill fill--home" [style.width.%]="stats.ownTurnoversWon + stats.ownTurnoversLost === 0 ? 50 : (stats.ownTurnoversWon / (stats.ownTurnoversWon + stats.ownTurnoversLost)) * 100"></div>
-                  <div class="mini-fill fill--away" [style.width.%]="stats.ownTurnoversWon + stats.ownTurnoversLost === 0 ? 50 : (stats.ownTurnoversLost / (stats.ownTurnoversWon + stats.ownTurnoversLost)) * 100"></div>
+                  <div class="mini-fill fill--home" [style.width.%]="turnoverHomeRatio()"></div>
+                  <div class="mini-fill fill--away" [style.width.%]="100 - turnoverHomeRatio()"></div>
                 </div>
 
                 <div class="card-details">
@@ -310,20 +316,6 @@
               </section>
 
             </div>
-
-
-            <!-- BARRA INFERIOR DE ACCIONES (FLOTANTE DIRECTA EN CANVAS) -->
-            <footer class="bottom-actions-row">
-              <button type="button" class="btn-action-back" (click)="goBackToLiveCapture()" title="Volver a la pantalla de captura en vivo">
-                <i class="ti ti-arrow-left" aria-hidden="true"></i>
-                <span>Carga en Vivo</span>
-              </button>
-
-              <button type="button" class="btn-action-start" (click)="openSecondHalfConfirmation()">
-                <i class="ti ti-player-play-filled" aria-hidden="true"></i>
-                <span>Comenzar 2º tiempo (min 40)</span>
-              </button>
-            </footer>
 
           </div>
         }
@@ -440,7 +432,7 @@
                         </td>
                         <td class="col-stat">
                           <span class="stat-mono" [class.stat-highlight]="(player.penaltyKicks + player.dropGoals) > 0" [class.stat-zero]="(player.penaltyKicks + player.dropGoals) === 0">
-                            {{ (player.penaltyKicks + player.dropGoals) > 0 ? (player.penaltyKicks + ' / ' + player.dropGoals) : '—' }}
+                            {{ formatKickingStats(player) }}
                           </span>
                         </td>
                         <td class="col-pts">
@@ -475,21 +467,21 @@
 
           </div>
 
-          <!-- Acciones del Tab Jugadores -->
-          <footer class="bottom-actions-row">
-            <button type="button" class="btn-action-back" (click)="goBackToLiveCapture()" title="Volver a la pantalla de captura en vivo">
-              <i class="ti ti-arrow-left" aria-hidden="true"></i>
-              <span>Carga en Vivo</span>
-            </button>
-
-            <button type="button" class="btn-action-start" (click)="openSecondHalfConfirmation()">
-              <i class="ti ti-player-play-filled" aria-hidden="true"></i>
-              <span>Comenzar 2º tiempo (min 40)</span>
-            </button>
-          </footer>
-
         </div>
       }
+
+      <!-- BARRA INFERIOR DE ACCIONES COMÚN -->
+      <footer class="bottom-actions-row">
+        <button type="button" class="btn-action-back" (click)="goBackToLiveCapture()" title="Volver a la pantalla de captura en vivo">
+          <i class="ti ti-arrow-left" aria-hidden="true"></i>
+          <span>Carga en Vivo</span>
+        </button>
+
+        <button type="button" class="btn-action-start" (click)="openSecondHalfConfirmation()">
+          <i class="ti ti-player-play-filled" aria-hidden="true"></i>
+          <span>Comenzar 2º tiempo (min 40)</span>
+        </button>
+      </footer>
 
     }
   </main>

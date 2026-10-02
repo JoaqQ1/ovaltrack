@@ -180,6 +180,10 @@ public class MatchService {
             throw new BusinessException("Partido no encontrado");
         }
 
+        if (match.getStatus() == matchStatus) {
+            throw new BusinessException("No se puede asignar el mismo estado al partido");
+        }
+
         if (match.getStatus() == MatchStatus.NOT_STARTED) {
             /*
              * boolean hasTitular = match.getRoster().stream()
@@ -200,6 +204,7 @@ public class MatchService {
                         "No se puede iniciar el partido sin al menos un jugador titular registrado.");
             }
         }
+
 
         match.setStatus(matchStatus);
         if (matchStatus == MatchStatus.IN_PROGRESS && match.getStartedAt() == null) {

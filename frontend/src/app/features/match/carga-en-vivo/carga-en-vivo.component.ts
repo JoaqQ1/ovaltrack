@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   EventCategoryGroup,
@@ -13,8 +14,8 @@ import { LocalMatchEvent } from '../types/event.types';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../services/statistic-calculation.service';
-import { HalftimeStatsModalComponent } from './components/halftime-stats-modal/halftime-stats-modal.component';
 import { PeriodStatisticDTO } from '../types/statistic.types';
+import { CurrentStatsModalComponent } from './components/current-stats-modal/current-stats-modal.component';
 
 /**
  * Representa un evento que ya fue tocado pero todavía está esperando a que
@@ -65,7 +66,7 @@ const POSSESSIONS: readonly Possession[] = ['OWN', 'NEUTRAL', 'OPPONENT'] as con
 @Component({
   selector: 'ot-live-capture',
   standalone: true,
-  imports: [CommonModule, HalftimeStatsModalComponent],
+  imports: [CommonModule, CurrentStatsModalComponent],
   templateUrl: './carga-en-vivo.component.html',
   styleUrl: './carga-en-vivo.component.css'
 })
@@ -102,10 +103,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   showConfirmHalftime = false;
   showConfirmFinish = false;
   isFinished = false;
-  showHalftimeModal = false;
+  showCurrentStatisticsModal = false;
   isCalculatingStats = false;
   isOfflineMode = false;
-  halftimeStats: PeriodStatisticDTO | null = null;
+  currentStats: PeriodStatisticDTO | null = null;
 
   private clockElapsedSeconds = 0;
   private clockStartedAt: number | null = null;
@@ -190,8 +191,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         }
         this.isLoading = false;
       },
-      error: () => {
-        this.errorMessage = 'No se pudo cargar el partido. Inténtalo nuevamente.';
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
         this.isLoading = false;
       },
     });
@@ -212,7 +213,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     return this.clockPaused ? 'ti ti-player-play' : 'ti ti-player-pause';
   }
 
-  /** Muestra u oculta el historial de eventos del partido. */
+  get periodLabelAction(): string {
+    return this.period === 1 ? 'Cerrar primer tiempo' : 'Finalizar partido';
+  }
+
   toggleHistory(): void {
     this.historyVisible = !this.historyVisible;
   }
@@ -333,8 +337,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.synchronized = true;
         this.persistState();
       },
-      error: () => {
-        this.errorMessage = 'No se pudo guardar el evento. Inténtalo nuevamente.';
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
       },
     });
   }
@@ -408,6 +412,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     if (this.period === 1 && !this.isHalftime) {
       this.showConfirmHalftime = true;
+    } else if (this.period === 2 && !this.isHalftime) {
+      this.showConfirmFinish = true;
     } else if (this.isHalftime) {
       this.router?.navigate(['/live-capture', this.matchId, 'halftime']);
     }
@@ -456,6 +462,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.stopClock();
     this.clockPaused = true;
     this.clockElapsedSeconds = this.parseClock(this.gameClock);
+    this.periodLabel = 'Finalizado';
     this.persistState();
 
     this.matchService.finishMatch(this.matchId).subscribe({
@@ -464,11 +471,12 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.synchronized = true;
         this.isOfflineMode = false;
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.synchronized = false;
-        this.errorMessage = 'No se pudo finalizar el partido. Inténtalo nuevamente.';
+        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
       },
     });
+    this.router?.navigate(['/post-match/', this.matchId]);
   }
 
   /** Cierra el primer tiempo, guarda el estado y navega a sus estadísticas. */
@@ -502,14 +510,13 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.router?.navigate(['/live-capture', this.matchId, 'halftime']);
   }
 
-  /** Calcula las estadísticas del primer tiempo y abre el modal. */
-  async openHalftimeModal(): Promise<void> {
-    this.showHalftimeModal = true;
+  async openCurrentStatisticsModal(): Promise<void> {
+    this.showCurrentStatisticsModal = true;
     this.isCalculatingStats = true;
 
     try {
       const allEventTypes = this.categories.flatMap(category => category.events);
-      this.halftimeStats = await this.statisticCalculationService.calculatePeriodStatistics(
+      this.currentStats = await this.statisticCalculationService.calculatePeriodStatistics(
         this.matchId,
         1,
         this.events,
@@ -522,34 +529,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Cierra el modal de estadísticas del entretiempo. */
-  closeHalftimeModal(): void {
-    this.showHalftimeModal = false;
-  }
-
-  /** Configura el segundo tiempo y reanuda el reloj acumulado. */
-  onStartSecondHalf(): void {
-    this.showHalftimeModal = false;
-    this.isHalftime = false;
-    this.period = 2;
-    this.periodLabel = '2T';
-
-    // En rugby profesional el reloj del segundo tiempo continúa acumulado desde 40:00 (2400s)
-    this.clockElapsedSeconds = Math.max(2400, this.parseClock(this.gameClock));
-    this.gameClock = this.formatClock(this.clockElapsedSeconds);
-    this.clockPaused = false;
-    this.startClock();
-
-    this.persistState();
-
-    this.matchService.startSecondHalf(this.matchId).subscribe({
-      next: () => {
-        this.synchronized = true;
-      },
-      error: () => {
-        this.synchronized = false;
-      },
-    });
+  closeCurrentStatisticsModal(): void {
+    this.showCurrentStatisticsModal = false;
   }
 
   /** Inicia un intervalo que actualiza el reloj periódicamente. */
@@ -608,8 +589,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     };
 
     this.liveCaptureService.saveLiveCaptureState(state).subscribe({
-      error: () => {
-        this.errorMessage = 'No se pudo guardar el estado local del partido.';
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
       },
     });
   }
@@ -714,8 +695,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.synchronized = false;
         this.persistState();
       },
-      error: () => {
-        this.errorMessage = 'No se pudo eliminar el evento. Inténtalo nuevamente.';
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
       },
     });
   }
@@ -895,4 +876,16 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     this.persistState();
   }
+
+  private readBackendError(error: HttpErrorResponse): string | null {
+  if (typeof error.error === 'string' && error.error.trim()) {
+    return error.error;
+  }
+
+  if (typeof error.error?.message === 'string') {
+    return error.error.message;
+  }
+
+  return null;
+}
 }

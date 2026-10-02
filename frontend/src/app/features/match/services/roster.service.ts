@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Match } from '../types/match.types';
-import { AvailablePlayer, BackendRosterResponse, RosterPayload, SavedRoster } from '../types/roster.types';
+import { AvailablePlayer, BackendRosterResponse, RosterPayload, SavedRoster, SaveRosterRequestDTO } from '../types/roster.types';
 
 @Injectable({ providedIn: 'root' })
 export class RosterService {
@@ -13,8 +13,8 @@ export class RosterService {
   getAvailablePlayers(matchId: string): Observable<AvailablePlayer[]> {
     return this.http.get<Match>(`${this.matchesUrl}/${matchId}`).pipe(
       switchMap(match => {
-        if (!match) {
-          throw new Error(`Partido ${matchId} no encontrado en el backend`);
+        if (!match?.divisionId) {
+          return throwError(() => new Error(`Partido ${matchId} no encontrado o sin división asignada`));
         }
         return this.http.get<AvailablePlayer[]>(`${environment.apiUrl}/division/${match.divisionId}/players`);
       })
@@ -22,7 +22,7 @@ export class RosterService {
   }
 
   saveRoster(payload: RosterPayload): Observable<void> {
-    const dto = {
+    const dto: SaveRosterRequestDTO = {
       titularesIds: payload.startingPlayers,
       suplentesIds: payload.substitutePlayers
     };
@@ -33,10 +33,10 @@ export class RosterService {
   getSavedRoster(matchId: string): Observable<SavedRoster | null> {
     return this.http.get<BackendRosterResponse>(`${this.matchesUrl}/${matchId}/roster`).pipe(
       map(response => ({
-        startingPlayers: response.startingPlayers || response.titularesIds || [],
-        substitutePlayers: response.substitutePlayers || response.suplentesIds || []
+        startingPlayers: response.startingPlayers ?? response.titularesIds ?? [],
+        substitutePlayers: response.substitutePlayers ?? response.suplentesIds ?? []
       })),
-      catchError(error => error.status === 404 ? of(null) : (() => { throw error; })())
+      catchError(error => error.status === 404 ? of(null) : throwError(() => error))
     );
   }
 }
