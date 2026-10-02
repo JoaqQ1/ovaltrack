@@ -116,6 +116,8 @@
                   Empezar partido
                 </button>
               </div>
+            } @else if (match.status === 'halftime' || match.status === 'finished') {
+              <span class="action-link">Ver estadisticas →</span>
             } @else {
               <span>Capturar en vivo →</span>
             }
