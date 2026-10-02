@@ -167,6 +167,8 @@ export class MatchSelectComponent implements OnInit {
     if (match.status === 'not_started') {
       // Si no empezó, va a la pantalla nueva que acabas de crear
       void this.router.navigate(['/selection-roster', match.id]);
+    } else if (match.status === 'halftime') {
+      void this.router.navigate(['/live-capture/', match.id, 'halftime'])
     } else if (match.status === 'finished'){
       void this.router.navigate(['/post-match', match.id])
     } else{
