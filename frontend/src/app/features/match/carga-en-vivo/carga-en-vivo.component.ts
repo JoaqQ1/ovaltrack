@@ -12,9 +12,6 @@ import { LiveCaptureEventType } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
-import { StatisticCalculationService } from '../services/statistic-calculation.service';
-import { HalftimeStatsModalComponent } from './components/halftime-stats-modal/halftime-stats-modal.component';
-import { PeriodStatisticDTO } from '../types/statistic.types';
 
 /**
  * Representa un evento que ya fue tocado pero todavía está esperando a que
@@ -65,7 +62,7 @@ const POSSESSIONS: readonly Possession[] = ['OWN', 'NEUTRAL', 'OPPONENT'] as con
 @Component({
   selector: 'ot-live-capture',
   standalone: true,
-  imports: [CommonModule, HalftimeStatsModalComponent],
+  imports: [CommonModule],
   templateUrl: './carga-en-vivo.component.html',
   styleUrl: './carga-en-vivo.component.css'
 })
@@ -73,7 +70,6 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly matchService = inject(MatchService);
-  private readonly statisticCalculationService = inject(StatisticCalculationService);
   private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly router = inject(Router, { optional: true });
   private matchId = '';
@@ -100,10 +96,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   showConfirmHalftime = false;
   showConfirmFinish = false;
   isFinished = false;
-  showHalftimeModal = false;
-  isCalculatingStats = false;
   isOfflineMode = false;
-  halftimeStats: PeriodStatisticDTO | null = null;
 
   private clockElapsedSeconds = 0;
   private clockStartedAt: number | null = null;
@@ -415,53 +408,6 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     // 4. Redirigir a la pantalla dedicada de estadísticas de entretiempo
     this.router?.navigate(['/live-capture', this.matchId, 'halftime']);
-  }
-
-  async openHalftimeModal(): Promise<void> {
-    this.showHalftimeModal = true;
-    this.isCalculatingStats = true;
-
-    try {
-      const allEventTypes = this.categories.flatMap(category => category.events);
-      this.halftimeStats = await this.statisticCalculationService.calculatePeriodStatistics(
-        this.matchId,
-        1,
-        this.events,
-        allEventTypes
-      );
-    } catch (error) {
-      console.error('Error al calcular estadísticas tácticas:', error);
-    } finally {
-      this.isCalculatingStats = false;
-    }
-  }
-
-  closeHalftimeModal(): void {
-    this.showHalftimeModal = false;
-  }
-
-  onStartSecondHalf(): void {
-    this.showHalftimeModal = false;
-    this.isHalftime = false;
-    this.period = 2;
-    this.periodLabel = '2T';
-
-    // En rugby profesional el reloj del segundo tiempo continúa acumulado desde 40:00 (2400s)
-    this.clockElapsedSeconds = Math.max(2400, this.parseClock(this.gameClock));
-    this.gameClock = this.formatClock(this.clockElapsedSeconds);
-    this.clockPaused = false;
-    this.startClock();
-
-    this.persistState();
-
-    this.matchService.startSecondHalf(this.matchId).subscribe({
-      next: () => {
-        this.synchronized = true;
-      },
-      error: () => {
-        this.synchronized = false;
-      },
-    });
   }
 
   private startClock(): void {

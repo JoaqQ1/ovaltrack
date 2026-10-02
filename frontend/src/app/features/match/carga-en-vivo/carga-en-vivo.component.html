@@ -234,17 +234,4 @@
             </div>
         </div>
         }
-
-    @if (showHalftimeModal) {
-    <ot-halftime-stats-modal
-      [stats]="halftimeStats"
-      [homeTeam]="homeTeam"
-      [awayTeam]="awayTeam"
-      [isLoading]="isCalculatingStats"
-      [isOffline]="isOfflineMode"
-      [theme]="theme"
-      (closeModal)="closeHalftimeModal()"
-      (startSecondHalf)="onStartSecondHalf()">
-    </ot-halftime-stats-modal>
-    }
 </section>

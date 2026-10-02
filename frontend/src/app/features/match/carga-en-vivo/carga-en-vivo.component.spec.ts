@@ -3,7 +3,6 @@ import { of } from 'rxjs';
 
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
-import { StatisticCalculationService } from '../services/statistic-calculation.service';
 import { CargaEnVivoComponent } from './carga-en-vivo.component';
 
 declare const describe: (description: string, specDefinitions: () => void) => void;
@@ -56,39 +55,6 @@ describe('CargaEnVivoComponent', () => {
             closeFirstHalf: () => of(undefined),
             startSecondHalf: () => of(undefined),
             getPeriodStatistics: () => of({}),
-          },
-        },
-        {
-          provide: StatisticCalculationService,
-          useValue: {
-            calculatePeriodStatistics: () => Promise.resolve({
-              matchId: '550e8400-e29b-41d4-a716-446655440002',
-              period: 1,
-              ownScore: 10,
-              opponentScore: 5,
-              ownTries: 2,
-              opponentTries: 1,
-              ownConversions: 0,
-              opponentConversions: 0,
-              ownPenalties: 0,
-              opponentPenalties: 0,
-              ownDropGoals: 0,
-              opponentDropGoals: 0,
-              ownTacklesCompleted: 15,
-              ownTacklesMissed: 2,
-              ownTackleEffectiveness: 88.2,
-              ownTurnoversWon: 3,
-              ownTurnoversLost: 1,
-              ownPenaltiesConceded: 4,
-              opponentPenaltiesConceded: 6,
-              ownYellowCards: 0,
-              opponentYellowCards: 0,
-              ownRedCards: 0,
-              opponentRedCards: 0,
-              scrumsTotal: 4,
-              lineoutsTotal: 6,
-              ownPossessionPercentage: 55.0,
-            }),
           },
         },
       ],
@@ -210,7 +176,7 @@ describe('CargaEnVivoComponent', () => {
     expect(component.showConfirmHalftime).toBe(true);
   });
 
-  it('should close first half, pause clock, calculate stats, and open modal on confirm', async () => {
+  it('should close first half and pause clock on confirm', async () => {
     component.period = 1;
     component.clockPaused = false;
     component.gameClock = '40:15';
@@ -220,24 +186,5 @@ describe('CargaEnVivoComponent', () => {
     expect(component.isHalftime).toBe(true);
     expect(component.periodLabel).toBe('Entretiempo');
     expect(component.clockPaused).toBe(true);
-    expect(component.showHalftimeModal).toBe(true);
-    expect(component.halftimeStats).not.toBe(null);
-    expect(component.halftimeStats?.ownScore).toBe(10);
-  });
-
-  it('should start second half with clock set to 40:00 when onStartSecondHalf is called', () => {
-    component.showHalftimeModal = true;
-    component.isHalftime = true;
-    component.period = 1;
-    component.gameClock = '39:50';
-
-    component.onStartSecondHalf();
-
-    expect(component.showHalftimeModal).toBe(false);
-    expect(component.isHalftime).toBe(false);
-    expect(component.period).toBe(2);
-    expect(component.periodLabel).toBe('2T');
-    expect(component.gameClock).toBe('40:00');
-    expect(component.clockPaused).toBe(false);
   });
 });
