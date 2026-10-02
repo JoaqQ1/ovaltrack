@@ -26,6 +26,15 @@ export const routes: Routes = [
             import('./features/home/home.component').then(m => m.HomeComponent)
     },
     {
+        path: 'admin/ovaltrack',
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard],
+        data: { roles: ['ADMIN_OVALTRACK'] },
+        loadComponent: () =>
+            import('./features/auth/admin/pages/ovaltrack-admin/ovaltrack-admin.component')
+                .then(m => m.OvalTrackAdminComponent)
+    },
+    {
         path: 'auth',
         loadChildren: () =>
             import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
