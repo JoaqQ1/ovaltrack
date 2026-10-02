@@ -1,14 +1,14 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { MatchService } from '../services/match.service';
 import { RosterService } from '../services/roster.service';
 import { StatisticCalculationService } from '../services/statistic-calculation.service';
+import { LiveCaptureCacheService } from '../services/live-capture-cache.service';
 import { PeriodStatisticDTO, PlayerPeriodStatistic } from '../types/statistic.types';
 import { RosterPlayerInfo } from '../services/calculators';
-import { liveCaptureDatabase, matchDatabase } from '../data/local-databases';
-import { SavedRoster } from '../types/roster.types';
+import { AvailablePlayer, SavedRoster } from '../types/roster.types';
 
 @Component({
   selector: 'ot-halftime-summary',
@@ -20,9 +20,11 @@ import { SavedRoster } from '../types/roster.types';
 export class HalftimeSummaryComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly matchService = inject(MatchService);
   private readonly rosterService = inject(RosterService);
   private readonly statisticCalculationService = inject(StatisticCalculationService);
+  private readonly cacheService = inject(LiveCaptureCacheService);
 
   readonly matchId = signal<string>('');
   readonly activeTab = signal<'general' | 'players'>('general');
@@ -108,8 +110,16 @@ export class HalftimeSummaryComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('matchId') || '';
     this.matchId.set(id);
 
-    window.addEventListener('online', () => this.isOffline.set(false));
-    window.addEventListener('offline', () => this.isOffline.set(true));
+    const handleOnline = () => this.isOffline.set(false);
+    const handleOffline = () => this.isOffline.set(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    this.destroyRef.onDestroy(() => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    });
 
     await this.loadSummaryData();
   }
@@ -145,10 +155,10 @@ export class HalftimeSummaryComponent implements OnInit {
         return;
       }
     } catch {
-      // Fallback a almacenamiento local Dexie
+      // Fallback a almacenamiento local mediante servicio de caché
     }
 
-    const localMatch = await matchDatabase.matches.get(matchId);
+    const localMatch = await this.cacheService.getMatch(matchId);
     if (localMatch?.opponent) {
       this.opponent.set(localMatch.opponent);
     }
@@ -156,7 +166,7 @@ export class HalftimeSummaryComponent implements OnInit {
 
   private async resolveRoster(matchId: string): Promise<RosterPlayerInfo[]> {
     let savedRoster: SavedRoster | null = null;
-    let availablePlayers: any[] = [];
+    let availablePlayers: AvailablePlayer[] = [];
 
     try {
       const [rosterRes, playersRes] = await Promise.all([
@@ -180,7 +190,7 @@ export class HalftimeSummaryComponent implements OnInit {
           playerId: playerId ?? `starter-${jerseyNumber}`,
           jerseyNumber,
           playerName: playerObj?.fullName ?? `Titular #${jerseyNumber}`,
-          position: playerObj?.position,
+          position: playerObj?.position ?? undefined,
           isStarter: true,
         });
       });
@@ -193,7 +203,7 @@ export class HalftimeSummaryComponent implements OnInit {
           playerId: playerId ?? `sub-${jerseyNumber}`,
           jerseyNumber,
           playerName: playerObj?.fullName ?? `Suplente #${jerseyNumber}`,
-          position: playerObj?.position,
+          position: playerObj?.position ?? undefined,
           isStarter: false,
         });
       });
@@ -207,7 +217,7 @@ export class HalftimeSummaryComponent implements OnInit {
             playerId: playerObj.id ?? `player-${jerseyNumber}`,
             jerseyNumber,
             playerName: playerObj.fullName ?? (isStarter ? `Titular #${jerseyNumber}` : `Suplente #${jerseyNumber}`),
-            position: playerObj.position,
+            position: playerObj.position ?? undefined,
             isStarter,
           });
         }
@@ -223,14 +233,14 @@ export class HalftimeSummaryComponent implements OnInit {
           playerId: playerObj?.id ?? `slot-${num}`,
           jerseyNumber: num,
           playerName: playerObj?.fullName ?? (isStarter ? `Titular #${num}` : `Suplente #${num}`),
-          position: playerObj?.position,
+          position: playerObj?.position ?? undefined,
           isStarter,
         });
       }
     }
 
     // Incluir camisetas adicionales de eventos si existieran
-    const events = await liveCaptureDatabase.events.where('matchId').equals(matchId).toArray();
+    const { events } = await this.cacheService.getStatusData(matchId);
     for (const event of events) {
       const playerNum = event.attributes?.['playerNumber'];
       const num = typeof playerNum === 'number' ? playerNum : (playerNum ? Number(playerNum) : null);
@@ -241,7 +251,7 @@ export class HalftimeSummaryComponent implements OnInit {
           playerId: event.playerId ?? playerObj?.id ?? `event-player-${num}`,
           jerseyNumber: num,
           playerName: playerObj?.fullName ?? (isStarter ? `Titular #${num}` : `Suplente #${num}`),
-          position: playerObj?.position,
+          position: playerObj?.position ?? undefined,
           isStarter,
         });
       }
@@ -281,9 +291,9 @@ export class HalftimeSummaryComponent implements OnInit {
     const id = this.matchId();
 
     try {
-      // 1. Actualizar estado local en Dexie para el 2° Tiempo (Minuto 40:00 acumulado)
-      const currentState = await liveCaptureDatabase.states.get(id);
-      await liveCaptureDatabase.states.put({
+      // 1. Actualizar estado local para el 2° Tiempo (Minuto 40:00 acumulado)
+      const { state: currentState } = await this.cacheService.getStatusData(id);
+      await this.cacheService.saveState({
         matchId: id,
         gameClock: '40:00',
         period: 2,
