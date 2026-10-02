@@ -13,6 +13,8 @@ public interface RegistrationRequestRepository extends JpaRepository<Registratio
 
     List<RegistrationRequest> findAllByStatusOrderByCreatedAtAsc(RegistrationRequestStatus status);
 
+    List<RegistrationRequest> findAllByStatusInOrderByCreatedAtAsc(List<RegistrationRequestStatus> statuses);
+
     List<RegistrationRequest> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
 
     Optional<RegistrationRequest> findFirstByUserIdAndStatusOrderByCreatedAtDesc(
