@@ -105,6 +105,7 @@ export class LiveCaptureService {
 
     return {
       query: resolvedQuery,
+      match,
       state: {
         homeTeam: HOME_TEAM_NAME,
         awayTeam: match.opponent,

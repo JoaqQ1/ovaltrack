@@ -167,12 +167,10 @@ export class SelectionRosterComponent implements OnInit {
       substitutePlayers: suplentesIds
     };
 
-    this.rosterService.saveRoster(payload).pipe(
-      switchMap(() => this.matchService.startMatch(this.matchId))
-    ).subscribe({
+    this.rosterService.saveRoster(payload).subscribe({
       next: () => {
-        console.log('Plantel guardado y partido iniciado con éxito');
-        alert('¡Plantel guardado! Iniciando partido...');
+        console.log('Plantel guardado');
+        alert('¡Plantel guardado!');
         this.router.navigate(['/match-selection']); 
       },
       error: (err) => {

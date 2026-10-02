@@ -12,6 +12,7 @@ import {
   NewMatchDraft,
 } from '../types/match.types';
 import { MatchService } from '../services/match.service';
+import { RosterService } from '../services/roster.service';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -35,6 +36,7 @@ import { MatchService } from '../services/match.service';
 })
 export class MatchSelectComponent implements OnInit {
   private readonly matchService = inject(MatchService);
+  private readonly rosterService = inject(RosterService);
   private readonly router = inject(Router);
 
   /** Filtros disponibles, en el orden en que se renderizan en el control segmentado. */
@@ -137,20 +139,25 @@ export class MatchSelectComponent implements OnInit {
     });
   }
 
-  /**
-   * Inicia un partido que está en estado 'not_started', actualizando su estado 
-   * o navegando a la pantalla de captura en vivo.
-   */
+  /** Navega a la captura en vivo solo si el partido tiene titulares completos. */
   startMatch(matchId: string): void {
-    this.matchService.startMatch(matchId).subscribe({
-      next: () => {
-        void this.router.navigate(['/live-capture', matchId]);
-      },
-      error: (error) => {
-        this.errorMessage = this.readBackendError(error) ?? 'No se pudo iniciar el partido.';
-      }
-    });
+    this.navigateToLiveCaptureIfRosterIsValid(matchId);
+  }
 
+
+  onSelectMatch(match: Match) {
+    this.openMatch(match);
+    this.selectMatch.emit(match);
+  }
+
+  isLive(match: Match): boolean {
+    return match.status === 'in_progress' || match.status === 'halftime';
+  }
+
+  get emptyMessage(): string {
+    return this.activeFilter !== 'all'
+      ? `No se encontraron partidos en estado "${this.statusLabels[this.activeFilter]}".`
+      : 'Aún no tienes partidos creados. Haz clic en "+ Crear partido" para programar el próximo encuentro.';
   }
 
   private readBackendError(error: HttpErrorResponse): string | null {
@@ -167,14 +174,36 @@ export class MatchSelectComponent implements OnInit {
     if (match.status === 'not_started') {
       // Si no empezó, va a la pantalla nueva que acabas de crear
       void this.router.navigate(['/selection-roster', match.id]);
-    } else if (match.status === 'finished'){
+    } else if (match.status === 'finished') {
       void this.router.navigate(['/post-match', match.id])
-    } else{
-      // Si ya está en progreso, va a la pantalla de la imagen
-      void this.router.navigate(['/live-capture', match.id]);
+    } else {
+      this.navigateToLiveCaptureIfRosterIsValid(match.id);
 
     }
 
+  }
+
+  private navigateToLiveCaptureIfRosterIsValid(matchId: string): void {
+    this.rosterService.getSavedRoster(matchId).subscribe({
+      next: roster => {
+        if (this.hasValidRoster(roster?.startingPlayers)) {
+          void this.router.navigate(['/live-capture', matchId]);
+          return;
+        }
+
+        this.errorMessage = 'Debes completar los 15 titulares antes de capturar el partido.';
+        //void this.router.navigate(['/selection-roster', matchId]);
+      },
+      error: () => {
+        this.errorMessage = 'No se pudo validar la alineación del partido.';
+      },
+    });
+  }
+
+  private hasValidRoster(startingPlayers: string[] | undefined): boolean {
+    return startingPlayers !== undefined
+      && startingPlayers.length === 15
+      && new Set(startingPlayers).size === 15;
   }
 
   /**

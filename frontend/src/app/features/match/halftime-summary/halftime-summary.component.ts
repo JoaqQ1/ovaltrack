@@ -285,6 +285,7 @@ export class HalftimeSummaryComponent implements OnInit {
       const currentState = await liveCaptureDatabase.states.get(id);
       await liveCaptureDatabase.states.put({
         matchId: id,
+        isStarted: true,
         gameClock: '40:00',
         period: 2,
         periodLabel: '2T',

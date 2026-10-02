@@ -61,6 +61,7 @@ export interface LiveCaptureState {
 
 export interface LiveCapturePersistedState {
   matchId: UUID;
+  isStarted: boolean;
   gameClock: string;
   period: number;
   periodLabel: string;
@@ -87,6 +88,7 @@ export interface LiveCapturePersistedState {
  */
 export interface LiveCaptureBootstrap {
   query: LiveCaptureQuery;
+  match: Match;
   state: LiveCaptureState;
   recentEvents: LocalMatchEvent[];
   eventTypes: LiveCaptureEventType[];
