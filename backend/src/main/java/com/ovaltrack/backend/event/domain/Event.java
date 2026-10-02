@@ -49,6 +49,8 @@ public class Event {
 
     private Integer matchTime;
 
+    private Integer absoluteMatchTime;
+
     private LocalDateTime realTime;
 
     private Integer period;

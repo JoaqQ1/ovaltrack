@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 
 import { MatchSelectComponent } from './match-selection.component';
 import { MatchService } from '../services/match.service';
+import { RosterService } from '../services/roster.service';
 
 describe('MatchSelectionComponent', () => {
   let component: MatchSelectComponent;
@@ -20,6 +21,12 @@ describe('MatchSelectionComponent', () => {
             getMatches: () => of([]),
             createMatch: () => of({}),
             deleteMatch: () => of(undefined),
+          },
+        },
+        {
+          provide: RosterService,
+          useValue: {
+            getSavedRoster: () => of(null),
           },
         },
       ],

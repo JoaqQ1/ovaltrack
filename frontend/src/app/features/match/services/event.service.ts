@@ -25,6 +25,7 @@ export class EventService {
       playerId: event.playerId,
       teamPossession: event.teamPossession,
       matchTime: event.matchTime,
+      absoluteMatchTime: event.absoluteMatchTime,
       realTime: event.realTime,
       period: event.period,
       origin: event.origin,

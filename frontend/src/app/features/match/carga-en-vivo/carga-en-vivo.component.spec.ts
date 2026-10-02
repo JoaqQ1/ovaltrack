@@ -12,6 +12,9 @@ declare const it: (description: string, testFunction: () => void | Promise<void>
 declare const expect: (actual: unknown) => {
   toBe(expected: unknown): void;
   toEqual(expected: unknown): void;
+  not: {
+    toBe(expected: unknown): void;
+  };
 };
 
 describe('CargaEnVivoComponent', () => {
@@ -26,6 +29,19 @@ describe('CargaEnVivoComponent', () => {
           provide: LiveCaptureService,
           useValue: {
             getLiveCaptureBootstrap: () => of({
+              match: {
+                id: '550e8400-e29b-41d4-a716-446655440002',
+                date: '2026-09-14T12:00:00',
+                divisionId: '550e8400-e29b-41d4-a716-446655440001',
+                opponent: 'DRC',
+                status: 'not_started' as const,
+                currentPeriod: 1,
+                clockElapsedSeconds: 0,
+                clockPaused: true,
+                currentPossession: 'OWN' as const,
+                homeScore: 0,
+                awayScore: 0,
+              },
               query: {
                 clubId: '550e8400-e29b-41d4-a716-446655440000',
                 divisionId: '550e8400-e29b-41d4-a716-446655440001',

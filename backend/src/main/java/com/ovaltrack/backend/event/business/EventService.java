@@ -103,6 +103,7 @@ public class EventService {
 		result.setPlayer(aPerson);
 		result.setTeamPossession(eventRequest.teamPossession());
 		result.setMatchTime(eventRequest.matchTime());
+		result.setAbsoluteMatchTime(eventRequest.absoluteMatchTime());
 		result.setRealTime(eventRequest.realTime());
 		result.setPeriod(eventRequest.period());
 		result.setOrigin(eventRequest.origin());
@@ -169,6 +170,7 @@ public class EventService {
 
 		result.setTeamPossession(eventRequest.teamPossession());
 		result.setMatchTime(eventRequest.matchTime());
+		result.setAbsoluteMatchTime(eventRequest.absoluteMatchTime());
 		result.setPeriod(eventRequest.period());
 		result.setOrigin(eventRequest.origin());
 		result.setAttributes(eventRequest.attributes());

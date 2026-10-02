@@ -105,6 +105,7 @@ export class LiveCaptureService {
 
     return {
       query: resolvedQuery,
+      match,
       state: {
         homeTeam: HOME_TEAM_NAME,
         awayTeam: match.opponent,
@@ -116,6 +117,7 @@ export class LiveCaptureService {
         period,
         periodLabel,
         clockPaused: match.clockPaused ?? true,
+        clockUpdatedAt: match.clockUpdatedAt,
         currentPossession: match.currentPossession ?? 'OWN',
         synchronized: true,
         isHalftime,

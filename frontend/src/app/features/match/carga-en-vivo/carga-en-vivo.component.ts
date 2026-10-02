@@ -93,6 +93,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   gameClock = '--:--';
   period = 1;
   periodLabel = '';
+  isStarted = false;
+  isStartingMatch = false;
   synchronized = false;
   clockPaused = false;
   historyVisible = false;
@@ -108,6 +110,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   private clockElapsedSeconds = 0;
   private clockStartedAt: number | null = null;
+  private matchStartedAt: number | null = null;
   private clockTimer: ReturnType<typeof setInterval> | null = null;
 
   /**
@@ -126,6 +129,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   theme: 'light' | 'dark' = 'light';
   private events: LocalMatchEvent[] = [];
 
+  /** Inicializa la pantalla, carga el partido y restaura su estado guardado. */
   ngOnInit(): void {
     // Cargar tema guardado o detectar preferencia del sistema
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -150,14 +154,30 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         const state = response.state;
         this.homeTeam = state.homeTeam;
         this.awayTeam = state.awayTeam;
+        this.matchStartedAt = response.match.startedAt
+          ? this.parseBackendTimestamp(response.match.startedAt)
+          : null;
         this.scoreboard = { ...state.scoreboard };
         this.gameClock = state.gameClock;
         this.period = state.period ?? 1;
         this.isHalftime = state.isHalftime ?? false;
-        this.periodLabel = state.periodLabel || (this.isHalftime ? 'Entretiempo' : (this.period === 2 ? '2T' : '1T'));
+        this.isStarted = response.match.status !== 'not_started';
+        this.periodLabel = this.isStarted
+          ? (state.periodLabel || (this.isHalftime ? 'Entretiempo' : (this.period === 2 ? '2T' : '1T')))
+          : 'Iniciar partido';
         this.synchronized = state.synchronized;
-        this.clockPaused = state.clockPaused;
+        // Durante el entretiempo el reloj debe estar detenido aunque el estado
+        // recibido tenga clockPaused=false por una persistencia anterior.
+        this.clockPaused = state.clockPaused || this.isHalftime;
         this.clockElapsedSeconds = this.parseClock(state.gameClock);
+        if (!this.clockPaused && state.clockUpdatedAt) {
+          const updatedAt = this.parseBackendTimestamp(state.clockUpdatedAt);
+          if (Number.isFinite(updatedAt)) {
+            const elapsedSinceUpdate = Math.max(0, Math.floor((Date.now() - updatedAt) / 1000));
+            this.clockElapsedSeconds += elapsedSinceUpdate;
+            this.gameClock = this.formatClock(this.clockElapsedSeconds);
+          }
+        }
         this.currentPossession = state.currentPossession;
         this.categories = this.groupEventTypes(response.eventTypes);
         this.events = response.recentEvents;
@@ -178,6 +198,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Detiene el temporizador cuando el componente deja de existir. */
   ngOnDestroy(): void {
     this.stopClock();
   }
@@ -200,12 +221,14 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.historyVisible = !this.historyVisible;
   }
 
+  /** Cambia el tema visual y lo conserva para futuras visitas. */
   toggleTheme(): void {
     this.theme = this.theme === 'light' ? 'dark' : 'light';
     this.applyTheme(this.theme);
     localStorage.setItem('theme', this.theme);
   }
 
+  /** Aplica el tema seleccionado al elemento raíz del documento. */
   private applyTheme(theme: 'light' | 'dark'): void {
     document.documentElement.setAttribute('data-theme', theme);
   }
@@ -216,6 +239,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   * al momento de registrarse.
    */
   selectPossession(possession: Possession): void {
+    if (!this.isStarted) {
+      return;
+    }
+
     this.currentPossession = possession;
     this.synchronized = false;
     this.persistState();
@@ -238,6 +265,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   * solo se persiste cuando queda asociado a un jugador.
    */
   onEventTap(event: LiveCaptureEventType): void {
+    if (!this.isStarted) {
+      return;
+    }
+
     if (this.pendingSelection) {
       if (this.pendingSelection.event.id === event.id) {
         const pendingEvent = this.pendingSelection;
@@ -261,7 +292,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   }
 
   onPlayerNumberTap(playerNumber: number, team: 'OWN' | 'OPPONENT'): void {
-    if (!this.pendingSelection) {
+    if (!this.isStarted || !this.pendingSelection) {
       return;
     }
 
@@ -277,6 +308,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.commitEvent(pendingEvent.event, pendingEvent.eventId, playerNumber);
   }
 
+  /** Crea y persiste un evento asociado al partido actual. */
   private commitEvent(event: LiveCaptureEventType, eventId: string, player: number | null): void {
     const timestamp = new Date().toISOString();
     const localEvent: LocalMatchEvent = {
@@ -286,6 +318,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       playerId: null,
       teamPossession: this.currentPossession,
       matchTime: this.parseClock(this.gameClock),
+      absoluteMatchTime: this.matchStartedAt === null
+        ? null
+        : Math.max(0, Math.floor((Date.now() - this.matchStartedAt) / 1000)),
       realTime: timestamp,
       period: this.period,
       origin: 'live-capture',
@@ -310,6 +345,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   /** Cancela una selección pendiente o elimina el último evento persistido. */
   undoLastEvent(): void {
+    if (!this.isStarted) {
+      return;
+    }
+
     if (this.pendingSelection) {
       this.pendingSelection = null;
       this.persistState();
@@ -324,6 +363,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   /** Elimina un evento específico y revierte sus efectos. */
   undoHistoryEvent(historyId: string): void {
+    if (!this.isStarted) {
+      return;
+    }
+
     const event = this.events.find(currentEvent => currentEvent.id === historyId);
     if (event) {
       this.deleteEventAndRebuild(event);
@@ -336,6 +379,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   /** Pausa o reanuda el reloj del partido sin afectar el historial de deshacer. */
   toggleClock(): void {
+    if (!this.isStarted || this.isHalftime) {
+      return;
+    }
+
     if (!this.clockPaused) {
       this.updateClock();
       this.stopClock();
@@ -352,7 +399,13 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.persistState();
   }
 
+  /** Decide qué acción ejecutar al pulsar el botón de cambio de periodo. */
   onPeriodButtonClick(): void {
+    if (!this.isStarted) {
+      this.startMatch();
+      return;
+    }
+
     if (this.isFinished) {
       return;
     }
@@ -366,14 +419,44 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Inicia el partido en backend y habilita la captura de eventos. */
+  startMatch(): void {
+    if (this.isStartingMatch || this.isStarted) {
+      return;
+    }
+
+    this.isStartingMatch = true;
+    this.matchService.startMatch(this.matchId).subscribe({
+      next: response => {
+        this.isStarted = true;
+        this.matchStartedAt = response.startedAt
+          ? this.parseBackendTimestamp(response.startedAt)
+          : this.matchStartedAt;
+        this.periodLabel = '1T';
+        this.clockPaused = false;
+        this.isStartingMatch = false;
+        this.startClock();
+        this.synchronized = true;
+        this.persistState();
+      },
+      error: () => {
+        this.isStartingMatch = false;
+        this.errorMessage = 'No se pudo iniciar el partido. Inténtalo nuevamente.';
+      },
+    });
+  }
+
+  /** Oculta el diálogo de confirmación del entretiempo. */
   cancelConfirmHalftime(): void {
     this.showConfirmHalftime = false;
   }
 
+  /** Oculta el diálogo de confirmación de finalización. */
   cancelConfirmFinish(): void {
     this.showConfirmFinish = false;
   }
 
+  /** Detiene el reloj y solicita al backend finalizar el partido. */
   confirmFinishMatch(): void {
     this.showConfirmFinish = false;
     this.stopClock();
@@ -396,6 +479,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.router?.navigate(['/post-match/', this.matchId]);
   }
 
+  /** Cierra el primer tiempo, guarda el estado y navega a sus estadísticas. */
   async confirmCloseFirstHalf(): Promise<void> {
     this.showConfirmHalftime = false;
     this.isHalftime = true;
@@ -449,12 +533,14 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.showCurrentStatisticsModal = false;
   }
 
+  /** Inicia un intervalo que actualiza el reloj periódicamente. */
   private startClock(): void {
     this.stopClock();
     this.clockStartedAt = Date.now();
     this.clockTimer = setInterval(() => this.updateClock(), 250);
   }
 
+  /** Cancela el intervalo del reloj y limpia su instante de inicio. */
   private stopClock(): void {
     if (this.clockTimer !== null) {
       clearInterval(this.clockTimer);
@@ -463,6 +549,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.clockStartedAt = null;
   }
 
+  /** Calcula el tiempo transcurrido y actualiza el texto del reloj. */
   private updateClock(): void {
     if (this.clockPaused || this.clockStartedAt === null) {
       return;
@@ -473,10 +560,11 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     if (nextClock !== this.gameClock) {
       this.gameClock = nextClock;
-      this.persistState(false);
+      // this.persistState(false);
     }
   }
 
+  /** Construye y guarda una copia del estado actual de la pantalla. */
   private persistState(updateClock = true): void {
     if (updateClock && !this.clockPaused) {
       this.updateClock();
@@ -484,6 +572,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     const state: LiveCapturePersistedState = {
       matchId: this.matchId,
+      isStarted: this.isStarted,
       gameClock: this.gameClock,
       periodLabel: this.periodLabel,
       period: this.period,
@@ -506,19 +595,21 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Restaura el estado persistido y reanuda el reloj si correspondía. */
   private restorePersistedState(state: LiveCapturePersistedState | undefined): boolean {
     if (!state || state.matchId !== this.matchId || !this.isValidPersistedState(state)) {
       return false;
     }
 
     this.period = state.period;
-    this.periodLabel = state.periodLabel;
+    this.periodLabel = this.isStarted ? state.periodLabel : 'Iniciar partido';
     this.isHalftime = state.isHalftime ?? (state.periodLabel === 'Entretiempo');
     this.synchronized = state.synchronized;
     this.pendingSelection = state.pendingSelection
       ? { ...state.pendingSelection, event: { ...state.pendingSelection.event } }
       : null;
-    this.clockPaused = state.clockPaused;
+    // El entretiempo siempre tiene prioridad sobre un valor antiguo del reloj.
+    this.clockPaused = state.clockPaused || this.isHalftime;
     this.clockElapsedSeconds = state.clockElapsedSeconds;
     if (state.currentPossession) {
       this.currentPossession = state.currentPossession;
@@ -527,7 +618,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       this.scoreboard = { ...state.scoreboard };
     }
 
-    if (this.clockPaused) {
+    if (!this.isStarted || this.clockPaused) {
+      this.clockPaused = true;
       this.gameClock = this.formatClock(this.clockElapsedSeconds);
       this.stopClock();
     } else {
@@ -540,17 +632,20 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     return true;
   }
 
+  /** Verifica que los datos recuperados tengan el formato esperado. */
   private isValidPersistedState(state: LiveCapturePersistedState): boolean {
     return Number.isInteger(state.period)
       && state.period > 0
       && Number.isFinite(state.clockElapsedSeconds)
       && Number.isFinite(state.savedAt)
+      && typeof state.isStarted === 'boolean'
       && typeof state.gameClock === 'string'
       && typeof state.periodLabel === 'string'
       && typeof state.clockPaused === 'boolean'
       && typeof state.synchronized === 'boolean';
   }
 
+  /** Convierte un reloj con formato mm:ss a una cantidad de segundos. */
   private parseClock(clock: string | undefined): number {
     if (!clock) {
       return 0;
@@ -562,24 +657,35 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       : 0;
   }
 
+  /** Convierte una cantidad de segundos al formato mm:ss. */
   private formatClock(totalSeconds: number): string {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 
+  /** Interpreta como UTC los LocalDateTime del backend que no incluyen zona horaria. */
+  private parseBackendTimestamp(timestamp: string): number {
+    const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(timestamp);
+    return Date.parse(hasTimezone ? timestamp : `${timestamp}Z`);
+  }
+
+  /** Devuelve el último evento de la lista, si existe. */
   private latestEvent(): LocalMatchEvent | undefined {
     return this.events[this.events.length - 1];
   }
 
+  /** Genera el siguiente número de secuencia para un evento local. */
   private nextEventSequence(): number {
     return this.events.reduce((highest, event) => Math.max(highest, event.localSequence), 0) + 1;
   }
 
+  /** Genera un identificador único para una entrada del historial. */
   private createHistoryId(): string {
     return crypto.randomUUID();
   }
 
+  /** Elimina un evento y vuelve a calcular el estado derivado del partido. */
   private deleteEventAndRebuild(event: LocalMatchEvent): void {
     const deletingLatestEvent = this.latestEvent()?.id === event.id;
     this.liveCaptureService.deleteEvent(event.id).subscribe({
@@ -595,6 +701,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Reconstruye marcador, posesión e historial recorriendo los eventos. */
   private rebuildStateFromEvents(preservePossession = false): void {
     let possession: Possession = this.currentPossession;
     const scoreboard = { home: 0, away: 0 };
@@ -639,16 +746,19 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.history = history.slice(0, 12);
   }
 
+  /** Busca un tipo de evento por su identificador. */
   private eventTypeById(eventTypeId: string): LiveCaptureEventType | undefined {
     return this.categories.flatMap(category => category.events)
       .find(eventType => eventType.id === eventTypeId);
   }
 
+  /** Lee el número de jugador almacenado en los atributos del evento. */
   private readPlayerNumber(event: LocalMatchEvent): number | null {
     const value = event.attributes?.['playerNumber'];
     return typeof value === 'number' ? value : null;
   }
 
+  /** Formatea el instante del evento para mostrarlo en el historial. */
   private formatEventMinute(matchTime: number | null): string {
     return this.formatClock(matchTime ?? 0);
   }
@@ -690,11 +800,13 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   }
 
   /** Resuelve el nombre a mostrar del equipo que tiene la posesión actualmente. */
+  /** Devuelve el nombre del equipo que tiene la posesión actual. */
   private teamInPossession(): string {
     return this.teamForPossession(this.currentPossession);
   }
 
   /** Alterna la posesión entre `own` y `opponent`; `neutral` siempre resuelve a `own`. */
+  /** Calcula qué equipo tendrá la posesión después de un evento. */
   private nextPossession(possession: Possession): Possession {
     if (possession === 'OWN') {
       return 'OPPONENT';

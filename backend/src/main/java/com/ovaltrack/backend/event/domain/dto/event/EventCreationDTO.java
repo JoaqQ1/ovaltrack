@@ -23,6 +23,8 @@ public record EventCreationDTO(
 
         Integer matchTime,
 
+        Integer absoluteMatchTime,
+
         LocalDateTime realTime,
 
         Integer period,

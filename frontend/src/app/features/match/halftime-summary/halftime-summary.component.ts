@@ -385,6 +385,7 @@ export class HalftimeSummaryComponent implements OnInit {
       period: 2,
       periodLabel: '2T',
       synchronized: true,
+      isStarted: true,
       clockPaused: false,
       isHalftime: false,
       pendingSelection: null,

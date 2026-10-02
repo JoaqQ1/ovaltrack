@@ -40,7 +40,8 @@
                     class="icon-btn"
                     (click)="toggleClock()"
                     [attr.aria-label]="pausaLabel"
-                    [attr.aria-pressed]="clockPaused">
+                    [attr.aria-pressed]="clockPaused"
+                    [disabled]="!isStarted || isHalftime">
                     <i [class]="pausaIcon" aria-hidden="true"></i>
                 </button>
 
@@ -57,12 +58,14 @@
                 type="button"
                 class="btn btn--outline"
                 [class.btn--active]="isHalftime"
-                [attr.aria-label]="isHalftime ? 'Ver resumen táctico del entretiempo' : 'Gestionar período del partido'"
-                (click)="onPeriodButtonClick()">
+                [attr.aria-label]="!isStarted ? 'Iniciar partido' : (isHalftime ? 'Ver resumen táctico del entretiempo' : 'Gestionar período del partido')"
+                (click)="onPeriodButtonClick()"
+                [disabled]="isStartingMatch">
                 {{ periodLabelAction }}
             </button>
             <button type="button" class="btn btn--outline"
-                (click)="undoLastEvent()">
+                (click)="undoLastEvent()"
+                [disabled]="!isStarted">
                 <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
                 Deshacer
             </button>
@@ -132,7 +135,7 @@
                         [class.event-chip--success]="eventVariant(event) === 'success'"
                         [class.event-chip--danger]="eventVariant(event) === 'danger'"
                         [class.event-chip--warning]="eventVariant(event) === 'warning'"
-                        [disabled]="pendingSelection !== null && pendingSelection.event.id !== event.id"
+                        [disabled]="!isStarted || (pendingSelection !== null && pendingSelection.event.id !== event.id)"
                         [class.event-chip--selected]="pendingSelection?.event?.id === event.id"
                         (click)="onEventTap(event)">
                         {{ event.name }}
@@ -172,7 +175,8 @@
                     <span class="history__time">{{ item.minute }}</span>
                     <button type="button" class="history__button"
                         [attr.aria-label]="'Deshacer evento de ' + item.minute"
-                        (click)="undoHistoryEvent(item.id)">
+                        (click)="undoHistoryEvent(item.id)"
+                        [disabled]="!isStarted">
                         <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -194,7 +198,7 @@
             [class.is-active]="currentPossession === possession"
             [attr.aria-pressed]="currentPossession === possession"
             (click)="selectPossession(possession)"
-            [disabled]="pendingSelection">
+            [disabled]="!isStarted || pendingSelection">
             {{ possession === 'OWN' ? 'Propia' : possession === 'OPPONENT' ?
             'Rival' : 'Neutral' }}
         </button>
