@@ -565,7 +565,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       const allEventTypes = this.categories.flatMap(category => category.events);
       this.currentStats = await this.statisticCalculationService.calculatePeriodStatistics(
         this.matchId,
-        1,
+        this.period,
         this.events,
         allEventTypes
       );
