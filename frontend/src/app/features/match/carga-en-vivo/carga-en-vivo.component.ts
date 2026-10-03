@@ -330,8 +330,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       origin: 'live-capture',
       attributes: player == null ? null : { playerNumber: player },
       createdAt: timestamp,
-      backendEventId: null,
       synchronizedAt: null,
+      active: true,
+      backendEventId: null,
       localSequence: this.nextEventSequence(),
     };
 
