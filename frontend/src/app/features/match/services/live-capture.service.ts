@@ -76,6 +76,7 @@ export class LiveCaptureService {
           switchMap(response => {
             const synchronizedEvent: LocalMatchEvent = {
               ...event,
+              backendEventId: response.id,
               synchronizedAt: response.synchronizedAt,
             };
 
@@ -92,9 +93,13 @@ export class LiveCaptureService {
     return defer(() => from(this.cache.getEventsByMatch(matchId)));
   }
 
-  deleteEvent(eventId: string): Observable<void> {
-    return this.eventService.delete(eventId).pipe(
-      switchMap(() => from(this.cache.deleteEvent(eventId)))
+  deleteEvent(event: LocalMatchEvent): Observable<void> {
+    if (!event.backendEventId) {
+      return from(this.cache.deleteEvent(event.id));
+    }
+
+    return this.eventService.delete(event.backendEventId ?? event.id).pipe(
+      switchMap(() => from(this.cache.deleteEvent(event.id)))
     );
   }
 
