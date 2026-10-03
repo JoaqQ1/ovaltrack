@@ -566,9 +566,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       await firstValueFrom(this.liveCaptureService.syncPendingEvents(this.matchId));
       this.events = await firstValueFrom(this.liveCaptureService.getLocalEvents(this.matchId));
       const allEventTypes = this.categories.flatMap(category => category.events);
-      this.currentStats = await this.statisticCalculationService.calculatePeriodStatistics(
+      this.currentStats = await this.statisticCalculationService.calculateMatchStatistics(
         this.matchId,
-        this.period,
         this.events,
         allEventTypes
       );
