@@ -5,6 +5,9 @@
 :host {
   display: block;
   width: 100%;
+  min-height: calc(100vh - 64px);
+  background-color: var(--r-bg);
+  transition: background-color 0.2s ease, color 0.2s ease;
 
   /* --- Tokens Modo Oscuro (Predeterminado / Dark Rugby Tech) --- */
   --r-bg: #0b111e;
@@ -23,12 +26,16 @@
   --r-accent-fg: #0b111e;
   --r-accent-border: rgba(163, 230, 53, 0.4);
 
+  --r-btn-outline-bg: #131c2e;
+  --r-btn-outline-border: #2a3c5a;
+  --r-btn-outline-fg: #cbd5e1;
+
   --r-slot-empty-bg: rgba(22, 34, 56, 0.45);
   --r-slot-empty-border: rgba(42, 60, 90, 0.7);
   --r-slot-empty-text: #94a3b8;
   --r-slot-filled-bg: #162238;
   --r-slot-filled-border: #a3e635;
-  --r-slot-active-glow: 0 0 16px rgba(163, 230, 53, 0.35);
+  --r-slot-active-glow: 0 0 16px rgba(163, 230, 53, 0.4);
 
   --r-toolbar-bg: #131c2e;
   --r-tab-inactive-bg: transparent;
@@ -51,6 +58,7 @@
 :host-context([data-theme="light"]),
 :host-context(.light-theme) {
   --r-bg: transparent;
+  background-color: transparent;
   --r-surface: #ffffff;
   --r-surface-header-start: #edf5e9;
   --r-surface-header-end: #e0ebd8;
@@ -65,6 +73,10 @@
   --r-accent-hover: #163618;
   --r-accent-fg: #ffffff;
   --r-accent-border: rgba(32, 75, 34, 0.3);
+
+  --r-btn-outline-bg: #ffffff;
+  --r-btn-outline-border: rgba(32, 75, 34, 0.25);
+  --r-btn-outline-fg: #204b22;
 
   --r-slot-empty-bg: #f8faf6;
   --r-slot-empty-border: rgba(32, 75, 34, 0.28);
@@ -92,6 +104,79 @@
 
 .roster-page {
   padding-bottom: 120px;
+}
+
+/* ==========================================================================
+   Sobrescritura de HUD para Alto Contraste en Modo Oscuro
+   ========================================================================== */
+.hud {
+  margin: 28px 0 20px 0;
+}
+
+.title,
+.brand-text .title {
+  color: var(--r-text-title) !important;
+}
+
+.club,
+.brand-text .club {
+  color: var(--r-text-muted) !important;
+}
+
+.btn-outline {
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 10px;
+  background-color: var(--r-btn-outline-bg);
+  border: 1px solid var(--r-btn-outline-border);
+  color: var(--r-btn-outline-fg);
+  font-family: var(--font-head, sans-serif);
+  font-weight: 700;
+  font-size: 13.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-outline:hover {
+  background-color: var(--r-pool-item-hover-bg);
+  border-color: var(--r-accent);
+  color: var(--r-accent);
+  transform: translateY(-1px);
+}
+
+.btn-invite {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 10px;
+  background-color: var(--r-accent);
+  border: 1px solid var(--r-accent);
+  color: var(--r-accent-fg);
+  font-family: var(--font-head, sans-serif);
+  font-weight: 700;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.btn-invite:hover:not(:disabled) {
+  background-color: var(--r-accent-hover);
+  border-color: var(--r-accent-hover);
+  color: var(--r-accent-fg);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.btn-invite:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ==========================================================================
@@ -307,6 +392,16 @@
   background: var(--r-surface);
   box-shadow: var(--r-slot-active-glow);
   transform: translateY(-2px);
+  animation: slot-pulse 2s infinite ease-in-out;
+}
+
+@keyframes slot-pulse {
+  0%, 100% {
+    box-shadow: var(--r-slot-active-glow);
+  }
+  50% {
+    box-shadow: 0 0 22px var(--r-accent-border);
+  }
 }
 
 .slot-card.filled {

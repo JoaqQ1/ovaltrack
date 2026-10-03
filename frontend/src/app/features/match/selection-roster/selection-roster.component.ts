@@ -103,6 +103,9 @@ export class SelectionRosterComponent implements OnInit {
 
         if (savedRoster) {
           this.applySavedRoster(savedRoster, players || []);
+        } else {
+          // Pre-seleccionar primera casilla titular
+          this.autoSelectFirstEmptySlot('titulares', this.startingSlots());
         }
 
         this.isLoading.set(false);
@@ -139,11 +142,30 @@ export class SelectionRosterComponent implements OnInit {
 
     this.startingSlots.set(starting);
     this.substituteSlots.set(subs);
+
+    // Auto-seleccionar primer puesto libre
+    const firstEmptyStarting = starting.findIndex(s => s.player === null);
+    if (firstEmptyStarting !== -1) {
+      this.currentStep.set('titulares');
+      this.activeSlotIndex.set(firstEmptyStarting);
+    } else {
+      const firstEmptySub = subs.findIndex(s => s.player === null);
+      if (firstEmptySub !== -1) {
+        this.currentStep.set('suplentes');
+        this.activeSlotIndex.set(firstEmptySub);
+      }
+    }
   }
 
   setStep(step: RosterStep): void {
     this.currentStep.set(step);
-    this.activeSlotIndex.set(null);
+    const slots = step === 'titulares' ? this.startingSlots() : this.substituteSlots();
+    this.autoSelectFirstEmptySlot(step, slots);
+  }
+
+  private autoSelectFirstEmptySlot(step: RosterStep, slots: RosterSlot[]): void {
+    const firstEmpty = slots.findIndex(s => s.player === null);
+    this.activeSlotIndex.set(firstEmpty !== -1 ? firstEmpty : null);
   }
 
   selectSlot(index: number): void {
@@ -162,30 +184,71 @@ export class SelectionRosterComponent implements OnInit {
     }
 
     const currentStep = this.currentStep();
-    const activeIndex = this.activeSlotIndex();
+    let targetIndex = this.activeSlotIndex();
     const slots = currentStep === 'titulares' ? [...this.startingSlots()] : [...this.substituteSlots()];
 
-    if (activeIndex !== null && slots[activeIndex]) {
-      // Asignar al slot explícitamente seleccionado
-      slots[activeIndex] = { ...slots[activeIndex], player };
-      this.updateSlotsArray(currentStep, slots);
-      this.activeSlotIndex.set(null);
-      this.toastService.info(`Asignado #${slots[activeIndex].number} (${slots[activeIndex].positionName}): ${player.fullName}`);
-    } else {
-      // Asignación inteligente: buscar primer slot vacío
-      const firstEmptyIndex = slots.findIndex(s => s.player === null);
-      if (firstEmptyIndex !== -1) {
-        slots[firstEmptyIndex] = { ...slots[firstEmptyIndex], player };
-        this.updateSlotsArray(currentStep, slots);
-        this.toastService.info(`Asignado #${slots[firstEmptyIndex].number} (${slots[firstEmptyIndex].positionName}): ${player.fullName}`);
-      } else {
-        this.toastService.warning(
-          currentStep === 'titulares'
-            ? 'Todos los puestos titulares están ocupados. Toca una casilla específica para reemplazar.'
-            : 'Todos los puestos suplentes están ocupados.'
+    if (targetIndex === null || !slots[targetIndex]) {
+      targetIndex = slots.findIndex(s => s.player === null);
+    }
+
+    if (targetIndex === -1 || !slots[targetIndex]) {
+      this.toastService.warning(
+        currentStep === 'titulares'
+          ? 'Todos los puestos titulares están ocupados. Toca una casilla específica para reemplazar.'
+          : 'Todos los puestos suplentes están ocupados.'
+      );
+      return;
+    }
+
+    // 1. Asignar jugador a la casilla seleccionada
+    const assignedNumber = slots[targetIndex].number;
+    const assignedPosition = slots[targetIndex].positionName;
+    slots[targetIndex] = { ...slots[targetIndex], player };
+    this.updateSlotsArray(currentStep, slots);
+
+    // 2. Comprobar si se completaron los 15 titulares para auto-transición
+    if (currentStep === 'titulares') {
+      const filledStarters = slots.filter(s => s.player !== null).length;
+      if (filledStarters === 15) {
+        this.toastService.success(
+          `Asignado #${assignedNumber} (${assignedPosition}): ${player.fullName}. ¡15 Titulares completos! Pasando a suplentes...`,
+          'Formación Titular'
         );
+        this.setStep('suplentes');
+        return;
       }
     }
+
+    // 3. Auto-avanzar al siguiente puesto vacío (Opción A)
+    const nextEmptyIndex = this.findNextEmptySlotIndex(slots, targetIndex);
+    this.activeSlotIndex.set(nextEmptyIndex);
+
+    if (currentStep === 'suplentes' && nextEmptyIndex === null) {
+      this.toastService.success(
+        `Asignado #${assignedNumber} (${assignedPosition}): ${player.fullName}. ¡Plantel completo!`,
+        'Alineación Completa'
+      );
+    } else {
+      this.toastService.info(
+        `Asignado #${assignedNumber} (${assignedPosition}): ${player.fullName}`
+      );
+    }
+  }
+
+  private findNextEmptySlotIndex(slots: RosterSlot[], fromIndex: number): number | null {
+    // Buscar hacia adelante desde fromIndex + 1
+    for (let i = fromIndex + 1; i < slots.length; i++) {
+      if (slots[i].player === null) {
+        return i;
+      }
+    }
+    // Si no se encuentra hacia adelante, buscar desde el principio (ciclo)
+    for (let i = 0; i < fromIndex; i++) {
+      if (slots[i].player === null) {
+        return i;
+      }
+    }
+    return null;
   }
 
   clearSlot(index: number, event?: Event): void {
@@ -198,12 +261,17 @@ export class SelectionRosterComponent implements OnInit {
 
     if (slots[index]) {
       const removedPlayerName = slots[index].player?.fullName;
+      const slotNumber = slots[index].number;
+      const slotPosition = slots[index].positionName;
+
       slots[index] = { ...slots[index], player: null };
       this.updateSlotsArray(currentStep, slots);
-      this.activeSlotIndex.set(null);
+
+      // Opción A: dejar la casilla recién vaciada inmediatamente en foco para sustituir
+      this.activeSlotIndex.set(index);
 
       if (removedPlayerName) {
-        this.toastService.info(`Se quitó a ${removedPlayerName} de la formación.`);
+        this.toastService.info(`Se quitó a ${removedPlayerName}. Puesto #${slotNumber} (${slotPosition}) listo para asignar.`);
       }
     }
   }
