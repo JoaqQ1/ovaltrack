@@ -16,6 +16,7 @@ export interface BackendEventResponse {
   attributes: Record<string, unknown> | null;
   createdAt: string;
   synchronizedAt: string | null;
+  active: boolean;
 }
 
 export interface BackendEventCreationRequest {
