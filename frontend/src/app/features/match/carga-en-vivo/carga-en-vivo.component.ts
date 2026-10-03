@@ -214,6 +214,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   }
 
   get periodLabelAction(): string {
+    if (!this.isStarted) {
+      return 'Empezar partido.';
+    }
     return this.period === 1 ? 'Cerrar primer tiempo' : 'Finalizar partido';
   }
 
