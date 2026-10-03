@@ -93,7 +93,7 @@ export class LiveCaptureCacheService {
       : liveCaptureDatabase.events.toCollection();
 
     return eventsQuery.toArray().then(events => events
-      .filter(event => event.synchronizedAt === null)
+      .filter(event => event.synchronizedAt === null && (event.active || event.backendEventId !== null))
       .sort((first, second) => first.localSequence - second.localSequence));
   }
 
