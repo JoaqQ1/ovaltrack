@@ -168,7 +168,6 @@ export class LiveCaptureService {
       groupName: eventType.groupName ?? 'General',
       category: eventType.category ?? 'NEUTRAL',
       points: eventType.points ?? 0,
-      active: true,
       createdAt: new Date().toISOString(),
     }));
     const isHalftime = match.status === 'halftime';
