@@ -14,4 +14,5 @@ export const LIVE_CAPTURE_EVENT_TYPES: LiveCaptureEventType[] = [
     { id: '550e8400-e29b-41d4-a716-446655440110', name: 'Amonestación', groupName: 'Neutro', category: 'NEUTRAL', affectsPossession: false, isScoring: false, points: 0, requiresPlayer: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
     { id: '550e8400-e29b-41d4-a716-446655440111', name: 'Expulsión', groupName: 'Neutro', category: 'NEUTRAL', affectsPossession: false, isScoring: false, points: 0, requiresPlayer: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
     { id: '550e8400-e29b-41d4-a716-446655440112', name: 'Lesión', groupName: 'Neutro', category: 'NEUTRAL', affectsPossession: false, isScoring: false, points: 0, requiresPlayer: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
+    { id: '550e8400-e29b-41d4-a716-446655440113', name: 'Conversion', groupName: 'Ataque', category: 'ATTACK', affectsPossession: true, isScoring: true, points: 2, requiresPlayer: true, templateEventFields: null, createdAt: '2026-09-07T12:00:00' },
 ];
