@@ -60,6 +60,7 @@ describe('CargaEnVivoComponent', () => {
               },
               recentEvents: [],
               eventTypes: [],
+              rosterPlayers: [],
             }),
             saveLiveCaptureState: () => of(undefined),
             saveEvent: () => of(undefined),

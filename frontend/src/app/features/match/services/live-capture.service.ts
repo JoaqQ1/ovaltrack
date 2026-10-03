@@ -74,9 +74,10 @@ export class LiveCaptureService {
   }
 
   private async readBootstrap(query: LiveCaptureQuery): Promise<LiveCaptureBootstrap> {
-    const { bootstrap, players } = await firstValueFrom(forkJoin({
+    const { bootstrap, players, savedRoster } = await firstValueFrom(forkJoin({
       bootstrap: this.matchService.getLiveMatchBootstrap(query.matchId),
       players: this.rosterService.getAvailablePlayers(query.matchId),
+      savedRoster: this.rosterService.getSavedRoster(query.matchId),
     }));
     const match = bootstrap.match;
     if (match.status === 'cancelled') {
@@ -87,6 +88,11 @@ export class LiveCaptureService {
       divisionId: match.divisionId,
     };
     this.playersByMatch.set(query.matchId, players);
+    const rosterIds = new Set([
+      ...(savedRoster?.startingPlayers ?? []),
+      ...(savedRoster?.substitutePlayers ?? []),
+    ]);
+    const rosterPlayers = players.filter(player => rosterIds.has(player.id));
     const events = bootstrap.events.map((event, index) => ({
       ...event,
       localSequence: index + 1,
@@ -125,6 +131,7 @@ export class LiveCaptureService {
       },
       recentEvents: events,
       eventTypes,
+      rosterPlayers,
     };
   }
 

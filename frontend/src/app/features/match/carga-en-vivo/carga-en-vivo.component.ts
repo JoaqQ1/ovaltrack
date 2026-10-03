@@ -11,6 +11,7 @@ import {
 } from '../types/live-capture.types';
 import { LiveCaptureEventType } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
+import { AvailablePlayer } from '../types/roster.types';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../services/statistic-calculation.service';
@@ -82,8 +83,12 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   /** Estados de posesión, en el orden en que se renderizan en la barra de posesión. */
   readonly possessions = POSSESSIONS;
 
-  /** Números de camiseta del 1 al 15, renderizados en ambas columnas de jugadores. */
-  readonly numeracionColumna = Array.from({ length: 15 }, (_, index) => index + 1);
+  /** Jugadores del roster indexados por el número de camiseta asignado. */
+  private readonly playersByJerseyNumber = new Map<number, AvailablePlayer>();
+
+  get numeracionColumna(): number[] {
+    return [...this.playersByJerseyNumber.keys()].sort((first, second) => first - second);
+  }
 
   readonly periods = ['inicio', '1er tiempo', '2do tiempo'];
 
@@ -180,6 +185,12 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         }
         this.currentPossession = state.currentPossession;
         this.categories = this.groupEventTypes(response.eventTypes);
+        this.playersByJerseyNumber.clear();
+        for (const player of response.rosterPlayers) {
+          if (player.jerseyNumber !== null) {
+            this.playersByJerseyNumber.set(player.jerseyNumber, player);
+          }
+        }
         this.events = response.recentEvents;
         this.rebuildStateFromEvents();
 
@@ -291,7 +302,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.commitEvent(event, this.createHistoryId(), null);
   }
 
-  onPlayerNumberTap(playerNumber: number, team: 'OWN' | 'OPPONENT'): void {
+  onPlayerNumberTap(jerseyNumber: number, team: 'OWN' | 'OPPONENT'): void {
     if (!this.isStarted || !this.pendingSelection) {
       return;
     }
@@ -305,17 +316,32 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     const pendingEvent = this.pendingSelection;
     this.pendingSelection = null;
-    this.commitEvent(pendingEvent.event, pendingEvent.eventId, playerNumber);
+    const player = this.playersByJerseyNumber.get(jerseyNumber);
+    if (!player) {
+      this.errorMessage = 'El jugador seleccionado no pertenece al roster del partido.';
+      return;
+    }
+    this.commitEvent(
+      pendingEvent.event,
+      pendingEvent.eventId,
+      team === 'OWN' ? player : null,
+      player.jerseyNumber,
+    );
   }
 
   /** Crea y persiste un evento asociado al partido actual. */
-  private commitEvent(event: LiveCaptureEventType, eventId: string, player: number | null): void {
+  private commitEvent(
+    event: LiveCaptureEventType,
+    eventId: string,
+    player: AvailablePlayer | null,
+    jerseyNumber: number | null = player?.jerseyNumber ?? null,
+  ): void {
     const timestamp = new Date().toISOString();
     const localEvent: LocalMatchEvent = {
       id: eventId,
       eventTypeId: event.id,
       matchId: this.matchId,
-      playerId: null,
+      playerId: player?.id ?? null,
       teamPossession: this.currentPossession,
       matchTime: this.parseClock(this.gameClock),
       absoluteMatchTime: this.matchStartedAt === null
@@ -324,7 +350,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       realTime: timestamp,
       period: this.period,
       origin: 'live-capture',
-      attributes: player == null ? null : { playerNumber: player },
+      attributes: jerseyNumber === null
+        ? null
+        : { playerNumber: jerseyNumber },
       createdAt: timestamp,
       synchronizedAt: null,
       localSequence: this.nextEventSequence(),
