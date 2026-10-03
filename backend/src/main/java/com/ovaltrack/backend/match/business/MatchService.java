@@ -205,6 +205,10 @@ public class MatchService {
             }
         }
 
+        if (match.getStatus() == MatchStatus.FINISHED && matchStatus == MatchStatus.CANCELLED) {
+            throw new BusinessException("No se puede cancelar un partido que ya termino");
+        }
+
 
         match.setStatus(matchStatus);
         if (matchStatus == MatchStatus.IN_PROGRESS && match.getStartedAt() == null) {
