@@ -378,10 +378,11 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.synchronized = savedEvent.synchronizedAt !== null;
         this.persistState();
 
-        if (onSuccess) {
-          onSuccess();
-        }
-        this.liveCaptureService.syncPendingEvents(this.matchId).subscribe();
+      this.liveCaptureService
+        .syncPendingEvents(this.matchId)
+        .subscribe({
+          next: () => onSuccess?.(),
+        });
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
