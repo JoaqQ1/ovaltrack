@@ -16,11 +16,13 @@ import { ThemeService } from 'src/app/core/services/theme.service';
         <div class="container d-flex justify-content-between align-items-center">
           <!-- Brand Link al Home -->
           <a routerLink="/home" class="brand-link">
-            <div class="brand-icon">
+            <!-- <div class="club-icon">
               {{ userContextService.currentClub()?.name ? userContextService.currentClub()!.name.charAt(0).toUpperCase() : 'O' }}
-            </div>
+            </div> -->
             <div class="brand-info">
-              <span class="brand-title">OvalTrack</span>
+              <img class="brand-icon"
+                [src]="themeService.theme() ===  'light' ? 'assets/brand/OvalTrack-fondo-claro.png' : 'assets/brand/OvalTrack-fondo-oscuro.png'"
+                alt="OvalTrack">
               @if (userContextService.currentClub()?.name) {
                 <small class="brand-subtitle">{{ userContextService.currentClub()!.name }}</small>
               }
@@ -140,7 +142,7 @@ import { ThemeService } from 'src/app/core/services/theme.service';
       color: inherit;
     }
 
-    .brand-icon {
+    .club-icon {
       width: 36px;
       height: 36px;
       background-color: #162238;
@@ -161,6 +163,14 @@ import { ThemeService } from 'src/app/core/services/theme.service';
       flex-direction: column;
     }
 
+    .brand-icon {
+      display: block;
+      width: 144px;
+      height: 35px;
+      flex: 0 0 auto;
+      object-fit: contain;
+    }
+
     .brand-title {
       font-weight: 700;
       font-size: 1.25rem;
@@ -175,7 +185,7 @@ import { ThemeService } from 'src/app/core/services/theme.service';
       font-weight: 500;
       color: #94a3b8;
       line-height: 1;
-      margin-top: 3px;
+      // margin-top: 3px;
       transition: color 0.2s ease;
     }
 
@@ -319,8 +329,8 @@ import { ThemeService } from 'src/app/core/services/theme.service';
       color: #4a6042;
     }
 
-    :host-context([data-theme="light"]) .brand-icon,
-    :host-context(.light-theme) .brand-icon {
+    :host-context([data-theme="light"]) .club-icon,
+    :host-context(.light-theme) .club-icon {
       background-color: #204b22;
       border: 1px solid #2a5f2e;
       color: #d6f2c4;
