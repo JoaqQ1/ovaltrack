@@ -34,5 +34,6 @@ export interface BackendEventCreationRequest {
 }
 
 export interface LocalMatchEvent extends BackendEventResponse {
+  backendEventId?: UUID | null;
   localSequence: number;
 }
