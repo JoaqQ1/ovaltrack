@@ -72,7 +72,7 @@ export class LiveCaptureService {
     return from(this.cache.getPendingEvents(matchId)).pipe(
       switchMap(events => from(events)),
       concatMap(event => {
-        if (!event.active && event.backendEventId) {
+        if (!event.active && event.backendEventId != null) {
           return this.eventService.delete(event.backendEventId).pipe(
             switchMap(response => from(this.cache.saveEvent({
               ...event,
