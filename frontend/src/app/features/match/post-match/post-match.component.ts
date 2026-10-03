@@ -1,10 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { MatchService } from '../services/match.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
 import { PersonService } from 'src/app/services/person.service';
+import { LiveCaptureCacheService } from '../services/live-capture-cache.service';
+import { LiveCaptureService } from '../services/live-capture.service';
+import { LocalMatchEvent } from '../types/event.types';
 
 @Component({
   selector: 'app-post-match',
@@ -21,9 +25,11 @@ export class PostMatchComponent implements OnInit{
   private eventTypeService = inject(EventTypeService);
   private personService = inject(PersonService);
   private readonly router = inject(Router);
+  private readonly cacheService = inject(LiveCaptureCacheService);
+  private readonly liveCaptureService = inject(LiveCaptureService);
 
   matchId = '';
-  events: any[] = [];
+  events: LocalMatchEvent[] = [];
   
   opponent = 'Cargando...';
   timelineTracks: { eventTypeId: string, eventName: string, occurrences: { time: number, player: string }[], color: string }[] = [];
@@ -58,18 +64,34 @@ export class PostMatchComponent implements OnInit{
         
         this.loadEvents();
       },
-      error: (err) => console.error('Error al cargar tipos de evento:', err)
+      error: () => {
+        this.cacheService.getEventTypes().then(types => {
+          types.forEach(type => {
+            this.eventTypesDiccionario[type.id] = type.name;
+          });
+          this.loadEvents();
+        });
+      }
     });
   }
 
-  loadEvents(): void {
-    this.eventService.getByMatch(this.matchId).subscribe({
-      next: (data) => {
-        this.events = data;
+  async loadEvents(): Promise<void> {
+    try {
+      await firstValueFrom(this.liveCaptureService.syncPendingEvents(this.matchId));
+      const remoteEvents = await firstValueFrom(this.eventService.getByMatch(this.matchId));
+      this.events = remoteEvents.map((event, index) => ({
+        ...event,
+        localSequence: index + 1,
+      }));
+      this.buildTimeline();
+    } catch (error) {
+      try {
+        this.events = await this.cacheService.getEventsByMatch(this.matchId);
         this.buildTimeline();
-      },
-      error: (err) => console.error('Error al traer eventos:', err)
-    });
+      } catch (localError) {
+        console.error('Error al traer eventos del partido:', localError);
+      }
+    }
   }
 
   getEventColor(eventName: string): string {
@@ -89,22 +111,23 @@ export class PostMatchComponent implements OnInit{
     const uniquePlayerIds = new Set<string>();
     
     this.events.forEach(event => {
-      if (event.matchTime > this.maxMatchDuration) {
-        this.maxMatchDuration = event.matchTime;
+      const eventTime = event.matchTime ?? 0;
+      if (eventTime > this.maxMatchDuration) {
+        this.maxMatchDuration = eventTime;
       }
       
       if (!trackMap.has(event.eventTypeId)) {
         trackMap.set(event.eventTypeId, []);
       }
       
-      if (event.playerId) {
+      if (event.playerId !== null) {
         uniquePlayerIds.add(event.playerId); 
       }
       
       trackMap.get(event.eventTypeId)?.push({
-        time: event.matchTime, 
+        time: eventTime, 
         player: 'Cargando...',
-        playerId: event.playerId
+        playerId: event.playerId ?? ''
       });
     });
 
