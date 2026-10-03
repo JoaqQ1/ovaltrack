@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, defer, firstValueFrom, forkJoin, from, map, switchMap } from 'rxjs';
+import { Observable, concatMap, defer, firstValueFrom, forkJoin, from, map, switchMap, toArray, catchError, EMPTY } from 'rxjs';
 import {
   LiveCaptureBootstrap,
   LiveCapturePersistedState,
@@ -50,6 +50,60 @@ export class LiveCaptureService {
   }
 
   saveEvent(event: LocalMatchEvent): Observable<LocalMatchEvent> {
+    const localEvent = this.resolvePlayer(event);
+
+    return from(this.cache.saveEvent(localEvent)).pipe(
+      map(savedEvent => ({
+        ...savedEvent,
+        localSequence: event.localSequence,
+      }))
+    );
+  }
+
+  syncPendingEvents(events: LocalMatchEvent[]): Observable<LocalMatchEvent[]> {
+    const pendingEvents = events.filter(
+      event => event.synchronizedAt === null,
+    );
+
+    return from(pendingEvents).pipe(
+      concatMap(event =>
+        this.eventService.createFromLocal(event).pipe(
+          switchMap(response => {
+            const synchronizedEvent: LocalMatchEvent = {
+              ...event,
+              synchronizedAt:
+                response.synchronizedAt ?? new Date().toISOString(),
+            };
+
+            return from(this.cache.saveEvent(synchronizedEvent));
+          }),
+          catchError(() => EMPTY),
+        ),
+      ),
+      toArray(),
+    );
+  }
+
+/* 
+  saveEvent(event: LocalMatchEvent): Observable<LocalMatchEvent> {
+    const localEvent = this.resolvePlayer(event);
+
+    return from(this.cache.saveEvent(localEvent)).pipe(
+      map(savedEvent => ({
+        ...savedEvent,
+        localSequence: event.localSequence,
+      })),
+      switchMap(savedEvent =>
+        this.eventService.createFromLocal(savedEvent).pipe(
+          map(() => savedEvent),
+        ),
+      ),
+    );
+  }
+   */
+
+/*   
+  saveEvent(event: LocalMatchEvent): Observable<LocalMatchEvent> {
     return this.eventService.createFromLocal(this.resolvePlayer(event)).pipe(
       map(response => ({ ...response, localSequence: event.localSequence })),
       // La caché se actualiza después de una respuesta exitosa del backend.
@@ -57,7 +111,8 @@ export class LiveCaptureService {
         map(() => savedEvent)
       ))
     );
-  }
+  } 
+ */
 
   deleteEvent(eventId: string): Observable<void> {
     return this.eventService.delete(eventId).pipe(
