@@ -71,8 +71,18 @@ export class LiveCaptureService {
   syncPendingEvents(matchId?: string): Observable<LocalMatchEvent[]> {
     return from(this.cache.getPendingEvents(matchId)).pipe(
       switchMap(events => from(events)),
-      concatMap(event =>
-        this.eventService.createFromLocal(event).pipe(
+      concatMap(event => {
+        if (!event.active && event.backendEventId) {
+          return this.eventService.delete(event.backendEventId).pipe(
+            switchMap(response => from(this.cache.saveEvent({
+              ...event,
+              synchronizedAt: response.synchronizedAt,
+            }))),
+            catchError(() => EMPTY),
+          );
+        }
+ 
+        return this.eventService.createFromLocal(event).pipe(
           switchMap(response => {
             const synchronizedEvent: LocalMatchEvent = {
               ...event,
@@ -83,8 +93,8 @@ export class LiveCaptureService {
             return from(this.cache.saveEvent(synchronizedEvent));
           }),
           catchError(() => EMPTY),
-        ),
-      ),
+        );
+      }),
       toArray(),
     );
   }
@@ -94,12 +104,9 @@ export class LiveCaptureService {
   }
 
   deleteEvent(event: LocalMatchEvent): Observable<void> {
-    if (!event.backendEventId) {
-      return from(this.cache.deleteEvent(event.id));
-    }
-
-    return this.eventService.delete(event.backendEventId ?? event.id).pipe(
-      switchMap(() => from(this.cache.deleteEvent(event.id)))
+    return from(this.cache.deleteEvent(event)).pipe(
+      switchMap(() => this.syncPendingEvents(event.matchId)),
+      map(() => undefined),
     );
   }
 
