@@ -330,6 +330,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       origin: 'live-capture',
       attributes: player == null ? null : { playerNumber: player },
       createdAt: timestamp,
+      backendEventId: null,
       synchronizedAt: null,
       localSequence: this.nextEventSequence(),
     };
@@ -693,7 +694,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   /** Elimina un evento y vuelve a calcular el estado derivado del partido. */
   private deleteEventAndRebuild(event: LocalMatchEvent): void {
     const deletingLatestEvent = this.latestEvent()?.id === event.id;
-    this.liveCaptureService.deleteEvent(event.id).subscribe({
+    this.liveCaptureService.deleteEvent(event).subscribe({
       next: () => {
         this.events = this.events.filter(currentEvent => currentEvent.id !== event.id);
         this.rebuildStateFromEvents(!deletingLatestEvent);
