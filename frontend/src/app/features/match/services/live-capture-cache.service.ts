@@ -35,7 +35,7 @@ export class LiveCaptureCacheService {
     return Promise.all([
       liveCaptureDatabase.states.get(query.matchId),
       this.getEventTypes(),
-      liveCaptureDatabase.events.where('matchId').equals(query.matchId).sortBy('localSequence'),
+      liveCaptureDatabase.events.where('matchId').equals(query.matchId).filter(event => event.active).sortBy('localSequence'),
     ]).then(([persistedState, eventTypes, events]) => ({ persistedState, eventTypes, events }));
   }
 
@@ -56,8 +56,17 @@ export class LiveCaptureCacheService {
     });
   }
 
-  deleteEvent(eventId: string): Promise<void> {
-    return liveCaptureDatabase.events.delete(eventId);
+  async deleteEvent(event: LocalMatchEvent): Promise<void> {
+    const backendEventId = event.backendEventId
+      ?? (event.synchronizedAt ? event.id : null);
+    const updated = await liveCaptureDatabase.events.update(event.id, {
+      active: false,
+      synchronizedAt: null,
+    });
+
+    if (updated === 0) {
+      throw new Error(`Event ${event.id} was not found`);
+    }
   }
 
   getStatusData(matchId: string): Promise<{
@@ -74,6 +83,7 @@ export class LiveCaptureCacheService {
     return liveCaptureDatabase.events
       .where('matchId')
       .equals(matchId)
+      .filter(event => event.active === true)
       .sortBy('localSequence');
   }
 
