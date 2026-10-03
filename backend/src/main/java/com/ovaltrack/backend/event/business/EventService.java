@@ -151,9 +151,13 @@ public class EventService {
 
 	@Transactional
 	public EventResponseDTO deleteEvent(UUID eventId) {
-		Event result = findEventEntityById(eventId);
+		Event result = eventRepository.findById(eventId).orElse(null);
 		if (result == null) {
 			throw new BusinessException("No se puede eliminar un evento que no existe");
+		}
+
+		if (!Boolean.TRUE.equals(result.getActive())) {
+			return EventDTOMapper.toResponseDTO(result);
 		}
 
 		result.setActive(false);
