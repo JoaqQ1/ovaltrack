@@ -5,6 +5,39 @@ export interface AvailablePlayer {
   position: string | null;
 }
 
+export type RosterStep = 'titulares' | 'suplentes';
+
+export type RugbyPositionCategory =
+  | 'primera_linea'
+  | 'segunda_linea'
+  | 'tercera_linea'
+  | 'medios'
+  | 'backs'
+  | 'suplente';
+
+export interface RugbySlotDefinition {
+  readonly number: number;
+  readonly positionName: string;
+  readonly positionCategory: RugbyPositionCategory;
+  readonly isStarter: boolean;
+}
+
+export interface RosterSlot {
+  readonly number: number;
+  readonly positionName: string;
+  readonly positionCategory: RugbyPositionCategory;
+  readonly isStarter: boolean;
+  player: AvailablePlayer | null;
+}
+
+export interface RosterValidationResult {
+  readonly isValid: boolean;
+  readonly startingCount: number;
+  readonly substituteCount: number;
+  readonly missingStartingCount: number;
+  readonly message?: string;
+}
+
 export interface RosterPayload {
   matchId: string;
   startingPlayers: string[];
