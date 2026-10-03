@@ -121,20 +121,21 @@ body {
 [data-theme="dark"] body {
   background-color: #0b111e;
   background-image: 
-    /* Capa 1: Degradé radial que desvanece suavemente las líneas hacia el centro */
+    /* Capa 1: Degradé radial que desvanece suavemente las líneas hacia el centro (difuminado como en modo claro) */
     radial-gradient(
       ellipse at 50% 30%,
-      rgba(11, 17, 30, 0.90) 0%,
-      rgba(11, 17, 30, 0.60) 35%,
-      rgba(11, 17, 30, 0.15) 65%,
-      transparent 80%
+      rgba(11, 17, 30, 1) 0%,
+      rgba(11, 17, 30, 0.95) 25%,
+      rgba(11, 17, 30, 0.60) 50%,
+      rgba(11, 17, 30, 0.15) 72%,
+      transparent 85%
     ),
-    /* Capa 2: Líneas diagonales a 135deg con separación (54px) y contraste táctico calibrado */
+    /* Capa 2: Líneas diagonales a 135deg con separación (54px), grosor 1.5px y borde suave difuminado */
     repeating-linear-gradient(
       135deg,
-      rgba(42, 60, 90, 0.22) 0px,
-      rgba(42, 60, 90, 0.22) 1.5px,
-      transparent 1.5px,
+      rgba(148, 163, 184, 0.12) 0px,
+      rgba(148, 163, 184, 0.12) 1.5px,
+      transparent 2px,
       transparent 54px
     );
   background-attachment: fixed;
