@@ -184,7 +184,7 @@ public class MatchService {
             throw new BusinessException("No se puede asignar el mismo estado al partido");
         }
 
-        if (match.getStatus() == MatchStatus.NOT_STARTED) {
+        if (match.getStatus() == MatchStatus.NOT_STARTED && matchStatus == MatchStatus.IN_PROGRESS) {
             /*
              * boolean hasTitular = match.getRoster().stream()
              * .anyMatch(player -> player.getRole() == MatchPlayerRole.TITULAR);
