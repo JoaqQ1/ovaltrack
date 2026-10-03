@@ -35,7 +35,7 @@ export class LiveCaptureCacheService {
     return Promise.all([
       liveCaptureDatabase.states.get(query.matchId),
       this.getEventTypes(),
-      liveCaptureDatabase.events.where('matchId').equals(query.matchId).sortBy('localSequence'),
+      liveCaptureDatabase.events.where('matchId').equals(query.matchId).filter(event => event.active).sortBy('localSequence'),
     ]).then(([persistedState, eventTypes, events]) => ({ persistedState, eventTypes, events }));
   }
 
@@ -56,8 +56,11 @@ export class LiveCaptureCacheService {
     });
   }
 
-  deleteEvent(eventId: string): Promise<void> {
-    return liveCaptureDatabase.events.delete(eventId);
+  async deleteEvent(event: LocalMatchEvent): Promise<void> {
+    await liveCaptureDatabase.events.update(event.id, {
+      active: false,
+      synchronizedAt: null,
+    });
   }
 
   getStatusData(matchId: string): Promise<{
@@ -68,6 +71,24 @@ export class LiveCaptureCacheService {
       liveCaptureDatabase.states.get(matchId),
       liveCaptureDatabase.events.where('matchId').equals(matchId).toArray(),
     ]).then(([state, events]) => ({ state, events }));
+  }
+
+  getEventsByMatch(matchId: string): Promise<LocalMatchEvent[]> {
+    return liveCaptureDatabase.events
+      .where('matchId')
+      .equals(matchId)
+      .filter(event => event.active === true)
+      .sortBy('localSequence');
+  }
+
+  getPendingEvents(matchId?: string): Promise<LocalMatchEvent[]> {
+    const eventsQuery = matchId
+      ? liveCaptureDatabase.events.where('matchId').equals(matchId)
+      : liveCaptureDatabase.events.toCollection();
+
+    return eventsQuery.toArray().then(events => events
+      .filter(event => event.synchronizedAt === null && (event.active || event.backendEventId != null))
+      .sort((first, second) => first.localSequence - second.localSequence));
   }
 
   deleteMatchData(matchId: string): Promise<void> {

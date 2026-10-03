@@ -123,9 +123,8 @@ public class EventController {
         @ApiResponse(responseCode = "409", description = "The event cannot be deleted because of a business or data-integrity conflict.")
     })
     @DeleteMapping("/{eventId}")
-    public ResponseEntity<Object> deleteEvent(@PathVariable UUID eventId) {
-        eventService.deleteEvent(eventId);
-        return ResponseEntity.ok("Evento eliminado correctamente");
+    public ResponseEntity<EventResponseDTO> deleteEvent(@PathVariable UUID eventId) {
+        return ResponseEntity.ok(eventService.deleteEvent(eventId));
     }
 
     @Operation(

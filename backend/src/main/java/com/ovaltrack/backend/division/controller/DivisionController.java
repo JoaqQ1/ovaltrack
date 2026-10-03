@@ -20,9 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.ovaltrack.backend.division.business.DivisionPlayerService;
-import com.ovaltrack.backend.division.business.DivisionSecurityValidator;
 import com.ovaltrack.backend.division.business.DivisionService;
-import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionUpdateDTO;

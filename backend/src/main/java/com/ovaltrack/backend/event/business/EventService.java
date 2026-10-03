@@ -1,5 +1,6 @@
 package com.ovaltrack.backend.event.business;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -108,7 +109,7 @@ public class EventService {
 		result.setPeriod(eventRequest.period());
 		result.setOrigin(eventRequest.origin());
 		result.setAttributes(eventRequest.attributes());
-		result.setSynchronizedAt(eventRequest.synchronizedAt());
+		result.setSynchronizedAt(LocalDateTime.now());
 		result.setActive(true);
 
 		Event savedEvent = eventRepository.save(result);
@@ -150,12 +151,17 @@ public class EventService {
 
 	@Transactional
 	public EventResponseDTO deleteEvent(UUID eventId) {
-		Event result = findEventEntityById(eventId);
+		Event result = eventRepository.findById(eventId).orElse(null);
 		if (result == null) {
 			throw new BusinessException("No se puede eliminar un evento que no existe");
 		}
 
+		if (!Boolean.TRUE.equals(result.getActive())) {
+			return EventDTOMapper.toResponseDTO(result);
+		}
+
 		result.setActive(false);
+		result.setSynchronizedAt(LocalDateTime.now());
 		Event savedEvent = eventRepository.save(result);
 		recalculateMatchScore(result.getMatch());
 		return EventDTOMapper.toResponseDTO(savedEvent);
