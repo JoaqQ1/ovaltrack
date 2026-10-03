@@ -1,21 +1,27 @@
 :host {
   display: flow-root;
   min-height: calc(100vh - 64px);
-  background-color: #0b111e;
+  background-color: transparent;
+  background-image: none;
   color: #e2e8f0;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 /* ==========================================================================
-   Modo Oscuro (Original Predeterminado)
+   Modo Oscuro (Predeterminado / Dark Rugby Tech)
    ========================================================================== */
 .home-title {
   color: #ffffff;
-  font-family: inherit;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-weight: 800;
+  font-size: 2.25rem;
+  letter-spacing: -0.01em;
 }
 
 .home-subtitle {
   color: #94a3b8;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 1.05rem;
 }
 
 /* Badges e indicadores */
@@ -33,17 +39,17 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
   font-size: 0.75rem;
   letter-spacing: 0.5px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .badge-role-pill {
-  font-size: 0.72rem;
+  font-size: 11.5px;
   background-color: #162238;
   color: #94a3b8;
   border: 1px solid #1f2e47;
-  padding: 0.2rem 0.6rem;
-  border-radius: 20px;
-  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -61,7 +67,7 @@
 .card-dark {
   background-color: #131c2e;
   border: 1px solid #1f2e47;
-  border-radius: 12px;
+  border-radius: 20px;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
@@ -70,7 +76,7 @@
 }
 
 .card-module-link:hover .card-dark {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   border-color: #3b82f6;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
 }
@@ -80,7 +86,7 @@
   height: 44px;
   background-color: #162238;
   border: 1px solid #2a3c5a;
-  border-radius: 8px;
+  border-radius: 12px;
   color: #60a5fa;
   transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
@@ -92,19 +98,24 @@
 
 .card-module-title {
   color: #ffffff;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-weight: 800;
   font-size: 1.25rem;
   transition: color 0.2s ease;
 }
 
 .card-module-desc {
   color: #94a3b8;
-  font-size: 0.875rem;
-  line-height: 1.4;
+  font-size: 0.925rem;
+  line-height: 1.45;
+  font-weight: 500;
   transition: color 0.2s ease;
 }
 
 .card-module-action {
   color: #a3e635;
+  font-weight: 700;
+  font-size: 0.925rem;
   transition: color 0.2s ease;
 }
 
@@ -123,6 +134,8 @@
 /* Landing Modo Oscuro */
 .landing-title {
   color: #ffffff;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-weight: 800;
 }
 
 .text-accent-highlight {
@@ -131,13 +144,14 @@
 
 .landing-subtitle {
   color: #94a3b8;
+  font-size: 1.15rem;
 }
 
 .btn-landing-cta {
   background-color: #a3e635;
   color: #0b111e;
-  font-weight: 600;
-  border-radius: 8px;
+  font-weight: 800;
+  border-radius: 10px;
   border: none;
   transition: all 0.2s ease;
 }
@@ -148,12 +162,27 @@
   box-shadow: 0 0 16px rgba(163, 230, 53, 0.35);
 }
 
+.btn-landing-secondary {
+  background-color: #162238;
+  border: 1px solid #2a3c5a;
+  color: #cbd5e1;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.btn-landing-secondary:hover {
+  background-color: #1c2b44;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
 .btn-outline-dark-theme {
   background-color: #131c2e;
   border: 1px solid #2a3c5a;
   color: #cbd5e1;
-  font-weight: 500;
-  border-radius: 8px;
+  font-weight: 600;
+  border-radius: 10px;
   transition: all 0.2s ease;
 }
 
@@ -163,8 +192,17 @@
   color: #ffffff;
 }
 
+.card-feature {
+  background-color: #131c2e;
+  border: 1px solid #1f2e47;
+  border-radius: 20px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
 .feature-title {
   color: #ffffff;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-weight: 800;
 }
 
 .feature-desc {
@@ -186,8 +224,14 @@
   color: #facc15;
 }
 
+.warning-card {
+  border-radius: 16px;
+}
+
 .warning-title {
   color: #ffffff;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-weight: 700;
 }
 
 .warning-desc {
@@ -210,33 +254,25 @@
 :host-context([data-theme="light"]) .home-title,
 :host-context(.light-theme) .home-title {
   color: #111d0e;
-  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
-  font-weight: 800;
-  font-size: 2.25rem;
-  letter-spacing: -0.01em;
 }
 
 :host-context([data-theme="light"]) .home-subtitle,
 :host-context(.light-theme) .home-subtitle {
   color: #43523a;
-  font-family: var(--font-body, 'Inter', sans-serif);
-  font-size: 1.05rem;
 }
 
 :host-context([data-theme="light"]) .badge-tech,
 :host-context(.light-theme) .badge-tech {
   background-color: #d6eac0;
   color: #244c09;
-  border: 1px solid rgba(65, 120, 20, 0.35);
-  font-weight: 700;
+  border-color: rgba(65, 120, 20, 0.35);
 }
 
 /* Tarjetas Verdes: Degrade diagonal (arriba izq a abajo der) 135deg y bordes redondeados */
 :host-context([data-theme="light"]) .card-dark,
 :host-context(.light-theme) .card-dark {
   background: linear-gradient(135deg, #daf2c0 0%, #bde68a 100%);
-  border: 1px solid rgba(70, 130, 25, 0.28);
-  border-radius: 20px;
+  border-color: rgba(70, 130, 25, 0.28);
   box-shadow: 0 4px 16px rgba(35, 75, 20, 0.08);
 }
 
@@ -248,15 +284,12 @@
   box-shadow: 0 12px 28px rgba(35, 75, 20, 0.14);
 }
 
-/* Ícono en verde bosque rugby (armónico, cálido y no negro) */
+/* Ícono en verde bosque rugby */
 :host-context([data-theme="light"]) .card-icon-wrapper,
 :host-context(.light-theme) .card-icon-wrapper {
   background-color: #244d18;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 12px;
+  border-color: rgba(255, 255, 255, 0.18);
   color: #ffffff;
-  width: 44px;
-  height: 44px;
 }
 
 :host-context([data-theme="light"]) .card-module-link:hover .card-icon-wrapper,
@@ -271,11 +304,7 @@
 :host-context(.light-theme) .badge-role-pill {
   background-color: #244d18;
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 4px 12px;
-  border-radius: 999px;
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 :host-context([data-theme="light"]) .badge-dot,
@@ -288,24 +317,16 @@
 :host-context([data-theme="light"]) .card-module-title,
 :host-context(.light-theme) .card-module-title {
   color: #142410;
-  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
-  font-weight: 800;
-  font-size: 1.25rem;
 }
 
 :host-context([data-theme="light"]) .card-module-desc,
 :host-context(.light-theme) .card-module-desc {
   color: #3b4e33;
-  font-size: 0.925rem;
-  line-height: 1.45;
-  font-weight: 500;
 }
 
 :host-context([data-theme="light"]) .card-module-action,
 :host-context(.light-theme) .card-module-action {
   color: #244d18;
-  font-weight: 700;
-  font-size: 0.925rem;
 }
 
 :host-context([data-theme="light"]) .card-module-link:hover .card-module-action,
@@ -317,8 +338,6 @@
 :host-context([data-theme="light"]) .landing-title,
 :host-context(.light-theme) .landing-title {
   color: #111d0e;
-  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
-  font-weight: 800;
 }
 
 :host-context([data-theme="light"]) .text-accent-highlight,
@@ -329,15 +348,12 @@
 :host-context([data-theme="light"]) .landing-subtitle,
 :host-context(.light-theme) .landing-subtitle {
   color: #43523a;
-  font-size: 1.15rem;
 }
 
 :host-context([data-theme="light"]) .btn-landing-cta,
 :host-context(.light-theme) .btn-landing-cta {
   background-color: #91da40;
   color: #1d3700;
-  font-weight: 800;
-  border-radius: 10px;
   box-shadow: 0 6px 16px rgba(90, 150, 30, 0.25);
 }
 
@@ -351,10 +367,8 @@
 :host-context([data-theme="light"]) .btn-landing-secondary,
 :host-context(.light-theme) .btn-landing-secondary {
   background-color: #dce7d2;
-  border: 1px solid rgba(65, 120, 20, 0.25);
+  border-color: rgba(65, 120, 20, 0.25);
   color: #1b2116;
-  font-weight: 600;
-  border-radius: 10px;
 }
 
 :host-context([data-theme="light"]) .btn-landing-secondary:hover,
@@ -367,16 +381,13 @@
 :host-context([data-theme="light"]) .card-feature,
 :host-context(.light-theme) .card-feature {
   background: linear-gradient(135deg, #daf2c0 0%, #bde68a 100%);
-  border: 1px solid rgba(70, 130, 25, 0.28);
-  border-radius: 20px;
+  border-color: rgba(70, 130, 25, 0.28);
   box-shadow: 0 4px 16px rgba(35, 75, 20, 0.08);
 }
 
 :host-context([data-theme="light"]) .feature-title,
 :host-context(.light-theme) .feature-title {
   color: #111d0e;
-  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
-  font-weight: 800;
 }
 
 :host-context([data-theme="light"]) .feature-desc,
@@ -387,22 +398,20 @@
 :host-context([data-theme="light"]) .landing-footer,
 :host-context(.light-theme) .landing-footer {
   color: #6a7b63;
-  border-top: 1px solid rgba(27, 33, 22, 0.14);
+  border-top-color: rgba(27, 33, 22, 0.14);
 }
 
 /* Warning en modo claro */
 :host-context([data-theme="light"]) .warning-card,
 :host-context(.light-theme) .warning-card {
   background: #ffffff;
-  border: 1px solid rgba(27, 33, 22, 0.12);
-  border-radius: 16px;
+  border-color: rgba(27, 33, 22, 0.12);
   box-shadow: 0 4px 20px rgba(27, 33, 22, 0.04);
 }
 
 :host-context([data-theme="light"]) .warning-title,
 :host-context(.light-theme) .warning-title {
   color: #111d0e;
-  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
 }
 
 :host-context([data-theme="light"]) .warning-desc,

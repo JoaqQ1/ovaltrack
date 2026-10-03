@@ -16,6 +16,7 @@ import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../services/statistic-calculation.service';
 import { PeriodStatisticDTO } from '../types/statistic.types';
 import { CurrentStatsModalComponent } from './components/current-stats-modal/current-stats-modal.component';
+import { FormsModule } from '@angular/forms';
 
 /**
  * Representa un evento que ya fue tocado pero todavía está esperando a que
@@ -66,7 +67,7 @@ const POSSESSIONS: readonly Possession[] = ['OWN', 'NEUTRAL', 'OPPONENT'] as con
 @Component({
   selector: 'ot-live-capture',
   standalone: true,
-  imports: [CommonModule, CurrentStatsModalComponent],
+  imports: [CommonModule, CurrentStatsModalComponent, FormsModule],
   templateUrl: './carga-en-vivo.component.html',
   styleUrl: './carga-en-vivo.component.css'
 })
@@ -107,6 +108,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   isCalculatingStats = false;
   isOfflineMode = false;
   currentStats: PeriodStatisticDTO | null = null;
+
+  showConversionModal = false;
+  pendingTryData: any = null; 
+  kickerNumber: number | null = null;
 
   private clockElapsedSeconds = 0;
   private clockStartedAt: number | null = null;
@@ -308,19 +313,49 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     }
 
     const pendingEvent = this.pendingSelection;
+    
+    // 👉 INTERCEPCIÓN DEL TRY (Validamos por nombre en vez de ID para evitar fallos)
+    if (pendingEvent.event.name.toLowerCase() === 'try') {
+      this.pendingTryData = {
+        event: pendingEvent.event,
+        eventId: pendingEvent.eventId,
+        playerNumber: playerNumber,
+        team: team
+      };
+      this.pendingSelection = null;
+      this.kickerNumber = playerNumber; // Autocompleta con el jugador que apoyó
+      this.showConversionModal = true;
+      return; // ¡Frenamos la ejecución aquí para que se quede esperando el modal!
+    }
+
+    // Flujo normal para el resto de los eventos
     this.pendingSelection = null;
     this.commitEvent(pendingEvent.event, pendingEvent.eventId, playerNumber);
   }
 
   /** Crea y persiste un evento asociado al partido actual. */
-  private commitEvent(event: LiveCaptureEventType, eventId: string, player: number | null): void {
+  private commitEvent(
+    event: any,
+    eventId: string,
+    player: number | null,
+    customAttributes?: any,
+    onSuccess?: () => void,
+    teamPossessionOverride?: string // 👈 1. NUEVO PARÁMETRO
+  ): void {
     const timestamp = new Date().toISOString();
-    const localEvent: LocalMatchEvent = {
+
+    let finalAttributes: any = customAttributes ? { ...customAttributes } : null;
+    if (player !== null) {
+      finalAttributes = finalAttributes || {};
+      finalAttributes.playerNumber = player;
+    }
+
+    const localEvent: any = {
       id: eventId,
       eventTypeId: event.id,
       matchId: this.matchId,
       playerId: null,
-      teamPossession: this.currentPossession,
+      teamPossession: teamPossessionOverride || this.currentPossession, // 👈 2. USAMOS EL EQUIPO FORZADO SI EXISTE
       matchTime: this.parseClock(this.gameClock),
       absoluteMatchTime: this.matchStartedAt === null
         ? null
@@ -328,7 +363,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       realTime: timestamp,
       period: this.period,
       origin: 'live-capture',
-      attributes: player == null ? null : { playerNumber: player },
+      attributes: finalAttributes,
       createdAt: timestamp,
       synchronizedAt: null,
       active: true,
@@ -342,6 +377,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.rebuildStateFromEvents();
         this.synchronized = savedEvent.synchronizedAt !== null;
         this.persistState();
+
+        if (onSuccess) {
+          onSuccess();
+        }
         this.liveCaptureService.syncPendingEvents(this.matchId).subscribe();
       },
       error: (error: HttpErrorResponse) => {
@@ -884,14 +923,80 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   }
 
   private readBackendError(error: HttpErrorResponse): string | null {
-  if (typeof error.error === 'string' && error.error.trim()) {
-    return error.error;
+    if (typeof error.error === 'string' && error.error.trim()) {
+      return error.error;
+    }
+
+    if (typeof error.error?.message === 'string') {
+      return error.error.message;
+    }
+
+    return null;
   }
 
-  if (typeof error.error?.message === 'string') {
-    return error.error.message;
+  cancelConversion(): void {
+    // Si cancela, guardamos el Try aclarando que fue exitoso pero NO convertido
+    if (this.pendingTryData) {
+      this.commitEvent(
+        this.pendingTryData.event,
+        this.pendingTryData.eventId,
+        this.pendingTryData.playerNumber,
+        { 
+          wasSuccessful: true,   // ¡Este dato faltaba y rompía el historial!
+          wasConverted: false 
+        }
+      );
+    }
+    this.resetConversionState();
   }
 
-  return null;
-}
+  confirmConversion(wasSuccessful: boolean): void {
+    if (!this.pendingTryData) return;
+
+    const kicker = this.kickerNumber;
+    const isConvSuccessful = wasSuccessful;
+    const originalPossession = this.currentPossession; 
+
+    // 1. ENVIAMOS EL TRY (Siempre)
+    this.commitEvent(
+      this.pendingTryData.event,
+      this.pendingTryData.eventId,
+      this.pendingTryData.playerNumber,
+      { 
+        wasSuccessful: true, 
+        wasConverted: isConvSuccessful 
+      },
+      () => {
+        // 2. SOLO ENVIAMOS LA CONVERSIÓN SI FUE ADENTRO
+        if (isConvSuccessful) {
+            const conversionEventMock = {
+              id: '550e8400-e29b-41d4-a716-446655440113',
+              name: 'Conversión'
+            };
+    
+            const newEventId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+              ? crypto.randomUUID() 
+              : '11111111-1111-4111-a111-' + Math.floor(Math.random() * 1000000000000).toString(16);
+    
+            this.commitEvent(
+              conversionEventMock,
+              newEventId,
+              kicker,
+              { wasSuccessful: true },
+              undefined, 
+              originalPossession 
+            );
+        }
+      },
+      originalPossession 
+    );
+
+    this.resetConversionState();
+  }
+
+  private resetConversionState(): void {
+    this.showConversionModal = false;
+    this.pendingTryData = null;
+    this.kickerNumber = null;
+  }
 }
