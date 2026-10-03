@@ -161,6 +161,7 @@ public class EventService {
 		}
 
 		result.setActive(false);
+		result.setSynchronizedAt(LocalDateTime.now());
 		Event savedEvent = eventRepository.save(result);
 		recalculateMatchScore(result.getMatch());
 		return EventDTOMapper.toResponseDTO(savedEvent);
