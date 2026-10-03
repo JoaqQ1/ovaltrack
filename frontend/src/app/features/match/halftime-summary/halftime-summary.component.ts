@@ -8,6 +8,7 @@ import { StatisticCalculationService } from '../services/statistic-calculation.s
 import { LiveCaptureCacheService } from '../services/live-capture-cache.service';
 import { PeriodStatisticDTO, PlayerPeriodStatistic } from '../types/statistic.types';
 import { LiveCapturePersistedState } from '../types/live-capture.types';
+import { LiveCaptureService } from '../services/live-capture.service';
 import { RosterPlayerInfo } from '../services/calculators';
 import { AvailablePlayer, SavedRoster } from '../types/roster.types';
 
@@ -30,6 +31,7 @@ export class HalftimeSummaryComponent implements OnInit {
   private readonly rosterService = inject(RosterService);
   private readonly statisticCalculationService = inject(StatisticCalculationService);
   private readonly cacheService = inject(LiveCaptureCacheService);
+  private readonly liveCaptureService = inject(LiveCaptureService);
 
   readonly matchId = signal<string>('');
   readonly activeTab = signal<'general' | 'players'>('general');
@@ -139,6 +141,7 @@ export class HalftimeSummaryComponent implements OnInit {
     });
 
     await this.loadSummaryData();
+    this.liveCaptureService.syncPendingEvents(id).subscribe();
   }
 
   async loadSummaryData(): Promise<void> {
