@@ -437,3 +437,132 @@
     width: 100%;
   }
 }
+
+/* ==========================================================================
+   Modo Oscuro (Dark Rugby Tech)
+   ========================================================================== */
+:host-context([data-theme="dark"]) .filter-toolbar {
+  background: #131c2e;
+  border-color: #1f2e47;
+  box-shadow: none;
+}
+
+:host-context([data-theme="dark"]) .status-tab {
+  color: #94a3b8;
+}
+
+:host-context([data-theme="dark"]) .status-tab:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:host-context([data-theme="dark"]) .status-tab.active {
+  background: #162238;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2a3c5a;
+}
+
+:host-context([data-theme="dark"]) .match-card-shell {
+  background: #131c2e;
+  border-color: #1f2e47;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+:host-context([data-theme="dark"]) .match-card-shell:hover {
+  border-color: #2a3c5a;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+}
+
+:host-context([data-theme="dark"]) .btn-delete-match {
+  color: #64748b;
+}
+
+:host-context([data-theme="dark"]) .btn-delete-match:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+:host-context([data-theme="dark"]) .vs-label {
+  background: #162238;
+  border-color: #2a3c5a;
+  color: #a3e635;
+}
+
+:host-context([data-theme="dark"]) .match-opponent-name {
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .match-date-badge {
+  color: #94a3b8;
+}
+
+:host-context([data-theme="dark"]) .match-score-badge {
+  background: #162238;
+  color: #a3e635;
+  border: 1px solid #2a3c5a;
+  box-shadow: none;
+}
+
+:host-context([data-theme="dark"]) .match-card-action {
+  border-top-color: #1f2e47;
+  color: #a3e635;
+}
+
+:host-context([data-theme="dark"]) .action-link {
+  color: #a3e635;
+}
+
+:host-context([data-theme="dark"]) .status-not_started {
+  background: #162238;
+  color: #94a3b8;
+  border-color: #2a3c5a;
+}
+
+:host-context([data-theme="dark"]) .status-finished {
+  background: rgba(163, 230, 53, 0.15);
+  color: #a3e635;
+  border-color: rgba(163, 230, 53, 0.3);
+}
+
+:host-context([data-theme="dark"]) .status-cancelled {
+  background: #162238;
+  color: #64748b;
+  border-color: #1f2e47;
+}
+
+:host-context([data-theme="dark"]) .match-modal {
+  background: #131c2e;
+  border-color: #2a3c5a;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+:host-context([data-theme="dark"]) .modal-header-salvia {
+  background: #162238;
+  border-bottom-color: #2a3c5a;
+}
+
+:host-context([data-theme="dark"]) .modal-title {
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .modal-subtitle {
+  color: #94a3b8;
+}
+
+:host-context([data-theme="dark"]) .custom-input {
+  background: #162238;
+  border-color: #2a3c5a;
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .custom-input:focus {
+  border-color: #a3e635;
+  background: #1c2b44;
+  box-shadow: 0 0 0 3px rgba(163, 230, 53, 0.2);
+}
+
+:host-context([data-theme="dark"]) .modal-actions {
+  border-top-color: #1f2e47;
+}

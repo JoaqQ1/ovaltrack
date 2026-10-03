@@ -337,9 +337,6 @@ export class HalftimeSummaryComponent implements OnInit {
     this.router.navigate(['/live-capture', this.matchId()]);
   }
 
-  goToHome(): void {
-    this.router.navigate(['/home']);
-  }
 
   openSecondHalfConfirmation(): void {
     this.isConfirmingSecondHalf.set(true);
