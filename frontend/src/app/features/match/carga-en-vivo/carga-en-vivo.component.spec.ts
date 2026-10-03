@@ -63,6 +63,7 @@ describe('CargaEnVivoComponent', () => {
             }),
             saveLiveCaptureState: () => of(undefined),
             saveEvent: () => of(undefined),
+            syncPendingEvents: () => of([]),
             deleteEvent: () => of(undefined),
           },
         },
