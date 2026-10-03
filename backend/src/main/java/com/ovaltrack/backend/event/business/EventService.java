@@ -1,5 +1,6 @@
 package com.ovaltrack.backend.event.business;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -108,7 +109,7 @@ public class EventService {
 		result.setPeriod(eventRequest.period());
 		result.setOrigin(eventRequest.origin());
 		result.setAttributes(eventRequest.attributes());
-		result.setSynchronizedAt(eventRequest.synchronizedAt());
+		result.setSynchronizedAt(LocalDateTime.now());
 		result.setActive(true);
 
 		Event savedEvent = eventRepository.save(result);
