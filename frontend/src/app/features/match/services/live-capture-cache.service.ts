@@ -57,16 +57,10 @@ export class LiveCaptureCacheService {
   }
 
   async deleteEvent(event: LocalMatchEvent): Promise<void> {
-    const backendEventId = event.backendEventId
-      ?? (event.synchronizedAt ? event.id : null);
-    const updated = await liveCaptureDatabase.events.update(event.id, {
+    await liveCaptureDatabase.events.update(event.id, {
       active: false,
       synchronizedAt: null,
     });
-
-    if (updated === 0) {
-      throw new Error(`Event ${event.id} was not found`);
-    }
   }
 
   getStatusData(matchId: string): Promise<{
@@ -93,7 +87,7 @@ export class LiveCaptureCacheService {
       : liveCaptureDatabase.events.toCollection();
 
     return eventsQuery.toArray().then(events => events
-      .filter(event => event.synchronizedAt === null && (event.active || event.backendEventId !== null))
+      .filter(event => event.synchronizedAt === null && (event.active || event.backendEventId != null))
       .sort((first, second) => first.localSequence - second.localSequence));
   }
 
