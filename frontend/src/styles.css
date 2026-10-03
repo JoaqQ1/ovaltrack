@@ -58,6 +58,53 @@
 }
 
 /* ==========================================================================
+   Design Tokens (Modo Oscuro / Dark Rugby Tech)
+   ========================================================================== */
+[data-theme="dark"] {
+  --bg: #0b111e;
+  --surface: #131c2e;
+  --surface-alt: #162238;
+  --surface-hover: #1c2b44;
+  --surface-header-start: #162238;
+  --surface-header-end: #162238;
+  --surface-toolbar: #131c2e;
+
+  --border: #1f2e47;
+  --border-strong: #2a3c5a;
+  --border-sport: #2a3c5a;
+  --border-sport-subtle: #1f2e47;
+
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  --grass: #a3e635;
+  --grass-hover: #bef264;
+  --on-grass: #0b111e;
+  --grass-deep: #a3e635;
+  --grass-tint: rgba(163, 230, 53, 0.15);
+  --grass-tint-strong: rgba(163, 230, 53, 0.25);
+  --grass-border: rgba(163, 230, 53, 0.35);
+
+  --navy: #3b82f6;
+  --navy-tint: rgba(59, 130, 246, 0.15);
+  --navy-border: rgba(59, 130, 246, 0.3);
+
+  --player: #94a3b8;
+  --player-tint: rgba(148, 163, 184, 0.1);
+
+  --btn-primary-bg: #a3e635;
+  --btn-primary-fg: #0b111e;
+  --btn-primary-hover: #bef264;
+  --btn-outline-bg: #131c2e;
+  --btn-outline-border: #2a3c5a;
+  --btn-outline-fg: #cbd5e1;
+
+  --shadow-elevation: 0 16px 36px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-button: 0 4px 12px rgba(163, 230, 53, 0.25);
+}
+
+/* ==========================================================================
    Base y Reseteo
    ========================================================================== */
 * {
@@ -69,6 +116,209 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
+}
+
+[data-theme="dark"] body {
+  background-color: #0b111e;
+  background-image: 
+    /* Capa 1: Degradé radial que desvanece suavemente las líneas hacia el centro */
+    radial-gradient(
+      ellipse at 50% 30%,
+      rgba(11, 17, 30, 0.90) 0%,
+      rgba(11, 17, 30, 0.60) 35%,
+      rgba(11, 17, 30, 0.15) 65%,
+      transparent 80%
+    ),
+    /* Capa 2: Líneas diagonales a 135deg con separación (54px) y contraste táctico calibrado */
+    repeating-linear-gradient(
+      135deg,
+      rgba(42, 60, 90, 0.22) 0px,
+      rgba(42, 60, 90, 0.22) 1.5px,
+      transparent 1.5px,
+      transparent 54px
+    );
+  background-attachment: fixed;
+  color: #cbd5e1;
+}
+
+/* ==========================================================================
+   Modo Oscuro: Componentes Globales Compartidos (SOLID)
+   ========================================================================== */
+[data-theme="dark"] .brand-text .title,
+[data-theme="dark"] .page-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .brand-text .club,
+[data-theme="dark"] .page-subtitle {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .badge-tech,
+[data-theme="dark"] .header-badge {
+  background-color: #162238;
+  border-color: #2a3c5a;
+  color: #a3e635;
+}
+
+[data-theme="dark"] .btn-invite,
+[data-theme="dark"] .btn-primary-rugby {
+  background-color: #a3e635;
+  color: #0b111e;
+  border-color: #a3e635;
+  box-shadow: 0 4px 12px rgba(163, 230, 53, 0.25);
+}
+
+[data-theme="dark"] .btn-invite:hover,
+[data-theme="dark"] .btn-primary-rugby:hover {
+  background-color: #bef264;
+  border-color: #bef264;
+  color: #0b111e;
+  box-shadow: 0 6px 16px rgba(163, 230, 53, 0.35);
+}
+
+[data-theme="dark"] .btn-outline {
+  background-color: #131c2e;
+  border-color: #2a3c5a;
+  color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .btn-outline:hover {
+  background-color: #1c2b44;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .form-card {
+  background: #131c2e;
+  border-color: #2a3c5a;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .card-header,
+[data-theme="dark"] .form-card-header {
+  background: #162238;
+  border-bottom: 2px solid #2a3c5a;
+}
+
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .form-card-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .card-subtitle,
+[data-theme="dark"] .form-card-subtitle {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .form-label {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .form-control {
+  background: #162238;
+  border-color: #2a3c5a;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  color: #64748b;
+}
+
+[data-theme="dark"] .form-control:focus {
+  border-color: #a3e635;
+  box-shadow: 0 0 0 3px rgba(163, 230, 53, 0.2);
+  background: #1c2b44;
+}
+
+[data-theme="dark"] .form-actions {
+  border-top-color: #1f2e47;
+}
+
+[data-theme="dark"] .filters {
+  background: #162238;
+  border-color: #1f2e47;
+}
+
+[data-theme="dark"] .chip.active {
+  background: #131c2e;
+  border-color: #2a3c5a;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .status-segment {
+  background: #162238;
+  border-color: #1f2e47;
+}
+
+[data-theme="dark"] .status-tab.active {
+  background: #131c2e;
+  color: #ffffff;
+  border: 1px solid #2a3c5a;
+}
+
+[data-theme="dark"] .status-tab.active .status-badge-count {
+  background: #162238;
+  color: #a3e635;
+}
+
+[data-theme="dark"] .empty-state {
+  background: #131c2e;
+  border-color: #1f2e47;
+}
+
+[data-theme="dark"] .empty-icon {
+  background: #162238;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .empty-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .empty-copy {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .card-base {
+  background: #131c2e;
+  border-color: #1f2e47;
+}
+
+[data-theme="dark"] .card-base:hover {
+  border-color: #2a3c5a;
+}
+
+[data-theme="dark"] .status-pill,
+[data-theme="dark"] .position-badge,
+[data-theme="dark"] .tag {
+  background: #162238;
+  border-color: #2a3c5a;
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .club-form-container {
+  background: #131c2e;
+  border: 1px solid #1f2e47;
+  border-radius: 16px;
+  padding: 24px;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .club-form-container h2 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .club-form-container label {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .club-form-container input,
+[data-theme="dark"] .club-form-container select {
+  background: #162238;
+  border: 1px solid #2a3c5a;
+  color: #ffffff;
 }
 
 body {

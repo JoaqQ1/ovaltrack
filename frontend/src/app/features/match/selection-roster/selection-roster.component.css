@@ -10,7 +10,7 @@
   transition: background-color 0.2s ease, color 0.2s ease;
 
   /* --- Tokens Modo Oscuro (Predeterminado / Dark Rugby Tech) --- */
-  --r-bg: #0b111e;
+  --r-bg: transparent;
   --r-surface: #131c2e;
   --r-surface-header-start: #162238;
   --r-surface-header-end: #162238;
