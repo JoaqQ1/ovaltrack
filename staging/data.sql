@@ -215,7 +215,7 @@ VALUES
     'Try',
     'Ataque',
     'ATTACK',
-    true,
+    false,
     true,
     5,
     true,
@@ -380,6 +380,21 @@ VALUES
     true,
     $${
       "injury": { "type": "string", "required": false }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440113',
+    'Conversion',
+    'Ataque',
+    'ATTACK',
+    true,
+    true,
+    2,
+    true,
+    $${
+      "wasSuccessful": { "type": "boolean", "required": true },
+      "distanceMeters": { "type": "number", "required": false }
     }$$::jsonb,
     CURRENT_TIMESTAMP
 );
