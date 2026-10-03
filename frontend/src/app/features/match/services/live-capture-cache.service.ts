@@ -70,6 +70,23 @@ export class LiveCaptureCacheService {
     ]).then(([state, events]) => ({ state, events }));
   }
 
+  getEventsByMatch(matchId: string): Promise<LocalMatchEvent[]> {
+    return liveCaptureDatabase.events
+      .where('matchId')
+      .equals(matchId)
+      .sortBy('localSequence');
+  }
+
+  getPendingEvents(matchId?: string): Promise<LocalMatchEvent[]> {
+    const eventsQuery = matchId
+      ? liveCaptureDatabase.events.where('matchId').equals(matchId)
+      : liveCaptureDatabase.events.toCollection();
+
+    return eventsQuery.toArray().then(events => events
+      .filter(event => event.synchronizedAt === null)
+      .sort((first, second) => first.localSequence - second.localSequence));
+  }
+
   deleteMatchData(matchId: string): Promise<void> {
     return liveCaptureDatabase.transaction(
       'rw',
