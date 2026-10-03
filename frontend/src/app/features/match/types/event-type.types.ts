@@ -13,7 +13,7 @@ export interface BackendEventTypeResponse {
 }
 
 export type LiveCaptureEventType = Omit<BackendEventTypeResponse,
-  'groupName' | 'category' | 'affectsPossession' | 'isScoring' | 'points' | 'requiresPlayer' | 'active'
+  'groupName' | 'category' | 'affectsPossession' | 'isScoring' | 'points' | 'requiresPlayer'
 > & {
   groupName: string;
   category: 'ATTACK' | 'DEFENSE' | 'NEUTRAL' | 'POSSESSION' | 'SET_PIECE';
@@ -21,6 +21,5 @@ export type LiveCaptureEventType = Omit<BackendEventTypeResponse,
   isScoring: boolean;
   points: number;
   requiresPlayer: boolean;
-  active: boolean;
   createdAt: string;
 };
