@@ -17,6 +17,7 @@ import { StatisticCalculationService } from '../services/statistic-calculation.s
 import { PeriodStatisticDTO } from '../types/statistic.types';
 import { CurrentStatsModalComponent } from './components/current-stats-modal/current-stats-modal.component';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
 /**
  * Representa un evento que ya fue tocado pero todavía está esperando a que
@@ -562,6 +563,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.isCalculatingStats = true;
 
     try {
+      await firstValueFrom(this.liveCaptureService.syncPendingEvents(this.matchId));
+      this.events = await firstValueFrom(this.liveCaptureService.getLocalEvents(this.matchId));
       const allEventTypes = this.categories.flatMap(category => category.events);
       this.currentStats = await this.statisticCalculationService.calculatePeriodStatistics(
         this.matchId,
