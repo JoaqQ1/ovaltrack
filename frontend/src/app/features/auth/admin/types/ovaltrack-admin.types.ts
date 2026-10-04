@@ -1,29 +1,34 @@
 import { UserRole } from '../../types/auth.types';
+import { Club } from 'src/app/features/club/types/club.types';
 
-export interface PendingRegistrationRequest {
-  requestId: string;
-  userId: string;
-  email: string;
-  firstName: string | null;
-  lastName: string | null;
-  requestedRole: UserRole;
-  clubId: string | null;
-  clubName: string | null;
-  status: 'PENDING' | 'NEEDS_INFORMATION';
-  createdAt: string;
+export interface RegistrationRequest {
+    id: string;
+    user: { id: string; loginEmail: string };
+    applicantFirstName: string | null;
+    applicantLastName: string | null;
+    applicantBirthDate: string | null;
+    requestedRole: UserRole;
+    requestedClubName: string | null;
+    requestedClubCity: string | null;
+    requestedClubContactEmail: string | null;
+    requestedClubContactPhone: string | null;
+    club: Club | null;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'NEEDS_INFORMATION';
+    decisionComment: string | null;
+    createdAt: string;
 }
 
 export interface ActivePlatformAccount {
-  id: string;
-  email: string;
-  role: UserRole;
-  active: boolean;
-  firstName: string | null;
-  lastName: string | null;
-  createdAt: string;
+    id: string;
+    email: string;
+    role: UserRole;
+    active: boolean;
+    firstName: string | null;
+    lastName: string | null;
+    createdAt: string;
 }
 
 export interface OvalTrackAdminOverview {
-  pendingRequests: PendingRegistrationRequest[];
-  activeAccounts: ActivePlatformAccount[];
+    registrationRequests: RegistrationRequest[];
+    activeAccounts: ActivePlatformAccount[];
 }
