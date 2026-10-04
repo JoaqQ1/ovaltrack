@@ -20,4 +20,5 @@ public interface RegistrationRequestRepository extends JpaRepository<Registratio
     Optional<RegistrationRequest> findFirstByUserIdAndStatusOrderByCreatedAtDesc(
             UUID userId,
             RegistrationRequestStatus status);
+
 }

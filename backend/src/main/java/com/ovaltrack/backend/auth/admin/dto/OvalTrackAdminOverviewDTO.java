@@ -8,5 +8,5 @@ import com.ovaltrack.backend.user.domain.dto.UserResponseDTO;
 
 public record OvalTrackAdminOverviewDTO(
         List<RegistrationRequest> registrationRequests,
-        Collection<UserResponseDTO> activeAccounts) {
+        Collection<UserResponseDTO> accounts) {
 }
