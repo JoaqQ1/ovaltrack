@@ -32,7 +32,7 @@ export const routes: Routes = [
         data: { roles: ['ADMIN_OVALTRACK'] },
         loadComponent: () =>
             import('./features/auth/admin/pages/ovaltrack-admin/ovaltrack-admin.component')
-                .then(m => m.OvalTrackAdminComponent)
+                .then(m => m.OvaltrackAdminComponent)
     },
     {
         path: 'auth',
