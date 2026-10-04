@@ -21,6 +21,9 @@ import com.ovaltrack.backend.user.domain.UserStatus;
 import jakarta.transaction.Transactional;
 
 import com.ovaltrack.backend.common.config.exceptions.UserDeactivatedException;
+import com.ovaltrack.backend.person.business.PersonService;
+import com.ovaltrack.backend.person.domain.Person;
+
 
 @Service
 public class AuthService {
@@ -29,17 +32,20 @@ public class AuthService {
     private final ClubService clubService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private PersonService personService;
 
     public AuthService(UserService userService,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             AdminService registrationRequestService,
-            ClubService clubService) {
+            ClubService clubService,
+            PersonService personService) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.registrationRequestService = registrationRequestService;
         this.clubService = clubService;
+        this.personService = personService;
     }
 
     @Transactional
@@ -51,9 +57,17 @@ public class AuthService {
 
         if (validateEmail(request.getEmail()))
             throw new BusinessException("The email is alredy registered");
+        Person person = new Person();
+        person.setFirstName(request.getApplicantFirstName());
+        person.setLastName(request.getApplicantLastName());
+        person.setBirthDate(request.getApplicantBirthDate());
+        person.setContactEmail(request.getEmail());
+        Person savedPerson = personService
+                .savePersonEntity(person);
 
         String passHash = passwordEncoder.encode(request.getPassword());
         User newUser = new User();
+        newUser.setPerson(savedPerson);
         newUser.setLoginEmail(request.getEmail());
         newUser.setPasswordHash(passHash);
         newUser.setActive(false);
