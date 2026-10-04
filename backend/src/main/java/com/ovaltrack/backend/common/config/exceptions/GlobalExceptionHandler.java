@@ -1,7 +1,6 @@
 package com.ovaltrack.backend.common.config.exceptions;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.dao.DataIntegrityViolationException;

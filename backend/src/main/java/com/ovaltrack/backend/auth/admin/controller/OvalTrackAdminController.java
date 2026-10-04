@@ -23,7 +23,6 @@ import com.ovaltrack.backend.auth.registration.service.AdminService;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.common.dto.response.BackendResponse;
 import com.ovaltrack.backend.user.business.UserService;
-import com.ovaltrack.backend.user.domain.UserRole;
 import com.ovaltrack.backend.user.domain.dto.UserResponseDTO;
 
 import lombok.RequiredArgsConstructor;

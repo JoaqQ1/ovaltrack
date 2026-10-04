@@ -11,8 +11,7 @@ import com.ovaltrack.backend.club.domain.Club;
 import com.ovaltrack.backend.club.business.ClubService;
 import jakarta.transaction.Transactional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;

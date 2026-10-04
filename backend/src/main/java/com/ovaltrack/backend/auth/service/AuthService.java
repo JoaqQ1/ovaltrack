@@ -10,17 +10,13 @@ import com.ovaltrack.backend.auth.registration.domain.dto.RegistrationRequestDTO
 import com.ovaltrack.backend.auth.registration.service.AdminService;
 import com.ovaltrack.backend.auth.security.JwtService;
 import com.ovaltrack.backend.club.business.ClubService;
-import com.ovaltrack.backend.club.domain.Club;
 import com.ovaltrack.backend.club.domain.ClubStatus;
 import com.ovaltrack.backend.club.domain.dto.ClubResponseDTO;
-import com.ovaltrack.backend.club.repository.ClubRepository;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.user.business.UserService;
 import com.ovaltrack.backend.user.domain.User;
 import com.ovaltrack.backend.user.domain.UserRole;
 import com.ovaltrack.backend.user.domain.UserStatus;
-import com.ovaltrack.backend.user.domain.dto.UserCreateRequestDTO;
-import com.ovaltrack.backend.user.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
 
