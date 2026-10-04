@@ -42,7 +42,8 @@ public class JwtService {
             claims.put("personId", user.getPerson().getId());
         }
 
-        if (user.getPerson().getClub() != null && user.getPerson().getClub().getId() != null){
+        if (user.getPerson() != null && user.getPerson().getClub() != null
+                && user.getPerson().getClub().getId() != null) {
             claims.put("clubId", user.getPerson().getClub().getId());
         }
 

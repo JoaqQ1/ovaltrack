@@ -50,3 +50,12 @@ El modelo separa explícitamente las responsabilidades de **acceso y credenciale
 
 * **Producción / Staging (`!dev`)**: Rutas privadas protegidas; exige token Bearer válido en cada solicitud.
 * **Desarrollo / Docker (`dev`, `docker`)**: Rutas públicas y bypass mediante `DevMockAuthFilter`, inyectando un usuario administrativo de pruebas para agilizar el trabajo del equipo sin requerir login manual.
+
+## 5. Bootstrap y panel global de OvalTrack (HU-5.5 / HU-5.6)
+
+* El rol `ADMIN_OVALTRACK` no se acepta en el registro público (`POST /api/auth/register`).
+* El primer administrador global se crea al iniciar el backend únicamente si se configuran `OVALTRACK_BOOTSTRAP_ADMIN_EMAIL` y `OVALTRACK_BOOTSTRAP_ADMIN_PASSWORD` en el entorno. La contraseña debe tener al menos 12 caracteres y se guarda hasheada con BCrypt.
+* El bootstrap es idempotente: no crea otro administrador global si ya existe uno y no modifica la contraseña ni el estado de una cuenta existente.
+* Para el primer arranque local, configura ambas variables en `.env` (archivo ignorado por Git) y ejecuta `./ds up`. Después de verificar el acceso, elimina `OVALTRACK_BOOTSTRAP_ADMIN_PASSWORD` del entorno y reinicia el backend. No compartas ni incluyas esa contraseña en commits.
+* El panel global está en `/admin/ovaltrack`; su API es `GET /api/admin/ovaltrack/overview` y requiere el rol `ADMIN_OVALTRACK`. Devuelve por separado solicitudes abiertas y cuentas activas, sin incluir hashes de contraseñas.
+* El frontend protege la ruta por rol y el backend vuelve a validar la autorización en el controlador. `ADMIN_CLUB` y los demás roles reciben acceso denegado al endpoint global.

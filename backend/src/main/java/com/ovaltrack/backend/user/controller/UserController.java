@@ -14,13 +14,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
-import com.ovaltrack.backend.common.config.exceptions.EntityNotFoundException;
 import com.ovaltrack.backend.user.business.UserService;
 import com.ovaltrack.backend.user.domain.User;
 import com.ovaltrack.backend.user.domain.dto.UserCreateRequestDTO;

@@ -16,6 +16,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByLoginEmail(String loginEmail);
 
+    boolean existsByRole(UserRole role);
+
+    List<User> findAllByActiveTrueOrderByCreatedAtDesc();
+
     Optional<User> findByPersonId(UUID personId);
 
     @Query("SELECT u FROM User u WHERE u.person.club.id = :clubId")
@@ -25,8 +29,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsActiveAdminInClubExcludingUser(
             @Param("clubId") UUID clubId,
             @Param("role") UserRole role,
-            @Param("excludeUserId") UUID excludeUserId
-    );
+            @Param("excludeUserId") UUID excludeUserId);
 
     default Optional<User> findByEmail(String email) {
         return findByLoginEmail(email);
@@ -35,4 +38,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     default boolean existsByEmail(String email) {
         return existsByLoginEmail(email);
     }
+
+    List<User> findByRoleNot(UserRole role);
 }

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+
 export const AUTH_ROUTES: Routes = [
   {
     path: 'login',
@@ -9,7 +10,17 @@ export const AUTH_ROUTES: Routes = [
   {
     path: 'register',
     loadComponent: () =>
-      import('./pages/register/register.component').then(m => m.RegisterComponent)
+      import('./pages/register/register-selector/register-selector.component').then(m => m.RegisterSelectorComponent)
+  },
+  {
+    path: 'register/club',
+    loadComponent: () =>
+      import('./pages/register/club-register/club-register.component').then(m => m.ClubRegisterComponent)
+  },
+  {
+    path: 'register/coach',
+    loadComponent: () =>
+      import('./pages/register/coach-register/coach-register.component').then(m => m.CoachRegisterComponent)
   },
   {
     path: '',

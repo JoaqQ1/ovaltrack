@@ -8,10 +8,15 @@
       >
         <span>Panel de Control</span>
       </div>
-      <h1 class="home-title display-6 fw-bold mb-2">Bienvenido a tu Espacio</h1>
-      <p class="home-subtitle mb-0">
-        Selecciona el módulo con el que deseas trabajar hoy según tus permisos.
-      </p>
+      @if (currentUser()?.role === 'ADMIN_OVALTRACK') {
+        <h1 class="home-title display-6 fw-bold mb-2">Administración de OvalTrack</h1>
+        <p class="home-subtitle mb-0">Gestiona solicitudes y consulta las cuentas activas de la plataforma.</p>
+      } @else {
+        <h1 class="home-title display-6 fw-bold mb-2">Bienvenido a tu Espacio</h1>
+        <p class="home-subtitle mb-0">
+          Selecciona el módulo con el que deseas trabajar hoy según tus permisos.
+        </p>
+      }
     </header>
 
     <!-- Si tiene un rol sin permisos asignados aún o es PLAYER -->

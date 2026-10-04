@@ -1,0 +1,197 @@
+:host {
+  display: block;
+  min-height: calc(100vh - 64px);
+  background-color: #0b111e;
+  color: #e2e8f0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.register-selector-wrapper {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+/* ==========================================================================
+   Títulos y Textos (Modo Oscuro por defecto)
+   ========================================================================== */
+.selector-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 2rem;
+  color: #ffffff;
+}
+
+.selector-subtitle {
+  color: #94a3b8;
+  font-size: 1.05rem;
+}
+
+/* Tarjetas de Selección */
+.selector-card {
+  background: #131c2e;
+  border: 2px solid #1f2e47;
+  border-radius: 20px;
+  padding: 30px;
+  transition: all 0.2s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-decoration: none;
+}
+
+.selector-card:hover {
+  border-color: #a3e635;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.card-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: #162238;
+  border: 1px solid #2a3c5a;
+  color: #a3e635;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.card-desc {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.card-action {
+  color: #a3e635;
+  font-weight: 700;
+  font-size: 0.875rem;
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-role-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.badge-coach {
+  background-color: rgba(163, 230, 53, 0.1);
+  color: #a3e635;
+  border-color: rgba(163, 230, 53, 0.2);
+}
+
+/* ==========================================================================
+   TEMA CLARO (Activado con data-theme="light" o .light-theme)
+   ========================================================================== */
+:host-context([data-theme="light"]),
+:host-context(.light-theme) {
+  background-color: #f6f7f1;
+  color: #1b2116;
+}
+
+:host-context([data-theme="light"]) .selector-title,
+:host-context(.light-theme) .selector-title {
+  color: #111d0e;
+}
+
+:host-context([data-theme="light"]) .selector-subtitle,
+:host-context(.light-theme) .selector-subtitle {
+  color: #4a6042;
+}
+
+:host-context([data-theme="light"]) .selector-card,
+:host-context(.light-theme) .selector-card {
+  background: #ffffff;
+  border: 2px solid rgba(32, 75, 34, 0.28);
+  box-shadow: 0 16px 36px rgba(15, 35, 15, 0.08);
+}
+
+:host-context([data-theme="light"]) .selector-card:hover,
+:host-context(.light-theme) .selector-card:hover {
+  border-color: #204b22;
+  box-shadow: 0 20px 40px rgba(15, 35, 15, 0.14);
+}
+
+:host-context([data-theme="light"]) .card-icon-wrapper,
+:host-context(.light-theme) .card-icon-wrapper {
+  background-color: #edf5e9;
+  border: 1px solid rgba(32, 75, 34, 0.25);
+  color: #204b22;
+}
+
+:host-context([data-theme="light"]) .card-title,
+:host-context(.light-theme) .card-title {
+  color: #111d0e;
+}
+
+:host-context([data-theme="light"]) .card-desc,
+:host-context(.light-theme) .card-desc {
+  color: #4a6042;
+}
+
+:host-context([data-theme="light"]) .card-action,
+:host-context(.light-theme) .card-action {
+  color: #204b22;
+}
+
+:host-context([data-theme="light"]) .badge-role-pill,
+:host-context(.light-theme) .badge-role-pill {
+  background-color: rgba(22, 50, 79, 0.08);
+  color: #16324f;
+  border-color: rgba(22, 50, 79, 0.2);
+}
+
+:host-context([data-theme="light"]) .badge-coach,
+:host-context(.light-theme) .badge-coach {
+  background-color: rgba(43, 108, 163, 0.08);
+  color: #2b6ca3;
+  border-color: rgba(43, 108, 163, 0.2);
+}
+/* ==========================================================================
+   Enlace de Retorno interactivo
+   ========================================================================== */
+.return-link-item {
+  color: #94a3b8; /* Color neutro secundario para modo oscuro */
+  transition: color 0.2s ease, transform 0.2s ease;
+  display: inline-block;
+}
+
+.return-link-item:hover {
+  color: #a3e635; /* Color neón en modo oscuro al hacer hover */
+  transform: translateX(-3px); /* Pequeño desplazamiento sutil hacia la izquierda indicando retorno */
+}
+
+/* Modo claro */
+:host-context([data-theme="light"]) .return-link-item,
+:host-context(.light-theme) .return-link-item {
+  color: #4a6042;
+}
+
+:host-context([data-theme="light"]) .return-link-item:hover,
+:host-context(.light-theme) .return-link-item:hover {
+  color: #204b22; /* Color verde rugby principal en modo claro al hacer hover */
+  text-decoration: underline;
+}

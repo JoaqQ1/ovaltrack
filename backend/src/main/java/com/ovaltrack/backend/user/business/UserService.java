@@ -55,6 +55,12 @@ public class UserService {
 				.toList();
 	}
 
+	public Collection<UserResponseDTO> findActiveUsersDTO() {
+		return userRepository.findAllByActiveTrueOrderByCreatedAtDesc().stream()
+				.map(UserDTOMapper::toResponseDTO)
+				.toList();
+	}
+
 	public Collection<UserResponseDTO> findUsersByClubId(UUID clubId) {
 		return userRepository.findAllByClubId(clubId).stream()
 				.filter(user -> user.getRole() != UserRole.ADMIN_OVALTRACK)
@@ -74,6 +80,12 @@ public class UserService {
 		return userRepository.findByLoginEmail(email).orElse(null);
 	}
 
+	public Collection<UserResponseDTO> findAllUsersExceptAdminOvaltrack() {
+		return userRepository.findByRoleNot(UserRole.ADMIN_OVALTRACK).stream()
+				.map(UserDTOMapper::toResponseDTO) 
+				.toList();
+	}
+
 	public boolean existsByEmail(String email) {
 		return userRepository.existsByLoginEmail(email);
 	}
@@ -85,6 +97,10 @@ public class UserService {
 
 	@Transactional
 	public UserResponseDTO createUser(UserCreateRequestDTO request) {
+		if (request.role() == UserRole.ADMIN_OVALTRACK) {
+			throw new BusinessException("ADMIN_OVALTRACK solo puede crearse mediante el bootstrap controlado");
+		}
+
 		String email = request.getEffectiveEmail();
 		if (email == null || email.isBlank()) {
 			throw new BusinessException("El email es obligatorio");

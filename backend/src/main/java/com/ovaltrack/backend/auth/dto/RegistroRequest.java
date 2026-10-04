@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record RegistroRequest(
     @NotBlank(message = "El email no puede estar vacío")
@@ -30,6 +31,14 @@ public record RegistroRequest(
     @NotNull(message = "El rol es obligatorio")
     UserRole role,
 
-    java.util.UUID clubId
+    UUID userId,
+
+    UUID clubId,
+
+    String clubName,
+
+    String clubRegion,
+
+    String clubContactPhone
 ) {
 }

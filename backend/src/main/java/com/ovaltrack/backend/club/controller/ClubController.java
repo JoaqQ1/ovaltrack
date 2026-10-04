@@ -1,5 +1,6 @@
 package com.ovaltrack.backend.club.controller;
 
+import java.util.Collection;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 
 @RestController
 @RequestMapping("club")
@@ -76,6 +78,15 @@ public class ClubController {
     }
 
     @Operation(
+        summary = "List active clubs available for registration",
+        description = "Returns public club identification details for registration forms."
+    )
+    @GetMapping("/registration-options")
+    public ResponseEntity<Object> findRegistrationOptions() {
+        return ResponseEntity.ok(clubService.findRegistrationOptions());
+    }
+
+    @Operation(
         summary = "Find a specific club in the system",
         description = "Return the specified club in the path variable."
     )
@@ -89,6 +100,12 @@ public class ClubController {
         return (result != null) ? ResponseEntity.ok(result)
                 : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
     }
+
+    @GetMapping("/actives-clubs")
+    public Collection<ClubResponseDTO> findAllActives() {
+        return this.clubService.findAllActives();
+    }
+    
 
     @Operation(
         summary = "Create a club in the system",

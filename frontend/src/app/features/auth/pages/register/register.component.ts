@@ -48,7 +48,7 @@ export class RegisterComponent {
 
     this.errorMessage = '';
     this.isSubmitting = true;
-
+    console.log(data)
     this.authService.register(data).subscribe({
       next: () => {
         this.router.navigate(['/home']);
