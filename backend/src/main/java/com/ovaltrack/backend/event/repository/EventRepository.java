@@ -10,16 +10,21 @@ import com.ovaltrack.backend.event.domain.Event;
 
 public interface EventRepository extends JpaRepository<Event, UUID> {
 
-    @Query("SELECT e FROM Event e WHERE e.match.division.club.id = :clubId")
+    @Query("SELECT e FROM Event e WHERE e.active = true AND e.match.division.club.id = :clubId")
     Collection<Event> findEventsByClubId(@Param("clubId") UUID clubId);
 
-    @Query("SELECT e FROM Event e WHERE e.match.division.id = :divisionId")
+    @Query("SELECT e FROM Event e WHERE e.active = true AND e.match.division.id = :divisionId")
     Collection<Event> findEventsByDivisionId(@Param("divisionId") UUID divisionId);
 
-    @Query("SELECT e FROM Event e WHERE e.match.id = :matchId")
+    @Query("SELECT e FROM Event e WHERE e.active = true AND e.match.id = :matchId ORDER BY e.period, e.matchTime, e.realTime")
     Collection<Event> findEventsByMatchId(@Param("matchId") UUID matchId);
 
-    @Query("SELECT e FROM Event e WHERE e.id = :eventId AND e.match.id = :matchId")
+    @Query("SELECT e FROM Event e WHERE e.active = true AND e.id = :eventId AND e.match.id = :matchId")
     Event findEventByIdAndMatchId(@Param("eventId") UUID eventId, @Param("matchId") UUID matchId);
+
+    @Query("SELECT e FROM Event e WHERE e.active = true AND e.id = :eventId")
+    Event findActiveEventById(@Param("eventId") UUID eventId);
+
+    Event findByClientEventId(UUID clientEventId);
 
 }

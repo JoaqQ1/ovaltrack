@@ -9,6 +9,8 @@ import com.ovaltrack.backend.event.domain.EventPossession;
 public record EventResponseDTO(
         UUID id,
 
+        UUID clientEventId,
+
         UUID eventTypeId,
 
         UUID matchId,
@@ -18,6 +20,8 @@ public record EventResponseDTO(
         EventPossession teamPossession,
 
         Integer matchTime,
+
+        Integer absoluteMatchTime,
 
         LocalDateTime realTime,
 

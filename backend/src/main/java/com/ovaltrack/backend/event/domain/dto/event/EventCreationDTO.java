@@ -14,12 +14,16 @@ public record EventCreationDTO(
         
         @NotNull
         UUID matchId,
+
+        UUID clientEventId,
         
         UUID playerId,
 
         EventPossession teamPossession,
 
         Integer matchTime,
+
+        Integer absoluteMatchTime,
 
         LocalDateTime realTime,
 

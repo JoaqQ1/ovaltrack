@@ -7,7 +7,6 @@ import { DivisionListComponent } from './features/division/division-list.compone
 import { DivisionPlayerFormComponent } from './features/division-player/form/division-player-form.component';
 import { DivisionCoachListComponent } from './features/division-coach/division-coach-list.component';
 import { hasRoleGuard } from './core/guards/has-role.guard';
-import { SelectionRosterComponent } from './features/match/selection-roster/selection-roster.component';
 import { hasClubGuard } from './core/guards/has-club.guard';
 import { PostMatchComponent } from './features/match/post-match/post-match.component';
 import { DivisionPlayerListComponent } from './features/division-player/list/division-player-list.component';
@@ -38,6 +37,18 @@ export const routes: Routes = [
         path: 'auth',
         loadChildren: () =>
             import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
+    },
+    {
+        path: 'live-capture/:matchId/halftime',
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+        },
+        loadComponent: () =>
+            import('./features/match/halftime-summary/halftime-summary.component').then(
+                m => m.HalftimeSummaryComponent
+            )
     },
     {
         path: 'live-capture/:matchId',
@@ -144,7 +155,15 @@ export const routes: Routes = [
     },
     {
         path: 'selection-roster/:id',
-        component: SelectionRosterComponent
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+        },
+        loadComponent: () =>
+            import('./features/match/selection-roster/selection-roster.component').then(
+                m => m.SelectionRosterComponent
+            )
     },
     {
         path: 'post-match/:id',

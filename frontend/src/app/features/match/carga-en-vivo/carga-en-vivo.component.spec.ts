@@ -2,14 +2,19 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
 import { LiveCaptureService } from '../services/live-capture.service';
+import { MatchService } from '../services/match.service';
+import { StatisticCalculationService } from '../services/statistic-calculation.service';
 import { CargaEnVivoComponent } from './carga-en-vivo.component';
 
 declare const describe: (description: string, specDefinitions: () => void) => void;
 declare const beforeEach: (action: () => void | Promise<void>) => void;
-declare const it: (description: string, testFunction: () => void) => void;
+declare const it: (description: string, testFunction: () => void | Promise<void>) => void;
 declare const expect: (actual: unknown) => {
   toBe(expected: unknown): void;
   toEqual(expected: unknown): void;
+  not: {
+    toBe(expected: unknown): void;
+  };
 };
 
 describe('CargaEnVivoComponent', () => {
@@ -24,6 +29,19 @@ describe('CargaEnVivoComponent', () => {
           provide: LiveCaptureService,
           useValue: {
             getLiveCaptureBootstrap: () => of({
+              match: {
+                id: '550e8400-e29b-41d4-a716-446655440002',
+                date: '2026-09-14T12:00:00',
+                divisionId: '550e8400-e29b-41d4-a716-446655440001',
+                opponent: 'DRC',
+                status: 'not_started' as const,
+                currentPeriod: 1,
+                clockElapsedSeconds: 0,
+                clockPaused: true,
+                currentPossession: 'OWN' as const,
+                homeScore: 0,
+                awayScore: 0,
+              },
               query: {
                 clubId: '550e8400-e29b-41d4-a716-446655440000',
                 divisionId: '550e8400-e29b-41d4-a716-446655440001',
@@ -45,7 +63,49 @@ describe('CargaEnVivoComponent', () => {
             }),
             saveLiveCaptureState: () => of(undefined),
             saveEvent: () => of(undefined),
+            syncPendingEvents: () => of([]),
             deleteEvent: () => of(undefined),
+          },
+        },
+        {
+          provide: MatchService,
+          useValue: {
+            closeFirstHalf: () => of(undefined),
+            startSecondHalf: () => of(undefined),
+            getPeriodStatistics: () => of({}),
+          },
+        },
+        {
+          provide: StatisticCalculationService,
+          useValue: {
+            calculatePeriodStatistics: () => Promise.resolve({
+              matchId: '550e8400-e29b-41d4-a716-446655440002',
+              period: 1,
+              ownScore: 10,
+              opponentScore: 5,
+              ownTries: 2,
+              opponentTries: 1,
+              ownConversions: 0,
+              opponentConversions: 0,
+              ownPenalties: 0,
+              opponentPenalties: 0,
+              ownDropGoals: 0,
+              opponentDropGoals: 0,
+              ownTacklesCompleted: 15,
+              ownTacklesMissed: 2,
+              ownTackleEffectiveness: 88.2,
+              ownTurnoversWon: 3,
+              ownTurnoversLost: 1,
+              ownPenaltiesConceded: 4,
+              opponentPenaltiesConceded: 6,
+              ownYellowCards: 0,
+              opponentYellowCards: 0,
+              ownRedCards: 0,
+              opponentRedCards: 0,
+              scrumsTotal: 4,
+              lineoutsTotal: 6,
+              ownPossessionPercentage: 55.0,
+            }),
           },
         },
       ],
@@ -77,7 +137,7 @@ describe('CargaEnVivoComponent', () => {
       events: [{
         id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK',
         affectsPossession: false, isScoring: true, points: 5, requiresPlayer: false,
-        active: true, templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
+        templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
       }],
     }];
     (component as any).events = [event];
@@ -99,7 +159,7 @@ describe('CargaEnVivoComponent', () => {
     const pendingEvent = {
       id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK' as const,
       affectsPossession: false, isScoring: true, points: 5, requiresPlayer: true,
-      active: true, templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
+      templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
     };
     component.pendingSelection = {
       event: pendingEvent,
@@ -119,7 +179,7 @@ describe('CargaEnVivoComponent', () => {
     const pendingEvent = {
       id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK' as const,
       affectsPossession: false, isScoring: true, points: 5, requiresPlayer: true,
-      active: true, templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
+      templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
     };
     component.pendingSelection = {
       event: pendingEvent,
@@ -137,7 +197,7 @@ describe('CargaEnVivoComponent', () => {
   it('should revert score without changing possession when deleting an older event', () => {
     const eventType = (id: string, name: string, affectsPossession: boolean, isScoring: boolean, points: number) => ({
       id, name, groupName: 'Test', category: 'ATTACK' as const, affectsPossession, isScoring,
-      points, requiresPlayer: false, active: true, templateEventFields: null,
+      points, requiresPlayer: false, templateEventFields: null,
       createdAt: '2026-09-14T12:00:00Z',
     });
     component.categories = [{ name: 'Test', events: [
@@ -155,5 +215,27 @@ describe('CargaEnVivoComponent', () => {
 
     expect(component.scoreboard.home).toBe(0);
     expect(component.currentPossession).toBe('OWN');
+  });
+
+  it('should open confirm halftime dialog when period button is clicked in period 1', () => {
+    component.period = 1;
+    component.isHalftime = false;
+    component.showConfirmHalftime = false;
+
+    component.onPeriodButtonClick();
+
+    expect(component.showConfirmHalftime).toBe(true);
+  });
+
+  it('should close first half and pause clock on confirm', async () => {
+    component.period = 1;
+    component.clockPaused = false;
+    component.gameClock = '40:15';
+
+    await component.confirmCloseFirstHalf();
+
+    expect(component.isHalftime).toBe(true);
+    expect(component.periodLabel).toBe('Entretiempo');
+    expect(component.clockPaused).toBe(true);
   });
 });

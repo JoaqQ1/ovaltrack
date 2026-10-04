@@ -13,6 +13,8 @@ public record EventUpdateDTO(
 
         Integer matchTime,
 
+        Integer absoluteMatchTime,
+
         //LocalDateTime realTime,
 
         Integer period,

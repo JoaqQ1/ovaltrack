@@ -87,4 +87,12 @@ public class GlobalExceptionHandler {
                 error.setStatus(HttpStatus.NOT_FOUND.value());
                 return ResponseEntity.status(HttpStatus.NOT_FOUND.value()).body(error);
         }
+
+        @ExceptionHandler(IllegalArgumentException.class)
+        public ResponseEntity<Map<String, String>> handleIllegalArgumentException(
+                        IllegalArgumentException ex) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body(Map.of("message",
+                                                ex.getMessage() != null ? ex.getMessage() : "Parámetro inválido."));
+        }
 }
