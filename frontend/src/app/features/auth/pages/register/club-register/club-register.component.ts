@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
-import { RegistroRequest } from '../../../types/auth.types';
+import { RegistrationRequest } from '../types/register.type';
 
 @Component({
   selector: 'app-club-register',
@@ -13,9 +13,10 @@ import { RegistroRequest } from '../../../types/auth.types';
   styleUrl: './club-register.component.css'
 })
 export class ClubRegisterComponent {
+
   private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  // private router = inject(Router);
+  constructor(private authService: AuthService) { }
+
   registerForm = this.fb.nonNullable.group({
     firstName: ['', [Validators.required]],
     lastName: ['', [Validators.required]],
@@ -24,6 +25,7 @@ export class ClubRegisterComponent {
     birthDate: ['', [Validators.required]],
     clubName: ['', [Validators.required]],
     clubRegion: ['', [Validators.required]],
+    clubContactPhone: [''],
     termsAccepted: [false, [Validators.requiredTrue]]
   });
 
@@ -42,18 +44,20 @@ export class ClubRegisterComponent {
 
     const rawData = this.registerForm.getRawValue();
 
-    // Estructura de la petición mapeando al rol ADMIN_CLUB requerido para alta de club (HU-5.12)
-    const payload: RegistroRequest = {
-      firstName: rawData.firstName,
-      lastName: rawData.lastName,
+    const payload: RegistrationRequest = {
       email: rawData.email,
       password: rawData.password,
-      birthDate: rawData.birthDate,
-      role: 'ADMIN_CLUB',
-      clubName: rawData.clubName,
-      clubRegion: rawData.clubRegion
+      requestedRole: 'ADMIN_CLUB',
+      applicantFirstName: rawData.firstName,
+      applicantLastName: rawData.lastName,
+      applicantBirthDate: rawData.birthDate,
+      requestedClubName: rawData.clubName,
+      requestedClubCity: rawData.clubRegion,
+      requestedClubContactEmail: rawData.email,
+      requestedClubContactPhone: rawData.clubContactPhone || undefined,
+      status: 'PENDING'
     };
-
+    console.log(payload)
     this.authService.register(payload).subscribe({
       next: (response) => {
         this.isSubmitting = false;

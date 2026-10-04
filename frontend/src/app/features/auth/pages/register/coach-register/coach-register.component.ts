@@ -3,9 +3,9 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
-import { RegistroRequest } from '../../../types/auth.types';
 import { ClubService } from '../../../../../services/club.service';
 import { ClubRegistrationOption } from '../../../../club/types/club.types';
+import { RegistrationRequest } from '../types/register.type';
 
 @Component({
   selector: 'app-coach-register',
@@ -16,9 +16,11 @@ import { ClubRegistrationOption } from '../../../../club/types/club.types';
 })
 export class CoachRegisterComponent implements OnInit {
 
-  private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
-  private readonly clubService = inject(ClubService);
+  private fb = inject(FormBuilder);
+  constructor(
+    private authService: AuthService,
+    private clubService: ClubService
+  ) { }
 
   readonly registerForm = this.fb.nonNullable.group({
     firstName: ['', [Validators.required]],
@@ -144,15 +146,18 @@ export class CoachRegisterComponent implements OnInit {
 
     this.errorMessage = '';
     this.isSubmitting = true;
-    const formData = this.registerForm.getRawValue();
-    const payload: RegistroRequest = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      password: formData.password,
-      birthDate: formData.birthDate,
-      role: 'COACH_ANALYST',
-      clubId: formData.clubId
+    const rawData = this.registerForm.getRawValue();
+
+    const payload: RegistrationRequest = {
+      email: rawData.email,
+      password: rawData.password,
+      requestedRole: 'COACH_ANALYST',
+      applicantFirstName: rawData.firstName,
+      applicantLastName: rawData.lastName,
+      applicantBirthDate: rawData.birthDate,
+      clubId: rawData.clubId,
+      requestedClubContactEmail: rawData.email,
+      status: 'PENDING'
     };
 
     this.authService.register(payload).subscribe({
