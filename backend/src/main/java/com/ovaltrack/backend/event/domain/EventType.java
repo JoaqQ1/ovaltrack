@@ -41,6 +41,10 @@ public class EventType {
 
     private Boolean requiresPlayer;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean isActive = true;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> templateEventFields;

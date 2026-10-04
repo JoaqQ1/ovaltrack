@@ -22,6 +22,8 @@ public record EventTypeResponseDTO(
 
     boolean requiresPlayer,
 
+    boolean isActive,
+
     Map<String,Object> templateEventFields
 ) {
 }

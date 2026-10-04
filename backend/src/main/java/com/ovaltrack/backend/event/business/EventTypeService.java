@@ -18,16 +18,16 @@ public class EventTypeService {
 	private EventTypeRepository eventTypeRepository;
 
 	public Collection<EventTypeResponseDTO> findAllEventTypes() {
-		return eventTypeRepository.findAll().stream().map(EventDTOMapper::toResponseDTO).toList();
+		return eventTypeRepository.findByIsActiveTrue().stream().map(EventDTOMapper::toResponseDTO).toList();
 	}
 
 	public EventTypeResponseDTO findEventTypeById(UUID eventTypeId) {
-		EventType result = eventTypeRepository.findById(eventTypeId).orElse(null);
+		EventType result = eventTypeRepository.findByIdAndIsActiveTrue(eventTypeId).orElse(null);
 		return EventDTOMapper.toResponseDTO(result);
 	}
 
 	public EventType findEventTypeEntityById(UUID eventTypeId) {
-		return eventTypeRepository.findById(eventTypeId).orElse(null);
+		return eventTypeRepository.findByIdAndIsActiveTrue(eventTypeId).orElse(null);
 	}
 
 }

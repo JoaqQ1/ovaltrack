@@ -873,7 +873,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
    */
   private groupEventTypes(eventTypes: LiveCaptureEventType[]): EventCategoryGroup[] {
     return eventTypes
-      .filter(event => event.active !== false)
+      .filter(event => event.isActive !== false)
       .reduce<EventCategoryGroup[]>((categories, event) => {
         const category = categories.find(item => item.name === event.groupName);
 
