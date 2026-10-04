@@ -1,6 +1,5 @@
 package com.ovaltrack.backend.auth.registration.domain;
 
-import com.ovaltrack.backend.club.domain.Club;
 import com.ovaltrack.backend.club.domain.dto.ClubCreationDTO;
 import com.ovaltrack.backend.person.domain.dto.PersonCreationDTO;
 import com.ovaltrack.backend.user.domain.User;
@@ -57,12 +56,8 @@ public class RegistrationRequest {
     @Column(name = "requested_club_contact_phone", length = 40)
     private String requestedClubContactPhone;
 
-    // No todas las solicitudes pertenecen a un club por ejemplo las solicitudes de
-    // administrador de club no pertenecen a un club hasta que se active la cuenta
-    // con el club.
-    @OneToOne
-    @JoinColumn(name = "club_id")
-    private Club club;
+    @Column(name="club_id")
+    private UUID clubId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
