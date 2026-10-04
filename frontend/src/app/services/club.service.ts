@@ -9,8 +9,8 @@ import { Club, ClubCreateRequest, ClubRegistrationOption, ClubUpdateRequest } fr
 })
 export class ClubService {
   private readonly http = inject(HttpClient);
-  
-  private readonly apiUrl = `${environment.apiUrl}/club`; 
+
+  private readonly apiUrl = `${environment.apiUrl}/club`;
 
   getClubs(): Observable<Club[]> {
     return this.http.get<Club[]>(this.apiUrl);
@@ -42,5 +42,8 @@ export class ClubService {
 
   getUsuarios(): Observable<unknown[]> {
     return this.getUsers();
+  }
+  getActiveClubs(): Observable<Club[]>{
+    return this.http.get<Club[]>(`${this.apiUrl}/actives-clubs`);
   }
 }
