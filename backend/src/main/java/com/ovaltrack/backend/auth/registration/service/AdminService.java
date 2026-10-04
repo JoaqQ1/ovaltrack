@@ -18,6 +18,7 @@ import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.common.config.exceptions.EntityNotFoundException;
 import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.Person;
+import com.ovaltrack.backend.person.domain.dto.PersonCreationDTO;
 import com.ovaltrack.backend.user.business.UserService;
 import com.ovaltrack.backend.user.domain.User;
 import com.ovaltrack.backend.user.domain.UserRole;
@@ -123,9 +124,13 @@ public class AdminService {
         User adminClub = request.getUser();
         ClubResponseDTO clubResponse = clubService.saveClub(request.toClubCreationDTO());
         Club aClub = clubService.findClubEntityById(clubResponse.id());
-        Person aPerson = personService.createPerson(request.toPersonCreationDTO(), aClub);
 
-        adminClub.setPerson(aPerson);
+        // Asocio a la persona al club y almaceno los datos
+        Person person = adminClub.getPerson();
+        person.setClub(aClub);
+        Person saved = personService.savePersonEntity(person);
+        
+        adminClub.setPerson(saved);
         adminClub.setRole(UserRole.ADMIN_CLUB);
         adminClub.setAccountStatus(UserStatus.ACTIVE);
         adminClub.setActive(true);
@@ -151,9 +156,13 @@ public class AdminService {
         Club aClub = clubService.findClubEntityById(request.getClubId());
         if (aClub == null)
             throw new BusinessException("El club asociado no existe");
-        Person aPerson = personService.createPerson(request.toPersonCreationDTO(), aClub);
 
-        coach.setPerson(aPerson);
+        // Asocio a la persona al club y almaceno los datos
+        Person person = coach.getPerson();
+        person.setClub(aClub);
+        Person saved = personService.savePersonEntity(person);
+
+        coach.setPerson(saved);
         coach.setRole(UserRole.COACH_ANALYST);
         coach.setAccountStatus(UserStatus.ACTIVE);
         coach.setActive(true);
