@@ -80,6 +80,12 @@ public class UserService {
 		return userRepository.findByLoginEmail(email).orElse(null);
 	}
 
+	public Collection<UserResponseDTO> findAllUsersExceptAdminOvaltrack() {
+		return userRepository.findByRoleNot(UserRole.ADMIN_OVALTRACK).stream()
+				.map(UserDTOMapper::toResponseDTO) 
+				.toList();
+	}
+
 	public boolean existsByEmail(String email) {
 		return userRepository.existsByLoginEmail(email);
 	}
