@@ -1,11 +1,12 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { AuthResponse, CurrentUserSession, LoginRequest, RegistrationResponse, RegistroRequest, TokenPayload } from '../types/auth.types';
+import { AuthResponse, CurrentUserSession, LoginRequest, RegistrationResponse, TokenPayload } from '../types/auth.types';
 import { environment } from '@environments/environment.docker';
 import { TokenService } from '../../../core/services/token.service';
 import { UserContextService } from '../../../core/services/user-context.service';
 import { Observable, tap } from 'rxjs';
+import { RegistrationRequest } from '../pages/register/types/register.type';
 @Injectable({
   providedIn: 'root'
 })
@@ -25,7 +26,7 @@ export class AuthService {
     }
   }
 
-  register(data: RegistroRequest): Observable<RegistrationResponse> {
+  register(data: RegistrationRequest): Observable<RegistrationResponse> {
     return this.http.post<RegistrationResponse>(`${this.apiUrl}/register`, data);
   }
   login(credentials: LoginRequest): Observable<AuthResponse> {

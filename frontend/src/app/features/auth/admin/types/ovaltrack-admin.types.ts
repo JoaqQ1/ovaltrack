@@ -1,5 +1,6 @@
+import { User, UserResponseDTO } from 'src/app/features/user/types/user.types';
 import { UserRole } from '../../types/auth.types';
-import { Club } from 'src/app/features/club/types/club.types';
+import { RegistrationRequestStatus } from '../../pages/register/types/register.type';
 
 export interface RegistrationRequest {
     id: string;
@@ -12,23 +13,14 @@ export interface RegistrationRequest {
     requestedClubCity: string | null;
     requestedClubContactEmail: string | null;
     requestedClubContactPhone: string | null;
-    club: Club | null;
-    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'NEEDS_INFORMATION';
+    status: RegistrationRequestStatus;
     decisionComment: string | null;
     createdAt: string;
+    decidedBy?:User
 }
 
-export interface ActivePlatformAccount {
-    id: string;
-    email: string;
-    role: UserRole;
-    active: boolean;
-    firstName: string | null;
-    lastName: string | null;
-    createdAt: string;
-}
 
 export interface OvalTrackAdminOverview {
     registrationRequests: RegistrationRequest[];
-    activeAccounts: ActivePlatformAccount[];
+    accounts: UserResponseDTO[];
 }

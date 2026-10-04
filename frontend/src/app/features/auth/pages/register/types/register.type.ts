@@ -1,12 +1,12 @@
 import { User } from "src/app/features/user/types/user.types";
 import { UserRole } from "../../../types/auth.types";
 
-export type RegistrationRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_INFORMATION';
+export type RegistrationRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'NEEDS_INFORMATION';
 
 
 export interface RegistrationRequest {
-    email:string,
-    password:string,
+    email: string,
+    password: string,
     requestedRole: UserRole;
     applicantFirstName: string;
     applicantLastName: string;

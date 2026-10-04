@@ -10,6 +10,7 @@ export interface RegistroRequest {
   role: UserRole;
   clubName?: string;     // Obligatorio si es ADMIN_CLUB
   clubRegion?: string;   // Obligatorio si es ADMIN_CLUB
+  clubContactPhone?: string;
   clubId?: string;       // Obligatorio si es COACH_ANALYST
 }
 

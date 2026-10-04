@@ -5,6 +5,8 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClubService } from 'src/app/services/club.service';
 import { Club } from 'src/app/features/club/types/club.types';
+import { BackendResponse, STATUS_CODE } from 'src/app/shared/types/shared-types';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-ovaltrack-admin',
@@ -19,27 +21,30 @@ export class OvaltrackAdminComponent implements OnInit {
   isLoading = true;
   activeSection: string = 'new-request';
   activeClubs: Club[] = [];
-  
+
   // Control de rechazos con comentarios
   rejectingId: string | null = null;
   rejectComment: string = '';
 
   constructor(
     private adminService: OvalTrackAdminService,
-    private clubService: ClubService
+    private clubService: ClubService,
   ) { }
 
   ngOnInit(): void {
     this.loadOverview();
-    this.getActiveClubs();
+    this.getClubs();
   }
 
   loadOverview(): void {
     this.isLoading = true;
     this.errorMessage = '';
     this.adminService.getOverview().subscribe({
-      next: overview => {
-        this.overview = overview;
+      next: (response: BackendResponse) => {
+        if (response.status === STATUS_CODE.OK) {
+          console.log(response)
+          this.overview = response.data as OvalTrackAdminOverview;
+        }
         this.isLoading = false;
       },
       error: () => {
@@ -53,8 +58,10 @@ export class OvaltrackAdminComponent implements OnInit {
 
   onAccept(id: string): void {
     this.adminService.approveClubRequest(id).subscribe({
-      next: () => {
-        this.loadOverview(); // Recargamos para actualizar estados
+      next: (response: BackendResponse) => {
+        if (response.status === STATUS_CODE.OK) {
+          this.loadOverview();
+        }
       },
       error: (err) => {
         console.error('Error al aprobar solicitud', err);
@@ -107,8 +114,8 @@ export class OvaltrackAdminComponent implements OnInit {
     });
   }
 
-  private getActiveClubs(): void {
-    this.clubService.getActiveClubs().subscribe({
+  getClubs(): void {
+    this.clubService.getClubes().subscribe({
       next: (clubs: Club[]) => {
         if (clubs) {
           this.activeClubs = clubs;
@@ -120,24 +127,50 @@ export class OvaltrackAdminComponent implements OnInit {
     });
   }
 
-  rejectClub(id: string): void {
-    console.log("Se dio de baja el club con id: " + id);
-    // TODO: Conectar con método de desactivación de club en ClubService
+  deactivateClub(club: Club): void {
   }
+  activateClub(club: Club): void {
+  }
+  activateAccount(userId: string) {
+    this.adminService.activateAccount(userId).subscribe({
+      next: (response: BackendResponse) => {
+        if (response.status === STATUS_CODE.OK) {
+          this.loadOverview();
+        }
+      },
+      error(err) {
+        console.error(err);
+      },
+    })
+  }
+  deactivateAccount(userId: string) {
+    console.log(userId)
+    this.adminService.deactivateAccount(userId).subscribe({
+      next: (response: BackendResponse) => {
+        if (response.status === STATUS_CODE.OK) {
+          this.loadOverview();
+        }
+      },
+      error(err) {
+        console.error(err);
+      },
+    })
+  }
+
 
   // --- GETTERS FILTRADOS ---
 
   // Solicitudes pendientes de nuevos clubes
   get newRequests(): RegistrationRequest[] {
     return this.overview?.registrationRequests?.filter(
-      r => r.requestedRole === 'ADMIN_CLUB' && (r.status === 'PENDING' || r.status === 'NEEDS_INFORMATION')
+      r => (r.status === 'PENDING' || r.status === 'NEEDS_INFORMATION')
     ) || [];
   }
 
   // Solicitudes de Staff / Admins de club (Historial general o procesadas para poder dar de alta/baja)
   get staffRequests(): RegistrationRequest[] {
     return this.overview?.registrationRequests?.filter(
-      r => r.requestedRole !== 'ADMIN_CLUB' || r.status === 'APPROVED' || r.status === 'REJECTED'
+      r => r.status === 'APPROVED' || r.status === 'REJECTED'
     ) || [];
   }
 }
