@@ -16,6 +16,7 @@ export interface BackendEventResponse {
   attributes: Record<string, unknown> | null;
   createdAt: string;
   synchronizedAt: string | null;
+  active: boolean;
 }
 
 export interface BackendEventCreationRequest {
@@ -34,5 +35,6 @@ export interface BackendEventCreationRequest {
 }
 
 export interface LocalMatchEvent extends BackendEventResponse {
+  backendEventId?: UUID | null;
   localSequence: number;
 }

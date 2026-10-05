@@ -16,6 +16,7 @@ export class EventTypeService {
         groupName: eventType.groupName ?? 'General',
         category: eventType.category ?? 'NEUTRAL',
         points: eventType.points ?? 0,
+        isActive: true,
         createdAt: new Date().toISOString(),
       })))
     );

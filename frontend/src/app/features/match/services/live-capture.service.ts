@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, defer, firstValueFrom, forkJoin, from, map, switchMap } from 'rxjs';
+import { Observable, concatMap, defer, firstValueFrom, forkJoin, from, map, switchMap, toArray, catchError, EMPTY } from 'rxjs';
 import {
   LiveCaptureBootstrap,
+  LiveCaptureBootstrapResponse,
   LiveCapturePersistedState,
   LiveCaptureQuery,
 } from '../types/live-capture.types';
@@ -11,7 +12,7 @@ import { LiveCaptureCacheService } from './live-capture-cache.service';
 import { MatchService } from './match.service';
 import { EventService } from './event.service';
 import { RosterService } from './roster.service';
-import { AvailablePlayer } from '../types/roster.types';
+import { AvailablePlayer , SavedRoster} from '../types/roster.types';
 
 const HOME_TEAM_NAME = 'PMRC';
 
@@ -33,6 +34,13 @@ export class LiveCaptureService {
   private readonly rosterService = inject(RosterService);
   private readonly playersByMatch = new Map<string, AvailablePlayer[]>();
 
+  constructor() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => this.syncPendingEvents().subscribe());
+      this.syncPendingEvents().subscribe();
+    }
+  }
+
   getLiveCaptureBootstrap(query: LiveCaptureQuery): Observable<LiveCaptureBootstrap> {
     return defer(() => from(this.readBootstrap(query)));
   }
@@ -50,18 +58,55 @@ export class LiveCaptureService {
   }
 
   saveEvent(event: LocalMatchEvent): Observable<LocalMatchEvent> {
-    return this.eventService.createFromLocal(this.resolvePlayer(event)).pipe(
-      map(response => ({ ...response, localSequence: event.localSequence })),
-      // La caché se actualiza después de una respuesta exitosa del backend.
-      switchMap(savedEvent => from(this.cache.saveEvent(savedEvent)).pipe(
-        map(() => savedEvent)
-      ))
+    const localEvent = this.resolvePlayer(event);
+
+    return from(this.cache.saveEvent(localEvent)).pipe(
+      map(savedEvent => ({
+        ...savedEvent,
+        localSequence: event.localSequence,
+      }))
     );
   }
 
-  deleteEvent(eventId: string): Observable<void> {
-    return this.eventService.delete(eventId).pipe(
-      switchMap(() => from(this.cache.deleteEvent(eventId)))
+  syncPendingEvents(matchId?: string): Observable<LocalMatchEvent[]> {
+    return from(this.cache.getPendingEvents(matchId)).pipe(
+      switchMap(events => from(events)),
+      concatMap(event => {
+        if (!event.active && event.backendEventId != null) {
+          return this.eventService.delete(event.backendEventId).pipe(
+            switchMap(response => from(this.cache.saveEvent({
+              ...event,
+              synchronizedAt: response.synchronizedAt,
+            }))),
+            catchError(() => EMPTY),
+          );
+        }
+
+        return this.eventService.createFromLocal(event).pipe(
+          switchMap(response => {
+            const synchronizedEvent: LocalMatchEvent = {
+              ...event,
+              backendEventId: response.id,
+              synchronizedAt: response.synchronizedAt,
+            };
+
+            return from(this.cache.saveEvent(synchronizedEvent));
+          }),
+          catchError(() => EMPTY),
+        );
+      }),
+      toArray(),
+    );
+  }
+
+  getLocalEvents(matchId: string): Observable<LocalMatchEvent[]> {
+    return defer(() => from(this.cache.getEventsByMatch(matchId)));
+  }
+
+  deleteEvent(event: LocalMatchEvent): Observable<void> {
+    return from(this.cache.deleteEvent(event)).pipe(
+      switchMap(() => this.syncPendingEvents(event.matchId)),
+      map(() => undefined),
     );
   }
 
@@ -74,11 +119,35 @@ export class LiveCaptureService {
   }
 
   private async readBootstrap(query: LiveCaptureQuery): Promise<LiveCaptureBootstrap> {
-    const { bootstrap, players, savedRoster } = await firstValueFrom(forkJoin({
-      bootstrap: this.matchService.getLiveMatchBootstrap(query.matchId),
-      players: this.rosterService.getAvailablePlayers(query.matchId),
-      savedRoster: this.rosterService.getSavedRoster(query.matchId),
-    }));
+    let bootstrap: LiveCaptureBootstrapResponse;
+    let players: AvailablePlayer[];
+    let savedRoster: SavedRoster | null;
+
+    try {
+      ({ bootstrap, players, savedRoster } = await firstValueFrom(forkJoin({
+        bootstrap: this.matchService.getLiveMatchBootstrap(query.matchId),
+        players: this.rosterService.getAvailablePlayers(query.matchId),
+        savedRoster: this.rosterService.getSavedRoster(query.matchId),
+      })));
+    } catch {
+      const [localMatch, localStatus, localEventTypes] = await Promise.all([
+        this.cache.getMatch(query.matchId),
+        this.cache.getStatusData(query.matchId),
+        this.cache.getEventTypes(),
+      ]);
+
+      if (!localMatch) {
+        throw new Error(`Match ${query.matchId} is unavailable offline`);
+      }
+
+      bootstrap = {
+        match: localMatch,
+        events: localStatus.events,
+        eventTypes: localEventTypes as unknown as LiveCaptureBootstrapResponse['eventTypes'],
+      };
+      players = [];
+      savedRoster = null;
+    }
     const match = bootstrap.match;
     if (match.status === 'cancelled') {
       throw new Error(`Match ${query.matchId} was cancelled`);
@@ -93,16 +162,29 @@ export class LiveCaptureService {
       ...(savedRoster?.substitutePlayers ?? []),
     ]);
     const rosterPlayers = players.filter(player => rosterIds.has(player.id));
-    const events = bootstrap.events.map((event, index) => ({
+    const remoteEvents = bootstrap.events.map((event, index) => ({
       ...event,
       localSequence: index + 1,
     }));
+    const localEvents = await this.cache.getEventsByMatch(query.matchId);
+    const eventsByClientId = new Map<string, LocalMatchEvent>();
+
+    remoteEvents.forEach(event => {
+      eventsByClientId.set(event.clientEventId ?? event.id, event);
+    });
+    localEvents.forEach(event => {
+      eventsByClientId.set(event.id, event);
+    });
+
+    const events = Array.from(eventsByClientId.values())
+      .sort((first, second) => first.localSequence - second.localSequence);
     const eventTypes = bootstrap.eventTypes.map(eventType => ({
       ...eventType,
       groupName: eventType.groupName ?? 'General',
       category: eventType.category ?? 'NEUTRAL',
       points: eventType.points ?? 0,
       createdAt: new Date().toISOString(),
+      isActive: true,
     }));
     const isHalftime = match.status === 'halftime';
     const period = match.currentPeriod ?? 1;

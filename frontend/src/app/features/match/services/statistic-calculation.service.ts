@@ -33,15 +33,31 @@ export class StatisticCalculationService {
     return this.computeStatistics(matchId, period, events, eventTypes);
   }
 
+  async calculateMatchStatistics(
+    matchId: string,
+    inMemoryEvents?: LocalMatchEvent[],
+    inMemoryEventTypes?: LiveCaptureEventType[]
+  ): Promise<PeriodStatisticDTO> {
+    const [events, eventTypes] = await Promise.all([
+      inMemoryEvents ?? liveCaptureDatabase.events.where('matchId').equals(matchId).toArray(),
+      inMemoryEventTypes && inMemoryEventTypes.length > 0
+        ? inMemoryEventTypes
+        : liveCaptureDatabase.eventTypes.toArray(),
+    ]);
+
+    return this.computeStatistics(matchId, 0, events, eventTypes, false);
+  }
+
   computeStatistics(
     matchId: string,
     period: number,
     events: LocalMatchEvent[],
-    eventTypes: LiveCaptureEventType[]
+    eventTypes: LiveCaptureEventType[],
+    filterByPeriod = true
   ): PeriodStatisticDTO {
     const eventTypeMap = new Map(eventTypes.map(et => [et.id, et]));
     const isInPeriod = (e: LocalMatchEvent) => e.period === null || e.period === period;
-    const periodEvents = events.filter(isInPeriod);
+    const periodEvents = filterByPeriod ? events.filter(isInPeriod) : events;
 
     return {
       matchId,

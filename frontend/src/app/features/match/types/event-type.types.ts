@@ -9,12 +9,11 @@ export interface BackendEventTypeResponse {
   isScoring: boolean;
   points: number | null;
   requiresPlayer: boolean;
-  isActive: boolean;
   templateEventFields: Record<string, unknown> | null;
 }
 
 export type LiveCaptureEventType = Omit<BackendEventTypeResponse,
-  'groupName' | 'category' | 'affectsPossession' | 'isScoring' | 'points' | 'requiresPlayer'
+  'groupName' | 'category' | 'affectsPossession' | 'isScoring' | 'points' | 'requiresPlayer' | 'active'
 > & {
   groupName: string;
   category: 'ATTACK' | 'DEFENSE' | 'NEUTRAL' | 'POSSESSION' | 'SET_PIECE';
@@ -22,5 +21,6 @@ export type LiveCaptureEventType = Omit<BackendEventTypeResponse,
   isScoring: boolean;
   points: number;
   requiresPlayer: boolean;
+  isActive: boolean;
   createdAt: string;
 };

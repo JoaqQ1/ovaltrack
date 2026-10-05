@@ -13,9 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ovaltrack.backend.auth.dto.AuthResponse;
 import com.ovaltrack.backend.auth.dto.LoginRequest;
 import com.ovaltrack.backend.auth.dto.PasswordResetRequest;
-import com.ovaltrack.backend.auth.dto.RegistroRequest;
+import com.ovaltrack.backend.auth.registration.domain.dto.RegistrationRequestDTO;
 import com.ovaltrack.backend.auth.service.AuthService;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
+import com.ovaltrack.backend.common.dto.response.BackendResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -34,38 +35,35 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @Operation(
-        summary = "Register a new user",
-        description = "Creates a user account and returns a JWT token when registration succeeds."
-    )
+    @Operation(summary = "Register a new user", description = "Creates a user account and registration request pending approval.")
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "User registered successfully."),
-        @ApiResponse(responseCode = "400", description = "The request contains invalid or incomplete data.")
+            @ApiResponse(responseCode = "201", description = "User registered successfully."),
+            @ApiResponse(responseCode = "400", description = "The request contains invalid or incomplete data.")
     })
     @PostMapping("/register")
-    public ResponseEntity<Object> registrar(@Valid @RequestBody RegistroRequest request, BindingResult bindingResult) {
+    public ResponseEntity<BackendResponse<Object>> registrar(@Valid @RequestBody RegistrationRequestDTO request,
+            BindingResult bindingResult) {
+        if (bindingResult.hasErrors())
+            return BackendResponse.badRequest("Campos inválidos", null);
         try {
-            if(bindingResult.hasErrors())
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", "Campos invalidos"));
-            AuthResponse response = authService.register(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            authService.register(request);
+            return BackendResponse.response(
+                HttpStatus.CREATED, 
+                "Solicitud de registro creada con éxito. Pendiente de aprobación", 
+                null
+            );
         } catch (BusinessException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", e.getMessage() != null ? e.getMessage() : "Error en el registro"));
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "Error en el registro";
+            return BackendResponse.badRequest(errorMessage, null);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", "Datos inválidos"));
+            return BackendResponse.badRequest("Datos inválidos", e);
         }
     }
 
-    @Operation(
-        summary = "Log in a user",
-        description = "Authenticates the supplied credentials and returns a JWT token."
-    )
+    @Operation(summary = "Log in a user", description = "Authenticates the supplied credentials and returns a JWT token.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Credentials accepted and token returned."),
-        @ApiResponse(responseCode = "400", description = "The credentials are invalid.")
+            @ApiResponse(responseCode = "200", description = "Credentials accepted and token returned."),
+            @ApiResponse(responseCode = "400", description = "The credentials are invalid.")
     })
     @PostMapping("/login")
     public ResponseEntity<Object> login(@RequestBody LoginRequest request) {
@@ -78,12 +76,9 @@ public class AuthController {
         }
     }
 
-    @Operation(
-        summary = "Request a password reset",
-        description = "Accepts a password reset request for the supplied email address."
-    )
+    @Operation(summary = "Request a password reset", description = "Accepts a password reset request for the supplied email address.")
     @ApiResponses({
-        @ApiResponse(responseCode = "202", description = "Password reset request accepted.")
+            @ApiResponse(responseCode = "202", description = "Password reset request accepted.")
     })
     @PostMapping("/password-reset/request")
     public ResponseEntity<Object> passwordReset(@RequestBody PasswordResetRequest request) {

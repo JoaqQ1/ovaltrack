@@ -1,6 +1,7 @@
 package com.ovaltrack.backend.auth.registration.domain;
 
-import com.ovaltrack.backend.club.domain.Club;
+import com.ovaltrack.backend.club.domain.dto.ClubCreationDTO;
+import com.ovaltrack.backend.person.domain.dto.PersonCreationDTO;
 import com.ovaltrack.backend.user.domain.User;
 import com.ovaltrack.backend.user.domain.UserRole;
 import jakarta.persistence.*;
@@ -8,6 +9,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -33,12 +35,29 @@ public class RegistrationRequest {
     @Column(name = "requested_role", nullable = false)
     private UserRole requestedRole;
 
-    // No todas las solicitudes pertenecen a un club por ejemplo las solicitudes de
-    // administrador de club no pertenecen a un club hasta que se active la cuenta
-    // con el club.
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "club_id")
-    private Club club;
+    @Column(name = "applicant_first_name", length = 100)
+    private String applicantFirstName;
+
+    @Column(name = "applicant_last_name", length = 100)
+    private String applicantLastName;
+
+    @Column(name = "applicant_birth_date")
+    private LocalDate applicantBirthDate;
+
+    @Column(name = "requested_club_name", length = 180)
+    private String requestedClubName;
+
+    @Column(name = "requested_club_city", length = 180)
+    private String requestedClubCity;
+
+    @Column(name = "requested_club_contact_email", length = 254)
+    private String requestedClubContactEmail;
+
+    @Column(name = "requested_club_contact_phone", length = 40)
+    private String requestedClubContactPhone;
+
+    @Column(name="club_id")
+    private UUID clubId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -57,4 +76,22 @@ public class RegistrationRequest {
     private LocalDateTime createdAt;
 
     private LocalDateTime decidedAt;
+
+    public ClubCreationDTO toClubCreationDTO(){
+        return new ClubCreationDTO(
+                requestedClubName,
+                user.getId(),
+                requestedClubCity,
+                null,
+                requestedClubContactEmail,
+                requestedClubContactPhone);
+    }
+    public PersonCreationDTO toPersonCreationDTO(){
+        return new PersonCreationDTO(
+            applicantFirstName, 
+            applicantLastName, 
+            applicantBirthDate, 
+            user.getLoginEmail(), 
+            null);
+    }
 }

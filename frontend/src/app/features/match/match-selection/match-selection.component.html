@@ -153,20 +153,20 @@
             Empezar partido
           </button>
         </div>
-        } @else if(match.status === 'finished'){
-        <button
-          type="button"
-          class="action-link"
-          (click)="onSelectMatch(match)">
-          Analisis post-partido
-        </button>
+        } @else if (match.status === 'finished' || match.status === 'halftime') {
+          <button
+            type="button"
+            class="btn btn-invite"
+            (click)="onSelectMatch(match)">
+            Ver estadisticas
+          </button>
         } @else {
-        <button
-          type="button"
-          class="action-link"
-          (click)="onSelectMatch(match)">
-          Capturar en vivo
-        </button>
+          <button
+            type="button"
+            class="action-link"
+            (click)="onSelectMatch(match)">
+            Capturar en vivo
+          </button>
         }
       </footer>
       }

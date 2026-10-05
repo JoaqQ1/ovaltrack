@@ -1,106 +1,259 @@
-<section class="roster-container">
-  <header class="roster-header">
-    
-    <h1>Armar Plantel</h1>
-    <div class="tabs">
-      <button [class.active]="currentStep === 'titulares'" (click)="goToTitulares()">Titulares</button>
-      <button [class.active]="currentStep === 'suplentes'" (click)="goToSuplentes()">Suplentes</button>
-      <button class="btn-primary" (click)="goBack()"> <i class="ti ti-arrow-left"></i> Volver</button>
+<div class="app roster-page">
+  <!-- 1. HUD Superior Oficial -->
+  <header class="hud">
+    <div class="hud-brand">
+      <div class="badge-tech">
+        <span>Alineación Táctica</span>
+      </div>
+      <div class="brand-text">
+        <h1 class="title">Armar Plantel vs {{ opponentName() }}</h1>
+        <p class="club">Asigna los 15 titulares reglamentarios y hasta 8 suplentes para el encuentro</p>
+      </div>
+    </div>
+
+    <div class="hud-actions">
+      <button type="button" class="btn btn-outline" (click)="goBack()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Volver al fixture</span>
+      </button>
     </div>
   </header>
 
-  @if (currentStep === 'titulares') {
-    <!-- ZONA SUPERIOR: Formación -->
-    <div class="slots-grid">
-      @for (slot of titularesSlots; track slot.number; let i = $index) {
-        <button 
-          class="slot-card" 
-          [class.filled]="slot.player"
-          [class.is-selected]="activeSlotIndex === i"
-          (click)="selectSlot(i)">
-          
-          <div class="slot-header">
-            <span class="slot-number">{{ slot.number }}</span>
-            <span class="slot-position">{{ slot.positionName }}</span>
-          </div>
-          
-          @if (slot.player) {
-            <span class="player-name">{{ slot.player.fullName }}</span>
-            <button class="btn-clear" (click)="clearSlot(i, $event)">
-              <i class="ti ti-x" aria-hidden="true"></i>
-            </button>
-          } @else {
-            <span class="empty-text">Tocar para asignar</span>
-          }
-        </button>
-      }
+  <!-- 2. Barra de Filtros Segmentados y Contadores de Puesto -->
+  <div class="roster-toolbar">
+    <div class="status-segment">
+      <button
+        type="button"
+        class="status-tab"
+        [class.active]="currentStep() === 'titulares'"
+        (click)="setStep('titulares')">
+        <span>Titulares (1-15)</span>
+        <span class="status-badge-count" [class.count-complete]="isStartingComplete()">
+          {{ startingAssignedCount() }}/15
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="status-tab"
+        [class.active]="currentStep() === 'suplentes'"
+        (click)="setStep('suplentes')">
+        <span>Suplentes (16-23)</span>
+        <span class="status-badge-count">
+          {{ substituteAssignedCount() }}/8
+        </span>
+      </button>
     </div>
 
-    <!-- ZONA INFERIOR: Jugadores Disponibles -->
-    <div class="pool-section">
-      <h2 class="pool-title">Jugadores Disponibles</h2>
-      <div class="players-pool">
-        @for (player of availablePlayers; track player.id) {
-          <button 
-            class="player-item" 
-            [class.is-assigned]="isPlayerAssigned(player.id)"
-            (click)="selectAvailablePlayer(player)">
-            {{ player.fullName }}
-          </button>
+    <div class="roster-summary-pill">
+      @if (isStartingComplete()) {
+        <span class="status-badge status-active">
+          <span class="dot"></span>
+          Formación titular completa (15/15)
+        </span>
+      } @else {
+        <span class="status-badge status-warning">
+          <span class="dot"></span>
+          Faltan {{ 15 - startingAssignedCount() }} titulares
+        </span>
+      }
+    </div>
+  </div>
+
+  <!-- 3. Contenido Principal / Grid Táctica -->
+  @if (isLoading()) {
+    <div class="roster-loading-grid">
+      <div class="sk-row"><div class="sk sk-block"></div></div>
+      <div class="sk-row"><div class="sk sk-block"></div></div>
+      <div class="sk-row"><div class="sk sk-block"></div></div>
+    </div>
+  } @else {
+    <div class="roster-layout">
+      <!-- Columna Izquierda: Grilla de Formación en Cancha -->
+      <section class="roster-field-card form-card">
+        <div class="form-card-header field-card-header">
+          <div>
+            <h2 class="form-card-title">
+              {{ currentStep() === 'titulares' ? 'Formación Titular' : 'Banco de Suplentes' }}
+            </h2>
+            <p class="form-card-subtitle">
+              {{ currentStep() === 'titulares'
+                  ? 'Puestos del 1 al 15 organizados por posición reglamentaria'
+                  : 'Relevos del 16 al 23 disponibles para cambios e impacto' }}
+            </p>
+          </div>
+          <div class="slot-mode-badge">
+            {{ currentStep() === 'titulares' ? '15 Jugadores' : 'Hasta 8 Jugadores' }}
+          </div>
+        </div>
+
+        <div class="form-card-body field-card-body">
+          <div class="slots-grid">
+            @for (slot of currentSlots(); track slot.number; let i = $index) {
+              <div
+                class="slot-card"
+                [class.filled]="slot.player !== null"
+                [class.is-selected]="activeSlotIndex() === i"
+                (click)="selectSlot(i)"
+                role="button"
+                tabindex="0">
+                
+                <div class="slot-top">
+                  <span class="slot-number">{{ slot.number }}</span>
+                  <span class="slot-position">{{ slot.positionName }}</span>
+                  @if (slot.player) {
+                    <button
+                      type="button"
+                      class="btn-clear-slot"
+                      (click)="clearSlot(i, $event)"
+                      title="Quitar jugador de esta casilla"
+                      aria-label="Quitar jugador">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  }
+                </div>
+
+                <div class="slot-main">
+                  @if (slot.player; as player) {
+                    <div class="player-assigned-info">
+                      <span class="player-avatar-mini">{{ player.fullName.charAt(0).toUpperCase() }}</span>
+                      <span class="player-fullname">{{ player.fullName }}</span>
+                    </div>
+                  } @else {
+                    <div class="slot-empty-prompt">
+                      <span class="plus-icon">+</span>
+                      <span class="empty-label">
+                        {{ activeSlotIndex() === i ? 'Toca un jugador disponible' : 'Tocar para asignar' }}
+                      </span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- Columna Derecha: Banco de Jugadores Disponibles -->
+      <aside class="roster-pool-card form-card">
+        <div class="form-card-header pool-card-header">
+          <div>
+            <h2 class="form-card-title">Plantel Disponible</h2>
+            <p class="form-card-subtitle">{{ availablePlayers().length }} jugadores registrados en la división</p>
+          </div>
+
+          <div class="pool-search-box">
+            <input
+              type="text"
+              class="form-control pool-search-input"
+              placeholder="Buscar jugador o puesto..."
+              [ngModel]="searchTerm()"
+              (ngModelChange)="searchTerm.set($event)" />
+          </div>
+        </div>
+
+        <div class="form-card-body pool-card-body">
+          @if (filteredAvailablePlayers().length === 0) {
+            <div class="empty-pool-state">
+              <p>No se encontraron jugadores que coincidan con la búsqueda.</p>
+            </div>
+          } @else {
+            <div class="players-pool-grid">
+              @for (player of filteredAvailablePlayers(); track player.id) {
+                <button
+                  type="button"
+                  class="player-pool-item"
+                  [class.is-assigned]="isPlayerAssigned(player.id)"
+                  (click)="selectAvailablePlayer(player)">
+                  <div class="player-pool-avatar">
+                    {{ player.fullName.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="player-pool-meta">
+                    <span class="player-pool-name">{{ player.fullName }}</span>
+                    <span class="player-pool-detail">
+                      @if (isPlayerAssigned(player.id)) {
+                        <span class="assigned-pill">En cancha (#{{ getPlayerDorsal(player.id) }})</span>
+                      } @else {
+                        <span class="position-tag">{{ player.position || 'Jugador' }}</span>
+                      }
+                    </span>
+                  </div>
+                  @if (!isPlayerAssigned(player.id)) {
+                    <span class="assign-action-indicator">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </span>
+                  }
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </aside>
+    </div>
+
+    <!-- 4. Barra Inferior Fija de Acciones -->
+    <div class="roster-bottom-actions">
+      <div class="actions-left-info">
+        @if (!isStartingComplete()) {
+          <span class="text-warning-bold">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            Faltan {{ 15 - startingAssignedCount() }} titulares para completar el XV
+          </span>
+        } @else {
+          <span class="text-success-bold">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            15 Titulares listos ({{ substituteAssignedCount() }} suplentes)
+          </span>
         }
       </div>
-    </div>
-    
-  } @else if (currentStep === 'suplentes') {
-    <!-- ZONA SUPERIOR: Formación Suplentes -->
-    <div class="slots-grid">
-      @for (slot of suplentesSlots; track slot.number; let i = $index) {
-        <button 
-          class="slot-card" 
-          [class.filled]="slot.player"
-          [class.is-selected]="activeSlotIndex === i"
-          (click)="selectSlot(i)">
-          
-          <div class="slot-header">
-            <span class="slot-number">{{ slot.number }}</span>
-            <span class="slot-position">{{ slot.positionName }}</span>
-          </div>
-          
-          @if (slot.player) {
-            <span class="player-name">{{ slot.player.fullName }}</span>
-            <button class="btn-clear" (click)="clearSlot(i, $event)">
-              <i class="ti ti-x" aria-hidden="true"></i>
-            </button>
-          } @else {
-            <span class="empty-text">Tocar para asignar</span>
-          }
-        </button>
-      }
-    </div>
 
-    <!-- ZONA INFERIOR: Jugadores Disponibles (La misma bolsa para ambos) -->
-    <div class="pool-section">
-      <h2 class="pool-title">Jugadores Disponibles</h2>
-      <div class="players-pool">
-        @for (player of availablePlayers; track player.id) {
-          <button 
-            class="player-item" 
-            [class.is-assigned]="isPlayerAssigned(player.id)"
-            (click)="selectAvailablePlayer(player)">
-            {{ player.fullName }}
+      <div class="actions-buttons-group">
+        @if (currentStep() === 'titulares') {
+          <button type="button" class="btn btn-outline" (click)="setStep('suplentes')">
+            <span>Continuar a Suplentes</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        } @else {
+          <button type="button" class="btn btn-outline" (click)="setStep('titulares')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Volver a Titulares</span>
           </button>
         }
+
+        <button
+          type="button"
+          class="btn btn-invite"
+          [disabled]="isSaving()"
+          (click)="guardarPlantel()">
+          @if (isSaving()) {
+            <span>Guardando...</span>
+          } @else {
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            <span>Guardar Plantel</span>
+          }
+        </button>
       </div>
     </div>
   }
-
-  <!-- BOTONES DE ACCIÓN (Fuera de los if, siempre abajo) -->
-  <div class="actions">
-    @if (currentStep === 'titulares') {
-      <button class="btn-primary" (click)="goToSuplentes()">Continuar a Suplentes</button>
-    } @else {
-      <button class="btn-secondary" (click)="goToTitulares()">Volver a Titulares</button>
-      <button class="btn-primary" (click)="guardarPlantel()">Guardar Plantel</button>
-    }
-  </div>
-</section>
+</div>

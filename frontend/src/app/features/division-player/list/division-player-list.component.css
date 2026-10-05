@@ -307,3 +307,133 @@
     padding: 12px 16px;
   }
 }
+
+/* ==========================================================================
+   Modo Oscuro (Dark Rugby Tech)
+   ========================================================================== */
+:host-context([data-theme="dark"]) .table-card {
+  background: #131c2e;
+  border-color: #1f2e47;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+:host-context([data-theme="dark"]) .card-header {
+  background: #162238;
+  border-bottom-color: #2a3c5a;
+}
+
+:host-context([data-theme="dark"]) .card-title {
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .history-card {
+  background: #131c2e;
+  border-top-color: #1f2e47;
+}
+
+:host-context([data-theme="dark"]) .history-header {
+  background: #162238;
+  border-bottom-color: #2a3c5a;
+}
+
+:host-context([data-theme="dark"]) .data-table th {
+  background: #162238;
+  color: #94a3b8;
+  border-bottom-color: #2a3c5a;
+}
+
+:host-context([data-theme="dark"]) .data-table td {
+  border-bottom-color: #1f2e47;
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .data-table tbody tr:hover {
+  background-color: #1a273e;
+}
+
+:host-context([data-theme="dark"]) .jersey-number {
+  background: #162238;
+  border-color: #2a3c5a;
+  color: #a3e635;
+}
+
+:host-context([data-theme="dark"]) .player-name {
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .position-badge {
+  background: #162238;
+  border-color: #2a3c5a;
+  color: #cbd5e1;
+}
+
+:host-context([data-theme="dark"]) .status-active {
+  background: rgba(163, 230, 53, 0.15);
+  color: #a3e635;
+  border-color: rgba(163, 230, 53, 0.3);
+}
+
+:host-context([data-theme="dark"]) .status-active .status-dot {
+  background: #a3e635;
+  box-shadow: 0 0 6px #a3e635;
+}
+
+:host-context([data-theme="dark"]) .status-inactive {
+  background: #162238;
+  color: #64748b;
+  border-color: #1f2e47;
+}
+
+:host-context([data-theme="dark"]) .status-inactive .status-dot {
+  background: #64748b;
+}
+
+:host-context([data-theme="dark"]) .form-control {
+  background: #162238;
+  border-color: #2a3c5a;
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .form-control:focus {
+  border-color: #a3e635;
+  background: #1c2b44;
+  box-shadow: 0 0 0 3px rgba(163, 230, 53, 0.2);
+}
+
+:host-context([data-theme="dark"]) .btn-primary,
+:host-context([data-theme="dark"]) .btn-invite {
+  background-color: #a3e635;
+  color: #0b111e;
+  border-color: #a3e635;
+  box-shadow: 0 2px 8px rgba(163, 230, 53, 0.25);
+}
+
+:host-context([data-theme="dark"]) .btn-primary:hover,
+:host-context([data-theme="dark"]) .btn-invite:hover {
+  background-color: #bef264;
+  border-color: #bef264;
+  color: #0b111e;
+  box-shadow: 0 4px 12px rgba(163, 230, 53, 0.35);
+}
+
+:host-context([data-theme="dark"]) .btn-secondary,
+:host-context([data-theme="dark"]) .btn-outline {
+  background-color: #131c2e;
+  border-color: #2a3c5a;
+  color: #cbd5e1;
+}
+
+:host-context([data-theme="dark"]) .btn-secondary:hover,
+:host-context([data-theme="dark"]) .btn-outline:hover {
+  background-color: #1c2b44;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .empty-state h2 {
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .empty-state p {
+  color: #94a3b8;
+}

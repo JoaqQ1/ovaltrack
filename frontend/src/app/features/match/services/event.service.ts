@@ -36,7 +36,7 @@ export class EventService {
     return this.create(request);
   }
 
-  delete(eventId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${eventId}`);
+  delete(eventId: string): Observable<BackendEventResponse> {
+    return this.http.delete<BackendEventResponse>(`${this.apiUrl}/${eventId}`);
   }
 }

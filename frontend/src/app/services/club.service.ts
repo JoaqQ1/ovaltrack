@@ -2,18 +2,22 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
-import { Club, ClubCreateRequest, ClubUpdateRequest } from '../features/club/types/club.types';
+import { Club, ClubCreateRequest, ClubRegistrationOption, ClubUpdateRequest } from '../features/club/types/club.types';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClubService {
   private readonly http = inject(HttpClient);
-  
-  private readonly apiUrl = `${environment.apiUrl}/club`; 
+
+  private readonly apiUrl = `${environment.apiUrl}/club`;
 
   getClubs(): Observable<Club[]> {
     return this.http.get<Club[]>(this.apiUrl);
+  }
+
+  getRegistrationOptions(): Observable<ClubRegistrationOption[]> {
+    return this.http.get<ClubRegistrationOption[]>(`${this.apiUrl}/registration-options`);
   }
 
   getClubes(): Observable<Club[]> {
@@ -38,5 +42,8 @@ export class ClubService {
 
   getUsuarios(): Observable<unknown[]> {
     return this.getUsers();
+  }
+  getActiveClubs(): Observable<Club[]>{
+    return this.http.get<Club[]>(`${this.apiUrl}/actives-clubs`);
   }
 }

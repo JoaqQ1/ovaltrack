@@ -16,11 +16,13 @@ import { ThemeService } from 'src/app/core/services/theme.service';
         <div class="container d-flex justify-content-between align-items-center">
           <!-- Brand Link al Home -->
           <a routerLink="/home" class="brand-link">
-            <div class="brand-icon">
+            <!-- <div class="club-icon">
               {{ userContextService.currentClub()?.name ? userContextService.currentClub()!.name.charAt(0).toUpperCase() : 'O' }}
-            </div>
+            </div> -->
             <div class="brand-info">
-              <span class="brand-title">OvalTrack</span>
+              <img class="brand-icon"
+                [src]="themeService.theme() ===  'light' ? 'assets/brand/OvalTrack-fondo-claro.png' : 'assets/brand/OvalTrack-fondo-oscuro.png'"
+                alt="OvalTrack">
               @if (userContextService.currentClub()?.name) {
                 <small class="brand-subtitle">{{ userContextService.currentClub()!.name }}</small>
               }
@@ -140,7 +142,7 @@ import { ThemeService } from 'src/app/core/services/theme.service';
       color: inherit;
     }
 
-    .brand-icon {
+    .club-icon {
       width: 36px;
       height: 36px;
       background-color: #162238;
@@ -161,6 +163,14 @@ import { ThemeService } from 'src/app/core/services/theme.service';
       flex-direction: column;
     }
 
+    .brand-icon {
+      display: block;
+      width: 144px;
+      height: 35px;
+      flex: 0 0 auto;
+      object-fit: contain;
+    }
+
     .brand-title {
       font-weight: 700;
       font-size: 1.25rem;
@@ -175,7 +185,6 @@ import { ThemeService } from 'src/app/core/services/theme.service';
       font-weight: 500;
       color: #94a3b8;
       line-height: 1;
-      margin-top: 3px;
       transition: color 0.2s ease;
     }
 
@@ -211,6 +220,10 @@ import { ThemeService } from 'src/app/core/services/theme.service';
       display: flex;
       align-items: center;
       gap: 8px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background-color: #131c2e;
+      border: 1px solid #2a3c5a;
       transition: all 0.2s ease;
     }
 
@@ -240,9 +253,11 @@ import { ThemeService } from 'src/app/core/services/theme.service';
       height: 38px;
       padding: 0 16px;
       font-size: 0.875rem;
-      font-weight: 500;
+      font-weight: 600;
       text-decoration: none;
       border-radius: 8px;
+      border: 1px solid transparent;
+      box-sizing: border-box;
       transition: all 0.2s ease;
       cursor: pointer;
       white-space: nowrap;
@@ -250,7 +265,7 @@ import { ThemeService } from 'src/app/core/services/theme.service';
 
     .btn-outline-dark-theme {
       background-color: #131c2e;
-      border: 1px solid #2a3c5a;
+      border-color: #2a3c5a;
       color: #cbd5e1;
     }
 
@@ -262,20 +277,20 @@ import { ThemeService } from 'src/app/core/services/theme.service';
 
     .btn-neon {
       background-color: #a3e635;
+      border-color: #a3e635;
       color: #0b111e;
-      font-weight: 600;
-      border: none;
     }
 
     .btn-neon:hover {
       background-color: #bef264;
+      border-color: #bef264;
       color: #0b111e;
       box-shadow: 0 0 14px rgba(163, 230, 53, 0.35);
     }
 
     .btn-outline-danger-custom {
       background-color: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-color: rgba(239, 68, 68, 0.3);
       color: #f87171;
     }
 
@@ -293,20 +308,20 @@ import { ThemeService } from 'src/app/core/services/theme.service';
     }
 
     /* ==========================================================================
-       Modo Claro en Navbar: Verde Salvia Suave (#e1edde) Luminoso con Borde Firme #204b22
+       Modo Claro en Navbar: Verde Salvia Suave (#e1edde) Luminoso con Borde Firme
        ========================================================================== */
     :host-context([data-theme="light"]) .navbar-global,
     :host-context(.light-theme) .navbar-global {
       background-color: #e1edde;
-      border-bottom: 2px solid #204b22;
+      border-bottom: 1px solid rgba(32, 75, 34, 0.20);
       box-shadow: 0 4px 14px rgba(20, 45, 20, 0.08);
     }
 
     :host-context([data-theme="light"]) .navbar-global.landing-nav,
     :host-context(.light-theme) .navbar-global.landing-nav {
       background-color: #e1edde;
-      border-bottom: 2px solid #204b22;
-      box-shadow: 0 4px 14px rgba(20, 45, 20, 0.08);
+      border-bottom: 1px solid transparent;
+      box-shadow: none;
     }
 
     :host-context([data-theme="light"]) .brand-title,
@@ -319,18 +334,17 @@ import { ThemeService } from 'src/app/core/services/theme.service';
       color: #4a6042;
     }
 
-    :host-context([data-theme="light"]) .brand-icon,
-    :host-context(.light-theme) .brand-icon {
+    :host-context([data-theme="light"]) .club-icon,
+    :host-context(.light-theme) .club-icon {
       background-color: #204b22;
-      border: 1px solid #2a5f2e;
+      border-color: #2a5f2e;
       color: #d6f2c4;
-      font-weight: 700;
     }
 
     :host-context([data-theme="light"]) .btn-theme-toggle,
     :host-context(.light-theme) .btn-theme-toggle {
       background-color: #ffffff;
-      border: 1px solid rgba(32, 75, 34, 0.25);
+      border-color: rgba(32, 75, 34, 0.25);
       color: #204b22;
     }
 
@@ -344,15 +358,12 @@ import { ThemeService } from 'src/app/core/services/theme.service';
     :host-context([data-theme="light"]) .user-role-badge,
     :host-context(.light-theme) .user-role-badge {
       background-color: #ffffff;
-      border: 1px solid rgba(32, 75, 34, 0.25);
-      border-radius: 999px;
-      padding: 4px 12px;
+      border-color: rgba(32, 75, 34, 0.25);
     }
 
     :host-context([data-theme="light"]) .badge-role,
     :host-context(.light-theme) .badge-role {
       color: #204b22;
-      font-weight: 700;
     }
 
     :host-context([data-theme="light"]) .status-dot,
@@ -364,9 +375,8 @@ import { ThemeService } from 'src/app/core/services/theme.service';
     :host-context([data-theme="light"]) .btn-outline-dark-theme,
     :host-context(.light-theme) .btn-outline-dark-theme {
       background-color: #ffffff;
-      border: 1px solid rgba(32, 75, 34, 0.25);
+      border-color: rgba(32, 75, 34, 0.25);
       color: #204b22;
-      font-weight: 600;
     }
 
     :host-context([data-theme="light"]) .btn-outline-dark-theme:hover,
@@ -379,23 +389,22 @@ import { ThemeService } from 'src/app/core/services/theme.service';
     :host-context([data-theme="light"]) .btn-neon,
     :host-context(.light-theme) .btn-neon {
       background-color: #204b22;
+      border-color: #204b22;
       color: #ffffff;
-      font-weight: 700;
     }
 
     :host-context([data-theme="light"]) .btn-neon:hover,
     :host-context(.light-theme) .btn-neon:hover {
       background-color: #173819;
+      border-color: #173819;
       box-shadow: 0 4px 14px rgba(32, 75, 34, 0.22);
     }
 
     :host-context([data-theme="light"]) .btn-outline-danger-custom,
     :host-context(.light-theme) .btn-outline-danger-custom {
       background-color: #204b22;
-      border: 1px solid #204b22;
+      border-color: #204b22;
       color: #ffffff;
-      font-weight: 600;
-      border-radius: 8px;
     }
 
     :host-context([data-theme="light"]) .btn-outline-danger-custom:hover,
