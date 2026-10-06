@@ -9,14 +9,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ovaltrack.backend.admin.dto.RegistrationDecisionRequest;
 import com.ovaltrack.backend.admin.service.AdminService;
 import com.ovaltrack.backend.club.business.ClubService;
 import com.ovaltrack.backend.club.domain.ClubStatus;
@@ -92,7 +90,6 @@ public class OvalTrackAdminController {
     @PostMapping("/clubs/{clubId}/reject")
     public ResponseEntity<BackendResponse<Object>> rejectClub(
             @PathVariable UUID clubId,
-            @RequestBody(required = false) RegistrationDecisionRequest request,
             Authentication authentication) {
         adminService.rejectClub(clubId);
         return BackendResponse.ok(null, "El club fue rechazado.");
@@ -110,7 +107,6 @@ public class OvalTrackAdminController {
     @PostMapping("/users/{userId}/reject")
     public ResponseEntity<BackendResponse<Object>> rejectAccount(
             @PathVariable UUID userId,
-            @RequestBody(required = false) RegistrationDecisionRequest request,
             Authentication authentication) {
         adminService.rejectAccount(userId);
         return BackendResponse.ok(null, "La cuenta fue rechazada.");
