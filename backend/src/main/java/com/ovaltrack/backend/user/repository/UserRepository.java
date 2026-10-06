@@ -1,5 +1,6 @@
 package com.ovaltrack.backend.user.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -10,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.ovaltrack.backend.user.domain.User;
 import com.ovaltrack.backend.user.domain.UserRole;
+import com.ovaltrack.backend.user.domain.UserStatus;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByLoginEmail(String loginEmail);
@@ -40,4 +42,21 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     }
 
     List<User> findByRoleNot(UserRole role);
+
+    Collection<User> findAllByAccountStatus(UserStatus status);
+
+    Collection<User> findAllByActive(boolean active);
+
+    @Query(value = """
+                    SELECT u, c
+                    FROM User u
+                    JOIN u.person p
+                    JOIN p.club c
+                    WHERE u.role = 'ADMIN_CLUB'
+                    AND (u.accountStatus = :status OR :status IS NULL) 
+                    AND (u.active = :active OR :active IS NULL) 
+                    """)
+    Collection<Object[]> findUserWithAssociatedClubByStatusAndActive(
+        @Param ("status")UserStatus status,
+        @Param ("active")Boolean active);
 }

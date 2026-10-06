@@ -6,6 +6,7 @@ import { AuthService } from '../../../services/auth.service';
 import { ClubService } from '../../../../../services/club.service';
 import { ClubRegistrationOption } from '../../../../club/types/club.types';
 import { RegistrationRequest } from '../types/register.type';
+import { MemberRegistrationDTO } from '../../../types/auth.types';
 
 @Component({
   selector: 'app-coach-register',
@@ -148,19 +149,19 @@ export class CoachRegisterComponent implements OnInit {
     this.isSubmitting = true;
     const rawData = this.registerForm.getRawValue();
 
-    const payload: RegistrationRequest = {
-      email: rawData.email,
-      password: rawData.password,
-      requestedRole: 'COACH_ANALYST',
-      applicantFirstName: rawData.firstName,
-      applicantLastName: rawData.lastName,
-      applicantBirthDate: rawData.birthDate,
-      clubId: rawData.clubId,
-      requestedClubContactEmail: rawData.email,
-      status: 'PENDING'
+    const payload: MemberRegistrationDTO = {
+      applicant: {
+        email: rawData.email,
+        password: rawData.password,
+        requestedRole: 'COACH_ANALYST',
+        firstName: rawData.firstName,
+        lastName: rawData.lastName,
+        birthDate: rawData.birthDate
+      },
+      club: { id: rawData.clubId }
     };
 
-    this.authService.register(payload).subscribe({
+    this.authService.registerMember(payload).subscribe({
       next: (response) => {
         this.successMessage = response.message;
         this.isSubmitting = false;

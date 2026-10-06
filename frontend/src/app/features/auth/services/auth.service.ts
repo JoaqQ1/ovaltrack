@@ -1,12 +1,13 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { AuthResponse, CurrentUserSession, LoginRequest, RegistrationResponse, TokenPayload } from '../types/auth.types';
+import { AuthResponse, ClubRegistrationDTO, CurrentUserSession, LoginRequest, MemberRegistrationDTO, RegistrationResponse, TokenPayload } from '../types/auth.types';
 import { environment } from '@environments/environment.docker';
 import { TokenService } from '../../../core/services/token.service';
 import { UserContextService } from '../../../core/services/user-context.service';
 import { Observable, tap } from 'rxjs';
 import { RegistrationRequest } from '../pages/register/types/register.type';
+import { BackendResponse } from 'src/app/shared/types/shared-types';
 @Injectable({
   providedIn: 'root'
 })
@@ -26,8 +27,11 @@ export class AuthService {
     }
   }
 
-  register(data: RegistrationRequest): Observable<RegistrationResponse> {
-    return this.http.post<RegistrationResponse>(`${this.apiUrl}/register`, data);
+  registerClub(data: ClubRegistrationDTO): Observable<BackendResponse> {
+    return this.http.post<BackendResponse>(`${this.apiUrl}/register-club`, data);
+  }
+  registerMember(data: MemberRegistrationDTO): Observable<BackendResponse> {
+    return this.http.post<BackendResponse>(`${this.apiUrl}/register`, data);
   }
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials).pipe(

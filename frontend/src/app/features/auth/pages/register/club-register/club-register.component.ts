@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { RegistrationRequest } from '../types/register.type';
+import { ClubRegistrationDTO } from '../../../types/auth.types';
 
 @Component({
   selector: 'app-club-register',
@@ -44,21 +45,23 @@ export class ClubRegisterComponent {
 
     const rawData = this.registerForm.getRawValue();
 
-    const payload: RegistrationRequest = {
-      email: rawData.email,
-      password: rawData.password,
-      requestedRole: 'ADMIN_CLUB',
-      applicantFirstName: rawData.firstName,
-      applicantLastName: rawData.lastName,
-      applicantBirthDate: rawData.birthDate,
-      requestedClubName: rawData.clubName,
-      requestedClubCity: rawData.clubRegion,
-      requestedClubContactEmail: rawData.email,
-      requestedClubContactPhone: rawData.clubContactPhone || undefined,
-      status: 'PENDING'
+    const payload: ClubRegistrationDTO = {
+      admin: {
+        email: rawData.email,
+        password: rawData.password,
+        firstName: rawData.firstName,
+        lastName: rawData.lastName,
+        birthDate: rawData.birthDate
+      },
+      club: {
+        name: rawData.clubName,
+        city: rawData.clubRegion,
+        contactEmail: rawData.email,
+        contactPhone: rawData.clubContactPhone || undefined
+      }
     };
-    console.log(payload)
-    this.authService.register(payload).subscribe({
+ 
+    this.authService.registerClub(payload).subscribe({
       next: (response) => {
         this.isSubmitting = false;
         this.successMessage = response.message;
