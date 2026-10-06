@@ -1,0 +1,547 @@
+<main class="wrap">
+  <header class="hud">
+    <span class="badge-tech">Panel de plataforma</span>
+    <h1 class="title">Administración de cuentas y clubes</h1>
+    <p class="club">
+      Revisa solicitudes de registro, activa cuentas y aprueba clubes con su
+      administrador.
+    </p>
+  </header>
+
+  @if (error()) {
+    <div class="alert" role="alert">
+      <span>{{ error() }}</span>
+      <button type="button" class="btn btn-outline" (click)="loadAll()">
+        Reintentar
+      </button>
+    </div>
+  }
+
+  <!-- Resumen -->
+  <section class="grid-4" aria-label="Resumen">
+    <article class="card stat">
+      <span>Solicitudes de cuenta</span>
+      <strong>{{ stats().pendingRequests }}</strong>
+      <span>Pendientes de revisión</span>
+    </article>
+    <article class="card stat">
+      <span>Clubes por aprobar</span>
+      <strong>{{ stats().pendingClubs }}</strong>
+      <span>Sin administrador asociado</span>
+    </article>
+    <article class="card stat">
+      <span>Cuentas activas</span>
+      <strong>{{ stats().activeAccounts }}</strong>
+      <span>Con cuenta aprobada</span>
+    </article>
+    <article class="card stat">
+      <span>Clubes activos</span>
+      <strong>{{ stats().activeClubs }}</strong>
+      <span>Operando en la plataforma</span>
+    </article>
+  </section>
+
+  <!-- Solicitudes de registro de administradores -->
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Solicitudes de registro</h2>
+        <p>Cuentas a la espera de activación</p>
+      </div>
+      <span class="badge badge-warn">{{ requests().length }} pendientes</span>
+    </div>
+    <div class="scroll">
+      <div class="table">
+        <div class="row row-head cols-requests">
+          <span>Solicitante</span><span>Club solicitado</span><span>Fecha</span
+          ><span>Rol</span><span>Acciones</span>
+        </div>
+        @for (r of requests(); track r.user.id) {
+          <div class="row cols-requests">
+            <div class="person">
+              <span class="avatar role-admin">{{
+                initials(r.user.firstName!)
+              }}</span>
+              <div>
+                <b>{{ r.user.firstName }}</b
+                ><span class="mono">{{ r.user.email }}</span>
+              </div>
+            </div>
+            <span>{{ r.club.name }}</span>
+            <span class="mono">{{ r.user.createdAt | date }}</span>
+            <span
+              ><i class="badge" [class]="'badge ' + roleClass(r.user.role)">{{
+                r.user.role
+              }}</i></span
+            >
+            <span class="actions">
+              <button
+                type="button"
+                class="btn btn-outline btn-danger"
+                (click)="rejectRequest(r.user)"
+              >
+                Rechazar
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="approveRequest(r)"
+              >
+                Aprobar cuenta
+              </button>
+            </span>
+          </div>
+        } @empty {
+          <p class="empty">
+            {{ loading() ? "Cargando…" : "No hay solicitudes pendientes." }}
+          </p>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Clubes pendientes de aprobación -->
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Clubes pendientes de aprobación</h2>
+        <p>
+          Al aprobar, el club queda activo y el administrador seleccionado queda
+          asociado
+        </p>
+      </div>
+      <span class="badge badge-warn"
+        >{{ pendingClubs().length }} pendientes</span
+      >
+    </div>
+    <div class="scroll">
+      <div class="table">
+        <div class="row row-head cols-pending">
+          <span>Club</span>
+          <span>Administrador a asociar</span>
+          <span>Acciones</span>
+        </div>
+        @for (c of pendingClubs(); track c.id) {
+          <div class="row cols-pending">
+            <div class="person">
+              <span class="logo">{{ c.name[0] }}</span>
+              <div>
+                <b>{{ c.name }}</b
+                ><span
+                  >{{ c.city }}
+                  <!-- @if (c.) {
+                    · Fundado {{ c. }}
+                  } -->
+                </span>
+              </div>
+            </div>
+
+            <div class="dropdown">
+              <button
+                type="button"
+                class="select"
+                aria-haspopup="listbox"
+                [attr.aria-expanded]="openDropdown() === 'pending-' + c.id"
+                (click)="toggleDropdown('pending-' + c.id)"
+              >
+                <span>
+                  @if (adminById(selectedAdmin()[c.id]); as a) {
+                    {{ a.user.firstName }} ({{ a.user.email }})
+                  } @else {
+                    Selecciona un administrador
+                  }
+                </span>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  aria-hidden="true"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              @if (openDropdown() === "pending-" + c.id) {
+                <ul class="menu" role="listbox">
+                  @for (a of admins(); track a.user.id) {
+                    <li>
+                      <button
+                        type="button"
+                        role="option"
+                        class="menu-item"
+                        [class.is-selected]="
+                          selectedAdmin()[c.id] === a.user.id
+                        "
+                        [attr.aria-selected]="
+                          selectedAdmin()[c.id] === a.user.id
+                        "
+                        (click)="chooseAdminForPending(c.id, a.user.id)"
+                      >
+                        <b>{{ a.user.firstName }}</b
+                        ><span class="mono">{{ a.user.email }}</span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+
+            <span class="actions">
+              <button
+                type="button"
+                class="btn btn-outline btn-danger"
+                (click)="rejectClub(c)"
+              >
+                Rechazar
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="selectedAdmin()[c.id] == null"
+                (click)="approveClub(c, selectedAdmin()[c.id]!)"
+              >
+                Aprobar club
+              </button>
+            </span>
+          </div>
+        } @empty {
+          <p class="empty">
+            {{
+              loading()
+                ? "Cargando…"
+                : "No hay clubes pendientes de aprobación."
+            }}
+          </p>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Cuentas -->
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Cuentas</h2>
+        <p>
+          Todas las cuentas de la plataforma. Rechaza las activas o acepta las
+          inactivas
+        </p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="segmented" role="tablist" aria-label="Filtrar cuentas">
+        <button
+          type="button"
+          role="tab"
+          [class.on]="accountFilter() === 'all'"
+          [attr.aria-selected]="accountFilter() === 'all'"
+          (click)="setAccountFilter('all')"
+        >
+          Todas · {{ accountCounts().all }}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          [class.on]="accountFilter() === 'active'"
+          [attr.aria-selected]="accountFilter() === 'active'"
+          (click)="setAccountFilter('active')"
+        >
+          Activas · {{ accountCounts().active }}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          [class.on]="accountFilter() === 'inactive'"
+          [attr.aria-selected]="accountFilter() === 'inactive'"
+          (click)="setAccountFilter('inactive')"
+        >
+          Inactivas · {{ accountCounts().inactive }}
+        </button>
+      </div>
+      <label class="search">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+        <input
+          type="search"
+          placeholder="Buscar por nombre o email"
+          aria-label="Buscar cuentas"
+          (input)="onSearch('account', $event)"
+        />
+      </label>
+    </div>
+    <div class="scroll">
+      <div class="table">
+        <div class="row row-head cols-accounts">
+          <span>Usuario</span><span>Rol</span><span>Club</span
+          ><span>Estado</span><span>Acción</span>
+        </div>
+        @for (a of filteredAccounts(); track a.user.id) {
+          <div class="row cols-accounts">
+            <div class="person">
+              <span
+                class="avatar"
+                [class]="'avatar ' + roleClass(a.user.role)"
+                >{{ initials(a.user.firstName!) }}</span
+              >
+              <div>
+                <b>{{ a.user.firstName }}</b
+                ><span class="mono">{{ a.user.email }}</span>
+              </div>
+            </div>
+            <span
+              ><i class="badge" [class]="'badge ' + roleClass(a.user.role)">{{
+                a.user.role
+              }}</i></span
+            >
+            <span>{{ a.club.name }}</span>
+            <span>
+              <i
+                class="badge"
+                [class.badge-ok]="a.user.active"
+                [class.badge-off]="!a.user.active"
+                >{{ a.user.active ? "Activa" : "Inactiva" }}</i
+              >
+            </span>
+            <span class="actions">
+              @if (a.user.active) {
+                <button
+                  type="button"
+                  class="btn btn-outline btn-danger"
+                  (click)="setAccountActive(a, false)"
+                >
+                  Desactivar
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="setAccountActive(a, true)"
+                >
+                  Aceptar
+                </button>
+              }
+            </span>
+          </div>
+        } @empty {
+          <p class="empty">
+            {{
+              loading()
+                ? "Cargando…"
+                : "No hay cuentas que coincidan con el filtro."
+            }}
+          </p>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Clubes -->
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Clubes</h2>
+        <p>Clubes activos y rechazados. Cambia su administrador o su estado</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="segmented" role="tablist" aria-label="Filtrar clubes">
+        <button
+          type="button"
+          role="tab"
+          [class.on]="clubFilter() === 'all'"
+          [attr.aria-selected]="clubFilter() === 'all'"
+          (click)="setClubFilter('all')"
+        >
+          Todos · {{ clubCounts().all }}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          [class.on]="clubFilter() === 'active'"
+          [attr.aria-selected]="clubFilter() === 'active'"
+          (click)="setClubFilter('active')"
+        >
+          Activos · {{ clubCounts().active }}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          [class.on]="clubFilter() === 'rejected'"
+          [attr.aria-selected]="clubFilter() === 'rejected'"
+          (click)="setClubFilter('rejected')"
+        >
+          Rechazados · {{ clubCounts().rejected }}
+        </button>
+      </div>
+      <label class="search">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+        <input
+          type="search"
+          placeholder="Buscar club o ciudad"
+          aria-label="Buscar clubes"
+          (input)="onSearch('club', $event)"
+        />
+      </label>
+    </div>
+    <div class="scroll">
+      <div class="table">
+        <div class="row row-head cols-clubs">
+          <span>Club</span><span>Administrador</span><span>Estado</span
+          ><span>Acciones</span>
+        </div>
+        @for (c of filteredClubs(); track c.id) {
+          <div class="row cols-clubs">
+            <div class="person">
+              <span class="logo">{{ c.name[0] }}</span>
+              <div>
+                <b>{{ c.name }}</b
+                ><span>{{ c.city }}</span>
+              </div>
+            </div>
+            <div class="person">
+              @if (adminById(c.adminUserId); as admin) {
+                <span class="avatar role-admin">{{
+                  initials(admin.user.firstName!)
+                }}</span>
+                <div>
+                  <b>{{ admin.user.firstName }}</b
+                  ><span class="mono">{{ admin.user.email }}</span>
+                </div>
+              } @else {
+                <span>Sin administrador</span>
+              }
+            </div>
+            <span>
+              <i
+                class="badge"
+                [class.badge-ok]="c.status === 'ACTIVE'"
+                [class.badge-off]="c.status !== 'ACTIVE'"
+                >{{ c.status === "ACTIVE" ? "Activo" : "Rechazado" }}</i
+              >
+            </span>
+            <span class="actions">
+              <!-- <button
+                type="button"
+                class="btn btn-outline"
+                (click)="openChangeAdmin(c)"
+              >
+                Cambiar administrador
+              </button> -->
+              @if (c.status === "ACTIVE") {
+                <button
+                  type="button"
+                  class="btn btn-outline btn-danger"
+                  (click)="setClubStatus(c, 'REJECTED')"
+                >
+                  Desactivar
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="setClubStatus(c, 'ACTIVE')"
+                >
+                  Aceptar
+                </button>
+              }
+            </span>
+          </div>
+        } @empty {
+          <p class="empty">
+            {{
+              loading()
+                ? "Cargando…"
+                : "No hay clubes que coincidan con el filtro."
+            }}
+          </p>
+        }
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Modal: cambiar administrador -->
+@if (changingClub(); as club) {
+  <div class="ot-backdrop" (click)="closeChangeAdmin()">
+    <div
+      class="ot-dialog card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="change-admin-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="card-header">
+        <div>
+          <h2 id="change-admin-title">Cambiar administrador</h2>
+          <p>{{ club.name }} · {{ club.city }}</p>
+        </div>
+      </div>
+      <ul
+        class="admin-list"
+        role="listbox"
+        aria-label="Administradores disponibles"
+      >
+        @for (a of admins(); track a.user.id) {
+          <li>
+            <button
+              type="button"
+              role="option"
+              class="menu-item"
+              [class.is-selected]="newAdminId() === a.user.id"
+              [attr.aria-selected]="newAdminId() === a.user.id"
+              (click)="newAdminId.set(a.user.id)"
+            >
+              <span class="avatar role-admin">{{
+                initials(a.user.firstName!)
+              }}</span>
+              <span class="menu-text"
+                ><b>{{ a.user.firstName }}</b
+                ><span class="mono">{{ a.user.email }}</span></span
+              >
+            </button>
+          </li>
+        }
+      </ul>
+      <div class="ot-dialog-footer">
+        <button
+          type="button"
+          class="btn btn-outline"
+          (click)="closeChangeAdmin()"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="newAdminId() === club.adminUserId"
+          (click)="confirmChangeAdmin()"
+        >
+          Guardar cambios
+        </button>
+      </div>
+    </div>
+  </div>
+}
