@@ -49,6 +49,10 @@ public class ClubService {
         return ClubDTOMapper.toResponseDTO(clubRepository.findById(clubId).orElse(null));
     }
 
+    public Collection<ClubResponseDTO> findClubByStatus(ClubStatus status){
+        return clubRepository.findAllByStatus(status).stream().map(ClubDTOMapper::toResponseDTO).toList();
+    }
+
     @Transactional
     public ClubResponseDTO saveClub(ClubCreationDTO aClubRequest) {
         Club aClub = new Club();
@@ -67,6 +71,13 @@ public class ClubService {
 
         aClub = clubRepository.save(aClub);
         return ClubDTOMapper.toResponseDTO(aClub);
+    }
+
+    @Transactional
+    public Club save(Club aClub) {
+        if (aClub == null)
+            throw new BusinessException("El club vino nulo!");
+        return clubRepository.save(aClub);
     }
 
     @Transactional
