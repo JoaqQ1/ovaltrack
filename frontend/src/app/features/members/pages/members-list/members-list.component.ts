@@ -54,10 +54,10 @@ export class MembersListComponent implements OnInit {
     key: StatusFilter;
     label: string;
   }> = [
-    { key: 'ACTIVE', label: 'Activos' },
-    { key: 'INACTIVE', label: 'Inactivos' },
-    { key: 'ALL', label: 'Todos' }
-  ];
+      { key: 'ACTIVE', label: 'Activos' },
+      { key: 'INACTIVE', label: 'Inactivos' },
+      { key: 'ALL', label: 'Todos' }
+    ];
 
   readonly filterDefs: Array<{
     key: FilterCategory;
@@ -65,11 +65,11 @@ export class MembersListComponent implements OnInit {
     dot?: string;
     dashed?: boolean;
   }> = [
-    { key: 'ALL', label: 'Todos' },
-    { key: 'STAFF', label: 'Staff / Coaches', dot: 'var(--navy)' },
-    { key: 'PLAYER', label: 'Jugadores', dot: 'var(--player)' },
-    { key: 'NO_ROLE', label: 'Sin asignar', dashed: true }
-  ];
+      { key: 'ALL', label: 'Todos' },
+      { key: 'STAFF', label: 'Staff / Coaches', dot: 'var(--navy)' },
+      { key: 'PLAYER', label: 'Jugadores', dot: 'var(--player)' },
+      { key: 'NO_ROLE', label: 'Sin asignar', dashed: true }
+    ];
 
   // State Signals
   readonly members = signal<Member[]>([]);
@@ -208,7 +208,7 @@ export class MembersListComponent implements OnInit {
   toggleActionsMenu(memberId: string, event: Event): void {
     event.stopPropagation();
     const member = this.members().find(m => m.id === memberId);
-    if (!member || !member.active) {
+    if (!member) {
       return;
     }
     const current = this.openMenu();
@@ -276,7 +276,7 @@ export class MembersListComponent implements OnInit {
   readonly memberToDeactivate = signal<Member | null>(null);
   readonly isDeactivating = signal<boolean>(false);
 
-  handleAction(member: Member, action: 'revoke', event: Event): void {
+  handleAction(member: Member, action: 'revoke' | 'activate', event: Event): void {
     event.stopPropagation();
     this.closeMenus();
 
@@ -290,6 +290,8 @@ export class MembersListComponent implements OnInit {
         return;
       }
       this.memberToDeactivate.set(member);
+    } else if (action === 'activate') {
+      this.activateUser(member);
     }
   }
 
@@ -390,5 +392,28 @@ export class MembersListComponent implements OnInit {
   @HostListener('document:click')
   onDocumentClick(): void {
     this.closeMenus();
+  }
+
+  activateUser(member: Member): void {
+    this.isDeactivating.set(true);
+    this.membersService.activateUser(member.id).subscribe({
+      next: () => {
+        this.updateMember(member.id, { active: true });
+        this.isDeactivating.set(false);
+
+        const fullName = `${member.firstName} ${member.lastName}`.trim() || member.email;
+        this.showBanner(
+          'success',
+          'Acceso activado',
+          `El usuario ${fullName} fue dado de alta correctamente.`
+        );
+      },
+      error: (err) => {
+        console.error('Error al dar de alta:', err);
+        this.isDeactivating.set(false);
+        const msg = err?.error?.message || 'Hubo un problema al activar el usuario.';
+        this.showBanner('error', 'No se pudo activar', msg);
+      }
+    });
   }
 }
