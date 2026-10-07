@@ -1237,3 +1237,87 @@
 		transition: none !important;
 	}
 }
+
+/* ==========================================================================
+   SIN SCROLL EN EL BODY
+   Todo se reparte el alto disponible: catálogo, chips y números se achican
+   en lugar de scrollear. Debe ir al final del archivo.
+   ========================================================================== */
+
+.live-capture__body {
+	overflow: hidden;
+}
+
+/* Números de jugador: grilla que se acomoda en 1, 2 o 3 filas según el ancho */
+.live-capture__number-column {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(2.25rem, 1fr));
+	grid-auto-rows: clamp(2.25rem, 6dvh, 3.125rem);
+	align-content: start;
+	align-items: stretch;
+	gap: 6px;
+	padding-block: 6px;
+	overflow: hidden;
+}
+
+.live-capture__number-circle {
+	flex: none;
+	width: auto;
+	min-width: 0;
+	height: auto;
+	font-size: clamp(0.875rem, 2.4dvh, 1.25rem);
+	line-height: 1;
+}
+
+/* Catálogo: las categorías y los chips se reparten el alto, sin mínimo fijo */
+.event-catalog {
+	overflow: hidden;
+	gap: clamp(6px, 1.6dvh, 18px);
+}
+
+.event-catalog__category {
+	flex: 1 1 0;
+	min-height: 0;
+}
+
+.event-catalog__label {
+	margin-bottom: clamp(2px, 0.8dvh, 8px);
+	line-height: 1.1;
+}
+
+.event-catalog__grid {
+	min-height: 0;
+	grid-auto-rows: minmax(0, 1fr);
+	gap: clamp(6px, 1.2dvh, var(--ot-gutter-match));
+}
+
+.event-chip {
+	min-height: 0;
+	padding-block: 2px;
+	overflow: hidden;
+	line-height: 1.1;
+	font-size: clamp(0.6875rem, min(0.55rem + 1.5vw, 3.4dvh), 1.875rem);
+}
+
+@media (max-width: 640px) {
+	.live-capture__number-column {
+		grid-template-columns: repeat(auto-fit, minmax(2.125rem, 1fr));
+		grid-auto-rows: 2.25rem;
+	}
+}
+
+/* Celular horizontal: 2 columnas de números que se reparten el alto */
+@media (orientation: landscape) and (max-height: 520px) {
+	.live-capture__number-column {
+		grid-template-columns: repeat(2, var(--ot-touch-target-min));
+		grid-auto-rows: minmax(0, 1fr);
+		align-content: stretch;
+		justify-content: center;
+		gap: 4px;
+		padding: 6px;
+	}
+
+	.live-capture__number-circle {
+		font-size: clamp(0.6875rem, 3.6dvh, 1rem);
+	}
+}
