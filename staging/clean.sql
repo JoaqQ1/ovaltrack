@@ -8,7 +8,6 @@ TRUNCATE TABLE
     division_players,
     division_coaches,
     divisions,
-    registration_requests,
     clubs,
     users,
     persons

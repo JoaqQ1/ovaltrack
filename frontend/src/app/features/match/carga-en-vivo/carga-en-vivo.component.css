@@ -54,7 +54,7 @@
 	--font-manrope: 'Manrope', system-ui, sans-serif;
 	--font-space-grotesk: 'Space Grotesk', 'Courier New', monospace;
 
-	width: 100vw;
+	width: 100%;
 	max-width: 100%;
 	height: 100dvh;
 	font-family: var(--font-manrope);
@@ -271,24 +271,6 @@
 	--possession-bg: var(--bg-away);
 }
 
-.live-capture__body--history-hidden {
-	grid-template-columns: minmax(0, 1fr);
-	grid-template-rows: auto minmax(0, 1fr) auto;
-}
-
-.live-capture__body--home-hidden.live-capture__body--away-hidden {
-	grid-template-rows: minmax(0, 1fr);
-}
-
-.live-capture__body--home-hidden:not(.live-capture__body--away-hidden),
-.live-capture__body--away-hidden:not(.live-capture__body--home-hidden) {
-	grid-template-rows: auto minmax(0, 1fr);
-}
-
-.live-capture__body--home-hidden.live-capture__body--away-hidden.live-capture__body--history-hidden {
-	grid-template-rows: minmax(0, 1fr);
-}
-
 .live-capture__number-column {
 	grid-column: 1;
 	height: auto;
@@ -312,14 +294,6 @@
 .live-capture__number-column--rival {
 	grid-row: 3;
 	border-top: 1px solid var(--border);
-}
-
-.live-capture__body--home-hidden .live-capture__number-column--rival {
-	grid-row: 1;
-}
-
-.live-capture__body--home-hidden.live-capture__body--away-hidden .event-catalog {
-	grid-row: 1;
 }
 
 .live-capture__number-circle {
@@ -657,138 +631,6 @@
 	outline-offset: calc(2px * var(--ot-live-scale));
 }
 
-@media (max-width: 991px) {
-	.live-capture__number-column {
-		padding: calc(var(--ot-margin-screen) * 0.5) 0;
-		justify-content: flex-start;
-		gap: var(--ot-stack-compact);
-		overflow-y: auto;
-		scrollbar-width: thin;
-	}
-
-	.live-capture__number-circle {
-		width: var(--ot-touch-target-min);
-		height: var(--ot-touch-target-min);
-		flex: 0 0 var(--ot-touch-target-min);
-		font-size: var(--ot-size-body-md);
-	}
-
-}
-
-@media (max-width: 768px) {
-	.live-capture__header {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-		grid-template-rows: auto auto;
-		align-items: center;
-	}
-
-	.live-capture__brand {
-		justify-content: flex-start;
-		grid-column: 1;
-		grid-row: 1;
-	}
-
-	.live-capture__brand-icon {
-		width: 160px;
-		height: 58px;
-	}
-
-	.live-capture__scoreboard {
-		position: static;
-		transform: none;
-		width: auto;
-		grid-column: 2;
-		grid-row: 1;
-		justify-content: center;
-    }
-
-	.live-capture__score {
-		min-width: 0;
-		text-align: center;
-		font-size: var(--ot-size-body-lg);
-		line-height: 1.25;
-	}
-
-	.live-capture__clock {
-		flex: 0 0 auto;
-	}
-
-	.live-capture__actions {
-		width: 100%;
-		grid-column: 1 / -1;
-		grid-row: 2;
-		justify-content: stretch;
-		gap: calc(6px * var(--ot-live-scale));
-	}
-
-	.live-capture__actions .btn--outline {
-		flex: 1 1 0;
-		justify-content: center;
-		min-width: 0;
-		padding: calc(8px * var(--ot-live-scale)) calc(12px * var(--ot-live-scale));
-		font-size: calc(12px * var(--ot-live-scale));
-	}
-
-	.live-capture__body {
-		grid-template-columns: minmax(0, 1fr);
-		grid-template-rows: auto minmax(0, 1fr) auto auto;
-	}
-
-	.live-capture__number-column {
-		flex-direction: row;
-		justify-content: flex-start;
-		overflow-x: auto;
-		overflow-y: hidden;
-		padding: calc(var(--ot-margin-screen) * 0.35) var(--ot-margin-screen);
-		gap: calc(8px * var(--ot-live-scale));
-		-webkit-overflow-scrolling: touch;
-		border: none;
-		background: var(--bg);
-	}
-
-	.history {
-		grid-row: -1;
-		grid-column: 1;
-		max-height: 30vh;
-		border: none;
-		border-top: 1px solid var(--border);
-	}
-
-	.event-catalog {
-		padding-inline: calc(var(--ot-margin-screen) * 0.75);
-		overflow-y: auto;
-	}
-
-	.live-capture__number-circle {
-		width: var(--ot-touch-target-min);
-		height: var(--ot-touch-target-min);
-		font-size: var(--ot-size-body-md);
-	}
-
-	.event-catalog__grid {
-		grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(120px * var(--ot-live-scale))), 1fr));
-		gap: calc(10px * var(--ot-live-scale));
-	}
-
-	.possession-bar {
-		flex-direction: row;
-		padding-inline: calc(var(--ot-margin-screen) * 0.75);
-		gap: calc(6px * var(--ot-live-scale));
-	}
-
-	.possession-bar__btn {
-		min-width: 0;
-		padding-inline: calc(8px * var(--ot-live-scale));
-		font-size: calc(11px * var(--ot-live-scale));
-	}
-
-	.icon-btn {
-		min-width: 44px;
-		min-height: 44px;
-	}
-}
-
 /* ==========================================================================
    Modal de Confirmación de Cierre de Tiempo
    ========================================================================== */
@@ -826,7 +668,7 @@
 	height: 56px;
 	border-radius: 50%;
 	background: rgba(34, 197, 94, 0.12);
-	color: var(--green-600);
+	color: var(--green-700);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -859,7 +701,7 @@
 .confirm-actions .btn {
 	flex: 1;
 	height: 44px;
-	border-radius: var(--ot-radius-md);
+	border-radius: var(--ot-radius-lg);
 	font-family: var(--font-manrope);
 	font-weight: 700;
 	font-size: 0.9rem;
@@ -951,4 +793,447 @@
 
 .live-capture[data-theme="light"] .confirm-actions .btn-primary:hover {
 	background: #156537;
+}
+
+/* ==========================================================================
+   RESPONSIVE v2
+   Reemplaza los breakpoints anteriores (991px / 768px) y las reglas de
+   grid con filas hardcodeadas. El layout ahora usa grid-template-areas:
+   los bloques que no se renderizan (@if) colapsan solos.
+   ========================================================================== */
+
+/* ---------- Base (escritorio / tablet horizontal) ---------- */
+
+.live-capture {
+	box-sizing: border-box;
+	height: 100vh;
+	height: 100dvh;
+	padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
+}
+
+/* Header: grid de 3 columnas en lugar de scoreboard absolute (se pisaba con
+   el logo y las acciones en anchos intermedios). */
+.live-capture__header {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+	grid-template-areas: "brand score actions";
+	align-items: center;
+	column-gap: var(--ot-stack-default);
+	row-gap: var(--ot-stack-compact);
+	padding: var(--ot-stack-default) var(--ot-margin-screen);
+}
+
+.live-capture__brand {
+	grid-area: brand;
+	justify-self: start;
+}
+
+.live-capture__brand-icon {
+	width: clamp(7rem, 12vw, 11.25rem);
+	height: auto;
+	aspect-ratio: 3 / 1;
+}
+
+.live-capture__scoreboard {
+	grid-area: score;
+	position: static;
+	transform: none;
+	justify-self: center;
+}
+
+.live-capture__score {
+	text-wrap: balance;
+}
+
+.live-capture__actions {
+	grid-area: actions;
+	justify-self: end;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+}
+
+.btn--outline {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	min-height: var(--ot-touch-target-min);
+	white-space: nowrap;
+}
+
+/* Body */
+.live-capture__body {
+	grid-template-columns: minmax(0, 1fr) clamp(15rem, 20vw, 18rem);
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	grid-template-areas:
+		"own history"
+		"catalog history"
+		"rival history";
+}
+
+.live-capture__body--history-hidden {
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-areas:
+		"own"
+		"catalog"
+		"rival";
+}
+
+.live-capture__number-column {
+	padding-inline: clamp(12px, 2vw, var(--ot-margin-screen));
+	scrollbar-width: thin;
+	overscroll-behavior: contain;
+}
+
+.live-capture__number-column--own {
+	grid-area: own;
+}
+
+.live-capture__number-column--rival {
+	grid-area: rival;
+	border-bottom: 0;
+}
+
+/* En pantallas táctiles el :hover queda "pegado" después del tap */
+@media (hover: none) {
+	.live-capture__number-circle:hover {
+		transform: none;
+		box-shadow: none;
+	}
+}
+
+/* El catálogo ahora scrollea en vez de recortar chips cuando falta alto */
+.event-catalog {
+	grid-area: catalog;
+	height: auto;
+	padding: clamp(12px, 2vw, var(--ot-margin-screen));
+	gap: clamp(12px, 1.6vw, calc(18px * var(--ot-live-scale)));
+	overflow-x: hidden;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+}
+
+.event-catalog__category {
+	flex: 1 0 auto;
+	min-height: auto;
+}
+
+.event-catalog__grid {
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
+	grid-auto-rows: minmax(var(--ot-touch-target-min), 1fr);
+	gap: clamp(8px, 1.2vw, var(--ot-gutter-match));
+}
+
+.event-chip {
+	font-size: clamp(0.875rem, 0.55rem + 1.5vw, calc(30px * var(--ot-live-scale)));
+	font-weight: 800; /* Manrope llega hasta 800; 1000 no existe en la fuente */
+	overflow-wrap: break-word;
+}
+
+.history {
+	grid-area: history;
+}
+
+.possession-bar {
+	padding-bottom: calc(var(--ot-stack-default) + env(safe-area-inset-bottom, 0px));
+}
+
+/* ---------- Tablet / notebook angosta: logo + acciones arriba, marcador abajo ---------- */
+
+@media (max-width: 1180px) {
+	.live-capture__header {
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-areas:
+			"brand actions"
+			"score score";
+	}
+}
+
+/* ---------- Layout apilado (tablet vertical y celular) ---------- */
+
+@media (max-width: 900px) {
+	.live-capture__body {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto minmax(0, 1fr) auto auto;
+		grid-template-areas:
+			"own"
+			"catalog"
+			"rival"
+			"history";
+	}
+
+	.live-capture__number-circle {
+		flex: 0 0 var(--ot-touch-target-min);
+		width: var(--ot-touch-target-min);
+		height: var(--ot-touch-target-min);
+		font-size: var(--ot-size-body-md);
+	}
+
+	.live-capture__number-column--rival {
+		border-top: 1px solid var(--border);
+	}
+
+	.history {
+		border-left: 0;
+		border-top: 1px solid var(--border);
+		max-height: min(30dvh, 14rem);
+	}
+
+	.possession-bar {
+		padding-inline: 12px;
+		gap: 6px;
+	}
+
+	.possession-bar__btn {
+		min-width: 0;
+		padding-inline: 8px;
+		font-size: calc(12px * var(--ot-live-scale));
+	}
+}
+
+/* ---------- Celular vertical ---------- */
+
+@media (max-width: 640px) {
+	.live-capture__header {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas:
+			"brand"
+			"score"
+			"actions";
+		padding: 8px 12px;
+		row-gap: 6px;
+	}
+
+	.live-capture__brand {
+		width: 100%;
+		justify-content: space-between;
+	}
+
+	.live-capture__brand-icon {
+		width: 7rem;
+	}
+
+	.live-capture__scoreboard {
+		width: 100%;
+		gap: 4px 14px;
+	}
+
+	.live-capture__score {
+		font-size: var(--ot-size-body-lg);
+		line-height: 1.2;
+	}
+
+	.live-capture__clock {
+		padding: 4px 10px;
+	}
+
+	.live-capture__clock-time {
+		font-size: calc(22px * var(--ot-live-scale));
+	}
+
+	.live-capture__actions {
+		width: 100%;
+		justify-self: stretch;
+		justify-content: flex-start;
+		gap: 6px;
+	}
+
+	.live-capture__actions .btn--outline {
+		flex: 1 1 auto;
+		min-width: 0;
+		padding-inline: 10px;
+		font-size: calc(12px * var(--ot-live-scale));
+		line-height: 1.15;
+		white-space: normal;
+	}
+
+	.live-capture__actions .icon-btn {
+		flex: 0 0 auto;
+	}
+
+	.event-catalog__grid {
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr));
+	}
+}
+
+/* ---------- Celular horizontal (poco alto): jugadores a los costados ---------- */
+
+@media (orientation: landscape) and (max-height: 520px) {
+	.live-capture {
+		--ot-touch-target-min: calc(40px * var(--ot-live-scale));
+	}
+
+	.live-capture__header {
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-areas: "brand score actions";
+		padding: 4px 12px;
+		column-gap: 12px;
+	}
+
+	.live-capture__brand {
+		width: auto;
+		justify-content: flex-start;
+	}
+
+	.live-capture__brand-icon {
+		width: 5.5rem;
+	}
+
+	.live-capture__scoreboard {
+		width: auto;
+		gap: 2px 12px;
+	}
+
+	.live-capture__score {
+		font-size: calc(15px * var(--ot-live-scale));
+	}
+
+	.live-capture__clock {
+		padding: 2px 8px;
+	}
+
+	.live-capture__clock-time {
+		font-size: calc(20px * var(--ot-live-scale));
+	}
+
+	.live-capture__actions {
+		width: auto;
+		justify-self: end;
+		justify-content: flex-end;
+	}
+
+	.live-capture__actions .btn--outline {
+		flex: 0 0 auto;
+		padding: 4px 10px;
+		white-space: nowrap;
+	}
+
+	.live-capture__body {
+		grid-template-columns: auto minmax(0, 1fr) auto clamp(11rem, 26vw, 15rem);
+		grid-template-rows: minmax(0, 1fr);
+		grid-template-areas: "own catalog rival history";
+	}
+
+	.live-capture__body.live-capture__body--history-hidden {
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-areas: "own catalog rival";
+	}
+
+	.live-capture__number-column {
+		flex-direction: column;
+		align-items: center;
+		justify-content: flex-start;
+		overflow-x: hidden;
+		overflow-y: auto;
+		padding: 8px;
+		border: 0;
+		background: var(--surface);
+	}
+
+	.live-capture__number-column--own {
+		border-right: 1px solid var(--border);
+	}
+
+	.live-capture__number-column--rival {
+		border-top: 0;
+		border-left: 1px solid var(--border);
+	}
+
+	.live-capture__number-circle {
+		flex: 0 0 var(--ot-touch-target-min);
+		width: var(--ot-touch-target-min);
+		height: var(--ot-touch-target-min);
+	}
+
+	.history {
+		border-top: 0;
+		border-left: 1px solid var(--border);
+		max-height: none;
+	}
+
+	.event-catalog {
+		padding: 8px 12px;
+		gap: 8px;
+	}
+
+	.possession-bar {
+		padding-block: 6px;
+		padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+	}
+
+	.confirm-icon {
+		width: 40px;
+		height: 40px;
+		font-size: 20px;
+		margin-bottom: 8px;
+	}
+
+	.confirm-text {
+		margin-bottom: 12px;
+	}
+}
+
+/* ---------- Modales ---------- */
+
+.confirm-backdrop {
+	padding:
+		max(16px, env(safe-area-inset-top, 0px))
+		max(16px, env(safe-area-inset-right, 0px))
+		max(16px, env(safe-area-inset-bottom, 0px))
+		max(16px, env(safe-area-inset-left, 0px));
+}
+
+.confirm-dialog {
+	max-height: 100%;
+	overflow-y: auto;
+	padding: clamp(18px, 4vw, 28px) clamp(16px, 4vw, 24px);
+}
+
+.confirm-actions {
+	flex-wrap: wrap;
+}
+
+.confirm-actions .btn {
+	flex: 1 1 9rem;
+	height: auto;
+	min-height: 44px;
+	padding: 8px 14px;
+	line-height: 1.2;
+	border-radius: var(--ot-radius-lg);
+}
+
+/* Reemplaza los style="" inline del modal de conversión */
+.conversion-form {
+	width: 100%;
+	margin: 4px 0 20px;
+	text-align: left;
+}
+
+.conversion-form__label {
+	display: block;
+	margin-bottom: 6px;
+	font-size: 0.9rem;
+	color: var(--text);
+}
+
+.conversion-form__input {
+	width: 100%;
+	box-sizing: border-box;
+	min-height: 44px;
+	padding: 10px 12px;
+	font-size: 1rem; /* 16px evita el zoom automático de iOS al enfocar */
+	border: 1px solid var(--border);
+	border-radius: var(--ot-radius-lg);
+	background: var(--surface-alt);
+	color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.live-capture *,
+	.confirm-backdrop,
+	.confirm-dialog {
+		animation: none !important;
+		transition: none !important;
+	}
 }
