@@ -1,9 +1,10 @@
 package com.ovaltrack.backend.event.domain.dto;
 
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 import com.ovaltrack.backend.event.domain.EventCategory;
+import com.ovaltrack.backend.event.domain.TemplateField;
 
 public record EventTypeResponseDTO(
     UUID id,
@@ -24,6 +25,12 @@ public record EventTypeResponseDTO(
 
     boolean isActive,
 
-    Map<String,Object> templateEventFields
+    String code,
+
+    boolean showInPalette,
+
+    UUID followUpEventTypeId,
+
+    List<TemplateField> templateEventFields
 ) {
 }

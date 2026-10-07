@@ -1,7 +1,7 @@
 -- OvalTrack Data Seeder
 -- =========================================
 
-TRUNCATE TABLE events, event_types, matches, division_players, division_coaches, divisions, clubs, users, persons RESTART IDENTITY CASCADE;
+TRUNCATE TABLE events, event_types, matches, division_players, division_coaches, divisions, registration_requests, clubs, users, persons RESTART IDENTITY CASCADE;
 
 ALTER TABLE matches DROP CONSTRAINT IF EXISTS matches_status_check;
 ALTER TABLE matches ADD CONSTRAINT matches_status_check CHECK (status IN ('NOT_STARTED', 'IN_PROGRESS', 'HALFTIME', 'FINISHED', 'CANCELLED'));
@@ -15,6 +15,14 @@ ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_score INTEGER NOT NULL DEFAULT
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS started_at TIMESTAMP;
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS finished_at TIMESTAMP;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS client_event_id UUID;
+-- Catálogo de eventos v2: código estable
+ALTER TABLE event_types ADD COLUMN IF NOT EXISTS code VARCHAR(60);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_event_types_code ON event_types (code);
+-- show_in_palette = false -> el tipo no aparece en la botonera en vivo (solo se crea como seguimiento)
+-- follow_up_event_type_id -> tras registrar este tipo, la app pide automáticamente el evento de seguimiento
+ALTER TABLE event_types ADD COLUMN IF NOT EXISTS show_in_palette BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE event_types ADD COLUMN IF NOT EXISTS follow_up_event_type_id UUID;
+
 
 -- =========================================
 -- PERSONS (30 personas en total)
@@ -202,16 +210,38 @@ INSERT INTO matches (
   ('11111111-1111-1111-1111-000000000045', '2026-10-12 14:00:00', '11111111-1111-1111-1111-000000000021', 'Calafate Rugby Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL);
 
 
+
 -- =========================================
 -- EVENT_TYPES (Catálogo Estándar de Tipos de Eventos)
 -- =========================================
+-- template_event_fields (v2) es un ARRAY ORDENADO de campos:
+--   key        identificador estable (clave dentro de events.attributes)
+--   label      texto a mostrar en el formulario
+--   type       select | number | boolean | text | jersey
+--   phase      'live'  -> se pide en el momento de la carga en vivo
+--              'post'  -> se completa después (pantalla post-partido)
+--   required   si es true y phase = 'live', bloquea el alta del evento
+--   options    [{value,label}] solo para type = select
+--   min/max/default   opcionales (number / jersey)
+--   effect     opcional; "scoring" = si el valor es false, el evento no suma puntos
+--   trueLabel/falseLabel   textos de los botones para type = boolean
+-- Claves reservadas en attributes (no se declaran en la plantilla): playerNumber
+--
+-- Regla del catálogo: un solo tipo por acción (Penal a los palos, Drop gol, Conversión).
+-- El resultado se pide al registrar el evento con un campo phase = 'live' marcado
+-- con "effect": "scoring". Los puntos solo se suman si ese campo NO es false.
+-- Cualquier campo con "effect" es leído por backend y frontend (ver helper).
+--
+-- Eventos de seguimiento: Conversión se crea solo después de un Try. Por eso Try apunta a
+-- Conversión con follow_up_event_type_id y Conversión tiene show_in_palette = false.
 
 INSERT INTO event_types
-(id, name, group_name, category, affects_possession, is_scoring, points,
- requires_player, is_active, template_event_fields, created_at)
+(id, code, name, group_name, category, affects_possession, is_scoring, points,
+ requires_player, is_active, show_in_palette, follow_up_event_type_id, template_event_fields, created_at)
 VALUES
 (
     '550e8400-e29b-41d4-a716-446655440101',
+    'TRY',
     'Try',
     'Ataque',
     'ATTACK',
@@ -220,14 +250,72 @@ VALUES
     5,
     true,
     true,
-    $${
-      "wasSuccessful": { "type": "boolean", "required": true },
-      "wasConverted": { "type": "boolean", "required": true }
-    }$$::jsonb,
+    true,
+    '550e8400-e29b-41d4-a716-446655440113',
+    $$[
+      {
+        "key": "zone",
+        "label": "Zona del campo",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "left",
+            "label": "Izquierda"
+          },
+          {
+            "value": "center",
+            "label": "Centro"
+          },
+          {
+            "value": "right",
+            "label": "Derecha"
+          }
+        ]
+      }
+    ]$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440113',
+    'CONVERSION',
+    'Conversión',
+    'Ataque',
+    'ATTACK',
+    true,
+    true,
+    2,
+    true,
+    true,
+    false,
+    NULL,
+    $$[
+      {
+        "key": "wasSuccessful",
+        "label": "Resultado",
+        "type": "boolean",
+        "phase": "live",
+        "required": true,
+        "effect": "scoring",
+        "trueLabel": "Convertido",
+        "falseLabel": "Errado"
+      },
+      {
+        "key": "distanceMeters",
+        "label": "Distancia (m)",
+        "type": "number",
+        "phase": "post",
+        "required": false,
+        "min": 0,
+        "max": 80
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440102',
+    'PENALTY_KICK',
     'Penal a los palos',
     'Ataque',
     'ATTACK',
@@ -236,14 +324,34 @@ VALUES
     3,
     true,
     true,
-    $${
-      "wasSuccessful": { "type": "boolean", "required": true },
-      "distanceMeters": { "type": "number", "required": false }
-    }$$::jsonb,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "wasSuccessful",
+        "label": "Resultado",
+        "type": "boolean",
+        "phase": "live",
+        "required": true,
+        "effect": "scoring",
+        "trueLabel": "Convertido",
+        "falseLabel": "Errado"
+      },
+      {
+        "key": "distanceMeters",
+        "label": "Distancia (m)",
+        "type": "number",
+        "phase": "post",
+        "required": false,
+        "min": 0,
+        "max": 80
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440103',
+    'DROP_GOAL',
     'Drop gol',
     'Ataque',
     'ATTACK',
@@ -252,14 +360,34 @@ VALUES
     3,
     true,
     true,
-    $${
-      "wasSuccessful": { "type": "boolean", "required": true },
-      "distanceMeters": { "type": "number", "required": false }
-    }$$::jsonb,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "wasSuccessful",
+        "label": "Resultado",
+        "type": "boolean",
+        "phase": "live",
+        "required": true,
+        "effect": "scoring",
+        "trueLabel": "Convertido",
+        "falseLabel": "Errado"
+      },
+      {
+        "key": "distanceMeters",
+        "label": "Distancia (m)",
+        "type": "number",
+        "phase": "post",
+        "required": false,
+        "min": 0,
+        "max": 80
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440104',
+    'TACKLE_MADE',
     'Tackle completado',
     'Defensa',
     'DEFENSE',
@@ -268,13 +396,22 @@ VALUES
     0,
     true,
     true,
-    $${
-      "forcedTurnover": { "type": "boolean", "required": false }
-    }$$::jsonb,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "forcedTurnover",
+        "label": "Forzó turnover",
+        "type": "boolean",
+        "phase": "post",
+        "required": false
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440105',
+    'TACKLE_MISSED',
     'Tackle fallado',
     'Defensa',
     'DEFENSE',
@@ -283,13 +420,40 @@ VALUES
     0,
     true,
     true,
-    $${
-      "failReason": { "type": "string", "required": false }
-    }$$::jsonb,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "failReason",
+        "label": "Motivo",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "missed",
+            "label": "No llegó"
+          },
+          {
+            "value": "bounced_off",
+            "label": "Lo superaron"
+          },
+          {
+            "value": "late",
+            "label": "Llegó tarde"
+          },
+          {
+            "value": "other",
+            "label": "Otro"
+          }
+        ]
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440106',
+    'TURNOVER',
     'Turnover',
     'Cambio de posesión',
     'NEUTRAL',
@@ -298,13 +462,48 @@ VALUES
     0,
     false,
     true,
-    '{
-      "turnoverType": {"type": "string", "required":false}
-    }'::jsonb,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "turnoverType",
+        "label": "Tipo de turnover",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "ruck_steal",
+            "label": "Robo en ruck"
+          },
+          {
+            "value": "maul_steal",
+            "label": "Robo en maul"
+          },
+          {
+            "value": "interception",
+            "label": "Intercepción"
+          },
+          {
+            "value": "knock_on",
+            "label": "Pelota caída"
+          },
+          {
+            "value": "kick_regained",
+            "label": "Recuperación de patada"
+          },
+          {
+            "value": "other",
+            "label": "Otro"
+          }
+        ]
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440107',
+    'SCRUM',
     'Scrum',
     'Formación fija',
     'NEUTRAL',
@@ -313,14 +512,54 @@ VALUES
     0,
     false,
     true,
-    $${
-      "scrumResult": { "type": "string", "required": true },
-      "resetCount": { "type": "integer", "required": false }
-    }$$::jsonb,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "scrumResult",
+        "label": "Resultado",
+        "type": "select",
+        "phase": "post",
+        "required": true,
+        "options": [
+          {
+            "value": "won_own",
+            "label": "Ganó su introducción"
+          },
+          {
+            "value": "lost_own",
+            "label": "Perdió su introducción"
+          },
+          {
+            "value": "stolen",
+            "label": "Robó introducción rival"
+          },
+          {
+            "value": "penalty_for",
+            "label": "Penal a favor"
+          },
+          {
+            "value": "penalty_against",
+            "label": "Penal en contra"
+          }
+        ]
+      },
+      {
+        "key": "resetCount",
+        "label": "Reinicios",
+        "type": "number",
+        "phase": "post",
+        "required": false,
+        "min": 0,
+        "max": 5,
+        "default": 0
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440108',
+    'LINEOUT',
     'Line-out',
     'Formación fija',
     'NEUTRAL',
@@ -329,13 +568,44 @@ VALUES
     0,
     false,
     true,
-    $${
-      "lineResult": { "type": "string", "required": true }
-    }$$::jsonb,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "lineResult",
+        "label": "Resultado",
+        "type": "select",
+        "phase": "post",
+        "required": true,
+        "options": [
+          {
+            "value": "won_clean",
+            "label": "Ganado limpio"
+          },
+          {
+            "value": "won_dirty",
+            "label": "Ganado sucio"
+          },
+          {
+            "value": "lost",
+            "label": "Perdido"
+          },
+          {
+            "value": "stolen",
+            "label": "Robado al rival"
+          },
+          {
+            "value": "penalty",
+            "label": "Penal"
+          }
+        ]
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440109',
+    'PENALTY_CONCEDED',
     'Penal / infracción',
     'Neutro',
     'NEUTRAL',
@@ -344,13 +614,48 @@ VALUES
     0,
     false,
     true,
-    $${
-      "penaltyType": { "type": "string", "required": false }
-    }$$::jsonb,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "penaltyType",
+        "label": "Tipo de infracción",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "offside",
+            "label": "Offside"
+          },
+          {
+            "value": "ruck_maul",
+            "label": "Ruck / maul"
+          },
+          {
+            "value": "scrum",
+            "label": "Scrum"
+          },
+          {
+            "value": "tackle",
+            "label": "Tackle"
+          },
+          {
+            "value": "lineout",
+            "label": "Line-out"
+          },
+          {
+            "value": "other",
+            "label": "Otra"
+          }
+        ]
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440110',
+    'YELLOW_CARD',
     'Amonestación',
     'Neutro',
     'NEUTRAL',
@@ -359,14 +664,54 @@ VALUES
     0,
     true,
     true,
-    $${
-      "reason": { "type": "string", "required": false },
-      "durationMinutes": { "type": "integer", "required": false }
-    }$$::jsonb,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "reason",
+        "label": "Motivo",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "high_tackle",
+            "label": "Tackle alto"
+          },
+          {
+            "value": "dangerous_play",
+            "label": "Juego peligroso"
+          },
+          {
+            "value": "dissent",
+            "label": "Protesta"
+          },
+          {
+            "value": "repeated_infringement",
+            "label": "Infracciones repetidas"
+          },
+          {
+            "value": "other",
+            "label": "Otro"
+          }
+        ]
+      },
+      {
+        "key": "durationMinutes",
+        "label": "Minutos de suspensión",
+        "type": "number",
+        "phase": "post",
+        "required": false,
+        "min": 1,
+        "max": 20,
+        "default": 10
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440111',
+    'RED_CARD',
     'Expulsión',
     'Neutro',
     'NEUTRAL',
@@ -375,13 +720,40 @@ VALUES
     0,
     true,
     true,
-    $${
-      "reason": { "type": "string", "required": false }
-    }$$::jsonb,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "reason",
+        "label": "Motivo",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "foul_play",
+            "label": "Juego sucio"
+          },
+          {
+            "value": "high_tackle",
+            "label": "Tackle alto"
+          },
+          {
+            "value": "second_yellow",
+            "label": "Segunda amarilla"
+          },
+          {
+            "value": "other",
+            "label": "Otro"
+          }
+        ]
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440112',
+    'INJURY',
     'Lesión',
     'Neutro',
     'NEUTRAL',
@@ -390,46 +762,81 @@ VALUES
     0,
     true,
     true,
-    $${
-      "injury": { "type": "string", "required": false }
-    }$$::jsonb,
-    CURRENT_TIMESTAMP
-),
-(
-    '550e8400-e29b-41d4-a716-446655440113',
-    'Conversion',
-    'Ataque',
-    'ATTACK',
     true,
-    true,
-    2,
-    true,
-    true,
-    $${
-      "wasSuccessful": { "type": "boolean", "required": true },
-      "distanceMeters": { "type": "number", "required": false }
-    }$$::jsonb,
+    NULL,
+    $$[
+      {
+        "key": "injury",
+        "label": "Zona de la lesión",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "head",
+            "label": "Cabeza / conmoción"
+          },
+          {
+            "value": "shoulder",
+            "label": "Hombro"
+          },
+          {
+            "value": "knee",
+            "label": "Rodilla"
+          },
+          {
+            "value": "ankle",
+            "label": "Tobillo"
+          },
+          {
+            "value": "muscle",
+            "label": "Muscular"
+          },
+          {
+            "value": "other",
+            "label": "Otra"
+          }
+        ]
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440114',
+    'SUBSTITUTION',
     'Cambio',
     'Neutro',
     'NEUTRAL',
     false,
     false,
     0,
+    false,
     true,
     true,
-    $${
-      "outgoingPlayer": { "type": "number", "required": true },
-      "incomingPlayer": { "type": "number", "required": true }
-    }$$::jsonb,
+    NULL,
+    $$[
+      {
+        "key": "outgoingPlayer",
+        "label": "Sale (N°)",
+        "type": "jersey",
+        "phase": "live",
+        "required": true,
+        "min": 1,
+        "max": 23
+      },
+      {
+        "key": "incomingPlayer",
+        "label": "Entra (N°)",
+        "type": "jersey",
+        "phase": "live",
+        "required": true,
+        "min": 1,
+        "max": 23
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 );
 
--- (id, name, group_name, category, affects_possession, is_scoring, points,
---  requires_player, is_active, template_event_fields, created_at)
 -- =========================================
 -- EVENTS (Eventos registrados en el partido)
 -- =========================================

@@ -7,7 +7,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -41,11 +41,16 @@ public class EventType {
 
     private Boolean requiresPlayer;
 
+    @Builder.Default
     private Boolean isActive = true;
+
+    private String code;
+    private Boolean showInPalette;
+    private UUID followUpEventTypeId; // UUID plano, sin @ManyToOne
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private Map<String, Object> templateEventFields;
+    private List<TemplateField> templateEventFields; // antes: Map<String,Object>
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

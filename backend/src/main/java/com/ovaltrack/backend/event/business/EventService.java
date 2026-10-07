@@ -84,6 +84,8 @@ public class EventService {
 			throw new BusinessException("No se puede crear un nuevo evento a partir de un tipo de evento que no existe");
 		}
 
+		EventRules.validateAttributes(aEventType, eventRequest.attributes());
+
 		Match aMatch = matchService.findMatchEntityById(eventRequest.matchId());
 		if (aMatch == null) {
 			throw new BusinessException("No se puede asignar un evento a un partido que no existe");
@@ -173,6 +175,8 @@ public class EventService {
 		if (result == null) {
 			throw new BusinessException("No se puede modificar un evento que no existe");
 		}
+
+		EventRules.validateAttributes(result.getEventType(), eventRequest.attributes());
 
 		result.setTeamPossession(eventRequest.teamPossession());
 		result.setMatchTime(eventRequest.matchTime());
