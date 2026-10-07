@@ -1,7 +1,7 @@
 -- OvalTrack Data Seeder
 -- =========================================
 
-TRUNCATE TABLE events, event_types, matches, division_players, division_coaches, divisions, registration_requests, clubs, users, persons RESTART IDENTITY CASCADE;
+TRUNCATE TABLE events, event_types, matches, division_players, division_coaches, divisions, clubs, users, persons RESTART IDENTITY CASCADE;
 
 ALTER TABLE matches DROP CONSTRAINT IF EXISTS matches_status_check;
 ALTER TABLE matches ADD CONSTRAINT matches_status_check CHECK (status IN ('NOT_STARTED', 'IN_PROGRESS', 'HALFTIME', 'FINISHED', 'CANCELLED'));
@@ -404,13 +404,32 @@ VALUES
     true,
     2,
     true,
+    true,
     $${
       "wasSuccessful": { "type": "boolean", "required": true },
       "distanceMeters": { "type": "number", "required": false }
     }$$::jsonb,
     CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440114',
+    'Cambio',
+    'Neutro',
+    'NEUTRAL',
+    false,
+    false,
+    0,
+    true,
+    true,
+    $${
+      "outgoingPlayer": { "type": "number", "required": true },
+      "incomingPlayer": { "type": "number", "required": true }
+    }$$::jsonb,
+    CURRENT_TIMESTAMP
 );
 
+-- (id, name, group_name, category, affects_possession, is_scoring, points,
+--  requires_player, is_active, template_event_fields, created_at)
 -- =========================================
 -- EVENTS (Eventos registrados en el partido)
 -- =========================================

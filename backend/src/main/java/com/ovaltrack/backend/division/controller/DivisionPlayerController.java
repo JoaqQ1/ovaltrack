@@ -1,6 +1,7 @@
 package com.ovaltrack.backend.division.controller;
 
 import java.util.UUID;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.ovaltrack.backend.division.business.DivisionPlayerService;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerCreationDTO;
+import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerPersonUserResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerUpdateDTO;
 
@@ -51,6 +53,19 @@ public class DivisionPlayerController {
             @RequestParam UUID divisionId,
             Authentication authentication) {
         return ResponseEntity.ok(divisionPlayerService.findDivisionPlayersByDivision(divisionId, authentication));
+    }
+
+    @Operation(
+        summary = "List division players with person and user data",
+        description = "Returns the division-player associations joined with their person and optional user account."
+    )
+    @GetMapping("/with-user")
+    @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
+    public ResponseEntity<List<DivisionPlayerPersonUserResponseDTO>> findDivisionPlayersWithPersonAndUser(
+            @RequestParam UUID divisionId,
+            Authentication authentication) {
+        return ResponseEntity.ok(
+                divisionPlayerService.findDivisionPlayersWithPersonAndUser(divisionId, authentication));
     }
 
     @Operation(

@@ -218,6 +218,27 @@ describe('CargaEnVivoComponent', () => {
     expect(component.currentPossession).toBe('OWN');
   });
 
+  it('should keep the possession recorded by a line-out after a possession-changing event', () => {
+    const eventType = (id: string, name: string, affectsPossession: boolean) => ({
+      id, name, groupName: 'Test', category: 'SET_PIECE' as const, affectsPossession,
+      isScoring: false, points: 0, requiresPlayer: false, isActive: true, active: true, templateEventFields: null,
+      createdAt: '2026-09-14T12:00:00Z',
+    });
+    component.categories = [{ name: 'Test', events: [
+      eventType('event-type-turnover', 'Turnover', true),
+      eventType('event-type-lineout', 'Line-out', false),
+    ] }];
+    (component as any).events = [
+      { eventTypeId: 'event-type-turnover', teamPossession: 'OWN', localSequence: 1 },
+      { eventTypeId: 'event-type-lineout', teamPossession: 'OPPONENT', localSequence: 2 },
+    ];
+    component.currentPossession = 'OWN';
+
+    (component as any).rebuildStateFromEvents();
+
+    expect(component.currentPossession).toBe('OPPONENT');
+  });
+
   it('should open confirm halftime dialog when period button is clicked in period 1', () => {
     component.period = 1;
     component.isHalftime = false;

@@ -85,11 +85,11 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   /** Estados de posesión, en el orden en que se renderizan en la barra de posesión. */
   readonly possessions = POSSESSIONS;
 
-  /** Jugadores del roster indexados por el número de camiseta asignado. */
-  private readonly playersByJerseyNumber = new Map<number, AvailablePlayer>();
+  /** Jugadores titulares indexados por su puesto de alineación, del 1 al 15. */
+  private readonly playersByStartingNumber = new Map<number, AvailablePlayer>();
 
   get numeracionColumna(): number[] {
-    return [...this.playersByJerseyNumber.keys()].sort((first, second) => first - second);
+    return [...this.playersByStartingNumber.keys()].sort((first, second) => first - second);
   }
 
   readonly periods = ['inicio', '1er tiempo', '2do tiempo'];
@@ -191,12 +191,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         }
         this.currentPossession = state.currentPossession;
         this.categories = this.groupEventTypes(response.eventTypes);
-        this.playersByJerseyNumber.clear();
-        for (const player of response.rosterPlayers) {
-          if (player.jerseyNumber !== null) {
-            this.playersByJerseyNumber.set(player.jerseyNumber, player);
-          }
-        }
+        this.playersByStartingNumber.clear();
+        response.rosterPlayers.forEach((player, index) => {
+          this.playersByStartingNumber.set(index + 1, player);
+        });
         this.events = response.recentEvents;
         this.rebuildStateFromEvents();
         this.liveCaptureService.syncPendingEvents(this.matchId).subscribe();
@@ -325,7 +323,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     }
 
     const pendingEvent = this.pendingSelection;
-    const player = this.playersByJerseyNumber.get(jerseyNumber);
+    const player = this.playersByStartingNumber.get(jerseyNumber);
     if (!player) {
       this.errorMessage = 'El jugador seleccionado no pertenece al roster del partido.';
       return;
@@ -352,6 +350,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       pendingEvent.event,
       pendingEvent.eventId,
       team === 'OWN' ? player : null,
+      { playerNumber: jerseyNumber },
     );
   }
 
@@ -367,7 +366,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     const timestamp = new Date().toISOString();
 
     let finalAttributes: any = customAttributes ? { ...customAttributes } : null;
-    if (player !== null) {
+    if (player !== null && finalAttributes?.playerNumber === undefined) {
       finalAttributes = finalAttributes || {};
       finalAttributes.playerNumber = player.jerseyNumber;
     }
@@ -773,7 +772,6 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   /** Reconstruye marcador, posesión e historial recorriendo los eventos. */
   private rebuildStateFromEvents(preservePossession = false): void {
-    let possession: Possession = this.currentPossession;
     const scoreboard = { home: 0, away: 0 };
     const history: HistoryItem[] = [];
 
@@ -804,14 +802,20 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         ),
       });
 
-      if (eventType.affectsPossession) {
-        possession = this.nextPossession(event.teamPossession);
-      }
     }
 
     this.scoreboard = scoreboard;
     if (!preservePossession) {
-      this.currentPossession = possession;
+      const latestEvent = this.events[this.events.length - 1];
+      const latestEventType = latestEvent
+        ? this.eventTypeById(latestEvent.eventTypeId)
+        : undefined;
+
+      if (latestEvent && latestEventType) {
+        this.currentPossession = latestEventType.affectsPossession
+          ? this.nextPossession(latestEvent.teamPossession)
+          : latestEvent.teamPossession;
+      }
     }
     this.history = history.slice(0, 12);
   }
@@ -967,6 +971,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.pendingTryData.eventId,
         this.pendingTryData.player,
         {
+          playerNumber: this.pendingTryData.playerNumber,
           wasSuccessful: true,   // ¡Este dato faltaba y rompía el historial!
           wasConverted: false
         }
@@ -979,7 +984,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     if (!this.pendingTryData) return;
 
     const kicker = this.kickerNumber;
-    const kickerPlayer = kicker === null ? null : this.playersByJerseyNumber.get(kicker) ?? null;
+    const kickerPlayer = kicker === null ? null : this.playersByStartingNumber.get(kicker) ?? null;
     const isConvSuccessful = wasSuccessful;
     const originalPossession = this.currentPossession;
 
@@ -989,6 +994,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       this.pendingTryData.eventId,
       this.pendingTryData.player,
       {
+        playerNumber: this.pendingTryData.playerNumber,
         wasSuccessful: true,
         wasConverted: isConvSuccessful
       },
@@ -1008,7 +1014,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
             conversionEventMock,
             newEventId,
             kickerPlayer,
-            { wasSuccessful: true },
+            { playerNumber: kicker, wasSuccessful: true },
             undefined,
             originalPossession
           );

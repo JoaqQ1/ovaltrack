@@ -157,11 +157,10 @@ export class LiveCaptureService {
       divisionId: match.divisionId,
     };
     this.playersByMatch.set(query.matchId, players);
-    const rosterIds = new Set([
-      ...(savedRoster?.startingPlayers ?? []),
-      ...(savedRoster?.substitutePlayers ?? []),
-    ]);
-    const rosterPlayers = players.filter(player => rosterIds.has(player.id));
+    const startingPlayerIds = savedRoster?.startingPlayers ?? [];
+    const rosterPlayers = startingPlayerIds
+      .map(playerId => players.find(player => player.id === playerId))
+      .filter((player): player is AvailablePlayer => player !== undefined);
     const remoteEvents = bootstrap.events.map((event, index) => ({
       ...event,
       localSequence: index + 1,

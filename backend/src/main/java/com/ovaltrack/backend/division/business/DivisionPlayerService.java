@@ -14,6 +14,7 @@ import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionPlayer;
 import com.ovaltrack.backend.division.domain.dto.DivisionDTOMapper;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerCreationDTO;
+import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerPersonUserResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerUpdateDTO;
 import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
@@ -21,6 +22,7 @@ import com.ovaltrack.backend.match.domain.dto.AvailablePlayerDTO;
 import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.Person;
 import com.ovaltrack.backend.person.domain.dto.PersonCreationDTO;
+import com.ovaltrack.backend.user.domain.User;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -117,6 +119,46 @@ public class DivisionPlayerService {
                 );
             })
             .toList();
+    }
+
+    public List<DivisionPlayerPersonUserResponseDTO> findDivisionPlayersWithPersonAndUser(
+            UUID divisionId, Authentication authentication) {
+        Division division = divisionService.findDivisionEntityById(divisionId);
+        if (division == null) {
+            throw new BusinessException("Division no encontrada");
+        }
+        if (authentication != null) {
+            divisionSecurityValidator.validateCanAccessDivision(division, authentication);
+        }
+
+        return divisionPlayerRepository.findDivisionPlayersWithPersonAndUser(divisionId).stream()
+                .map(this::toDivisionPlayerPersonUserResponse)
+                .toList();
+    }
+
+    private DivisionPlayerPersonUserResponseDTO toDivisionPlayerPersonUserResponse(Object[] row) {
+        DivisionPlayer divisionPlayer = (DivisionPlayer) row[0];
+        Person person = (Person) row[1];
+        User user = (User) row[2];
+
+        return new DivisionPlayerPersonUserResponseDTO(
+                divisionPlayer.getId(),
+                person.getId(),
+                divisionPlayer.getDivision().getId(),
+                divisionPlayer.getJerseyNumber(),
+                divisionPlayer.getPosition(),
+                divisionPlayer.getStartDate(),
+                divisionPlayer.getEndDate(),
+                person.getFirstName(),
+                person.getLastName(),
+                person.getBirthDate(),
+                person.getContactEmail(),
+                person.getContactPhone(),
+                user == null ? null : user.getId(),
+                user == null ? null : user.getLoginEmail(),
+                user == null ? null : user.getRole(),
+                user == null ? null : user.getAccountStatus(),
+                user == null ? null : user.getActive());
     }
 
     public DivisionPlayer findDivisionPlayerEntityById(UUID divisionPlayerId) {
