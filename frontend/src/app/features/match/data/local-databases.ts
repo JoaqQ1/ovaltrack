@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { LIVE_CAPTURE_EVENT_TYPES } from './live-capture.mock';
+// import { LIVE_CAPTURE_EVENT_TYPES } from './live-capture.mock';
 import { MOCK_MATCHES } from './match.mock';
 import { LiveCapturePersistedState } from '../types/live-capture.types';
 import { LiveCaptureEventType } from '../types/event-type.types';
@@ -38,8 +38,12 @@ export class LiveCaptureDatabase extends Dexie {
 export const matchDatabase = new MatchDatabase();
 export const liveCaptureDatabase = new LiveCaptureDatabase();
 
+// export async function initializeLocalDatabases(): Promise<void> {
+//   await Promise.all([seedMissingMatches(), seedEventTypes()]);
+// }
+
 export async function initializeLocalDatabases(): Promise<void> {
-  await Promise.all([seedMissingMatches(), seedEventTypes()]);
+  await seedMissingMatches();
 }
 
 export async function seedMissingMatches(): Promise<void> {
@@ -66,15 +70,15 @@ export async function seedMissingMatches(): Promise<void> {
   });
 }
 
-export async function seedEventTypes(): Promise<void> {
-  const existingEventTypes = await liveCaptureDatabase.eventTypes.toArray();
-  const knownIds = new Set(existingEventTypes.map(eventType => eventType.id));
-  const missingEventTypes = LIVE_CAPTURE_EVENT_TYPES.filter(eventType => !knownIds.has(eventType.id));
+// export async function seedEventTypes(): Promise<void> {
+//   const existingEventTypes = await liveCaptureDatabase.eventTypes.toArray();
+//   const knownIds = new Set(existingEventTypes.map(eventType => eventType.id));
+//   const missingEventTypes = LIVE_CAPTURE_EVENT_TYPES.filter(eventType => !knownIds.has(eventType.id));
 
-  if (missingEventTypes.length > 0) {
-    await liveCaptureDatabase.eventTypes.bulkPut(missingEventTypes);
-  }
-}
+//   if (missingEventTypes.length > 0) {
+//     await liveCaptureDatabase.eventTypes.bulkPut(missingEventTypes);
+//   }
+// }
 
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);

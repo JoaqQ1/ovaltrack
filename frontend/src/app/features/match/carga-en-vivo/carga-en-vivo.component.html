@@ -228,34 +228,59 @@
     </div>
     }
 
-    @if (showConversionModal) {
-    <div class="confirm-backdrop" (click)="cancelConversion()">
-        <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="conversion-title" (click)="$event.stopPropagation()">
+    @if (pendingCapture; as capture) {
+    <div class="confirm-backdrop" (click)="cancelCapture()">
+        <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="capture-title" (click)="$event.stopPropagation()">
             <div class="confirm-icon">
                 <i class="ti ti-ball-football" aria-hidden="true"></i>
             </div>
-            <h3 id="conversion-title" class="confirm-title">¡TRY! ¿Y la conversión?</h3>
-            <p class="confirm-text">
-                Indica quién fue el pateador y si la conversión sumó los 2 puntos adicionales.
-            </p>
-            
-            <div class="conversion-form">
-               <label for="kickerInput" class="conversion-form__label">Número del Pateador:</label>
-               <input id="kickerInput" type="number" [(ngModel)]="kickerNumber" class="conversion-form__input" inputmode="numeric" min="0">
+            <h3 id="capture-title" class="confirm-title">{{ capture.event.name }}</h3>
+
+            <div class="conversion-form" style="margin: 20px 0; text-align: left;">
+                @if (capture.isFollowUp && capture.event.requiresPlayer) {
+                <label for="captureJersey" style="display: block; font-size: 0.9rem; margin-bottom: 5px;">Número del jugador:</label>
+                <input id="captureJersey" type="number" [(ngModel)]="capture.playerNumber" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 12px;">
+                }
+
+                @for (field of liveFieldsOf(capture.event); track field.key) {
+                <label style="display: block; font-size: 0.9rem; margin-bottom: 5px;">{{ field.label }}</label>
+                @switch (field.type) {
+                    @case ('boolean') {
+                    <div class="confirm-actions" style="display: flex; gap: 10px; width: 100%;">
+                        <button type="button" class="btn btn-secondary" style="flex: 1;" (click)="setCaptureValue(field.key, false)">
+                            <i class="ti ti-x" aria-hidden="true"></i> {{ field.falseLabel ?? 'No' }}
+                        </button>
+                        <button type="button" class="btn btn-primary" style="flex: 1;" (click)="setCaptureValue(field.key, true)">
+                            <i class="ti ti-check" aria-hidden="true"></i> {{ field.trueLabel ?? 'Sí' }}
+                        </button>
+                    </div>
+                    }
+                    @case ('select') {
+                    <select class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;" [(ngModel)]="capture.values[field.key]">
+                        @for (option of field.options; track option.value) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                        }
+                    </select>
+                    }
+                    @default {
+                    <input type="number" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 12px;" [attr.min]="field.min" [attr.max]="field.max" [(ngModel)]="capture.values[field.key]">
+                    }
+                }
+                }
             </div>
 
-            <div class="confirm-actions">
-                <button type="button" class="btn btn-secondary" (click)="confirmConversion(false)">
-                    <i class="ti ti-x" aria-hidden="true"></i> Fallada
-                </button>
-                <button type="button" class="btn btn-primary" (click)="confirmConversion(true)">
-                    <i class="ti ti-check" aria-hidden="true"></i> Adentro (+2 pts)
+            @if (!isSingleBoolean(capture.event)) {
+            <div class="confirm-actions" style="display: flex; gap: 10px; width: 100%;">
+                <button type="button" class="btn btn-secondary" style="flex: 1;" (click)="cancelCapture()">Cancelar</button>
+                <button type="button" class="btn btn-primary" style="flex: 1;" [disabled]="!captureIsComplete(capture)" (click)="confirmCapture()">
+                    <i class="ti ti-check" aria-hidden="true"></i> Confirmar
                 </button>
             </div>
+            }
         </div>
     </div>
     }
-    
+
         @if (showConfirmFinish) {
         <div class="confirm-backdrop" (click)="cancelConfirmFinish()">
             <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-finish-title" (click)="$event.stopPropagation()">
