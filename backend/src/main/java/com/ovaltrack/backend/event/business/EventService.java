@@ -197,7 +197,7 @@ public class EventService {
 
 		for (Event event : eventRepository.findEventsByMatchId(match.getId())) {
 			EventType eventType = event.getEventType();
-			if (!Boolean.TRUE.equals(eventType.getIsScoring())) {
+			if (!EventRules.countsAsScoring(eventType, event.getAttributes())) {
 				continue;
 			}
 

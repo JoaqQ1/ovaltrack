@@ -9,7 +9,26 @@ export interface BackendEventTypeResponse {
   isScoring: boolean;
   points: number | null;
   requiresPlayer: boolean;
-  templateEventFields: Record<string, unknown> | null;
+  code: string;
+  showInPalette: boolean;
+  followUpEventTypeId: string | null;
+  templateEventFields: TemplateField[];
+}
+
+export interface TemplateField {
+  key: string; label: string;
+  type: 'select' | 'number' | 'boolean' | 'text' | 'jersey';
+  phase: 'live' | 'post';
+  required: boolean;
+  options?: {
+    value: string;
+    label: string
+  }[];
+  min?: number; max?: number;
+  default?: unknown;
+  effect?: 'scoring';
+  trueLabel?: string;
+  falseLabel?: string;
 }
 
 export type LiveCaptureEventType = Omit<BackendEventTypeResponse,
