@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ovaltrack.backend.auth.dto.AuthResponse;
 import com.ovaltrack.backend.auth.dto.LoginRequest;
 import com.ovaltrack.backend.auth.dto.PasswordResetRequest;
-import com.ovaltrack.backend.auth.registration.domain.dto.RegistrationRequestDTO;
+import com.ovaltrack.backend.auth.registration.domain.dto.ClubRegistrationDTO;
+import com.ovaltrack.backend.auth.registration.domain.dto.MemberRegistrationDTO;
 import com.ovaltrack.backend.auth.service.AuthService;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.common.dto.response.BackendResponse;
@@ -35,23 +36,48 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @Operation(summary = "Register a new user", description = "Creates a user account and registration request pending approval.")
+    @Operation(summary = "Register a new player or coach", description = "Creates a player or coach account and a registration request pending approval. "
+            + "To register a club and its administrator, use POST /register-club.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User registered successfully."),
-            @ApiResponse(responseCode = "400", description = "The request contains invalid or incomplete data.")
+            @ApiResponse(responseCode = "201", description = "Registration request created successfully. Pending approval."),
+            @ApiResponse(responseCode = "400", description = "The request contains invalid or incomplete data, or violates a business rule.")
     })
     @PostMapping("/register")
-    public ResponseEntity<BackendResponse<Object>> registrar(@Valid @RequestBody RegistrationRequestDTO request,
+    public ResponseEntity<BackendResponse<Object>> registrar(@Valid @RequestBody MemberRegistrationDTO request,
             BindingResult bindingResult) {
         if (bindingResult.hasErrors())
             return BackendResponse.badRequest("Campos inválidos", null);
         try {
             authService.register(request);
             return BackendResponse.response(
-                HttpStatus.CREATED, 
-                "Solicitud de registro creada con éxito. Pendiente de aprobación", 
-                null
-            );
+                    HttpStatus.CREATED,
+                    "Solicitud de registro creada con éxito. Pendiente de aprobación",
+                    null);
+        } catch (BusinessException e) {
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "Error en el registro";
+            return BackendResponse.badRequest(errorMessage, null);
+        } catch (IllegalArgumentException e) {
+            return BackendResponse.badRequest("Datos inválidos", e);
+        }
+    }
+
+    @Operation(summary = "Register a new club and its administrator", description = "Creates a club administrator account together with a club registration request. "
+            + "Both remain pending until a platform administrator approves them and associates the administrator with the club.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Club registration request created successfully. Pending approval."),
+            @ApiResponse(responseCode = "400", description = "The request contains invalid or incomplete data, or violates a business rule.")
+    })
+    @PostMapping("/register-club")
+    public ResponseEntity<BackendResponse<Object>> registrarClub(@Valid @RequestBody ClubRegistrationDTO request,
+            BindingResult bindingResult) {
+        if (bindingResult.hasErrors())
+            return BackendResponse.badRequest("Campos inválidos", null);
+        try {
+            authService.registerClub(request);
+            return BackendResponse.response(
+                    HttpStatus.CREATED,
+                    "Solicitud de registro creada con éxito. Pendiente de aprobación",
+                    null);
         } catch (BusinessException e) {
             String errorMessage = e.getMessage() != null ? e.getMessage() : "Error en el registro";
             return BackendResponse.badRequest(errorMessage, null);

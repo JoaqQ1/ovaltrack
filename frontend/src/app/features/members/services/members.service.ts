@@ -36,6 +36,10 @@ export class MembersService {
     return this.http.patch(`${this.baseUrl}/user/${userId}/role`, { role: newRole });
   }
 
+  activateUser(userId: string): Observable<BackendUserResponse> {
+    return this.http.patch<BackendUserResponse>(`${this.baseUrl}/user/${userId}/activar`, {});
+  }
+  
   deactivateUser(userId: string): Observable<BackendUserResponse> {
     return this.http.patch<BackendUserResponse>(`${this.baseUrl}/user/${userId}/baja`, {});
   }

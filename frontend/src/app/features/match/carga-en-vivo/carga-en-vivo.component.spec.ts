@@ -138,7 +138,7 @@ describe('CargaEnVivoComponent', () => {
       events: [{
         id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK',
         affectsPossession: false, isScoring: true, points: 5, requiresPlayer: false,
-        isActive: true, templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
+        templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
       }],
     }];
     (component as any).events = [event];
@@ -160,7 +160,7 @@ describe('CargaEnVivoComponent', () => {
     const pendingEvent = {
       id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK' as const,
       affectsPossession: false, isScoring: true, points: 5, requiresPlayer: true,
-      active: true, templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
+      templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
     };
     component.pendingSelection = {
       event: pendingEvent,
@@ -180,7 +180,7 @@ describe('CargaEnVivoComponent', () => {
     const pendingEvent = {
       id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK' as const,
       affectsPossession: false, isScoring: true, points: 5, requiresPlayer: true,
-      active: true, templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
+      templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
     };
     component.pendingSelection = {
       event: pendingEvent,
@@ -198,7 +198,7 @@ describe('CargaEnVivoComponent', () => {
   it('should revert score without changing possession when deleting an older event', () => {
     const eventType = (id: string, name: string, affectsPossession: boolean, isScoring: boolean, points: number) => ({
       id, name, groupName: 'Test', category: 'ATTACK' as const, affectsPossession, isScoring,
-      points, requiresPlayer: false, active: true, templateEventFields: null,
+      points, requiresPlayer: false, templateEventFields: null,
       createdAt: '2026-09-14T12:00:00Z',
     });
     component.categories = [{ name: 'Test', events: [

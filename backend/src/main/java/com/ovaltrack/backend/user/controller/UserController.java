@@ -106,6 +106,24 @@ public class UserController {
 		return ResponseEntity.ok(updatedUser);
 	}
 
+	@Operation(summary = "Activate user (Alta/Activación)", description = "Activates the user access back, restoring platform availability.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "User activated successfully.", content = @Content(schema = @Schema(implementation = UserResponseDTO.class))),
+			@ApiResponse(responseCode = "401", description = "Unauthorized - Missing or invalid authentication token."),
+			@ApiResponse(responseCode = "403", description = "Forbidden - Caller does not have permissions to activate user."),
+			@ApiResponse(responseCode = "404", description = "Target user not found."),
+			@ApiResponse(responseCode = "409", description = "Business conflict (e.g. already active).")
+	})
+	
+	@PatchMapping("/{userId}/activar")
+	@PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
+	public ResponseEntity<UserResponseDTO> activateUser(
+			@PathVariable UUID userId,
+			Authentication authentication) {
+		UserResponseDTO activatedUser = userService.activateUser(userId, authentication);
+		return ResponseEntity.ok(activatedUser);
+	}
+
 	@Operation(summary = "Deactivate user (Baja lógica)", description = "Deactivates the user access without deleting historical data.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "User deactivated successfully.", content = @Content(schema = @Schema(implementation = UserResponseDTO.class))),

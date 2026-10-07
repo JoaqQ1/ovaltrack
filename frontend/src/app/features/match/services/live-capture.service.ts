@@ -81,7 +81,6 @@ export class LiveCaptureService {
             catchError(() => EMPTY),
           );
         }
-
         return this.eventService.createFromLocal(event).pipe(
           switchMap(response => {
             const synchronizedEvent: LocalMatchEvent = {

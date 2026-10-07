@@ -30,7 +30,7 @@ export const routes: Routes = [
         canActivate: [hasRoleGuard],
         data: { roles: ['ADMIN_OVALTRACK'] },
         loadComponent: () =>
-            import('./features/auth/admin/pages/ovaltrack-admin/ovaltrack-admin.component')
+            import('./features/admin/pages/panel-ovaltrack/ovaltrack-admin.component')
                 .then(m => m.OvaltrackAdminComponent)
     },
     {

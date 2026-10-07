@@ -116,7 +116,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   currentStats: PeriodStatisticDTO | null = null;
 
   showConversionModal = false;
-  pendingTryData: any = null;
+  pendingTryData: any = null; 
   kickerNumber: number | null = null;
 
   private clockElapsedSeconds = 0;

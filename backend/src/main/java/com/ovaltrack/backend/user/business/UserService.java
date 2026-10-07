@@ -2,10 +2,13 @@ package com.ovaltrack.backend.user.business;
 
 import java.util.Collection;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.club.domain.Club;
+import com.ovaltrack.backend.club.domain.dto.ClubDTOMapper;
+import com.ovaltrack.backend.club.domain.dto.ClubResponseDTO;
 import com.ovaltrack.backend.club.repository.ClubRepository;
 import com.ovaltrack.backend.user.domain.User;
 import com.ovaltrack.backend.user.repository.UserRepository;
@@ -13,6 +16,7 @@ import com.ovaltrack.backend.user.repository.UserRepository;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.common.config.exceptions.EntityNotFoundException;
 import com.ovaltrack.backend.user.domain.UserRole;
+import com.ovaltrack.backend.user.domain.UserStatus;
 import com.ovaltrack.backend.user.domain.dto.UserDTOMapper;
 import com.ovaltrack.backend.user.domain.dto.UserResponseDTO;
 import org.springframework.security.core.Authentication;
@@ -21,6 +25,7 @@ import jakarta.transaction.Transactional;
 
 import com.ovaltrack.backend.person.domain.Person;
 import com.ovaltrack.backend.person.repository.PersonRepository;
+import com.ovaltrack.backend.user.domain.dto.UserClubRegistration;
 import com.ovaltrack.backend.user.domain.dto.UserCreateRequestDTO;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -82,8 +87,41 @@ public class UserService {
 
 	public Collection<UserResponseDTO> findAllUsersExceptAdminOvaltrack() {
 		return userRepository.findByRoleNot(UserRole.ADMIN_OVALTRACK).stream()
-				.map(UserDTOMapper::toResponseDTO) 
+				.map(UserDTOMapper::toResponseDTO)
 				.toList();
+	}
+
+	public Collection<UserResponseDTO> findAllByAccountStatus(UserStatus status) {
+		return userRepository.findAllByAccountStatus(status)
+				.stream()
+				.map(UserDTOMapper::toResponseDTO)
+				.toList();
+	}
+
+	public Collection<UserResponseDTO> findAllByActive(boolean active) {
+		return userRepository.findAllByActive(active)
+				.stream()
+				.map(UserDTOMapper::toResponseDTO)
+				.toList();
+	}
+
+	public Collection<UserClubRegistration> findAllClubRegistrationsByStatusAndActive(UserStatus status,Boolean active) {
+		// 1. Llamamos al repositorio que nos trae los Object[] (u, c)
+		Collection<Object[]> results = userRepository.findUserWithAssociatedClubByStatusAndActive(status,active);
+		// 2. Mapeamos cada fila usando los mappers correspondientes
+		return results.stream()
+				.map(row -> {
+					User userEntity = (User) row[0];
+					Club clubEntity = (Club) row[1];
+
+					// Mapeo usando los métodos estáticos o de instancia de tus mappers
+					UserResponseDTO userDto = UserDTOMapper.toResponseDTO(userEntity);
+					ClubResponseDTO clubDto = ClubDTOMapper.toResponseDTO(clubEntity);
+
+					// Retornamos tu estructura UserClubRegistration que agrupa ambos DTOs
+					return new UserClubRegistration(userDto, clubDto);
+				})
+				.collect(Collectors.toList());
 	}
 
 	public boolean existsByEmail(String email) {
@@ -175,6 +213,21 @@ public class UserService {
 		return UserDTOMapper.toResponseDTO(savedUser);
 	}
 
+	@Transactional
+	public UserResponseDTO activateUser(UUID userId, Authentication authentication) {
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+
+		if (!user.isDeactivated()) {
+			throw new BusinessException("El usuario ya se encuentra dado de alta");
+		}
+
+		userPermissionValidator.validateCanDeactivate(user, authentication);
+
+		user.setActive(true);
+		User savedUser = userRepository.save(user);
+		return UserDTOMapper.toResponseDTO(savedUser);
+	}
 	@Transactional
 	public UserResponseDTO deactivateUser(UUID userId, Authentication authentication) {
 		User user = userRepository.findById(userId)
