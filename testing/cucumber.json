@@ -1,14 +1,20 @@
 {
   "default": {
     "paths": [
+      "features/registro/**/*.feature",
       "features/club/**/*.feature",
       "features/user/**/*.feature",
       "features/division/**/*.feature",
       "features/match/**/*.feature",
       "features/event/**/*.feature"
     ],
-    "require": ["features/**/*.js"],
-    "format": ["summary", "progress-bar"],
+    "require": [
+      "features/**/*.js"
+    ],
+    "format": [
+      "summary",
+      "progress-bar"
+    ],
     "publishQuiet": true
   }
 }
