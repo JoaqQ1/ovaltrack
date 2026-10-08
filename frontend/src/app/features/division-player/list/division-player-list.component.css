@@ -41,6 +41,34 @@
   padding: 16px 24px;
 }
 
+.history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.history-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(32, 75, 34, 0.22);
+  border-radius: 8px;
+  background: transparent;
+  color: #204b22;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.history-close:hover,
+.history-close:focus-visible {
+  background: #dcebd6;
+  outline: none;
+}
+
 .table-responsive {
   width: 100%;
   overflow-x: auto;
