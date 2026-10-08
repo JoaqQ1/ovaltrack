@@ -122,6 +122,16 @@
     </div>
   </div>
 
+  <app-modal
+    *ngIf="mostrarModalConfirmacion && coachToRemove"
+    title="Desasociar entrenador"
+    message="¿Está seguro de que quiere desasociar a este entrenador de la división?"
+    description="La asociación quedará finalizada y conservará su historial."
+    [isProcessing]="!!eliminandoId"
+    (confirm)="confirmarDesasociacion()"
+    (cancel)="cancelarDesasociacion()">
+  </app-modal>
+
   <div class="history-card" *ngIf="coachHistory.length > 0">
     <div class="history-header">
       <div>
