@@ -39,6 +39,7 @@
 .table-scroll-container {
   max-height: 470px;
   overflow-y: auto;
+  overflow-x: auto;
   border: 1px solid var(--border, rgba(27, 33, 22, 0.10));
   border-radius: 8px;
   background: var(--surface, #ffffff);
@@ -46,6 +47,7 @@
 
 .review-data-table {
   width: 100%;
+  min-width: 700px; /* Evita que las columnas colapsen en móviles */
   border-collapse: collapse;
   text-align: left;
 }

@@ -125,14 +125,20 @@
 }
 
 .filter-pill-btn.unassigned-pill {
-  background: #ffffff;
-  border: 1.5px solid #d97706;
-  color: #b45309;
+  /* Hereda estilos neutrales inactivos */
+}
+
+.filter-pill-btn.unassigned-pill .badge-count-text {
+  color: #b45309; /* Solo el número lleva el acento para indicar advertencia */
 }
 
 .filter-pill-btn.unassigned-pill.active {
   background: #fef3c7;
   border-color: #b45309;
+  color: #78350f;
+}
+
+.filter-pill-btn.unassigned-pill.active .badge-count-text {
   color: #78350f;
 }
 
@@ -201,11 +207,12 @@
   border: 1px solid var(--border, rgba(27, 33, 22, 0.10));
   border-radius: 8px;
   background: var(--surface, #ffffff);
-  overflow-x: hidden;
+  overflow-x: auto; /* Permite scroll horizontal en móviles */
 }
 
 .timeline-board {
   width: 100%;
+  min-width: 800px; /* Asegura legibilidad de la gráfica en pantallas pequeñas */
   position: relative;
   display: flex;
   flex-direction: column;
