@@ -11,7 +11,8 @@ import com.ovaltrack.backend.club.domain.Club;
 import com.ovaltrack.backend.club.business.ClubService;
 import jakarta.transaction.Transactional;
 
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -34,18 +35,14 @@ public class PersonService {
                 .toList();
     }
 
-    public Collection<PersonResponseDTO> findPlayersByClubId(UUID clubId) {
-        return personRepository.findPlayersByClubId(clubId).stream()
-                .map(PersonDTOMapper::toResponseDTO)
-                .toList();
+    public Page<PersonResponseDTO> findPaginatedInactivePlayersByClubId(UUID clubId, int page, int size) {
+        return personRepository
+                .findPaginatedInactivePlayersByClubId(
+                        clubId,
+                        PageRequest.of(page, size)
+                )
+                .map(PersonDTOMapper::toResponseDTO);
     }
-
-    //TODO: Check this Page<DTO> to List<DTO> problem
-/*     public Page<PersonResponseDTO> findPaginatedPlayersByClubId(UUID clubId, int page, int size) {
-        return personRepository.findPaginatedPlayersByClubId(clubId, PageRequest.of(page, size)).stream()
-                .map(PersonDTOMapper::toResponseDTO)
-                .toList();
-    } */
 
     public PersonResponseDTO findPersonById(UUID personId) {
         return PersonDTOMapper.toResponseDTO(findPersonEntityById(personId));
