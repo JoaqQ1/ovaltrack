@@ -1,7 +1,9 @@
 {
   "default": {
     "paths": [
-      "features/registro/**/*.feature",
+      "features/registro-club/**/*.feature",
+      "features/admin/**/*.feature",
+      "features/registro-coach/**/*.feature",
       "features/club/**/*.feature",
       "features/user/**/*.feature",
       "features/division/**/*.feature",
