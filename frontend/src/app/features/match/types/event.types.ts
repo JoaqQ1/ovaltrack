@@ -38,3 +38,16 @@ export interface LocalMatchEvent extends BackendEventResponse {
   backendEventId?: UUID | null;
   localSequence: number;
 }
+
+export interface MatchTimelineEventResponse {
+  id: string;
+  eventTypeId: string;
+  eventTypeName: string;
+  playerId?: string | null;
+  playerName?: string | null;
+  playerJerseyNumber?: number | null;
+  matchTime: number;
+  realTime: string;
+  period: number;
+  teamPossession: Possession;
+}

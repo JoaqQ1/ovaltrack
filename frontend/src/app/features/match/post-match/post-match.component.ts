@@ -5,11 +5,10 @@ import { firstValueFrom } from 'rxjs';
 import { MatchService } from '../services/match.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
-import { PersonService } from 'src/app/services/person.service';
 import { LiveCaptureCacheService } from '../services/live-capture-cache.service';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
-import { LocalMatchEvent } from '../types/event.types';
+import { MatchTimelineEventResponse } from '../types/event.types';
 
 export interface TimelineOccurrence {
   timeMinutes: number;
@@ -51,7 +50,6 @@ export class PostMatchComponent implements OnInit {
   private matchService = inject(MatchService);
   private eventService = inject(EventService);
   private eventTypeService = inject(EventTypeService);
-  private personService = inject(PersonService);
   private readonly router = inject(Router);
   private readonly cacheService = inject(LiveCaptureCacheService);
   private readonly liveCaptureService = inject(LiveCaptureService);
@@ -60,7 +58,7 @@ export class PostMatchComponent implements OnInit {
   readonly userClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
 
   matchId = '';
-  events: LocalMatchEvent[] = [];
+  events: MatchTimelineEventResponse[] = [];
   chronologicalEvents: ChronologicalEventItem[] = [];
   errorMessage = '';
   isLoading = true;
@@ -70,7 +68,6 @@ export class PostMatchComponent implements OnInit {
   maxMatchDuration = 80; // Minutos reglamentarios de rugby
   timelineTicks: number[] = [];
   eventTypesDiccionario: { [id: string]: string } = {};
-  playerNamesCache = new Map<string, string>();
 
   ngOnInit(): void {
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
@@ -120,11 +117,7 @@ export class PostMatchComponent implements OnInit {
     }
 
     try {
-      const remoteEvents = await firstValueFrom(this.eventService.getByMatchPostMatch(this.matchId));
-      this.events = remoteEvents.map((event, index) => ({
-        ...event,
-        localSequence: index + 1,
-      }));
+      this.events = await firstValueFrom(this.eventService.getByMatchPostMatch(this.matchId));
       this.buildTimeline();
     } catch (error: any) {
       if (error?.status === 409 || error?.error?.includes?.('cerrado')) {
@@ -137,7 +130,19 @@ export class PostMatchComponent implements OnInit {
 
       // Si falla la conexión remota, fallback al caché local
       try {
-        this.events = await this.cacheService.getEventsByMatch(this.matchId);
+        const localEvents = await this.cacheService.getEventsByMatch(this.matchId);
+        this.events = localEvents.map(e => ({
+          id: e.id,
+          eventTypeId: e.eventTypeId,
+          eventTypeName: this.getEventName(e.eventTypeId),
+          playerId: e.playerId,
+          playerName: e.playerId ? 'Jugador' : null,
+          playerJerseyNumber: null,
+          matchTime: e.matchTime ?? 0,
+          realTime: e.realTime ?? new Date().toISOString(),
+          period: e.period ?? 1,
+          teamPossession: e.teamPossession
+        }));
         this.buildTimeline();
       } catch (localError) {
         console.error('Error al traer eventos del partido:', localError);
@@ -180,8 +185,7 @@ export class PostMatchComponent implements OnInit {
   }
 
   buildTimeline(): void {
-    const trackMap = new Map<string, { seconds: number; realTime: string | null; playerId: string | null }[]>();
-    const uniquePlayerIds = new Set<string>();
+    const trackMap = new Map<string, { seconds: number; realTime: string | null; playerId: string | null; playerName: string | null; eventTypeName: string }[]>();
 
     this.maxMatchDuration = 80;
 
@@ -197,60 +201,32 @@ export class PostMatchComponent implements OnInit {
         trackMap.set(event.eventTypeId, []);
       }
 
-      if (event.playerId) {
-        uniquePlayerIds.add(event.playerId);
-      }
+      const eventName = event.eventTypeName || this.getEventName(event.eventTypeId);
 
       trackMap.get(event.eventTypeId)?.push({
         seconds: eventSeconds,
         realTime: event.realTime ?? null,
-        playerId: event.playerId ?? null
+        playerId: event.playerId ?? null,
+        playerName: event.playerName ?? null,
+        eventTypeName: eventName
       });
     });
 
-    this.fetchPlayerNames(uniquePlayerIds, trackMap);
-  }
-
-  fetchPlayerNames(
-    playerIds: Set<string>,
-    trackMap: Map<string, { seconds: number; realTime: string | null; playerId: string | null }[]>
-  ): void {
-    // Renderizar de inmediato para no bloquear la UI
     this.finalizeTimeline(trackMap);
-
-    if (playerIds.size === 0) {
-      return;
-    }
-
-    playerIds.forEach(id => {
-      if (this.playerNamesCache.has(id)) {
-        return;
-      }
-
-      this.personService.getPersonById(id).subscribe({
-        next: (person) => {
-          this.playerNamesCache.set(id, `${person.firstName} ${person.lastName}`);
-          this.finalizeTimeline(trackMap);
-        },
-        error: () => {
-          this.playerNamesCache.set(id, 'Jugador desconocido');
-          this.finalizeTimeline(trackMap);
-        }
-      });
-    });
   }
 
   finalizeTimeline(
-    trackMap: Map<string, { seconds: number; realTime: string | null; playerId: string | null }[]>
+    trackMap: Map<string, { seconds: number; realTime: string | null; playerId: string | null; playerName: string | null; eventTypeName: string }[]>
   ): void {
     this.timelineTracks = [];
 
     trackMap.forEach((occurrences, id) => {
+      const firstOcc = occurrences[0];
+      const name = firstOcc?.eventTypeName || this.getEventName(id);
+
       const occurrencesWithData: TimelineOccurrence[] = occurrences.map(occ => {
         const hasPlayer = Boolean(occ.playerId);
-        const playerName = hasPlayer
-          ? (this.playerNamesCache.get(occ.playerId!) || 'Desconocido')
-          : 'Sin jugador asignado';
+        const playerName = occ.playerName || (hasPlayer ? 'Jugador' : 'Sin jugador asignado');
 
         return {
           timeMinutes: occ.seconds / 60,
@@ -261,7 +237,6 @@ export class PostMatchComponent implements OnInit {
         };
       });
 
-      const name = this.getEventName(id);
       this.timelineTracks.push({
         eventTypeId: id,
         eventName: name,
@@ -272,11 +247,9 @@ export class PostMatchComponent implements OnInit {
 
     // Construir lista cronológica completa para la tabla
     this.chronologicalEvents = this.events.map(event => {
-      const eventName = this.getEventName(event.eventTypeId);
+      const eventName = event.eventTypeName || this.getEventName(event.eventTypeId);
       const hasPlayer = Boolean(event.playerId);
-      const playerName = hasPlayer
-        ? (this.playerNamesCache.get(event.playerId!) || 'Desconocido')
-        : 'Sin jugador asignado';
+      const playerName = event.playerName || (hasPlayer ? 'Jugador' : 'Sin jugador asignado');
 
       return {
         id: event.id,
