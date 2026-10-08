@@ -35,12 +35,8 @@ public class PersonService {
                 .toList();
     }
 
-    public Page<PersonResponseDTO> findPaginatedInactivePlayersByClubId(UUID clubId, int page, int size) {
-        return personRepository
-                .findPaginatedInactivePlayersByClubId(
-                        clubId,
-                        PageRequest.of(page, size)
-                )
+    public Page<PersonResponseDTO> findPaginatedInactivePlayersByClubAndDivision(UUID clubId, UUID divisionId, int page, int size) {
+        return personRepository.findPaginatedInactivePlayersByClubAndDivision(clubId, divisionId,PageRequest.of(page, size))
                 .map(PersonDTOMapper::toResponseDTO);
     }
 
