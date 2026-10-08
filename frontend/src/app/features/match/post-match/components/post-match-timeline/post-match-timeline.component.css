@@ -1,0 +1,428 @@
+
+.timeline-card {
+  background: var(--surface, #ffffff);
+  border: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.timeline-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #3b4e33);
+  display: block;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary, #111d0e);
+  margin: 0;
+}
+
+.timeline-legend {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary, #3b4e33);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 18px;
+  border-radius: 2px;
+}
+
+.legend-indicator.normal {
+  background: var(--btn-primary-bg, #204b22);
+}
+
+.legend-indicator.striped {
+  background: repeating-linear-gradient(
+    45deg,
+    #f59e0b,
+    #f59e0b 2px,
+    #ffffff 2px,
+    #ffffff 4px
+  );
+  border: 1px solid #d97706;
+}
+
+/* Barra de Filtros */
+.filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--surface-toolbar, #eaf3e6);
+  border: 1px solid var(--border, rgba(27, 33, 22, 0.10));
+  border-radius: 10px;
+  margin-bottom: 1.25rem;
+}
+
+.filter-left-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filter-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border-strong, rgba(27, 33, 22, 0.22));
+  border-radius: 9999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary, #111d0e);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-pill-btn:hover {
+  background: var(--surface-alt, #eef1e7);
+}
+
+.filter-pill-btn.active {
+  background: var(--btn-primary-bg, #204b22);
+  border-color: var(--btn-primary-bg, #204b22);
+  color: #ffffff;
+}
+
+.filter-divider {
+  display: inline-block;
+  width: 1px;
+  height: 22px;
+  background: var(--border, rgba(27, 33, 22, 0.15));
+  margin: 0 0.25rem;
+}
+
+.filter-pill-btn.unassigned-pill {
+  background: #ffffff;
+  border: 1.5px solid #d97706;
+  color: #b45309;
+}
+
+.filter-pill-btn.unassigned-pill.active {
+  background: #fef3c7;
+  border-color: #b45309;
+  color: #78350f;
+}
+
+.badge-count-text {
+  font-weight: 800;
+  margin-left: 2px;
+}
+
+.filter-pill-btn.clear-pill {
+  color: var(--btn-primary-bg, #204b22);
+  border-color: var(--border-strong, rgba(27, 33, 22, 0.22));
+}
+
+.filter-pill-btn.clear-pill:hover {
+  background: #ffffff;
+  border-color: var(--btn-primary-bg, #204b22);
+}
+
+.search-wrap {
+  position: relative;
+  min-width: 220px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted, #7a8c74);
+  font-size: 0.85rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.35rem 0.85rem 0.35rem 2.2rem;
+  font-size: 0.82rem;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border-strong, rgba(27, 33, 22, 0.22));
+  border-radius: 9999px;
+  color: var(--text-primary, #111d0e);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.search-input:focus {
+  border-color: var(--btn-primary-bg, #204b22);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted, #7a8c74);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Tablero de Línea de Tiempo */
+.timeline-scroll-container {
+  width: 100%;
+  border: 1px solid var(--border, rgba(27, 33, 22, 0.10));
+  border-radius: 8px;
+  background: var(--surface, #ffffff);
+  overflow-x: hidden;
+}
+
+.timeline-board {
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.ruler-row {
+  display: flex;
+  height: 38px;
+  border-bottom: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
+  background: var(--surface-alt, #eef1e7);
+}
+
+.ruler-sidebar-label {
+  width: 175px;
+  min-width: 175px;
+  padding: 0 0.75rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted, #7a8c74);
+  border-right: 1px solid var(--border, rgba(27, 33, 22, 0.10));
+}
+
+.ruler-track {
+  flex: 1;
+  position: relative;
+}
+
+.ruler-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.tick-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary, #3b4e33);
+  margin-bottom: 2px;
+}
+
+.ruler-tick.milestone .tick-label {
+  color: var(--text-primary, #111d0e);
+  font-weight: 800;
+}
+
+.tick-line {
+  width: 1px;
+  height: 8px;
+  background: var(--border-strong, rgba(27, 33, 22, 0.22));
+}
+
+.timeline-tracks-overlay {
+  position: absolute;
+  top: 38px;
+  bottom: 0;
+  left: 175px;
+  right: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.halftime-vertical-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 2px dashed #94a3b8;
+  z-index: 1;
+}
+
+.selected-event-indicator-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--btn-primary-bg, #204b22);
+  box-shadow: 0 0 8px rgba(32, 75, 34, 0.5);
+  z-index: 5;
+  transition: left 0.15s ease-out;
+}
+
+.selected-indicator-pin {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: var(--btn-primary-bg, #204b22);
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Filas de Carriles */
+.timeline-lane-row {
+  display: flex;
+  height: 44px;
+  border-bottom: 1px solid var(--border, rgba(27, 33, 22, 0.10));
+  transition: background-color 0.15s ease;
+}
+
+.timeline-lane-row:hover {
+  background-color: var(--surface-hover, #f1f3ea);
+}
+
+.timeline-lane-row.lane-hidden {
+  opacity: 0.45;
+  height: 36px;
+  background: var(--surface-alt, #eef1e7);
+}
+
+.lane-btn {
+  width: 175px;
+  min-width: 175px;
+  padding: 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border, rgba(27, 33, 22, 0.10));
+  cursor: pointer;
+  text-align: left;
+}
+
+.lane-color-bar {
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+}
+
+.lane-name {
+  flex: 1;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary, #111d0e);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lane-badge {
+  background: var(--surface-alt, #eef1e7);
+  color: var(--text-secondary, #3b4e33);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.lane-track {
+  flex: 1;
+  position: relative;
+  height: 100%;
+}
+
+/* Marcadores de Evento */
+.marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 26px;
+  border-radius: 2px;
+  border: none;
+  cursor: pointer;
+  z-index: 2;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.marker::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 36px;
+}
+
+.marker:hover {
+  transform: translate(-50%, -50%) scale(1.4);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  z-index: 6;
+}
+
+.marker.marker-selected {
+  transform: translate(-50%, -50%) scale(1.5);
+  outline: 2px solid #111d0e;
+  outline-offset: 1px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+}
+
+.marker.marker-unassigned {
+  background: repeating-linear-gradient(
+    45deg,
+    #f59e0b,
+    #f59e0b 2px,
+    #ffffff 2px,
+    #ffffff 4px
+  ) !important;
+  border: 1px solid #d97706;
+}
+
+.marker.marker-dimmed {
+  opacity: 0.12;
+  box-shadow: none;
+  pointer-events: none;
+}

@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -72,6 +74,21 @@ public class EventController {
     @GetMapping("/match")
     public ResponseEntity<Object> findEventsByMatchId(@RequestParam UUID matchId) {
         return ResponseEntity.ok(eventService.findEventsByMatchId(matchId));
+    }
+
+    @Operation(
+        summary = "List events for a closed match review",
+        description = "Returns all events for a match, strictly validating that the match is in FINISHED state."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Events returned successfully."),
+        @ApiResponse(responseCode = "403", description = "Forbidden: user cannot manage this match."),
+        @ApiResponse(responseCode = "409", description = "The match is not closed or cannot be processed.")
+    })
+    @GetMapping("/match/post-match")
+    @PreAuthorize("hasAnyRole('ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST')")
+    public ResponseEntity<Object> findPostMatchEvents(@RequestParam UUID matchId, Authentication authentication) {
+        return ResponseEntity.ok(eventService.findPostMatchEvents(matchId, authentication));
     }
 
     @Operation(

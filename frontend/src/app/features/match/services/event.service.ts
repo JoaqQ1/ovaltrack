@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { BackendEventCreationRequest, BackendEventResponse, LocalMatchEvent } from '../types/event.types';
+import { BackendEventCreationRequest, BackendEventResponse, LocalMatchEvent, MatchTimelineEventResponse } from '../types/event.types';
 
 @Injectable({ providedIn: 'root' })
 export class EventService {
@@ -11,6 +11,10 @@ export class EventService {
 
   getByMatch(matchId: string): Observable<BackendEventResponse[]> {
     return this.http.get<BackendEventResponse[]>(`${this.apiUrl}/match?matchId=${matchId}`);
+  }
+
+  getByMatchPostMatch(matchId: string): Observable<MatchTimelineEventResponse[]> {
+    return this.http.get<MatchTimelineEventResponse[]>(`${this.apiUrl}/match/post-match?matchId=${matchId}`);
   }
 
   create(request: BackendEventCreationRequest): Observable<BackendEventResponse> {

@@ -1,61 +1,54 @@
-<div class="post-match-container">
-  <h2>Mi Club vs {{ opponent }}</h2>
-  <div class="hud-actions">
-      <button type="button" class="btn btn-invite" (click)="comeBack()">
-        Volver atras
-      </button>
-    </div>
-  <p *ngIf="timelineTracks.length === 0">No hay eventos para mostrar.</p>
-  
-  <div class="timeline-board" *ngIf="timelineTracks.length > 0">
-    
-    <!-- Cabecera de la línea de tiempo -->
-    <div class="timeline-header" style="display: flex; width: 100%;">
-      <div class="header-sidebar" style="width: 200px;">Eventos</div>
-      
-      <!-- Contenedor de la regla que ocupa el espacio restante -->
-      <div class="header-track ruler-track" style="flex-grow: 1; position: relative;">
-        <!-- El ngFor genera cada marca -->
-        <div class="ruler-tick" 
-             *ngFor="let tick of timelineTicks" 
-             [style.left.%]="(tick / maxMatchDuration) * 100"
-             [ngClass]="{'milestone': tick === 0 || tick === 40 || tick === 80}">
-          
-          <!-- Los números o etiquetas -->
-          <span class="tick-label">
-            <ng-container *ngIf="tick === 0">Inicio</ng-container>
-            <ng-container *ngIf="tick === 40">E.T.</ng-container>
-            <ng-container *ngIf="tick === 80">Fin</ng-container>
-            <ng-container *ngIf="tick !== 0 && tick !== 40 && tick !== 80">{{ tick }}'</ng-container>
-          </span>
-          
-          <!-- La rayita vertical -->
-          <div class="tick-mark"></div>
-        </div>
+<div class="app review-dashboard-container">
+  <!-- Page Header Integrado OvalTrack -->
+  <header class="hud">
+    <div class="hud-brand">
+      <div class="badge-tech">
+        <span>Análisis • Post-Partido</span>
+      </div>
+      <div class="brand-text">
+        <h1 class="title">{{ userClubName() }} vs {{ opponent() }}</h1>
+        <p class="club">Revisión de la carga: verificá que cada evento esté completo y correcto</p>
       </div>
     </div>
 
-    <!-- Filas agrupadas por evento -->
-    <div class="timeline-row" *ngFor="let track of timelineTracks; let i = index">
-      
-      <!-- Columna izquierda: Nombre y cantidad -->
-      <div class="row-sidebar">
-        <!-- Modificamos aquí para que la barrita izquierda cambie de color -->
-        <span class="event-name" [style.borderLeftColor]="track.color">{{ track.eventName }}</span>
-        <span class="event-count">{{ track.occurrences.length }}</span>
-      </div>
-      
-      <!-- Columna derecha: Pista de tiempo -->
-      <div class="row-track">
-        <!-- Iteramos sobre 'occurrence' en lugar de 'time' -->
-        <div class="marker"
-             *ngFor="let occurrence of track.occurrences"
-             [style.left.%]="(occurrence.time / maxMatchDuration) * 100"
-             [style.backgroundColor]="track.color"
-             [title]="'Minuto: ' + occurrence.time + '\'\nJugador: ' + occurrence.player">
-        </div>
-      </div>
-      
+    <div class="hud-actions">
+      <button type="button" class="btn btn-outline" (click)="comeBack()">
+        <i class="bi bi-arrow-left"></i> Volver a partidos
+      </button>
     </div>
+  </header>
+
+  <!-- Banner de Error Semántico -->
+  <div *ngIf="errorMessage()" class="alert-error" role="alert">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ errorMessage() }}</span>
+  </div>
+
+  <!-- Estado de Carga con Skeletons Oficiales -->
+  <div *ngIf="isLoading()" class="skeleton-state">
+    <div class="sk-row" *ngFor="let i of [1, 2, 3, 4]">
+      <div class="sk sk-avatar"></div>
+      <div style="flex: 1">
+        <div class="sk sk-line"></div>
+        <div class="sk sk-line s"></div>
+      </div>
+      <div class="sk sk-block" style="max-width: 140px"></div>
+      <div class="sk sk-pill"></div>
+    </div>
+  </div>
+
+  <!-- Contenido Principal: Layout de Dos Columnas (Fase 2) -->
+  <div class="review-layout" *ngIf="!isLoading() && !errorMessage()">
+    <!-- Columna Principal: KPIs, Distribución Temporal y Tabla Detallada -->
+    <main class="review-main-column">
+      <app-post-match-kpis />
+      <app-post-match-timeline />
+      <app-post-match-table />
+    </main>
+
+    <!-- Columna Lateral (Sidebar 340px): Detalle del Evento y Cola de Revisión -->
+    <aside class="review-sidebar-column">
+      <app-post-match-panel />
+    </aside>
   </div>
 </div>

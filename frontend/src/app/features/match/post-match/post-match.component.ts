@@ -1,42 +1,55 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { MatchService } from '../services/match.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
-import { PersonService } from 'src/app/services/person.service';
 import { LiveCaptureCacheService } from '../services/live-capture-cache.service';
 import { LiveCaptureService } from '../services/live-capture.service';
-import { LocalMatchEvent } from '../types/event.types';
+import { UserContextService } from 'src/app/core/services/user-context.service';
+import { ToastService } from 'src/app/core/services/toast.service';
+import { MatchReviewStore } from './store/match-review.store';
+import { PostMatchKpisComponent } from './components/post-match-kpis/post-match-kpis.component';
+import { PostMatchTimelineComponent } from './components/post-match-timeline/post-match-timeline.component';
+import { PostMatchTableComponent } from './components/post-match-table/post-match-table.component';
+import { PostMatchPanelComponent } from './components/post-match-panel/post-match-panel.component';
 
 @Component({
   selector: 'app-post-match',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    PostMatchKpisComponent,
+    PostMatchTimelineComponent,
+    PostMatchTableComponent,
+    PostMatchPanelComponent
+  ],
   templateUrl: './post-match.component.html',
   styleUrl: './post-match.component.css'
 })
-export class PostMatchComponent implements OnInit{
+export class PostMatchComponent implements OnInit {
 
-  private route = inject(ActivatedRoute);
-  private matchService = inject(MatchService);
-  private eventService = inject(EventService);
-  private eventTypeService = inject(EventTypeService);
-  private personService = inject(PersonService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly matchService = inject(MatchService);
+  private readonly eventService = inject(EventService);
+  private readonly eventTypeService = inject(EventTypeService);
   private readonly cacheService = inject(LiveCaptureCacheService);
   private readonly liveCaptureService = inject(LiveCaptureService);
+  private readonly toastService = inject(ToastService);
+  readonly userContext = inject(UserContextService);
+  readonly store = inject(MatchReviewStore);
+
+  readonly userClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
 
   matchId = '';
-  events: LocalMatchEvent[] = [];
-  
-  opponent = 'Cargando...';
-  timelineTracks: { eventTypeId: string, eventName: string, occurrences: { time: number, player: string }[], color: string }[] = [];
-  maxMatchDuration = 80;
-  timelineTicks: number[] = [];
-  eventTypesDiccionario: { [id: string]: string } = {};
-  playerNamesCache = new Map<string, string>();
+
+  // Estado del contenedor
+  readonly opponent = signal<string>('Cargando...');
+  readonly errorMessage = signal<string>('');
+  readonly isLoading = signal<boolean>(true);
+  readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
 
   ngOnInit(): void {
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
@@ -49,26 +62,36 @@ export class PostMatchComponent implements OnInit{
   loadMatchDetails(): void {
     this.matchService.getMatchById(this.matchId).subscribe({
       next: (match) => {
-        this.opponent = match.opponent || 'Visitante';
+        this.opponent.set(match.opponent || 'Visitante');
+        if (match.startedAt) {
+          this.store.matchStartTime.set(match.startedAt);
+        }
       },
-      error: (err) => console.error('Error al cargar detalles del partido:', err)
+      error: () => {
+        this.toastService.error('No se pudieron obtener los detalles del partido');
+      }
     });
   }
 
   loadEventTypesAndEvents(): void {
     this.eventTypeService.getAll().subscribe({
       next: (types) => {
+        const dict: { [id: string]: string } = {};
         types.forEach(type => {
-          this.eventTypesDiccionario[type.id] = type.name; 
+          dict[type.id] = type.name;
         });
-        
+        this.eventTypesDiccionario.set(dict);
+        this.store.setEventTypes(dict);
         this.loadEvents();
       },
       error: () => {
         this.cacheService.getEventTypes().then(types => {
+          const dict: { [id: string]: string } = {};
           types.forEach(type => {
-            this.eventTypesDiccionario[type.id] = type.name;
+            dict[type.id] = type.name;
           });
+          this.eventTypesDiccionario.set(dict);
+          this.store.setEventTypes(dict);
           this.loadEvents();
         });
       }
@@ -76,123 +99,53 @@ export class PostMatchComponent implements OnInit{
   }
 
   async loadEvents(): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
     try {
       await firstValueFrom(this.liveCaptureService.syncPendingEvents(this.matchId));
-      const remoteEvents = await firstValueFrom(this.eventService.getByMatch(this.matchId));
-      this.events = remoteEvents.map((event, index) => ({
-        ...event,
-        localSequence: index + 1,
-      }));
-      this.buildTimeline();
-    } catch (error) {
-      try {
-        this.events = await this.cacheService.getEventsByMatch(this.matchId);
-        this.buildTimeline();
-      } catch (localError) {
-        console.error('Error al traer eventos del partido:', localError);
-      }
+    } catch {
+      // Sync local previo no bloqueante
     }
-  }
 
-  getEventColor(eventName: string): string {
-    const nameStr = eventName.toLowerCase();
-    
-    if (nameStr.includes('try')) return '#57AD16'; // Verde
-    if (nameStr.includes('tackle')) return '#0C2C47'; // Azul oscuro (el de tu marca)
-    if (nameStr.includes('penal') || nameStr.includes('expulsión') || nameStr.includes('lesión')) return '#C6403A'; // Rojo
-    if (nameStr.includes('line') || nameStr.includes('scrum') || nameStr.includes('turnover')) return '#F5821F'; // Naranja
-    if (nameStr.includes('drop')) return '#9c27b0'; // Morado
-    
-    return '#e6c820'; // Amarillo por defecto para cualquier otro evento
-  }
-
-  buildTimeline(): void {
-    const trackMap = new Map<string, { time: number, player: string, playerId: string }[]>();
-    const uniquePlayerIds = new Set<string>();
-    
-    this.events.forEach(event => {
-      const eventTime = event.matchTime ?? 0;
-      if (eventTime > this.maxMatchDuration) {
-        this.maxMatchDuration = eventTime;
-      }
-      
-      if (!trackMap.has(event.eventTypeId)) {
-        trackMap.set(event.eventTypeId, []);
-      }
-      
-      if (event.playerId !== null) {
-        uniquePlayerIds.add(event.playerId); 
-      }
-      
-      trackMap.get(event.eventTypeId)?.push({
-        time: eventTime, 
-        player: 'Cargando...',
-        playerId: event.playerId ?? ''
-      });
-    });
-
-    this.fetchPlayerNames(uniquePlayerIds, trackMap);
-  }
-
-  fetchPlayerNames(playerIds: Set<string>, trackMap: Map<string, { time: number, player: string, playerId: string}[]>): void {
-    let pendingRequests = playerIds.size;
-
-    if (pendingRequests === 0){
-      this.finalizeTimeline(trackMap);
-      return;
-    }
-  
-    playerIds.forEach(id => {
-      if (this.playerNamesCache.has(id)){
-        pendingRequests--;
-        if (pendingRequests === 0) this.finalizeTimeline(trackMap);
+    try {
+      const remoteEvents = await firstValueFrom(this.eventService.getByMatchPostMatch(this.matchId));
+      this.store.setEvents(remoteEvents);
+    } catch (error: any) {
+      if (error?.status === 409 || error?.error?.includes?.('cerrado')) {
+        const msg = typeof error.error === 'string'
+          ? error.error
+          : (error.error?.message || 'El partido aún no se encuentra cerrado.');
+        this.errorMessage.set(msg);
+        this.toastService.warning(msg);
+        this.isLoading.set(false);
         return;
       }
 
-      this.personService.getPersonById(id).subscribe({
-        next: (person) => {
-          this.playerNamesCache.set(id, `${person.firstName} ${person.lastName}`);
-        },
-        error: () => {
-          this.playerNamesCache.set(id, 'Jugador desconocido');
-        },
-        complete: () => {
-          pendingRequests--;
-          if (pendingRequests === 0) {
-            this.finalizeTimeline(trackMap);
-          }
-        }
-      });
-    });
-  }
-
-
-  finalizeTimeline(trackMap: Map<string, { time: number, player: string, playerId: string }[]>): void {
-    this.timelineTracks = [];
-    trackMap.forEach((occurrences, id) => {
-
-      const occurrencesWithNames = occurrences.map(occ => ({
-        time: occ.time,
-        player: occ.playerId ? (this.playerNamesCache.get(occ.playerId) || 'Desconocido') : 'Sin jugador'
-      }));
-
-      const name = this.getEventName(id);
-      this.timelineTracks.push({
-        eventTypeId: id,
-        eventName : name,
-        occurrences: occurrencesWithNames,
-        color: this.getEventColor(name)
-      });
-    });
-
-    this.timelineTicks = [];
-    for (let i = 0; i <= this.maxMatchDuration; i += 2) {
-      this.timelineTicks.push(i);
+      try {
+        const localEvents = await this.cacheService.getEventsByMatch(this.matchId);
+        const dict = this.eventTypesDiccionario();
+        const mapped = localEvents.map(e => ({
+          id: e.id,
+          eventTypeId: e.eventTypeId,
+          eventTypeName: dict[e.eventTypeId] || 'Evento',
+          playerId: e.playerId,
+          playerName: e.playerId ? 'Jugador' : null,
+          playerJerseyNumber: null,
+          matchTime: e.matchTime ?? 0,
+          realTime: e.realTime ?? new Date().toISOString(),
+          period: e.period ?? 1,
+          teamPossession: e.teamPossession
+        }));
+        this.store.setEvents(mapped);
+      } catch {
+        const msg = 'No se pudieron cargar los eventos del partido.';
+        this.errorMessage.set(msg);
+        this.toastService.error(msg);
+      }
+    } finally {
+      this.isLoading.set(false);
     }
-  }
-
-  getEventName(eventTypeId: string): string {
-    return this.eventTypesDiccionario[eventTypeId] || 'Evento Desconocido';
   }
 
   comeBack(): void {

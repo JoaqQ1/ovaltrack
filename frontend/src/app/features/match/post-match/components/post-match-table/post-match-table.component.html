@@ -1,0 +1,76 @@
+<section class="table-card">
+  <!-- Cabecera de la tarjeta -->
+  <div class="table-card-header">
+    <div>
+      <span class="section-label">REGISTRO DETALLADO</span>
+      <h2 class="section-title">Línea cronológica de eventos</h2>
+    </div>
+    <div class="table-counter">
+      <span>Mostrando {{ store.visibleEvents().length }} de {{ store.allViewModels().length }}</span>
+    </div>
+  </div>
+
+  <!-- Contenedor con scroll y cabecera sticky -->
+  <div class="table-scroll-container">
+    <table class="review-data-table">
+      <thead>
+        <tr>
+          <th style="width: 90px;">PERÍODO</th>
+          <th style="width: 120px;">TIEMPO</th>
+          <th style="width: 160px;">HORA REAL</th>
+          <th>TIPO DE EVENTO</th>
+          <th>JUGADOR ASOCIADO</th>
+          <th style="width: 80px; text-align: center;">ACCIÓN</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ev of store.visibleEvents()" 
+            [attr.data-event-id]="ev.id"
+            (click)="onRowClick(ev)"
+            [class.selected-row]="ev.id === store.selectedEventId()"
+            [class.unassigned-row]="!ev.hasPlayer">
+          <td>
+            <span class="period-badge" [class.p2]="ev.period === 2">
+              {{ ev.period === 1 ? '1T' : '2T' }}
+            </span>
+          </td>
+          <td>
+            <span class="time-mono">{{ ev.matchTimeFormatted }}</span>
+          </td>
+          <td>
+            <span class="realtime-mono">{{ ev.realTimeFormatted }}</span>
+          </td>
+          <td>
+            <span class="event-chip">
+              <span class="event-dot" [style.backgroundColor]="ev.color"></span>
+              {{ ev.eventTypeName }}
+            </span>
+          </td>
+          <td>
+            <span *ngIf="ev.hasPlayer" class="player-assigned">
+              <span class="player-initial">{{ ev.playerName.charAt(0).toUpperCase() }}</span>
+              {{ ev.playerName }}
+            </span>
+            <span *ngIf="!ev.hasPlayer" class="player-unassigned">
+              Sin asignar
+            </span>
+          </td>
+          <td style="text-align: center;">
+            <button type="button" class="btn-row-select" title="Seleccionar evento">
+              <i class="bi bi-eye"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Estado vacío si ningún evento coincide con filtros -->
+    <div *ngIf="store.visibleEvents().length === 0" class="table-empty-state">
+      <i class="bi bi-funnel-fill empty-icon"></i>
+      <p class="empty-msg">Ningún evento coincide con los filtros aplicados.</p>
+      <button type="button" class="btn-clear-empty" (click)="store.clearFilters()">
+        Restablecer filtros
+      </button>
+    </div>
+  </div>
+</section>

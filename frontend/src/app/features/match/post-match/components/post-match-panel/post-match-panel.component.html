@@ -1,0 +1,94 @@
+<div class="panel-stack">
+  <!-- Tarjeta 1: Detalle del Evento Seleccionado -->
+  <section class="panel-card">
+    <div class="panel-card-header">
+      <span class="section-label">EVENTO SELECCIONADO</span>
+      <h3 class="panel-title" *ngIf="store.selectedEvent() as ev">
+        {{ ev.eventTypeName }} • {{ ev.matchTimeFormatted }}
+      </h3>
+      <h3 class="panel-title text-muted" *ngIf="!store.selectedEvent()">
+        Sin selección
+      </h3>
+    </div>
+
+    <ng-container *ngIf="store.selectedEvent() as ev">
+      <div class="detail-grid">
+        <div class="detail-row">
+          <span class="detail-label">Período</span>
+          <span class="detail-value">{{ ev.period === 1 ? '1T' : '2T' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Hora real</span>
+          <span class="detail-value mono">{{ ev.realTimeFormatted }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Jugador</span>
+          <span class="detail-value" [class.text-amber]="!ev.hasPlayer">
+            {{ ev.hasPlayer ? ev.playerName : 'Sin asignar' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Campo de asignación preparado para HU 8.2 (Read-only informativo en HU 8.1) -->
+      <div class="assignment-field-wrapper">
+        <div class="fake-select-readonly" title="La asignación interactiva se habilitará en la HU 8.2">
+          <span>{{ ev.hasPlayer ? ev.playerName : 'Seleccionar jugador...' }}</span>
+          <i class="bi bi-chevron-down select-caret"></i>
+        </div>
+      </div>
+
+      <!-- Botón de Acción Rápida: Siguiente Pendiente -->
+      <button type="button" 
+              class="btn-next-pending" 
+              [disabled]="store.kpis().unassignedEvents === 0"
+              (click)="onNextPendingClick()">
+        Siguiente pendiente
+      </button>
+    </ng-container>
+
+    <div *ngIf="!store.selectedEvent()" class="empty-panel-msg">
+      <p>Selecciona un evento de la gráfica o tabla para ver su detalle.</p>
+    </div>
+  </section>
+
+  <!-- Tarjeta 2: Cola de Revisión -->
+  <section class="panel-card">
+    <div class="panel-card-header">
+      <span class="section-label">COLA DE REVISIÓN</span>
+      <h3 class="panel-title text-amber">
+        {{ store.kpis().unassignedEvents }} pendientes
+      </h3>
+    </div>
+
+    <!-- Lista de Pendientes Clickable -->
+    <div class="queue-list" *ngIf="store.pendingQueue().length > 0">
+      <div *ngFor="let item of store.pendingQueue().slice(0, 8)" 
+           class="queue-item" 
+           [class.selected]="item.id === store.selectedEventId()"
+           (click)="store.selectEvent(item.id)">
+        <span class="queue-time">{{ item.matchTimeFormatted }}</span>
+        <span class="queue-name">{{ item.eventTypeName }}</span>
+      </div>
+      <div *ngIf="store.pendingQueue().length > 8" class="queue-more-hint">
+        +{{ store.pendingQueue().length - 8 }} más en la tabla
+      </div>
+    </div>
+
+    <!-- Estado si no quedan pendientes -->
+    <div *ngIf="store.pendingQueue().length === 0" class="queue-completed">
+      <i class="bi bi-check-circle-fill text-success fs-4 mb-1"></i>
+      <p class="mb-0 fw-bold text-success">¡Todos los eventos asignados!</p>
+    </div>
+
+    <!-- Barra de Calidad de Carga -->
+    <div class="quality-bar-wrapper">
+      <div class="quality-label-row">
+        <span>Calidad de carga:</span>
+        <span class="fw-bold">{{ store.kpis().coveragePercentage }}% con jugador</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" [style.width.%]="store.kpis().coveragePercentage"></div>
+      </div>
+    </div>
+  </section>
+</div>

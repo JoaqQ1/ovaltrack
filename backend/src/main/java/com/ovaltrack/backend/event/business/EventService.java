@@ -4,8 +4,10 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.UUID;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import com.ovaltrack.backend.match.business.MatchSecurityValidator;
 import com.ovaltrack.backend.match.business.MatchService;
 import com.ovaltrack.backend.match.domain.Match;
 import com.ovaltrack.backend.match.domain.MatchStatus;
@@ -19,6 +21,7 @@ import com.ovaltrack.backend.event.domain.dto.EventDTOMapper;
 import com.ovaltrack.backend.event.domain.dto.event.EventCreationDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventResponseDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventUpdateDTO;
+import com.ovaltrack.backend.event.domain.dto.event.MatchTimelineEventResponseDTO;
 import com.ovaltrack.backend.event.repository.EventRepository;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 
@@ -35,6 +38,7 @@ public class EventService {
 	private final MatchService matchService;
 	private final PersonService personService;
 	private final MatchRepository matchRepository;
+	private final MatchSecurityValidator matchSecurityValidator;
 
 	public Collection<EventResponseDTO> findEventsByClubId(UUID clubId) {
 		if (clubService.findClubById(clubId) == null) {
@@ -60,6 +64,20 @@ public class EventService {
         }
 		return eventRepository.findEventsByMatchId(matchId).stream()
 				.map(EventDTOMapper::toResponseDTO)
+				.toList();
+	}
+
+	public Collection<MatchTimelineEventResponseDTO> findPostMatchEvents(UUID matchId, Authentication authentication) {
+		Match match = matchService.findMatchEntityById(matchId);
+		if (match == null) {
+			throw new BusinessException("Partido no encontrado");
+		}
+		matchSecurityValidator.validateCanManageMatch(match, authentication);
+		if (match.getStatus() != MatchStatus.FINISHED) {
+			throw new BusinessException("El partido aún no se encuentra cerrado");
+		}
+		return eventRepository.findPostMatchEventsByMatchId(matchId).stream()
+				.map(EventDTOMapper::toTimelineResponseDTO)
 				.toList();
 	}
 
