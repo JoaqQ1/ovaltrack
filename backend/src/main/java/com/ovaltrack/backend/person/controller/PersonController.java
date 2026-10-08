@@ -54,11 +54,12 @@ public class PersonController {
         @ApiResponse(responseCode = "200", description = "Persons returned successfully, even if there are none.")
     })
     @GetMapping("/club")
-    public ResponseEntity<Object> findPaginatedInactivePlayersByClubId(
+    public ResponseEntity<Object> findPaginatedInactivePlayersByClubAndDivision(
             @RequestParam UUID clubId,
+            @RequestParam UUID divisionId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(personService.findPaginatedInactivePlayersByClubId(clubId, page, size));
+        return ResponseEntity.ok(personService.findPaginatedInactivePlayersByClubAndDivision(clubId, divisionId, page, size));
     }
 
     @Operation(
