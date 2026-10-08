@@ -1,99 +1,189 @@
-.post-match-container {
-  padding: 20px;
-  background-color: #111111; /* Fondo oscuro estilo editor de video */
-  color: #eeeeee;
-  min-height: 100vh;
-  font-family: sans-serif;
+/* ==========================================================================
+   Post Match Component Styles — OvalTrack Sport Pro Salvia & Dark Tech
+   ========================================================================== */
+
+:host {
+  display: block;
+}
+
+/* Tarjeta Elevada de Datos (Estilo Canónico OvalTrack) */
+.table-card {
+  width: 100%;
+  background: var(--surface, #ffffff);
+  border: 2px solid var(--border-sport, rgba(32, 75, 34, 0.26));
+  border-radius: 18px;
+  box-shadow: var(--shadow-elevation, 0 10px 28px rgba(15, 35, 15, 0.10), 0 3px 8px rgba(15, 35, 15, 0.05));
+  overflow: hidden;
+  margin-bottom: 24px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-header {
+  background: linear-gradient(180deg, var(--surface-header-start, #edf5e9) 0%, var(--surface-header-end, #e0ebd8) 100%);
+  border-bottom: 2px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
+  padding: 20px 28px;
+  margin: 0;
+}
+
+.card-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--text-primary, #111d0e);
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Alerta de Error Semántica */
+.alert-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fef3f2;
+  border: 1.5px solid var(--error-border, #fecdca);
+  color: var(--error, #b42318);
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(180, 35, 24, 0.06);
+}
+
+/* Skeletons */
+.skeleton-state {
+  margin: 20px 0;
+}
+
+/* ==========================================================================
+   Línea de Tiempo Multipista
+   ========================================================================== */
+.timeline-wrapper {
+  width: 100%;
+  overflow-x: auto;
 }
 
 .timeline-board {
-  margin-top: 20px;
-  border: 1px solid #333;
-  border-radius: 6px;
-  background-color: #1a1a1a;
-  overflow: hidden;
-}
-
-.timeline-header, .timeline-row {
-  display: flex;
-  align-items: stretch;
-  border-bottom: 1px solid #2a2a2a;
+  min-width: 720px;
+  background-color: var(--surface, #ffffff);
 }
 
 .timeline-header {
-  background-color: #0f0f0f;
-  color: #888;
-  font-size: 13px;
-  font-weight: bold;
-  padding: 10px 0;
+  display: flex;
+  align-items: stretch;
+  border-bottom: 2px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.16));
+  background-color: var(--surface-alt, #f4f8f2);
+  color: var(--text-secondary, #3b4e33);
+  font-family: var(--font-head);
+  font-size: 12.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 0;
 }
 
-.header-sidebar, .row-sidebar {
-  width: 220px;
-  min-width: 220px;
-  padding: 0 15px;
+.header-sidebar,
+.row-sidebar {
+  width: 240px;
+  min-width: 240px;
+  padding: 0 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-right: 1px solid #333;
+  border-right: 1.5px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.16));
+  background-color: var(--surface-alt, #f7faf5);
 }
 
 .event-name {
-  font-size: 14px;
-  font-weight: 500;
-  border-left: 3px solid #e6c820; /* Marca de color a la izquierda */
-  padding-left: 8px;
+  font-family: var(--font-head);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary, #111d0e);
+  border-left: 4px solid var(--btn-primary-bg, #204b22);
+  padding-left: 10px;
+  line-height: 1.25;
 }
 
 .event-count {
-  color: #666;
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-secondary, #3b4e33);
+  background-color: var(--surface, #ffffff);
+  border: 1px solid var(--border, rgba(27, 33, 22, 0.12));
+  padding: 2px 8px;
+  border-radius: var(--radius-pill, 999px);
 }
 
-.header-track, .row-track {
+.timeline-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border, rgba(27, 33, 22, 0.10));
+  transition: background-color 0.15s ease;
+}
+
+.timeline-row:hover {
+  background-color: var(--surface-hover, #f6faf4);
+}
+
+.timeline-row:last-child {
+  border-bottom: none;
+}
+
+.header-track,
+.row-track {
   flex-grow: 1;
   position: relative;
-}
-
-.header-track {
-  padding-left: 15px;
 }
 
 .row-track {
-  height: 45px;
-  background-color: #1f1f1f; /* Fondo de los carriles ligeramente más claro */
+  height: 52px;
+  background-color: var(--surface, #ffffff);
 }
 
-/* El truco principal: Las marcas absolutas */
+.timeline-row:hover .row-track {
+  background-color: var(--surface-hover, #f6faf4);
+}
+
+/* Marcador visual de evento */
 .marker {
   position: absolute;
   top: 50%;
-  transform: translate(-50%, -50%); /* Centra el punto exactamente en el % calculado */
-  width: 3px;
-  height: 18px;
-  background-color: #e6c820; /* Color amarillo estilo Veo */
-  border-radius: 2px;
+  transform: translate(-50%, -50%);
+  width: 7px;
+  height: 28px;
+  border-radius: 3px;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .marker:hover {
-  transform: translate(-50%, -50%) scale(1.5);
-  background-color: #ffffff;
+  transform: translate(-50%, -50%) scale(1.45);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  z-index: 5;
 }
 
-/* Contenedor de la regla */
+/* Evento sin jugador asignado */
+.marker.marker-unassigned {
+  outline: 2px dashed #f59e0b;
+  outline-offset: 2px;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+}
+
+/* Regla graduada en minutos */
 .ruler-track {
   flex-grow: 1;
   position: relative;
-  min-height: 35px;
-  overflow: visible; /* Asegura que los números no se corten */
+  min-height: 36px;
+  overflow: visible;
 }
 
-/* Cada marca individual */
 .ruler-tick {
   position: absolute;
-  top: 5px; /* Modificado: en lugar de bottom: -11px */
+  top: 4px;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
@@ -101,42 +191,312 @@
   z-index: 2;
 }
 
-/* Texto de la marca (10', 20', etc.) */
 .tick-label {
+  font-family: var(--font-mono);
   font-size: 11px;
-  color: #a0a0a0; /* Gris claro para destacar sobre el fondo oscuro */
+  color: var(--text-muted, #7c8571);
   white-space: nowrap;
   margin-bottom: 3px;
-  font-family: monospace;
+  font-weight: 600;
 }
 
 .tick-mark {
   width: 1px;
   height: 6px;
-  background-color: #666;
+  background-color: var(--border-strong, rgba(27, 33, 22, 0.22));
 }
 
-/* Estilos especiales para Inicio, Entretiempo y Fin */
 .ruler-tick.milestone .tick-label {
-  color: #ffffff; /* Blanco brillante para los hitos */
-  font-weight: bold;
-  font-family: sans-serif;
-  font-size: 10px;
+  color: var(--btn-primary-bg, #204b22);
+  font-weight: 800;
+  font-family: var(--font-head);
+  font-size: 11px;
   text-transform: uppercase;
 }
 
 .ruler-tick.milestone .tick-mark {
   height: 10px;
   width: 2px;
-  background-color: #ffffff;
+  background-color: var(--btn-primary-bg, #204b22);
 }
 
-/* Ajuste sutil para que el texto de la marca del Inicio y Fin no se corte en los bordes de la pantalla */
 .ruler-tick:first-child {
   transform: translateX(0%);
   align-items: flex-start;
 }
+
 .ruler-tick:last-child {
   transform: translateX(-100%);
   align-items: flex-end;
+}
+
+/* Leyenda */
+.timeline-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary, #3b4e33);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-box {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.legend-box.normal {
+  background-color: var(--btn-primary-bg, #204b22);
+}
+
+.legend-box.unassigned {
+  background-color: var(--btn-primary-bg, #204b22);
+  outline: 2px dashed #f59e0b;
+}
+
+/* ==========================================================================
+   Tabla Cronológica
+   ========================================================================== */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+.data-table th {
+  background: var(--surface-header-start, #f4f8f2);
+  color: var(--btn-primary-bg, #204b22);
+  font-family: var(--font-head);
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 14px 24px;
+  border-bottom: 2px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.16));
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border, rgba(27, 33, 22, 0.10));
+  color: var(--text-primary, #111d0e);
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.data-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--surface-hover, #f6faf4);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.period-badge {
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 9px;
+  letter-spacing: 0.04em;
+}
+
+.match-time-mono {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--text-primary, #111d0e);
+}
+
+.realtime-mono {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-muted, #7c8571);
+}
+
+.event-type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface-alt, #eef1e7);
+  border: 1px solid var(--border, rgba(27, 33, 22, 0.10));
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary, #111d0e);
+}
+
+.event-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.player-name-cell {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary, #111d0e);
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge-unassigned {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--warning-tint, rgba(253, 176, 34, 0.20));
+  color: var(--warning, #8a5700);
+  border: 1px dashed var(--warning-border, rgba(154, 104, 0, 0.40));
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Soporte Modo Oscuro (Dark Rugby Tech)
+   ========================================================================== */
+[data-theme="dark"] .table-card {
+  background: #131c2e;
+  border-color: #2a3c5a;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .card-header {
+  background: #162238;
+  border-bottom: 2px solid #2a3c5a;
+}
+
+[data-theme="dark"] .card-title {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .timeline-board {
+  background-color: #131c2e;
+}
+
+[data-theme="dark"] .timeline-header {
+  background-color: #162238;
+  border-bottom-color: #2a3c5a;
+  color: #a3e635;
+}
+
+[data-theme="dark"] .header-sidebar,
+[data-theme="dark"] .row-sidebar {
+  background-color: #162238;
+  border-right-color: #2a3c5a;
+}
+
+[data-theme="dark"] .event-name {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .event-count {
+  background-color: #131c2e;
+  border-color: #2a3c5a;
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .timeline-row {
+  border-bottom-color: #1f2e47;
+}
+
+[data-theme="dark"] .timeline-row:hover {
+  background-color: #1c2b44;
+}
+
+[data-theme="dark"] .row-track {
+  background-color: #131c2e;
+}
+
+[data-theme="dark"] .timeline-row:hover .row-track {
+  background-color: #1c2b44;
+}
+
+[data-theme="dark"] .tick-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .tick-mark {
+  background-color: #2a3c5a;
+}
+
+[data-theme="dark"] .ruler-tick.milestone .tick-label {
+  color: #a3e635;
+}
+
+[data-theme="dark"] .ruler-tick.milestone .tick-mark {
+  background-color: #a3e635;
+}
+
+[data-theme="dark"] .timeline-legend {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .legend-box.normal {
+  background-color: #a3e635;
+}
+
+[data-theme="dark"] .legend-box.unassigned {
+  background-color: #a3e635;
+}
+
+[data-theme="dark"] .data-table th {
+  background: #162238;
+  color: #a3e635;
+  border-bottom-color: #2a3c5a;
+}
+
+[data-theme="dark"] .data-table td {
+  border-bottom-color: #1f2e47;
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .data-table tbody tr:hover {
+  background-color: #1c2b44;
+}
+
+[data-theme="dark"] .match-time-mono {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .realtime-mono {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .event-type-chip {
+  background: #162238;
+  border-color: #2a3c5a;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .player-name-cell {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .alert-error {
+  background: #2a1517;
+  border-color: #5c1d24;
+  color: #f87171;
 }
