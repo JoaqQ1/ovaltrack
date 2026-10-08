@@ -4,7 +4,7 @@
   flex-direction: column;
   gap: 1.25rem;
   position: sticky;
-  top: 1.5rem;
+  top: 100px; /* Offset aumentado para no chocar con la navbar global fija */
 }
 
 .panel-card {
