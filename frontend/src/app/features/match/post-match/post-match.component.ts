@@ -111,8 +111,15 @@ export class PostMatchComponent implements OnInit {
   async loadEvents(): Promise<void> {
     this.isLoading = true;
     this.errorMessage = '';
+
+    // Intenta sincronizar eventos pendientes sin bloquear la carga remota si falla
     try {
       await firstValueFrom(this.liveCaptureService.syncPendingEvents(this.matchId));
+    } catch (syncError) {
+      console.warn('Sincronización previa omitida o fallida:', syncError);
+    }
+
+    try {
       const remoteEvents = await firstValueFrom(this.eventService.getByMatchPostMatch(this.matchId));
       this.events = remoteEvents.map((event, index) => ({
         ...event,
@@ -128,6 +135,7 @@ export class PostMatchComponent implements OnInit {
         return;
       }
 
+      // Si falla la conexión remota, fallback al caché local
       try {
         this.events = await this.cacheService.getEventsByMatch(this.matchId);
         this.buildTimeline();
@@ -207,32 +215,26 @@ export class PostMatchComponent implements OnInit {
     playerIds: Set<string>,
     trackMap: Map<string, { seconds: number; realTime: string | null; playerId: string | null }[]>
   ): void {
-    let pendingRequests = playerIds.size;
+    // Renderizar de inmediato para no bloquear la UI
+    this.finalizeTimeline(trackMap);
 
-    if (pendingRequests === 0) {
-      this.finalizeTimeline(trackMap);
+    if (playerIds.size === 0) {
       return;
     }
 
     playerIds.forEach(id => {
       if (this.playerNamesCache.has(id)) {
-        pendingRequests--;
-        if (pendingRequests === 0) this.finalizeTimeline(trackMap);
         return;
       }
 
       this.personService.getPersonById(id).subscribe({
         next: (person) => {
           this.playerNamesCache.set(id, `${person.firstName} ${person.lastName}`);
+          this.finalizeTimeline(trackMap);
         },
         error: () => {
           this.playerNamesCache.set(id, 'Jugador desconocido');
-        },
-        complete: () => {
-          pendingRequests--;
-          if (pendingRequests === 0) {
-            this.finalizeTimeline(trackMap);
-          }
+          this.finalizeTimeline(trackMap);
         }
       });
     });
