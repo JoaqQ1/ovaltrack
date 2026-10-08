@@ -9,11 +9,13 @@ import { PersonService } from 'src/app/services/person.service';
 import { Division } from '../../division/types/division.types';
 import { DivisionPlayerResponse } from '../type/division-player.types';
 import { PersonResponse } from '../../person/types/person.types';
+import { PaginationComponent } from '../../pagination/pagination.component';
+import { ResultsPage } from '../../pagination/results-page';
 
 @Component({
   selector: 'app-division-player-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, PaginationComponent],
   templateUrl: './division-player-list.component.html',
   styleUrl: './division-player-list.component.css'
 })
@@ -28,18 +30,22 @@ export class DivisionPlayerListComponent implements OnInit {
     activePlayers: DivisionPlayerResponse[] = [];
     playerHistory: DivisionPlayerResponse[] = [];
     activePersons: PersonResponse[] = [];
+    
+    mensajeExito = '';
     mensajeError = '';
 
-    allPlayers: PersonResponse[] = [];
+    private autoDismissTimer: any = null;
+
+    resultsPage: ResultsPage = <ResultsPage>{};
+    currentPage: number = 1;
     mostrarFormularioAsociacion = false;
 
     ngOnInit(): void {
         this.cargarJugadoresActivos();
     }
 
-    mostrarJugadores(): void {
+    mostrarJugadoresInactivos(): void {
       if (this.mostrarFormularioAsociacion) {
-        // Toggle OFF if already visible
         this.mostrarFormularioAsociacion = false;
         return;
       }
@@ -49,9 +55,19 @@ export class DivisionPlayerListComponent implements OnInit {
         return;
       }
 
-      this.personService.getPlayersByClubId(this.division.clubId).subscribe({
-        next: (persons) => {
-          this.allPlayers = persons;
+      this.cargarJugadoresDisponibles(1);
+    }
+
+    cargarJugadoresDisponibles(page: number): void {
+      if (!this.division?.clubId) {
+        this.mensajeError = 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.';
+        return;
+      }
+
+      this.currentPage = page;
+      this.personService.getPagedInactivePlayersByClubId(this.division.clubId, page, 10).subscribe({
+        next: (response: ResultsPage) => {
+          this.resultsPage = response;
           this.mostrarFormularioAsociacion = true;
         },
         error: (err) => {
@@ -59,6 +75,10 @@ export class DivisionPlayerListComponent implements OnInit {
           this.mensajeError = 'No se pudieron obtener las personas del club.';
         }
       });
+    }
+
+    onPageChangeRequested(page: number): void {
+      this.cargarJugadoresDisponibles(page);
     }
 
     crearAsociacion(personId: string, position: string, jerseyNumber?: number): void {
@@ -75,10 +95,12 @@ export class DivisionPlayerListComponent implements OnInit {
       };
 
       this.mensajeError = '';
-
+      this.mensajeExito = '';
       this.divisionPlayerService.registerPlayer(creationDto).subscribe({
         next: () => {
+          this.mensajeExito = 'Jugador asociado a la division.';
           this.cargarJugadoresActivos();
+          this.cargarJugadoresDisponibles(this.currentPage);
         },
         error: (err) => {
           console.error('Error al asociar jugador a la división', err);
@@ -184,4 +206,20 @@ export class DivisionPlayerListComponent implements OnInit {
             }
         });
     }
+
+  closeSuccess(): void {
+    this.mensajeExito = '';
+    if (this.autoDismissTimer) {
+      clearTimeout(this.autoDismissTimer);
+      this.autoDismissTimer = null;
+    }
+  }
+
+  closeError(): void {
+    this.mensajeError = '';
+    if (this.autoDismissTimer) {
+      clearTimeout(this.autoDismissTimer);
+      this.autoDismissTimer = null;
+    }
+  }
 }
