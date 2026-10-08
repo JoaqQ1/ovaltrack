@@ -32,6 +32,7 @@ export class DivisionCoachListComponent implements OnInit {
   
   division: Division | null = null;
   coaches: DivisionCoachResponse[] = [];
+  coachHistory: DivisionCoachResponse[] = [];
   persons: PersonResponse[] = [];
   availableCoaches: Member[] = [];
   coachForm!: FormGroup;
@@ -55,6 +56,11 @@ export class DivisionCoachListComponent implements OnInit {
   }
 
   mostrarAsociacion(): void {
+    if (this.mostrarFormulario) {
+      this.cancelarAsociacion();
+      return;
+    }
+    this.cerrarHistorial();
     this.mensajeError = '';
     this.availableCoaches = [];
     this.cargandoMiembros = true;
@@ -127,6 +133,31 @@ export class DivisionCoachListComponent implements OnInit {
           : (err.error?.message || 'No se pudo desasociar el entrenador.');
       }
     });
+  }
+
+  mostrarHistorial(coach: DivisionCoachResponse): void {
+    const divisionId = this.division?.id;
+    if (!divisionId) {
+      this.mensajeError = 'No se pudo obtener el historial porque la división no está disponible.';
+      return;
+    }
+
+    this.coachHistory = [];
+    this.divisionCoachService.getHistoryByDivisionIdAndPersonId(divisionId, coach.personId).subscribe({
+      next: (history) => {
+        this.coachHistory = history;
+      },
+      error: (err) => {
+        console.error('Error al cargar el historial del entrenador', err);
+        this.mensajeError = typeof err.error === 'string'
+          ? err.error
+          : (err.error?.message || 'No se pudo cargar el historial del entrenador.');
+      }
+    });
+  }
+
+  cerrarHistorial(): void {
+    this.coachHistory = [];
   }
 
   cargarEntrenadores(): void {
