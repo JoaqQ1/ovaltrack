@@ -8,6 +8,12 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
+@media (max-width: 768px) {
+  .timeline-card {
+    padding: 1rem;
+  }
+}
+
 .timeline-card-header {
   display: flex;
   justify-content: space-between;
@@ -160,6 +166,12 @@
 .search-wrap {
   position: relative;
   min-width: 220px;
+}
+
+@media (max-width: 768px) {
+  .search-wrap {
+    flex: 1 1 100%;
+  }
 }
 
 .search-icon {

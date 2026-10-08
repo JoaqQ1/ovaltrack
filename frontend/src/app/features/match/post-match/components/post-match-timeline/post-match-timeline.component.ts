@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatchReviewStore } from '../../store/match-review.store';
-import { ReviewPeriodFilter } from '../../types/match-review.types';
+import { ReviewEventViewModel, ReviewPeriodFilter } from '../../types/match-review.types';
 
 @Component({
   selector: 'app-post-match-timeline',
@@ -13,6 +13,11 @@ import { ReviewPeriodFilter } from '../../types/match-review.types';
 })
 export class PostMatchTimelineComponent {
   readonly store = inject(MatchReviewStore);
+
+  getTooltip(occ: ReviewEventViewModel): string {
+    const player = occ.hasPlayer ? occ.playerName : 'Sin jugador asignado';
+    return `${occ.matchTimeFormatted} • ${occ.eventTypeName} (${player})`;
+  }
 
   // Eje de marcas en minutos calculado dinámicamente
   readonly timelineTicks = computed<number[]>(() => {

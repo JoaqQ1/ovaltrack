@@ -15,6 +15,12 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
+@media (max-width: 768px) {
+  .panel-card {
+    padding: 1rem;
+  }
+}
+
 .panel-card-header {
   margin-bottom: 0.85rem;
   border-bottom: 1px solid var(--border, rgba(27, 33, 22, 0.10));

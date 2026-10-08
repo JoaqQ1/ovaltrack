@@ -133,9 +133,7 @@
                     [style.left.%]="occ.pct" 
                     [style.backgroundColor]="occ.hasPlayer ? occ.color : '#f59e0b'" 
                     [attr.aria-label]="occ.eventTypeName + ' · ' + occ.matchTimeFormatted + ' · ' + occ.playerName" 
-                    [title]="occ.eventTypeName + ' · ' + occ.matchTimeFormatted + '
-Hora: ' + occ.realTimeFormatted + '
-Jugador: ' + occ.playerName"
+                    [title]="getTooltip(occ)"
                     (click)="store.selectEvent(occ.id)">
             </button>
           </ng-container>

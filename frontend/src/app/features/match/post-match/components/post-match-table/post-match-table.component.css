@@ -11,7 +11,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .table-card {
+    padding: 1rem;
+  }
 }
 
 .section-label {
@@ -37,57 +45,65 @@
 }
 
 .table-scroll-container {
-  max-height: 470px;
-  overflow-y: auto;
   overflow-x: auto;
   border: 1px solid var(--border, rgba(27, 33, 22, 0.10));
   border-radius: 8px;
   background: var(--surface, #ffffff);
 }
 
-.review-data-table {
+.table-grid-wrapper {
+  min-width: 720px; /* Evita que las columnas colapsen en móviles */
   width: 100%;
-  min-width: 700px; /* Evita que las columnas colapsen en móviles */
-  border-collapse: collapse;
-  text-align: left;
 }
 
-.review-data-table thead th {
-  position: sticky;
-  top: 0;
+.table-grid-header {
+  display: grid;
+  grid-template-columns: 85px 105px 150px minmax(130px, 1.2fr) minmax(150px, 1.5fr) 70px;
   background: var(--surface-alt, #eef1e7);
-  padding: 0.65rem 0.85rem;
+  padding: 0 0.85rem;
+  height: 42px;
+  align-items: center;
+  border-bottom: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   color: var(--text-secondary, #3b4e33);
-  border-bottom: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
-  z-index: 5;
+  box-sizing: border-box;
 }
 
-.review-data-table tbody tr {
+.table-virtual-viewport {
+  height: 470px;
+  width: 100%;
+}
+
+.table-grid-row {
+  display: grid;
+  grid-template-columns: 85px 105px 150px minmax(130px, 1.2fr) minmax(150px, 1.5fr) 70px;
+  align-items: center;
+  padding: 0 0.85rem;
+  height: 48px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--border, rgba(27, 33, 22, 0.10));
   cursor: pointer;
   transition: background-color 0.12s ease;
+  font-size: 0.85rem;
 }
 
-.review-data-table tbody tr:hover {
+.table-grid-row:hover {
   background-color: var(--surface-hover, #f1f3ea);
 }
 
-.review-data-table tbody tr.selected-row {
+.table-grid-row.selected-row {
   background-color: #f0f7ee !important;
   box-shadow: inset 3px 0 0 var(--btn-primary-bg, #204b22);
 }
 
-.review-data-table tbody tr.unassigned-row {
+.table-grid-row.unassigned-row {
   background-color: #fffdf5;
 }
 
-.review-data-table td {
-  padding: 0.65rem 0.85rem;
-  font-size: 0.85rem;
-  vertical-align: middle;
+.col-action {
+  text-align: center;
 }
 
 .period-badge {
