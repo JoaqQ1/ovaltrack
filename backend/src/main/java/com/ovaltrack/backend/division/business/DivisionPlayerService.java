@@ -50,14 +50,6 @@ public class DivisionPlayerService {
                 .map(DivisionDTOMapper::toResponseDTO).toList();
     }
 
-    public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivision(UUID divisionId) {
-        return findActiveDivisionPlayersByDivision(divisionId, null);
-    }
-
-    public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivision(UUID divisionId, Authentication authentication) {
-        return findActiveDivisionPlayersByDivision(divisionId, authentication);
-    }
-
     public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivisionIdAndPersonId(UUID divisionId, UUID personId) {
         return findDivisionPlayersByDivisionIdAndPersonId(divisionId, personId, null);
     }
