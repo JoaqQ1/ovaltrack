@@ -13,7 +13,7 @@
     ],
     "format": [
       "summary",
-      "progress-bar"
+      "progress"
     ],
     "publishQuiet": true
   }
