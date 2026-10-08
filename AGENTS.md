@@ -1,49 +1,80 @@
 # AGENTS.md
 
-## Environment
+## Environment & Execution Rules
 
-- Three-service Docker monorepo: `backend/` (Spring Boot), `frontend/` (Angular 18 PWA), `testing/` (Cucumber.js). No local Java/Maven/Node/Angular toolchain — everything builds and runs in containers. Do NOT run `mvn`/`npm`/`ng` on the host (only `backend/mvnw` works directly); use `./ds`.
-- `./ds` is the single entrypoint. First `./ds up` auto-creates `.env` from `.env.example`. `up` runs detached (`docker compose up -d --build`).
+- **Docker-first Monorepo**: Three-service architecture: `backend/` (Spring Boot), `frontend/` (Angular 18 PWA), `testing/` (Cucumber.js).
+- **No Host Toolchain**: No local Java/Maven/Node/Angular/PostgreSQL required. Do NOT run `mvn`/`npm`/`ng` directly on the host (only `./backend/mvnw` is host-compatible if strictly needed).
+- **Single Entrypoint**: `./ds` is the sole script for managing the environment. First `./ds up` auto-creates `.env` from `.env.example`. Detached mode by default (`docker compose up -d --build`).
 
-## Commands
+## Commands (`./ds`)
 
-- `./ds up` / `down` / `ps` / `logs [svc]` / `restart [svc]` / `build [svc]` / `db` (interactive psql).
-- `./ds compile` — recompiles backend Java in-container (`dc exec backend mvn compile -DskipTests`).
-- `./ds mvn <args>` — arbitrary Maven command in the backend container.
-- `./ds test` — runs the `testing` service (it uses the `--profile test` compose profile); requires the backend to be up and healthy.
-- `./ds staging data.sql` — seeds/resets the PostgreSQL database with the specified script from `staging/`.
-- `./ds sync-node` — copies `node_modules` from container to host for local IDE autocompletion.
-- `./ds install` — runs `npm install --legacy-peer-deps` inside the frontend container.
-- **`./ds down` keeps data/volumes. Only `./ds reset`** (`down -v`, prompts for confirmation) wipes DB data plus the `.m2`/`node_modules` caches.
+- `./ds up` — Builds (if needed) and starts backend, frontend, and PostgreSQL in detached mode.
+- `./ds down` — Stops containers (preserves database volumes).
+- `./ds ps` — Lists container status, health, and exposed ports.
+- `./ds logs [svc]` — Streams live logs (all services or specific: `./ds logs backend`).
+- `./ds restart [svc]` — Restarts all services or a specific container (`./ds restart db`).
+- `./ds build [svc]` — Rebuilds Docker images.
+- `./ds compile` — Recompiles backend Java code inside the container (`dc exec backend mvn compile -DskipTests`).
+- `./ds mvn <args>` — Runs arbitrary Maven commands inside backend container (e.g. `./ds mvn test`).
+- `./ds test` — Runs the Cucumber.js BDD test suite against the backend. Automatically executes `staging clean.sql` beforehand.
+- `./ds staging <file.sql>` — Executes a SQL script from `staging/` into the PostgreSQL database (e.g. `./ds staging data.sql`).
+- `./ds db` — Opens an interactive `psql` shell connected to PostgreSQL.
+- `./ds backend` / `./ds frontend` — Opens an interactive shell (`bash`/`sh`) inside the respective container.
+- `./ds pwa` / `pwa-down` — Builds and serves/stops the production PWA with Nginx on port `4201` (for testing Service Workers and offline mode).
+- `./ds install` — Runs `npm install --legacy-peer-deps` inside the frontend container.
+- `./ds sync-node` — Copies `node_modules` from the frontend container to host for IDE autocompletion/TypeScript server.
+- **`./ds reset`** — Stops containers and deletes all data volumes and caches (prompts for confirmation).
 
-## Backend (hot reload)
+## Backend Architecture & Stack
 
-- `backend/run.sh` runs `inotifywait` on `src/` → `mvn compile`, and Spring DevTools auto-restarts on new `target/classes`. Editing `.java` files auto-applies in the container — no manual restart is normally needed; `./ds compile` forces it.
-- `./backend` is bind-mounted to `/app`; `target/` is a named volume.
+- **Stack**: Spring Boot **3.3.4**, **Java 21**, Lombok, SpringDoc OpenAPI (Swagger UI at `http://localhost:8080/swagger-ui`), Actuator (`/actuator/health`).
+- **Hot Reload**: `backend/run.sh` monitors `src/` with `inotifywait` $\rightarrow$ triggers `mvn compile`, and Spring DevTools restarts on class changes. `./ds compile` forces an immediate recompile.
+- **Database**: PostgreSQL 16 with Hibernate `spring.jpa.hibernate.ddl-auto=update` (schema auto-synchronized from JPA entities, **no migration files**).
+- **Security & Authentication**:
+  - Stateless Spring Security with JWT Bearer tokens (`io.jsonwebtoken` JJWT 0.12.5), validated by `JwtAuthenticationFilter`.
+  - Method-level security enabled via `@EnableMethodSecurity` / `@PreAuthorize`.
+  - Initial system admin bootstrap: `BootstrapAdminRunner` creates the first `ADMIN_OVALTRACK` from environment variables `OVALTRACK_BOOTSTRAP_ADMIN_EMAIL` and `OVALTRACK_BOOTSTRAP_ADMIN_PASSWORD` (min 12 characters).
+  - User Roles (`UserRole`): `ADMIN_OVALTRACK`, `ADMIN_CLUB`, `COACH_ANALYST`, `PLAYER`, `NO_ROLE`.
+- **API & Error Standards**:
+  - Direct REST payloads (`ResponseEntity<DTO>`) or `BackendResponse<T>` depending on domain module.
+  - Standard HTTP status codes (`200 OK`, `201 Created`, `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `409 Conflict`).
+  - Centralized exception handling in `GlobalExceptionHandler` (`BusinessException` $\rightarrow$ 409, `EntityNotFoundException` $\rightarrow$ 404, `AccessDeniedException` $\rightarrow$ 401/403, `HttpMessageNotReadableException` $\rightarrow$ 400), returning standard JSON error responses (`{ "message": "..." }`).
+  - Strict layer separation: Entity $\leftrightarrow$ DTO Mapper $\leftrightarrow$ Service $\leftrightarrow$ Controller/Presenter.
 
-## Backend stack (trust `pom.xml`, not the README)
+## Frontend Architecture & Stack
 
-- Spring Boot parent **3.3.4**, **Java 21**, Lombok, springdoc (Swagger UI at `/swagger-ui`), actuator (`/actuator/health`).
-- JPA `ddl-auto=update` — schema auto-synced from entities, **no migration files**.
-- Direct REST responses returning domain DTOs with standard HTTP status codes (no generic `ApiResponse` envelopes).
-- Strict separation: Entity $\leftrightarrow$ DTO Mapper $\leftrightarrow$ Service $\leftrightarrow$ Controller/Presenter.
+- **Stack**: Angular 18 PWA, Standalone Components, `inject()`-based Dependency Injection (prefer `inject()` over constructor injection).
+- **Hot Reload**: Served with `ng serve --poll 2000 --host 0.0.0.0` at `http://localhost:4200`. Dependencies install with **`npm install --legacy-peer-deps`**.
+- **State & Reactivity**:
+  - Prefer Angular Signals (`signal()`, `computed()`) for synchronous UI/component state and service context.
+  - Use RxJS pipelines (`switchMap`, `takeUntilDestroyed`) for asynchronous HTTP streams. Avoid manual nested `.subscribe()` calls.
+  - Global user state is managed via `UserContextService` (`src/app/core/services/user-context.service.ts`), exposing reactive signals (`userContext`, `currentClub`, `currentRole`, `activeDivisions`, `hasClub`).
+- **UI & Design System (*Sport Pro Salvia*)**:
+  - Reference `docs/DESIGN_SYSTEM.md` and `src/styles.css` as the single source of truth for UI design.
+  - Use predefined design tokens (`--bg-canvas: #e1edde`, `--btn-primary-bg: #204b22`, `--border-sport`, elevated cards, 2px borders, minimum hit-targets of 44–48px). Do NOT invent arbitrary colors or ad-hoc styles.
+  - Bootstrap 5 and Bootstrap Icons are available globally.
+- **UI Feedback & Toasts**:
+  - Always use `ToastService` (`src/app/core/services/toast.service.ts`) for notifications and feedback (`toastService.success()`, `toastService.error()`, `toastService.warning()`, `toastService.info()`).
+  - Toasts are rendered globally by `<app-toast-container />`. Do NOT use `window.alert()` or install external UI notification libraries.
+- **Offline & Storage**:
+  - Dexie (`IndexedDB`) is used for client-side local caching and offline data storage.
+- **Typing & Paths**:
+  - Strong domain typing with TypeScript interfaces in `features/<domain>/types/`. Avoid `any`.
+  - Only `@environments/*` is aliased in `tsconfig.json`; use clean relative paths for other internal imports.
 
-## Testing
+## Testing & Staging
 
-- The only real test suite is Cucumber.js BDD in `testing/`; `.feature` files and steps are written in **Spanish**. It hits the live backend via `API_URL` (default `http://backend:8080`). Run with `./ds test`. Frontend tests are default Karma/Jasmine scaffolding (not exercised in the container).
-
-## Frontend
-
-- Angular 18 PWA, standalone components, served with `ng serve --poll 2000 --host 0.0.0.0` (hot reload). Dependencies install with **`npm install --legacy-peer-deps`**.
-- Backend URL is injectable via `window.__env` (`frontend/src/assets/env.js`) / `environment.docker.ts`.
-- Prefer RxJS reactive pipelines (`switchMap`, `takeUntilDestroyed`) or Angular Signals over nested subscriptions.
-- Strong domain typing with TypeScript interfaces in `features/<domain>/types/`.
+- **BDD Suite (Cucumber.js)**: Located in `testing/`. Feature files (`.feature`) and step definitions are written in **Spanish** (`Dado`, `Cuando`, `Entonces`).
+- **Target**: Hits the live backend at `http://backend:8080` (or `API_URL`).
+- **Execution**: Run with `./ds test`. It automatically cleans the database with `staging clean.sql` before execution.
+- **Helpers**: Reusable auth and domain helpers in `testing/features/support/` (`auth_helper.js`, `getUserToken`, `getAdminToken`).
+- **Database Seeding**: SQL scripts in `staging/` (`clean.sql`, `data.sql`, `snapshot.sql`, `event_type.sql`) loaded with `./ds staging <file.sql>`.
 
 ## Development Guidelines (SOLID & Clean Code)
 
-- El desarrollo en todo el proyecto (backend y frontend) debe esforzarse activamente por respetar los principios **SOLID**:
-  - **S (Single Responsibility Principle - Responsabilidad Única)**: Cada clase, entidad, servicio o componente debe tener un único motivo para cambiar. Separar estrictamente entidades de dominio, DTOs, mappers, servicios de negocio y controladores/presenters.
-  - **O (Open/Closed Principle - Abierto/Cerrado)**: El código debe estar abierto a la extensión pero cerrado a la modificación. El uso de DTOs y mappers desacopla la persistencia del contrato de API, permitiendo evolucionar esquemas sin romper clientes.
-  - **L (Liskov Substitution Principle - Sustitución de Liskov)**: Las subclases o implementaciones deben poder sustituir a sus tipos base sin alterar el comportamiento esperado del sistema.
-  - **I (Interface Segregation Principle - Segregación de Interfaces)**: Preferir contratos pequeños y específicos. Los DTOs deben solicitar y exponer únicamente los datos necesarios para la operación en cuestión.
-  - **D (Dependency Inversion Principle - Inversión de Dependencias)**: Los módulos de alto nivel no deben depender de los de bajo nivel, sino de abstracciones (inyección de dependencias en Spring, interfaces de servicios y repositorios).
+- **S (Single Responsibility)**: Cada clase, servicio, componente o entidad debe tener una única razón para cambiar. Separar estrictamente entidades de dominio, DTOs, mappers, servicios de negocio y controladores.
+- **O (Open/Closed)**: El código debe estar abierto a la extensión pero cerrado a la modificación. Los DTOs desacoplan el contrato de API del modelo de persistencia.
+- **L (Liskov Substitution)**: Las implementaciones deben cumplir estrictamente los contratos e interfaces sin alterar el comportamiento esperado.
+- **I (Interface Segregation)**: Contratos pequeños y específicos; los DTOs deben solicitar y exponer únicamente los datos requeridos.
+- **D (Dependency Inversion)**: Depender de abstracciones mediante inyección de dependencias en Spring (`@RequiredArgsConstructor`) y Angular (`inject()`).
+- **Refactoring Protocols**: Seguir las directivas de `docs/REFACTORING.md` (no refactorizar sin tests en verde, un refactor = un commit, regla de las tres repeticiones, pasos pequeños y reversibles).
