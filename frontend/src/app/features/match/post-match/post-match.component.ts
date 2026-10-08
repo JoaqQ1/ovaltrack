@@ -10,6 +10,7 @@ import { LiveCaptureService } from '../services/live-capture.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { MatchTimelineEventResponse } from '../types/event.types';
+import { MatchReviewStore } from './store/match-review.store';
 
 export interface TimelineOccurrence {
   timeMinutes: number;
@@ -56,6 +57,7 @@ export class PostMatchComponent implements OnInit {
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly toastService = inject(ToastService);
   readonly userContext = inject(UserContextService);
+  readonly store = inject(MatchReviewStore);
 
   readonly userClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
 
@@ -174,6 +176,9 @@ export class PostMatchComponent implements OnInit {
     this.matchService.getMatchById(this.matchId).subscribe({
       next: (match) => {
         this.opponent.set(match.opponent || 'Visitante');
+        if (match.startedAt) {
+          this.store.matchStartTime.set(match.startedAt);
+        }
       },
       error: () => {
         this.toastService.error('No se pudieron obtener los detalles del partido');
@@ -189,6 +194,7 @@ export class PostMatchComponent implements OnInit {
           dict[type.id] = type.name;
         });
         this.eventTypesDiccionario.set(dict);
+        this.store.setEventTypes(dict);
         this.loadEvents();
       },
       error: () => {
@@ -198,6 +204,7 @@ export class PostMatchComponent implements OnInit {
             dict[type.id] = type.name;
           });
           this.eventTypesDiccionario.set(dict);
+          this.store.setEventTypes(dict);
           this.loadEvents();
         });
       }
@@ -217,6 +224,7 @@ export class PostMatchComponent implements OnInit {
     try {
       const remoteEvents = await firstValueFrom(this.eventService.getByMatchPostMatch(this.matchId));
       this.events.set(remoteEvents);
+      this.store.setEvents(remoteEvents);
     } catch (error: any) {
       if (error?.status === 409 || error?.error?.includes?.('cerrado')) {
         const msg = typeof error.error === 'string'
@@ -231,7 +239,7 @@ export class PostMatchComponent implements OnInit {
       try {
         const localEvents = await this.cacheService.getEventsByMatch(this.matchId);
         const dict = this.eventTypesDiccionario();
-        this.events.set(localEvents.map(e => ({
+        const mapped = localEvents.map(e => ({
           id: e.id,
           eventTypeId: e.eventTypeId,
           eventTypeName: dict[e.eventTypeId] || 'Evento',
@@ -242,7 +250,9 @@ export class PostMatchComponent implements OnInit {
           realTime: e.realTime ?? new Date().toISOString(),
           period: e.period ?? 1,
           teamPossession: e.teamPossession
-        })));
+        }));
+        this.events.set(mapped);
+        this.store.setEvents(mapped);
       } catch (localError) {
         const msg = 'No se pudieron cargar los eventos del partido.';
         this.errorMessage.set(msg);
