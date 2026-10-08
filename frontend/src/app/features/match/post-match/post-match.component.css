@@ -166,6 +166,16 @@
   z-index: 5;
 }
 
+.marker::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 36px;
+}
+
 /* Evento sin jugador asignado */
 .marker.marker-unassigned {
   outline: 2px dashed #f59e0b;

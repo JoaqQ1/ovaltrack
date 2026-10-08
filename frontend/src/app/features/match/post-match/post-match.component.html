@@ -6,7 +6,7 @@
         <span>Análisis • Post-Partido</span>
       </div>
       <div class="brand-text">
-        <h1 class="title">{{ userClubName() }} vs {{ opponent }}</h1>
+        <h1 class="title">{{ userClubName() }} vs {{ opponent() }}</h1>
         <p class="club">Distribución temporal y registro cronológico del encuentro</p>
       </div>
     </div>
@@ -19,13 +19,13 @@
   </header>
 
   <!-- Banner de Error Semántico -->
-  <div *ngIf="errorMessage" class="alert-error" role="alert">
+  <div *ngIf="errorMessage()" class="alert-error" role="alert">
     <i class="bi bi-exclamation-triangle-fill"></i>
-    <span>{{ errorMessage }}</span>
+    <span>{{ errorMessage() }}</span>
   </div>
 
   <!-- Estado de Carga con Skeletons Oficiales -->
-  <div *ngIf="isLoading" class="skeleton-state">
+  <div *ngIf="isLoading()" class="skeleton-state">
     <div class="sk-row" *ngFor="let i of [1, 2, 3, 4]">
       <div class="sk sk-avatar"></div>
       <div style="flex: 1">
@@ -37,9 +37,9 @@
     </div>
   </div>
 
-  <ng-container *ngIf="!isLoading && !errorMessage">
+  <ng-container *ngIf="!isLoading() && !errorMessage()">
     <!-- Estado Vacío -->
-    <div *ngIf="timelineTracks.length === 0" class="empty-state">
+    <div *ngIf="timelineTracks().length === 0" class="empty-state">
       <div class="empty-icon">
         <i class="bi bi-clipboard2-x" style="font-size: 24px;"></i>
       </div>
@@ -51,7 +51,7 @@
     </div>
 
     <!-- Vista Gráfica: Tarjeta Elevada con Línea de Tiempo Multipista -->
-    <section class="table-card" *ngIf="timelineTracks.length > 0">
+    <section class="table-card" *ngIf="timelineTracks().length > 0">
       <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
           <p class="brand-text club">Visualización gráfica</p>
@@ -70,8 +70,8 @@
             <div class="header-sidebar">Eventos</div>
             <div class="header-track ruler-track">
               <div class="ruler-tick" 
-                   *ngFor="let tick of timelineTicks" 
-                   [style.left.%]="(tick / maxMatchDuration) * 100"
+                   *ngFor="let tick of timelineTicks()" 
+                   [style.left.%]="(tick / maxMatchDuration()) * 100"
                    [ngClass]="{'milestone': tick === 0 || tick === 40 || tick === 80}">
                 <span class="tick-label">
                   <ng-container *ngIf="tick === 0">Inicio</ng-container>
@@ -85,7 +85,7 @@
           </div>
 
           <!-- Filas agrupadas por evento -->
-          <div class="timeline-row" *ngFor="let track of timelineTracks">
+          <div class="timeline-row" *ngFor="let track of timelineTracks()">
             <!-- Columna izquierda: Nombre y cantidad -->
             <div class="row-sidebar">
               <span class="event-name" [style.borderLeftColor]="track.color">{{ track.eventName }}</span>
@@ -97,7 +97,7 @@
               <div class="marker"
                    *ngFor="let occurrence of track.occurrences"
                    [ngClass]="{'marker-unassigned': !occurrence.hasPlayer}"
-                   [style.left.%]="(occurrence.timeMinutes / maxMatchDuration) * 100"
+                   [style.left.%]="(occurrence.timeMinutes / maxMatchDuration()) * 100"
                    [style.backgroundColor]="track.color"
                    [title]="'Tiempo: ' + occurrence.matchTimeFormatted + '\nHora real: ' + occurrence.realTimeFormatted + '\nJugador: ' + occurrence.player">
               </div>
@@ -108,7 +108,7 @@
     </section>
 
     <!-- Vista de Lista: Tarjeta Elevada con Tabla Cronológica -->
-    <section class="table-card mt-4" *ngIf="chronologicalEvents.length > 0">
+    <section class="table-card mt-4" *ngIf="chronologicalEvents().length > 0">
       <div class="card-header">
         <p class="brand-text club">Registro detallado</p>
         <h2 class="card-title"><i class="bi bi-card-checklist me-2"></i>Línea Cronológica de Eventos</h2>
@@ -126,7 +126,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let ev of chronologicalEvents">
+            <tr *ngFor="let ev of chronologicalEvents()">
               <td>
                 <span class="badge-tech period-badge">{{ ev.period === 1 ? '1T' : '2T' }}</span>
               </td>

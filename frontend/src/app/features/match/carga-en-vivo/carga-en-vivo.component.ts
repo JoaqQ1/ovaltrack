@@ -18,6 +18,7 @@ import { PeriodStatisticDTO } from '../types/statistic.types';
 import { CurrentStatsModalComponent } from './components/current-stats-modal/current-stats-modal.component';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 /**
  * Representa un evento que ya fue tocado pero todavía está esperando a que
@@ -77,6 +78,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly matchService = inject(MatchService);
   private readonly statisticCalculationService = inject(StatisticCalculationService);
+  private readonly toastService = inject(ToastService);
   private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly router = inject(Router, { optional: true });
   private matchId = '';
@@ -504,8 +506,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.showConfirmFinish = false;
   }
 
-  /** Detiene el reloj y solicita al backend finalizar el partido. */
-  confirmFinishMatch(): void {
+  /** Detiene el reloj y solicita al backend finalizar el partido previa sincronización de eventos pendientes. */
+  async confirmFinishMatch(): Promise<void> {
     this.showConfirmFinish = false;
     this.stopClock();
     this.clockPaused = true;
@@ -513,18 +515,22 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.periodLabel = 'Finalizado';
     this.persistState();
 
-    this.matchService.finishMatch(this.matchId).subscribe({
-      next: () => {
-        this.isFinished = true;
-        this.synchronized = true;
-        this.isOfflineMode = false;
-      },
-      error: (error: HttpErrorResponse) => {
-        this.synchronized = false;
-        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
-      },
-    });
-    this.router?.navigate(['/post-match/', this.matchId]);
+    try {
+      // 1. Asegurar sincronización de eventos pendientes antes de cerrar el partido
+      await firstValueFrom(this.liveCaptureService.syncPendingEvents(this.matchId));
+
+      // 2. Cerrar el partido en backend una vez persistidos todos los eventos
+      await firstValueFrom(this.matchService.finishMatch(this.matchId));
+
+      this.isFinished = true;
+      this.synchronized = true;
+      this.isOfflineMode = false;
+      this.router?.navigate(['/post-match/', this.matchId]);
+    } catch (error: any) {
+      this.synchronized = false;
+      this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error al finalizar el partido.';
+      this.toastService.error(this.errorMessage);
+    }
   }
 
   /** Cierra el primer tiempo, guarda el estado y navega a sus estadísticas. */
