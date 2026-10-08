@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -34,11 +36,11 @@ public class DivisionPlayerService {
     private final DivisionService divisionService;
     private final PersonService personService;
 
-    public Collection<DivisionPlayerResponseDTO> findActiveDivisionPlayersByDivision(UUID divisionId) {
-        return findActiveDivisionPlayersByDivision(divisionId, null);
+    public Page<DivisionPlayerResponseDTO> findPaginatedActiveDivisionPlayersByDivision(UUID divisionId, int page, int size) {
+        return findPaginatedActiveDivisionPlayersByDivision(divisionId, page, size, null);
     }
 
-    public Collection<DivisionPlayerResponseDTO> findActiveDivisionPlayersByDivision(UUID divisionId, Authentication authentication) {
+    public Page<DivisionPlayerResponseDTO> findPaginatedActiveDivisionPlayersByDivision(UUID divisionId, int page, int size, Authentication authentication) {
         Division division = divisionService.findDivisionEntityById(divisionId);
         if (division == null) {
             throw new BusinessException("Division no encontrada");
@@ -46,8 +48,7 @@ public class DivisionPlayerService {
         if (authentication != null) {
             divisionSecurityValidator.validateCanAccessDivision(division, authentication);
         }
-        return divisionPlayerRepository.findActiveDivisionPlayersByDivision(divisionId).stream()
-                .map(DivisionDTOMapper::toResponseDTO).toList();
+        return divisionPlayerRepository.findPaginatedActiveDivisionPlayersByDivision(divisionId, PageRequest.of(page, size)).map(DivisionDTOMapper::toResponseDTO);
     }
 
     public Collection<DivisionPlayerResponseDTO> findDivisionPlayersByDivisionIdAndPersonId(UUID divisionId, UUID personId) {
