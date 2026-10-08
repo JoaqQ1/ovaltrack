@@ -3,6 +3,8 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  position: sticky;
+  top: 1.5rem;
 }
 
 .panel-card {
@@ -11,11 +13,6 @@
   border-radius: 14px;
   padding: 1.25rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-}
-
-.sticky-card {
-  position: sticky;
-  top: 1rem;
 }
 
 .panel-card-header {

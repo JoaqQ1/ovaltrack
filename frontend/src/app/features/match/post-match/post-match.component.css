@@ -18,7 +18,6 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
   gap: 1.5rem;
-  align-items: start;
 }
 
 .review-main-column {
