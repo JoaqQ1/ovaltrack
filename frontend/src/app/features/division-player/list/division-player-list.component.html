@@ -119,7 +119,7 @@
     <div class="card-header" *ngIf="activePlayers.length > 0">
       <p class="brand-text club">Plantel de división</p>
       <h2 class="card-title" id="players-title">
-        {{ activePlayers.length }} jugador{{ activePlayers.length === 1 ? '' : 'es' }}
+        {{ activePlayersResultsPage.totalElements }} jugador{{ activePlayersResultsPage.totalElements === 1 ? '' : 'es' }}
       </h2>
     </div>
 
@@ -195,6 +195,15 @@
         </tbody>
       </table>
     </div>
+
+    <app-pagination
+      [totalPages]="activePlayersResultsPage.totalPages"
+      [currentPage]="activePlayersCurrentPage"
+      [number]="activePlayersResultsPage.number"
+      [last]="activePlayersResultsPage.last"
+      [hidden]="activePlayersResultsPage.numberOfElements < 1"
+      (pageChangeRequested)="onActivePlayersPageChangeRequested($event)">
+    </app-pagination>
 
     <!-- History Card -->
     <div class="table-card history-card" *ngIf="playerHistory.length > 0">
