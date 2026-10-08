@@ -54,7 +54,7 @@ export class DivisionPlayerListComponent implements OnInit {
         this.mensajeError = 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.';
         return;
       }
-
+      this.cerrarHistorial();
       this.cargarJugadoresDisponibles(1);
     }
 
@@ -131,6 +131,10 @@ export class DivisionPlayerListComponent implements OnInit {
             : (err.error?.message || 'No se pudo cargar el historial del jugador.');
         }
       });
+    }
+
+    cerrarHistorial(): void {
+      this.playerHistory = [];
     }
 
     cargarJugadoresActivos(): void {
