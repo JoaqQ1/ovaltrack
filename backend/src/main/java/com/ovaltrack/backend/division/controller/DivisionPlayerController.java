@@ -38,8 +38,8 @@ public class DivisionPlayerController {
     private final DivisionPlayerService divisionPlayerService;
    
     @Operation(
-        summary = "List active players in a division",
-        description = "Returns all active players associated with the division identified by the divisionId query parameter."
+        summary = "List a page of the active players in a division",
+        description = "Returns a page of active players associated with the division identified by the divisionId query parameter."
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Division players returned successfully, even if there are none."),
@@ -47,10 +47,12 @@ public class DivisionPlayerController {
     })
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
-    public ResponseEntity<Object> findActiveDivisionPlayersByDivision(
+    public ResponseEntity<Object> findPaginatedActiveDivisionPlayersByDivision(
             @RequestParam UUID divisionId,
-            Authentication authentication) {
-        return ResponseEntity.ok(divisionPlayerService.findActiveDivisionPlayersByDivision(divisionId, authentication));
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(divisionPlayerService.findPaginatedActiveDivisionPlayersByDivision(divisionId, page, size, authentication));
     }
 
     @Operation(
