@@ -65,7 +65,7 @@ export class DivisionPlayerListComponent implements OnInit {
       }
 
       this.currentPage = page;
-      this.personService.getPagedInactivePlayersByClubId(this.division.clubId, page, 10).subscribe({
+      this.personService.getPagedInactivePlayersByClubAndDivision(this.division.clubId, this.division.id, page, 10).subscribe({
         next: (response: ResultsPage) => {
           this.resultsPage = response;
           this.mostrarFormularioAsociacion = true;
