@@ -12,11 +12,12 @@ import { Member } from '../members/types/members.types';
 import { PersonResponse } from '../person/types/person.types';
 import { PersonService } from 'src/app/services/person.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
+import { ModalComponent } from '../modal/modal.component';
 
 @Component({
   selector: 'app-division-coach-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, ModalComponent],
   templateUrl: './division-coach-list.component.html',
   styleUrl: './division-coach-list.component.css'
 })
@@ -29,15 +30,18 @@ export class DivisionCoachListComponent implements OnInit {
   private readonly membersService = inject(MembersService);
   private readonly personService = inject(PersonService);
   private readonly userContextService = inject(UserContextService);
-  
+
   division: Division | null = null;
   coaches: DivisionCoachResponse[] = [];
+  coachHistory: DivisionCoachResponse[] = [];
   persons: PersonResponse[] = [];
   availableCoaches: Member[] = [];
   coachForm!: FormGroup;
   mostrarFormulario = false;
   guardando = false;
   eliminandoId: string | null = null;
+  coachToRemove: DivisionCoachResponse | null = null;
+  mostrarModalConfirmacion = false;
   cargando = true;
   cargandoMiembros = false;
   error = '';
@@ -55,6 +59,11 @@ export class DivisionCoachListComponent implements OnInit {
   }
 
   mostrarAsociacion(): void {
+    if (this.mostrarFormulario) {
+      this.cancelarAsociacion();
+      return;
+    }
+    this.cerrarHistorial();
     this.mensajeError = '';
     this.availableCoaches = [];
     this.cargandoMiembros = true;
@@ -108,25 +117,71 @@ export class DivisionCoachListComponent implements OnInit {
   }
 
   desasociarEntrenador(coach: DivisionCoachResponse): void {
-    if (coach.endDate || this.eliminandoId || !window.confirm('¿Desasociar este entrenador de la división?')) {
+    if (coach.endDate || this.eliminandoId) {
       return;
     }
 
-    this.eliminandoId = coach.id;
     this.mensajeError = '';
-    this.divisionCoachService.remove(coach.id).subscribe({
+    this.cerrarHistorial();
+    this.coachToRemove = coach;
+    this.mostrarModalConfirmacion = true;
+  }
+
+  cancelarDesasociacion(): void {
+    if (!this.eliminandoId) {
+      this.mostrarModalConfirmacion = false;
+      this.coachToRemove = null;
+    }
+  }
+
+  confirmarDesasociacion(): void {
+    if (!this.coachToRemove) {
+      return;
+    }
+
+    this.eliminandoId = this.coachToRemove.id;
+    this.divisionCoachService.remove(this.coachToRemove.id).subscribe({
       next: () => {
         this.eliminandoId = null;
+        this.mostrarModalConfirmacion = false;
+        this.coachToRemove = null;
         this.cargarEntrenadores();
       },
       error: (err) => {
         console.error('Error al desasociar entrenador', err);
         this.eliminandoId = null;
+        this.mostrarModalConfirmacion = false;
+        this.coachToRemove = null;
         this.mensajeError = typeof err.error === 'string'
           ? err.error
           : (err.error?.message || 'No se pudo desasociar el entrenador.');
       }
     });
+  }
+
+  mostrarHistorial(coach: DivisionCoachResponse): void {
+    const divisionId = this.division?.id;
+    if (!divisionId) {
+      this.mensajeError = 'No se pudo obtener el historial porque la división no está disponible.';
+      return;
+    }
+
+    this.coachHistory = [];
+    this.divisionCoachService.getHistoryByDivisionIdAndPersonId(divisionId, coach.personId).subscribe({
+      next: (history) => {
+        this.coachHistory = history;
+      },
+      error: (err) => {
+        console.error('Error al cargar el historial del entrenador', err);
+        this.mensajeError = typeof err.error === 'string'
+          ? err.error
+          : (err.error?.message || 'No se pudo cargar el historial del entrenador.');
+      }
+    });
+  }
+
+  cerrarHistorial(): void {
+    this.coachHistory = [];
   }
 
   cargarEntrenadores(): void {

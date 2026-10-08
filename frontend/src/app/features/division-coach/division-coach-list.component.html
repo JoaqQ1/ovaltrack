@@ -14,7 +14,7 @@
     <div class="hud-actions">
       <a routerLink="/divisions" class="btn btn-outline">← Volver a divisiones</a>
       <button type="button" class="btn btn-invite" *ngIf="!esCoach" (click)="mostrarAsociacion()" [disabled]="cargandoMiembros">
-        {{ cargandoMiembros ? 'Cargando entrenadores...' : '+ Asociar entrenador' }}
+        {{ mostrarFormulario ? 'Ocultar registro' : '+ Asociar entrenador' }}
       </button>
     </div>
   </header>
@@ -54,7 +54,6 @@
         </div>
 
         <div class="form-actions">
-          <button type="button" class="btn btn-ghost" (click)="cancelarAsociacion()">Cancelar</button>
           <button type="submit" class="btn btn-invite" [disabled]="coachForm.invalid || guardando">
             {{ guardando ? 'Guardando...' : 'Asociar entrenador' }}
           </button>
@@ -101,6 +100,12 @@
 
       <div class="division-status-zone">
         <button
+          type="button"
+          class="btn btn-outline"
+          (click)="mostrarHistorial(coach)">
+          Historial
+        </button>
+        <button
           *ngIf="!esCoach && !coach.endDate"
           type="button"
           class="btn btn-outline"
@@ -114,6 +119,57 @@
         </span>
 
       </div>
+    </div>
+  </div>
+
+  <app-modal
+    *ngIf="mostrarModalConfirmacion && coachToRemove"
+    title="Desasociar entrenador"
+    message="¿Está seguro de que quiere desasociar a este entrenador de la división?"
+    description="La asociación quedará finalizada y conservará su historial."
+    [isProcessing]="!!eliminandoId"
+    (confirm)="confirmarDesasociacion()"
+    (cancel)="cancelarDesasociacion()">
+  </app-modal>
+
+  <div class="history-card" *ngIf="coachHistory.length > 0">
+    <div class="history-header">
+      <div>
+        <p class="card-subtitle">Historial del entrenador</p>
+        <h2 class="card-title">{{ coachHistory.length }} asociación{{ coachHistory.length === 1 ? '' : 'es' }}</h2>
+      </div>
+      <button
+        type="button"
+        class="history-close"
+        aria-label="Cerrar historial del entrenador"
+        title="Cerrar historial"
+        (click)="cerrarHistorial()">
+        ×
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Inicio</th>
+            <th>Fin</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let historyItem of coachHistory">
+            <td>{{ formatDate(historyItem.startDate) }}</td>
+            <td>{{ formatDate(historyItem.endDate) }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="historyItem.endDate ? 'status-inactive' : 'status-active'">
+                <span class="dot"></span>
+                {{ historyItem.endDate ? 'Finalizado' : 'Activo' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

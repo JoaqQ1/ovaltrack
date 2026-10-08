@@ -2,19 +2,6 @@
    Division Player List Component Styles (Fase C - Estética Mi Club Elevada)
    ========================================================================== */
 
-/* Alert Message */
-.alert-error {
-  background: #fef3f2;
-  border: 1.5px solid #fecdca;
-  color: #b42318;
-  padding: 14px 18px;
-  border-radius: 12px;
-  font-size: 13.5px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 6px rgba(180, 35, 24, 0.06);
-}
-
 /* Data Table Card Wrapper (Elevación y Borde Mi Club) */
 .table-card {
   width: 100%;
@@ -52,6 +39,34 @@
   background: linear-gradient(180deg, #f2f7ef 0%, #eaf3e6 100%);
   border-bottom: 2px solid rgba(32, 75, 34, 0.16);
   padding: 16px 24px;
+}
+
+.history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.history-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(32, 75, 34, 0.22);
+  border-radius: 8px;
+  background: transparent;
+  color: #204b22;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.history-close:hover,
+.history-close:focus-visible {
+  background: #dcebd6;
+  outline: none;
 }
 
 .table-responsive {

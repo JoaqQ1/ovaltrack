@@ -9,11 +9,13 @@ import { PersonService } from 'src/app/services/person.service';
 import { Division } from '../../division/types/division.types';
 import { DivisionPlayerResponse } from '../type/division-player.types';
 import { PersonResponse } from '../../person/types/person.types';
+import { PaginationComponent } from '../../pagination/pagination.component';
+import { ResultsPage } from '../../pagination/results-page';
 
 @Component({
   selector: 'app-division-player-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, PaginationComponent],
   templateUrl: './division-player-list.component.html',
   styleUrl: './division-player-list.component.css'
 })
@@ -28,18 +30,24 @@ export class DivisionPlayerListComponent implements OnInit {
     activePlayers: DivisionPlayerResponse[] = [];
     playerHistory: DivisionPlayerResponse[] = [];
     activePersons: PersonResponse[] = [];
+    
+    mensajeExito = '';
     mensajeError = '';
 
-    allPlayers: PersonResponse[] = [];
+    private autoDismissTimer: any = null;
+
+    resultsPage: ResultsPage = <ResultsPage>{};
+    currentPage: number = 1;
+    activePlayersResultsPage: ResultsPage = <ResultsPage>{};
+    activePlayersCurrentPage: number = 1;
     mostrarFormularioAsociacion = false;
 
     ngOnInit(): void {
         this.cargarJugadoresActivos();
     }
 
-    mostrarJugadores(): void {
+    mostrarJugadoresInactivos(): void {
       if (this.mostrarFormularioAsociacion) {
-        // Toggle OFF if already visible
         this.mostrarFormularioAsociacion = false;
         return;
       }
@@ -48,10 +56,20 @@ export class DivisionPlayerListComponent implements OnInit {
         this.mensajeError = 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.';
         return;
       }
+      this.cerrarHistorial();
+      this.cargarJugadoresDisponibles(1);
+    }
 
-      this.personService.getPlayersByClubId(this.division.clubId).subscribe({
-        next: (persons) => {
-          this.allPlayers = persons;
+    cargarJugadoresDisponibles(page: number): void {
+      if (!this.division?.clubId) {
+        this.mensajeError = 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.';
+        return;
+      }
+
+      this.currentPage = page;
+      this.personService.getPagedInactivePlayersByClubAndDivision(this.division.clubId, this.division.id, page, 10).subscribe({
+        next: (response: ResultsPage) => {
+          this.resultsPage = response;
           this.mostrarFormularioAsociacion = true;
         },
         error: (err) => {
@@ -59,6 +77,10 @@ export class DivisionPlayerListComponent implements OnInit {
           this.mensajeError = 'No se pudieron obtener las personas del club.';
         }
       });
+    }
+
+    onPageChangeRequested(page: number): void {
+      this.cargarJugadoresDisponibles(page);
     }
 
     crearAsociacion(personId: string, position: string, jerseyNumber?: number): void {
@@ -75,10 +97,12 @@ export class DivisionPlayerListComponent implements OnInit {
       };
 
       this.mensajeError = '';
-
+      this.mensajeExito = '';
       this.divisionPlayerService.registerPlayer(creationDto).subscribe({
         next: () => {
+          this.mensajeExito = 'Jugador asociado a la division.';
           this.cargarJugadoresActivos();
+          this.cargarJugadoresDisponibles(this.currentPage);
         },
         error: (err) => {
           console.error('Error al asociar jugador a la división', err);
@@ -111,7 +135,11 @@ export class DivisionPlayerListComponent implements OnInit {
       });
     }
 
-    cargarJugadoresActivos(): void {
+    cerrarHistorial(): void {
+      this.playerHistory = [];
+    }
+
+    cargarJugadoresActivos(page: number = this.activePlayersCurrentPage): void {
       this.mensajeError = '';
 
       this.route.paramMap.pipe(
@@ -123,28 +151,32 @@ export class DivisionPlayerListComponent implements OnInit {
 
           return forkJoin({
             division: this.divisionService.getDivisionById(divisionId),
-            activePlayers: this.divisionPlayerService.getActiveByDivisionId(divisionId)
+            activePlayersPage: this.divisionPlayerService.getActiveByDivisionId(divisionId, page, 10)
           });
         }),
-        switchMap(({ division, activePlayers }) => {
+        switchMap(({ division, activePlayersPage }) => {
+          const activePlayers = activePlayersPage.content as DivisionPlayerResponse[];
           if (activePlayers.length === 0) {
-            return of({ division, activePlayers, activePersons: [] as PersonResponse[] });
+            return of({ division, activePlayersPage, activePlayers, activePersons: [] as PersonResponse[] });
           }
 
           return forkJoin(
-            activePlayers.map(activePlayers => this.personService.getPersonById(activePlayers.personId))
+            activePlayers.map(player => this.personService.getPersonById(player.personId))
           ).pipe(
-            switchMap((activePersons) => of({ division, activePlayers, activePersons }))
+            switchMap((activePersons) => of({ division, activePlayersPage, activePlayers, activePersons }))
           );
         })
       ).subscribe({
-        next: ({ division, activePlayers, activePersons }) => {
+        next: ({ division, activePlayersPage, activePlayers, activePersons }) => {
           this.division = division;
+          this.activePlayersResultsPage = activePlayersPage;
+          this.activePlayersCurrentPage = activePlayersPage.number + 1;
           this.activePlayers = activePlayers;
           this.activePersons = activePersons;
         },
         error: (err) => {
           console.error('Error al cargar los jugadores de la división', err);
+          this.activePlayersResultsPage = <ResultsPage>{};
           this.activePlayers = [];
           this.activePersons = [];
 
@@ -170,6 +202,10 @@ export class DivisionPlayerListComponent implements OnInit {
       });
     }
 
+    onActivePlayersPageChangeRequested(page: number): void {
+      this.cargarJugadoresActivos(page);
+    }
+
     desasociarJugador(player: DivisionPlayerResponse): void {
         this.mensajeError = '';
         this.divisionPlayerService.remove(player.id).subscribe({
@@ -184,4 +220,20 @@ export class DivisionPlayerListComponent implements OnInit {
             }
         });
     }
+
+  closeSuccess(): void {
+    this.mensajeExito = '';
+    if (this.autoDismissTimer) {
+      clearTimeout(this.autoDismissTimer);
+      this.autoDismissTimer = null;
+    }
+  }
+
+  closeError(): void {
+    this.mensajeError = '';
+    if (this.autoDismissTimer) {
+      clearTimeout(this.autoDismissTimer);
+      this.autoDismissTimer = null;
+    }
+  }
 }
