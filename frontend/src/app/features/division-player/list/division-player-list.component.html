@@ -199,7 +199,17 @@
     <!-- History Card -->
     <div class="table-card history-card" *ngIf="playerHistory.length > 0">
       <div class="card-header history-header">
-        <p class="brand-text club">Historial del jugador</p>
+        <div class="history-heading">
+          <p class="brand-text club">Historial del jugador</p>
+          <button
+            type="button"
+            class="history-close"
+            aria-label="Cerrar historial del jugador"
+            title="Cerrar historial"
+            (click)="cerrarHistorial()">
+            ×
+          </button>
+        </div>
         <h2 class="card-title">{{ playerHistory.length }} asociación{{ playerHistory.length === 1 ? '' : 'es' }}</h2>
       </div>
 
