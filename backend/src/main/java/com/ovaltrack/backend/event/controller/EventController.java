@@ -75,6 +75,19 @@ public class EventController {
     }
 
     @Operation(
+        summary = "List events for a closed match review",
+        description = "Returns all events for a match, strictly validating that the match is in FINISHED state."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Events returned successfully."),
+        @ApiResponse(responseCode = "409", description = "The match is not closed or cannot be processed.")
+    })
+    @GetMapping("/match/post-match")
+    public ResponseEntity<Object> findPostMatchEvents(@RequestParam UUID matchId) {
+        return ResponseEntity.ok(eventService.findPostMatchEvents(matchId));
+    }
+
+    @Operation(
         summary = "Find an event",
         description = "Returns the event identified by the eventId path parameter."
     )

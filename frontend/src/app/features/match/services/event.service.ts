@@ -13,6 +13,10 @@ export class EventService {
     return this.http.get<BackendEventResponse[]>(`${this.apiUrl}/match?matchId=${matchId}`);
   }
 
+  getByMatchPostMatch(matchId: string): Observable<BackendEventResponse[]> {
+    return this.http.get<BackendEventResponse[]>(`${this.apiUrl}/match/post-match?matchId=${matchId}`);
+  }
+
   create(request: BackendEventCreationRequest): Observable<BackendEventResponse> {
     return this.http.post<BackendEventResponse>(this.apiUrl, request);
   }

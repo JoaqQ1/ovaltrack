@@ -63,6 +63,19 @@ public class EventService {
 				.toList();
 	}
 
+	public Collection<EventResponseDTO> findPostMatchEvents(UUID matchId) {
+		Match match = matchService.findMatchEntityById(matchId);
+		if (match == null) {
+			throw new BusinessException("Partido no encontrado");
+		}
+		if (match.getStatus() != MatchStatus.FINISHED) {
+			throw new BusinessException("El partido aún no se encuentra cerrado");
+		}
+		return eventRepository.findEventsByMatchId(matchId).stream()
+				.map(EventDTOMapper::toResponseDTO)
+				.toList();
+	}
+
 	public EventResponseDTO findEventById(UUID eventId) {
 		Event result = eventRepository.findActiveEventById(eventId);
 		return EventDTOMapper.toResponseDTO(result);
