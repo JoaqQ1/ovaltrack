@@ -25,6 +25,7 @@
       </thead>
       <tbody>
         <tr *ngFor="let ev of store.visibleEvents()" 
+            [attr.data-event-id]="ev.id"
             (click)="onRowClick(ev)"
             [class.selected-row]="ev.id === store.selectedEventId()"
             [class.unassigned-row]="!ev.hasPlayer">

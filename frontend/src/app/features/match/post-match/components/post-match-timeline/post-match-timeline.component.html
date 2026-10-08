@@ -92,9 +92,19 @@
         </div>
       </div>
 
-      <!-- Línea Vertical de Entretiempo (Referencia visual transversal) -->
-      <div class="halftime-vertical-line" 
-           [style.left.%]="(40 / store.matchDurationScale()) * 100">
+      <!-- Overlay de Referencias Verticales (Alineado con las pistas) -->
+      <div class="timeline-tracks-overlay">
+        <!-- Línea Vertical de Entretiempo (Referencia visual transversal) -->
+        <div class="halftime-vertical-line" 
+             [style.left.%]="(40 / store.matchDurationScale()) * 100">
+        </div>
+
+        <!-- Línea Vertical del Evento Seleccionado -->
+        <div *ngIf="selectedEventPct() !== null" 
+             class="selected-event-indicator-line" 
+             [style.left.%]="selectedEventPct()">
+          <div class="selected-indicator-pin"></div>
+        </div>
       </div>
 
       <!-- Filas de Carriles por Tipo de Evento -->

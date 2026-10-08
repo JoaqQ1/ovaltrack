@@ -29,6 +29,11 @@ export class PostMatchTimelineComponent {
     return ticks;
   });
 
+  readonly selectedEventPct = computed<number | null>(() => {
+    const selected = this.store.selectedEvent();
+    return selected ? selected.pct : null;
+  });
+
   onSearchChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.store.setSearchTerm(input.value);

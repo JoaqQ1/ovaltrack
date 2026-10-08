@@ -261,14 +261,47 @@
   background: var(--border-strong, rgba(27, 33, 22, 0.22));
 }
 
-.halftime-vertical-line {
+.timeline-tracks-overlay {
   position: absolute;
   top: 38px;
+  bottom: 0;
+  left: 175px;
+  right: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.halftime-vertical-line {
+  position: absolute;
+  top: 0;
   bottom: 0;
   width: 0;
   border-left: 2px dashed #94a3b8;
   z-index: 1;
-  pointer-events: none;
+}
+
+.selected-event-indicator-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--btn-primary-bg, #204b22);
+  box-shadow: 0 0 8px rgba(32, 75, 34, 0.5);
+  z-index: 5;
+  transition: left 0.15s ease-out;
+}
+
+.selected-indicator-pin {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: var(--btn-primary-bg, #204b22);
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Filas de Carriles */
