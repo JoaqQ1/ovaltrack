@@ -47,15 +47,18 @@ public class PersonController {
     }
 
     @Operation(
-        summary = "List all persons by club ID",
-        description = "Returns every person associated with a club based on the clubId request parameter"
+        summary = "List all inactive players by club ID",
+        description = "Returns every inactive player associated with a club based on the clubId request parameter"
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Persons returned successfully, even if there are none.")
     })
     @GetMapping("/club")
-    public ResponseEntity<Object> findPlayersByClubId(@RequestParam UUID clubId) {
-        return ResponseEntity.ok(personService.findPlayersByClubId(clubId));
+    public ResponseEntity<Object> findPaginatedInactivePlayersByClubId(
+            @RequestParam UUID clubId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(personService.findPaginatedInactivePlayersByClubId(clubId, page, size));
     }
 
     @Operation(
