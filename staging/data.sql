@@ -217,15 +217,16 @@ INSERT INTO matches (
 -- template_event_fields (v2) es un ARRAY ORDENADO de campos:
 --   key        identificador estable (clave dentro de events.attributes)
 --   label      texto a mostrar en el formulario
---   type       select | number | boolean | text | jersey
+--   type       select | number | boolean | text
 --   phase      'live'  -> se pide en el momento de la carga en vivo
 --              'post'  -> se completa después (pantalla post-partido)
 --   required   si es true y phase = 'live', bloquea el alta del evento
 --   options    [{value,label}] solo para type = select
---   min/max/default   opcionales (number / jersey)
+--   min/max/default   opcionales (number)
 --   effect     opcional; "scoring" = si el valor es false, el evento no suma puntos
 --   trueLabel/falseLabel   textos de los botones para type = boolean
 -- Claves reservadas en attributes (no se declaran en la plantilla): playerNumber
+-- Cambio: sin campos hasta definir su lógica (cambia la lista de jugadores en cancha).
 --
 -- Regla del catálogo: un solo tipo por acción (Penal a los palos, Drop gol, Conversión).
 -- El resultado se pide al registrar el evento con un campo phase = 'live' marcado
@@ -810,30 +811,11 @@ VALUES
     false,
     false,
     0,
-    false,
+    true,
     true,
     true,
     NULL,
-    $$[
-      {
-        "key": "outgoingPlayer",
-        "label": "Sale (N°)",
-        "type": "jersey",
-        "phase": "live",
-        "required": true,
-        "min": 1,
-        "max": 23
-      },
-      {
-        "key": "incomingPlayer",
-        "label": "Entra (N°)",
-        "type": "jersey",
-        "phase": "live",
-        "required": true,
-        "min": 1,
-        "max": 23
-      }
-    ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 );
 

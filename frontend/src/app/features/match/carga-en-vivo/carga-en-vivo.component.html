@@ -95,26 +95,10 @@
         </div>
     </header>
 
-    <div class="live-capture__body"
+    <div class="live-capture__body live-capture__body--home-hidden live-capture__body--away-hidden"
         [class.live-capture__body--history-hidden]="!historyVisible"
-        [class.live-capture__body--home-hidden]="!pendingSelection?.homeEnabled"
-        [class.live-capture__body--away-hidden]="!pendingSelection?.awayEnabled"
         role="main">
 
-        @if (pendingSelection?.homeEnabled) {
-        <aside
-            class="live-capture__number-column live-capture__number-column--own"
-            aria-label="Jugadores del equipo propio">
-            @for (numero of numeracionColumna; track numero) {
-            <button type="button" class="live-capture__number-circle"
-                [attr.aria-label]="'Seleccionar jugador ' + numero + ' del equipo propio'"
-                [disabled]="!pendingSelection?.homeEnabled"
-                (click)="onPlayerNumberTap(numero, 'OWN')">
-                {{ numero }}
-            </button>
-            }
-        </aside>
-        }
 
         <div class="event-catalog"
             [class.event-catalog--own]="currentPossession === 'OWN'"
@@ -135,8 +119,7 @@
                         [class.event-chip--success]="eventVariant(event) === 'success'"
                         [class.event-chip--danger]="eventVariant(event) === 'danger'"
                         [class.event-chip--warning]="eventVariant(event) === 'warning'"
-                        [disabled]="!isStarted || (pendingSelection !== null && pendingSelection.event.id !== event.id)"
-                        [class.event-chip--selected]="pendingSelection?.event?.id === event.id"
+                        [disabled]="!isStarted"
                         (click)="onEventTap(event)">
                         {{ event.name }}
                     </button>
@@ -146,20 +129,6 @@
             }
         </div>
 
-        @if (pendingSelection?.awayEnabled) {
-        <aside
-            class="live-capture__number-column live-capture__number-column--rival"
-            aria-label="Jugadores del equipo rival">
-            @for (numero of numeracionColumna; track numero) {
-            <button type="button" class="live-capture__number-circle"
-                [attr.aria-label]="'Seleccionar jugador ' + numero + ' del equipo rival'"
-                [disabled]="!pendingSelection?.awayEnabled"
-                (click)="onPlayerNumberTap(numero, 'OPPONENT')">
-                {{ numero }}
-            </button>
-            }
-        </aside>
-        }
 
         @if (historyVisible) {
         <aside class="history" aria-label="Historial de eventos">
@@ -198,7 +167,7 @@
             [class.is-active]="currentPossession === possession"
             [attr.aria-pressed]="currentPossession === possession"
             (click)="selectPossession(possession)"
-            [disabled]="!isStarted || pendingSelection">
+            [disabled]="!isStarted">
             {{ possession === 'OWN' ? 'Propia' : possession === 'OPPONENT' ?
             'Rival' : 'Neutral' }}
         </button>
@@ -228,58 +197,132 @@
     </div>
     }
 
-    @if (pendingCapture; as capture) {
-    <div class="confirm-backdrop" (click)="cancelCapture()">
-        <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="capture-title" (click)="$event.stopPropagation()">
-            <div class="confirm-icon">
-                <i class="ti ti-ball-football" aria-hidden="true"></i>
-            </div>
-            <h3 id="capture-title" class="confirm-title">{{ capture.event.name }}</h3>
-
-            <div class="conversion-form" style="margin: 20px 0; text-align: left;">
-                @if (capture.isFollowUp && capture.event.requiresPlayer) {
-                <label for="captureJersey" style="display: block; font-size: 0.9rem; margin-bottom: 5px;">Número del jugador:</label>
-                <input id="captureJersey" type="number" [(ngModel)]="capture.playerNumber" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 12px;">
-                }
-
-                @for (field of liveFieldsOf(capture.event); track field.key) {
-                <label style="display: block; font-size: 0.9rem; margin-bottom: 5px;">{{ field.label }}</label>
-                @switch (field.type) {
-                    @case ('boolean') {
-                    <div class="confirm-actions" style="display: flex; gap: 10px; width: 100%;">
-                        <button type="button" class="btn btn-secondary" style="flex: 1;" (click)="setCaptureValue(field.key, false)">
-                            <i class="ti ti-x" aria-hidden="true"></i> {{ field.falseLabel ?? 'No' }}
-                        </button>
-                        <button type="button" class="btn btn-primary" style="flex: 1;" (click)="setCaptureValue(field.key, true)">
-                            <i class="ti ti-check" aria-hidden="true"></i> {{ field.trueLabel ?? 'Sí' }}
-                        </button>
-                    </div>
-                    }
-                    @case ('select') {
-                    <select class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;" [(ngModel)]="capture.values[field.key]">
-                        @for (option of field.options; track option.value) {
-                        <option [value]="option.value">{{ option.label }}</option>
-                        }
-                    </select>
-                    }
-                    @default {
-                    <input type="number" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 12px;" [attr.min]="field.min" [attr.max]="field.max" [(ngModel)]="capture.values[field.key]">
-                    }
-                }
-                }
-            </div>
-
-            @if (!isSingleBoolean(capture.event)) {
-            <div class="confirm-actions" style="display: flex; gap: 10px; width: 100%;">
-                <button type="button" class="btn btn-secondary" style="flex: 1;" (click)="cancelCapture()">Cancelar</button>
-                <button type="button" class="btn btn-primary" style="flex: 1;" [disabled]="!captureIsComplete(capture)" (click)="confirmCapture()">
-                    <i class="ti ti-check" aria-hidden="true"></i> Confirmar
+    @if (capture; as c) {
+    <div class="capture-backdrop">
+        <div class="capture" role="dialog" aria-modal="true" [attr.aria-label]="c.event.name">
+            <header class="capture__header" [class.capture__header--away]="c.team === 'OPPONENT'">
+                @if (c.stepIndex > 0) {
+                <button type="button" class="capture__icon-btn" aria-label="Paso anterior" (click)="captureBack()">
+                    <i class="ti ti-arrow-left" aria-hidden="true"></i>
                 </button>
+                }
+                <h2 class="capture__title">{{ c.event.name }}</h2>
+                @if (c.steps.length > 1) {
+                <span class="capture__step">{{ c.stepIndex + 1 }}/{{ c.steps.length }}</span>
+                }
+                @if (c.canChooseTeam && captureStep?.kind === 'player') {
+                <div class="capture__team" role="group" aria-label="Equipo">
+                    <button type="button" class="capture__team-btn" [class.is-active]="c.team === 'OWN'" (click)="chooseTeam('OWN')">Propio</button>
+                    <button type="button" class="capture__team-btn" [class.is-active]="c.team === 'OPPONENT'" (click)="chooseTeam('OPPONENT')">Rival</button>
+                </div>
+                }
+                <button type="button" class="capture__icon-btn" aria-label="Cancelar evento" (click)="cancelCapture()">
+                    <i class="ti ti-x" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="capture__body">
+                @if (captureStep?.kind === 'player') {
+                    @if (c.team === 'OWN') {
+                    <section class="capture__group">
+                        <p class="capture__label">Forwards · 1–8</p>
+                        <div class="capture__grid">
+                            @for (slot of forwardSlots; track slot.number) {
+                            <button type="button" class="capture__player" [class.is-selected]="c.playerNumber === slot.number" (click)="pickPlayer(slot.number)">
+                                <span class="capture__number">{{ slot.number }}</span>
+                                <span class="capture__name">{{ slot.name }}</span>
+                            </button>
+                            }
+                        </div>
+                    </section>
+                    <section class="capture__group">
+                        <p class="capture__label">Backs · 9–15</p>
+                        <div class="capture__grid">
+                            @for (slot of backSlots; track slot.number) {
+                            <button type="button" class="capture__player" [class.is-selected]="c.playerNumber === slot.number" (click)="pickPlayer(slot.number)">
+                                <span class="capture__number">{{ slot.number }}</span>
+                                <span class="capture__name">{{ slot.name }}</span>
+                            </button>
+                            }
+                        </div>
+                    </section>
+                    } @else {
+                    <section class="capture__group">
+                        <p class="capture__label">Rival · 1–23</p>
+                        <div class="capture__grid">
+                            @for (number of rivalNumbers; track number) {
+                            <button type="button" class="capture__player" [class.is-selected]="c.playerNumber === number" (click)="pickPlayer(number)">
+                                <span class="capture__number">{{ number }}</span>
+                            </button>
+                            }
+                        </div>
+                    </section>
+                    }
+                }
+
+                @if (captureField; as field) {
+                <section class="capture__group">
+                    <p class="capture__label">{{ field.label }}</p>
+                    @switch (field.type) {
+                        @case ('boolean') {
+                        <div class="capture__choices capture__choices--two">
+                            <button type="button" class="capture__choice capture__choice--no" (click)="chooseOption(field, false)">
+                                <i class="ti ti-x" aria-hidden="true"></i>{{ field.falseLabel ?? 'No' }}
+                            </button>
+                            <button type="button" class="capture__choice capture__choice--yes" (click)="chooseOption(field, true)">
+                                <i class="ti ti-check" aria-hidden="true"></i>{{ field.trueLabel ?? 'Sí' }}
+                            </button>
+                        </div>
+                        }
+                        @case ('select') {
+                        <div class="capture__choices">
+                            @for (option of field.options; track option.value) {
+                            <button type="button" class="capture__choice" [class.is-selected]="c.values[field.key] === option.value" (click)="chooseOption(field, option.value)">
+                                {{ option.label }}
+                            </button>
+                            }
+                        </div>
+                        }
+                        @case ('number') {
+                        <div class="capture__slider">
+                            <p class="capture__readout">{{ sliderValue(field) }}</p>
+                            <input type="range" class="capture__range" step="1"
+                                [attr.min]="field.min ?? 0" [attr.max]="field.max ?? 100"
+                                [value]="sliderValue(field)" [attr.aria-label]="field.label"
+                                (input)="onSlider(field, $any($event.target).value)">
+                            <div class="capture__range-scale">
+                                <span>{{ field.min ?? 0 }}</span>
+                                <span>{{ field.max ?? 100 }}</span>
+                            </div>
+                        </div>
+                        }
+                    }
+                </section>
+                }
             </div>
+
+            @if (captureStep?.kind === 'player') {
+            <footer class="capture__footer">
+                <button type="button" class="capture__skip" (click)="pickPlayer(null)">
+                    <i class="ti ti-user-off" aria-hidden="true"></i> Sin jugador
+                </button>
+            </footer>
+            }
+
+            @if (captureField; as field) {
+            @if (field.type === 'number') {
+            <footer class="capture__footer">
+                @if (!field.required) {
+                <button type="button" class="capture__btn" (click)="skipField(field)">Omitir</button>
+                }
+                <button type="button" class="capture__btn capture__btn--primary" (click)="confirmSlider(field)">Listo</button>
+            </footer>
+            }
             }
         </div>
     </div>
     }
+
 
         @if (showConfirmFinish) {
         <div class="confirm-backdrop" (click)="cancelConfirmFinish()">

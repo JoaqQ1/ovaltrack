@@ -17,7 +17,7 @@ export interface BackendEventTypeResponse {
 
 export interface TemplateField {
   key: string; label: string;
-  type: 'select' | 'number' | 'boolean' | 'text' | 'jersey';
+  type: 'select' | 'number' | 'boolean' | 'text';
   phase: 'live' | 'post';
   required: boolean;
   options?: {

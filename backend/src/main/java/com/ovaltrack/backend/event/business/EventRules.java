@@ -52,7 +52,7 @@ public final class EventRules {
                     if (!(v instanceof Boolean))
                         throw new BusinessException("Valor inválido en " + f.label());
                 }
-                case "number", "jersey" -> {
+                case "number"-> {
                     if (!(v instanceof Number))
                         throw new BusinessException("Valor inválido en " + f.label());
                 }
