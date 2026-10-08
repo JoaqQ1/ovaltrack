@@ -19,19 +19,34 @@
       <button
         type="button"
         class="btn btn-invite"
-        (click)="mostrarJugadores()">
+        (click)="mostrarJugadoresInactivos()">
         {{ mostrarFormularioAsociacion ? 'Ocultar registro' : '+ Asociar jugadores' }}
       </button>
     </div>
   </header>
 
-  <!-- Error Alert -->
-  <div class="alert-error" *ngIf="mensajeError" role="alert">
-    <strong>Error de carga:</strong> {{ mensajeError }}
+  <!-- Alerts -->
+  <div class="banner-region" aria-live="polite">
+    <div class="banner banner-success" role="alert" *ngIf="mensajeExito">
+      <div style="flex: 1">
+        <strong>¡Excelente!</strong>
+        <p>{{ mensajeExito }}</p>
+      </div>
+      <button class="close" (click)="closeSuccess()" aria-label="Cerrar aviso">✕</button>
+    </div>
+
+    <div class="banner banner-error" role="alert" *ngIf="mensajeError">
+      <div style="flex: 1">
+        <strong>Error</strong>
+        <p>{{ mensajeError }}</p>
+      </div>
+      <button class="close" (click)="closeError()" aria-label="Cerrar aviso">✕</button>
+    </div>
   </div>
 
+
   <!-- Section: Available Club Players to Register (Visible when toggled ON) -->
-  <section class="table-card" *ngIf="mostrarFormularioAsociacion && allPlayers.length > 0">
+  <section class="table-card" *ngIf="mostrarFormularioAsociacion && resultsPage.content.length > 0">
     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
       <div>
         <p class="brand-text club">Jugadores del club disponibles</p>
@@ -51,7 +66,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let person of allPlayers">
+          <tr *ngFor="let person of resultsPage.content">
             <td>
               <div class="player-name">{{ person.firstName }} {{ person.lastName }}</div>
             </td>
@@ -87,12 +102,21 @@
         </tbody>
       </table>
     </div>
+
+      <app-pagination
+        [totalPages]="resultsPage.totalPages"
+        [currentPage]="currentPage"
+        (pageChangeRequested)="onPageChangeRequested($event)"
+        [number]="resultsPage.number"
+        [hidden]="resultsPage.numberOfElements < 1"
+      >
+      </app-pagination>
   </section>
 
   <!-- Main Content Card (Active Players List) -->
   <section class="table-card" aria-live="polite">
     <!-- Header inside card displaying total count -->
-    <div class="card-header" *ngIf="!mensajeError && activePlayers.length > 0">
+    <div class="card-header" *ngIf="activePlayers.length > 0">
       <p class="brand-text club">Plantel de división</p>
       <h2 class="card-title" id="players-title">
         {{ activePlayers.length }} jugador{{ activePlayers.length === 1 ? '' : 'es' }}
@@ -100,13 +124,13 @@
     </div>
 
     <!-- Empty State -->
-    <div class="empty-state" *ngIf="!mensajeError && activePlayers.length === 0">
+    <div class="empty-state" *ngIf="activePlayers.length === 0">
       <h2>No hay jugadores asociados</h2>
       <p>Esta división todavía no tiene jugadores registrados.</p>
     </div>
 
     <!-- Responsive Table -->
-    <div class="table-responsive" *ngIf="!mensajeError && activePlayers.length > 0">
+    <div class="table-responsive" *ngIf="activePlayers.length > 0">
       <table class="data-table" aria-labelledby="players-title">
         <thead>
           <tr>
