@@ -47,10 +47,10 @@ public class DivisionPlayerController {
     })
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
-    public ResponseEntity<Object> findDivisionPlayersByDivisionId(
+    public ResponseEntity<Object> findActiveDivisionPlayersByDivision(
             @RequestParam UUID divisionId,
             Authentication authentication) {
-        return ResponseEntity.ok(divisionPlayerService.findDivisionPlayersByDivision(divisionId, authentication));
+        return ResponseEntity.ok(divisionPlayerService.findActiveDivisionPlayersByDivision(divisionId, authentication));
     }
 
     @Operation(
