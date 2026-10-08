@@ -159,10 +159,14 @@
 }
 
 .queue-item.selected {
-  background: #fef3c7;
-  border-color: #b45309;
+  background: #edf5e9;
+  border-color: var(--border-sport, #204b22);
   font-weight: 700;
-  box-shadow: inset 3px 0 0 #b45309;
+  box-shadow: inset 3px 0 0 var(--btn-primary-bg, #204b22);
+}
+
+.queue-item.selected .queue-time {
+  color: var(--btn-primary-bg, #204b22);
 }
 
 .queue-time {

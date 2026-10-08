@@ -90,17 +90,17 @@
 
 .period-badge {
   display: inline-block;
-  padding: 2px 7px;
+  padding: 2px 8px;
   font-size: 0.75rem;
   font-weight: 700;
-  background: var(--surface-alt, #eef1e7);
-  color: var(--text-secondary, #3b4e33);
+  background: #e1edde;
+  color: var(--btn-primary-bg, #204b22);
   border-radius: 6px;
 }
 
 .period-badge.p2 {
-  background: #e8ecf4;
-  color: #1e3a8a;
+  background: #e1edde;
+  color: var(--btn-primary-bg, #204b22);
 }
 
 .time-mono, .realtime-mono {

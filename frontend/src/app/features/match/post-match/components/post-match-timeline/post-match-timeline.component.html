@@ -18,40 +18,39 @@
   <!-- Barra de Filtros Deportiva -->
   <div class="filter-bar">
     <div class="filter-left-group">
-      <!-- Selector de Período Segmentado -->
-      <div class="segmented-control">
-        <button type="button" 
-                class="segment-btn" 
-                [class.active]="store.filters().period === 'ALL'" 
-                (click)="setPeriod('ALL')">
-          Todo el partido
-        </button>
-        <button type="button" 
-                class="segment-btn" 
-                [class.active]="store.filters().period === 1" 
-                (click)="setPeriod(1)">
-          1T
-        </button>
-        <button type="button" 
-                class="segment-btn" 
-                [class.active]="store.filters().period === 2" 
-                (click)="setPeriod(2)">
-          2T
-        </button>
-      </div>
+      <!-- Botones de Período estilo Pill -->
+      <button type="button" 
+              class="filter-pill-btn" 
+              [class.active]="store.filters().period === 'ALL'" 
+              (click)="setPeriod('ALL')">
+        Todo el partido
+      </button>
+      <button type="button" 
+              class="filter-pill-btn" 
+              [class.active]="store.filters().period === 1" 
+              (click)="setPeriod(1)">
+        1T
+      </button>
+      <button type="button" 
+              class="filter-pill-btn" 
+              [class.active]="store.filters().period === 2" 
+              (click)="setPeriod(2)">
+        2T
+      </button>
+
+      <span class="filter-divider"></span>
 
       <!-- Toggle Solo sin Jugador -->
       <button type="button" 
-              class="btn-filter-pill" 
+              class="filter-pill-btn unassigned-pill" 
               [class.active]="store.filters().onlyUnassigned" 
               (click)="store.toggleOnlyUnassigned()">
-        Solo sin jugador
-        <span class="badge-count">{{ store.kpis().unassignedEvents }}</span>
+        Solo sin jugador <span class="badge-count-text">{{ store.kpis().unassignedEvents }}</span>
       </button>
 
       <!-- Limpiar Filtros -->
       <button type="button" 
-              class="btn-clear-filters" 
+              class="filter-pill-btn clear-pill" 
               (click)="store.clearFilters()">
         Limpiar filtros
       </button>

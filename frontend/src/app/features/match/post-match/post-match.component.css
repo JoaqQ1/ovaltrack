@@ -7,6 +7,12 @@
   display: block;
 }
 
+/* Modificador de contenedor general para el Dashboard */
+.review-dashboard-container {
+  max-width: 1600px !important; /* Más ancho para que respire la gráfica y tabla */
+  padding: 0 32px 100px !important;
+}
+
 /* Layout Principal de Dos Columnas */
 .review-layout {
   display: grid;
