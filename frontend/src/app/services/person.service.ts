@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
+import { ResultsPage } from '../features/pagination/results-page';
 import { PersonResponse, PersonCreationRequest, PersonUpdateRequest } from '../features/person/types/person.types';
 
 @Injectable({
@@ -20,9 +21,12 @@ export class PersonService {
     return this.http.get<PersonResponse>(`${this.apiUrl}/${id}`);
   }
 
-  getPlayersByClubId(clubId: string): Observable<PersonResponse[]> {
-    const params = new HttpParams().set('clubId', clubId);
-    return this.http.get<PersonResponse[]>(`${this.apiUrl}/club`, {params});
+  getPagedInactivePlayersByClubId(clubId: string, page: number, size: number): Observable<ResultsPage> {
+    const params = new HttpParams()
+      .set('clubId', clubId)
+      .set('page', page - 1)
+      .set('size', size);
+    return this.http.get<ResultsPage>(`${this.apiUrl}/club`, { params });
   }
 
   createPerson(person: PersonCreationRequest): Observable<PersonResponse> {
