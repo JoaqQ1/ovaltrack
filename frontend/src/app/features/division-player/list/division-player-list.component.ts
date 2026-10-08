@@ -38,6 +38,8 @@ export class DivisionPlayerListComponent implements OnInit {
 
     resultsPage: ResultsPage = <ResultsPage>{};
     currentPage: number = 1;
+    activePlayersResultsPage: ResultsPage = <ResultsPage>{};
+    activePlayersCurrentPage: number = 1;
     mostrarFormularioAsociacion = false;
 
     ngOnInit(): void {
@@ -137,7 +139,7 @@ export class DivisionPlayerListComponent implements OnInit {
       this.playerHistory = [];
     }
 
-    cargarJugadoresActivos(): void {
+    cargarJugadoresActivos(page: number = this.activePlayersCurrentPage): void {
       this.mensajeError = '';
 
       this.route.paramMap.pipe(
@@ -149,28 +151,32 @@ export class DivisionPlayerListComponent implements OnInit {
 
           return forkJoin({
             division: this.divisionService.getDivisionById(divisionId),
-            activePlayers: this.divisionPlayerService.getActiveByDivisionId(divisionId)
+            activePlayersPage: this.divisionPlayerService.getActiveByDivisionId(divisionId, page, 10)
           });
         }),
-        switchMap(({ division, activePlayers }) => {
+        switchMap(({ division, activePlayersPage }) => {
+          const activePlayers = activePlayersPage.content as DivisionPlayerResponse[];
           if (activePlayers.length === 0) {
-            return of({ division, activePlayers, activePersons: [] as PersonResponse[] });
+            return of({ division, activePlayersPage, activePlayers, activePersons: [] as PersonResponse[] });
           }
 
           return forkJoin(
-            activePlayers.map(activePlayers => this.personService.getPersonById(activePlayers.personId))
+            activePlayers.map(player => this.personService.getPersonById(player.personId))
           ).pipe(
-            switchMap((activePersons) => of({ division, activePlayers, activePersons }))
+            switchMap((activePersons) => of({ division, activePlayersPage, activePlayers, activePersons }))
           );
         })
       ).subscribe({
-        next: ({ division, activePlayers, activePersons }) => {
+        next: ({ division, activePlayersPage, activePlayers, activePersons }) => {
           this.division = division;
+          this.activePlayersResultsPage = activePlayersPage;
+          this.activePlayersCurrentPage = activePlayersPage.number + 1;
           this.activePlayers = activePlayers;
           this.activePersons = activePersons;
         },
         error: (err) => {
           console.error('Error al cargar los jugadores de la división', err);
+          this.activePlayersResultsPage = <ResultsPage>{};
           this.activePlayers = [];
           this.activePersons = [];
 
@@ -194,6 +200,10 @@ export class DivisionPlayerListComponent implements OnInit {
           this.mensajeError = 'No se pudieron cargar los jugadores de la división.';
         }
       });
+    }
+
+    onActivePlayersPageChangeRequested(page: number): void {
+      this.cargarJugadoresActivos(page);
     }
 
     desasociarJugador(player: DivisionPlayerResponse): void {
