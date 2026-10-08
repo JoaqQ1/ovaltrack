@@ -7,7 +7,7 @@
       </div>
       <div class="brand-text">
         <h1 class="title">{{ userClubName() }} vs {{ opponent() }}</h1>
-        <p class="club">Distribución temporal y registro cronológico del encuentro</p>
+        <p class="club">Revisión de la carga: verificá que cada evento esté completo y correcto</p>
       </div>
     </div>
 
@@ -37,123 +37,18 @@
     </div>
   </div>
 
-  <ng-container *ngIf="!isLoading() && !errorMessage()">
-    <!-- Estado Vacío -->
-    <div *ngIf="timelineTracks().length === 0" class="empty-state">
-      <div class="empty-icon">
-        <i class="bi bi-clipboard2-x" style="font-size: 24px;"></i>
-      </div>
-      <div class="empty-title">Sin eventos registrados</div>
-      <p class="empty-copy">Este partido aún no cuenta con jugadas o eventos capturados.</p>
-      <button type="button" class="btn btn-outline" (click)="comeBack()">
-        Volver a partidos
-      </button>
-    </div>
+  <!-- Contenido Principal: Layout de Dos Columnas (Fase 2) -->
+  <div class="review-layout" *ngIf="!isLoading() && !errorMessage()">
+    <!-- Columna Principal: KPIs, Distribución Temporal y Tabla Detallada -->
+    <main class="review-main-column">
+      <app-post-match-kpis />
+      <app-post-match-timeline />
+      <app-post-match-table />
+    </main>
 
-    <!-- Vista Gráfica: Tarjeta Elevada con Línea de Tiempo Multipista -->
-    <section class="table-card" *ngIf="timelineTracks().length > 0">
-      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-          <p class="brand-text club">Visualización gráfica</p>
-          <h2 class="card-title"><i class="bi bi-bar-chart-steps me-2"></i>Distribución Temporal de Jugadas</h2>
-        </div>
-        <div class="timeline-legend">
-          <span class="legend-item"><span class="legend-box normal"></span> Con jugador asignado</span>
-          <span class="legend-item"><span class="legend-box unassigned"></span> Sin jugador asignado</span>
-        </div>
-      </div>
-
-      <div class="timeline-wrapper">
-        <div class="timeline-board">
-          <!-- Cabecera de la línea de tiempo (Regla en Minutos) -->
-          <div class="timeline-header">
-            <div class="header-sidebar">Eventos</div>
-            <div class="header-track ruler-track">
-              <div class="ruler-tick" 
-                   *ngFor="let tick of timelineTicks()" 
-                   [style.left.%]="(tick / maxMatchDuration()) * 100"
-                   [ngClass]="{'milestone': tick === 0 || tick === 40 || tick === 80}">
-                <span class="tick-label">
-                  <ng-container *ngIf="tick === 0">Inicio</ng-container>
-                  <ng-container *ngIf="tick === 40">E.T.</ng-container>
-                  <ng-container *ngIf="tick === 80">Fin</ng-container>
-                  <ng-container *ngIf="tick !== 0 && tick !== 40 && tick !== 80">{{ tick }}'</ng-container>
-                </span>
-                <div class="tick-mark"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Filas agrupadas por evento -->
-          <div class="timeline-row" *ngFor="let track of timelineTracks()">
-            <!-- Columna izquierda: Nombre y cantidad -->
-            <div class="row-sidebar">
-              <span class="event-name" [style.borderLeftColor]="track.color">{{ track.eventName }}</span>
-              <span class="event-count">{{ track.occurrences.length }}</span>
-            </div>
-
-            <!-- Columna derecha: Pista de tiempo -->
-            <div class="row-track">
-              <div class="marker"
-                   *ngFor="let occurrence of track.occurrences"
-                   [ngClass]="{'marker-unassigned': !occurrence.hasPlayer}"
-                   [style.left.%]="(occurrence.timeMinutes / maxMatchDuration()) * 100"
-                   [style.backgroundColor]="track.color"
-                   [title]="'Tiempo: ' + occurrence.matchTimeFormatted + '\nHora real: ' + occurrence.realTimeFormatted + '\nJugador: ' + occurrence.player">
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Vista de Lista: Tarjeta Elevada con Tabla Cronológica -->
-    <section class="table-card mt-4" *ngIf="chronologicalEvents().length > 0">
-      <div class="card-header">
-        <p class="brand-text club">Registro detallado</p>
-        <h2 class="card-title"><i class="bi bi-card-checklist me-2"></i>Línea Cronológica de Eventos</h2>
-      </div>
-
-      <div class="table-responsive">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th style="width: 100px;">Período</th>
-              <th style="width: 140px;">Tiempo</th>
-              <th style="width: 200px;">Hora Real</th>
-              <th>Tipo de Evento</th>
-              <th>Jugador Asociado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let ev of chronologicalEvents()">
-              <td>
-                <span class="badge-tech period-badge">{{ ev.period === 1 ? '1T' : '2T' }}</span>
-              </td>
-              <td>
-                <span class="match-time-mono">{{ ev.matchTimeFormatted }}</span>
-              </td>
-              <td>
-                <span class="realtime-mono">{{ ev.realTimeFormatted }}</span>
-              </td>
-              <td>
-                <span class="event-type-chip">
-                  <span class="event-dot" [style.backgroundColor]="ev.color"></span>
-                  {{ ev.eventName }}
-                </span>
-              </td>
-              <td>
-                <span *ngIf="ev.hasPlayer" class="player-name-cell">
-                  <i class="bi bi-person-fill text-muted me-1"></i>{{ ev.player }}
-                </span>
-                <span *ngIf="!ev.hasPlayer" class="badge-unassigned">
-                  <i class="bi bi-person-x-fill me-1"></i>Sin jugador asignado
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </ng-container>
+    <!-- Columna Lateral (Sidebar 340px): Detalle del Evento y Cola de Revisión -->
+    <aside class="review-sidebar-column">
+      <app-post-match-panel />
+    </aside>
+  </div>
 </div>

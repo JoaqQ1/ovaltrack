@@ -1,0 +1,221 @@
+
+.panel-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.panel-card {
+  background: var(--surface, #ffffff);
+  border: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.sticky-card {
+  position: sticky;
+  top: 1rem;
+}
+
+.panel-card-header {
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border, rgba(27, 33, 22, 0.10));
+  padding-bottom: 0.5rem;
+}
+
+.section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #3b4e33);
+  display: block;
+}
+
+.panel-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary, #111d0e);
+  margin: 0.2rem 0 0 0;
+}
+
+.text-amber {
+  color: #b45309;
+}
+
+.detail-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  padding: 0.2rem 0;
+}
+
+.detail-label {
+  color: var(--text-secondary, #3b4e33);
+  font-weight: 600;
+}
+
+.detail-value {
+  color: var(--text-primary, #111d0e);
+  font-weight: 700;
+}
+
+.detail-value.mono {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+.assignment-field-wrapper {
+  margin-bottom: 0.85rem;
+}
+
+.fake-select-readonly {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface-alt, #eef1e7);
+  border: 1px solid var(--border-strong, rgba(27, 33, 22, 0.22));
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary, #3b4e33);
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+.select-caret {
+  font-size: 0.75rem;
+  color: var(--text-muted, #7a8c74);
+}
+
+.btn-next-pending {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--btn-primary-bg, #204b22);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.btn-next-pending:hover:not(:disabled) {
+  background: var(--btn-primary-hover, #163618);
+  transform: translateY(-1px);
+}
+
+.btn-next-pending:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.empty-panel-msg {
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-muted, #7a8c74);
+}
+
+/* Cola de Revisión */
+.queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0.65rem;
+  background: #fffdf5;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.queue-item:hover {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
+
+.queue-item.selected {
+  background: #fef3c7;
+  border-color: #b45309;
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 #b45309;
+}
+
+.queue-time {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.queue-name {
+  color: var(--text-primary, #111d0e);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-more-hint {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-muted, #7a8c74);
+  padding: 2px 0;
+}
+
+.queue-completed {
+  text-align: center;
+  padding: 1rem;
+}
+
+.quality-bar-wrapper {
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border, rgba(27, 33, 22, 0.10));
+  padding-top: 0.75rem;
+}
+
+.quality-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #3b4e33);
+  margin-bottom: 0.35rem;
+}
+
+.progress-track {
+  height: 6px;
+  background: var(--surface-alt, #eef1e7);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--btn-primary-bg, #204b22);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}

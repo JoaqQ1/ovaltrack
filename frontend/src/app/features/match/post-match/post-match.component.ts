@@ -9,40 +9,22 @@ import { LiveCaptureCacheService } from '../services/live-capture-cache.service'
 import { LiveCaptureService } from '../services/live-capture.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ToastService } from 'src/app/core/services/toast.service';
-import { MatchTimelineEventResponse } from '../types/event.types';
 import { MatchReviewStore } from './store/match-review.store';
-
-export interface TimelineOccurrence {
-  timeMinutes: number;
-  matchTimeFormatted: string;
-  realTimeFormatted: string;
-  player: string;
-  hasPlayer: boolean;
-}
-
-export interface TimelineTrack {
-  eventTypeId: string;
-  eventName: string;
-  occurrences: TimelineOccurrence[];
-  color: string;
-}
-
-export interface ChronologicalEventItem {
-  id: string;
-  period: number;
-  matchTime: number;
-  matchTimeFormatted: string;
-  realTimeFormatted: string;
-  eventName: string;
-  player: string;
-  hasPlayer: boolean;
-  color: string;
-}
+import { PostMatchKpisComponent } from './components/post-match-kpis/post-match-kpis.component';
+import { PostMatchTimelineComponent } from './components/post-match-timeline/post-match-timeline.component';
+import { PostMatchTableComponent } from './components/post-match-table/post-match-table.component';
+import { PostMatchPanelComponent } from './components/post-match-panel/post-match-panel.component';
 
 @Component({
   selector: 'app-post-match',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    PostMatchKpisComponent,
+    PostMatchTimelineComponent,
+    PostMatchTableComponent,
+    PostMatchPanelComponent
+  ],
   templateUrl: './post-match.component.html',
   styleUrl: './post-match.component.css'
 })
@@ -63,106 +45,11 @@ export class PostMatchComponent implements OnInit {
 
   matchId = '';
 
-  // Estado reactivo primario (Signals)
-  readonly events = signal<MatchTimelineEventResponse[]>([]);
+  // Estado del contenedor
   readonly opponent = signal<string>('Cargando...');
   readonly errorMessage = signal<string>('');
   readonly isLoading = signal<boolean>(true);
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
-
-  // Estado reactivo derivado (Computed)
-  readonly maxMatchDuration = computed<number>(() => {
-    let max = 80;
-    for (const ev of this.events()) {
-      const minutes = (ev.matchTime ?? 0) / 60;
-      if (minutes > max) {
-        max = Math.ceil(minutes);
-      }
-    }
-    return max;
-  });
-
-  readonly timelineTicks = computed<number[]>(() => {
-    const ticks: number[] = [];
-    const max = this.maxMatchDuration();
-    for (let i = 0; i <= max; i += 5) {
-      ticks.push(i);
-    }
-    return ticks;
-  });
-
-  readonly timelineTracks = computed<TimelineTrack[]>(() => {
-    const trackMap = new Map<string, { seconds: number; realTime: string | null; playerId: string | null; playerName: string | null; eventTypeName: string }[]>();
-    const dict = this.eventTypesDiccionario();
-
-    for (const event of this.events()) {
-      if (!trackMap.has(event.eventTypeId)) {
-        trackMap.set(event.eventTypeId, []);
-      }
-      const eventName = event.eventTypeName || dict[event.eventTypeId] || 'Evento';
-      trackMap.get(event.eventTypeId)!.push({
-        seconds: event.matchTime ?? 0,
-        realTime: event.realTime ?? null,
-        playerId: event.playerId ?? null,
-        playerName: event.playerName ?? null,
-        eventTypeName: eventName
-      });
-    }
-
-    const tracks: TimelineTrack[] = [];
-    trackMap.forEach((occurrences, id) => {
-      const name = occurrences[0]?.eventTypeName || dict[id] || 'Evento';
-      const occurrencesWithData: TimelineOccurrence[] = occurrences.map(occ => {
-        const hasPlayer = Boolean(occ.playerId);
-        const playerName = occ.playerName || (hasPlayer ? 'Jugador' : 'Sin jugador asignado');
-
-        return {
-          timeMinutes: occ.seconds / 60,
-          matchTimeFormatted: this.formatMatchTime(occ.seconds),
-          realTimeFormatted: this.formatRealTime(occ.realTime),
-          player: playerName,
-          hasPlayer: hasPlayer
-        };
-      });
-
-      tracks.push({
-        eventTypeId: id,
-        eventName: name,
-        occurrences: occurrencesWithData,
-        color: this.getEventColor(name)
-      });
-    });
-
-    return tracks;
-  });
-
-  readonly chronologicalEvents = computed<ChronologicalEventItem[]>(() => {
-    const dict = this.eventTypesDiccionario();
-    const list: ChronologicalEventItem[] = this.events().map(event => {
-      const eventName = event.eventTypeName || dict[event.eventTypeId] || 'Evento';
-      const hasPlayer = Boolean(event.playerId);
-      const playerName = event.playerName || (hasPlayer ? 'Jugador' : 'Sin jugador asignado');
-
-      return {
-        id: event.id,
-        period: event.period ?? 1,
-        matchTime: event.matchTime ?? 0,
-        matchTimeFormatted: this.formatMatchTime(event.matchTime),
-        realTimeFormatted: this.formatRealTime(event.realTime),
-        eventName: eventName,
-        player: playerName,
-        hasPlayer: hasPlayer,
-        color: this.getEventColor(eventName)
-      };
-    });
-
-    return list.sort((a, b) => {
-      if (a.period !== b.period) {
-        return a.period - b.period;
-      }
-      return a.matchTime - b.matchTime;
-    });
-  });
 
   ngOnInit(): void {
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
@@ -217,13 +104,12 @@ export class PostMatchComponent implements OnInit {
 
     try {
       await firstValueFrom(this.liveCaptureService.syncPendingEvents(this.matchId));
-    } catch (syncError) {
+    } catch {
       // Sync local previo no bloqueante
     }
 
     try {
       const remoteEvents = await firstValueFrom(this.eventService.getByMatchPostMatch(this.matchId));
-      this.events.set(remoteEvents);
       this.store.setEvents(remoteEvents);
     } catch (error: any) {
       if (error?.status === 409 || error?.error?.includes?.('cerrado')) {
@@ -251,46 +137,14 @@ export class PostMatchComponent implements OnInit {
           period: e.period ?? 1,
           teamPossession: e.teamPossession
         }));
-        this.events.set(mapped);
         this.store.setEvents(mapped);
-      } catch (localError) {
+      } catch {
         const msg = 'No se pudieron cargar los eventos del partido.';
         this.errorMessage.set(msg);
         this.toastService.error(msg);
       }
     } finally {
       this.isLoading.set(false);
-    }
-  }
-
-  getEventColor(eventName: string): string {
-    const nameStr = eventName.toLowerCase();
-
-    if (nameStr.includes('try')) return '#2e7d32';
-    if (nameStr.includes('tackle')) return '#16324f';
-    if (nameStr.includes('penal') || nameStr.includes('expulsión') || nameStr.includes('lesión') || nameStr.includes('amarilla') || nameStr.includes('roja')) return '#b42318';
-    if (nameStr.includes('line') || nameStr.includes('scrum') || nameStr.includes('turnover')) return '#d96a0a';
-    if (nameStr.includes('drop') || nameStr.includes('conversión')) return '#7c3aed';
-
-    return '#204b22';
-  }
-
-  formatMatchTime(seconds: number | null | undefined): string {
-    if (seconds === null || seconds === undefined) return '00:00';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-
-  formatRealTime(isoString: string | null | undefined): string {
-    if (!isoString) return 'Sin registro';
-    try {
-      const date = new Date(isoString);
-      if (isNaN(date.getTime())) return isoString;
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
-        ' (' + date.toLocaleDateString([], { day: '2-digit', month: '2-digit' }) + ')';
-    } catch {
-      return isoString;
     }
   }
 

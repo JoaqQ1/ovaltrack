@@ -1,0 +1,137 @@
+<section class="timeline-card">
+  <!-- Cabecera de la sección -->
+  <div class="timeline-card-header">
+    <div>
+      <span class="section-label">VISTA GENERAL</span>
+      <h2 class="section-title">Distribución temporal de jugadas</h2>
+    </div>
+    <div class="timeline-legend">
+      <span class="legend-item">
+        <span class="legend-indicator normal"></span> Con jugador
+      </span>
+      <span class="legend-item">
+        <span class="legend-indicator striped"></span> Sin jugador asignado
+      </span>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros Deportiva -->
+  <div class="filter-bar">
+    <div class="filter-left-group">
+      <!-- Selector de Período Segmentado -->
+      <div class="segmented-control">
+        <button type="button" 
+                class="segment-btn" 
+                [class.active]="store.filters().period === 'ALL'" 
+                (click)="setPeriod('ALL')">
+          Todo el partido
+        </button>
+        <button type="button" 
+                class="segment-btn" 
+                [class.active]="store.filters().period === 1" 
+                (click)="setPeriod(1)">
+          1T
+        </button>
+        <button type="button" 
+                class="segment-btn" 
+                [class.active]="store.filters().period === 2" 
+                (click)="setPeriod(2)">
+          2T
+        </button>
+      </div>
+
+      <!-- Toggle Solo sin Jugador -->
+      <button type="button" 
+              class="btn-filter-pill" 
+              [class.active]="store.filters().onlyUnassigned" 
+              (click)="store.toggleOnlyUnassigned()">
+        Solo sin jugador
+        <span class="badge-count">{{ store.kpis().unassignedEvents }}</span>
+      </button>
+
+      <!-- Limpiar Filtros -->
+      <button type="button" 
+              class="btn-clear-filters" 
+              (click)="store.clearFilters()">
+        Limpiar filtros
+      </button>
+    </div>
+
+    <!-- Búsqueda por jugador o tipo -->
+    <div class="search-wrapper">
+      <i class="bi bi-search search-icon"></i>
+      <input type="text" 
+             class="search-input" 
+             placeholder="Buscar jugador o tipo" 
+             [value]="store.filters().searchTerm" 
+             (input)="onSearchChange($event)">
+    </div>
+  </div>
+
+  <!-- Tablero Gráfico Multipista con Overflow Horizontal -->
+  <div class="timeline-scroll-container">
+    <div class="timeline-board">
+      <!-- Cabecera de la Regla (Eje Temporal) -->
+      <div class="ruler-row">
+        <div class="ruler-sidebar-label">
+          <span>EVENTOS • clic para ocultar</span>
+        </div>
+        <div class="ruler-track">
+          <div class="ruler-tick" 
+               *ngFor="let tick of timelineTicks()" 
+               [style.left.%]="(tick / store.matchDurationScale()) * 100"
+               [ngClass]="{'milestone': tick === 0 || tick === 40 || tick === store.matchDurationScale()}">
+            <span class="tick-label">
+              <ng-container *ngIf="tick === 0">INICIO</ng-container>
+              <ng-container *ngIf="tick === 40">E.T.</ng-container>
+              <ng-container *ngIf="tick === store.matchDurationScale()">FIN</ng-container>
+              <ng-container *ngIf="tick !== 0 && tick !== 40 && tick !== store.matchDurationScale()">{{ tick }}'</ng-container>
+            </span>
+            <div class="tick-line"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Línea Vertical de Entretiempo (Referencia visual transversal) -->
+      <div class="halftime-vertical-line" 
+           [style.left.%]="(40 / store.matchDurationScale()) * 100">
+      </div>
+
+      <!-- Filas de Carriles por Tipo de Evento -->
+      <div class="timeline-lane-row" 
+           *ngFor="let lane of store.timelineLanes()" 
+           [class.lane-hidden]="lane.hidden">
+        <!-- Sidebar del Carril (Botón interactivo con aria-pressed) -->
+        <button type="button" 
+                class="lane-btn" 
+                [attr.aria-pressed]="!lane.hidden" 
+                (click)="store.toggleLane(lane.eventTypeId)"
+                [title]="lane.hidden ? 'Mostrar carril' : 'Ocultar carril'">
+          <span class="lane-color-bar" [style.backgroundColor]="lane.color"></span>
+          <span class="lane-name">{{ lane.eventName }}</span>
+          <span class="lane-badge">{{ lane.totalCount }}</span>
+        </button>
+
+        <!-- Pista Horizontal del Carril con Marcadores -->
+        <div class="lane-track">
+          <ng-container *ngIf="!lane.hidden">
+            <button type="button" 
+                    *ngFor="let occ of lane.occurrences" 
+                    class="marker" 
+                    [class.marker-unassigned]="!occ.hasPlayer" 
+                    [class.marker-dimmed]="occ.isDimmed" 
+                    [class.marker-selected]="occ.id === store.selectedEventId()" 
+                    [style.left.%]="occ.pct" 
+                    [style.backgroundColor]="occ.hasPlayer ? occ.color : '#f59e0b'" 
+                    [attr.aria-label]="occ.eventTypeName + ' · ' + occ.matchTimeFormatted + ' · ' + occ.playerName" 
+                    [title]="occ.eventTypeName + ' · ' + occ.matchTimeFormatted + '
+Hora: ' + occ.realTimeFormatted + '
+Jugador: ' + occ.playerName"
+                    (click)="store.selectEvent(occ.id)">
+            </button>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
