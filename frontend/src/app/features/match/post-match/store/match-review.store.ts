@@ -10,6 +10,10 @@ import {
   ReviewTimelineLane
 } from '../types/match-review.types';
 
+export const RUGBY_HALF_TIME_MIN = 40;
+export const RUGBY_FULL_TIME_MIN = 80;
+export const EMPTY_TIME_PLACEHOLDER = '--:--:--';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -34,7 +38,7 @@ export class MatchReviewStore {
 
   // --- Duración Dinámica y Escala (Eje X) ---
   readonly matchDurationScale = computed<number>(() => {
-    let maxMinutes = 80; // Estándar mínimo reglamentario de rugby
+    let maxMinutes = RUGBY_FULL_TIME_MIN; // Estándar mínimo reglamentario de rugby
     for (const ev of this.rawEvents()) {
       const mins = (ev.matchTime ?? 0) / 60;
       if (mins > maxMinutes) {
@@ -280,13 +284,13 @@ export class MatchReviewStore {
   }
 
   private formatOnlyTime(iso: string | null | undefined): string {
-    if (!iso) return '--:--:--';
+    if (!iso) return EMPTY_TIME_PLACEHOLDER;
     try {
       const date = new Date(iso);
       if (isNaN(date.getTime())) return iso;
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     } catch {
-      return '--:--:--';
+      return EMPTY_TIME_PLACEHOLDER;
     }
   }
 
@@ -305,7 +309,7 @@ export class MatchReviewStore {
       const sortedByRealTime = [...allEvents].sort((a, b) => a.realTime.localeCompare(b.realTime));
       return this.formatOnlyTime(sortedByRealTime[0].realTime);
     }
-    return '--:--:--';
+    return EMPTY_TIME_PLACEHOLDER;
   }
 
   private buildBaseViewModel(

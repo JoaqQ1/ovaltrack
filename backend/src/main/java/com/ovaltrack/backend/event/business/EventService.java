@@ -109,7 +109,7 @@ public class EventService {
 		if (aMatch.getStatus() == com.ovaltrack.backend.match.domain.MatchStatus.CANCELLED) {
 			throw new BusinessException("No se puede asignar un evento a un partido cancelado");
 		}
-		if (aMatch.getStatus() == MatchStatus.FINISHED && !eventRequest.origin().equals("post_capture")) {
+		if (aMatch.getStatus() == MatchStatus.FINISHED && !Event.ORIGIN_POST_CAPTURE.equals(eventRequest.origin())) {
 			throw new BusinessException("No se puede cargar eventos mediante esta pantalla para un partido que ya termino");
 		}
 
