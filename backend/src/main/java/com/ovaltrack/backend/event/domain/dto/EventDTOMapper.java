@@ -29,7 +29,8 @@ public final class EventDTOMapper {
                 event.getOrigin(),
                 event.getAttributes(),
                 event.getCreatedAt(),
-                event.getSynchronizedAt());
+                event.getSynchronizedAt(),
+                event.getActive());
     }
 
     public static EventTypeResponseDTO toResponseDTO(EventType eventType) {
