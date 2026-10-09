@@ -240,6 +240,11 @@ export class MatchReviewStore {
       if (partial.eventTypeId && dict[partial.eventTypeId]) {
         updated.eventTypeName = dict[partial.eventTypeId];
       }
+      if (partial.playerId !== undefined) {
+        const playerObj = this.availablePlayers().find(p => p.id === partial.playerId);
+        updated.playerName = playerObj ? playerObj.fullName : null;
+        updated.playerJerseyNumber = playerObj ? playerObj.jerseyNumber : null;
+      }
       const newArray = [...current];
       newArray[index] = updated;
       this.rawEvents.set(newArray);

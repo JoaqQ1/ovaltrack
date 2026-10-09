@@ -46,11 +46,8 @@ export class PostMatchPanelComponent {
     }).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        const playerObj = this.store.availablePlayers().find(p => p.id === newPlayerId);
         this.store.updateEvent(ev.id, {
-          playerId: newPlayerId,
-          playerName: playerObj ? playerObj.fullName : null,
-          playerJerseyNumber: playerObj ? playerObj.jerseyNumber : null
+          playerId: newPlayerId
         });
         this.toastService.success(newPlayerId ? 'Jugador asignado correctamente' : 'Evento marcado sin jugador');
       },
@@ -102,16 +99,10 @@ export class PostMatchPanelComponent {
     }).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        const playerObj = this.store.availablePlayers().find(p => p.id === playerId);
-        const typeObj = this.store.eventTypesList().find(t => t.id === this.editEventTypeId);
-
         this.store.updateEvent(ev.id, {
           eventTypeId: this.editEventTypeId,
-          eventTypeName: typeObj ? typeObj.name : ev.eventTypeName,
           teamPossession: this.editTeamPossession,
-          playerId: playerId,
-          playerName: playerObj ? playerObj.fullName : null,
-          playerJerseyNumber: playerObj ? playerObj.jerseyNumber : null
+          playerId: playerId
         });
 
         this.closeEditModal();
