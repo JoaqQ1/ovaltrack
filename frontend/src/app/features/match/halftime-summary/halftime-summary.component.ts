@@ -152,6 +152,9 @@ export class HalftimeSummaryComponent implements OnInit {
       // 1. Resolver información del partido (Rival / Local)
       await this.resolveMatchInfo(id);
 
+      // Mantener IndexedDB actualizado antes de calcular estadísticas locales.
+      await firstValueFrom(this.liveCaptureService.hydrateMatchEvents(id)).catch(() => []);
+
       // 2. Calcular estadísticas generales del 1° Tiempo
       const general = await this.statisticCalculationService.calculatePeriodStatistics(id, 1);
       this.generalStats.set(general);
