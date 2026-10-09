@@ -192,13 +192,36 @@ public class EventService {
 			throw new BusinessException("No se puede modificar un evento que no existe");
 		}
 
-		result.setTeamPossession(eventRequest.teamPossession());
-		result.setMatchTime(eventRequest.matchTime());
-		result.setAbsoluteMatchTime(eventRequest.absoluteMatchTime());
-		result.setPeriod(eventRequest.period());
-		result.setOrigin(eventRequest.origin());
-		result.setAttributes(eventRequest.attributes());
-		result.setSynchronizedAt(eventRequest.synchronizedAt());
+		if (eventRequest.eventTypeId() != null) {
+			EventType aEventType = eventTypeService.findEventTypeEntityById(eventRequest.eventTypeId());
+			if (aEventType == null) {
+				throw new BusinessException("No se puede asociar un evento a un tipo de evento que no existe");
+			}
+			result.setEventType(aEventType);
+		}
+
+		Person aPerson = resolveEventPlayer(eventRequest.playerId(), result.getMatch());
+		result.setPlayer(aPerson);
+
+		if (eventRequest.teamPossession() != null) {
+			result.setTeamPossession(eventRequest.teamPossession());
+		}
+		if (eventRequest.matchTime() != null) {
+			result.setMatchTime(eventRequest.matchTime());
+		}
+		if (eventRequest.absoluteMatchTime() != null) {
+			result.setAbsoluteMatchTime(eventRequest.absoluteMatchTime());
+		}
+		if (eventRequest.period() != null) {
+			result.setPeriod(eventRequest.period());
+		}
+		if (eventRequest.origin() != null) {
+			result.setOrigin(eventRequest.origin());
+		}
+		if (eventRequest.attributes() != null) {
+			result.setAttributes(eventRequest.attributes());
+		}
+		result.setSynchronizedAt(LocalDateTime.now());
 
 		Event savedEvent = eventRepository.save(result);
 		recalculateMatchScore(result.getMatch());

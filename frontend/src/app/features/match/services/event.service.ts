@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { BackendEventCreationRequest, BackendEventResponse, LocalMatchEvent, MatchTimelineEventResponse } from '../types/event.types';
+import { BackendEventCreationRequest, BackendEventUpdateRequest, BackendEventResponse, LocalMatchEvent, MatchTimelineEventResponse } from '../types/event.types';
 
 @Injectable({ providedIn: 'root' })
 export class EventService {
@@ -38,6 +38,10 @@ export class EventService {
     };
 
     return this.create(request);
+  }
+
+  update(eventId: string, request: BackendEventUpdateRequest): Observable<BackendEventResponse> {
+    return this.http.put<BackendEventResponse>(`${this.apiUrl}/${eventId}`, request);
   }
 
   delete(eventId: string): Observable<BackendEventResponse> {

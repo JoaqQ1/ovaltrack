@@ -1,5 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { MatchTimelineEventResponse } from '../../types/event.types';
+import { AvailablePlayer } from '../../types/roster.types';
+import { LiveCaptureEventType } from '../../types/event-type.types';
 import {
   ReviewEventViewModel,
   ReviewFilters,
@@ -14,10 +16,13 @@ import {
 export class MatchReviewStore {
 
   // --- Estado Primario (Signals) ---
+  readonly matchId = signal<string>('');
   readonly rawEvents = signal<MatchTimelineEventResponse[]>([]);
   readonly matchStartTime = signal<string | null>(null);
   readonly selectedEventId = signal<string | null>(null);
   readonly eventTypesDict = signal<Record<string, string>>({});
+  readonly eventTypesList = signal<LiveCaptureEventType[]>([]);
+  readonly availablePlayers = signal<AvailablePlayer[]>([]);
 
   readonly filters = signal<ReviewFilters>({
     period: 'ALL',
@@ -185,6 +190,23 @@ export class MatchReviewStore {
     }
   }
 
+  setMatchId(id: string): void {
+    this.matchId.set(id);
+  }
+
+  setAvailablePlayers(players: AvailablePlayer[]): void {
+    this.availablePlayers.set(players);
+  }
+
+  setEventTypesList(types: LiveCaptureEventType[]): void {
+    this.eventTypesList.set(types);
+    const dict: Record<string, string> = {};
+    types.forEach(t => {
+      dict[t.id] = t.name;
+    });
+    this.eventTypesDict.set(dict);
+  }
+
   setEventTypes(dict: Record<string, string>): void {
     this.eventTypesDict.set(dict);
   }
@@ -236,6 +258,29 @@ export class MatchReviewStore {
       searchTerm: '',
       hiddenLaneIds: []
     });
+  }
+
+  removeEvent(eventId: string): void {
+    const current = this.rawEvents();
+    this.rawEvents.set(current.filter(e => e.id !== eventId));
+    if (this.selectedEventId() === eventId) {
+      this.selectedEventId.set(null);
+    }
+  }
+
+  updateEvent(eventId: string, partial: Partial<MatchTimelineEventResponse>): void {
+    const current = this.rawEvents();
+    const index = current.findIndex(e => e.id === eventId);
+    if (index !== -1) {
+      const dict = this.eventTypesDict();
+      const updated = { ...current[index], ...partial };
+      if (partial.eventTypeId && dict[partial.eventTypeId]) {
+        updated.eventTypeName = dict[partial.eventTypeId];
+      }
+      const newArray = [...current];
+      newArray[index] = updated;
+      this.rawEvents.set(newArray);
+    }
   }
 
   // --- Utilidades de Formateo y Colores ---

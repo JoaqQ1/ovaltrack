@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { MatchService } from '../services/match.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
+import { RosterService } from '../services/roster.service';
 import { LiveCaptureCacheService } from '../services/live-capture-cache.service';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
@@ -35,6 +36,7 @@ export class PostMatchComponent implements OnInit {
   private readonly matchService = inject(MatchService);
   private readonly eventService = inject(EventService);
   private readonly eventTypeService = inject(EventTypeService);
+  private readonly rosterService = inject(RosterService);
   private readonly cacheService = inject(LiveCaptureCacheService);
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly toastService = inject(ToastService);
@@ -54,9 +56,22 @@ export class PostMatchComponent implements OnInit {
   ngOnInit(): void {
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
     if (this.matchId) {
+      this.store.setMatchId(this.matchId);
       this.loadMatchDetails();
+      this.loadRoster();
       this.loadEventTypesAndEvents();
     }
+  }
+
+  loadRoster(): void {
+    this.rosterService.getAvailablePlayers(this.matchId).subscribe({
+      next: (players) => {
+        this.store.setAvailablePlayers(players);
+      },
+      error: () => {
+        // Fallback no bloqueante si la división no tiene jugadores cargados
+      }
+    });
   }
 
   loadMatchDetails(): void {
@@ -81,7 +96,7 @@ export class PostMatchComponent implements OnInit {
           dict[type.id] = type.name;
         });
         this.eventTypesDiccionario.set(dict);
-        this.store.setEventTypes(dict);
+        this.store.setEventTypesList(types);
         this.loadEvents();
       },
       error: () => {
@@ -91,7 +106,7 @@ export class PostMatchComponent implements OnInit {
             dict[type.id] = type.name;
           });
           this.eventTypesDiccionario.set(dict);
-          this.store.setEventTypes(dict);
+          this.store.setEventTypesList(types);
           this.loadEvents();
         });
       }
