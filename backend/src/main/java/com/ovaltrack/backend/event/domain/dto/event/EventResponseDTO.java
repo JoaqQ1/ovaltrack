@@ -32,7 +32,9 @@ public record EventResponseDTO(
         Map<String, Object> attributes,
 
         LocalDateTime createdAt,
-        
-        LocalDateTime synchronizedAt
+
+        LocalDateTime synchronizedAt,
+
+        Boolean active
 ) {
 }
