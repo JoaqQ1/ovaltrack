@@ -6,11 +6,12 @@ import { EventService } from '../../../services/event.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { Possession } from '../../../types/live-capture.types';
 import { ReviewEventViewModel } from '../../types/match-review.types';
+import { ModalComponent } from '../../../../modal/modal.component';
 
 @Component({
   selector: 'app-post-match-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent],
   templateUrl: './post-match-panel.component.html',
   styleUrl: './post-match-panel.component.css'
 })

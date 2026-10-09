@@ -201,6 +201,8 @@
   animation: modalFadeIn 0.18s ease-out;
 }
 
+
+
 @keyframes modalFadeIn {
   from {
     opacity: 0;

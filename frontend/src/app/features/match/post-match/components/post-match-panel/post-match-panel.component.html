@@ -134,50 +134,50 @@
 <!-- ================= MODAL DE EDICIÓN AVANZADA ================= -->
 <div class="custom-modal-backdrop" *ngIf="showEditModal()">
   <div class="custom-modal-dialog">
-    <div class="modal-content shadow-lg">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold">
-          <i class="bi bi-pencil-square me-2 text-primary"></i> Editar Evento
+    <div class="form-card w-100">
+      <div class="form-card-header d-flex justify-content-between align-items-center pb-3">
+        <h5 class="form-card-title mb-0">
+          Editar Evento
         </h5>
         <button type="button" class="btn-close" (click)="closeEditModal()"></button>
       </div>
-      <div class="modal-body" *ngIf="store.selectedEvent() as sel">
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Tipo de Evento</label>
-          <select class="form-select" [(ngModel)]="editEventTypeId">
+      <div class="form-card-body p-4" *ngIf="store.selectedEvent() as sel">
+        <div class="mb-4">
+          <label class="form-label fw-bold" style="color: #111d0e;">Tipo de Evento</label>
+          <select class="form-control" [(ngModel)]="editEventTypeId">
             <option *ngFor="let t of store.eventTypesList()" [value]="t.id">
               {{ t.name }} ({{ t.category }})
             </option>
           </select>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Posesión / Equipo</label>
+        <div class="mb-4">
+          <label class="form-label fw-bold" style="color: #111d0e;">Posesión / Equipo</label>
           <div class="d-flex gap-2">
             <button type="button" 
-                    class="btn btn-sm flex-fill" 
-                    [ngClass]="editTeamPossession === 'OWN' ? 'btn-success' : 'btn-outline-secondary'"
+                    class="btn flex-fill fw-bold" 
+                    [ngClass]="editTeamPossession === 'OWN' ? 'btn-success text-white' : 'btn-light border'"
                     (click)="editTeamPossession = 'OWN'; onPossessionChange()">
-              <i class="bi bi-shield-check me-1"></i> Propia (Local)
+              Propia (Local)
             </button>
             <button type="button" 
-                    class="btn btn-sm flex-fill" 
-                    [ngClass]="editTeamPossession === 'OPPONENT' ? 'btn-danger' : 'btn-outline-secondary'"
+                    class="btn flex-fill fw-bold" 
+                    [ngClass]="editTeamPossession === 'OPPONENT' ? 'btn-danger text-white' : 'btn-light border'"
                     (click)="editTeamPossession = 'OPPONENT'; onPossessionChange()">
-              <i class="bi bi-shield-x me-1"></i> Rival (Visitante)
+              Rival (Visitante)
             </button>
             <button type="button" 
-                    class="btn btn-sm flex-fill" 
-                    [ngClass]="editTeamPossession === 'NEUTRAL' ? 'btn-secondary' : 'btn-outline-secondary'"
+                    class="btn flex-fill fw-bold" 
+                    [ngClass]="editTeamPossession === 'NEUTRAL' ? 'btn-secondary text-white' : 'btn-light border'"
                     (click)="editTeamPossession = 'NEUTRAL'; onPossessionChange()">
               Neutral
             </button>
           </div>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Jugador Asociado</label>
-          <select class="form-select" 
+        <div class="mb-4">
+          <label class="form-label fw-bold" style="color: #111d0e;">Jugador Asociado</label>
+          <select class="form-control" 
                   [(ngModel)]="editPlayerId" 
                   [disabled]="editTeamPossession === 'OPPONENT'">
             <option value="">-- Sin asignar (Sin jugador) --</option>
@@ -190,15 +190,16 @@
           </small>
         </div>
 
-        <div class="p-2 bg-light rounded small border">
-          <span class="text-muted">Tiempo del evento:</span> <strong>{{ sel.matchTimeFormatted }} ({{ sel.period === 1 ? '1T' : '2T' }})</strong>
+        <div class="p-3 bg-light rounded-3 border">
+          <span class="text-muted me-2">Tiempo del evento:</span>
+          <strong>{{ sel.matchTimeFormatted }} ({{ sel.period === 1 ? '1T' : '2T' }})</strong>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-sm" (click)="closeEditModal()" [disabled]="isSubmitting()">
+      <div class="p-4 d-flex justify-content-end gap-3" style="background: #fdfdfd; border-top: 1px solid rgba(0,0,0,0.05);">
+        <button type="button" class="btn-outline m-0" (click)="closeEditModal()" [disabled]="isSubmitting()">
           Cancelar
         </button>
-        <button type="button" class="btn btn-primary btn-sm" (click)="saveEditModal()" [disabled]="isSubmitting()">
+        <button type="button" class="btn-invite m-0 border-0" style="height: 44px; border-radius: 10px; padding: 0 24px; font-weight: 600;" (click)="saveEditModal()" [disabled]="isSubmitting()">
           <span *ngIf="isSubmitting()" class="spinner-border spinner-border-sm me-1"></span>
           Guardar cambios
         </button>
@@ -208,33 +209,11 @@
 </div>
 
 <!-- ================= MODAL DE CONFIRMACIÓN DE ELIMINACIÓN ================= -->
-<div class="custom-modal-backdrop" *ngIf="showDeleteModal()">
-  <div class="custom-modal-dialog">
-    <div class="modal-content shadow-lg border-danger">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title fw-bold">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i> Confirmar Eliminación
-        </h5>
-        <button type="button" class="btn-close btn-close-white" (click)="closeDeleteModal()"></button>
-      </div>
-      <div class="modal-body" *ngIf="store.selectedEvent() as sel">
-        <p class="mb-2">¿Estás seguro de que deseas eliminar este evento cargado?</p>
-        <div class="alert alert-warning mb-2 py-2">
-          <strong>{{ sel.eventTypeName }}</strong> • {{ sel.matchTimeFormatted }} ({{ sel.playerName }})
-        </div>
-        <p class="text-danger small mb-0 fw-semibold">
-          Esta acción es permanente y recalculará las estadísticas del partido.
-        </p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="closeDeleteModal()" [disabled]="isSubmitting()">
-          Cancelar
-        </button>
-        <button type="button" class="btn btn-danger btn-sm" (click)="confirmDelete()" [disabled]="isSubmitting()">
-          <span *ngIf="isSubmitting()" class="spinner-border spinner-border-sm me-1"></span>
-          Sí, eliminar evento
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+<app-modal *ngIf="showDeleteModal() && store.selectedEvent() as sel"
+           title="Confirmar Eliminación"
+           [message]="'¿Estás seguro de que deseas eliminar permanentemente el evento: ' + sel.eventTypeName + ' • ' + sel.matchTimeFormatted + '?'"
+           description="Esta acción es permanente y recalculará las estadísticas del partido."
+           [isProcessing]="isSubmitting()"
+           (confirm)="confirmDelete()"
+           (cancel)="closeDeleteModal()">
+</app-modal>
