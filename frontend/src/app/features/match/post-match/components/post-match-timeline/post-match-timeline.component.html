@@ -40,6 +40,28 @@
 
       <span class="filter-divider"></span>
 
+      <!-- Botones de Equipo estilo Pill -->
+      <button type="button" 
+              class="filter-pill-btn" 
+              [class.active]="store.filters().team === 'ALL'" 
+              (click)="store.setTeamFilter('ALL')">
+        Todos
+      </button>
+      <button type="button" 
+              class="filter-pill-btn" 
+              [class.active]="store.filters().team === 'OWN'" 
+              (click)="store.setTeamFilter('OWN')">
+        Propios
+      </button>
+      <button type="button" 
+              class="filter-pill-btn" 
+              [class.active]="store.filters().team === 'OPPONENT'" 
+              (click)="store.setTeamFilter('OPPONENT')">
+        Rival
+      </button>
+
+      <span class="filter-divider"></span>
+
       <!-- Toggle Solo sin Jugador -->
       <button type="button" 
               class="filter-pill-btn unassigned-pill" 

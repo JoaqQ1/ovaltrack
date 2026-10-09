@@ -4,6 +4,7 @@ export type ReviewPeriodFilter = 'ALL' | 1 | 2;
 
 export interface ReviewFilters {
   period: ReviewPeriodFilter;
+  team: 'ALL' | 'OWN' | 'OPPONENT';
   onlyUnassigned: boolean;
   searchTerm: string;
   hiddenLaneIds: string[];

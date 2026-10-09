@@ -26,6 +26,7 @@ export class MatchReviewStore {
 
   readonly filters = signal<ReviewFilters>({
     period: 'ALL',
+    team: 'ALL',
     onlyUnassigned: false,
     searchTerm: '',
     hiddenLaneIds: []
@@ -61,13 +62,15 @@ export class MatchReviewStore {
 
       // Determinar si este evento coincide con los filtros activos
       const matchesPeriod = currentFilters.period === 'ALL' || e.period === currentFilters.period;
-      const matchesUnassigned = !currentFilters.onlyUnassigned || !hasPlayer;
+      const matchesTeam = currentFilters.team === 'ALL' || e.teamPossession === currentFilters.team;
+      const isUnassigned = !hasPlayer && e.teamPossession !== 'OPPONENT';
+      const matchesUnassigned = !currentFilters.onlyUnassigned || isUnassigned;
       const matchesSearch = term === '' ||
         playerName.toLowerCase().includes(term) ||
         eventName.toLowerCase().includes(term);
       const matchesLane = !currentFilters.hiddenLaneIds.includes(e.eventTypeId);
 
-      const isMatching = matchesPeriod && matchesUnassigned && matchesSearch && matchesLane;
+      const isMatching = matchesPeriod && matchesTeam && matchesUnassigned && matchesSearch && matchesLane;
 
       return {
         id: e.id,
@@ -104,7 +107,7 @@ export class MatchReviewStore {
   // --- Cola de Revisión (Pendientes sin jugador) ---
   readonly pendingQueue = computed<ReviewEventViewModel[]>(() => {
     return this.allViewModels()
-      .filter(ev => !ev.hasPlayer)
+      .filter(ev => !ev.hasPlayer && ev.teamPossession !== 'OPPONENT')
       .sort((a, b) => {
         if (a.period !== b.period) return a.period - b.period;
         return a.matchTime - b.matchTime;
@@ -158,7 +161,7 @@ export class MatchReviewStore {
   readonly kpis = computed<ReviewKpis>(() => {
     const all = this.allViewModels();
     const totalEvents = all.length;
-    const unassignedEvents = all.filter(e => !e.hasPlayer).length;
+    const unassignedEvents = all.filter(e => !e.hasPlayer && e.teamPossession !== 'OPPONENT').length;
     const coveragePercentage = totalEvents > 0
       ? Math.round(((totalEvents - unassignedEvents) / totalEvents) * 100)
       : 100;
@@ -233,8 +236,12 @@ export class MatchReviewStore {
     this.filters.update(f => ({ ...f, period }));
   }
 
+  setTeamFilter(team: 'ALL' | 'OWN' | 'OPPONENT'): void {
+    this.filters.update(f => ({ ...f, team }));
+  }
+
   toggleOnlyUnassigned(): void {
-    this.filters.update(f => ({ ...f, onlyUnassigned: !f.onlyUnassigned }));
+    this.filters.update(f => ({ ...f, onlyUnassigned: !f.onlyUnassigned}));
   }
 
   setSearchTerm(term: string): void {
@@ -254,6 +261,7 @@ export class MatchReviewStore {
   clearFilters(): void {
     this.filters.set({
       period: 'ALL',
+      team: 'ALL',
       onlyUnassigned: false,
       searchTerm: '',
       hiddenLaneIds: []
