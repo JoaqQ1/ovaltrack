@@ -109,6 +109,12 @@ export class PostMatchComponent implements OnInit {
     }
 
     try {
+      await firstValueFrom(this.liveCaptureService.hydrateMatchEvents(this.matchId));
+    } catch {
+      // El contenido local sigue disponible si el backend no responde.
+    }
+
+    try {
       const remoteEvents = await firstValueFrom(this.eventService.getByMatchPostMatch(this.matchId));
       this.store.setEvents(remoteEvents);
     } catch (error: any) {
