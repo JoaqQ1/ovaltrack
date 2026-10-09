@@ -30,7 +30,7 @@
              [attr.data-event-id]="ev.id"
              (click)="onRowClick(ev)"
              [class.selected-row]="ev.id === store.selectedEventId()"
-             [class.unassigned-row]="!ev.hasPlayer">
+             [class.unassigned-row]="ev.isUnassigned">
           <div class="col-period">
             <span class="period-badge" [class.p2]="ev.period === 2">
               {{ ev.period === 1 ? '1T' : '2T' }}
@@ -53,7 +53,10 @@
               <span class="player-initial">{{ ev.playerName.charAt(0).toUpperCase() }}</span>
               {{ ev.playerName }}
             </span>
-            <span *ngIf="!ev.hasPlayer" class="player-unassigned">
+            <span *ngIf="!ev.hasPlayer && ev.teamPossession === 'OPPONENT'" class="player-rival">
+              Rival
+            </span>
+            <span *ngIf="ev.isUnassigned" class="player-unassigned">
               Sin asignar
             </span>
           </div>

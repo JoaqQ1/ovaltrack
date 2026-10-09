@@ -149,11 +149,11 @@
             <button type="button" 
                     *ngFor="let occ of lane.occurrences" 
                     class="marker" 
-                    [class.marker-unassigned]="!occ.hasPlayer" 
+                    [class.marker-unassigned]="occ.isUnassigned" 
                     [class.marker-dimmed]="occ.isDimmed" 
                     [class.marker-selected]="occ.id === store.selectedEventId()" 
                     [style.left.%]="occ.pct" 
-                    [style.backgroundColor]="occ.hasPlayer ? occ.color : '#f59e0b'" 
+                    [style.backgroundColor]="occ.isUnassigned ? '#f59e0b' : occ.color" 
                     [attr.aria-label]="occ.eventTypeName + ' · ' + occ.matchTimeFormatted + ' · ' + occ.playerName" 
                     [title]="getTooltip(occ)"
                     (click)="store.selectEvent(occ.id)">

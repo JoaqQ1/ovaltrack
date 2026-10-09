@@ -26,6 +26,7 @@ export interface ReviewEventViewModel {
   playerName: string;
   playerJerseyNumber: number | null;
   hasPlayer: boolean;
+  isUnassigned: boolean;
   teamPossession: Possession;
   isDimmed: boolean; // True si queda fuera de los filtros activos (para el gráfico)
 }

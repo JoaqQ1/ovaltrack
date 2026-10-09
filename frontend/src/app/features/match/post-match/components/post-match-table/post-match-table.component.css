@@ -185,6 +185,17 @@
   font-weight: 700;
 }
 
+.player-rival {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--surface-alt, #eef1e7);
+  border: 1px solid var(--border, rgba(27, 33, 22, 0.15));
+  border-radius: 6px;
+  color: var(--text-secondary, #3b4e33);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
 .btn-row-select {
   background: transparent;
   border: none;

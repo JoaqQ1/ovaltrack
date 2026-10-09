@@ -88,6 +88,7 @@ export class MatchReviewStore {
         playerName,
         playerJerseyNumber: e.playerJerseyNumber ?? null,
         hasPlayer,
+        isUnassigned,
         teamPossession: e.teamPossession,
         isDimmed: !isMatching
       };
@@ -107,7 +108,7 @@ export class MatchReviewStore {
   // --- Cola de Revisión (Pendientes sin jugador) ---
   readonly pendingQueue = computed<ReviewEventViewModel[]>(() => {
     return this.allViewModels()
-      .filter(ev => !ev.hasPlayer && ev.teamPossession !== 'OPPONENT')
+      .filter(ev => ev.isUnassigned)
       .sort((a, b) => {
         if (a.period !== b.period) return a.period - b.period;
         return a.matchTime - b.matchTime;
@@ -161,7 +162,7 @@ export class MatchReviewStore {
   readonly kpis = computed<ReviewKpis>(() => {
     const all = this.allViewModels();
     const totalEvents = all.length;
-    const unassignedEvents = all.filter(e => !e.hasPlayer && e.teamPossession !== 'OPPONENT').length;
+    const unassignedEvents = all.filter(e => e.isUnassigned).length;
     const coveragePercentage = totalEvents > 0
       ? Math.round(((totalEvents - unassignedEvents) / totalEvents) * 100)
       : 100;
