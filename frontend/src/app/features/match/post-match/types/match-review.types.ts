@@ -4,6 +4,7 @@ export type ReviewPeriodFilter = 'ALL' | 1 | 2;
 
 export interface ReviewFilters {
   period: ReviewPeriodFilter;
+  team: 'ALL' | 'OWN' | 'OPPONENT';
   onlyUnassigned: boolean;
   searchTerm: string;
   hiddenLaneIds: string[];
@@ -25,6 +26,7 @@ export interface ReviewEventViewModel {
   playerName: string;
   playerJerseyNumber: number | null;
   hasPlayer: boolean;
+  isUnassigned: boolean;
   teamPossession: Possession;
   isDimmed: boolean; // True si queda fuera de los filtros activos (para el gráfico)
 }

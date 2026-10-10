@@ -52,3 +52,21 @@ Then('el sistema rechaza la solicitud con código {int} y el mensaje {string}', 
 Then('el sistema responde con código {int} y el mensaje {string}', async function (statusCode, mensajeEsperado) {
   await assertResponseCodeAndMessage(this, statusCode, mensajeEsperado);
 });
+
+Then('el sistema responde con código {int}', function (statusCode) {
+  assert.ok(this.lastResponse, 'No se encontró lastResponse en el contexto del escenario');
+  assert.equal(
+    this.lastResponse.status,
+    statusCode,
+    `Se esperaba código HTTP ${statusCode} pero se obtuvo ${this.lastResponse.status}`
+  );
+});
+
+Then('el sistema rechaza la solicitud con código {int}', function (statusCode) {
+  assert.ok(this.lastResponse, 'No se encontró lastResponse en el contexto del escenario');
+  assert.equal(
+    this.lastResponse.status,
+    statusCode,
+    `Se esperaba código HTTP ${statusCode} pero se obtuvo ${this.lastResponse.status}`
+  );
+});

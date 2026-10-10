@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { MatchService } from '../services/match.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
+import { RosterService } from '../services/roster.service';
 import { LiveCaptureCacheService } from '../services/live-capture-cache.service';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
@@ -35,6 +36,7 @@ export class PostMatchComponent implements OnInit {
   private readonly matchService = inject(MatchService);
   private readonly eventService = inject(EventService);
   private readonly eventTypeService = inject(EventTypeService);
+  private readonly rosterService = inject(RosterService);
   private readonly cacheService = inject(LiveCaptureCacheService);
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly toastService = inject(ToastService);
@@ -42,6 +44,8 @@ export class PostMatchComponent implements OnInit {
   readonly store = inject(MatchReviewStore);
 
   readonly userClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
+
+  @ViewChild(PostMatchPanelComponent) panel!: PostMatchPanelComponent;
 
   matchId = '';
 
@@ -51,12 +55,37 @@ export class PostMatchComponent implements OnInit {
   readonly isLoading = signal<boolean>(true);
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
 
+  onEditRequested(): void {
+    if (this.panel) {
+      this.panel.openEditModal();
+    }
+  }
+
+  onDeleteRequested(): void {
+    if (this.panel) {
+      this.panel.openDeleteModal();
+    }
+  }
+
   ngOnInit(): void {
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
     if (this.matchId) {
+      this.store.setMatchId(this.matchId);
       this.loadMatchDetails();
+      this.loadRoster();
       this.loadEventTypesAndEvents();
     }
+  }
+
+  loadRoster(): void {
+    this.rosterService.getAvailablePlayers(this.matchId).subscribe({
+      next: (players) => {
+        this.store.setAvailablePlayers(players);
+      },
+      error: () => {
+        // Fallback no bloqueante si la división no tiene jugadores cargados
+      }
+    });
   }
 
   loadMatchDetails(): void {
@@ -81,7 +110,7 @@ export class PostMatchComponent implements OnInit {
           dict[type.id] = type.name;
         });
         this.eventTypesDiccionario.set(dict);
-        this.store.setEventTypes(dict);
+        this.store.setEventTypesList(types);
         this.loadEvents();
       },
       error: () => {
@@ -91,7 +120,7 @@ export class PostMatchComponent implements OnInit {
             dict[type.id] = type.name;
           });
           this.eventTypesDiccionario.set(dict);
-          this.store.setEventTypes(dict);
+          this.store.setEventTypesList(types);
           this.loadEvents();
         });
       }

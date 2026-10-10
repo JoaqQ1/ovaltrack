@@ -22,6 +22,14 @@
           <span class="detail-value mono">{{ ev.realTimeFormatted }}</span>
         </div>
         <div class="detail-row">
+          <span class="detail-label">Posesión</span>
+          <span class="detail-value">
+            <span class="badge" [ngClass]="ev.teamPossession === 'OPPONENT' ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'">
+              {{ ev.teamPossession === 'OPPONENT' ? 'Rival' : (ev.teamPossession === 'NEUTRAL' ? 'Neutral' : 'Propia') }}
+            </span>
+          </span>
+        </div>
+        <div class="detail-row">
           <span class="detail-label">Jugador</span>
           <span class="detail-value" [class.text-amber]="!ev.hasPlayer">
             {{ ev.hasPlayer ? ev.playerName : 'Sin asignar' }}
@@ -29,21 +37,51 @@
         </div>
       </div>
 
-      <!-- Campo de asignación preparado para HU 8.2 (Read-only informativo en HU 8.1) -->
-      <div class="assignment-field-wrapper">
-        <div class="fake-select-readonly" title="La asignación interactiva se habilitará en la HU 8.2">
-          <span>{{ ev.hasPlayer ? ev.playerName : 'Seleccionar jugador...' }}</span>
-          <i class="bi bi-chevron-down select-caret"></i>
+      <!-- Asignación Rápida de Jugador (Triage) -->
+      <div class="assignment-field-wrapper mt-3">
+        <label class="form-label quick-label">
+          <i class="bi bi-person-check-fill me-1"></i> Asignación rápida (Local):
+        </label>
+        <div *ngIf="ev.teamPossession === 'OPPONENT'" class="alert alert-light py-2 px-3 small border mb-0">
+          <i class="bi bi-info-circle me-1 text-secondary"></i> Evento de equipo rival (no asignable)
+        </div>
+        <div *ngIf="ev.teamPossession !== 'OPPONENT'" class="select-container">
+          <select class="form-select form-select-sm custom-player-select" 
+                  [ngModel]="ev.playerId || ''"
+                  (ngModelChange)="onQuickPlayerModelChange($event, ev)"
+                  [disabled]="isSubmitting()">
+            <option value="">-- Sin asignar (Pendiente) --</option>
+            <option *ngFor="let p of store.availablePlayers()" [value]="p.id">
+              {{ p.jerseyNumber ? '#' + p.jerseyNumber + ' ' : '' }}{{ p.fullName }}
+            </option>
+          </select>
         </div>
       </div>
 
-      <!-- Botón de Acción Rápida: Siguiente Pendiente -->
-      <button type="button" 
-              class="btn-next-pending" 
-              [disabled]="store.kpis().unassignedEvents === 0"
-              (click)="onNextPendingClick()">
-        Siguiente pendiente
-      </button>
+      <!-- Botonera de Acciones -->
+      <div class="panel-actions-wrapper mt-3">
+        <button *ngIf="store.kpis().unassignedEvents > 0"
+                type="button" 
+                class="btn-next-pending" 
+                (click)="onNextPendingClick()">
+          <i class="bi bi-arrow-down-circle me-1"></i> Siguiente pendiente
+        </button>
+
+        <div class="btn-action-row">
+          <button type="button" 
+                  class="btn btn-sm btn-edit-event" 
+                  (click)="openEditModal()"
+                  title="Editar detalles completos del evento">
+            <i class="bi bi-pencil-square me-1"></i> Editar
+          </button>
+          <button type="button" 
+                  class="btn btn-sm btn-delete-event" 
+                  (click)="openDeleteModal()"
+                  title="Eliminar evento cargado por error">
+            <i class="bi bi-trash3 me-1"></i> Eliminar
+          </button>
+        </div>
+      </div>
     </ng-container>
 
     <div *ngIf="!store.selectedEvent()" class="empty-panel-msg">
@@ -92,3 +130,90 @@
     </div>
   </section>
 </div>
+
+<!-- ================= MODAL DE EDICIÓN AVANZADA ================= -->
+<div class="custom-modal-backdrop" *ngIf="showEditModal()">
+  <div class="custom-modal-dialog">
+    <div class="form-card w-100">
+      <div class="form-card-header d-flex justify-content-between align-items-center pb-3">
+        <h5 class="form-card-title mb-0">
+          Editar Evento
+        </h5>
+        <button type="button" class="btn-close" (click)="closeEditModal()"></button>
+      </div>
+      <div class="form-card-body p-4" *ngIf="store.selectedEvent() as sel">
+        <div class="mb-4">
+          <label class="form-label fw-bold" style="color: #111d0e;">Tipo de Evento</label>
+          <select class="form-control" [(ngModel)]="editEventTypeId">
+            <option *ngFor="let t of store.eventTypesList()" [value]="t.id">
+              {{ t.name }} ({{ t.category }})
+            </option>
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-bold" style="color: #111d0e;">Posesión / Equipo</label>
+          <div class="d-flex gap-2">
+            <button type="button" 
+                    class="btn flex-fill fw-bold" 
+                    [ngClass]="editTeamPossession === 'OWN' ? 'btn-success text-white' : 'btn-light border'"
+                    (click)="editTeamPossession = 'OWN'; onPossessionChange()">
+              Propia (Local)
+            </button>
+            <button type="button" 
+                    class="btn flex-fill fw-bold" 
+                    [ngClass]="editTeamPossession === 'OPPONENT' ? 'btn-danger text-white' : 'btn-light border'"
+                    (click)="editTeamPossession = 'OPPONENT'; onPossessionChange()">
+              Rival (Visitante)
+            </button>
+            <button type="button" 
+                    class="btn flex-fill fw-bold" 
+                    [ngClass]="editTeamPossession === 'NEUTRAL' ? 'btn-secondary text-white' : 'btn-light border'"
+                    (click)="editTeamPossession = 'NEUTRAL'; onPossessionChange()">
+              Neutral
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-bold" style="color: #111d0e;">Jugador Asociado</label>
+          <select class="form-control" 
+                  [(ngModel)]="editPlayerId" 
+                  [disabled]="editTeamPossession === 'OPPONENT'">
+            <option value="">-- Sin asignar (Sin jugador) --</option>
+            <option *ngFor="let p of store.availablePlayers()" [value]="p.id">
+              {{ p.jerseyNumber ? '#' + p.jerseyNumber + ' ' : '' }}{{ p.fullName }}
+            </option>
+          </select>
+          <small *ngIf="editTeamPossession === 'OPPONENT'" class="text-muted d-block mt-1">
+            * Para el equipo rival no se asigna jugador individual.
+          </small>
+        </div>
+
+        <div class="p-3 bg-light rounded-3 border">
+          <span class="text-muted me-2">Tiempo del evento:</span>
+          <strong>{{ sel.matchTimeFormatted }} ({{ sel.period === 1 ? '1T' : '2T' }})</strong>
+        </div>
+      </div>
+      <div class="p-4 d-flex justify-content-end gap-3" style="background: #fdfdfd; border-top: 1px solid rgba(0,0,0,0.05);">
+        <button type="button" class="btn-outline m-0" (click)="closeEditModal()" [disabled]="isSubmitting()">
+          Cancelar
+        </button>
+        <button type="button" class="btn-invite m-0 border-0" style="height: 44px; border-radius: 10px; padding: 0 24px; font-weight: 600;" (click)="saveEditModal()" [disabled]="isSubmitting()">
+          <span *ngIf="isSubmitting()" class="spinner-border spinner-border-sm me-1"></span>
+          Guardar cambios
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL DE CONFIRMACIÓN DE ELIMINACIÓN ================= -->
+<app-modal *ngIf="showDeleteModal() && store.selectedEvent() as sel"
+           title="Confirmar Eliminación"
+           [message]="'¿Estás seguro de que deseas eliminar permanentemente el evento: ' + sel.eventTypeName + ' • ' + sel.matchTimeFormatted + '?'"
+           description="Esta acción es permanente y recalculará las estadísticas del partido."
+           [isProcessing]="isSubmitting()"
+           (confirm)="confirmDelete()"
+           (cancel)="closeDeleteModal()">
+</app-modal>

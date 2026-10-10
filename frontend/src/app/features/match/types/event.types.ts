@@ -34,6 +34,18 @@ export interface BackendEventCreationRequest {
   synchronizedAt?: string | null;
 }
 
+export interface BackendEventUpdateRequest {
+  eventTypeId?: UUID | null;
+  playerId?: UUID | null;
+  teamPossession?: Possession | null;
+  matchTime?: number | null;
+  absoluteMatchTime?: number | null;
+  period?: number | null;
+  origin?: string | null;
+  attributes?: Record<string, unknown> | null;
+  synchronizedAt?: string | null;
+}
+
 export interface LocalMatchEvent extends BackendEventResponse {
   backendEventId?: UUID | null;
   localSequence: number;

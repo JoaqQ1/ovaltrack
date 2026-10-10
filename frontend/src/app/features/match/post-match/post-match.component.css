@@ -57,3 +57,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  .review-dashboard-container {
+    padding: 0 16px 80px !important;
+  }
+}

@@ -1,0 +1,36 @@
+info:
+  name: 04 - [200 OK] Editar evento (Asignar jugador) [PATCH]
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/event/{{targetEventId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{coachToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "playerId": "{{personId}}",
+        "teamPossession": "OWN"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y retornar el evento con el jugador asignado", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().id).to.equal(bru.getEnvVar("targetEventId"));
+          expect(res.getBody().playerId).to.equal(bru.getEnvVar("personId"));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

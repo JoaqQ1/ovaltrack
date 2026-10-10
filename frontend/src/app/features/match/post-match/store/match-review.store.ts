@@ -1,5 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { MatchTimelineEventResponse } from '../../types/event.types';
+import { AvailablePlayer } from '../../types/roster.types';
+import { LiveCaptureEventType } from '../../types/event-type.types';
 import {
   ReviewEventViewModel,
   ReviewFilters,
@@ -8,19 +10,27 @@ import {
   ReviewTimelineLane
 } from '../types/match-review.types';
 
+export const RUGBY_HALF_TIME_MIN = 40;
+export const RUGBY_FULL_TIME_MIN = 80;
+export const EMPTY_TIME_PLACEHOLDER = '--:--:--';
+
 @Injectable({
   providedIn: 'root'
 })
 export class MatchReviewStore {
 
   // --- Estado Primario (Signals) ---
+  readonly matchId = signal<string>('');
   readonly rawEvents = signal<MatchTimelineEventResponse[]>([]);
   readonly matchStartTime = signal<string | null>(null);
   readonly selectedEventId = signal<string | null>(null);
   readonly eventTypesDict = signal<Record<string, string>>({});
+  readonly eventTypesList = signal<LiveCaptureEventType[]>([]);
+  readonly availablePlayers = signal<AvailablePlayer[]>([]);
 
   readonly filters = signal<ReviewFilters>({
     period: 'ALL',
+    team: 'ALL',
     onlyUnassigned: false,
     searchTerm: '',
     hiddenLaneIds: []
@@ -28,7 +38,7 @@ export class MatchReviewStore {
 
   // --- Duración Dinámica y Escala (Eje X) ---
   readonly matchDurationScale = computed<number>(() => {
-    let maxMinutes = 80; // Estándar mínimo reglamentario de rugby
+    let maxMinutes = RUGBY_FULL_TIME_MIN; // Estándar mínimo reglamentario de rugby
     for (const ev of this.rawEvents()) {
       const mins = (ev.matchTime ?? 0) / 60;
       if (mins > maxMinutes) {
@@ -47,42 +57,9 @@ export class MatchReviewStore {
     const term = currentFilters.searchTerm.trim().toLowerCase();
 
     return raw.map(e => {
-      const eventName = e.eventTypeName || dict[e.eventTypeId] || 'Evento';
-      const hasPlayer = Boolean(e.playerId && e.playerId.trim() !== '');
-      const playerName = e.playerName || (hasPlayer ? 'Jugador' : 'Sin asignar');
-      const seconds = e.matchTime ?? 0;
-      const minute = seconds / 60;
-      const pct = Math.min(100, Math.max(0, (minute / scale) * 100));
-
-      // Determinar si este evento coincide con los filtros activos
-      const matchesPeriod = currentFilters.period === 'ALL' || e.period === currentFilters.period;
-      const matchesUnassigned = !currentFilters.onlyUnassigned || !hasPlayer;
-      const matchesSearch = term === '' ||
-        playerName.toLowerCase().includes(term) ||
-        eventName.toLowerCase().includes(term);
-      const matchesLane = !currentFilters.hiddenLaneIds.includes(e.eventTypeId);
-
-      const isMatching = matchesPeriod && matchesUnassigned && matchesSearch && matchesLane;
-
-      return {
-        id: e.id,
-        eventTypeId: e.eventTypeId,
-        eventTypeName: eventName,
-        color: this.resolveEventColor(eventName),
-        period: e.period ?? 1,
-        matchTime: seconds,
-        minute,
-        pct,
-        matchTimeFormatted: this.formatTimeSeconds(seconds),
-        realTime: e.realTime,
-        realTimeFormatted: this.formatRealTime(e.realTime),
-        playerId: e.playerId ?? null,
-        playerName,
-        playerJerseyNumber: e.playerJerseyNumber ?? null,
-        hasPlayer,
-        teamPossession: e.teamPossession,
-        isDimmed: !isMatching
-      };
+      const vm = this.buildBaseViewModel(e, dict, scale);
+      vm.isDimmed = !this.evaluateFilters(vm, currentFilters, term);
+      return vm;
     });
   });
 
@@ -90,20 +67,14 @@ export class MatchReviewStore {
   readonly visibleEvents = computed<ReviewEventViewModel[]>(() => {
     return this.allViewModels()
       .filter(ev => !ev.isDimmed)
-      .sort((a, b) => {
-        if (a.period !== b.period) return a.period - b.period;
-        return a.matchTime - b.matchTime;
-      });
+      .sort((a, b) => this.sortChronologically(a, b));
   });
 
   // --- Cola de Revisión (Pendientes sin jugador) ---
   readonly pendingQueue = computed<ReviewEventViewModel[]>(() => {
     return this.allViewModels()
-      .filter(ev => !ev.hasPlayer)
-      .sort((a, b) => {
-        if (a.period !== b.period) return a.period - b.period;
-        return a.matchTime - b.matchTime;
-      });
+      .filter(ev => ev.isUnassigned)
+      .sort((a, b) => this.sortChronologically(a, b));
   });
 
   // --- Evento Actualmente Seleccionado ---
@@ -153,20 +124,12 @@ export class MatchReviewStore {
   readonly kpis = computed<ReviewKpis>(() => {
     const all = this.allViewModels();
     const totalEvents = all.length;
-    const unassignedEvents = all.filter(e => !e.hasPlayer).length;
+    const unassignedEvents = all.filter(e => e.isUnassigned).length;
     const coveragePercentage = totalEvents > 0
       ? Math.round(((totalEvents - unassignedEvents) / totalEvents) * 100)
       : 100;
 
-    let startTimeFormatted = '--:--:--';
-    const explicitStart = this.matchStartTime();
-    if (explicitStart) {
-      startTimeFormatted = this.formatOnlyTime(explicitStart);
-    } else if (all.length > 0) {
-      // Tomar la hora del primer evento cronológico
-      const sortedByRealTime = [...all].sort((a, b) => a.realTime.localeCompare(b.realTime));
-      startTimeFormatted = this.formatOnlyTime(sortedByRealTime[0].realTime);
-    }
+    const startTimeFormatted = this.resolveMatchStartTimeFormatted(all, this.matchStartTime());
 
     return {
       totalEvents,
@@ -183,6 +146,23 @@ export class MatchReviewStore {
     if (matchStartTime !== undefined) {
       this.matchStartTime.set(matchStartTime);
     }
+  }
+
+  setMatchId(id: string): void {
+    this.matchId.set(id);
+  }
+
+  setAvailablePlayers(players: AvailablePlayer[]): void {
+    this.availablePlayers.set(players);
+  }
+
+  setEventTypesList(types: LiveCaptureEventType[]): void {
+    this.eventTypesList.set(types);
+    const dict: Record<string, string> = {};
+    types.forEach(t => {
+      dict[t.id] = t.name;
+    });
+    this.eventTypesDict.set(dict);
   }
 
   setEventTypes(dict: Record<string, string>): void {
@@ -211,8 +191,12 @@ export class MatchReviewStore {
     this.filters.update(f => ({ ...f, period }));
   }
 
+  setTeamFilter(team: 'ALL' | 'OWN' | 'OPPONENT'): void {
+    this.filters.update(f => ({ ...f, team }));
+  }
+
   toggleOnlyUnassigned(): void {
-    this.filters.update(f => ({ ...f, onlyUnassigned: !f.onlyUnassigned }));
+    this.filters.update(f => ({ ...f, onlyUnassigned: !f.onlyUnassigned}));
   }
 
   setSearchTerm(term: string): void {
@@ -232,10 +216,39 @@ export class MatchReviewStore {
   clearFilters(): void {
     this.filters.set({
       period: 'ALL',
+      team: 'ALL',
       onlyUnassigned: false,
       searchTerm: '',
       hiddenLaneIds: []
     });
+  }
+
+  removeEvent(eventId: string): void {
+    const current = this.rawEvents();
+    this.rawEvents.set(current.filter(e => e.id !== eventId));
+    if (this.selectedEventId() === eventId) {
+      this.selectedEventId.set(null);
+    }
+  }
+
+  updateEvent(eventId: string, partial: Partial<MatchTimelineEventResponse>): void {
+    const current = this.rawEvents();
+    const index = current.findIndex(e => e.id === eventId);
+    if (index !== -1) {
+      const dict = this.eventTypesDict();
+      const updated = { ...current[index], ...partial };
+      if (partial.eventTypeId && dict[partial.eventTypeId]) {
+        updated.eventTypeName = dict[partial.eventTypeId];
+      }
+      if (partial.playerId !== undefined) {
+        const playerObj = this.availablePlayers().find(p => p.id === partial.playerId);
+        updated.playerName = playerObj ? playerObj.fullName : null;
+        updated.playerJerseyNumber = playerObj ? playerObj.jerseyNumber : null;
+      }
+      const newArray = [...current];
+      newArray[index] = updated;
+      this.rawEvents.set(newArray);
+    }
   }
 
   // --- Utilidades de Formateo y Colores ---
@@ -276,13 +289,78 @@ export class MatchReviewStore {
   }
 
   private formatOnlyTime(iso: string | null | undefined): string {
-    if (!iso) return '--:--:--';
+    if (!iso) return EMPTY_TIME_PLACEHOLDER;
     try {
       const date = new Date(iso);
       if (isNaN(date.getTime())) return iso;
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     } catch {
-      return '--:--:--';
+      return EMPTY_TIME_PLACEHOLDER;
     }
+  }
+
+  // --- Funciones Extraídas (Refactoring Niveles 1 y 2) ---
+
+  private sortChronologically(a: ReviewEventViewModel, b: ReviewEventViewModel): number {
+    if (a.period !== b.period) return a.period - b.period;
+    return a.matchTime - b.matchTime;
+  }
+
+  private resolveMatchStartTimeFormatted(allEvents: ReviewEventViewModel[], explicitStart: string | null): string {
+    if (explicitStart) {
+      return this.formatOnlyTime(explicitStart);
+    }
+    if (allEvents.length > 0) {
+      const sortedByRealTime = [...allEvents].sort((a, b) => a.realTime.localeCompare(b.realTime));
+      return this.formatOnlyTime(sortedByRealTime[0].realTime);
+    }
+    return EMPTY_TIME_PLACEHOLDER;
+  }
+
+  private buildBaseViewModel(
+    e: MatchTimelineEventResponse,
+    dict: Record<string, string>,
+    scale: number
+  ): ReviewEventViewModel {
+    const eventName = e.eventTypeName || dict[e.eventTypeId] || 'Evento';
+    const hasPlayer = Boolean(e.playerId && e.playerId.trim() !== '');
+    const playerName = e.playerName || (hasPlayer ? 'Jugador' : 'Sin asignar');
+    const seconds = e.matchTime ?? 0;
+    const minute = seconds / 60;
+    const pct = Math.min(100, Math.max(0, (minute / scale) * 100));
+    const isUnassigned = !hasPlayer && e.teamPossession !== 'OPPONENT';
+
+    return {
+      id: e.id,
+      eventTypeId: e.eventTypeId,
+      eventTypeName: eventName,
+      color: this.resolveEventColor(eventName),
+      period: e.period ?? 1,
+      matchTime: seconds,
+      minute,
+      pct,
+      matchTimeFormatted: this.formatTimeSeconds(seconds),
+      realTime: e.realTime,
+      realTimeFormatted: this.formatRealTime(e.realTime),
+      playerId: e.playerId ?? null,
+      playerName,
+      playerJerseyNumber: e.playerJerseyNumber ?? null,
+      hasPlayer,
+      isUnassigned,
+      teamPossession: e.teamPossession,
+      isDimmed: false
+    };
+  }
+
+  private evaluateFilters(ev: ReviewEventViewModel, filters: ReviewFilters, term: string): boolean {
+    const matchesPeriod = filters.period === 'ALL' || ev.period === filters.period;
+    const matchesTeam = filters.team === 'ALL' || ev.teamPossession === filters.team;
+    const matchesUnassigned = !filters.onlyUnassigned || ev.isUnassigned;
+    const matchesSearch = term === '' ||
+      ev.playerName.toLowerCase().includes(term) ||
+      ev.eventTypeName.toLowerCase().includes(term);
+    const matchesLane = !filters.hiddenLaneIds.includes(ev.eventTypeId);
+
+    return matchesPeriod && matchesTeam && matchesUnassigned && matchesSearch && matchesLane;
   }
 }

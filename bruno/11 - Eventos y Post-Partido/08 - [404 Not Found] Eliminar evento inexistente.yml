@@ -1,0 +1,27 @@
+info:
+  name: 08 - [404 Not Found] Eliminar evento inexistente
+  type: http
+  seq: 8
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/event/00000000-0000-0000-0000-000000000000"
+  headers:
+    - name: Authorization
+      value: Bearer {{coachToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 404 Not Found para evento inexistente", function() {
+          expect(res.getStatus()).to.equal(404);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -43,7 +43,7 @@
     <main class="review-main-column">
       <app-post-match-kpis />
       <app-post-match-timeline />
-      <app-post-match-table />
+      <app-post-match-table (editRequested)="onEditRequested()" (deleteRequested)="onDeleteRequested()" />
     </main>
 
     <!-- Columna Lateral (Sidebar 340px): Detalle del Evento y Cola de Revisión -->

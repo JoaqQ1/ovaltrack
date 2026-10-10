@@ -40,6 +40,28 @@
 
       <span class="filter-divider"></span>
 
+      <!-- Botones de Equipo estilo Pill -->
+      <button type="button" 
+              class="filter-pill-btn" 
+              [class.active]="store.filters().team === 'ALL'" 
+              (click)="store.setTeamFilter('ALL')">
+        Todos
+      </button>
+      <button type="button" 
+              class="filter-pill-btn" 
+              [class.active]="store.filters().team === 'OWN'" 
+              (click)="store.setTeamFilter('OWN')">
+        Propios
+      </button>
+      <button type="button" 
+              class="filter-pill-btn" 
+              [class.active]="store.filters().team === 'OPPONENT'" 
+              (click)="store.setTeamFilter('OPPONENT')">
+        Rival
+      </button>
+
+      <span class="filter-divider"></span>
+
       <!-- Toggle Solo sin Jugador -->
       <button type="button" 
               class="filter-pill-btn unassigned-pill" 
@@ -79,12 +101,12 @@
           <div class="ruler-tick" 
                *ngFor="let tick of timelineTicks()" 
                [style.left.%]="(tick / store.matchDurationScale()) * 100"
-               [ngClass]="{'milestone': tick === 0 || tick === 40 || tick === store.matchDurationScale()}">
+               [ngClass]="{'milestone': tick === 0 || tick === halfTimeMin || tick === store.matchDurationScale()}">
             <span class="tick-label">
               <ng-container *ngIf="tick === 0">INICIO</ng-container>
-              <ng-container *ngIf="tick === 40">E.T.</ng-container>
+              <ng-container *ngIf="tick === halfTimeMin">E.T.</ng-container>
               <ng-container *ngIf="tick === store.matchDurationScale()">FIN</ng-container>
-              <ng-container *ngIf="tick !== 0 && tick !== 40 && tick !== store.matchDurationScale()">{{ tick }}'</ng-container>
+              <ng-container *ngIf="tick !== 0 && tick !== halfTimeMin && tick !== store.matchDurationScale()">{{ tick }}'</ng-container>
             </span>
             <div class="tick-line"></div>
           </div>
@@ -95,7 +117,7 @@
       <div class="timeline-tracks-overlay">
         <!-- Línea Vertical de Entretiempo (Referencia visual transversal) -->
         <div class="halftime-vertical-line" 
-             [style.left.%]="(40 / store.matchDurationScale()) * 100">
+             [style.left.%]="(halfTimeMin / store.matchDurationScale()) * 100">
         </div>
 
         <!-- Línea Vertical del Evento Seleccionado -->
@@ -127,15 +149,13 @@
             <button type="button" 
                     *ngFor="let occ of lane.occurrences" 
                     class="marker" 
-                    [class.marker-unassigned]="!occ.hasPlayer" 
+                    [class.marker-unassigned]="occ.isUnassigned" 
                     [class.marker-dimmed]="occ.isDimmed" 
                     [class.marker-selected]="occ.id === store.selectedEventId()" 
                     [style.left.%]="occ.pct" 
-                    [style.backgroundColor]="occ.hasPlayer ? occ.color : '#f59e0b'" 
+                    [style.backgroundColor]="occ.isUnassigned ? '#f59e0b' : occ.color" 
                     [attr.aria-label]="occ.eventTypeName + ' · ' + occ.matchTimeFormatted + ' · ' + occ.playerName" 
-                    [title]="occ.eventTypeName + ' · ' + occ.matchTimeFormatted + '
-Hora: ' + occ.realTimeFormatted + '
-Jugador: ' + occ.playerName"
+                    [title]="getTooltip(occ)"
                     (click)="store.selectEvent(occ.id)">
             </button>
           </ng-container>
