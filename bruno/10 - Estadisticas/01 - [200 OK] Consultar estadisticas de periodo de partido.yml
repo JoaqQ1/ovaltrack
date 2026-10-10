@@ -1,0 +1,33 @@
+info:
+  name: 01 - [200 OK] Consultar estadisticas de periodo de partido
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/statistics/match/{{matchFinishedPuertoMadrynId}}?period=1"
+  headers:
+    - name: Authorization
+      value: Bearer {{coachToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK con metricas calculadas del periodo", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().matchId).to.equal(bru.getEnvVar("matchFinishedPuertoMadrynId"));
+          expect(res.getBody().period).to.equal(1);
+          expect(res.getBody()).to.have.property('ownScore');
+          expect(res.getBody()).to.have.property('opponentScore');
+          expect(res.getBody()).to.have.property('ownTries');
+          expect(res.getBody()).to.have.property('ownPossessionPercentage');
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

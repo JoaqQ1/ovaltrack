@@ -1,0 +1,7 @@
+info:
+  name: 11 - Eventos y Post-Partido
+  type: folder
+  seq: 11
+
+request:
+  auth: inherit
