@@ -4,6 +4,7 @@ import { LiveCapturePersistedState, LiveCaptureQuery } from '../types/live-captu
 import { LiveCaptureEventType } from '../types/event-type.types';
 import { BackendEventResponse, LocalMatchEvent } from '../types/event.types';
 import { Match } from '../types/match.types';
+import { Division } from '../../division/types/division.types';
 
 @Injectable({ providedIn: 'root' })
 export class LiveCaptureCacheService {
@@ -17,6 +18,18 @@ export class LiveCaptureCacheService {
 
   saveMatches(matches: Match[]): Promise<void> {
     return matchDatabase.matches.bulkPut(matches).then(() => undefined);
+  }
+
+  getMatchesByDivision(divisionId: string): Promise<Match[]> {
+    return matchDatabase.matches.where('divisionId').equals(divisionId).toArray();
+  }
+
+  saveDivisions(divisions: Division[]): Promise<void> {
+    return matchDatabase.divisions.bulkPut(divisions).then(() => undefined);
+  }
+
+  getDivisionsByClub(clubId: string): Promise<Division[]> {
+    return matchDatabase.divisions.where('clubId').equals(clubId).toArray();
   }
 
   getEventTypes(): Promise<LiveCaptureEventType[]> {
