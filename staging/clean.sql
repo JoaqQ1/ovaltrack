@@ -1,21 +1,38 @@
--- Limpieza de la base de datos para pruebas automatizadas.
--- La estructura se conserva; solo se eliminan los datos.
+-- =========================================================================
+-- Script de Limpieza (Staging Clean) y Siembra de Event Types
+-- =========================================================================
 
-TRUNCATE TABLE
-    events,
-    event_types,
-    matches,
-    division_players,
-    division_coaches,
-    divisions,
-    registration_requests,
-    clubs,
-    users,
-    persons
-RESTART IDENTITY CASCADE;
+BEGIN;
+
+-- 1. Desactivar temporalmente las validaciones de FK en la sesión actual
+SET session_replication_role = 'replica';
+
+-- 2. Ejecutar la limpieza de datos en orden seguro (desde los hijos hacia los padres)
+DELETE FROM events;
+DELETE FROM event_types; -- Se incluye para vaciar el catálogo y permitir reinsertarlo sin duplicados
+DELETE FROM matches;
+DELETE FROM division_players;
+DELETE FROM division_coaches;
+DELETE FROM divisions;
+
+-- Borrado de usuarios (respetando al administrador de OvalTrack) y catálogos principales
+DELETE FROM users WHERE role != 'ADMIN_OVALTRACK';
+DELETE FROM persons;
+DELETE FROM clubs;
+
+-- 3. Restaurar las restricciones de FK al finalizar la limpieza
+SET session_replication_role = 'origin';
+
+COMMIT;
+
+
+-- =========================================================================
+-- Modificaciones estructurales y constraints adicionales
+-- =========================================================================
 
 ALTER TABLE matches DROP CONSTRAINT IF EXISTS matches_status_check;
 ALTER TABLE matches ADD CONSTRAINT matches_status_check CHECK (status IN ('NOT_STARTED', 'IN_PROGRESS', 'HALFTIME', 'FINISHED', 'CANCELLED'));
+
 
 -- =========================================================================
 -- Sembrado del Catálogo Estándar de Tipos de Eventos (Event Types)

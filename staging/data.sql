@@ -1,7 +1,41 @@
--- OvalTrack Data Seeder
+-- OvalTrack Data Seeder (Modificado para preservar ADMIN_OVALTRACK)
 -- =========================================
 
-TRUNCATE TABLE events, event_types, matches, division_players, division_coaches, divisions, registration_requests, clubs, users, persons RESTART IDENTITY CASCADE;
+BEGIN;
+
+-- 1. Desactivar temporalmente validaciones de FK para evitar errores por dependencias circulares
+SET session_replication_role = 'replica';
+
+-- 2. Limpieza selectiva (preservando los usuarios con rol ADMIN_OVALTRACK y sus entidades relacionadas si es necesario)
+DELETE FROM events;
+DELETE FROM event_types;
+DELETE FROM matches;
+DELETE FROM division_players;
+DELETE FROM division_coaches;
+DELETE FROM divisions;
+
+-- Borrar usuarios excepto el administrador general del sistema
+DELETE FROM users WHERE role != 'ADMIN_OVALTRACK';
+
+-- Borrar personas que no estén asociadas a un usuario ADMIN_OVALTRACK activo
+DELETE FROM persons WHERE id NOT IN (
+    SELECT person_id FROM users WHERE role = 'ADMIN_OVALTRACK' AND person_id IS NOT NULL
+);
+
+-- Borrar clubs cuyo administrador no sea un ADMIN_OVALTRACK (o puedes limpiar todos si el club se vuelve a sembrar abajo)
+DELETE FROM clubs WHERE admin_user_id NOT IN (
+    SELECT id FROM users WHERE role = 'ADMIN_OVALTRACK'
+);
+
+-- 3. Restaurar las restricciones de FK
+SET session_replication_role = 'origin';
+
+COMMIT;
+
+
+-- =========================================
+-- Modificaciones y Estructura
+-- =========================================
 
 ALTER TABLE matches DROP CONSTRAINT IF EXISTS matches_status_check;
 ALTER TABLE matches ADD CONSTRAINT matches_status_check CHECK (status IN ('NOT_STARTED', 'IN_PROGRESS', 'HALFTIME', 'FINISHED', 'CANCELLED'));
@@ -15,6 +49,7 @@ ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_score INTEGER NOT NULL DEFAULT
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS started_at TIMESTAMP;
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS finished_at TIMESTAMP;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS client_event_id UUID;
+
 
 -- =========================================
 -- PERSONS (30 personas en total)
@@ -65,7 +100,8 @@ INSERT INTO persons (id, first_name, last_name, birth_date, contact_email, conta
     ('11111111-1111-1111-1111-000000000134', 'Ignacio', 'Ruiz', '2001-01-03', 'player19@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
     ('11111111-1111-1111-1111-000000000135', 'Joel', 'Sclavi', '1994-06-25', 'player20@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
     ('11111111-1111-1111-1111-000000000136', 'Pedro', 'Rubiolo', '2002-12-21', 'player21@ovaltrack.com', '123456789', CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000137', 'Rodrigo', 'Bruni', '1993-09-03', 'player22@ovaltrack.com', '123456789', CURRENT_TIMESTAMP);
+    ('11111111-1111-1111-1111-000000000137', 'Rodrigo', 'Bruni', '1993-09-03', 'player22@ovaltrack.com', '123456789', CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
 
 
 -- =========================================
@@ -101,7 +137,8 @@ INSERT INTO users (id, login_email, password_hash, role, person_id, active, crea
     ('11111111-1111-1111-1111-000000000134', 'player19@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000134', true, CURRENT_TIMESTAMP),
     ('11111111-1111-1111-1111-000000000135', 'player20@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000135', true, CURRENT_TIMESTAMP),
     ('11111111-1111-1111-1111-000000000136', 'player21@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000136', true, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000137', 'player22@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000137', true, CURRENT_TIMESTAMP);
+    ('11111111-1111-1111-1111-000000000137', 'player22@ovaltrack.com', '$2a$10$rfosuoBOENyuQRIy6eCSX.RVjuk2ZrLtlz7NdGpBlxrqviDJflWiG', 'PLAYER', '11111111-1111-1111-1111-000000000137', true, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
 
 
 -- =========================================
@@ -109,10 +146,11 @@ INSERT INTO users (id, login_email, password_hash, role, person_id, active, crea
 -- =========================================
 
 INSERT INTO clubs (id, name, created_at, status, admin_user_id, city, logo_url, contact_email, contact_phone) VALUES
-    ('11111111-1111-1111-1111-000000000010', 'Puerto Madryn Rugby Club', CURRENT_TIMESTAMP, 'ACTIVE', '11111111-1111-1111-1111-000000000001', 'Puerto Madryn', '/argentina-escudo.png', 'contacto@pmrc.com', '123456789');
+    ('11111111-1111-1111-1111-000000000010', 'Puerto Madryn Rugby Club', CURRENT_TIMESTAMP, 'ACTIVE', '11111111-1111-1111-1111-000000000001', 'Puerto Madryn', '/argentina-escudo.png', 'contacto@pmrc.com', '123456789')
+ON CONFLICT (id) DO NOTHING;
 
 -- Asociar todas las personas existentes al club creado
-UPDATE persons SET club_id = '11111111-1111-1111-1111-000000000010';
+UPDATE persons SET club_id = '11111111-1111-1111-1111-000000000010' WHERE club_id IS NULL;
 
 
 -- =========================================
@@ -121,7 +159,8 @@ UPDATE persons SET club_id = '11111111-1111-1111-1111-000000000010';
 
 INSERT INTO divisions (id, name, club_id, created_at, age_category, gender, active) VALUES
     ('11111111-1111-1111-1111-000000000020', 'Primera', '11111111-1111-1111-1111-000000000010', CURRENT_TIMESTAMP, 'SENIOR', 'MALE', true),
-    ('11111111-1111-1111-1111-000000000021', 'M19', '11111111-1111-1111-1111-000000000010', CURRENT_TIMESTAMP, 'U20', 'MALE', true);
+    ('11111111-1111-1111-1111-000000000021', 'M19', '11111111-1111-1111-1111-000000000010', CURRENT_TIMESTAMP, 'U20', 'MALE', true)
+ON CONFLICT (id) DO NOTHING;
 
 
 -- =========================================
@@ -130,7 +169,8 @@ INSERT INTO divisions (id, name, club_id, created_at, age_category, gender, acti
 
 INSERT INTO division_coaches (id, person_id, division_id, start_date, end_date) VALUES
     ('11111111-1111-1111-1111-000000000030', '11111111-1111-1111-1111-000000000002', '11111111-1111-1111-1111-000000000020', '2023-01-01', NULL),
-    ('11111111-1111-1111-1111-000000000031', '11111111-1111-1111-1111-000000000003', '11111111-1111-1111-1111-000000000021', '2023-01-01', NULL);
+    ('11111111-1111-1111-1111-000000000031', '11111111-1111-1111-1111-000000000003', '11111111-1111-1111-1111-000000000021', '2023-01-01', NULL)
+ON CONFLICT (id) DO NOTHING;
 
 
 -- =========================================
@@ -176,7 +216,8 @@ INSERT INTO division_players (id, person_id, division_id, jersey_number, positio
     ('11111111-1111-1111-1111-000000000223', '11111111-1111-1111-1111-000000000124', '11111111-1111-1111-1111-000000000021', 9, 'Back', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000224', '11111111-1111-1111-1111-000000000125', '11111111-1111-1111-1111-000000000021', 10, 'Back', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000225', '11111111-1111-1111-1111-000000000126', '11111111-1111-1111-1111-000000000021', 11, 'Back', '2023-01-01', NULL),
-    ('11111111-1111-1111-1111-000000000226', '11111111-1111-1111-1111-000000000127', '11111111-1111-1111-1111-000000000021', 12, 'Back', '2023-01-01', NULL);
+    ('11111111-1111-1111-1111-000000000226', '11111111-1111-1111-1111-000000000127', '11111111-1111-1111-1111-000000000021', 12, 'Back', '2023-01-01', NULL)
+ON CONFLICT (id) DO NOTHING;
 
 
 -- =========================================
@@ -199,7 +240,8 @@ INSERT INTO matches (
     -- 5: Deportivo Portugués (Finalizado -> ideal para probar consulta de partidos concluidos)
   ('11111111-1111-1111-1111-000000000044', '2026-09-21 15:30:00', '11111111-1111-1111-1111-000000000020', 'Deportivo Portugués', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     -- 6: Calafate RC (División M19, no iniciado)
-  ('11111111-1111-1111-1111-000000000045', '2026-10-12 14:00:00', '11111111-1111-1111-1111-000000000021', 'Calafate Rugby Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL);
+  ('11111111-1111-1111-1111-000000000045', '2026-10-12 14:00:00', '11111111-1111-1111-1111-000000000021', 'Calafate Rugby Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL)
+ON CONFLICT (id) DO NOTHING;
 
 
 -- =========================================
@@ -397,21 +439,13 @@ VALUES
       "distanceMeters": { "type": "number", "required": false }
     }$$::jsonb,
     CURRENT_TIMESTAMP
-);
-
--- =========================================
--- EVENTS (Eventos registrados en el partido)
--- =========================================
-/* 
-INSERT INTO events (id, match_id, player_id, event_type_id, team_possession, match_time, real_time, period, origin, created_at, synchronized_at) VALUES
-    ('11111111-1111-1111-1111-000000000300', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000104', '11111111-1111-1111-1111-000000000051', 'OPPONENT', 0, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000301', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000106', '11111111-1111-1111-1111-000000000052', 'NEUTRAL', 5, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000302', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000103', '11111111-1111-1111-1111-000000000052', 'NEUTRAL', 10, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000303', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000108', '11111111-1111-1111-1111-000000000052', 'NEUTRAL', 15, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000304', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000101', '11111111-1111-1111-1111-000000000052', 'NEUTRAL', 20, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000305', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000105', '11111111-1111-1111-1111-000000000050', 'OWN', 25, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000306', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000107', '11111111-1111-1111-1111-000000000050', 'OWN', 30, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000307', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000104', '11111111-1111-1111-1111-000000000052', 'NEUTRAL', 35, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000308', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000113', '11111111-1111-1111-1111-000000000051', 'OPPONENT', 40, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('11111111-1111-1111-1111-000000000309', '11111111-1111-1111-1111-000000000040', '11111111-1111-1111-1111-000000000112', '11111111-1111-1111-1111-000000000052', 'NEUTRAL', 45, CURRENT_TIMESTAMP, 1, 'APP', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
-     */
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    group_name = EXCLUDED.group_name,
+    category = EXCLUDED.category,
+    affects_possession = EXCLUDED.affects_possession,
+    is_scoring = EXCLUDED.is_scoring,
+    points = EXCLUDED.points,
+    requires_player = EXCLUDED.requires_player,
+    template_event_fields = EXCLUDED.template_event_fields;
