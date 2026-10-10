@@ -1,22 +1,27 @@
 import Dexie, { Table } from 'dexie';
 import { LIVE_CAPTURE_EVENT_TYPES } from './live-capture.mock';
-import { MOCK_MATCHES } from './match.mock';
 import { LiveCapturePersistedState } from '../types/live-capture.types';
 import { LiveCaptureEventType } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
 import { Match } from '../types/match.types';
+import { Division } from '../../division/types/division.types';
 
 export const MATCH_DATABASE_NAME = 'ovaltrack';
-export const MATCH_DATABASE_VERSION = 2;
+export const MATCH_DATABASE_VERSION = 3;
 export const LIVE_CAPTURE_DATABASE_NAME = 'ovaltrack-live-capture';
 export const LIVE_CAPTURE_DATABASE_VERSION = 4;
 
 export class MatchDatabase extends Dexie {
   matches!: Table<Match, string>;
+  divisions!: Table<Division, string>;
 
   constructor() {
     super(MATCH_DATABASE_NAME);
-    this.version(MATCH_DATABASE_VERSION).stores({ matches: 'id' });
+    this.version(2).stores({ matches: 'id' });
+    this.version(MATCH_DATABASE_VERSION).stores({
+      matches: 'id, divisionId',
+      divisions: 'id, clubId',
+    });
   }
 }
 
@@ -50,7 +55,6 @@ export async function seedMissingMatches(): Promise<void> {
     divisionId: match.divisionId ?? TEMPORARY_DIVISION_ID,
   }));
   const knownIds = new Set(normalizedMatches.map(match => match.id));
-  const missingMatches = MOCK_MATCHES.filter(match => !knownIds.has(match.id));
 
   await matchDatabase.transaction('rw', matchDatabase.matches, async () => {
     for (const [index, match] of existingMatches.entries()) {
@@ -59,9 +63,8 @@ export async function seedMissingMatches(): Promise<void> {
         await matchDatabase.matches.delete(match.id);
       }
     }
-
-    if (normalizedMatches.length > 0 || missingMatches.length > 0) {
-      await matchDatabase.matches.bulkPut([...normalizedMatches, ...missingMatches]);
+    if (normalizedMatches.length > 0) {
+      await matchDatabase.matches.bulkPut([...normalizedMatches]);
     }
   });
 }
