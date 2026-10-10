@@ -55,6 +55,15 @@ Then('la línea de eventos refleja que el evento modificado está asignado a {st
   assert.equal(event.playerId, this.lastAssignedPlayerId, 'El playerId no coincide con el asignado');
 });
 
+Then('el jugador {string} queda vinculado como autor de la acción en el evento', async function (nombreJugador) {
+  const eventRes = await fetch(`${BACKEND_URL}/event/${targetEventId}`, {
+    headers: { 'Authorization': `Bearer ${this.token}` }
+  });
+  assert.equal(eventRes.status, 200, 'No se pudo obtener el evento individual');
+  const event = await eventRes.json();
+  assert.equal(event.playerId, this.lastAssignedPlayerId, 'El autor del evento individual no coincide');
+});
+
 // HP2
 When('el entrenador edita el evento {string} cambiándolo a {string} con posesión {string}', async function (tipoAntiguo, tipoNuevo, posesion) {
   const eventsRes = await fetch(`${BACKEND_URL}/event/match/post-match?matchId=${this.currentMatch.id}`, {
