@@ -1,12 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, from, map, switchMap } from 'rxjs';
+import { Observable, catchError, from, map, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, NewMatchDraft } from '../types/match.types';
-import { BackendRosterResponse, RosterPayload, SavedRoster } from '../types/roster.types';
+import { RosterPayload } from '../types/roster.types';
 import { PeriodStatisticDTO } from '../types/statistic.types';
 import { LiveCaptureBootstrapResponse } from '../types/live-capture.types';
-import { TEMPORARY_DIVISION_ID } from '../data/match.constants';
 import { LiveCaptureCacheService } from './live-capture-cache.service';
 import { StatisticApiService } from './statistic-api.service';
 
@@ -19,12 +18,13 @@ export class MatchService {
 
   getAllMatchesByDivisionId(divisionId: string): Observable<Match[]> {
     return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${divisionId}`).pipe(
-      map(matches => matches.map(match => ({
-        ...match,
-        status: this.normalizeStatus(match.status),
-        opponent: match.opponent ?? '',
-        date: match.date ?? ''
-      })))
+      map(matches => matches.map(match => this.normalizeMatch(match))),
+      switchMap(matches => from(this.cache.saveMatches(matches)).pipe(map(() => matches))),
+      catchError(() => from(this.cache.getMatchesByDivision(divisionId)).pipe(
+        switchMap(matches => matches.length > 0
+          ? from([matches])
+          : throwError(() => new Error(`No hay partidos almacenados para la división ${divisionId}`)))
+      ))
     );
   }
 
