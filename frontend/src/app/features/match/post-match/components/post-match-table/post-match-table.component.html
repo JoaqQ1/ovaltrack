@@ -61,8 +61,11 @@
             </span>
           </div>
           <div class="col-action">
-            <button type="button" class="btn-row-select" title="Seleccionar evento">
-              <i class="bi bi-eye"></i>
+            <button type="button" class="btn-row-action btn-edit" title="Editar evento" (click)="onEditClick(ev, $event)">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button type="button" class="btn-row-action btn-delete" title="Eliminar evento" (click)="onDeleteClick(ev, $event)">
+              <i class="bi bi-trash3"></i>
             </button>
           </div>
         </div>

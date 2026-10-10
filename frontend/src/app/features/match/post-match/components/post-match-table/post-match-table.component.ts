@@ -1,4 +1,4 @@
-import { Component, ViewChild, effect, inject } from '@angular/core';
+import { Component, ViewChild, effect, inject, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { MatchReviewStore } from '../../store/match-review.store';
@@ -12,6 +12,8 @@ import { ReviewEventViewModel } from '../../types/match-review.types';
   styleUrl: './post-match-table.component.css'
 })
 export class PostMatchTableComponent {
+  @Output() editRequested = new EventEmitter<ReviewEventViewModel>();
+  @Output() deleteRequested = new EventEmitter<ReviewEventViewModel>();
   readonly store = inject(MatchReviewStore);
 
   @ViewChild(CdkVirtualScrollViewport) viewport?: CdkVirtualScrollViewport;
@@ -35,5 +37,17 @@ export class PostMatchTableComponent {
 
   trackById(_index: number, item: ReviewEventViewModel): string {
     return item.id;
+  }
+
+  onEditClick(ev: ReviewEventViewModel, event: MouseEvent): void {
+    event.stopPropagation();
+    this.store.selectEvent(ev.id);
+    this.editRequested.emit(ev);
+  }
+
+  onDeleteClick(ev: ReviewEventViewModel, event: MouseEvent): void {
+    event.stopPropagation();
+    this.store.selectEvent(ev.id);
+    this.deleteRequested.emit(ev);
   }
 }

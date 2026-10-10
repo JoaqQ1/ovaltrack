@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { MatchService } from '../services/match.service';
@@ -45,6 +45,8 @@ export class PostMatchComponent implements OnInit {
 
   readonly userClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
 
+  @ViewChild(PostMatchPanelComponent) panel!: PostMatchPanelComponent;
+
   matchId = '';
 
   // Estado del contenedor
@@ -52,6 +54,18 @@ export class PostMatchComponent implements OnInit {
   readonly errorMessage = signal<string>('');
   readonly isLoading = signal<boolean>(true);
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
+
+  onEditRequested(): void {
+    if (this.panel) {
+      this.panel.openEditModal();
+    }
+  }
+
+  onDeleteRequested(): void {
+    if (this.panel) {
+      this.panel.openDeleteModal();
+    }
+  }
 
   ngOnInit(): void {
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
