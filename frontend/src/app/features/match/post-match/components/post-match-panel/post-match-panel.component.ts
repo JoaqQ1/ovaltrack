@@ -35,26 +35,21 @@ export class PostMatchPanelComponent {
   }
 
   // --- Asignación Rápida desde el Panel ---
-  onQuickPlayerChange(event: Event, ev: ReviewEventViewModel): void {
-    const select = event.target as HTMLSelectElement;
-    const newPlayerId = select.value.trim() || null;
-
+  onQuickPlayerModelChange(newPlayerId: string, ev: ReviewEventViewModel): void {
+    const finalPlayerId = newPlayerId.trim() || null;
     this.isSubmitting.set(true);
     this.eventService.update(ev.id, {
-      playerId: newPlayerId,
+      playerId: finalPlayerId,
       teamPossession: ev.teamPossession
     }).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.store.updateEvent(ev.id, {
-          playerId: newPlayerId
-        });
-        this.toastService.success(newPlayerId ? 'Jugador asignado correctamente' : 'Evento marcado sin jugador');
+        this.store.updateEvent(ev.id, { playerId: finalPlayerId });
+        this.toastService.success('Jugador asignado correctamente');
       },
       error: () => {
         this.isSubmitting.set(false);
-        this.toastService.error('Error al actualizar el jugador asignado');
-        select.value = ev.playerId || '';
+        this.toastService.error('Error al actualizar el jugador');
       }
     });
   }

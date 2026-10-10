@@ -47,9 +47,9 @@
         </div>
         <div *ngIf="ev.teamPossession !== 'OPPONENT'" class="select-container">
           <select class="form-select form-select-sm custom-player-select" 
-                  [value]="ev.playerId || ''" 
-                  [disabled]="isSubmitting()"
-                  (change)="onQuickPlayerChange($event, ev)">
+                  [ngModel]="ev.playerId || ''"
+                  (ngModelChange)="onQuickPlayerModelChange($event, ev)"
+                  [disabled]="isSubmitting()">
             <option value="">-- Sin asignar (Pendiente) --</option>
             <option *ngFor="let p of store.availablePlayers()" [value]="p.id">
               {{ p.jerseyNumber ? '#' + p.jerseyNumber + ' ' : '' }}{{ p.fullName }}
@@ -60,9 +60,9 @@
 
       <!-- Botonera de Acciones -->
       <div class="panel-actions-wrapper mt-3">
-        <button type="button" 
+        <button *ngIf="store.kpis().unassignedEvents > 0"
+                type="button" 
                 class="btn-next-pending" 
-                [disabled]="store.kpis().unassignedEvents === 0"
                 (click)="onNextPendingClick()">
           <i class="bi bi-arrow-down-circle me-1"></i> Siguiente pendiente
         </button>

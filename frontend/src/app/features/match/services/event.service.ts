@@ -41,7 +41,7 @@ export class EventService {
   }
 
   update(eventId: string, request: BackendEventUpdateRequest): Observable<BackendEventResponse> {
-    return this.http.put<BackendEventResponse>(`${this.apiUrl}/${eventId}`, request);
+    return this.http.patch<BackendEventResponse>(`${this.apiUrl}/${eventId}`, request);
   }
 
   delete(eventId: string): Observable<BackendEventResponse> {

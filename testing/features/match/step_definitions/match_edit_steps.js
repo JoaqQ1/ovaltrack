@@ -31,7 +31,7 @@ When('el entrenador edita el evento {string} asignándole el jugador {string}', 
   this.lastAssignedPlayerId = player.id;
 
   this.lastResponse = await fetch(`${BACKEND_URL}/event/${event.id}`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.token}`
@@ -68,7 +68,7 @@ When('el entrenador edita el evento {string} cambiándolo a {string} con posesi�
   const newEventTypeId = await findEventTypeIdByName(tipoNuevo, this.token);
 
   this.lastResponse = await fetch(`${BACKEND_URL}/event/${event.id}`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.token}`
@@ -167,7 +167,7 @@ When('el entrenador intenta editar el evento {string} asignándole un jugador fu
   assert.ok(event, `Evento ${tipoEvento} no encontrado`);
 
   this.lastResponse = await fetch(`${BACKEND_URL}/event/${event.id}`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.token}`
@@ -194,7 +194,7 @@ When('el entrenador intenta editar el evento enviando un ID de tipo de evento in
   assert.ok(event, `No hay eventos para editar`);
 
   this.lastResponse = await fetch(`${BACKEND_URL}/event/${event.id}`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.token}`
