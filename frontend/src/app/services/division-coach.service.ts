@@ -23,6 +23,16 @@ export class DivisionCoachService {
     return this.http.get<DivisionCoachResponse>(`${this.apiUrl}/${divisionCoachId}`);
   }
 
+  getHistoryByDivisionIdAndPersonId(divisionId: string, personId: string): Observable<DivisionCoachResponse[]> {
+    const params = new HttpParams({
+      fromObject: {
+        divisionId,
+        personId
+      }
+    });
+    return this.http.get<DivisionCoachResponse[]>(`${this.apiUrl}/history`, { params });
+  }
+
   create(request: DivisionCoachCreationRequest): Observable<DivisionCoachResponse> {
     return this.http.post<DivisionCoachResponse>(this.apiUrl, request);
   }

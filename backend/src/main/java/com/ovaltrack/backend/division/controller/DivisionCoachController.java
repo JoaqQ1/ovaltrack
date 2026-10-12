@@ -36,8 +36,8 @@ public class DivisionCoachController {
     private final DivisionCoachService divisionCoachService;
 
     @Operation(
-        summary = "List coaches in a division",
-        description = "Returns all coaches associated with the division identified by the divisionId query parameter."
+        summary = "List active coaches in a division",
+        description = "Returns all active coaches associated with the division identified by the divisionId query parameter."
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Division coaches returned successfully, even if there are none."),
@@ -45,11 +45,29 @@ public class DivisionCoachController {
     })
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
-    public ResponseEntity<Object> findDivisionCoachesByDivisionId(
+    public ResponseEntity<Object> findActiveDivisionCoachesByDivisionId(
             @RequestParam UUID divisionId,
             Authentication authentication) {
-        return ResponseEntity.ok(divisionCoachService.findDivisionCoachesByDivisionId(divisionId, authentication));
+        return ResponseEntity.ok(divisionCoachService.findActiveDivisionCoachesByDivisionId(divisionId, authentication));
     }
+
+    @Operation(
+        summary = "List history of a coach in a division",
+        description = "Returns the history of a coach associated with the division identified by the divisionId query parameter and personId."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Division coaches returned successfully, even if there are none."),
+        @ApiResponse(responseCode = "409", description = "The division or request could not be processed because of a business conflict.")
+    })
+    @GetMapping("/history")
+    @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
+    public ResponseEntity<Object> findActiveDivisionCoachesByDivisionId(
+            @RequestParam UUID divisionId,
+            @RequestParam UUID personId,
+            Authentication authentication) {
+        return ResponseEntity.ok(divisionCoachService.findDivisionCoachesByDivisionIdAndPersonId(divisionId, personId, authentication));
+    }
+
 
     @Operation(
         summary = "Find a division coach",

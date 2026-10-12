@@ -1,0 +1,33 @@
+info:
+  name: 07 - [409 Conflict] Error tipo de evento inexistente
+  type: http
+  seq: 7
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/event/{{targetEventId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{coachToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "eventTypeId": "00000000-0000-0000-0000-000000000000"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe rechazar con 409 Conflict al enviar tipo inexistente", function() {
+          expect(res.getStatus()).to.equal(409);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

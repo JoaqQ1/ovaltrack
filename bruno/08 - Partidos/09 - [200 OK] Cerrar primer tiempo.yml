@@ -1,0 +1,29 @@
+info:
+  name: 09 - [200 OK] Cerrar primer tiempo
+  type: http
+  seq: 9
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/matches/{{matchId}}/close-first-half"
+  headers:
+    - name: Authorization
+      value: Bearer {{coachToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y cambiar estado a HALFTIME", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().status).to.equal("HALFTIME");
+          expect(res.getBody().currentPeriod).to.equal(1);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

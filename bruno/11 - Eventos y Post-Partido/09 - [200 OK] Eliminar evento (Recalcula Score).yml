@@ -1,0 +1,28 @@
+info:
+  name: 09 - [200 OK] Eliminar evento (Recalcula Score)
+  type: http
+  seq: 9
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/event/{{targetEventId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{coachToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y devolver el evento eliminado", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().id).to.equal(bru.getEnvVar("targetEventId"));
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

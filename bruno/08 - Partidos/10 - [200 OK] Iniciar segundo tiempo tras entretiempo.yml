@@ -1,0 +1,29 @@
+info:
+  name: 10 - [200 OK] Iniciar segundo tiempo tras entretiempo
+  type: http
+  seq: 10
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/matches/{{matchChenqueId}}/start-second-half"
+  headers:
+    - name: Authorization
+      value: Bearer {{coachToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y cambiar a IN_PROGRESS con periodo 2", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().status).to.equal("IN_PROGRESS");
+          expect(res.getBody().currentPeriod).to.equal(2);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

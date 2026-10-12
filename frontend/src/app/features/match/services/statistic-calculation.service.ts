@@ -30,7 +30,7 @@ export class StatisticCalculationService {
         : liveCaptureDatabase.eventTypes.toArray(),
     ]);
 
-    return this.computeStatistics(matchId, period, events, eventTypes);
+    return this.computeStatistics(matchId, period, events.filter(event => event.active), eventTypes);
   }
 
   async calculateMatchStatistics(
@@ -45,7 +45,7 @@ export class StatisticCalculationService {
         : liveCaptureDatabase.eventTypes.toArray(),
     ]);
 
-    return this.computeStatistics(matchId, 0, events, eventTypes, false);
+    return this.computeStatistics(matchId, 0, events.filter(event => event.active), eventTypes, false);
   }
 
   computeStatistics(
@@ -85,7 +85,7 @@ export class StatisticCalculationService {
         : liveCaptureDatabase.eventTypes.toArray(),
     ]);
 
-    return this.computePlayerStatistics(roster, period, events, eventTypes);
+    return this.computePlayerStatistics(roster, period, events.filter(event => event.active), eventTypes);
   }
 
   computePlayerStatistics(

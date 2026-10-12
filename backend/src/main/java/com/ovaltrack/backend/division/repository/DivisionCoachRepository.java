@@ -11,8 +11,8 @@ import com.ovaltrack.backend.division.domain.DivisionCoach;
 
 public interface DivisionCoachRepository extends JpaRepository<DivisionCoach, UUID> {
 
-    @Query("SELECT dc FROM DivisionCoach dc WHERE dc.division.id = :divisionId")
-    Collection<DivisionCoach> findDivisionCoachesByDivisionId(@Param("divisionId") UUID divisionId);
+    @Query("SELECT dc FROM DivisionCoach dc WHERE dc.division.id = :divisionId AND dc.endDate IS NULL")
+    Collection<DivisionCoach> findActiveDivisionCoachesByDivisionId(@Param("divisionId") UUID divisionId);
 
     @Query("""
             SELECT COUNT(dc) > 0
@@ -26,4 +26,14 @@ public interface DivisionCoachRepository extends JpaRepository<DivisionCoach, UU
 
     @Query("SELECT dc FROM DivisionCoach dc JOIN FETCH dc.division d WHERE dc.person.id = :personId AND dc.endDate IS NULL")
     Collection<DivisionCoach> findActiveByPersonId(@Param("personId") UUID personId);
+
+	@Query("""
+            SELECT dc 
+            FROM DivisionCoach dc 
+            WHERE dc.division.id = :divisionId 
+            AND dc.person.id = :personId
+            ORDER BY startDate DESC
+            """)
+	Collection<DivisionCoach> findDivisionCoachesByDivisionIdAndPersonId(@Param("divisionId") UUID divisionId, @Param ("personId") UUID personId);
+
 }

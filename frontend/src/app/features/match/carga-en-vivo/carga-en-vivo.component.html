@@ -239,16 +239,16 @@
                 Indica quién fue el pateador y si la conversión sumó los 2 puntos adicionales.
             </p>
             
-            <div class="conversion-form" style="margin: 20px 0; text-align: left;">
-               <label for="kickerInput" style="display: block; font-size: 0.9rem; margin-bottom: 5px;">Número del Pateador:</label>
-               <input id="kickerInput" type="number" [(ngModel)]="kickerNumber" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+            <div class="conversion-form">
+               <label for="kickerInput" class="conversion-form__label">Número del Pateador:</label>
+               <input id="kickerInput" type="number" [(ngModel)]="kickerNumber" class="conversion-form__input" inputmode="numeric" min="0">
             </div>
 
-            <div class="confirm-actions" style="display: flex; gap: 10px; width: 100%;">
-                <button type="button" class="btn btn-secondary" style="flex: 1;" (click)="confirmConversion(false)">
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-secondary" (click)="confirmConversion(false)">
                     <i class="ti ti-x" aria-hidden="true"></i> Fallada
                 </button>
-                <button type="button" class="btn btn-primary" style="flex: 1; background-color: #28a745; color: white;" (click)="confirmConversion(true)">
+                <button type="button" class="btn btn-primary" (click)="confirmConversion(true)">
                     <i class="ti ti-check" aria-hidden="true"></i> Adentro (+2 pts)
                 </button>
             </div>

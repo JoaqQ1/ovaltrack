@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { liveCaptureDatabase, matchDatabase } from '../data/local-databases';
 import { LiveCapturePersistedState, LiveCaptureQuery } from '../types/live-capture.types';
 import { LiveCaptureEventType } from '../types/event-type.types';
-import { LocalMatchEvent } from '../types/event.types';
+import { BackendEventResponse, LocalMatchEvent } from '../types/event.types';
 import { Match } from '../types/match.types';
 
 @Injectable({ providedIn: 'root' })
@@ -45,6 +45,54 @@ export class LiveCaptureCacheService {
 
   saveEvent(event: LocalMatchEvent): Promise<LocalMatchEvent> {
     return liveCaptureDatabase.events.put(event).then(() => event);
+  }
+
+  async mergeRemoteEvents(matchId: string, remoteEvents: BackendEventResponse[]): Promise<LocalMatchEvent[]> {
+    await liveCaptureDatabase.transaction('rw', liveCaptureDatabase.events, async () => {
+      const localEvents = await liveCaptureDatabase.events.where('matchId').equals(matchId).toArray();
+      const byLocalId = new Map(localEvents.map(event => [event.id, event]));
+      const byBackendId = new Map(
+        localEvents
+          .filter(event => event.backendEventId)
+          .map(event => [event.backendEventId!, event]),
+      );
+      const byClientId = new Map(
+        localEvents
+          .filter(event => event.clientEventId)
+          .map(event => [event.clientEventId!, event]),
+      );
+      let nextSequence = localEvents.reduce(
+        (highest, event) => Math.max(highest, event.localSequence),
+        0,
+      );
+
+      for (const remoteEvent of remoteEvents) {
+        const localEvent = byBackendId.get(remoteEvent.id)
+          ?? (remoteEvent.clientEventId ? byLocalId.get(remoteEvent.clientEventId) : undefined)
+          ?? (remoteEvent.clientEventId ? byClientId.get(remoteEvent.clientEventId) : undefined);
+
+        if (localEvent && !localEvent.active && localEvent.synchronizedAt === null && localEvent.backendEventId) {
+          continue;
+        }
+
+        const event: LocalMatchEvent = {
+          ...remoteEvent,
+          active: remoteEvent.active ?? true,
+          id: localEvent?.id ?? remoteEvent.clientEventId ?? remoteEvent.id,
+          backendEventId: remoteEvent.id,
+          localSequence: localEvent?.localSequence ?? ++nextSequence,
+        };
+
+        await liveCaptureDatabase.events.put(event);
+        byLocalId.set(event.id, event);
+        byBackendId.set(event.backendEventId!, event);
+        if (event.clientEventId) {
+          byClientId.set(event.clientEventId, event);
+        }
+      }
+    });
+
+    return this.getEventsByMatch(matchId);
   }
 
   replaceEvents(matchId: string, events: LocalMatchEvent[]): Promise<void> {

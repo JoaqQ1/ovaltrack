@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { DivisionPlayerResponse } from '../features/division-player/type/division-player.types';
+import { ResultsPage } from '../features/pagination/results-page';
 
 @Injectable({
   providedIn: 'root'
@@ -25,9 +26,12 @@ export class DivisionPlayerService {
     return this.http.get<DivisionPlayerResponse[]>(`${this.apiUrl}/history`, { params });
   }
 
-  getActiveByDivisionId(divisionId: string): Observable<DivisionPlayerResponse[]> {
-    const params = new HttpParams().set('divisionId', divisionId);
-    return this.http.get<DivisionPlayerResponse[]>(this.apiUrl, { params });
+  getActiveByDivisionId(divisionId: string, page: number, size: number): Observable<ResultsPage> {
+    const params = new HttpParams()
+      .set('divisionId', divisionId)
+      .set('page', page - 1)
+      .set('size', size);
+    return this.http.get<ResultsPage>(this.apiUrl, { params });
   }
 
   remove(divisionPlayerId: string): Observable<string> {

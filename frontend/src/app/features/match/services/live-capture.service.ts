@@ -45,6 +45,12 @@ export class LiveCaptureService {
     return defer(() => from(this.readBootstrap(query)));
   }
 
+  hydrateMatchEvents(matchId: string): Observable<LocalMatchEvent[]> {
+    return this.eventService.getByMatch(matchId).pipe(
+      switchMap(remoteEvents => from(this.cache.mergeRemoteEvents(matchId, remoteEvents))),
+    );
+  }
+
   saveLiveCaptureState(state: LiveCapturePersistedState): Observable<void> {
     const request: LiveMatchStateRequest = {
       clockElapsedSeconds: state.clockElapsedSeconds,
@@ -121,6 +127,7 @@ export class LiveCaptureService {
   private async readBootstrap(query: LiveCaptureQuery): Promise<LiveCaptureBootstrap> {
     let bootstrap: LiveCaptureBootstrapResponse;
     let players: AvailablePlayer[];
+    let loadedFromBackend = true;
 
     try {
       ({ bootstrap, players } = await firstValueFrom(forkJoin({
@@ -128,6 +135,7 @@ export class LiveCaptureService {
         players: this.rosterService.getAvailablePlayers(query.matchId),
       })));
     } catch {
+      loadedFromBackend = false;
       const [localMatch, localStatus, localEventTypes] = await Promise.all([
         this.cache.getMatch(query.matchId),
         this.cache.getStatusData(query.matchId),
@@ -154,22 +162,6 @@ export class LiveCaptureService {
       divisionId: match.divisionId,
     };
     this.playersByMatch.set(query.matchId, players);
-    const remoteEvents = bootstrap.events.map((event, index) => ({
-      ...event,
-      localSequence: index + 1,
-    }));
-    const localEvents = await this.cache.getEventsByMatch(query.matchId);
-    const eventsByClientId = new Map<string, LocalMatchEvent>();
-
-    remoteEvents.forEach(event => {
-      eventsByClientId.set(event.clientEventId ?? event.id, event);
-    });
-    localEvents.forEach(event => {
-      eventsByClientId.set(event.id, event);
-    });
-
-    const events = Array.from(eventsByClientId.values())
-      .sort((first, second) => first.localSequence - second.localSequence);
     const eventTypes = bootstrap.eventTypes.map(eventType => ({
       ...eventType,
       groupName: eventType.groupName ?? 'General',
@@ -177,6 +169,10 @@ export class LiveCaptureService {
       points: eventType.points ?? 0,
       createdAt: new Date().toISOString(),
     }));
+    await this.cache.saveEventTypes(eventTypes);
+    const events = loadedFromBackend
+      ? await this.cache.mergeRemoteEvents(query.matchId, bootstrap.events)
+      : await this.cache.getEventsByMatch(query.matchId);
     const isHalftime = match.status === 'halftime';
     const period = match.currentPeriod ?? 1;
     const periodLabel = isHalftime ? 'Entretiempo' : (period === 2 ? '2T' : '1T');

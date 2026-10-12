@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,18 +31,15 @@ public interface PersonRepository extends JpaRepository<Person, UUID> {
         JOIN dp.division d
         JOIN d.club c
         WHERE c.id = :clubId
+        AND NOT EXISTS (
+            SELECT activeDp
+            FROM DivisionPlayer activeDp
+            WHERE activeDp.person.id = p.id
+                AND activeDp.division.id = :divisionId
+                AND activeDp.endDate IS NULL
+        )
         ORDER BY p.lastName, p.firstName
     """)
-    Collection<Person> findPlayersByClubId(@Param("clubId") UUID clubId);
+    Page<Person> findPaginatedInactivePlayersByClubAndDivision(@Param("clubId") UUID clubId, @Param ("divisionId") UUID divisionId, Pageable pageable);
 
-    @Query("""
-        SELECT DISTINCT p
-        FROM Person p
-        JOIN DivisionPlayer dp ON dp.person.id = p.id
-        JOIN dp.division d
-        JOIN d.club c
-        WHERE c.id = :clubId
-        ORDER BY p.lastName, p.firstName
-    """)
-    Page<Person> findPaginatedPlayersByClubId(@Param("clubId") UUID clubId, Pageable pageable);
 }
