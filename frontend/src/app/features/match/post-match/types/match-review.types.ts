@@ -20,8 +20,8 @@ export interface ReviewEventViewModel {
   minute: number; // Minutos reglamentarios (matchTime / 60)
   pct: number; // Posición porcentual horizontal (0 a 100%)
   matchTimeFormatted: string; // Formato "MM:SS"
-  realTime: string;
-  realTimeFormatted: string; // Formato "HH:mm:ss"
+  absoluteMatchTime: number; // Segundos continuos desde el inicio (empieza en 0 y sigue contando)
+  absoluteTimeFormatted: string; // Formato "MM:SS"
   playerId: string | null;
   playerName: string;
   playerJerseyNumber: number | null;

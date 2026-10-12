@@ -69,6 +69,7 @@ public final class EventDTOMapper {
                 playerName,
                 null,
                 event.getMatchTime(),
+                event.getAbsoluteMatchTime(),
                 event.getRealTime(),
                 event.getPeriod(),
                 event.getTeamPossession(),

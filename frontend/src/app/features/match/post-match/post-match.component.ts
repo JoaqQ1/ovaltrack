@@ -179,7 +179,7 @@ export class PostMatchComponent implements OnInit {
           playerName: e.playerId ? 'Jugador' : null,
           playerJerseyNumber: null,
           matchTime: e.matchTime ?? 0,
-          realTime: e.realTime ?? new Date().toISOString(),
+          absoluteMatchTime: e.absoluteMatchTime ?? null,
           period: e.period ?? 1,
           teamPossession: e.teamPossession
         }));

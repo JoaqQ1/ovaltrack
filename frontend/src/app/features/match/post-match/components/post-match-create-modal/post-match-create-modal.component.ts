@@ -58,12 +58,14 @@ export class PostMatchCreateModalComponent {
 
     const seconds = Math.round(this.minute * 60);
     const assignedPlayerId = (this.possession === 'OPPONENT') ? null : (this.playerId.trim() || null);
+    const absoluteSeconds = (this.period === 2 ? 2400 : 0) + seconds;
 
     const payload: BackendEventCreationRequest = {
       eventTypeId: this.eventTypeId,
       matchId: this.matchId,
       period: this.period,
       matchTime: seconds,
+      absoluteMatchTime: absoluteSeconds,
       teamPossession: this.possession,
       playerId: assignedPlayerId,
       origin: 'post_capture',
@@ -90,7 +92,7 @@ export class PostMatchCreateModalComponent {
           playerName: playerObj ? playerObj.fullName : null,
           playerJerseyNumber: playerObj ? playerObj.jerseyNumber : null,
           matchTime: seconds,
-          realTime: res.realTime || new Date().toISOString(),
+          absoluteMatchTime: res.absoluteMatchTime ?? absoluteSeconds,
           period: this.period,
           teamPossession: this.possession,
           origin: 'post_capture',

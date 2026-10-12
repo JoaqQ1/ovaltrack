@@ -14,6 +14,7 @@ public record MatchTimelineEventResponseDTO(
         String playerName,
         Integer playerJerseyNumber,
         Integer matchTime,
+        Integer absoluteMatchTime,
         LocalDateTime realTime,
         Integer period,
         EventPossession teamPossession,

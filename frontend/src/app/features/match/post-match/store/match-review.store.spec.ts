@@ -24,7 +24,7 @@ describe('MatchReviewStore (HU-8.4)', () => {
       eventTypeId: 'type-1',
       eventTypeName: 'Tackle completado',
       matchTime: 600,
-      realTime: '2026-10-12T15:10:00Z',
+      absoluteMatchTime: 650,
       period: 1,
       teamPossession: 'OWN',
       origin: 'live-capture'
@@ -35,7 +35,7 @@ describe('MatchReviewStore (HU-8.4)', () => {
       eventTypeId: 'type-2',
       eventTypeName: 'Try',
       matchTime: 300,
-      realTime: '2026-10-12T15:05:00Z',
+      absoluteMatchTime: 320,
       period: 1,
       teamPossession: 'OWN',
       origin: 'post_capture'
@@ -56,13 +56,17 @@ describe('MatchReviewStore (HU-8.4)', () => {
     const vms = store.allViewModels();
     expect(vms[0].isPostMatch).toBeTrue();
     expect(vms[0].origin).toBe('post_capture');
+    expect(vms[0].absoluteMatchTime).toBe(320);
+    expect(vms[0].absoluteTimeFormatted).toBe('05:20');
     expect(vms[1].isPostMatch).toBeFalse();
     expect(vms[1].origin).toBe('live-capture');
+    expect(vms[1].absoluteMatchTime).toBe(650);
+    expect(vms[1].absoluteTimeFormatted).toBe('10:50');
   });
 
   it('should enrich player name and jersey number when available in roster', () => {
     store.setAvailablePlayers([
-      { id: 'player-1', fullName: 'Juan Pérez', jerseyNumber: 10 }
+      { id: 'player-1', fullName: 'Juan Pérez', jerseyNumber: 10, position: null }
     ]);
 
     const newEvent: MatchTimelineEventResponse = {
@@ -71,7 +75,7 @@ describe('MatchReviewStore (HU-8.4)', () => {
       eventTypeName: 'Try',
       playerId: 'player-1',
       matchTime: 900,
-      realTime: '2026-10-12T15:15:00Z',
+      absoluteMatchTime: 940,
       period: 1,
       teamPossession: 'OWN',
       origin: 'post_capture'
@@ -85,5 +89,7 @@ describe('MatchReviewStore (HU-8.4)', () => {
     expect(vm?.playerJerseyNumber).toBe(10);
     expect(vm?.hasPlayer).toBeTrue();
     expect(vm?.isPostMatch).toBeTrue();
+    expect(vm?.absoluteMatchTime).toBe(940);
+    expect(vm?.absoluteTimeFormatted).toBe('15:40');
   });
 });

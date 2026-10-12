@@ -59,7 +59,8 @@ export interface MatchTimelineEventResponse {
   playerName?: string | null;
   playerJerseyNumber?: number | null;
   matchTime: number;
-  realTime: string;
+  absoluteMatchTime?: number | null;
+  realTime?: string | null;
   period: number;
   teamPossession: Possession;
   origin?: string | null;

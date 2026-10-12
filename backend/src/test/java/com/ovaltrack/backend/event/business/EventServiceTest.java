@@ -209,6 +209,7 @@ class EventServiceTest {
         event.setMatch(match);
         event.setPeriod(1);
         event.setMatchTime(600);
+        event.setAbsoluteMatchTime(630);
         event.setRealTime(LocalDateTime.now());
         event.setTeamPossession(EventPossession.OWN);
         event.setOrigin(Event.ORIGIN_POST_CAPTURE);
@@ -224,6 +225,7 @@ class EventServiceTest {
         MatchTimelineEventResponseDTO dto = result.iterator().next();
         assertEquals(Event.ORIGIN_POST_CAPTURE, dto.origin());
         assertEquals("YELLOW", dto.attributes().get("card"));
+        assertEquals(630, dto.absoluteMatchTime());
         verify(matchSecurityValidator).validateCanManageMatch(match, authentication);
     }
 }

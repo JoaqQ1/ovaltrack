@@ -279,7 +279,9 @@ export class MatchReviewStore {
       if (pDiff !== 0) return pDiff;
       const tDiff = (a.matchTime ?? 0) - (b.matchTime ?? 0);
       if (tDiff !== 0) return tDiff;
-      return (a.realTime || '').localeCompare(b.realTime || '');
+      const absA = a.absoluteMatchTime ?? 0;
+      const absB = b.absoluteMatchTime ?? 0;
+      return absA - absB;
     });
 
     this.rawEvents.set(updated);
@@ -311,16 +313,15 @@ export class MatchReviewStore {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 
-  private formatRealTime(iso: string | null | undefined): string {
-    if (!iso) return 'Sin registro';
-    try {
-      const date = new Date(iso);
-      if (isNaN(date.getTime())) return iso;
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
-        ' (' + date.toLocaleDateString([], { day: '2-digit', month: '2-digit' }) + ')';
-    } catch {
-      return iso;
+  private formatAbsoluteTime(totalSeconds: number): string {
+    const total = Math.max(0, Math.floor(totalSeconds));
+    const hours = Math.floor(total / 3600);
+    const mins = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 
   private formatOnlyTime(iso: string | null | undefined): string {
@@ -338,16 +339,13 @@ export class MatchReviewStore {
 
   private sortChronologically(a: ReviewEventViewModel, b: ReviewEventViewModel): number {
     if (a.period !== b.period) return a.period - b.period;
-    return a.matchTime - b.matchTime;
+    if (a.matchTime !== b.matchTime) return a.matchTime - b.matchTime;
+    return a.absoluteMatchTime - b.absoluteMatchTime;
   }
 
   private resolveMatchStartTimeFormatted(allEvents: ReviewEventViewModel[], explicitStart: string | null): string {
     if (explicitStart) {
       return this.formatOnlyTime(explicitStart);
-    }
-    if (allEvents.length > 0) {
-      const sortedByRealTime = [...allEvents].sort((a, b) => a.realTime.localeCompare(b.realTime));
-      return this.formatOnlyTime(sortedByRealTime[0].realTime);
     }
     return EMPTY_TIME_PLACEHOLDER;
   }
@@ -361,6 +359,9 @@ export class MatchReviewStore {
     const hasPlayer = Boolean(e.playerId && e.playerId.trim() !== '');
     const playerName = e.playerName || (hasPlayer ? 'Jugador' : 'Sin asignar');
     const seconds = e.matchTime ?? 0;
+    const absSeconds = e.absoluteMatchTime != null
+      ? e.absoluteMatchTime
+      : ((e.period === 2 ? 2400 : 0) + seconds);
     const minute = seconds / 60;
     const pct = Math.min(100, Math.max(0, (minute / scale) * 100));
     const isUnassigned = !hasPlayer && e.teamPossession !== 'OPPONENT';
@@ -376,8 +377,8 @@ export class MatchReviewStore {
       minute,
       pct,
       matchTimeFormatted: this.formatTimeSeconds(seconds),
-      realTime: e.realTime,
-      realTimeFormatted: this.formatRealTime(e.realTime),
+      absoluteMatchTime: absSeconds,
+      absoluteTimeFormatted: this.formatAbsoluteTime(absSeconds),
       playerId: e.playerId ?? null,
       playerName,
       playerJerseyNumber: e.playerJerseyNumber ?? null,
