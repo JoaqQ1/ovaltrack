@@ -62,4 +62,6 @@ export interface MatchTimelineEventResponse {
   realTime: string;
   period: number;
   teamPossession: Possession;
+  origin?: string | null;
+  attributes?: Record<string, unknown> | null;
 }

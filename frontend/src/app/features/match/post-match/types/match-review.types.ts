@@ -28,6 +28,9 @@ export interface ReviewEventViewModel {
   hasPlayer: boolean;
   isUnassigned: boolean;
   teamPossession: Possession;
+  origin?: string | null;
+  isPostMatch: boolean;
+  attributes?: Record<string, unknown> | null;
   isDimmed: boolean; // True si queda fuera de los filtros activos (para el gráfico)
 }
 

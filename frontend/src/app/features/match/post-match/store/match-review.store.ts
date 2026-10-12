@@ -251,6 +251,41 @@ export class MatchReviewStore {
     }
   }
 
+  addEvent(event: MatchTimelineEventResponse): void {
+    const dict = this.eventTypesDict();
+    const eventName = event.eventTypeName || dict[event.eventTypeId] || 'Evento';
+    let playerName = event.playerName;
+    let playerJerseyNumber = event.playerJerseyNumber;
+
+    if (event.playerId && !playerName) {
+      const playerObj = this.availablePlayers().find(p => p.id === event.playerId);
+      if (playerObj) {
+        playerName = playerObj.fullName;
+        playerJerseyNumber = playerObj.jerseyNumber;
+      }
+    }
+
+    const enrichedEvent: MatchTimelineEventResponse = {
+      ...event,
+      eventTypeName: eventName,
+      playerName: playerName ?? null,
+      playerJerseyNumber: playerJerseyNumber ?? null,
+      origin: event.origin ?? 'post_capture'
+    };
+
+    const current = this.rawEvents();
+    const updated = [...current, enrichedEvent].sort((a, b) => {
+      const pDiff = (a.period ?? 1) - (b.period ?? 1);
+      if (pDiff !== 0) return pDiff;
+      const tDiff = (a.matchTime ?? 0) - (b.matchTime ?? 0);
+      if (tDiff !== 0) return tDiff;
+      return (a.realTime || '').localeCompare(b.realTime || '');
+    });
+
+    this.rawEvents.set(updated);
+    this.selectedEventId.set(enrichedEvent.id);
+  }
+
   // --- Utilidades de Formateo y Colores ---
 
   private resolveEventColor(name: string): string {
@@ -329,6 +364,7 @@ export class MatchReviewStore {
     const minute = seconds / 60;
     const pct = Math.min(100, Math.max(0, (minute / scale) * 100));
     const isUnassigned = !hasPlayer && e.teamPossession !== 'OPPONENT';
+    const isPostMatch = e.origin === 'post_capture';
 
     return {
       id: e.id,
@@ -348,6 +384,9 @@ export class MatchReviewStore {
       hasPlayer,
       isUnassigned,
       teamPossession: e.teamPossession,
+      origin: e.origin,
+      isPostMatch,
+      attributes: e.attributes,
       isDimmed: false
     };
   }
