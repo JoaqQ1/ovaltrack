@@ -89,12 +89,24 @@ export class PostMatchComponent implements OnInit {
   }
 
   loadRoster(): void {
-    this.rosterService.getAvailablePlayers(this.matchId).subscribe({
+    this.rosterService.getMatchRosterPlayers(this.matchId).subscribe({
       next: (players) => {
-        this.store.setAvailablePlayers(players);
+        if (players && players.length > 0) {
+          this.store.setAvailablePlayers(players);
+        } else {
+          // Fallback para partidos de prueba antiguos sin plantel guardado
+          this.rosterService.getAvailablePlayers(this.matchId).subscribe({
+            next: (divPlayers) => this.store.setAvailablePlayers(divPlayers),
+            error: () => {}
+          });
+        }
       },
       error: () => {
-        // Fallback no bloqueante si la división no tiene jugadores cargados
+        // Fallback en caso de error de red o backend previo
+        this.rosterService.getAvailablePlayers(this.matchId).subscribe({
+          next: (divPlayers) => this.store.setAvailablePlayers(divPlayers),
+          error: () => {}
+        });
       }
     });
   }

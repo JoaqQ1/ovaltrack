@@ -182,26 +182,21 @@
 /* Modales */
 .custom-modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
+  inset: 0;
   z-index: 1050;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  background-color: rgba(17, 29, 14, 0.55);
+  backdrop-filter: blur(4px);
 }
 
 .custom-modal-dialog {
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
   animation: modalFadeIn 0.18s ease-out;
 }
-
-
 
 @keyframes modalFadeIn {
   from {
@@ -212,6 +207,136 @@
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+.custom-modal-dialog .form-card {
+  background: var(--surface, #ffffff);
+  border: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
+  border-radius: 18px;
+  box-shadow: 0 16px 36px rgba(17, 29, 14, 0.16);
+  overflow: hidden;
+}
+
+.custom-modal-dialog .form-card-header {
+  background: linear-gradient(180deg, var(--surface-header-start, #edf5e9) 0%, var(--surface-header-end, #e0ebd8) 100%);
+  border-bottom: 2px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
+  padding: 20px 24px;
+}
+
+.custom-modal-dialog .header-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background-color: #ffffff;
+  border: 1.5px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.custom-modal-dialog .form-card-title {
+  font-family: var(--font-head);
+  color: var(--text-primary, #111d0e);
+  font-weight: 800;
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.form-label-custom {
+  color: var(--text-primary, #111d0e);
+  font-size: 13.5px;
+  margin-bottom: 6px;
+}
+
+.custom-modal-dialog .form-control,
+.custom-modal-dialog .form-select {
+  border: 1.5px solid var(--border-strong, rgba(27, 33, 22, 0.22));
+  border-radius: 10px;
+  font-size: 0.92rem;
+  padding: 0.5rem 0.85rem;
+  min-height: 44px;
+  background-color: #ffffff;
+  color: var(--text-primary, #111d0e);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.custom-modal-dialog .form-control:focus,
+.custom-modal-dialog .form-select:focus {
+  border-color: var(--btn-primary-bg, #204b22);
+  box-shadow: 0 0 0 3px rgba(32, 75, 34, 0.15);
+  background-color: #fafdf9;
+}
+
+/* Botones Segmentados (Posesión / Período) */
+.segment-btn {
+  height: 42px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background-color: #f7faf5;
+  border: 1.5px solid rgba(32, 75, 34, 0.22);
+  color: var(--text-secondary, #3b4e33);
+  transition: all 0.15s ease;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.segment-btn:hover {
+  background-color: #edf5e9;
+  border-color: var(--btn-primary-bg, #204b22);
+  color: var(--text-primary, #111d0e);
+}
+
+.segment-btn--active {
+  background-color: var(--btn-primary-bg, #204b22) !important;
+  border-color: var(--btn-primary-bg, #204b22) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(32, 75, 34, 0.25);
+}
+
+.segment-btn--danger {
+  background-color: var(--error, #b42318) !important;
+  border-color: var(--error, #b42318) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(180, 35, 24, 0.25);
+}
+
+.segment-btn--neutral {
+  background-color: var(--navy, #16324f) !important;
+  border-color: var(--navy, #16324f) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(22, 50, 79, 0.25);
+}
+
+.event-time-badge-box {
+  background-color: var(--surface-alt, #edf5e9);
+  border: 1.5px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
+.event-time-badge-box .mono {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+/* Modal Footer */
+.modal-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  background-color: var(--surface-alt, #fafcf9);
+  border-top: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.15));
+}
+
+.modal-footer-actions .btn {
+  height: 44px;
+  padding: 0 20px;
 }
 
 .empty-panel-msg {

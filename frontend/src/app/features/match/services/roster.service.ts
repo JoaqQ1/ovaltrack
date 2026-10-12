@@ -21,6 +21,10 @@ export class RosterService {
     );
   }
 
+  getMatchRosterPlayers(matchId: string): Observable<AvailablePlayer[]> {
+    return this.http.get<AvailablePlayer[]>(`${this.matchesUrl}/${matchId}/roster/players`);
+  }
+
   saveRoster(payload: RosterPayload): Observable<void> {
     const dto: SaveRosterRequestDTO = {
       titularesIds: payload.startingPlayers,
