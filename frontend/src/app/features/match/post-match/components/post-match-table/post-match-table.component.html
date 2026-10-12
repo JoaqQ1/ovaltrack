@@ -46,6 +46,9 @@
             <span class="event-chip">
               <span class="event-dot" [style.backgroundColor]="ev.color"></span>
               {{ ev.eventTypeName }}
+              <i *ngIf="ev.isPostMatch"
+                 class="bi bi-clock-history ms-1 text-muted"
+                 title="Cargado post-partido"></i>
             </span>
           </div>
           <div class="col-player">

@@ -12,6 +12,10 @@
     </div>
 
     <div class="hud-actions">
+      <button type="button" class="btn-invite m-0 border-0 d-flex align-items-center gap-2" style="height: 44px; border-radius: 10px; padding: 0 20px; font-weight: 600;" (click)="openCreateModal()">
+        <i class="bi bi-plus-lg"></i>
+        <span>Agregar evento</span>
+      </button>
       <button type="button" class="btn btn-outline" (click)="comeBack()">
         <i class="bi bi-arrow-left"></i> Volver a partidos
       </button>
@@ -51,4 +55,7 @@
       <app-post-match-panel />
     </aside>
   </div>
+
+  <!-- Modal de Alta de Eventos Post-Partido (HU-8.4) -->
+  <app-post-match-create-modal [isOpen]="showCreateModal()" [matchId]="matchId" (close)="closeCreateModal()" />
 </div>

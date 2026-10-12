@@ -30,6 +30,15 @@
           </span>
         </div>
         <div class="detail-row">
+          <span class="detail-label">Origen</span>
+          <span class="detail-value">
+            <span class="badge" [ngClass]="ev.isPostMatch ? 'bg-warning-subtle text-warning-emphasis' : 'bg-secondary-subtle text-secondary'">
+              <i class="bi" [ngClass]="ev.isPostMatch ? 'bi-clock-history me-1' : 'bi-broadcast me-1'"></i>
+              {{ ev.isPostMatch ? 'Post-partido' : 'En vivo' }}
+            </span>
+          </span>
+        </div>
+        <div class="detail-row">
           <span class="detail-label">Jugador</span>
           <span class="detail-value" [class.text-amber]="!ev.hasPlayer">
             {{ ev.hasPlayer ? ev.playerName : 'Sin asignar' }}

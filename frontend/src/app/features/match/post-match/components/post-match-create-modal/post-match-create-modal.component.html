@@ -1,0 +1,127 @@
+<div class="custom-modal-backdrop" *ngIf="isOpen">
+  <div class="custom-modal-dialog">
+    <div class="form-card w-100">
+      <!-- Header -->
+      <div class="form-card-header d-flex justify-content-between align-items-center pb-3">
+        <div class="d-flex align-items-center gap-2">
+          <div class="header-icon-box">
+            <i class="bi bi-plus-circle-fill text-success"></i>
+          </div>
+          <div>
+            <h5 class="form-card-title mb-0">Agregar Evento Post-Partido</h5>
+            <small class="text-muted">Carga manual de acciones ocurridas durante el partido</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close" (click)="onClose()" [disabled]="isSubmitting()"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="form-card-body p-4">
+        <!-- 1. Tipo de Evento -->
+        <div class="mb-3">
+          <label class="form-label fw-bold" style="color: #111d0e;">Tipo de Evento *</label>
+          <select class="form-control" [(ngModel)]="eventTypeId">
+            <option value="" disabled selected>-- Selecciona el tipo de acción --</option>
+            <option *ngFor="let t of store.eventTypesList()" [value]="t.id">
+              {{ t.name }} ({{ t.category }})
+            </option>
+          </select>
+        </div>
+
+        <!-- 2. Período y Minuto Aproximado -->
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label fw-bold" style="color: #111d0e;">Período *</label>
+            <div class="d-flex gap-2">
+              <button type="button"
+                      class="btn flex-fill fw-bold"
+                      [ngClass]="period === 1 ? 'btn-success text-white' : 'btn-light border'"
+                      (click)="period = 1">
+                1° Tiempo (1T)
+              </button>
+              <button type="button"
+                      class="btn flex-fill fw-bold"
+                      [ngClass]="period === 2 ? 'btn-success text-white' : 'btn-light border'"
+                      (click)="period = 2">
+                2° Tiempo (2T)
+              </button>
+            </div>
+          </div>
+
+          <div class="col-6">
+            <label class="form-label fw-bold" style="color: #111d0e;">Minuto del período *</label>
+            <div class="input-group">
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="minute" 
+                     min="0" 
+                     max="100" 
+                     placeholder="Ej: 15" />
+              <span class="input-group-text">min</span>
+            </div>
+            <small class="text-muted d-block mt-1">Tiempo relativo al tiempo de juego</small>
+          </div>
+        </div>
+
+        <!-- 3. Posesión / Equipo -->
+        <div class="mb-3">
+          <label class="form-label fw-bold" style="color: #111d0e;">Posesión / Equipo *</label>
+          <div class="d-flex gap-2">
+            <button type="button" 
+                    class="btn flex-fill fw-bold" 
+                    [ngClass]="possession === 'OWN' ? 'btn-success text-white' : 'btn-light border'"
+                    (click)="possession = 'OWN'; onPossessionChange()">
+              Propia (Local)
+            </button>
+            <button type="button" 
+                    class="btn flex-fill fw-bold" 
+                    [ngClass]="possession === 'OPPONENT' ? 'btn-danger text-white' : 'btn-light border'"
+                    (click)="possession = 'OPPONENT'; onPossessionChange()">
+              Rival (Visitante)
+            </button>
+            <button type="button" 
+                    class="btn flex-fill fw-bold" 
+                    [ngClass]="possession === 'NEUTRAL' ? 'btn-secondary text-white' : 'btn-light border'"
+                    (click)="possession = 'NEUTRAL'; onPossessionChange()">
+              Neutral
+            </button>
+          </div>
+        </div>
+
+        <!-- 4. Jugador Asociado (Opcional) -->
+        <div class="mb-2">
+          <label class="form-label fw-bold" style="color: #111d0e;">
+            Jugador Asociado
+            <span class="fw-normal text-muted small">(opcional)</span>
+          </label>
+          <select class="form-control" 
+                  [(ngModel)]="playerId" 
+                  [disabled]="possession === 'OPPONENT'">
+            <option value="">-- Sin asignar (Sin jugador) --</option>
+            <option *ngFor="let p of store.availablePlayers()" [value]="p.id">
+              {{ p.jerseyNumber ? '#' + p.jerseyNumber + ' ' : '' }}{{ p.fullName }}
+            </option>
+          </select>
+          <small *ngIf="possession === 'OPPONENT'" class="text-muted d-block mt-1">
+            * Para el equipo rival no se asigna jugador individual.
+          </small>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-4 d-flex justify-content-end gap-3" style="background: #fdfdfd; border-top: 1px solid rgba(0,0,0,0.05);">
+        <button type="button" class="btn-outline m-0" (click)="onClose()" [disabled]="isSubmitting()">
+          Cancelar
+        </button>
+        <button type="button" 
+                class="btn-invite m-0 border-0 d-flex align-items-center justify-content-center gap-2" 
+                style="height: 44px; border-radius: 10px; padding: 0 24px; font-weight: 600;" 
+                (click)="save()" 
+                [disabled]="isSubmitting()">
+          <span *ngIf="isSubmitting()" class="spinner-border spinner-border-sm"></span>
+          <span>{{ isSubmitting() ? 'Guardando...' : 'Guardar evento' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
