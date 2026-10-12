@@ -91,7 +91,7 @@ public class EventService {
 	}
 
 	@Transactional
-	public EventResponseDTO saveEvent(EventCreationDTO eventRequest) {
+	public EventResponseDTO saveEvent(EventCreationDTO eventRequest, Authentication authentication) {
 		Event existingEvent = findExistingClientEvent(eventRequest.clientEventId(), eventRequest.matchId());
 		if (existingEvent != null) {
 			return EventDTOMapper.toResponseDTO(existingEvent);
@@ -113,6 +113,10 @@ public class EventService {
 			throw new BusinessException("No se puede cargar eventos mediante esta pantalla para un partido que ya termino");
 		}
 
+		if (authentication != null) {
+			matchSecurityValidator.validateCanManageMatch(aMatch, authentication);
+		}
+
 		Person aPerson = resolveEventPlayer(eventRequest.playerId(), aMatch);
 
 		Event result = new Event();
@@ -123,7 +127,7 @@ public class EventService {
 		result.setTeamPossession(eventRequest.teamPossession());
 		result.setMatchTime(eventRequest.matchTime());
 		result.setAbsoluteMatchTime(eventRequest.absoluteMatchTime());
-		result.setRealTime(eventRequest.realTime());
+		result.setRealTime(eventRequest.realTime() != null ? eventRequest.realTime() : LocalDateTime.now());
 		result.setPeriod(eventRequest.period());
 		result.setOrigin(eventRequest.origin());
 		result.setAttributes(eventRequest.attributes());
@@ -133,6 +137,11 @@ public class EventService {
 		Event savedEvent = eventRepository.save(result);
 		recalculateMatchScore(aMatch);
 		return EventDTOMapper.toResponseDTO(savedEvent);
+	}
+
+	@Transactional
+	public EventResponseDTO saveEvent(EventCreationDTO eventRequest) {
+		return saveEvent(eventRequest, null);
 	}
 
 	private Event findExistingClientEvent(UUID clientEventId, UUID matchId) {
@@ -168,10 +177,14 @@ public class EventService {
 	}
 
 	@Transactional
-	public EventResponseDTO deleteEvent(UUID eventId) {
+	public EventResponseDTO deleteEvent(UUID eventId, Authentication authentication) {
 		Event result = eventRepository.findById(eventId).orElse(null);
 		if (result == null) {
 			throw new BusinessException("No se puede eliminar un evento que no existe");
+		}
+
+		if (authentication != null) {
+			matchSecurityValidator.validateCanManageMatch(result.getMatch(), authentication);
 		}
 
 		if (!Boolean.TRUE.equals(result.getActive())) {
@@ -186,10 +199,19 @@ public class EventService {
 	}
 
 	@Transactional
-	public EventResponseDTO updateEvent(UUID eventId, EventUpdateDTO eventRequest) {
+	public EventResponseDTO deleteEvent(UUID eventId) {
+		return deleteEvent(eventId, null);
+	}
+
+	@Transactional
+	public EventResponseDTO updateEvent(UUID eventId, EventUpdateDTO eventRequest, Authentication authentication) {
 		Event result = findEventEntityById(eventId);
 		if (result == null) {
 			throw new BusinessException("No se puede modificar un evento que no existe");
+		}
+
+		if (authentication != null) {
+			matchSecurityValidator.validateCanManageMatch(result.getMatch(), authentication);
 		}
 
 		if (eventRequest.eventTypeId() != null) {
@@ -226,6 +248,11 @@ public class EventService {
 		Event savedEvent = eventRepository.save(result);
 		recalculateMatchScore(result.getMatch());
 		return EventDTOMapper.toResponseDTO(savedEvent);
+	}
+
+	@Transactional
+	public EventResponseDTO updateEvent(UUID eventId, EventUpdateDTO eventRequest) {
+		return updateEvent(eventId, eventRequest, null);
 	}
 
 	private void recalculateMatchScore(Match match) {

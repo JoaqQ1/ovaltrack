@@ -123,12 +123,13 @@ public class EventController {
         @ApiResponse(responseCode = "409", description = "The request is invalid or the event cannot be saved because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> saveEvent(@Valid @RequestBody EventCreationDTO eventRequest, BindingResult bindingResult) {
+    public ResponseEntity<Object> saveEvent(@Valid @RequestBody EventCreationDTO eventRequest, BindingResult bindingResult,
+            Authentication authentication) {
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        return ResponseEntity.ok(eventService.saveEvent(eventRequest));
+        return ResponseEntity.ok(eventService.saveEvent(eventRequest, authentication));
     }
 
     @Operation(
@@ -140,8 +141,8 @@ public class EventController {
         @ApiResponse(responseCode = "409", description = "The event cannot be deleted because of a business or data-integrity conflict.")
     })
     @DeleteMapping("/{eventId}")
-    public ResponseEntity<EventResponseDTO> deleteEvent(@PathVariable UUID eventId) {
-        return ResponseEntity.ok(eventService.deleteEvent(eventId));
+    public ResponseEntity<EventResponseDTO> deleteEvent(@PathVariable UUID eventId, Authentication authentication) {
+        return ResponseEntity.ok(eventService.deleteEvent(eventId, authentication));
     }
 
     @Operation(
@@ -162,12 +163,12 @@ public class EventController {
     })
     @PatchMapping("/{eventId}")
     public ResponseEntity<Object> updateEvent(@PathVariable UUID eventId, @Valid @RequestBody EventUpdateDTO request,
-            BindingResult bindingResult) {
+            BindingResult bindingResult, Authentication authentication) {
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        return ResponseEntity.ok(eventService.updateEvent(eventId, request));
+        return ResponseEntity.ok(eventService.updateEvent(eventId, request, authentication));
     }
 
 }
