@@ -61,7 +61,7 @@
                   [disabled]="isSubmitting()">
             <option value="">-- Sin asignar (Pendiente) --</option>
             <option *ngFor="let p of store.availablePlayers()" [value]="p.id">
-              {{ p.fullName }}{{ p.role ? ' (' + (p.role === 'TITULAR' ? 'Titular' : 'Suplente') + ')' : '' }}
+              {{ p.jerseyNumber ? '#' + p.jerseyNumber + ' ' : '' }}{{ p.fullName }}
             </option>
           </select>
         </div>

@@ -98,7 +98,7 @@
                   [disabled]="possession === 'OPPONENT'">
             <option value="">-- Sin asignar (Sin jugador) --</option>
             <option *ngFor="let p of store.availablePlayers()" [value]="p.id">
-              {{ p.fullName }}{{ p.role ? ' (' + (p.role === 'TITULAR' ? 'Titular' : 'Suplente') + ')' : '' }}
+              {{ p.jerseyNumber ? '#' + p.jerseyNumber + ' ' : '' }}{{ p.fullName }}
             </option>
           </select>
           <small *ngIf="possession === 'OPPONENT'" class="text-muted d-block mt-1">

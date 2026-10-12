@@ -72,7 +72,7 @@ export class SelectionRosterComponent implements OnInit {
     return players.filter(p =>
       p.fullName.toLowerCase().includes(query) ||
       (p.position && p.position.toLowerCase().includes(query)) ||
-      (p.jerseyNumber != null && p.jerseyNumber.toString().includes(query))
+      (p.jerseyNumber !== null && p.jerseyNumber.toString().includes(query))
     );
   });
 

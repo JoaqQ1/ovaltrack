@@ -1,9 +1,8 @@
 export interface AvailablePlayer {
   id: string;
   fullName: string;
-  jerseyNumber?: number | null;
-  position?: string | null;
-  role?: 'TITULAR' | 'SUPLENTE';
+  jerseyNumber: number | null;
+  position: string | null;
 }
 
 export type RosterStep = 'titulares' | 'suplentes';
