@@ -18,7 +18,7 @@ Given(
     clubCity,
   ) {
     this.coach = { firstName, lastname, email, password, birthDate, role };
-    const response = await fetch(`${BACKEND_URL}/club/${clubName}/${clubCity}`);
+    const response = await fetch(`${BACKEND_URL}/club/search/${clubName}/${clubCity}`);
     let json = await response.json();
     this.club = json.data;
   },
