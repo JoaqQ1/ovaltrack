@@ -1,14 +1,23 @@
 {
   "default": {
     "paths": [
+      "features/registro-club/**/*.feature",
+      "features/admin/**/*.feature",
+      "features/registro-coach/**/*.feature",
+      "features/invitar-jugador/**/*.feature",
       "features/club/**/*.feature",
       "features/user/**/*.feature",
       "features/division/**/*.feature",
       "features/match/**/*.feature",
       "features/event/**/*.feature"
     ],
-    "require": ["features/**/*.js"],
-    "format": ["summary", "progress-bar"],
+    "require": [
+      "features/**/*.js"
+    ],
+    "format": [
+      "summary",
+      "progress"
+    ],
     "publishQuiet": true
   }
 }
