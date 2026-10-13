@@ -153,30 +153,37 @@
   color: #b42318;
 }
 
-.btn-next-pending {
+/* Enlace contextual interactivo de navegación de pendientes (deja de ser botón verde sólido) */
+.link-next-pending {
+  background: transparent;
+  border: 1px dashed rgba(32, 75, 34, 0.35);
+  color: var(--text-secondary, #3b4e33);
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--btn-primary-bg, #204b22);
-  color: #ffffff;
-  border: none;
+  gap: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
   border-radius: 8px;
-  padding: 0.55rem 1rem;
-  font-size: 0.85rem;
-  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition: all 0.15s ease;
 }
 
-.btn-next-pending:hover:not(:disabled) {
-  background: var(--btn-primary-hover, #163618);
-  transform: translateY(-1px);
+.link-next-pending:hover {
+  background-color: rgba(32, 75, 34, 0.07);
+  border-color: var(--btn-primary-bg, #204b22);
+  color: var(--btn-primary-bg, #204b22);
 }
 
-.btn-next-pending:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.pending-count-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #fef08a;
+  color: #854d0e;
+  padding: 1px 6px;
+  border-radius: 999px;
 }
 
 /* Modales */

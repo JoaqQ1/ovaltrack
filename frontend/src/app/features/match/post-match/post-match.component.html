@@ -12,12 +12,28 @@
     </div>
 
     <div class="hud-actions">
-      <button type="button" class="btn-invite m-0 border-0 d-flex align-items-center gap-2" style="height: 44px; border-radius: 10px; padding: 0 20px; font-weight: 600;" (click)="openCreateModal()">
-        <i class="bi bi-plus-lg"></i>
-        <span>Agregar evento</span>
+      <!-- Secundario a la izquierda -->
+      <button 
+        type="button" 
+        class="btn btn-outline btn-hud" 
+        (click)="comeBack()"
+        aria-label="Volver a partidos"
+        title="Volver a partidos"
+      >
+        <i class="bi bi-arrow-left"></i>
+        <span class="hud-btn-text">Volver a partidos</span>
       </button>
-      <button type="button" class="btn btn-outline" (click)="comeBack()">
-        <i class="bi bi-arrow-left"></i> Volver a partidos
+
+      <!-- Primario Verde Sólido a la derecha -->
+      <button 
+        type="button" 
+        class="btn-invite btn-hud" 
+        (click)="openCreateModal()"
+        aria-label="Agregar evento"
+        title="Agregar evento"
+      >
+        <i class="bi bi-plus-lg"></i>
+        <span class="hud-btn-text">Agregar evento</span>
       </button>
     </div>
   </header>

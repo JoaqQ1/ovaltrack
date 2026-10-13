@@ -62,11 +62,12 @@ import { ThemeService } from 'src/app/core/services/theme.service';
 
             @if (currentUser(); as user) {
               <!-- Acciones Autenticadas -->
-              <a routerLink="/home" class="btn-outline-dark-theme btn-nav-action" *ngIf="currentUrl !== '/home' && currentUrl !== '/'">
+              <a routerLink="/home" class="btn-outline-dark-theme btn-nav-action" *ngIf="currentUrl !== '/home' && currentUrl !== '/'"
+                 aria-label="Volver al inicio" title="Volver al inicio">
                 <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path d="M19 12H5M12 19l-7-7 7-7"/>
                 </svg>
-                <span>Volver al inicio</span>
+                <span class="nav-btn-text">Volver al inicio</span>
               </a>
 
               <div class="user-role-badge">
@@ -78,16 +79,24 @@ import { ThemeService } from 'src/app/core/services/theme.service';
                 type="button"
                 class="btn-outline-danger-custom btn-nav-action"
                 (click)="logout()"
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
               >
-                Cerrar sesión
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span class="nav-btn-text">Cerrar sesión</span>
               </button>
             } @else {
               <!-- Acciones Públicas / No Autenticadas -->
-              <a routerLink="/home" class="btn-outline-dark-theme btn-nav-action" *ngIf="currentUrl !== '/home' && currentUrl !== '/'">
+              <a routerLink="/home" class="btn-outline-dark-theme btn-nav-action" *ngIf="currentUrl !== '/home' && currentUrl !== '/'"
+                 aria-label="Volver al inicio" title="Volver al inicio">
                 <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path d="M19 12H5M12 19l-7-7 7-7"/>
                 </svg>
-                <span>Volver al inicio</span>
+                <span class="nav-btn-text">Volver al inicio</span>
               </a>
 
               @if (currentUrl.includes('/auth/login') || currentUrl.includes('/login')) {
@@ -289,14 +298,14 @@ import { ThemeService } from 'src/app/core/services/theme.service';
     }
 
     .btn-outline-danger-custom {
-      background-color: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.3);
+      background-color: transparent;
+      border: 1.5px solid rgba(239, 68, 68, 0.4);
       color: #f87171;
     }
 
     .btn-outline-danger-custom:hover {
-      background-color: #ef4444;
-      color: #ffffff;
+      background-color: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
       border-color: #ef4444;
     }
 
@@ -304,6 +313,20 @@ import { ThemeService } from 'src/app/core/services/theme.service';
       .brand-subtitle,
       .user-role-badge {
         display: none;
+      }
+
+      .btn-nav-action {
+        padding: 0 10px;
+        min-width: 38px;
+        justify-content: center;
+      }
+
+      .btn-nav-action .nav-btn-text {
+        display: none;
+      }
+
+      .btn-nav-action svg {
+        margin: 0 !important;
       }
     }
 
@@ -402,17 +425,19 @@ import { ThemeService } from 'src/app/core/services/theme.service';
 
     :host-context([data-theme="light"]) .btn-outline-danger-custom,
     :host-context(.light-theme) .btn-outline-danger-custom {
-      background-color: #204b22;
-      border-color: #204b22;
-      color: #ffffff;
+      background-color: #ffffff;
+      border: 1px solid rgba(180, 35, 24, 0.35);
+      color: #b42318;
+      box-shadow: 0 2px 6px rgba(20, 45, 20, 0.04);
     }
 
     :host-context([data-theme="light"]) .btn-outline-danger-custom:hover,
     :host-context(.light-theme) .btn-outline-danger-custom:hover {
-      background-color: #163618;
-      border-color: #163618;
-      color: #ffffff;
-      box-shadow: 0 4px 12px rgba(32, 75, 34, 0.20);
+      background-color: #fef3f2;
+      border-color: #b42318;
+      color: #912018;
+      box-shadow: 0 3px 8px rgba(180, 35, 24, 0.12);
+      transform: translateY(-1px);
     }
   `]
 })
