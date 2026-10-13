@@ -292,22 +292,24 @@ public class MatchService {
         }
 
         return match.getRoster().stream()
-                .map(mp -> {
-                    DivisionPlayer dp = mp.getDivisionPlayer();
-                    var person = dp.getPerson();
-                    String fullName = ((person.getFirstName() != null ? person.getFirstName() : "") + " "
-                            + (person.getLastName() != null ? person.getLastName() : "")).trim();
-
-                    return MatchRosterPlayerDTO.builder()
-                            .id(person.getId())
-                            .fullName(fullName.isEmpty() ? "Sin Nombre" : fullName)
-                            .role(mp.getRole())
-                            .position(dp.getPosition())
-                            .build();
-                })
+                .map(this::toMatchRosterPlayerDTO)
                 .sorted(Comparator.comparing((MatchRosterPlayerDTO p) -> p.getRole() == MatchPlayerRole.TITULAR ? 0 : 1)
                         .thenComparing(p -> p.getFullName(), String.CASE_INSENSITIVE_ORDER))
                 .toList();
+    }
+
+    private MatchRosterPlayerDTO toMatchRosterPlayerDTO(MatchPlayer mp) {
+        DivisionPlayer dp = mp.getDivisionPlayer();
+        var person = dp.getPerson();
+        String fullName = ((person.getFirstName() != null ? person.getFirstName() : "") + " "
+                + (person.getLastName() != null ? person.getLastName() : "")).trim();
+
+        return MatchRosterPlayerDTO.builder()
+                .id(person.getId())
+                .fullName(fullName.isEmpty() ? "Sin Nombre" : fullName)
+                .role(mp.getRole())
+                .position(dp.getPosition())
+                .build();
     }
 
     @Transactional
