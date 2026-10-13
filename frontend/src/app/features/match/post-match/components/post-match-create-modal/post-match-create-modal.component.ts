@@ -58,7 +58,7 @@ export class PostMatchCreateModalComponent {
 
     const seconds = Math.round(this.minute * 60);
     const assignedPlayerId = (this.possession === 'OPPONENT') ? null : (this.playerId.trim() || null);
-    const absoluteSeconds = (this.period === 2 ? 2400 : 0) + seconds;
+    const absoluteSeconds = this.store.estimateAbsoluteTime(seconds, this.period);
 
     const payload: BackendEventCreationRequest = {
       eventTypeId: this.eventTypeId,

@@ -288,6 +288,48 @@ export class MatchReviewStore {
     this.selectedEventId.set(enrichedEvent.id);
   }
 
+  /**
+   * Estima la hora absoluta para un nuevo evento proyectando el desfase acumulado
+   * de pausas del evento previo más cercano en el mismo período.
+   */
+  estimateAbsoluteTime(newMatchTimeSeconds: number, period: 1 | 2): number {
+    const raw = this.rawEvents();
+
+    // 1. Filtrar eventos del mismo período con hora absoluta válida
+    const periodEvents = raw
+      .filter(e => (e.period ?? 1) === period && e.absoluteMatchTime != null)
+      .sort((a, b) => (a.matchTime ?? 0) - (b.matchTime ?? 0));
+
+    // 2. Buscar el evento anterior más cercano (matchTime <= newMatchTimeSeconds)
+    const prevEvents = periodEvents.filter(e => (e.matchTime ?? 0) <= newMatchTimeSeconds);
+    const prevEvent = prevEvents.length > 0 ? prevEvents[prevEvents.length - 1] : null;
+
+    if (prevEvent && prevEvent.absoluteMatchTime != null) {
+      const prevMatchTime = prevEvent.matchTime ?? 0;
+      const pauseOffset = Math.max(0, prevEvent.absoluteMatchTime - prevMatchTime);
+      let calculated = newMatchTimeSeconds + pauseOffset;
+
+      // Si coincide exactamente el segundo de juego, sumar 2 segundos para desempatar la secuencia visual
+      if (prevMatchTime === newMatchTimeSeconds) {
+        calculated = Math.max(calculated, prevEvent.absoluteMatchTime + 2);
+      }
+      return calculated;
+    }
+
+    // 3. Fallback si no hay eventos previos en el período:
+    if (period === 1) {
+      return newMatchTimeSeconds;
+    } else {
+      // Si es período 2 y no hay eventos en 2T, anclarse al último evento del 1T
+      const p1Events = raw
+        .filter(e => (e.period ?? 1) === 1 && e.absoluteMatchTime != null)
+        .sort((a, b) => (a.absoluteMatchTime ?? 0) - (b.absoluteMatchTime ?? 0));
+      const lastP1 = p1Events.length > 0 ? p1Events[p1Events.length - 1] : null;
+      const baseP2 = lastP1?.absoluteMatchTime != null ? lastP1.absoluteMatchTime : 2400;
+      return baseP2 + newMatchTimeSeconds;
+    }
+  }
+
   // --- Utilidades de Formateo y Colores ---
 
   private resolveEventColor(name: string): string {
@@ -361,7 +403,7 @@ export class MatchReviewStore {
     const seconds = e.matchTime ?? 0;
     const absSeconds = e.absoluteMatchTime != null
       ? e.absoluteMatchTime
-      : ((e.period === 2 ? 2400 : 0) + seconds);
+      : this.estimateAbsoluteTime(seconds, (e.period === 2 ? 2 : 1));
     const minute = seconds / 60;
     const pct = Math.min(100, Math.max(0, (minute / scale) * 100));
     const isUnassigned = !hasPlayer && e.teamPossession !== 'OPPONENT';

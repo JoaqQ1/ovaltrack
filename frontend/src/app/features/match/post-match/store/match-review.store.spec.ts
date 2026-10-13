@@ -92,4 +92,67 @@ describe('MatchReviewStore (HU-8.4)', () => {
     expect(vm?.absoluteMatchTime).toBe(940);
     expect(vm?.absoluteTimeFormatted).toBe('15:40');
   });
+
+  describe('estimateAbsoluteTime', () => {
+    it('should calculate absolute time by projecting previous event pause offset in same period', () => {
+      // Evento previo: min 5:30 (330s), absoluto 6:20 (380s) -> offset pausa: 50s
+      store.setEvents([
+        {
+          id: 'ev-prev',
+          eventTypeId: 'type-1',
+          eventTypeName: 'Try',
+          matchTime: 330,
+          absoluteMatchTime: 380,
+          period: 1,
+          teamPossession: 'OWN'
+        }
+      ]);
+
+      // Nuevo evento: min 5:35 (335s) -> 335 + 50 = 385s (6:25)
+      const estimated = store.estimateAbsoluteTime(335, 1);
+      expect(estimated).toBe(385);
+    });
+
+    it('should add 2 seconds disambiguation if matchTime equals previous event', () => {
+      store.setEvents([
+        {
+          id: 'ev-try',
+          eventTypeId: 'type-1',
+          eventTypeName: 'Try',
+          matchTime: 330,
+          absoluteMatchTime: 380,
+          period: 1,
+          teamPossession: 'OWN'
+        }
+      ]);
+
+      // Conversión en el mismo segundo de juego (330s) -> 380 + 2 = 382s
+      const estimated = store.estimateAbsoluteTime(330, 1);
+      expect(estimated).toBe(382);
+    });
+
+    it('should return raw matchTime if period 1 has no previous events', () => {
+      store.setEvents([]);
+      const estimated = store.estimateAbsoluteTime(180, 1);
+      expect(estimated).toBe(180);
+    });
+
+    it('should anchor to last period 1 event when period 2 has no previous events', () => {
+      store.setEvents([
+        {
+          id: 'ev-p1-last',
+          eventTypeId: 'type-1',
+          eventTypeName: 'Penal',
+          matchTime: 2400,
+          absoluteMatchTime: 2650,
+          period: 1,
+          teamPossession: 'OWN'
+        }
+      ]);
+
+      // Primer evento de 2T en el min 1 (60s) -> 2650 + 60 = 2710s
+      const estimated = store.estimateAbsoluteTime(60, 2);
+      expect(estimated).toBe(2710);
+    });
+  });
 });
