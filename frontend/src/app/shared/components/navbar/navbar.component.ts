@@ -13,7 +13,7 @@ import { ThemeService } from 'src/app/core/services/theme.service';
   template: `
     <header class="navbar-wrapper sticky-top">
       <nav class="navbar-global" [class.landing-nav]="isLanding">
-        <div class="container d-flex justify-content-between align-items-center">
+        <div class="layout-container d-flex justify-content-between align-items-center">
           <!-- Brand Link al Home -->
           <a routerLink="/home" class="brand-link">
             <!-- <div class="club-icon">
