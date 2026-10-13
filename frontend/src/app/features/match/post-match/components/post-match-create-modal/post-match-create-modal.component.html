@@ -47,19 +47,34 @@
           </div>
         </div>
 
-        <!-- 3. Minuto del período (Fila 2 completa) -->
+        <!-- 3. Minuto y Segundo del período -->
         <div class="mb-3">
-          <label class="form-label fw-bold form-label-custom">Minuto del período *</label>
-          <div class="input-group custom-input-group">
-            <input type="number" 
-                   class="form-control" 
-                   [(ngModel)]="minute" 
-                   min="0" 
-                   max="100" 
-                   placeholder="Ej: 15" />
-            <span class="input-group-text">min</span>
+          <label class="form-label fw-bold form-label-custom">Momento del período *</label>
+          <div class="row g-2">
+            <div class="col-6">
+              <div class="input-group custom-input-group">
+                <input type="number" 
+                       class="form-control font-mono" 
+                       [(ngModel)]="minute" 
+                       min="0" 
+                       max="100" 
+                       placeholder="15" />
+                <span class="input-group-text">min</span>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="input-group custom-input-group">
+                <input type="number" 
+                       class="form-control font-mono" 
+                       [(ngModel)]="second" 
+                       min="0" 
+                       max="59" 
+                       placeholder="00" />
+                <span class="input-group-text">seg</span>
+              </div>
+            </div>
           </div>
-          <small class="text-muted d-block mt-1">Tiempo relativo al inicio del tiempo seleccionado</small>
+          <small class="text-muted d-block mt-1">Tiempo de juego relativo al inicio del período seleccionado (MM:SS)</small>
         </div>
 
         <!-- 4. Posesión / Equipo -->

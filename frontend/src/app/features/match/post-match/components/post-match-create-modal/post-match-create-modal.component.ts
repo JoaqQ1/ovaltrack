@@ -31,6 +31,7 @@ export class PostMatchCreateModalComponent {
   eventTypeId = '';
   period: 1 | 2 = 1;
   minute: number | null = 1;
+  second: number | null = 0;
   possession: Possession = 'OWN';
   playerId = '';
 
@@ -56,7 +57,13 @@ export class PostMatchCreateModalComponent {
       return;
     }
 
-    const seconds = Math.round(this.minute * 60);
+    const secVal = this.second ?? 0;
+    if (secVal < 0 || secVal > 59) {
+      this.toastService.warning('Los segundos deben estar entre 0 y 59');
+      return;
+    }
+
+    const seconds = Math.floor(this.minute) * 60 + Math.floor(secVal);
     const assignedPlayerId = (this.possession === 'OPPONENT') ? null : (this.playerId.trim() || null);
     const absoluteSeconds = this.store.estimateAbsoluteTime(seconds, this.period);
 
@@ -117,6 +124,7 @@ export class PostMatchCreateModalComponent {
     this.eventTypeId = '';
     this.period = 1;
     this.minute = 1;
+    this.second = 0;
     this.possession = 'OWN';
     this.playerId = '';
   }
