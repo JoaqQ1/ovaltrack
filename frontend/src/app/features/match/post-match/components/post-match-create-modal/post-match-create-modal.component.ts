@@ -52,8 +52,8 @@ export class PostMatchCreateModalComponent {
       return;
     }
 
-    if (this.minute === null || this.minute === undefined || this.minute < 0) {
-      this.toastService.warning('Ingresa un minuto válido');
+    if (this.minute === null || this.minute === undefined || this.minute < 0 || this.minute > 80) {
+      this.toastService.warning('Ingresa un minuto válido (entre 0 y 80)');
       return;
     }
 

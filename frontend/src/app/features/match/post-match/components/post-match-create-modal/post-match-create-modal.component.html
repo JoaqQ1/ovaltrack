@@ -57,7 +57,8 @@
                        class="form-control font-mono" 
                        [(ngModel)]="minute" 
                        min="0" 
-                       max="100" 
+                       max="80" 
+                       step="1"
                        placeholder="15" />
                 <span class="input-group-text">min</span>
               </div>
@@ -69,6 +70,7 @@
                        [(ngModel)]="second" 
                        min="0" 
                        max="59" 
+                       step="1"
                        placeholder="00" />
                 <span class="input-group-text">seg</span>
               </div>
