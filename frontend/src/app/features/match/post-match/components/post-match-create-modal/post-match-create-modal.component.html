@@ -57,9 +57,9 @@
                        class="form-control font-mono" 
                        [(ngModel)]="minute" 
                        min="0" 
-                       max="80" 
+                       [max]="period === 1 ? 45 : 85" 
                        step="1"
-                       placeholder="15" />
+                       [placeholder]="period === 1 ? '15' : '10'" />
                 <span class="input-group-text">min</span>
               </div>
             </div>
@@ -76,7 +76,17 @@
               </div>
             </div>
           </div>
-          <small class="text-muted d-block mt-1">Tiempo de juego relativo al inicio del período seleccionado (MM:SS)</small>
+          <div class="mt-1 small" [ngClass]="period === 1 && (minute || 0) > 45 ? 'text-danger fw-semibold' : 'text-muted'">
+            <ng-container *ngIf="period === 1">
+              <span>Tiempo de juego: 1T {{ formattedDisplayTime }} (máx. 45 min)</span>
+              <span *ngIf="(minute || 0) > 45" class="d-block text-danger">
+                &bull; Supera el límite de 45'. Si fue en el min {{ minute }} de partido, seleccioná 2T.
+              </span>
+            </ng-container>
+            <ng-container *ngIf="period === 2">
+              <span>Tiempo de juego: 2T {{ formattedDisplayTime }} &bull; Equivale al <strong>minuto {{ formattedMatchTotalTime }}</strong> de partido</span>
+            </ng-container>
+          </div>
         </div>
 
         <!-- 4. Posesión / Equipo -->
@@ -87,13 +97,13 @@
                     class="btn segment-btn flex-fill" 
                     [class.segment-btn--active]="possession === 'OWN'"
                     (click)="possession = 'OWN'; onPossessionChange()">
-              Propia (Local)
+              Propia
             </button>
             <button type="button" 
                     class="btn segment-btn flex-fill" 
                     [class.segment-btn--danger]="possession === 'OPPONENT'"
                     (click)="possession = 'OPPONENT'; onPossessionChange()">
-              Rival (Visitante)
+              Rival
             </button>
             <button type="button" 
                     class="btn segment-btn flex-fill" 

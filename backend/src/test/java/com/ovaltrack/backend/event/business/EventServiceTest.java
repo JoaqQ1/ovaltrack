@@ -228,4 +228,119 @@ class EventServiceTest {
         assertEquals(630, dto.absoluteMatchTime());
         verify(matchSecurityValidator).validateCanManageMatch(match, authentication);
     }
+
+    @Test
+    @DisplayName("saveEvent: Lanza BusinessException si matchTime es negativo")
+    void saveEvent_shouldThrowBusinessException_whenMatchTimeIsNegative() {
+        UUID matchId = UUID.randomUUID();
+        UUID eventTypeId = UUID.randomUUID();
+
+        EventType eventType = new EventType();
+        eventType.setId(eventTypeId);
+        when(eventTypeService.findEventTypeEntityById(eventTypeId)).thenReturn(eventType);
+
+        Match match = new Match();
+        match.setId(matchId);
+        match.setStatus(MatchStatus.FINISHED);
+        when(matchService.findMatchEntityById(matchId)).thenReturn(match);
+
+        EventCreationDTO request = new EventCreationDTO(
+                eventTypeId, matchId, null, null, EventPossession.OWN,
+                -10, null, null, 1, Event.ORIGIN_POST_CAPTURE, null, null
+        );
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> eventService.saveEvent(request));
+        assertTrue(ex.getMessage().contains("no puede ser negativo"));
+    }
+
+    @Test
+    @DisplayName("saveEvent: Lanza BusinessException si período 1 excede los 45 minutos (2700s)")
+    void saveEvent_shouldThrowBusinessException_whenPeriod1Exceeds45Minutes() {
+        UUID matchId = UUID.randomUUID();
+        UUID eventTypeId = UUID.randomUUID();
+
+        EventType eventType = new EventType();
+        eventType.setId(eventTypeId);
+        when(eventTypeService.findEventTypeEntityById(eventTypeId)).thenReturn(eventType);
+
+        Match match = new Match();
+        match.setId(matchId);
+        match.setStatus(MatchStatus.FINISHED);
+        when(matchService.findMatchEntityById(matchId)).thenReturn(match);
+
+        // 60 minutos en el 1T = 3600s (> 2700s)
+        EventCreationDTO request = new EventCreationDTO(
+                eventTypeId, matchId, null, null, EventPossession.OWN,
+                3600, null, null, 1, Event.ORIGIN_POST_CAPTURE, null, null
+        );
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> eventService.saveEvent(request));
+        assertTrue(ex.getMessage().contains("1° Tiempo no puede exceder"));
+    }
+
+    @Test
+    @DisplayName("saveEvent: Lanza BusinessException si período 2 excede los 85 minutos (5100s)")
+    void saveEvent_shouldThrowBusinessException_whenPeriod2Exceeds85Minutes() {
+        UUID matchId = UUID.randomUUID();
+        UUID eventTypeId = UUID.randomUUID();
+
+        EventType eventType = new EventType();
+        eventType.setId(eventTypeId);
+        when(eventTypeService.findEventTypeEntityById(eventTypeId)).thenReturn(eventType);
+
+        Match match = new Match();
+        match.setId(matchId);
+        match.setStatus(MatchStatus.FINISHED);
+        when(matchService.findMatchEntityById(matchId)).thenReturn(match);
+
+        // 90 minutos de partido = 5400s (> 5100s)
+        EventCreationDTO request = new EventCreationDTO(
+                eventTypeId, matchId, null, null, EventPossession.OWN,
+                5400, null, null, 2, Event.ORIGIN_POST_CAPTURE, null, null
+        );
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> eventService.saveEvent(request));
+        assertTrue(ex.getMessage().contains("2° Tiempo no puede exceder"));
+    }
+
+    @Test
+    @DisplayName("saveEvent: Permite guardar evento en el 1T a los 42 minutos por descuento de juego activo")
+    void saveEvent_shouldSucceed_whenPeriod1Is42MinutesWithStoppageTime() {
+        UUID matchId = UUID.randomUUID();
+        UUID eventTypeId = UUID.randomUUID();
+
+        EventType eventType = new EventType();
+        eventType.setId(eventTypeId);
+        eventType.setName("Penal");
+        eventType.setIsScoring(false);
+        when(eventTypeService.findEventTypeEntityById(eventTypeId)).thenReturn(eventType);
+
+        Match match = new Match();
+        match.setId(matchId);
+        match.setStatus(MatchStatus.FINISHED);
+        when(matchService.findMatchEntityById(matchId)).thenReturn(match);
+
+        // 42 minutos = 2520s (permitido <= 2700s)
+        EventCreationDTO request = new EventCreationDTO(
+                eventTypeId, matchId, null, null, EventPossession.OWN,
+                2520, 2600, null, 1, Event.ORIGIN_POST_CAPTURE, null, null
+        );
+
+        Event savedEvent = new Event();
+        savedEvent.setId(UUID.randomUUID());
+        savedEvent.setEventType(eventType);
+        savedEvent.setMatch(match);
+        savedEvent.setPeriod(1);
+        savedEvent.setMatchTime(2520);
+        savedEvent.setAbsoluteMatchTime(2600);
+        savedEvent.setTeamPossession(EventPossession.OWN);
+        savedEvent.setOrigin(Event.ORIGIN_POST_CAPTURE);
+
+        when(eventRepository.save(any(Event.class))).thenReturn(savedEvent);
+
+        EventResponseDTO res = eventService.saveEvent(request);
+        assertNotNull(res);
+        assertEquals(2520, res.matchTime());
+        assertEquals(2600, res.absoluteMatchTime());
+    }
 }

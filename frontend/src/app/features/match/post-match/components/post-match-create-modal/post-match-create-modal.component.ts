@@ -46,14 +46,39 @@ export class PostMatchCreateModalComponent {
     this.close.emit();
   }
 
+  get formattedDisplayTime(): string {
+    const min = Math.max(0, Math.floor(this.minute ?? 0));
+    const sec = Math.max(0, Math.min(59, Math.floor(this.second ?? 0)));
+    return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  }
+
+  get formattedMatchTotalTime(): string {
+    const min = Math.max(0, Math.floor(this.minute ?? 0));
+    const sec = Math.max(0, Math.min(59, Math.floor(this.second ?? 0)));
+    const totalMin = this.period === 2 ? (min < 40 ? 40 + min : min) : min;
+    return `${totalMin.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  }
+
   save(): void {
     if (!this.eventTypeId) {
       this.toastService.warning('Debes seleccionar un tipo de evento');
       return;
     }
 
-    if (this.minute === null || this.minute === undefined || this.minute < 0 || this.minute > 80) {
-      this.toastService.warning('Ingresa un minuto válido (entre 0 y 80)');
+    if (this.minute === null || this.minute === undefined || this.minute < 0) {
+      this.toastService.warning('Ingresa un minuto válido');
+      return;
+    }
+
+    if (this.period === 1 && this.minute > 45) {
+      this.toastService.warning(
+        `El 1° Tiempo no puede superar los 45 minutos. Si el evento ocurrió en el minuto ${this.minute} del partido, seleccioná el 2° Tiempo.`
+      );
+      return;
+    }
+
+    if (this.period === 2 && this.minute > 85) {
+      this.toastService.warning('El 2° Tiempo no puede superar los 85 minutos de partido.');
       return;
     }
 
@@ -63,15 +88,19 @@ export class PostMatchCreateModalComponent {
       return;
     }
 
-    const seconds = Math.floor(this.minute) * 60 + Math.floor(secVal);
+    let matchTimeSeconds = Math.floor(this.minute) * 60 + Math.floor(secVal);
+    if (this.period === 2 && this.minute < 40) {
+      matchTimeSeconds = 2400 + matchTimeSeconds;
+    }
+
     const assignedPlayerId = (this.possession === 'OPPONENT') ? null : (this.playerId.trim() || null);
-    const absoluteSeconds = this.store.estimateAbsoluteTime(seconds, this.period);
+    const absoluteSeconds = this.store.estimateAbsoluteTime(matchTimeSeconds, this.period);
 
     const payload: BackendEventCreationRequest = {
       eventTypeId: this.eventTypeId,
       matchId: this.matchId,
       period: this.period,
-      matchTime: seconds,
+      matchTime: matchTimeSeconds,
       absoluteMatchTime: absoluteSeconds,
       teamPossession: this.possession,
       playerId: assignedPlayerId,
@@ -98,7 +127,7 @@ export class PostMatchCreateModalComponent {
           playerId: assignedPlayerId,
           playerName: playerObj ? playerObj.fullName : null,
           playerJerseyNumber: playerObj ? playerObj.jerseyNumber : null,
-          matchTime: seconds,
+          matchTime: matchTimeSeconds,
           absoluteMatchTime: res.absoluteMatchTime ?? absoluteSeconds,
           period: this.period,
           teamPossession: this.possession,

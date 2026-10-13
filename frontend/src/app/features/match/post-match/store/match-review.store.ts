@@ -326,7 +326,8 @@ export class MatchReviewStore {
         .sort((a, b) => (a.absoluteMatchTime ?? 0) - (b.absoluteMatchTime ?? 0));
       const lastP1 = p1Events.length > 0 ? p1Events[p1Events.length - 1] : null;
       const baseP2 = lastP1?.absoluteMatchTime != null ? lastP1.absoluteMatchTime : 2400;
-      return baseP2 + newMatchTimeSeconds;
+      const elapsedInP2 = newMatchTimeSeconds >= 2400 ? (newMatchTimeSeconds - 2400) : newMatchTimeSeconds;
+      return baseP2 + elapsedInP2;
     }
   }
 

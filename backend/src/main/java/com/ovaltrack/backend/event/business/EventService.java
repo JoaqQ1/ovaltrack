@@ -117,6 +117,8 @@ public class EventService {
 			matchSecurityValidator.validateCanManageMatch(aMatch, authentication);
 		}
 
+		validateMatchTimePeriod(eventRequest.period(), eventRequest.matchTime());
+
 		Person aPerson = resolveEventPlayer(eventRequest.playerId(), aMatch);
 
 		Event result = new Event();
@@ -214,6 +216,10 @@ public class EventService {
 			matchSecurityValidator.validateCanManageMatch(result.getMatch(), authentication);
 		}
 
+		Integer effectivePeriod = eventRequest.period() != null ? eventRequest.period() : result.getPeriod();
+		Integer effectiveMatchTime = eventRequest.matchTime() != null ? eventRequest.matchTime() : result.getMatchTime();
+		validateMatchTimePeriod(effectivePeriod, effectiveMatchTime);
+
 		if (eventRequest.eventTypeId() != null) {
 			EventType aEventType = eventTypeService.findEventTypeEntityById(eventRequest.eventTypeId());
 			if (aEventType == null) {
@@ -276,6 +282,20 @@ public class EventService {
 		match.setHomeScore(homeScore);
 		match.setAwayScore(awayScore);
 		matchRepository.save(match);
+	}
+
+	private void validateMatchTimePeriod(Integer period, Integer matchTime) {
+		if (matchTime != null) {
+			if (matchTime < 0) {
+				throw new BusinessException("El tiempo de juego no puede ser negativo");
+			}
+			if (Integer.valueOf(1).equals(period) && matchTime > 2700) {
+				throw new BusinessException("El tiempo de juego del 1° Tiempo no puede exceder los 45 minutos");
+			}
+			if (Integer.valueOf(2).equals(period) && matchTime > 5100) {
+				throw new BusinessException("El tiempo de juego del 2° Tiempo no puede exceder los 85 minutos");
+			}
+		}
 	}
 
 }
