@@ -10,9 +10,18 @@ import {
   ReviewTimelineLane
 } from '../types/match-review.types';
 
-export const RUGBY_HALF_TIME_MIN = 40;
-export const RUGBY_FULL_TIME_MIN = 80;
-export const EMPTY_TIME_PLACEHOLDER = '--:--:--';
+import {
+  RUGBY_HALF_TIME_MIN,
+  RUGBY_FULL_TIME_MIN,
+  EMPTY_TIME_PLACEHOLDER,
+  estimateAbsoluteTime as estimateAbsoluteTimeUtil,
+  resolveEventColor,
+  formatTimeSeconds,
+  formatAbsoluteTime,
+  formatOnlyTime
+} from '../utils/match-review.utils';
+
+export { RUGBY_HALF_TIME_MIN, RUGBY_FULL_TIME_MIN, EMPTY_TIME_PLACEHOLDER };
 
 @Injectable({
   providedIn: 'root'
@@ -293,89 +302,7 @@ export class MatchReviewStore {
    * de pausas del evento previo más cercano en el mismo período.
    */
   estimateAbsoluteTime(newMatchTimeSeconds: number, period: 1 | 2): number {
-    const raw = this.rawEvents();
-
-    // 1. Filtrar eventos del mismo período con hora absoluta válida
-    const periodEvents = raw
-      .filter(e => (e.period ?? 1) === period && e.absoluteMatchTime != null)
-      .sort((a, b) => (a.matchTime ?? 0) - (b.matchTime ?? 0));
-
-    // 2. Buscar el evento anterior más cercano (matchTime <= newMatchTimeSeconds)
-    const prevEvents = periodEvents.filter(e => (e.matchTime ?? 0) <= newMatchTimeSeconds);
-    const prevEvent = prevEvents.length > 0 ? prevEvents[prevEvents.length - 1] : null;
-
-    if (prevEvent && prevEvent.absoluteMatchTime != null) {
-      const prevMatchTime = prevEvent.matchTime ?? 0;
-      const pauseOffset = Math.max(0, prevEvent.absoluteMatchTime - prevMatchTime);
-      let calculated = newMatchTimeSeconds + pauseOffset;
-
-      // Si coincide exactamente el segundo de juego, sumar 2 segundos para desempatar la secuencia visual
-      if (prevMatchTime === newMatchTimeSeconds) {
-        calculated = Math.max(calculated, prevEvent.absoluteMatchTime + 2);
-      }
-      return calculated;
-    }
-
-    // 3. Fallback si no hay eventos previos en el período:
-    if (period === 1) {
-      return newMatchTimeSeconds;
-    } else {
-      // Si es período 2 y no hay eventos en 2T, anclarse al último evento del 1T
-      const p1Events = raw
-        .filter(e => (e.period ?? 1) === 1 && e.absoluteMatchTime != null)
-        .sort((a, b) => (a.absoluteMatchTime ?? 0) - (b.absoluteMatchTime ?? 0));
-      const lastP1 = p1Events.length > 0 ? p1Events[p1Events.length - 1] : null;
-      const baseP2 = lastP1?.absoluteMatchTime != null ? lastP1.absoluteMatchTime : 2400;
-      const elapsedInP2 = newMatchTimeSeconds >= 2400 ? (newMatchTimeSeconds - 2400) : newMatchTimeSeconds;
-      return baseP2 + elapsedInP2;
-    }
-  }
-
-  // --- Utilidades de Formateo y Colores ---
-
-  private resolveEventColor(name: string): string {
-    const lower = name.toLowerCase();
-    if (lower.includes('try')) return '#2e7d32'; // Verde
-    if (lower.includes('tackle fallado')) return '#2563eb'; // Azul medio (Punto 12)
-    if (lower.includes('tackle')) return '#16324f'; // Azul marino oscuro
-    if (lower.includes('penal') || lower.includes('infracción') || lower.includes('amarilla') || lower.includes('roja')) {
-      return '#b42318'; // Rojo deportivo
-    }
-    if (lower.includes('line') || lower.includes('scrum') || lower.includes('turnover')) {
-      return '#d96a0a'; // Naranja óxido
-    }
-    if (lower.includes('drop') || lower.includes('conversión')) {
-      return '#7c3aed'; // Púrpura
-    }
-    return '#204b22'; // Salvia primario default
-  }
-
-  private formatTimeSeconds(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-
-  private formatAbsoluteTime(totalSeconds: number): string {
-    const total = Math.max(0, Math.floor(totalSeconds));
-    const hours = Math.floor(total / 3600);
-    const mins = Math.floor((total % 3600) / 60);
-    const secs = total % 60;
-    if (hours > 0) {
-      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-
-  private formatOnlyTime(iso: string | null | undefined): string {
-    if (!iso) return EMPTY_TIME_PLACEHOLDER;
-    try {
-      const date = new Date(iso);
-      if (isNaN(date.getTime())) return iso;
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    } catch {
-      return EMPTY_TIME_PLACEHOLDER;
-    }
+    return estimateAbsoluteTimeUtil(this.rawEvents(), newMatchTimeSeconds, period);
   }
 
   // --- Funciones Extraídas (Refactoring Niveles 1 y 2) ---
@@ -388,7 +315,7 @@ export class MatchReviewStore {
 
   private resolveMatchStartTimeFormatted(allEvents: ReviewEventViewModel[], explicitStart: string | null): string {
     if (explicitStart) {
-      return this.formatOnlyTime(explicitStart);
+      return formatOnlyTime(explicitStart);
     }
     return EMPTY_TIME_PLACEHOLDER;
   }
@@ -414,14 +341,14 @@ export class MatchReviewStore {
       id: e.id,
       eventTypeId: e.eventTypeId,
       eventTypeName: eventName,
-      color: this.resolveEventColor(eventName),
+      color: resolveEventColor(eventName),
       period: e.period ?? 1,
       matchTime: seconds,
       minute,
       pct,
-      matchTimeFormatted: this.formatTimeSeconds(seconds),
+      matchTimeFormatted: formatTimeSeconds(seconds),
       absoluteMatchTime: absSeconds,
-      absoluteTimeFormatted: this.formatAbsoluteTime(absSeconds),
+      absoluteTimeFormatted: formatAbsoluteTime(absSeconds),
       playerId: e.playerId ?? null,
       playerName,
       playerJerseyNumber: e.playerJerseyNumber ?? null,
