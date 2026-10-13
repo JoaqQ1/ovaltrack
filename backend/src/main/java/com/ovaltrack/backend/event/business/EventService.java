@@ -32,6 +32,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EventService {
 
+	public static final int MAX_FIRST_HALF_MATCH_SECONDS = 2700; // 45 min (40 reglamentarios + 5 descuento)
+	public static final int MAX_SECOND_HALF_MATCH_SECONDS = 5100; // 85 min (80 reglamentarios + 5 descuento)
+
 	private final EventRepository eventRepository;
 	private final EventTypeService eventTypeService;
 	private final ClubService clubService;
@@ -289,10 +292,10 @@ public class EventService {
 			if (matchTime < 0) {
 				throw new BusinessException("El tiempo de juego no puede ser negativo");
 			}
-			if (Integer.valueOf(1).equals(period) && matchTime > 2700) {
+			if (Integer.valueOf(1).equals(period) && matchTime > MAX_FIRST_HALF_MATCH_SECONDS) {
 				throw new BusinessException("El tiempo de juego del 1° Tiempo no puede exceder los 45 minutos");
 			}
-			if (Integer.valueOf(2).equals(period) && matchTime > 5100) {
+			if (Integer.valueOf(2).equals(period) && matchTime > MAX_SECOND_HALF_MATCH_SECONDS) {
 				throw new BusinessException("El tiempo de juego del 2° Tiempo no puede exceder los 85 minutos");
 			}
 		}
