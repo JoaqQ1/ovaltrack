@@ -1,13 +1,40 @@
 package com.ovaltrack.backend.event.domain.dto;
 
+import java.time.LocalDateTime;
+
 import com.ovaltrack.backend.event.domain.Event;
 import com.ovaltrack.backend.event.domain.EventType;
+import com.ovaltrack.backend.event.domain.dto.event.EventCreationDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventResponseDTO;
 import com.ovaltrack.backend.event.domain.dto.event.MatchTimelineEventResponseDTO;
+import com.ovaltrack.backend.match.domain.Match;
+import com.ovaltrack.backend.person.domain.Person;
 
 public final class EventDTOMapper {
 
     private EventDTOMapper() {
+    }
+
+    public static Event toEntity(EventCreationDTO request, Match match, EventType eventType, Person player) {
+        if (request == null) {
+            return null;
+        }
+
+        Event event = new Event();
+        event.setClientEventId(request.clientEventId());
+        event.setEventType(eventType);
+        event.setMatch(match);
+        event.setPlayer(player);
+        event.setTeamPossession(request.teamPossession());
+        event.setMatchTime(request.matchTime());
+        event.setAbsoluteMatchTime(request.absoluteMatchTime());
+        event.setRealTime(request.realTime() != null ? request.realTime() : LocalDateTime.now());
+        event.setPeriod(request.period());
+        event.setOrigin(request.origin());
+        event.setAttributes(request.attributes());
+        event.setSynchronizedAt(LocalDateTime.now());
+        event.setActive(true);
+        return event;
     }
 
     public static EventResponseDTO toResponseDTO(Event event) {

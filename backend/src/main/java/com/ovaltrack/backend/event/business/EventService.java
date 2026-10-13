@@ -124,20 +124,7 @@ public class EventService {
 
 		Person aPerson = resolveEventPlayer(eventRequest.playerId(), aMatch);
 
-		Event result = new Event();
-		result.setClientEventId(eventRequest.clientEventId());
-		result.setEventType(aEventType);
-		result.setMatch(aMatch);
-		result.setPlayer(aPerson);
-		result.setTeamPossession(eventRequest.teamPossession());
-		result.setMatchTime(eventRequest.matchTime());
-		result.setAbsoluteMatchTime(eventRequest.absoluteMatchTime());
-		result.setRealTime(eventRequest.realTime() != null ? eventRequest.realTime() : LocalDateTime.now());
-		result.setPeriod(eventRequest.period());
-		result.setOrigin(eventRequest.origin());
-		result.setAttributes(eventRequest.attributes());
-		result.setSynchronizedAt(LocalDateTime.now());
-		result.setActive(true);
+		Event result = EventDTOMapper.toEntity(eventRequest, aMatch, aEventType, aPerson);
 
 		Event savedEvent = eventRepository.save(result);
 		recalculateMatchScore(aMatch);
