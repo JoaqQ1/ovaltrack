@@ -31,7 +31,7 @@ When("se presiona el botón Enviar solicitud de acceso", async function () {
     applicant: member,
     club: club,
   };
-  console.log(memberRegistrationDTO)
+  (memberRegistrationDTO)
 
   const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
     method: "POST",
@@ -39,7 +39,7 @@ When("se presiona el botón Enviar solicitud de acceso", async function () {
     body: JSON.stringify(memberRegistrationDTO),
   });
   this.response = await response.json();
-  console.log(this.response)
+  (this.response)
 });
 
 Then(
