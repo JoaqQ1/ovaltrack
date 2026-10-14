@@ -170,7 +170,8 @@ export const routes: Routes = [
         canMatch: [authGuard],
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
-            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            layout: 'wide'
         },
         component: PostMatchComponent
     },

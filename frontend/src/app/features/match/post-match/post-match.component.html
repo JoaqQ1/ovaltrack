@@ -1,4 +1,4 @@
-<div class="app review-dashboard-container">
+<div class="layout-container page">
   <!-- Page Header Integrado OvalTrack -->
   <header class="hud">
     <div class="hud-brand">
@@ -12,8 +12,28 @@
     </div>
 
     <div class="hud-actions">
-      <button type="button" class="btn btn-outline" (click)="comeBack()">
-        <i class="bi bi-arrow-left"></i> Volver a partidos
+      <!-- Secundario a la izquierda -->
+      <button 
+        type="button" 
+        class="btn btn-outline btn-hud" 
+        (click)="comeBack()"
+        aria-label="Volver a partidos"
+        title="Volver a partidos"
+      >
+        <i class="bi bi-arrow-left"></i>
+        <span class="hud-btn-text">Volver a partidos</span>
+      </button>
+
+      <!-- Primario Verde Sólido a la derecha -->
+      <button 
+        type="button" 
+        class="btn-invite btn-hud" 
+        (click)="openCreateModal()"
+        aria-label="Agregar evento"
+        title="Agregar evento"
+      >
+        <i class="bi bi-plus-lg"></i>
+        <span class="hud-btn-text">Agregar evento</span>
       </button>
     </div>
   </header>
@@ -51,4 +71,7 @@
       <app-post-match-panel />
     </aside>
   </div>
+
+  <!-- Modal de Alta de Eventos Post-Partido (HU-8.4) -->
+  <app-post-match-create-modal [isOpen]="showCreateModal()" [matchId]="matchId" (close)="closeCreateModal()" />
 </div>

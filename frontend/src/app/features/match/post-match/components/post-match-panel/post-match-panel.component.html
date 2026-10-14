@@ -18,14 +18,23 @@
           <span class="detail-value">{{ ev.period === 1 ? '1T' : '2T' }}</span>
         </div>
         <div class="detail-row">
-          <span class="detail-label">Hora real</span>
-          <span class="detail-value mono">{{ ev.realTimeFormatted }}</span>
+          <span class="detail-label">Hora absoluta</span>
+          <span class="detail-value mono">{{ ev.absoluteTimeFormatted }}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Posesión</span>
           <span class="detail-value">
             <span class="badge" [ngClass]="ev.teamPossession === 'OPPONENT' ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'">
               {{ ev.teamPossession === 'OPPONENT' ? 'Rival' : (ev.teamPossession === 'NEUTRAL' ? 'Neutral' : 'Propia') }}
+            </span>
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Origen</span>
+          <span class="detail-value">
+            <span class="badge" [ngClass]="ev.isPostMatch ? 'bg-warning-subtle text-warning-emphasis' : 'bg-secondary-subtle text-secondary'">
+              <i class="bi" [ngClass]="ev.isPostMatch ? 'bi-clock-history me-1' : 'bi-broadcast me-1'"></i>
+              {{ ev.isPostMatch ? 'Post-partido' : 'En vivo' }}
             </span>
           </span>
         </div>
@@ -58,15 +67,8 @@
         </div>
       </div>
 
-      <!-- Botonera de Acciones -->
+      <!-- Botonera de Acciones del Evento Seleccionado -->
       <div class="panel-actions-wrapper mt-3">
-        <button *ngIf="store.kpis().unassignedEvents > 0"
-                type="button" 
-                class="btn-next-pending" 
-                (click)="onNextPendingClick()">
-          <i class="bi bi-arrow-down-circle me-1"></i> Siguiente pendiente
-        </button>
-
         <div class="btn-action-row">
           <button type="button" 
                   class="btn btn-sm btn-edit-event" 
@@ -96,6 +98,20 @@
       <h3 class="panel-title text-amber">
         {{ store.kpis().unassignedEvents }} pendientes
       </h3>
+    </div>
+
+    <!-- Botón de Triage / Siguiente Pendiente (SOLID: gestiona la iteración de la cola) -->
+    <div class="queue-action-wrapper mb-3" *ngIf="store.kpis().unassignedEvents > 0">
+      <button type="button" 
+              class="btn btn-triage-next" 
+              (click)="onNextPendingClick()"
+              aria-label="Ir al siguiente evento pendiente de asignación">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-arrow-down-circle-fill text-amber"></i>
+          <span>Siguiente pendiente</span>
+        </div>
+        <span class="triage-count-pill">{{ store.kpis().unassignedEvents }}</span>
+      </button>
     </div>
 
     <!-- Lista de Pendientes Clickable -->
@@ -135,49 +151,64 @@
 <div class="custom-modal-backdrop" *ngIf="showEditModal()">
   <div class="custom-modal-dialog">
     <div class="form-card w-100">
-      <div class="form-card-header d-flex justify-content-between align-items-center pb-3">
-        <h5 class="form-card-title mb-0">
-          Editar Evento
-        </h5>
+      <!-- Header -->
+      <div class="form-card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <div class="header-icon-box">
+            <i class="bi bi-pencil-square text-success"></i>
+          </div>
+          <div>
+            <h5 class="form-card-title mb-0">Editar Evento</h5>
+            <small class="text-muted">Modificación de detalles y reasignación de la jugada</small>
+          </div>
+        </div>
         <button type="button" class="btn-close" (click)="closeEditModal()"></button>
       </div>
+
+      <!-- Body -->
       <div class="form-card-body p-4" *ngIf="store.selectedEvent() as sel">
-        <div class="mb-4">
-          <label class="form-label fw-bold" style="color: #111d0e;">Tipo de Evento</label>
-          <select class="form-control" [(ngModel)]="editEventTypeId">
+        <!-- 1. Tipo de Evento -->
+        <div class="mb-3">
+          <label class="form-label fw-bold form-label-custom">Tipo de Evento *</label>
+          <select class="form-control form-select" [(ngModel)]="editEventTypeId">
             <option *ngFor="let t of store.eventTypesList()" [value]="t.id">
               {{ t.name }} ({{ t.category }})
             </option>
           </select>
         </div>
 
-        <div class="mb-4">
-          <label class="form-label fw-bold" style="color: #111d0e;">Posesión / Equipo</label>
+        <!-- 2. Posesión / Equipo -->
+        <div class="mb-3">
+          <label class="form-label fw-bold form-label-custom">Posesión / Equipo *</label>
           <div class="d-flex gap-2">
             <button type="button" 
-                    class="btn flex-fill fw-bold" 
-                    [ngClass]="editTeamPossession === 'OWN' ? 'btn-success text-white' : 'btn-light border'"
+                    class="btn segment-btn flex-fill" 
+                    [class.segment-btn--active]="editTeamPossession === 'OWN'"
                     (click)="editTeamPossession = 'OWN'; onPossessionChange()">
               Propia (Local)
             </button>
             <button type="button" 
-                    class="btn flex-fill fw-bold" 
-                    [ngClass]="editTeamPossession === 'OPPONENT' ? 'btn-danger text-white' : 'btn-light border'"
+                    class="btn segment-btn flex-fill" 
+                    [class.segment-btn--danger]="editTeamPossession === 'OPPONENT'"
                     (click)="editTeamPossession = 'OPPONENT'; onPossessionChange()">
               Rival (Visitante)
             </button>
             <button type="button" 
-                    class="btn flex-fill fw-bold" 
-                    [ngClass]="editTeamPossession === 'NEUTRAL' ? 'btn-secondary text-white' : 'btn-light border'"
+                    class="btn segment-btn flex-fill" 
+                    [class.segment-btn--neutral]="editTeamPossession === 'NEUTRAL'"
                     (click)="editTeamPossession = 'NEUTRAL'; onPossessionChange()">
               Neutral
             </button>
           </div>
         </div>
 
-        <div class="mb-4">
-          <label class="form-label fw-bold" style="color: #111d0e;">Jugador Asociado</label>
-          <select class="form-control" 
+        <!-- 3. Jugador Asociado -->
+        <div class="mb-3">
+          <label class="form-label fw-bold form-label-custom">
+            Jugador Asociado
+            <span class="fw-normal text-muted small">(opcional)</span>
+          </label>
+          <select class="form-control form-select" 
                   [(ngModel)]="editPlayerId" 
                   [disabled]="editTeamPossession === 'OPPONENT'">
             <option value="">-- Sin asignar (Sin jugador) --</option>
@@ -190,18 +221,27 @@
           </small>
         </div>
 
-        <div class="p-3 bg-light rounded-3 border">
-          <span class="text-muted me-2">Tiempo del evento:</span>
-          <strong>{{ sel.matchTimeFormatted }} ({{ sel.period === 1 ? '1T' : '2T' }})</strong>
+        <!-- 4. Información de Tiempo Registrado -->
+        <div class="event-time-badge-box">
+          <div class="d-flex align-items-center justify-content-between">
+            <span class="text-secondary small fw-bold">
+              <i class="bi bi-clock-history me-1"></i> Tiempo del evento registrado:
+            </span>
+            <span class="badge-tech mono">
+              {{ sel.matchTimeFormatted }} ({{ sel.period === 1 ? '1T' : '2T' }})
+            </span>
+          </div>
         </div>
       </div>
-      <div class="p-4 d-flex justify-content-end gap-3" style="background: #fdfdfd; border-top: 1px solid rgba(0,0,0,0.05);">
-        <button type="button" class="btn-outline m-0" (click)="closeEditModal()" [disabled]="isSubmitting()">
+
+      <!-- Footer -->
+      <div class="modal-footer-actions">
+        <button type="button" class="btn btn-outline" (click)="closeEditModal()" [disabled]="isSubmitting()">
           Cancelar
         </button>
-        <button type="button" class="btn-invite m-0 border-0" style="height: 44px; border-radius: 10px; padding: 0 24px; font-weight: 600;" (click)="saveEditModal()" [disabled]="isSubmitting()">
-          <span *ngIf="isSubmitting()" class="spinner-border spinner-border-sm me-1"></span>
-          Guardar cambios
+        <button type="button" class="btn btn-invite d-flex align-items-center justify-content-center gap-2" (click)="saveEditModal()" [disabled]="isSubmitting()">
+          <span *ngIf="isSubmitting()" class="spinner-border spinner-border-sm"></span>
+          <span>{{ isSubmitting() ? 'Guardando...' : 'Guardar cambios' }}</span>
         </button>
       </div>
     </div>

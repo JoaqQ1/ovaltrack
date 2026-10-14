@@ -1,7 +1,8 @@
 import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatchReviewStore, RUGBY_HALF_TIME_MIN } from '../../store/match-review.store';
+import { MatchReviewStore } from '../../store/match-review.store';
+import { RUGBY_HALF_TIME_MIN } from '../../utils/match-review.utils';
 import { ReviewEventViewModel, ReviewPeriodFilter } from '../../types/match-review.types';
 
 @Component({

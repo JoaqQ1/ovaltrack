@@ -17,7 +17,7 @@
       <div class="table-grid-header">
         <div class="col-period">PERÍODO</div>
         <div class="col-time">TIEMPO</div>
-        <div class="col-realtime">HORA REAL</div>
+        <div class="col-realtime">HORA ABSOLUTA</div>
         <div class="col-type">TIPO DE EVENTO</div>
         <div class="col-player">JUGADOR ASOCIADO</div>
         <div class="col-action">ACCIÓN</div>
@@ -40,12 +40,15 @@
             <span class="time-mono">{{ ev.matchTimeFormatted }}</span>
           </div>
           <div class="col-realtime">
-            <span class="realtime-mono">{{ ev.realTimeFormatted }}</span>
+            <span class="realtime-mono">{{ ev.absoluteTimeFormatted }}</span>
           </div>
           <div class="col-type">
             <span class="event-chip">
               <span class="event-dot" [style.backgroundColor]="ev.color"></span>
               {{ ev.eventTypeName }}
+              <i *ngIf="ev.isPostMatch"
+                 class="bi bi-clock-history ms-1 text-muted"
+                 title="Cargado post-partido"></i>
             </span>
           </div>
           <div class="col-player">

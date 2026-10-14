@@ -1,5 +1,7 @@
 <app-toast-container />
-@if (showNavbar) {
-  <app-navbar />
-}
-<router-outlet />
+<div class="app-shell" [class.layout-wide]="layout.isWide()">
+  @if (showNavbar) {
+    <app-navbar />
+  }
+  <router-outlet />
+</div>
