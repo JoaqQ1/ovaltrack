@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { catchError, forkJoin, of } from 'rxjs';
 import {
   Match,
   MATCH_FILTERS,
@@ -266,6 +267,7 @@ export class MatchSelectComponent implements OnInit {
           // Autoseleccionar la primera división
           this.selectedDivisionId = this.userDivisions[0].id;
           this.loadMatchesForDivision(this.selectedDivisionId);
+          
         }
       });
 
@@ -285,11 +287,22 @@ export class MatchSelectComponent implements OnInit {
       next: (matches) => {
         this.matches = matches;
         this.errorMessage = '';
+        this.cacheRosters(matches);
       },
       error: () => {
         this.errorMessage = 'No se pudieron cargar los partidos de esta división.';
         this.matches = [];
       }
     });
+  }
+
+  private cacheRosters(matches: Match[]): void {
+    if (matches.length === 0) {
+      return;
+    }
+
+    forkJoin(matches.map(match => this.rosterService.getSavedRoster(match.id).pipe(
+      catchError(() => of(null)),
+    ))).subscribe();
   }
 }
