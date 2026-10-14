@@ -263,7 +263,7 @@ VALUES
     false,
     false,
     0,
-    true,
+    false,
     $${
       "forcedTurnover": { "type": "boolean", "required": false }
     }$$::jsonb,
@@ -277,7 +277,7 @@ VALUES
     false,
     false,
     0,
-    true,
+    false,
     $${
       "failReason": { "type": "string", "required": false }
     }$$::jsonb,

@@ -11,12 +11,16 @@
           tu club</p>
       </div>
     </div>
-
+    
     <div class="hud-actions">
       <button type="button" class="btn btn-invite" (click)="openCreateModal()">
         + Crear partido
       </button>
+      <button type="button" class="btn btn-outline" (click)="goToHistory()">
+        Historial de partidos
+      </button>
     </div>
+    
   </header>
 
   <!-- Banner de Error Backend -->
@@ -189,6 +193,7 @@
     </div>
     }
   </div>
+  
 
   <!-- Modal de Creación de Partido -->
   @if (isCreateOpen) {

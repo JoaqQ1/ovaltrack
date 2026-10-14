@@ -10,6 +10,7 @@ import { hasRoleGuard } from './core/guards/has-role.guard';
 import { hasClubGuard } from './core/guards/has-club.guard';
 import { PostMatchComponent } from './features/match/post-match/post-match.component';
 import { DivisionPlayerListComponent } from './features/division-player/list/division-player-list.component';
+import { MatchHistoryComponent } from './features/match/match-selection/match-history.component';
 
 export const routes: Routes = [
     // Raíz: redirige a /home
@@ -173,6 +174,15 @@ export const routes: Routes = [
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
         },
         component: PostMatchComponent
+    },
+    {
+        path: 'match-history',
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+        },
+        component: MatchHistoryComponent
     },
     // Wildcard para rutas no encontradas
     {

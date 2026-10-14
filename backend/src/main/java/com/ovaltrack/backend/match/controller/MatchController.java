@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 @RequestMapping("matches")
 @Tag(name = "Matches", description = "Create, query, update, and delete matches")
 @CrossOrigin(origins = "http://localhost:4200")
-@RequiredArgsConstructor
+@RequiredArgsConstructor 
 public class MatchController {
 
     private final MatchService matchService;

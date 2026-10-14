@@ -32,7 +32,9 @@ public class Match {
     @JoinColumn(name = "division_id", nullable = false)
     private Division division;
 
-    private String opponent;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "opponent_id", nullable = false)
+    private Opponent opponent;
 
     @Enumerated(EnumType.STRING)
     private MatchStatus status;

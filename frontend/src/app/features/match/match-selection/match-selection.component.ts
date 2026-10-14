@@ -41,8 +41,8 @@ export class MatchSelectComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly divisionService = inject(DivisionService);
 
-  /** Filtros disponibles, en el orden en que se renderizan en el control segmentado. */
-  readonly filters = MATCH_FILTERS;
+  /** Filtros disponibles, en el orden en que se renderizan en el control segmentado, menos el finalizado. */
+  readonly filters = MATCH_FILTERS.filter(f => f !== 'finished');
   readonly statusLabels = MATCH_STATUS_LABELS;
 
   matches: Match[] = [];
@@ -59,6 +59,8 @@ export class MatchSelectComponent implements OnInit {
   draft: NewMatchDraft = { date: '', opponent: '' };
   errorMessage = '';
 
+  
+
   /**
    * Se emite cuando el usuario toca un partido de la grilla. Quien use este
    * componente decide qué hacer según el estado (por ejemplo, navegar a la
@@ -72,17 +74,25 @@ export class MatchSelectComponent implements OnInit {
     this.loadUserDivisions();
   }
 
-  /** Partidos visibles según {@link activeFilter}. */
+  
+  goToHistory() {
+    this.router.navigate(['/match-history']);
+  }
+
+  // 3. Modificamos los partidos visibles para que NO muestre los finalizados
   get visibleMatches(): Match[] {
+    // Filtramos los finalizados de la memoria (ahora viven en la otra pantalla)
+    let activeMatches = this.matches.filter(match => match.status !== 'finished');
+
     if (this.activeFilter === 'all') {
-      return this.matches.filter(match => match.status !== 'cancelled');
+      return activeMatches.filter(match => match.status !== 'cancelled');
     }
 
     if (this.activeFilter === 'in_progress') {
-      return this.matches.filter(match => match.status === 'in_progress' || match.status === 'halftime');
+      return activeMatches.filter(match => match.status === 'in_progress' || match.status === 'halftime');
     }
 
-    return this.matches.filter(match => match.status === this.activeFilter);
+    return activeMatches.filter(match => match.status === this.activeFilter);
   }
 
   /** Si el formulario de alta tiene los dos campos requeridos completos. */
@@ -288,4 +298,5 @@ export class MatchSelectComponent implements OnInit {
       }
     });
   }
+
 }
