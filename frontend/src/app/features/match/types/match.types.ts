@@ -51,6 +51,16 @@ export interface NewMatchDraft {
 /** Estados posibles de un partido en el listado. */
 export type MatchStatus = 'empty_roster' | 'not_started' | 'in_progress' | 'halftime' | 'finished' | 'cancelled';
 
+export type PendingMatchAction = 'start' | 'close-first-half' | 'start-second-half' | 'finish';
+
+export interface PendingMatchMutation {
+  id: string;
+  matchId: string;
+  action: PendingMatchAction;
+  createdAt: number;
+  payload?: Record<string, unknown> | null;
+}
+
 /** Filtro del listado: todos los estados más la opción "ver todos". */
 export type MatchFilter = MatchStatus | 'all';
 
