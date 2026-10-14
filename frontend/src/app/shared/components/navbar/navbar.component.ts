@@ -298,15 +298,15 @@ import { ThemeService } from 'src/app/core/services/theme.service';
     }
 
     .btn-outline-danger-custom {
-      background-color: transparent;
-      border: 1.5px solid rgba(239, 68, 68, 0.4);
+      background-color: #131c2e;
+      border: 1px solid #2a3c5a;
       color: #f87171;
     }
 
     .btn-outline-danger-custom:hover {
-      background-color: rgba(239, 68, 68, 0.15);
+      background-color: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.45);
       color: #fca5a5;
-      border-color: #ef4444;
     }
 
     @media (max-width: 600px) {
@@ -426,7 +426,7 @@ import { ThemeService } from 'src/app/core/services/theme.service';
     :host-context([data-theme="light"]) .btn-outline-danger-custom,
     :host-context(.light-theme) .btn-outline-danger-custom {
       background-color: #ffffff;
-      border: 1px solid rgba(180, 35, 24, 0.35);
+      border: 1px solid rgba(32, 75, 34, 0.25);
       color: #b42318;
       box-shadow: 0 2px 6px rgba(20, 45, 20, 0.04);
     }
@@ -434,7 +434,7 @@ import { ThemeService } from 'src/app/core/services/theme.service';
     :host-context([data-theme="light"]) .btn-outline-danger-custom:hover,
     :host-context(.light-theme) .btn-outline-danger-custom:hover {
       background-color: #fef3f2;
-      border-color: #b42318;
+      border-color: rgba(180, 35, 24, 0.4);
       color: #912018;
       box-shadow: 0 3px 8px rgba(180, 35, 24, 0.12);
       transform: translateY(-1px);
