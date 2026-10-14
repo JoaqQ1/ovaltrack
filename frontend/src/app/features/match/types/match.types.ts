@@ -22,9 +22,9 @@ export interface Match {
 export interface BackendMatchResponse {
   id: UUID;
   date: string | null;
-  divisionId: UUID;
+  divisionId: UUID; 
   opponent: string | null;
-  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'HALFTIME' | 'FINISHED' | 'CANCELLED';
+  status: 'EMPTY_ROSTER' | 'NOT_STARTED' | 'IN_PROGRESS' | 'HALFTIME' | 'FINISHED' | 'CANCELLED';
   currentPeriod: number;
   clockElapsedSeconds: number;
   clockPaused: boolean;
@@ -49,7 +49,7 @@ export interface NewMatchDraft {
 }
 
 /** Estados posibles de un partido en el listado. */
-export type MatchStatus = 'not_started' | 'in_progress' | 'halftime' | 'finished' | 'cancelled';
+export type MatchStatus = 'empty_roster' | 'not_started' | 'in_progress' | 'halftime' | 'finished' | 'cancelled';
 
 /** Filtro del listado: todos los estados más la opción "ver todos". */
 export type MatchFilter = MatchStatus | 'all';
@@ -60,6 +60,7 @@ export const MATCH_FILTERS: readonly MatchFilter[] = ['all', 'not_started', 'in_
 /** Etiquetas legibles para cada estado/filtro. */
 export const MATCH_STATUS_LABELS: Record<MatchFilter, string> = {
   all: 'Todos',
+  empty_roster: 'Sin plantel',
   not_started: 'No iniciado',
   in_progress: 'En progreso',
   halftime: 'Entretiempo',
