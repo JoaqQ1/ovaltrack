@@ -43,7 +43,8 @@ export const routes: Routes = [
         canMatch: [authGuard],
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
-            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            preload: true
         },
         loadComponent: () =>
             import('./features/match/halftime-summary/halftime-summary.component').then(
@@ -55,7 +56,8 @@ export const routes: Routes = [
         canMatch: [authGuard],
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
-            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            preload: true
         },
         loadComponent: () =>
             import('./features/match/carga-en-vivo/carga-en-vivo.component').then(
@@ -67,7 +69,8 @@ export const routes: Routes = [
         canMatch: [authGuard],
         canActivate: [hasRoleGuard],
         data: {
-            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            preload: true
         },
         loadComponent: () =>
             import('./features/match/match-selection/match-selection.component').then(
@@ -170,7 +173,8 @@ export const routes: Routes = [
         canMatch: [authGuard],
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
-            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            preload: true
         },
         component: PostMatchComponent
     },
