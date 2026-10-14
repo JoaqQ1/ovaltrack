@@ -122,32 +122,56 @@ export class MatchService {
     action: PendingMatchAction,
     nextLocalStatus: MatchStatus,
   ): Promise<Match> {
-        const cachedMatch = await this.cache.getMatch(matchId);
-        const nextMatch: Match = cachedMatch
-          ? { ...cachedMatch, status: nextLocalStatus }
-          : {
-              id: matchId,
-              status: nextLocalStatus,
-              opponent: '',
-              date: '',
-              divisionId: '',
-              currentPeriod: 1,
-              clockElapsedSeconds: 0,
-              clockPaused: true,
-              currentPossession: 'OWN',
-              homeScore: 0,
-              awayScore: 0,
-            } as Match;
+    const cachedMatch = await this.cache.getMatch(matchId);
+    
+    // Determine updated variables based on the action
+    let currentPeriod = cachedMatch?.currentPeriod ?? 1;
+    let clockPaused = cachedMatch?.clockPaused ?? true;
+    let clockElapsedSeconds = cachedMatch?.clockElapsedSeconds;
 
-        await this.cache.saveMatches([nextMatch]);
-        await this.cache.savePendingMatchMutation({
-          id: `${matchId}-${action}-${Date.now()}`,
-          matchId,
-          action,
-          createdAt: Date.now(),
-        });
+    if (action === 'start-second-half') {
+      currentPeriod = 2;
+      clockPaused = false;
+    } else if (action === 'close-first-half') {
+      clockPaused = true;
+    } else if (action === 'start') {
+      currentPeriod = 1;
+      clockPaused = false;
+    } else if (action === 'finish') {
+      clockPaused = true;
+    }
 
-        return nextMatch;
+    const nextMatch: Match = cachedMatch
+      ? { 
+          ...cachedMatch,
+          status: nextLocalStatus, 
+          currentPeriod, 
+          clockPaused,
+          clockElapsedSeconds 
+        }
+      : {
+          id: matchId,
+          status: nextLocalStatus,
+          opponent: '',
+          date: '',
+          divisionId: '' as any,
+          currentPeriod,
+          clockElapsedSeconds: 0,
+          clockPaused,
+          currentPossession: 'OWN',
+          homeScore: 0,
+          awayScore: 0,
+        } as Match;
+
+    await this.cache.saveMatches([nextMatch]);
+    const mutationId = `${matchId}-latest`;
+    await this.cache.savePendingMatchMutation({
+      id: mutationId,
+      matchId,
+      action,
+      createdAt: Date.now(),
+    });
+    return nextMatch;
   }
 
   deleteMatch(matchId: string): Observable<BackendMatchResponse> {
