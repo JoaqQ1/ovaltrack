@@ -6,9 +6,22 @@ import { BackendEventResponse, LocalMatchEvent } from '../types/event.types';
 import { Match, PendingMatchMutation } from '../types/match.types';
 import { Division } from '../../division/types/division.types';
 import { SavedRoster } from '../types/roster.types';
+import { UserContext } from '../../auth/types/auth.types';
 
 @Injectable({ providedIn: 'root' })
 export class LiveCaptureCacheService {
+
+  saveUserContext(context: UserContext): Promise<void> {
+    return matchDatabase.userContexts.put({
+      ...context,
+      cachedAt: Date.now(),
+    }).then(() => undefined);
+  }
+
+  getUserContext(userId: string): Promise<UserContext | undefined> {
+    return matchDatabase.userContexts.get(userId);
+  }
+
   getMatches(): Promise<Match[]> {
     return matchDatabase.matches.toArray();
   }
@@ -18,8 +31,9 @@ export class LiveCaptureCacheService {
   }
 
   saveMatches(matches: Match[]): Promise<void> {
+    //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     const savedMatches = matches.filter(match => match.status === 'not_started' || match.status === 'in_progress')
-    return matchDatabase.matches.bulkPut(savedMatches).then(() => undefined);
+    return matchDatabase.matches.bulkPut(matches).then(() => undefined);
   }
 
   getMatchesByDivision(divisionId: string): Promise<Match[]> {
@@ -45,7 +59,7 @@ export class LiveCaptureCacheService {
   getRoster(matchId: string): Promise<SavedRoster | undefined> {
     return matchDatabase.rosters.get(matchId);
   }
-
+  
   savePendingMatchMutation(mutation: PendingMatchMutation): Promise<void> {
     return matchDatabase.pendingMatchMutations.put(mutation).then(() => undefined);
   }
