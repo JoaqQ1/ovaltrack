@@ -1,0 +1,31 @@
+info:
+  name: 01 - [200 OK] Listar linea de eventos de partido cerrado (Puerto Madryn)
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/event/match/post-match?matchId={{matchFinishedPuertoMadrynId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{coachToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK con los 300 eventos ordenados de Puerto Madryn", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody()).to.be.an('array');
+          expect(res.getBody().length).to.equal(300);
+          // Guardar el primer evento para los tests de edicion/eliminacion
+          bru.setEnvVar("targetEventId", res.getBody()[0].id);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -18,6 +18,7 @@ import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.user.business.UserService;
 import com.ovaltrack.backend.user.domain.User;
 
+import io.jsonwebtoken.lang.Collections;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -49,8 +50,15 @@ public class ClubService {
         return ClubDTOMapper.toResponseDTO(clubRepository.findById(clubId).orElse(null));
     }
 
-    public Collection<ClubResponseDTO> findClubByStatus(ClubStatus status){
+    public Collection<ClubResponseDTO> findClubByStatus(ClubStatus status) {
         return clubRepository.findAllByStatus(status).stream().map(ClubDTOMapper::toResponseDTO).toList();
+    }
+
+    public Collection<ClubResponseDTO> search(String term) {
+        if (term == null || term.isBlank())
+            return Collections.emptyList();
+        return clubRepository.search("%" + term.toUpperCase() + "%").stream().map(ClubDTOMapper::toResponseDTO)
+                .toList();
     }
 
     @Transactional

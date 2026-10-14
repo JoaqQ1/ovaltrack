@@ -1,0 +1,36 @@
+info:
+  name: 05 - [200 OK] Editar tipo de evento y posesion [PATCH]
+  type: http
+  seq: 5
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/event/{{targetEventId}}"
+  headers:
+    - name: Authorization
+      value: Bearer {{coachToken}}
+  body:
+    type: json
+    data: |-
+      {
+        "eventTypeId": "550e8400-e29b-41d4-a716-446655440106",
+        "teamPossession": "OWN"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 200 OK y actualizar tipo de evento", function() {
+          expect(res.getStatus()).to.equal(200);
+          expect(res.getBody().id).to.equal(bru.getEnvVar("targetEventId"));
+          expect(res.getBody().eventTypeId).to.equal("550e8400-e29b-41d4-a716-446655440106");
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

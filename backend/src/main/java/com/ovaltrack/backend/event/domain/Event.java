@@ -23,6 +23,8 @@ import java.util.UUID;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Event {
 
+    public static final String ORIGIN_POST_CAPTURE = "post_capture";
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include

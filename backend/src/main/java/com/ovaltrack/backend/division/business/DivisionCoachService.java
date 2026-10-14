@@ -32,11 +32,11 @@ public class DivisionCoachService {
     private final UserService userService;
     private final DivisionSecurityValidator divisionSecurityValidator;
 
-    public Collection<DivisionCoachResponseDTO> findDivisionCoachesByDivisionId(UUID divisionId) {
-        return findDivisionCoachesByDivisionId(divisionId, null);
+    public Collection<DivisionCoachResponseDTO> findActiveDivisionCoachesByDivisionId(UUID divisionId) {
+        return findActiveDivisionCoachesByDivisionId(divisionId, null);
     }
 
-    public Collection<DivisionCoachResponseDTO> findDivisionCoachesByDivisionId(UUID divisionId, Authentication authentication) {
+    public Collection<DivisionCoachResponseDTO> findActiveDivisionCoachesByDivisionId(UUID divisionId, Authentication authentication) {
         Division division = divisionService.findDivisionEntityById(divisionId);
         if (division == null) {
             throw new BusinessException("Division no encontrada");
@@ -44,7 +44,7 @@ public class DivisionCoachService {
         if (authentication != null) {
             divisionSecurityValidator.validateCanAccessDivision(division, authentication);
         }
-        return divisionCoachRepository.findDivisionCoachesByDivisionId(divisionId).stream()
+        return divisionCoachRepository.findActiveDivisionCoachesByDivisionId(divisionId).stream()
                 .map(DivisionDTOMapper::toResponseDTO).toList();
     }
 
@@ -62,6 +62,22 @@ public class DivisionCoachService {
 
     public DivisionCoach findDivisionCoachEntityById(UUID divisionCoachId) {
         return divisionCoachRepository.findById(divisionCoachId).orElse(null);
+    }
+
+    public Collection<DivisionCoachResponseDTO> findDivisionCoachesByDivisionIdAndPersonId(UUID divisionId, UUID personId) {
+        return findDivisionCoachesByDivisionIdAndPersonId(divisionId, personId, null);
+    }
+
+    public Collection<DivisionCoachResponseDTO> findDivisionCoachesByDivisionIdAndPersonId(UUID divisionId, UUID personId, Authentication authentication) {
+        Division division = divisionService.findDivisionEntityById(divisionId);
+        if (division == null) {
+            throw new BusinessException("Division no encontrada");
+        }
+        if (authentication != null) {
+            divisionSecurityValidator.validateCanAccessDivision(division, authentication);
+        }
+        return divisionCoachRepository.findDivisionCoachesByDivisionIdAndPersonId(divisionId, personId).stream()
+                .map(DivisionDTOMapper::toResponseDTO).toList();
     }
 
     @Transactional

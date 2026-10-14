@@ -178,6 +178,12 @@ export const routes: Routes = [
     },
     {
         path: 'post-match/:id',
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            layout: 'wide'
+        },
         component: PostMatchComponent
     },
     // Wildcard para rutas no encontradas

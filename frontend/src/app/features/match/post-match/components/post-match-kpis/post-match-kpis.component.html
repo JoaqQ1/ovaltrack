@@ -1,0 +1,23 @@
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <span class="kpi-label">EVENTOS CARGADOS</span>
+    <span class="kpi-value">{{ store.kpis().totalEvents }}</span>
+  </div>
+
+  <div class="kpi-card" [class.kpi-card-warning]="store.kpis().unassignedEvents > 0">
+    <span class="kpi-label">SIN JUGADOR ASIGNADO</span>
+    <span class="kpi-value text-amber">{{ store.kpis().unassignedEvents }}</span>
+  </div>
+
+  <div class="kpi-card">
+    <span class="kpi-label">CARGA COMPLETA</span>
+    <div class="kpi-progress-wrap">
+      <span class="kpi-value">{{ store.kpis().coveragePercentage }}<span class="kpi-unit">%</span></span>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <span class="kpi-label">INICIO REAL</span>
+    <span class="kpi-value kpi-mono">{{ store.kpis().startTimeFormatted }}</span>
+  </div>
+</div>
