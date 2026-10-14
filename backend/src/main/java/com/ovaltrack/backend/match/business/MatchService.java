@@ -198,8 +198,7 @@ public class MatchService {
             validateRosterForStart(match);
         }
 
-        if ((currentStatus == MatchStatus.EMPTY_ROSTER  || currentStatus == MatchStatus.NOT_STARTED) 
-            && targetStatus == MatchStatus.FINISHED) {
+        if (currentStatus == MatchStatus.EMPTY_ROSTER && targetStatus == MatchStatus.FINISHED) {
             throw new BusinessException("No se puede finalizar un partido que no fue empezado");
         }
 
