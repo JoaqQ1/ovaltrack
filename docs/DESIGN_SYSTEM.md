@@ -318,5 +318,60 @@ Cuando decidas abordar y definir el **Modo Oscuro** para estas vistas en una eta
    - Outline Blanco Deportivo (`.btn-outline`): Para acciones secundarias, filtros o cancelar.
    - Rojo destructivo (`.btn-logout`, `.btn-delete`): Reservado para eliminar o cerrar sesión.
 3. **Mantener la consistencia de elevación:** Toda tarjeta, tabla o contenedor de datos debe tener borde de `2px` con radio redondeado (`16px` o `20px`) y sombra de elevación profunda.
-4. **Hit-targets mínimos de 44px a 48px:** Toda área interactiva debe ser fácilmente clickeable en tablet y móvil.
-5. **No romper la pantalla de Carga en Vivo (`/live-capture/:matchId`):** Dicha pantalla es un instrumento de captura en tiempo real y debe mantenerse enfocada en su diseño de alta densidad.
+5. **No alterar ni forzar contenedores en Carga en Vivo ni Entretiempo:** Dichas pantallas (`/live-capture/:matchId` y `/live-capture/:matchId/halftime`) son instrumentos tácticos especializados para tablet en tiempo real; deben mantenerse a pantalla completa y están exentas de `.layout-container`.
+6. **Uso obligatorio de `.layout-container.page`:** Toda nueva pantalla o flujo de gestión debe construirse dentro de `.layout-container.page` para garantizar alineación pixel-perfect con la Navbar.
+
+---
+
+## 7. Arquitectura de Layout y Contenedores Unificados
+
+El sistema de interfaz de OvalTrack implementa una arquitectura de layout fluida y sincronizada entre la barra de navegación superior (`NavbarComponent`) y las vistas de la aplicación, desacoplada mediante variables CSS en el contenedor raíz `.app-shell`:
+
+### 7.1 Tokens de Layout (`:root`)
+```css
+:root {
+  --layout-max: 1180px;   /* Ancho máximo estándar para vistas de gestión */
+  --layout-pad: 24px;     /* Padding lateral en desktop */
+  --layout-pad-y: 24px;   /* Separación superior entre Navbar y contenido */
+}
+
+@media (max-width: 768px) {
+  :root {
+    --layout-pad: 16px;   /* Padding lateral reducido en tablet/móvil */
+    --layout-pad-y: 16px;
+  }
+}
+
+/* Modificador activado en .app-shell para vistas analíticas de alta densidad */
+.layout-wide {
+  --layout-max: 1560px;
+}
+```
+
+### 7.2 Clases de Layout Universales
+1. **`.layout-container`:** Clase compartida utilizada tanto en el interior de la Navbar como en las páginas. Aplica la fórmula moderna:
+   ```css
+   .layout-container {
+     width: min(100% - 2 * var(--layout-pad), var(--layout-max));
+     margin-inline: auto;
+   }
+   ```
+2. **`.page`:** Define el espaciado vertical estandarizado de las páginas ruteadas:
+   ```css
+   .page {
+     padding-block: var(--layout-pad-y) 64px;
+   }
+   ```
+
+### 7.3 Flujo y Reglas de Vistas
+* **Vistas de Gestión (Estándar):**
+  - Club, Divisiones, Miembros, Fixture, Panel de Inicio (`/home`), Admin OvalTrack (`/admin/ovaltrack`).
+  - Utilizan `.layout-container.page` (o `.app` por compatibilidad retroactiva).
+  - Ancho máximo acotado a `1180px` centrado.
+* **Vistas Analíticas Densas (Wide):**
+  - Revisión post-partido (`/post-match/:id`).
+  - Declaran `data: { layout: 'wide' }` en [app.routes.ts](file:///home/gonzalolopez/Documentos/Proyectos/ovaltrack/frontend/src/app/app.routes.ts).
+  - `LayoutService` activa automáticamente la clase `.layout-wide` en `.app-shell`, expandiendo simultáneamente la Navbar y el contenido a `1560px` con alineación vertical milimétrica.
+* **Vistas Especializadas Exentas (Pantalla Completa):**
+  - Captura en vivo (`/live-capture/:matchId`) y Resumen táctico de entretiempo (`/live-capture/:matchId/halftime`).
+  - Ocultan la Navbar y no consumen `.layout-container`, operando al 100% del viewport en tablets.

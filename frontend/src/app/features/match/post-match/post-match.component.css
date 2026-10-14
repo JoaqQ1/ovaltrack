@@ -7,11 +7,6 @@
   display: block;
 }
 
-/* Modificador de contenedor general para el Dashboard */
-.review-dashboard-container {
-  max-width: 1600px !important; /* Más ancho para que respire la gráfica y tabla */
-  padding: 0 32px 100px !important;
-}
 
 /* Layout Principal de Dos Columnas */
 .review-layout {
@@ -58,8 +53,47 @@
   }
 }
 
-@media (max-width: 768px) {
-  .review-dashboard-container {
-    padding: 0 16px 80px !important;
+/* Acciones del HUD */
+.hud-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-hud {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 0 18px;
+  transition: all 0.15s ease;
+}
+
+/* En móvil: botones como íconos táctiles de 44x44px con aria-label */
+@media (max-width: 576px) {
+  .hud-actions {
+    gap: 8px;
+  }
+
+  .btn-hud {
+    padding: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+  }
+
+  .btn-hud .hud-btn-text {
+    display: none;
+  }
+
+  .btn-hud i {
+    font-size: 1.15rem;
+    margin: 0 !important;
   }
 }
+
+

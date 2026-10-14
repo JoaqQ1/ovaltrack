@@ -46,8 +46,9 @@
         #divisionSelect
         id="divisionSelect" 
         class="form-control custom-input dropdown-division" 
+        [value]="selectedDivisionId"
         (change)="onDivisionChange(divisionSelect.value)">
-        <option value="" disabled selected>Selecciona una división...</option>
+        <option value="" disabled [selected]="!selectedDivisionId">Selecciona una división...</option>
         @for (div of userDivisions; track div.id) {
           <option [value]="div.id">{{ div.name }}</option>
         }

@@ -15,6 +15,7 @@ import { PostMatchKpisComponent } from './components/post-match-kpis/post-match-
 import { PostMatchTimelineComponent } from './components/post-match-timeline/post-match-timeline.component';
 import { PostMatchTableComponent } from './components/post-match-table/post-match-table.component';
 import { PostMatchPanelComponent } from './components/post-match-panel/post-match-panel.component';
+import { PostMatchCreateModalComponent } from './components/post-match-create-modal/post-match-create-modal.component';
 
 @Component({
   selector: 'app-post-match',
@@ -24,7 +25,8 @@ import { PostMatchPanelComponent } from './components/post-match-panel/post-matc
     PostMatchKpisComponent,
     PostMatchTimelineComponent,
     PostMatchTableComponent,
-    PostMatchPanelComponent
+    PostMatchPanelComponent,
+    PostMatchCreateModalComponent
   ],
   templateUrl: './post-match.component.html',
   styleUrl: './post-match.component.css'
@@ -54,6 +56,15 @@ export class PostMatchComponent implements OnInit {
   readonly errorMessage = signal<string>('');
   readonly isLoading = signal<boolean>(true);
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
+  readonly showCreateModal = signal<boolean>(false);
+
+  openCreateModal(): void {
+    this.showCreateModal.set(true);
+  }
+
+  closeCreateModal(): void {
+    this.showCreateModal.set(false);
+  }
 
   onEditRequested(): void {
     if (this.panel) {
@@ -78,7 +89,7 @@ export class PostMatchComponent implements OnInit {
   }
 
   loadRoster(): void {
-    this.rosterService.getAvailablePlayers(this.matchId).subscribe({
+    this.rosterService.getMatchRosterPlayers(this.matchId).subscribe({
       next: (players) => {
         this.store.setAvailablePlayers(players);
       },
@@ -168,7 +179,7 @@ export class PostMatchComponent implements OnInit {
           playerName: e.playerId ? 'Jugador' : null,
           playerJerseyNumber: null,
           matchTime: e.matchTime ?? 0,
-          realTime: e.realTime ?? new Date().toISOString(),
+          absoluteMatchTime: e.absoluteMatchTime ?? null,
           period: e.period ?? 1,
           teamPossession: e.teamPossession
         }));

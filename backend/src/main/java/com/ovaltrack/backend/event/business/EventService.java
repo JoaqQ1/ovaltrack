@@ -32,6 +32,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EventService {
 
+	public static final int MAX_FIRST_HALF_MATCH_SECONDS = 2700; // 45 min (40 reglamentarios + 5 descuento)
+	public static final int MAX_SECOND_HALF_MATCH_SECONDS = 5100; // 85 min (80 reglamentarios + 5 descuento)
+
 	private final EventRepository eventRepository;
 	private final EventTypeService eventTypeService;
 	private final ClubService clubService;
@@ -43,7 +46,7 @@ public class EventService {
 	public Collection<EventResponseDTO> findEventsByClubId(UUID clubId) {
 		if (clubService.findClubById(clubId) == null) {
 			throw new BusinessException("Club no encontrado");
-        }
+		}
 		return eventRepository.findEventsByClubId(clubId).stream()
 				.map(EventDTOMapper::toResponseDTO)
 				.toList();
@@ -52,7 +55,7 @@ public class EventService {
 	public Collection<EventResponseDTO> findEventsByDivisionId(UUID divisionId) {
 		if (clubService.findClubById(divisionId) == null) {
 			throw new BusinessException("Division no encontrada");
-        }
+		}
 		return eventRepository.findEventsByDivisionId(divisionId).stream()
 				.map(EventDTOMapper::toResponseDTO)
 				.toList();
@@ -61,7 +64,7 @@ public class EventService {
 	public Collection<EventResponseDTO> findEventsByMatchId(UUID matchId) {
 		if (matchService.findMatchById(matchId) == null) {
 			throw new BusinessException("Partido no encontrado");
-        }
+		}
 		return eventRepository.findEventsByMatchId(matchId).stream()
 				.map(EventDTOMapper::toResponseDTO)
 				.toList();
@@ -91,7 +94,7 @@ public class EventService {
 	}
 
 	@Transactional
-	public EventResponseDTO saveEvent(EventCreationDTO eventRequest) {
+	public EventResponseDTO saveEvent(EventCreationDTO eventRequest, Authentication authentication) {
 		Event existingEvent = findExistingClientEvent(eventRequest.clientEventId(), eventRequest.matchId());
 		if (existingEvent != null) {
 			return EventDTOMapper.toResponseDTO(existingEvent);
@@ -99,40 +102,40 @@ public class EventService {
 
 		EventType aEventType = eventTypeService.findEventTypeEntityById(eventRequest.eventTypeId());
 		if (aEventType == null) {
-			throw new BusinessException("No se puede crear un nuevo evento a partir de un tipo de evento que no existe");
+			throw new BusinessException(
+					"No se puede crear un nuevo evento a partir de un tipo de evento que no existe");
 		}
 
-		Match aMatch = matchService.findMatchEntityById(eventRequest.matchId());
-		if (aMatch == null) {
+		Match match = matchService.findMatchEntityById(eventRequest.matchId());
+		if (match == null) {
 			throw new BusinessException("No se puede asignar un evento a un partido que no existe");
 		}
-		if (aMatch.getStatus() == com.ovaltrack.backend.match.domain.MatchStatus.CANCELLED) {
+		if (match.getStatus() == MatchStatus.CANCELLED) {
 			throw new BusinessException("No se puede asignar un evento a un partido cancelado");
 		}
-		if (aMatch.getStatus() == MatchStatus.FINISHED && !Event.ORIGIN_POST_CAPTURE.equals(eventRequest.origin())) {
-			throw new BusinessException("No se puede cargar eventos mediante esta pantalla para un partido que ya termino");
+		if (match.getStatus() == MatchStatus.FINISHED && !Event.ORIGIN_POST_CAPTURE.equals(eventRequest.origin())) {
+			throw new BusinessException(
+					"No se puede cargar eventos mediante esta pantalla para un partido que ya termino");
 		}
 
-		Person aPerson = resolveEventPlayer(eventRequest.playerId(), aMatch);
+		if (authentication != null) {
+			matchSecurityValidator.validateCanManageMatch(match, authentication);
+		}
 
-		Event result = new Event();
-		result.setClientEventId(eventRequest.clientEventId());
-		result.setEventType(aEventType);
-		result.setMatch(aMatch);
-		result.setPlayer(aPerson);
-		result.setTeamPossession(eventRequest.teamPossession());
-		result.setMatchTime(eventRequest.matchTime());
-		result.setAbsoluteMatchTime(eventRequest.absoluteMatchTime());
-		result.setRealTime(eventRequest.realTime());
-		result.setPeriod(eventRequest.period());
-		result.setOrigin(eventRequest.origin());
-		result.setAttributes(eventRequest.attributes());
-		result.setSynchronizedAt(LocalDateTime.now());
-		result.setActive(true);
+		validateMatchTimePeriod(eventRequest.period(), eventRequest.matchTime());
+
+		Person aPerson = resolveEventPlayer(eventRequest.playerId(), match);
+
+		Event result = EventDTOMapper.toEntity(eventRequest, match, aEventType, aPerson);
 
 		Event savedEvent = eventRepository.save(result);
-		recalculateMatchScore(aMatch);
+		recalculateMatchScore(match);
 		return EventDTOMapper.toResponseDTO(savedEvent);
+	}
+
+	@Transactional
+	public EventResponseDTO saveEvent(EventCreationDTO eventRequest) {
+		return saveEvent(eventRequest, null);
 	}
 
 	private Event findExistingClientEvent(UUID clientEventId, UUID matchId) {
@@ -161,17 +164,22 @@ public class EventService {
 		boolean playerInRoster = match.getRoster().stream()
 				.anyMatch(matchPlayer -> matchPlayer.getDivisionPlayer().getPerson().getId().equals(playerId));
 		if (!playerInRoster) {
-			throw new BusinessException("No se puede asignar un evento a un jugador que no pertenece al plantel del partido");
+			throw new BusinessException(
+					"No se puede asignar un evento a un jugador que no pertenece al plantel del partido");
 		}
 
 		return player;
 	}
 
 	@Transactional
-	public EventResponseDTO deleteEvent(UUID eventId) {
+	public EventResponseDTO deleteEvent(UUID eventId, Authentication authentication) {
 		Event result = eventRepository.findById(eventId).orElse(null);
 		if (result == null) {
 			throw new BusinessException("No se puede eliminar un evento que no existe");
+		}
+
+		if (authentication != null) {
+			matchSecurityValidator.validateCanManageMatch(result.getMatch(), authentication);
 		}
 
 		if (!Boolean.TRUE.equals(result.getActive())) {
@@ -186,11 +194,25 @@ public class EventService {
 	}
 
 	@Transactional
-	public EventResponseDTO updateEvent(UUID eventId, EventUpdateDTO eventRequest) {
+	public EventResponseDTO deleteEvent(UUID eventId) {
+		return deleteEvent(eventId, null);
+	}
+
+	@Transactional
+	public EventResponseDTO updateEvent(UUID eventId, EventUpdateDTO eventRequest, Authentication authentication) {
 		Event result = findEventEntityById(eventId);
 		if (result == null) {
 			throw new BusinessException("No se puede modificar un evento que no existe");
 		}
+
+		if (authentication != null) {
+			matchSecurityValidator.validateCanManageMatch(result.getMatch(), authentication);
+		}
+
+		Integer effectivePeriod = eventRequest.period() != null ? eventRequest.period() : result.getPeriod();
+		Integer effectiveMatchTime = eventRequest.matchTime() != null ? eventRequest.matchTime()
+				: result.getMatchTime();
+		validateMatchTimePeriod(effectivePeriod, effectiveMatchTime);
 
 		if (eventRequest.eventTypeId() != null) {
 			EventType aEventType = eventTypeService.findEventTypeEntityById(eventRequest.eventTypeId());
@@ -200,8 +222,8 @@ public class EventService {
 			result.setEventType(aEventType);
 		}
 
-		Person aPerson = resolveEventPlayer(eventRequest.playerId(), result.getMatch());
-		result.setPlayer(aPerson);
+		Person person = resolveEventPlayer(eventRequest.playerId(), result.getMatch());
+		result.setPlayer(person);
 
 		if (eventRequest.teamPossession() != null) {
 			result.setTeamPossession(eventRequest.teamPossession());
@@ -228,6 +250,11 @@ public class EventService {
 		return EventDTOMapper.toResponseDTO(savedEvent);
 	}
 
+	@Transactional
+	public EventResponseDTO updateEvent(UUID eventId, EventUpdateDTO eventRequest) {
+		return updateEvent(eventId, eventRequest, null);
+	}
+
 	private void recalculateMatchScore(Match match) {
 		int homeScore = 0;
 		int awayScore = 0;
@@ -249,6 +276,20 @@ public class EventService {
 		match.setHomeScore(homeScore);
 		match.setAwayScore(awayScore);
 		matchRepository.save(match);
+	}
+
+	private void validateMatchTimePeriod(Integer period, Integer matchTime) {
+		if (matchTime != null) {
+			if (matchTime < 0) {
+				throw new BusinessException("El tiempo de juego no puede ser negativo");
+			}
+			if (Integer.valueOf(1).equals(period) && matchTime > MAX_FIRST_HALF_MATCH_SECONDS) {
+				throw new BusinessException("El tiempo de juego del 1° Tiempo no puede exceder los 45 minutos");
+			}
+			if (Integer.valueOf(2).equals(period) && matchTime > MAX_SECOND_HALF_MATCH_SECONDS) {
+				throw new BusinessException("El tiempo de juego del 2° Tiempo no puede exceder los 85 minutos");
+			}
+		}
 	}
 
 }

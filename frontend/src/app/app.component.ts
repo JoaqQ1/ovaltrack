@@ -6,6 +6,7 @@ import { environment } from '@environments/environment.docker';
 import { HttpClient } from '@angular/common/http';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
+import { LayoutService } from './core/services/layout.service';
 
 interface PingResponse {
   status: string;
@@ -22,6 +23,7 @@ interface PingResponse {
 export class AppComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
+  readonly layout = inject(LayoutService);
 
   isConnected = false;
   statusMessage = 'Intentando conectar con el backend...';
