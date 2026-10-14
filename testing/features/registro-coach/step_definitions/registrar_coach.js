@@ -9,36 +9,37 @@ Given(
   `el usuario con {string} {string} {string} {string} {string} {string} {string} {string}`,
   async function (
     firstName,
-    lastname,
+    lastName,
     email,
     password,
     birthDate,
-    role,
+    requestedRole,
     clubName,
     clubCity,
   ) {
-    this.coach = { firstName, lastname, email, password, birthDate, role };
-    const response = await fetch(`${BACKEND_URL}/club/search/${clubName}/${clubCity}`);
+    this.coach = { firstName, lastName, email, password, birthDate, requestedRole };
+    const response = await fetch(`${BACKEND_URL}/club/search/${clubName}`);
     let json = await response.json();
-    this.club = json.data;
+    this.club = json.data[0];
   },
 );
 
 When("se presiona el botón Enviar solicitud de acceso", async function () {
   const member = { ...this.coach };
   const club = { ...this.club };
-  const payload = {
+  const memberRegistrationDTO = {
     applicant: member,
     club: club,
   };
+  console.log(memberRegistrationDTO)
 
   const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(memberRegistrationDTO),
   });
-
   this.response = await response.json();
+  console.log(this.response)
 });
 
 Then(
