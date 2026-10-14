@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, from, map, switchMap, throwError } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, catchError, firstValueFrom, from, map, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, NewMatchDraft } from '../types/match.types';
+import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, NewMatchDraft, PendingMatchAction, PendingMatchMutation } from '../types/match.types';
 import { RosterPayload } from '../types/roster.types';
 import { PeriodStatisticDTO } from '../types/statistic.types';
 import { LiveCaptureBootstrapResponse } from '../types/live-capture.types';
@@ -15,6 +15,14 @@ export class MatchService {
   private readonly cache = inject(LiveCaptureCacheService);
   private readonly statisticApiService = inject(StatisticApiService);
   private readonly apiUrl = `${environment.apiUrl}/matches`;
+  private pendingSyncPromise: Promise<void> | null = null;
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {void this.syncPendingMatchMutations();});
+      void this.syncPendingMatchMutations();
+    }
+  }
 
   getAllMatchesByDivisionId(divisionId: string): Observable<Match[]> {
     return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${divisionId}`).pipe(
@@ -48,14 +56,20 @@ export class MatchService {
   }
 
   closeFirstHalf(matchId: string): Observable<Match> {
-    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/close-first-half`, {}).pipe(
-      map(match => this.normalizeMatch(match))
+    return this.transitionMatch(
+      matchId,
+      'close-first-half',
+      () => this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/close-first-half`, {}),
+      'halftime',
     );
   }
 
   startSecondHalf(matchId: string): Observable<Match> {
-    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start-second-half`, {}).pipe(
-      map(match => this.normalizeMatch(match))
+    return this.transitionMatch(
+      matchId,
+      'start-second-half',
+      () => this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start-second-half`, {}),
+      'in_progress',
     );
   }
 
@@ -77,15 +91,63 @@ export class MatchService {
   }
 
   startMatch(matchId: string): Observable<Match> {
-    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start`, {}).pipe(
-      map(match => this.normalizeMatch(match))
-    );
+    return this.transitionMatch(matchId, 'start', () => this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start`, {}), 'in_progress');
   }
 
   finishMatch(matchId: string): Observable<Match> {
-    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/finish`, {}).pipe(
-      map(match => this.normalizeMatch(match))
+    return this.transitionMatch(matchId, 'finish', () => this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/finish`, {}), 'finished');
+  }
+
+  private transitionMatch(
+    matchId: string,
+    action: PendingMatchAction,
+    request: () => Observable<BackendMatchResponse>,
+    nextLocalStatus: MatchStatus,
+  ): Observable<Match> {
+    return request().pipe(
+      map(match => this.normalizeMatch(match)),
+      switchMap(normalizedMatch => from(this.cache.saveMatches([normalizedMatch])).pipe(map(() => normalizedMatch))),
+      catchError((error: HttpErrorResponse) => {
+        if (error.status !== 0) {
+          return throwError(() => error);
+        }
+
+        return from(this.queueOfflineTransition(matchId, action, nextLocalStatus));
+      })
     );
+  }
+
+  private async queueOfflineTransition(
+    matchId: string,
+    action: PendingMatchAction,
+    nextLocalStatus: MatchStatus,
+  ): Promise<Match> {
+        const cachedMatch = await this.cache.getMatch(matchId);
+        const nextMatch: Match = cachedMatch
+          ? { ...cachedMatch, status: nextLocalStatus }
+          : {
+              id: matchId,
+              status: nextLocalStatus,
+              opponent: '',
+              date: '',
+              divisionId: '',
+              currentPeriod: 1,
+              clockElapsedSeconds: 0,
+              clockPaused: true,
+              currentPossession: 'OWN',
+              homeScore: 0,
+              awayScore: 0,
+            } as Match;
+
+        await this.cache.saveMatches([nextMatch]);
+        await this.cache.savePendingMatchMutation({
+          id: `${matchId}-${action}-${Date.now()}`,
+          matchId,
+          action,
+          createdAt: Date.now(),
+        });
+
+        return nextMatch;
   }
 
   deleteMatch(matchId: string): Observable<BackendMatchResponse> {
@@ -132,6 +194,55 @@ export class MatchService {
     return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/live-state`, state).pipe(
       map(match => this.normalizeMatch(match))
     );
+  }
+
+  private async syncPendingMatchMutations(): Promise<void> {
+    if (this.pendingSyncPromise) {
+      return this.pendingSyncPromise;
+    }
+
+    this.pendingSyncPromise = this.flushPendingMatchMutations();
+    try {
+      await this.pendingSyncPromise;
+    } finally {
+      this.pendingSyncPromise = null;
+    }
+  }
+
+  private async flushPendingMatchMutations(): Promise<void> {
+    const pending = await this.cache.getPendingMatchMutations();
+    if (!pending.length || !navigator.onLine) {
+      return;
+    }
+
+    for (const mutation of pending) {
+      try {
+        const endpoint = this.mapMutationEndpoint(mutation);
+        const result = await firstValueFrom(this.http.put<BackendMatchResponse>(endpoint, {}));
+        await this.cache.saveMatches([this.normalizeMatch(result)]);
+        await this.cache.deletePendingMatchMutation(mutation.id);
+      } catch (error) {
+        if (error instanceof HttpErrorResponse && error.status >= 400 && error.status < 500 && error.status !== 401 && error.status !== 403) {
+          await this.cache.deletePendingMatchMutation(mutation.id);
+          continue;
+        }
+
+        // Keep network, authentication, and server failures for a later retry.
+        break;
+      }
+    }
+  }
+
+  private mapMutationEndpoint(mutation: PendingMatchMutation): string {
+    const base = `${this.apiUrl}/${mutation.matchId}`;
+    const endpoints: Record<PendingMatchAction, string> = {
+      start: `${base}/start`,
+      'close-first-half': `${base}/close-first-half`,
+      'start-second-half': `${base}/start-second-half`,
+      finish: `${base}/finish`,
+    };
+
+    return endpoints[mutation.action];
   }
 
 }
