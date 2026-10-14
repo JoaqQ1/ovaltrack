@@ -3,17 +3,20 @@ import { LIVE_CAPTURE_EVENT_TYPES } from './live-capture.mock';
 import { LiveCapturePersistedState } from '../types/live-capture.types';
 import { LiveCaptureEventType } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
-import { Match } from '../types/match.types';
+import { Match, PendingMatchMutation } from '../types/match.types';
 import { Division } from '../../division/types/division.types';
+import { SavedRoster } from '../types/roster.types';
 
 export const MATCH_DATABASE_NAME = 'ovaltrack';
-export const MATCH_DATABASE_VERSION = 3;
+export const MATCH_DATABASE_VERSION = 4;
 export const LIVE_CAPTURE_DATABASE_NAME = 'ovaltrack-live-capture';
 export const LIVE_CAPTURE_DATABASE_VERSION = 4;
 
 export class MatchDatabase extends Dexie {
   matches!: Table<Match, string>;
   divisions!: Table<Division, string>;
+  rosters!: Table<SavedRoster & { matchId: string }, string>;
+  pendingMatchMutations!: Table<PendingMatchMutation, string>;
 
   constructor() {
     super(MATCH_DATABASE_NAME);
@@ -21,6 +24,8 @@ export class MatchDatabase extends Dexie {
     this.version(MATCH_DATABASE_VERSION).stores({
       matches: 'id, divisionId',
       divisions: 'id, clubId',
+      rosters: 'matchId',
+      pendingMatchMutations: 'id, matchId, action, createdAt',
     });
   }
 }
@@ -44,29 +49,7 @@ export const matchDatabase = new MatchDatabase();
 export const liveCaptureDatabase = new LiveCaptureDatabase();
 
 export async function initializeLocalDatabases(): Promise<void> {
-  await Promise.all([seedMissingMatches(), seedEventTypes()]);
-}
-
-export async function seedMissingMatches(): Promise<void> {
-  const existingMatches = await matchDatabase.matches.toArray();
-  const normalizedMatches = existingMatches.map(match => ({
-    ...match,
-    id: isUuid(match.id) ? match.id : crypto.randomUUID(),
-    divisionId: match.divisionId ?? TEMPORARY_DIVISION_ID,
-  }));
-  const knownIds = new Set(normalizedMatches.map(match => match.id));
-
-  await matchDatabase.transaction('rw', matchDatabase.matches, async () => {
-    for (const [index, match] of existingMatches.entries()) {
-      const normalizedMatch = normalizedMatches[index];
-      if (normalizedMatch.id !== match.id) {
-        await matchDatabase.matches.delete(match.id);
-      }
-    }
-    if (normalizedMatches.length > 0) {
-      await matchDatabase.matches.bulkPut([...normalizedMatches]);
-    }
-  });
+  await seedEventTypes();
 }
 
 export async function seedEventTypes(): Promise<void> {
@@ -78,9 +61,3 @@ export async function seedEventTypes(): Promise<void> {
     await liveCaptureDatabase.eventTypes.bulkPut(missingEventTypes);
   }
 }
-
-function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-}
-
-const TEMPORARY_DIVISION_ID = '11111111-1111-1111-1111-000000000020';
