@@ -57,7 +57,7 @@
                        class="form-control font-mono" 
                        [(ngModel)]="minute" 
                        min="0" 
-                       [max]="period === 1 ? 45 : 85" 
+                       [max]="period === 1 ? 40 : 80" 
                        step="1"
                        [placeholder]="period === 1 ? '15' : '10'" />
                 <span class="input-group-text">min</span>
@@ -76,11 +76,11 @@
               </div>
             </div>
           </div>
-          <div class="mt-1 small" [ngClass]="period === 1 && (minute || 0) > 45 ? 'text-danger fw-semibold' : 'text-muted'">
+          <div class="mt-1 small" [ngClass]="period === 1 && (minute || 0) > 40 ? 'text-danger fw-semibold' : 'text-muted'">
             <ng-container *ngIf="period === 1">
-              <span>Tiempo de juego: 1T {{ formattedDisplayTime }} (máx. 45 min)</span>
-              <span *ngIf="(minute || 0) > 45" class="d-block text-danger">
-                &bull; Supera el límite de 45'. Si fue en el min {{ minute }} de partido, seleccioná 2T.
+              <span>Tiempo de juego: 1T {{ formattedDisplayTime }} (máx. 40 min)</span>
+              <span *ngIf="(minute || 0) > 40" class="d-block text-danger">
+                &bull; Supera el límite de 40'. Si fue en el min {{ minute }} de partido, seleccioná 2T.
               </span>
             </ng-container>
             <ng-container *ngIf="period === 2">

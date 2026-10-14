@@ -26,6 +26,7 @@ import com.ovaltrack.backend.event.domain.EventPossession;
 import com.ovaltrack.backend.event.domain.EventType;
 import com.ovaltrack.backend.event.domain.dto.event.EventCreationDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventResponseDTO;
+import com.ovaltrack.backend.event.domain.dto.event.EventUpdateDTO;
 import com.ovaltrack.backend.event.domain.dto.event.MatchTimelineEventResponseDTO;
 import com.ovaltrack.backend.event.repository.EventRepository;
 import com.ovaltrack.backend.match.business.MatchSecurityValidator;
@@ -34,6 +35,7 @@ import com.ovaltrack.backend.match.domain.Match;
 import com.ovaltrack.backend.match.domain.MatchStatus;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 import com.ovaltrack.backend.person.business.PersonService;
+import com.ovaltrack.backend.person.domain.Person;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EventService Unit Tests (HU-8.4)")
@@ -254,8 +256,8 @@ class EventServiceTest {
     }
 
     @Test
-    @DisplayName("saveEvent: Lanza BusinessException si período 1 excede los 45 minutos (2700s)")
-    void saveEvent_shouldThrowBusinessException_whenPeriod1Exceeds45Minutes() {
+    @DisplayName("saveEvent: Lanza BusinessException si período 1 excede los 40 minutos (2400s)")
+    void saveEvent_shouldThrowBusinessException_whenPeriod1Exceeds40Minutes() {
         UUID matchId = UUID.randomUUID();
         UUID eventTypeId = UUID.randomUUID();
 
@@ -268,10 +270,10 @@ class EventServiceTest {
         match.setStatus(MatchStatus.FINISHED);
         when(matchService.findMatchEntityById(matchId)).thenReturn(match);
 
-        // 60 minutos en el 1T = 3600s (> 2700s)
+        // 45 minutos en el 1T = 2700s (> 2400s)
         EventCreationDTO request = new EventCreationDTO(
                 eventTypeId, matchId, null, null, EventPossession.OWN,
-                3600, null, null, 1, Event.ORIGIN_POST_CAPTURE, null, null
+                2700, null, null, 1, Event.ORIGIN_POST_CAPTURE, null, null
         );
 
         BusinessException ex = assertThrows(BusinessException.class, () -> eventService.saveEvent(request));
@@ -279,8 +281,8 @@ class EventServiceTest {
     }
 
     @Test
-    @DisplayName("saveEvent: Lanza BusinessException si período 2 excede los 85 minutos (5100s)")
-    void saveEvent_shouldThrowBusinessException_whenPeriod2Exceeds85Minutes() {
+    @DisplayName("saveEvent: Lanza BusinessException si período 2 excede los 80 minutos (4800s)")
+    void saveEvent_shouldThrowBusinessException_whenPeriod2Exceeds80Minutes() {
         UUID matchId = UUID.randomUUID();
         UUID eventTypeId = UUID.randomUUID();
 
@@ -293,10 +295,10 @@ class EventServiceTest {
         match.setStatus(MatchStatus.FINISHED);
         when(matchService.findMatchEntityById(matchId)).thenReturn(match);
 
-        // 90 minutos de partido = 5400s (> 5100s)
+        // 85 minutos de partido = 5100s (> 4800s)
         EventCreationDTO request = new EventCreationDTO(
                 eventTypeId, matchId, null, null, EventPossession.OWN,
-                5400, null, null, 2, Event.ORIGIN_POST_CAPTURE, null, null
+                5100, null, null, 2, Event.ORIGIN_POST_CAPTURE, null, null
         );
 
         BusinessException ex = assertThrows(BusinessException.class, () -> eventService.saveEvent(request));
@@ -304,8 +306,8 @@ class EventServiceTest {
     }
 
     @Test
-    @DisplayName("saveEvent: Permite guardar evento en el 1T a los 42 minutos por descuento de juego activo")
-    void saveEvent_shouldSucceed_whenPeriod1Is42MinutesWithStoppageTime() {
+    @DisplayName("saveEvent: Permite guardar evento en el 1T a los 40 minutos reglamentarios (2400s)")
+    void saveEvent_shouldSucceed_whenPeriod1Is40Minutes() {
         UUID matchId = UUID.randomUUID();
         UUID eventTypeId = UUID.randomUUID();
 
@@ -320,10 +322,10 @@ class EventServiceTest {
         match.setStatus(MatchStatus.FINISHED);
         when(matchService.findMatchEntityById(matchId)).thenReturn(match);
 
-        // 42 minutos = 2520s (permitido <= 2700s)
+        // 40 minutos = 2400s (permitido <= 2400s)
         EventCreationDTO request = new EventCreationDTO(
                 eventTypeId, matchId, null, null, EventPossession.OWN,
-                2520, 2600, null, 1, Event.ORIGIN_POST_CAPTURE, null, null
+                2400, 2400, null, 1, Event.ORIGIN_POST_CAPTURE, null, null
         );
 
         Event savedEvent = new Event();
@@ -331,8 +333,8 @@ class EventServiceTest {
         savedEvent.setEventType(eventType);
         savedEvent.setMatch(match);
         savedEvent.setPeriod(1);
-        savedEvent.setMatchTime(2520);
-        savedEvent.setAbsoluteMatchTime(2600);
+        savedEvent.setMatchTime(2400);
+        savedEvent.setAbsoluteMatchTime(2400);
         savedEvent.setTeamPossession(EventPossession.OWN);
         savedEvent.setOrigin(Event.ORIGIN_POST_CAPTURE);
 
@@ -340,7 +342,139 @@ class EventServiceTest {
 
         EventResponseDTO res = eventService.saveEvent(request);
         assertNotNull(res);
-        assertEquals(2520, res.matchTime());
-        assertEquals(2600, res.absoluteMatchTime());
+        assertEquals(2400, res.matchTime());
+        assertEquals(2400, res.absoluteMatchTime());
+    }
+
+    @Test
+    @DisplayName("saveEvent: Lanza BusinessException si se asigna un jugador a un evento del equipo rival")
+    void saveEvent_shouldThrowBusinessException_whenOpponentEventHasPlayer() {
+        UUID matchId = UUID.randomUUID();
+        UUID eventTypeId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+
+        EventType eventType = new EventType();
+        eventType.setId(eventTypeId);
+        when(eventTypeService.findEventTypeEntityById(eventTypeId)).thenReturn(eventType);
+
+        Match match = new Match();
+        match.setId(matchId);
+        match.setStatus(MatchStatus.FINISHED);
+        when(matchService.findMatchEntityById(matchId)).thenReturn(match);
+
+        EventCreationDTO request = new EventCreationDTO(
+                eventTypeId, matchId, null, playerId, EventPossession.OPPONENT,
+                1200, 1200, null, 1, Event.ORIGIN_POST_CAPTURE, null, null
+        );
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> eventService.saveEvent(request));
+        assertTrue(ex.getMessage().contains("No se puede asignar un jugador a un evento del equipo rival"));
+    }
+
+    @Test
+    @DisplayName("saveEvent: Permite registrar evento del equipo rival sin jugador asignado")
+    void saveEvent_shouldSucceed_whenOpponentEventHasNullPlayer() {
+        UUID matchId = UUID.randomUUID();
+        UUID eventTypeId = UUID.randomUUID();
+
+        EventType eventType = new EventType();
+        eventType.setId(eventTypeId);
+        eventType.setName("Try Rival");
+        eventType.setIsScoring(true);
+        eventType.setPoints(5);
+        when(eventTypeService.findEventTypeEntityById(eventTypeId)).thenReturn(eventType);
+
+        Match match = new Match();
+        match.setId(matchId);
+        match.setStatus(MatchStatus.FINISHED);
+        when(matchService.findMatchEntityById(matchId)).thenReturn(match);
+
+        EventCreationDTO request = new EventCreationDTO(
+                eventTypeId, matchId, null, null, EventPossession.OPPONENT,
+                1500, 1500, null, 1, Event.ORIGIN_POST_CAPTURE, null, null
+        );
+
+        Event savedEvent = new Event();
+        savedEvent.setId(UUID.randomUUID());
+        savedEvent.setEventType(eventType);
+        savedEvent.setMatch(match);
+        savedEvent.setPeriod(1);
+        savedEvent.setMatchTime(1500);
+        savedEvent.setTeamPossession(EventPossession.OPPONENT);
+        savedEvent.setOrigin(Event.ORIGIN_POST_CAPTURE);
+
+        when(eventRepository.save(any(Event.class))).thenReturn(savedEvent);
+
+        EventResponseDTO res = eventService.saveEvent(request);
+        assertNotNull(res);
+        assertNull(res.playerId());
+        assertEquals(EventPossession.OPPONENT, res.teamPossession());
+    }
+
+    @Test
+    @DisplayName("updateEvent: Lanza BusinessException si se intenta asignar jugador a un evento del equipo rival")
+    void updateEvent_shouldThrowBusinessException_whenOpponentEventHasPlayer() {
+        UUID eventId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+
+        Match match = new Match();
+        match.setId(UUID.randomUUID());
+
+        Event existingEvent = new Event();
+        existingEvent.setId(eventId);
+        existingEvent.setMatch(match);
+        existingEvent.setTeamPossession(EventPossession.OPPONENT);
+        existingEvent.setPeriod(1);
+        existingEvent.setMatchTime(1000);
+
+        when(eventRepository.findActiveEventById(eventId)).thenReturn(existingEvent);
+
+        EventUpdateDTO updateDTO = new EventUpdateDTO(
+                null, playerId, null, null, null, null, null, null, null
+        );
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> eventService.updateEvent(eventId, updateDTO));
+        assertTrue(ex.getMessage().contains("No se puede asignar un jugador a un evento del equipo rival"));
+    }
+
+    @Test
+    @DisplayName("updateEvent: Limpia el jugador si la posesión cambia a OPPONENT")
+    void updateEvent_shouldClearPlayer_whenPossessionChangedToOpponent() {
+        UUID eventId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+
+        Match match = new Match();
+        match.setId(UUID.randomUUID());
+
+        Person person = new Person();
+        person.setId(playerId);
+        person.setFirstName("Juan");
+        person.setLastName("Perez");
+
+        EventType eventType = new EventType();
+        eventType.setId(UUID.randomUUID());
+        eventType.setIsScoring(false);
+
+        Event existingEvent = new Event();
+        existingEvent.setId(eventId);
+        existingEvent.setMatch(match);
+        existingEvent.setEventType(eventType);
+        existingEvent.setTeamPossession(EventPossession.OWN);
+        existingEvent.setPlayer(person);
+        existingEvent.setPeriod(1);
+        existingEvent.setMatchTime(1000);
+
+        when(eventRepository.findActiveEventById(eventId)).thenReturn(existingEvent);
+        when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        EventUpdateDTO updateDTO = new EventUpdateDTO(
+                null, null, EventPossession.OPPONENT, null, null, null, null, null, null
+        );
+
+        EventResponseDTO res = eventService.updateEvent(eventId, updateDTO);
+        assertNotNull(res);
+        assertNull(res.playerId());
+        assertEquals(EventPossession.OPPONENT, res.teamPossession());
+        assertNull(existingEvent.getPlayer());
     }
 }

@@ -70,15 +70,15 @@ export class PostMatchCreateModalComponent {
       return;
     }
 
-    if (this.period === 1 && this.minute > 45) {
+    if (this.period === 1 && this.minute > 40) {
       this.toastService.warning(
-        `El 1° Tiempo no puede superar los 45 minutos. Si el evento ocurrió en el minuto ${this.minute} del partido, seleccioná el 2° Tiempo.`
+        `El 1° Tiempo no puede superar los 40 minutos. Si el evento ocurrió en el minuto ${this.minute} del partido, seleccioná el 2° Tiempo.`
       );
       return;
     }
 
-    if (this.period === 2 && this.minute > 85) {
-      this.toastService.warning('El 2° Tiempo no puede superar los 85 minutos de partido.');
+    if (this.period === 2 && this.minute > 80) {
+      this.toastService.warning('El 2° Tiempo no puede superar los 80 minutos de partido.');
       return;
     }
 
