@@ -22,6 +22,10 @@ export class LiveCaptureCacheService {
     return matchDatabase.userContexts.get(userId);
   }
 
+  clearUserContext(userId: string): Promise<void> {
+    return matchDatabase.userContexts.delete(userId).then(() => undefined);
+  }
+
   getMatches(): Promise<Match[]> {
     return matchDatabase.matches.toArray();
   }
