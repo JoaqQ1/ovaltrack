@@ -1,15 +1,17 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, map, of, from, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Match } from '../types/match.types';
 import { AvailablePlayer, BackendRosterResponse, RosterPayload, SavedRoster, SaveRosterRequestDTO } from '../types/roster.types';
+import { LiveCaptureCacheService } from './live-capture-cache.service';
 
 @Injectable({ providedIn: 'root' })
 export class RosterService {
   private readonly http = inject(HttpClient);
   private readonly matchesUrl = `${environment.apiUrl}/matches`;
-
+  private readonly cache = inject(LiveCaptureCacheService);
+  
   getAvailablePlayers(matchId: string): Observable<AvailablePlayer[]> {
     return this.http.get<Match>(`${this.matchesUrl}/${matchId}`).pipe(
       switchMap(match => {
@@ -31,12 +33,29 @@ export class RosterService {
   }
 
   getSavedRoster(matchId: string): Observable<SavedRoster | null> {
-    return this.http.get<BackendRosterResponse>(`${this.matchesUrl}/${matchId}/roster`).pipe(
+    return this.http.get<BackendRosterResponse>(
+      `${this.matchesUrl}/${matchId}/roster`
+    ).pipe(
       map(response => ({
         startingPlayers: response.startingPlayers ?? response.titularesIds ?? [],
-        substitutePlayers: response.substitutePlayers ?? response.suplentesIds ?? []
+        substitutePlayers: response.substitutePlayers ?? response.suplentesIds ?? [],
       })),
-      catchError(error => error.status === 404 ? of(null) : throwError(() => error))
+      switchMap(roster =>
+        from(this.cache.saveRoster(matchId, roster)).pipe(
+          map(() => roster)
+        )
+      ),
+      catchError(error => {
+        if (error.status === 404) {
+          return of(null);
+        }
+
+        return from(this.cache.getRoster(matchId)).pipe(
+          map(roster => roster ?? null)
+        );
+      })
     );
   }
+
+
 }
