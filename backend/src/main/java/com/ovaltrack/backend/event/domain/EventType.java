@@ -45,7 +45,9 @@ public class EventType {
     private Boolean isActive = true;
 
     private String code;
+
     private Boolean showInPalette;
+    
     private UUID followUpEventTypeId; // UUID plano, sin @ManyToOne
 
     @JdbcTypeCode(SqlTypes.JSON)
