@@ -67,19 +67,8 @@
         </div>
       </div>
 
-      <!-- Botonera de Acciones -->
+      <!-- Botonera de Acciones del Evento Seleccionado -->
       <div class="panel-actions-wrapper mt-3">
-        <!-- Deja de ser botón: enlace contextual interactivo de triage -->
-        <button *ngIf="store.kpis().unassignedEvents > 0"
-                type="button" 
-                class="link-next-pending" 
-                (click)="onNextPendingClick()"
-                aria-label="Ir al siguiente evento pendiente de asignación">
-          <i class="bi bi-arrow-down-circle"></i>
-          <span>Siguiente pendiente</span>
-          <span class="pending-count-pill">{{ store.kpis().unassignedEvents }}</span>
-        </button>
-
         <div class="btn-action-row">
           <button type="button" 
                   class="btn btn-sm btn-edit-event" 
@@ -109,6 +98,20 @@
       <h3 class="panel-title text-amber">
         {{ store.kpis().unassignedEvents }} pendientes
       </h3>
+    </div>
+
+    <!-- Botón de Triage / Siguiente Pendiente (SOLID: gestiona la iteración de la cola) -->
+    <div class="queue-action-wrapper mb-3" *ngIf="store.kpis().unassignedEvents > 0">
+      <button type="button" 
+              class="btn btn-triage-next" 
+              (click)="onNextPendingClick()"
+              aria-label="Ir al siguiente evento pendiente de asignación">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-arrow-down-circle-fill text-amber"></i>
+          <span>Siguiente pendiente</span>
+        </div>
+        <span class="triage-count-pill">{{ store.kpis().unassignedEvents }}</span>
+      </button>
     </div>
 
     <!-- Lista de Pendientes Clickable -->
