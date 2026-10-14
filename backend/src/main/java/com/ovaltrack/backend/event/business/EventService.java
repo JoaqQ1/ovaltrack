@@ -106,6 +106,8 @@ public class EventService {
 					"No se puede crear un nuevo evento a partir de un tipo de evento que no existe");
 		}
 
+		EventRules.validateAttributes(aEventType, eventRequest.attributes());
+		
 		Match match = matchService.findMatchEntityById(eventRequest.matchId());
 		if (match == null) {
 			throw new BusinessException("No se puede asignar un evento a un partido que no existe");
@@ -209,6 +211,8 @@ public class EventService {
 			matchSecurityValidator.validateCanManageMatch(result.getMatch(), authentication);
 		}
 
+		EventRules.validateAttributes(result.getEventType(), eventRequest.attributes());
+
 		Integer effectivePeriod = eventRequest.period() != null ? eventRequest.period() : result.getPeriod();
 		Integer effectiveMatchTime = eventRequest.matchTime() != null ? eventRequest.matchTime()
 				: result.getMatchTime();
@@ -261,7 +265,7 @@ public class EventService {
 
 		for (Event event : eventRepository.findEventsByMatchId(match.getId())) {
 			EventType eventType = event.getEventType();
-			if (!Boolean.TRUE.equals(eventType.getIsScoring())) {
+			if (!EventRules.countsAsScoring(eventType, event.getAttributes())) {
 				continue;
 			}
 

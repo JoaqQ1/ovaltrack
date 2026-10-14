@@ -137,6 +137,17 @@ export const routes: Routes = [
         component: DivisionPlayerFormComponent
     },
     {
+        path: 'division-player-user-query',
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+        },
+        canMatch: [authGuard],
+        loadComponent: () =>
+            import('./features/division-player/user-query/division-player-user-query.component')
+                .then(m => m.DivisionPlayerUserQueryComponent)
+    },
+    {
         path: 'members',
         canMatch: [authGuard],
         canActivate: [hasRoleGuard, hasClubGuard],
