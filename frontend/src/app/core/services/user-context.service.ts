@@ -83,6 +83,12 @@ Previous loadUserContext
   }
 
   clear(): void {
+    const tokenPayload = this.tokenService.getPayload();
     this.contextSignal.set(null);
+    if (!tokenPayload) {
+      return;
+    }
+
+    this.cache.clearUserContext(tokenPayload.userId);
   }
 }
