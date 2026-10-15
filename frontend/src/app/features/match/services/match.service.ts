@@ -15,13 +15,8 @@ export class MatchService {
   private readonly cache = inject(LiveCaptureCacheService);
   private readonly statisticApiService = inject(StatisticApiService);
   private readonly apiUrl = `${environment.apiUrl}/matches`;
-  private pendingSyncPromise: Promise<void> | null = null;
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('online', () => {void this.syncPendingMatchMutations();});
-      void this.syncPendingMatchMutations();
-    }
   }
 
   getAllMatchesByDivisionId(divisionId: string): Observable<Match[]> {
@@ -124,10 +119,9 @@ export class MatchService {
   ): Promise<Match> {
     const cachedMatch = await this.cache.getMatch(matchId);
     
-    // Determine updated variables based on the action
     let currentPeriod = cachedMatch?.currentPeriod ?? 1;
     let clockPaused = cachedMatch?.clockPaused ?? true;
-    let clockElapsedSeconds = cachedMatch?.clockElapsedSeconds;
+    let clockElapsedSeconds = cachedMatch?.clockElapsedSeconds ?? 0;
 
     if (action === 'start-second-half') {
       currentPeriod = 2;
@@ -164,6 +158,8 @@ export class MatchService {
         } as Match;
 
     await this.cache.saveMatches([nextMatch]);
+
+    // COLLAPSING MUTATIONS: Use a fixed ID per match so only the latest state change is preserved
     const mutationId = `${matchId}-latest`;
     await this.cache.savePendingMatchMutation({
       id: mutationId,
@@ -171,6 +167,7 @@ export class MatchService {
       action,
       createdAt: Date.now(),
     });
+
     return nextMatch;
   }
 
@@ -218,55 +215,6 @@ export class MatchService {
     return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/live-state`, state).pipe(
       map(match => this.normalizeMatch(match))
     );
-  }
-
-  private async syncPendingMatchMutations(): Promise<void> {
-    if (this.pendingSyncPromise) {
-      return this.pendingSyncPromise;
-    }
-
-    this.pendingSyncPromise = this.flushPendingMatchMutations();
-    try {
-      await this.pendingSyncPromise;
-    } finally {
-      this.pendingSyncPromise = null;
-    }
-  }
-
-  private async flushPendingMatchMutations(): Promise<void> {
-    const pending = await this.cache.getPendingMatchMutations();
-    if (!pending.length || !navigator.onLine) {
-      return;
-    }
-
-    for (const mutation of pending) {
-      try {
-        const endpoint = this.mapMutationEndpoint(mutation);
-        const result = await firstValueFrom(this.http.put<BackendMatchResponse>(endpoint, {}));
-        await this.cache.saveMatches([this.normalizeMatch(result)]);
-        await this.cache.deletePendingMatchMutation(mutation.id);
-      } catch (error) {
-        if (error instanceof HttpErrorResponse && error.status >= 400 && error.status < 500 && error.status !== 401 && error.status !== 403) {
-          await this.cache.deletePendingMatchMutation(mutation.id);
-          continue;
-        }
-
-        // Keep network, authentication, and server failures for a later retry.
-        break;
-      }
-    }
-  }
-
-  private mapMutationEndpoint(mutation: PendingMatchMutation): string {
-    const base = `${this.apiUrl}/${mutation.matchId}`;
-    const endpoints: Record<PendingMatchAction, string> = {
-      start: `${base}/start`,
-      'close-first-half': `${base}/close-first-half`,
-      'start-second-half': `${base}/start-second-half`,
-      finish: `${base}/finish`,
-    };
-
-    return endpoints[mutation.action];
   }
 
 }
