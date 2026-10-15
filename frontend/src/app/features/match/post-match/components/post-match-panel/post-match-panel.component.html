@@ -180,29 +180,30 @@
                 playerId: ev.playerId
               }"
               [showTimeFields]="false"
+              [showEnrichmentFields]="true"
               (formChange)="onFormChange($event)"
             />
 
-            <div class="mt-3 d-flex justify-content-between align-items-center">
+            <div class="panel-edit-footer">
               <button type="button" 
-                      class="btn btn-sm btn-outline-sport" 
+                      class="btn-panel-action btn-panel-back" 
                       (click)="activeTab.set('view')">
-                Volver a Ver
+                <i class="bi bi-arrow-left me-1"></i> Volver a Ver
               </button>
               <button type="button" 
                       class="btn-panel-action btn-panel-delete" 
                       (click)="openDeleteModal()">
-                Eliminar evento
+                <i class="bi bi-trash3 me-1"></i> Eliminar evento
               </button>
             </div>
           </ng-container>
         </div>
 
         <!-- 3. Divisor Horizontal -->
-        <div class="inspector-divider"></div>
+        <div class="inspector-divider" *ngIf="activeTab() === 'view'"></div>
 
         <!-- 4. Sección Cola de Revisión Integrada -->
-        <div class="queue-section">
+        <div class="queue-section" *ngIf="activeTab() === 'view'">
           <div class="queue-section-header">
             <span class="section-label">COLA DE REVISIÓN</span>
           </div>
@@ -228,7 +229,7 @@
 
           <!-- Lista de Tarjetas de Eventos Pendientes -->
           <div class="queue-cards-list" *ngIf="store.pendingQueue().length > 0">
-            <div *ngFor="let item of store.pendingQueue().slice(0, 5)" 
+            <div *ngFor="let item of store.pendingQueue().slice(0, 6)" 
                  class="queue-card-item" 
                  [class.selected]="item.id === store.selectedEventId()"
                  (click)="store.selectEvent(item.id)">
@@ -236,8 +237,8 @@
               <span class="qc-name">{{ item.eventTypeName }}</span>
               <span class="qc-period">{{ item.period === 1 ? '1T' : '2T' }}</span>
             </div>
-            <div *ngIf="store.pendingQueue().length > 5" class="queue-more-hint">
-              +{{ store.pendingQueue().length - 5 }} más en la tabla
+            <div *ngIf="store.pendingQueue().length > 6" class="queue-more-hint">
+              +{{ store.pendingQueue().length - 6 }} más en la tabla
             </div>
           </div>
 

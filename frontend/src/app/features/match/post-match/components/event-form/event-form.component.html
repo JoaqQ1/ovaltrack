@@ -109,4 +109,101 @@
       <span *ngIf="period() === 2">Tiempo de juego: 2T {{ formattedDisplayTime }} &bull; Equivale al <strong>minuto {{ formattedMatchTotalTime }}</strong> de partido</span>
     </div>
   </ng-container>
+
+  <!-- 5. Enriquecimiento Táctico y Notas (Andamiaje preparado para HU compañero) -->
+  <ng-container *ngIf="showEnrichmentFields">
+    <div class="enrichment-divider"></div>
+    <div class="enrichment-section">
+      <div class="enrichment-header">
+        <span class="enrichment-badge">DETALLES TÁCTICOS</span>
+        <span class="enrichment-optional">(OPCIONAL)</span>
+      </div>
+
+      <!-- Causa reglamentaria si es Penal o Tarjeta -->
+      <div class="form-group mb-2" *ngIf="isDisciplinaryOrPenalty()">
+        <label class="form-label-sport">Causa reglamentaria</label>
+        <select class="form-select custom-sport-select"
+                [ngModel]="infractionCause()"
+                (ngModelChange)="onInfractionCauseChange($event)"
+                [disabled]="disabled">
+          <option value="">Seleccionar causa raíz...</option>
+          <option value="Offside / Fuera de juego">Offside / Fuera de juego</option>
+          <option value="No liberar en ruck">No liberar en ruck</option>
+          <option value="No soltar al jugador tackleado">No soltar al jugador tackleado</option>
+          <option value="Tackle alto / peligroso">Tackle alto / peligroso</option>
+          <option value="Derrumbe intencional (Maul / Scrum)">Derrumbe intencional (Maul / Scrum)</option>
+          <option value="Infracción en formación fija">Infracción en formación fija (Entrada / Giro)</option>
+          <option value="Inconducta antideportiva">Inconducta antideportiva</option>
+          <option value="Reiteración de faltas">Reiteración de faltas de equipo</option>
+        </select>
+      </div>
+
+      <!-- Metros de empuje si es Scrum -->
+      <div class="form-group mb-2" *ngIf="isScrum()">
+        <label class="form-label-sport">Empuje en scrum (Metros)</label>
+        <div class="scrum-meters-control">
+          <div class="scrum-quick-pills">
+            <button type="button" 
+                    class="scrum-pill-btn" 
+                    [class.active]="scrumPushMeters() === -5"
+                    (click)="onScrumPushMetersChange(-5)"
+                    [disabled]="disabled">
+              -5m
+            </button>
+            <button type="button" 
+                    class="scrum-pill-btn" 
+                    [class.active]="scrumPushMeters() === -2"
+                    (click)="onScrumPushMetersChange(-2)"
+                    [disabled]="disabled">
+              -2m
+            </button>
+            <button type="button" 
+                    class="scrum-pill-btn" 
+                    [class.active]="scrumPushMeters() === 0"
+                    (click)="onScrumPushMetersChange(0)"
+                    [disabled]="disabled">
+              0m
+            </button>
+            <button type="button" 
+                    class="scrum-pill-btn" 
+                    [class.active]="scrumPushMeters() === 2"
+                    (click)="onScrumPushMetersChange(2)"
+                    [disabled]="disabled">
+              +2m
+            </button>
+            <button type="button" 
+                    class="scrum-pill-btn" 
+                    [class.active]="scrumPushMeters() === 5"
+                    (click)="onScrumPushMetersChange(5)"
+                    [disabled]="disabled">
+              +5m
+            </button>
+          </div>
+          <div class="scrum-input-wrap">
+            <input type="number" 
+                   class="form-control custom-sport-input scrum-input" 
+                   [ngModel]="scrumPushMeters()"
+                   (ngModelChange)="onScrumPushMetersChange($event)"
+                   placeholder="Metros (+ avance / - retroceso)..."
+                   min="-20"
+                   max="20"
+                   [disabled]="disabled">
+            <span class="scrum-unit">m</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notas tácticas comunes a todo evento -->
+      <div class="form-group mb-1">
+        <label class="form-label-sport">Notas del evento</label>
+        <textarea class="form-control custom-sport-textarea"
+                  rows="2"
+                  [ngModel]="notes()"
+                  (ngModelChange)="onNotesChange($event)"
+                  placeholder="Observaciones para el staff o videoanálisis..."
+                  [disabled]="disabled">
+        </textarea>
+      </div>
+    </div>
+  </ng-container>
 </div>

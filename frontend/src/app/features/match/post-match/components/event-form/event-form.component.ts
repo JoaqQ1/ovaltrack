@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatchReviewStore } from '../../store/match-review.store';
@@ -11,6 +11,10 @@ export interface EventFormData {
   period?: 1 | 2;
   minute?: number | null;
   second?: number | null;
+  // Campos preparados para enriquecimiento táctico y notas (HU compañero)
+  notes?: string | null;
+  infractionCause?: string | null;
+  scrumPushMeters?: number | null;
 }
 
 @Component({
@@ -31,10 +35,14 @@ export class EventFormComponent {
       if (data.period !== undefined) this.period.set(data.period);
       if (data.minute !== undefined) this.minute.set(data.minute);
       if (data.second !== undefined) this.second.set(data.second);
+      this.notes.set(data.notes || '');
+      this.infractionCause.set(data.infractionCause || '');
+      this.scrumPushMeters.set(data.scrumPushMeters ?? null);
     }
   }
 
   @Input() showTimeFields = false;
+  @Input() showEnrichmentFields = false;
   @Input() disabled = false;
 
   @Output() formChange = new EventEmitter<EventFormData>();
@@ -46,6 +54,34 @@ export class EventFormComponent {
   readonly minute = signal<number | null>(1);
   readonly second = signal<number | null>(0);
 
+  // Señales de Enriquecimiento Táctico
+  readonly notes = signal<string>('');
+  readonly infractionCause = signal<string>('');
+  readonly scrumPushMeters = signal<number | null>(null);
+
+  readonly currentEventType = computed(() =>
+    this.store.eventTypesList().find(t => t.id === this.eventTypeId())
+  );
+
+  readonly isDisciplinaryOrPenalty = computed(() => {
+    const name = (this.currentEventType()?.name || '').toLowerCase();
+    return name.includes('penal') || 
+           name.includes('infracción') || 
+           name.includes('infraccion') ||
+           name.includes('amarilla') || 
+           name.includes('roja') || 
+           name.includes('tarjeta') || 
+           name.includes('amonestación') || 
+           name.includes('amonestacion') || 
+           name.includes('expulsión') ||
+           name.includes('expulsion');
+  });
+
+  readonly isScrum = computed(() => {
+    const name = (this.currentEventType()?.name || '').toLowerCase();
+    return name.includes('scrum');
+  });
+
   private emitChange(): void {
     this.formChange.emit({
       eventTypeId: this.eventTypeId(),
@@ -53,8 +89,26 @@ export class EventFormComponent {
       playerId: this.playerId(),
       period: this.period(),
       minute: this.minute(),
-      second: this.second()
+      second: this.second(),
+      notes: this.notes().trim() || null,
+      infractionCause: this.infractionCause().trim() || null,
+      scrumPushMeters: this.scrumPushMeters()
     });
+  }
+
+  onNotesChange(n: string): void {
+    this.notes.set(n);
+    this.emitChange();
+  }
+
+  onInfractionCauseChange(cause: string): void {
+    this.infractionCause.set(cause);
+    this.emitChange();
+  }
+
+  onScrumPushMetersChange(meters: number | null): void {
+    this.scrumPushMeters.set(meters);
+    this.emitChange();
   }
 
   onEventTypeChange(id: string): void {

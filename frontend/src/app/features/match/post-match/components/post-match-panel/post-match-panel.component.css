@@ -321,7 +321,7 @@
 }
 
 .panel-title {
-  font-size: 1.12rem;
+  font-size: 1.18rem;
   font-weight: 800;
   color: var(--text-primary, #111d0e);
   margin: 0;
@@ -338,7 +338,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 14px;
+  padding: 9px 16px;
   background: var(--surface-toolbar, #eaf3e6);
   border-bottom: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.18));
   flex: none;
@@ -356,8 +356,8 @@
   background: transparent;
   border: none;
   border-radius: 6px;
-  padding: 4px 12px;
-  font-size: 0.78rem;
+  padding: 5px 14px;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-secondary, #3b4e33);
   cursor: pointer;
@@ -415,41 +415,44 @@
 
 /* ================= DETALLE CLEAN (SOLAPA VER) ================= */
 .view-tab-content {
-  padding: 10px 14px 6px;
+  padding: 14px 16px 10px;
   flex: none;
 }
 
 .edit-tab-content {
-  padding: 10px 14px 6px;
+  padding: 14px 16px 14px;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .panel-section-header {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .panel-subtitle {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: #475569;
   font-family: var(--font-mono, monospace);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .detail-list-clean {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 12px;
 }
 
 .detail-item-clean {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.82rem;
-  padding: 1.5px 0;
-  border-bottom: none;
+  font-size: 0.85rem;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--border, rgba(27, 33, 22, 0.08));
 }
 
 .item-label {
@@ -463,7 +466,7 @@
 }
 
 .assign-quick-section {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .assign-sublabel {
@@ -472,7 +475,7 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-secondary, #3b4e33);
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   display: block;
 }
 
@@ -481,10 +484,10 @@
   border-radius: 8px;
   background-color: var(--surface, #ffffff);
   color: var(--text-primary, #111d0e);
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 500;
-  padding: 5px 10px;
-  height: 34px;
+  padding: 6px 12px;
+  height: 36px;
   width: 100%;
 }
 
@@ -496,14 +499,14 @@
 .panel-actions-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 10px;
+  margin-top: 6px;
 }
 
 .btn-panel-action {
-  height: 32px;
+  height: 34px;
   border-radius: 8px;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -537,6 +540,35 @@
   text-decoration: underline;
 }
 
+.panel-edit-footer {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.18));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: none;
+}
+
+.btn-panel-back {
+  flex: 1.2;
+  background: #ffffff;
+  border: 1.5px solid var(--border-sport, rgba(32, 75, 34, 0.28));
+  color: var(--btn-primary-bg, #204b22);
+}
+
+.btn-panel-back:hover {
+  background: rgba(32, 75, 34, 0.05);
+  border-color: var(--btn-primary-bg, #204b22);
+}
+
+:host-context([data-theme="dark"]) .btn-panel-back {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(163, 230, 53, 0.3);
+  color: #a3e635;
+}
+
 /* ================= DIVISOR DEL INSPECTOR ================= */
 .inspector-divider {
   border-top: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.18));
@@ -546,7 +578,7 @@
 
 /* ================= COLA DE REVISIÓN INTEGRADA ================= */
 .queue-section {
-  padding: 8px 14px 12px;
+  padding: 10px 16px 14px;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -570,8 +602,8 @@
   background: #ffffff;
   border: 1.5px solid var(--border-sport, rgba(32, 75, 34, 0.22));
   border-radius: 8px;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -610,7 +642,7 @@
   grid-template-columns: 46px 1fr auto;
   align-items: center;
   gap: 8px;
-  padding: 5px 10px;
+  padding: 6px 10px;
   background: #fffdf7;
   border: 1px solid #ebdcc1;
   border-radius: 8px;
