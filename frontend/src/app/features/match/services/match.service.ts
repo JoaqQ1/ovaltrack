@@ -126,6 +126,7 @@ export class MatchService {
     if (action === 'start-second-half') {
       currentPeriod = 2;
       clockPaused = false;
+      clockElapsedSeconds = Math.max(2400, cachedMatch?.clockElapsedSeconds ?? 2400);
     } else if (action === 'close-first-half') {
       clockPaused = true;
     } else if (action === 'start') {
@@ -159,7 +160,6 @@ export class MatchService {
 
     await this.cache.saveMatches([nextMatch]);
 
-    // COLLAPSING MUTATIONS: Use a fixed ID per match so only the latest state change is preserved
     const mutationId = `${matchId}-latest`;
     await this.cache.savePendingMatchMutation({
       id: mutationId,
