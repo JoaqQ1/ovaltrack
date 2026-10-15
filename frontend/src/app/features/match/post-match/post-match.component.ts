@@ -11,7 +11,8 @@ import { LiveCaptureService } from '../services/live-capture.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { MatchReviewStore } from './store/match-review.store';
-import { PostMatchKpisComponent } from './components/post-match-kpis/post-match-kpis.component';
+import { PostMatchHeaderComponent } from './components/post-match-header/post-match-header.component';
+import { PostMatchKpiStripComponent } from './components/post-match-kpi-strip/post-match-kpi-strip.component';
 import { PostMatchTimelineComponent } from './components/post-match-timeline/post-match-timeline.component';
 import { PostMatchTableComponent } from './components/post-match-table/post-match-table.component';
 import { PostMatchPanelComponent } from './components/post-match-panel/post-match-panel.component';
@@ -22,7 +23,8 @@ import { PostMatchCreateModalComponent } from './components/post-match-create-mo
   standalone: true,
   imports: [
     CommonModule,
-    PostMatchKpisComponent,
+    PostMatchHeaderComponent,
+    PostMatchKpiStripComponent,
     PostMatchTimelineComponent,
     PostMatchTableComponent,
     PostMatchPanelComponent,
@@ -106,6 +108,7 @@ export class PostMatchComponent implements OnInit {
         if (match.startedAt) {
           this.store.matchStartTime.set(match.startedAt);
         }
+        this.store.setInitialScores(match.homeScore ?? 0, match.awayScore ?? 0);
       },
       error: () => {
         this.toastService.error('No se pudieron obtener los detalles del partido');

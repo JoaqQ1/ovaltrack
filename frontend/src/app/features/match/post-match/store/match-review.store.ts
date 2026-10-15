@@ -36,6 +36,9 @@ export class MatchReviewStore {
   readonly eventTypesDict = signal<Record<string, string>>({});
   readonly eventTypesList = signal<LiveCaptureEventType[]>([]);
   readonly availablePlayers = signal<AvailablePlayer[]>([]);
+  readonly initialHomeScore = signal<number>(0);
+  readonly initialAwayScore = signal<number>(0);
+  readonly scoreDelta = signal<{ text: string; type: 'OWN' | 'OPPONENT' } | null>(null);
 
   readonly filters = signal<ReviewFilters>({
     period: 'ALL',
@@ -43,6 +46,35 @@ export class MatchReviewStore {
     onlyUnassigned: false,
     searchTerm: '',
     hiddenLaneIds: []
+  });
+
+  // --- Tanteador Reactivo Oficial ---
+  readonly scoreboard = computed<{ home: number; away: number }>(() => {
+    const events = this.rawEvents();
+    const typesMap = new Map<string, LiveCaptureEventType>();
+    this.eventTypesList().forEach(t => typesMap.set(t.id, t));
+
+    let home = 0;
+    let away = 0;
+
+    for (const ev of events) {
+      const type = typesMap.get(ev.eventTypeId);
+      if (type?.isScoring) {
+        const pts = type.points || 0;
+        if (ev.teamPossession === 'OPPONENT') {
+          away += pts;
+        } else if (ev.teamPossession === 'OWN') {
+          home += pts;
+        }
+      }
+    }
+
+    // Fallback al tanteador de cabecera si los eventos aún no tienen scores calculados
+    if (home === 0 && away === 0 && (this.initialHomeScore() > 0 || this.initialAwayScore() > 0)) {
+      return { home: this.initialHomeScore(), away: this.initialAwayScore() };
+    }
+
+    return { home, away };
   });
 
   // --- Indicador Reactivo de Filtros Activos ---
@@ -160,6 +192,24 @@ export class MatchReviewStore {
 
   // --- Acciones de Estado (State Mutators) ---
 
+  private deltaTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  setInitialScores(home: number, away: number): void {
+    this.initialHomeScore.set(home);
+    this.initialAwayScore.set(away);
+  }
+
+  triggerScoreDelta(points: number, type: 'OWN' | 'OPPONENT'): void {
+    if (this.deltaTimeoutId) {
+      clearTimeout(this.deltaTimeoutId);
+    }
+    const text = points > 0 ? `+${points}` : `${points}`;
+    this.scoreDelta.set({ text, type });
+    this.deltaTimeoutId = setTimeout(() => {
+      this.scoreDelta.set(null);
+    }, 3000);
+  }
+
   setEvents(events: MatchTimelineEventResponse[], matchStartTime?: string | null): void {
     this.rawEvents.set(events);
     if (matchStartTime !== undefined) {
@@ -244,6 +294,13 @@ export class MatchReviewStore {
 
   removeEvent(eventId: string): void {
     const current = this.rawEvents();
+    const toRemove = current.find(e => e.id === eventId);
+    if (toRemove) {
+      const typeObj = this.eventTypesList().find(t => t.id === toRemove.eventTypeId);
+      if (typeObj?.isScoring && typeObj.points > 0) {
+        this.triggerScoreDelta(-typeObj.points, toRemove.teamPossession === 'OPPONENT' ? 'OPPONENT' : 'OWN');
+      }
+    }
     this.rawEvents.set(current.filter(e => e.id !== eventId));
     if (this.selectedEventId() === eventId) {
       this.selectedEventId.set(null);
@@ -305,6 +362,11 @@ export class MatchReviewStore {
 
     this.rawEvents.set(updated);
     this.selectedEventId.set(enrichedEvent.id);
+
+    const typeObj = this.eventTypesList().find(t => t.id === enrichedEvent.eventTypeId);
+    if (typeObj?.isScoring && typeObj.points > 0) {
+      this.triggerScoreDelta(typeObj.points, enrichedEvent.teamPossession === 'OPPONENT' ? 'OPPONENT' : 'OWN');
+    }
   }
 
   /**
