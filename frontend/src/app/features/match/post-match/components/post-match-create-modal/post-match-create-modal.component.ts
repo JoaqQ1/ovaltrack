@@ -61,12 +61,12 @@ export class PostMatchCreateModalComponent {
 
   save(): void {
     if (!this.eventTypeId) {
-      this.toastService.warning('Debes seleccionar un tipo de evento');
+      this.toastService.warning('Debés seleccionar un tipo de evento');
       return;
     }
 
     if (this.minute === null || this.minute === undefined || this.minute < 0) {
-      this.toastService.warning('Ingresa un minuto válido');
+      this.toastService.warning('Ingresá un minuto válido');
       return;
     }
 

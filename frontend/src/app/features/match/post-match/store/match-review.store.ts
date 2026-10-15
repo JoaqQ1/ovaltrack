@@ -45,6 +45,16 @@ export class MatchReviewStore {
     hiddenLaneIds: []
   });
 
+  // --- Indicador Reactivo de Filtros Activos ---
+  readonly hasActiveFilters = computed<boolean>(() => {
+    const f = this.filters();
+    return f.period !== 'ALL' ||
+           f.team !== 'ALL' ||
+           f.onlyUnassigned ||
+           f.searchTerm.trim() !== '' ||
+           f.hiddenLaneIds.length > 0;
+  });
+
   // --- Duración Dinámica y Escala (Eje X) ---
   readonly matchDurationScale = computed<number>(() => {
     let maxMinutes = RUGBY_FULL_TIME_MIN; // Estándar mínimo reglamentario de rugby

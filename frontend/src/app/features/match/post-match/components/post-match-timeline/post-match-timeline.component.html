@@ -70,11 +70,15 @@
         Solo sin jugador <span class="badge-count-text">{{ store.kpis().unassignedEvents }}</span>
       </button>
 
-      <!-- Limpiar Filtros -->
-      <button type="button" 
+      <!-- Limpiar Filtros (Visible solo cuando hay filtros activos) -->
+      <button *ngIf="store.hasActiveFilters()"
+              type="button" 
               class="filter-pill-btn clear-pill" 
-              (click)="store.clearFilters()">
-        Limpiar filtros
+              (click)="store.clearFilters()"
+              aria-label="Limpiar filtros activos"
+              title="Restablecer todos los filtros a sus valores por defecto">
+        <i class="bi bi-x-circle-fill me-1"></i>
+        <span>Limpiar filtros</span>
       </button>
     </div>
 

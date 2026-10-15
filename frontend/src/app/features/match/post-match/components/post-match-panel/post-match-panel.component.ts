@@ -80,7 +80,7 @@ export class PostMatchPanelComponent {
     if (!ev) return;
 
     if (!this.editEventTypeId) {
-      this.toastService.warning('Debes seleccionar un tipo de evento');
+      this.toastService.warning('Debés seleccionar un tipo de evento');
       return;
     }
 

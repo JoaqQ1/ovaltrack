@@ -32,7 +32,7 @@
              [class.selected-row]="ev.id === store.selectedEventId()"
              [class.unassigned-row]="ev.isUnassigned">
           <div class="col-period">
-            <span class="period-badge" [class.p2]="ev.period === 2">
+            <span class="period-text">
               {{ ev.period === 1 ? '1T' : '2T' }}
             </span>
           </div>

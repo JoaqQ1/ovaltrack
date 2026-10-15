@@ -8,7 +8,7 @@
             <i class="bi bi-plus-circle-fill text-success"></i>
           </div>
           <div>
-            <h5 class="form-card-title mb-0">Agregar Evento Post-Partido</h5>
+            <h5 class="form-card-title mb-0">Agregar evento post-partido</h5>
             <small class="text-muted">Carga manual de acciones ocurridas durante el partido</small>
           </div>
         </div>
@@ -19,11 +19,11 @@
       <div class="form-card-body p-4">
         <!-- 1. Tipo de Evento -->
         <div class="mb-3">
-          <label class="form-label fw-bold form-label-custom">Tipo de Evento *</label>
+          <label class="form-label fw-bold form-label-custom">Tipo de evento *</label>
           <select class="form-control form-select" [(ngModel)]="eventTypeId">
-            <option value="" disabled selected>-- Selecciona el tipo de acción --</option>
+            <option value="" disabled selected>Seleccioná el tipo de jugada</option>
             <option *ngFor="let t of store.eventTypesList()" [value]="t.id">
-              {{ t.name }} ({{ t.category }})
+              {{ t.name }}
             </option>
           </select>
         </div>
@@ -91,7 +91,7 @@
 
         <!-- 4. Posesión / Equipo -->
         <div class="mb-3">
-          <label class="form-label fw-bold form-label-custom">Posesión / Equipo *</label>
+          <label class="form-label fw-bold form-label-custom">Posesión / equipo *</label>
           <div class="d-flex gap-2">
             <button type="button" 
                     class="btn segment-btn flex-fill" 
@@ -117,13 +117,13 @@
         <!-- 5. Jugador Asociado (Opcional) -->
         <div class="mb-2">
           <label class="form-label fw-bold form-label-custom">
-            Jugador Asociado
+            Jugador asociado
             <span class="fw-normal text-muted small">(opcional)</span>
           </label>
           <select class="form-control form-select" 
                   [(ngModel)]="playerId" 
                   [disabled]="possession === 'OPPONENT'">
-            <option value="">-- Sin asignar (Sin jugador) --</option>
+            <option value="">Sin asignar (Sin jugador)</option>
             <option *ngFor="let p of store.availablePlayers()" [value]="p.id">
               {{ p.jerseyNumber ? '#' + p.jerseyNumber + ' ' : '' }}{{ p.fullName }}
             </option>
