@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { LayoutService } from 'src/app/core/services/layout.service';
 import { MatchService } from '../services/match.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
@@ -33,7 +34,7 @@ import { PostMatchCreateModalComponent } from './components/post-match-create-mo
   templateUrl: './post-match.component.html',
   styleUrl: './post-match.component.css'
 })
-export class PostMatchComponent implements OnInit {
+export class PostMatchComponent implements OnInit, OnDestroy {
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -44,6 +45,7 @@ export class PostMatchComponent implements OnInit {
   private readonly cacheService = inject(LiveCaptureCacheService);
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly toastService = inject(ToastService);
+  private readonly layoutService = inject(LayoutService);
   readonly userContext = inject(UserContextService);
   readonly store = inject(MatchReviewStore);
 
@@ -81,6 +83,7 @@ export class PostMatchComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.layoutService.setWide(true);
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
     if (this.matchId) {
       this.store.setMatchId(this.matchId);
@@ -88,6 +91,10 @@ export class PostMatchComponent implements OnInit {
       this.loadRoster();
       this.loadEventTypesAndEvents();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.layoutService.setWide(null);
   }
 
   loadRoster(): void {

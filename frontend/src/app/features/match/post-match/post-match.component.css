@@ -22,8 +22,6 @@
   height: calc(100vh - var(--navbar-h, 64px) - var(--layout-pad-y, 24px) - 16px);
   height: calc(100dvh - var(--navbar-h, 64px) - var(--layout-pad-y, 24px) - 16px);
   min-height: 640px;
-  max-width: 1440px;
-  width: min(100% - 2 * var(--layout-pad, 24px), 1440px);
   padding-block: var(--layout-pad-y, 24px) 16px !important;
   box-sizing: border-box;
 }
