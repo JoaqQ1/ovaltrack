@@ -103,7 +103,7 @@
       <!-- Cabecera de la Regla (Eje Temporal) -->
       <div class="ruler-row">
         <div class="ruler-sidebar-label">
-          <span>EVENTOS • clic para ocultar</span>
+          <span title="Clic en una jugada para mostrar u ocultar su carril">JUGADA</span>
         </div>
         <div class="ruler-track">
           <div class="ruler-tick" 
@@ -145,10 +145,11 @@
                 class="lane-btn" 
                 [attr.aria-pressed]="!lane.hidden" 
                 (click)="store.toggleLane(lane.eventTypeId)"
-                [title]="lane.hidden ? 'Mostrar carril' : 'Ocultar carril'">
+                [attr.aria-label]="(lane.hidden ? 'Mostrar carril de ' : 'Ocultar carril de ') + lane.eventName"
+                [title]="(lane.hidden ? 'Mostrar carril • ' : 'Ocultar carril • ') + lane.eventName">
           <span class="lane-color-bar" [style.backgroundColor]="lane.color"></span>
-          <span class="lane-name">{{ lane.eventName }}</span>
-          <span class="lane-badge">{{ lane.totalCount }}</span>
+          <span class="lane-name" [title]="lane.eventName">{{ lane.eventName }}</span>
+          <span class="lane-count">{{ lane.totalCount }}</span>
         </button>
 
         <!-- Pista Horizontal del Carril con Marcadores -->
