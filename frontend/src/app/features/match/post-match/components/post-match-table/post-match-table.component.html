@@ -1,15 +1,4 @@
 <section class="table-card">
-  <!-- Cabecera de la tarjeta -->
-  <div class="table-card-header">
-    <div>
-      <span class="section-label">REGISTRO DETALLADO</span>
-      <h2 class="section-title">Línea cronológica de eventos</h2>
-    </div>
-    <div class="table-counter">
-      <span>Mostrando {{ store.visibleEvents().length }} de {{ store.allViewModels().length }}</span>
-    </div>
-  </div>
-
   <!-- Contenedor con scroll horizontal responsivo -->
   <div class="table-scroll-container">
     <div class="table-grid-wrapper">
@@ -23,7 +12,7 @@
       </div>
 
       <!-- Viewport con Virtual Scroll (Rendimiento 60fps con cientos de eventos) -->
-      <cdk-virtual-scroll-viewport itemSize="48" class="table-virtual-viewport" *ngIf="store.visibleEvents().length > 0">
+      <cdk-virtual-scroll-viewport itemSize="42" class="table-virtual-viewport" *ngIf="store.visibleEvents().length > 0">
         <div *cdkVirtualFor="let ev of store.visibleEvents(); trackBy: trackById"
              class="table-grid-row"
              [attr.data-event-id]="ev.id"
@@ -45,9 +34,6 @@
             <span class="event-chip">
               <span class="event-dot" [style.backgroundColor]="ev.color"></span>
               <span class="event-name">{{ ev.eventTypeName }}</span>
-              <i *ngIf="ev.isPostMatch"
-                 class="bi bi-clock-history ms-1 text-muted"
-                 title="Cargado post-partido"></i>
             </span>
           </div>
           <div class="col-player">

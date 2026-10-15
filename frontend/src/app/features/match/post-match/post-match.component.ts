@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, computed, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
@@ -79,6 +79,35 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   onDeleteRequested(): void {
     if (this.panel) {
       this.panel.openDeleteModal();
+    }
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement;
+    const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA');
+
+    if (event.key === 'Escape') {
+      if (this.showCreateModal()) {
+        this.closeCreateModal();
+        return;
+      }
+      if (this.panel?.sheetState() === 'open') {
+        this.panel.closeSheet();
+        return;
+      }
+      if (this.store.selectedEventId()) {
+        this.store.selectEvent(null);
+        return;
+      }
+    }
+
+    if (!isEditingField) {
+      if (event.key === 'ArrowRight' || event.key === ']') {
+        this.panel?.onNextPendingClick();
+      } else if (event.key === 'ArrowLeft' || event.key === '[') {
+        this.panel?.onPrevPendingClick();
+      }
     }
   }
 

@@ -13,7 +13,7 @@
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(0, 1fr) 320px;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto clamp(285px, 34vh, 315px) minmax(0, 1fr);
   grid-template-areas:
     "hud hud"
     "kpi kpi"

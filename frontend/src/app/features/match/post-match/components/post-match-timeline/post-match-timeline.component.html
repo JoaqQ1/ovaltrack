@@ -1,21 +1,5 @@
 <section class="timeline-card">
-  <!-- Cabecera de la sección -->
-  <div class="timeline-card-header">
-    <div>
-      <span class="section-label">VISTA GENERAL</span>
-      <h2 class="section-title">Distribución temporal de jugadas</h2>
-    </div>
-    <div class="timeline-legend">
-      <span class="legend-item">
-        <span class="legend-indicator normal"></span> Con jugador
-      </span>
-      <span class="legend-item">
-        <span class="legend-indicator striped"></span> Sin jugador asignado
-      </span>
-    </div>
-  </div>
-
-  <!-- Barra de Filtros Deportiva -->
+  <!-- Barra de Filtros Deportiva Integrada -->
   <div class="filter-bar">
     <div class="filter-left-group">
       <!-- Botones de Período estilo Pill -->
@@ -67,7 +51,7 @@
               class="filter-pill-btn unassigned-pill" 
               [class.active]="store.filters().onlyUnassigned" 
               (click)="store.toggleOnlyUnassigned()">
-        Solo sin jugador <span class="badge-count-text">{{ store.kpis().unassignedEvents }}</span>
+        Solo sin jugador &bull; {{ store.kpis().unassignedEvents }}
       </button>
 
       <!-- Limpiar Filtros (Visible solo cuando hay filtros activos) -->
