@@ -5,11 +5,11 @@ import { LiveCaptureEventType } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
 import { Match, PendingMatchMutation } from '../types/match.types';
 import { Division } from '../../division/types/division.types';
-import { SavedRoster } from '../types/roster.types';
+import { AvailablePlayer, SavedRoster } from '../types/roster.types';
 import { UserContext } from '../../auth/types/auth.types';
 
 export const MATCH_DATABASE_NAME = 'ovaltrack';
-export const MATCH_DATABASE_VERSION = 5;
+export const MATCH_DATABASE_VERSION = 7;
 export const LIVE_CAPTURE_DATABASE_NAME = 'ovaltrack-live-capture';
 export const LIVE_CAPTURE_DATABASE_VERSION = 4;
 
@@ -18,6 +18,7 @@ export class MatchDatabase extends Dexie {
   matches!: Table<Match, string>;
   divisions!: Table<Division, string>;
   rosters!: Table<SavedRoster & { matchId: string }, string>;
+  divisionPlayers!: Table<AvailablePlayer & { divisionId: string }, string>;
   pendingMatchMutations!: Table<PendingMatchMutation, string>;
 
   constructor() {
@@ -28,6 +29,7 @@ export class MatchDatabase extends Dexie {
       matches: 'id, divisionId',
       divisions: 'id, clubId',
       rosters: 'matchId',
+      divisionPlayers: 'id, divisionId, jerseyNumber',
       pendingMatchMutations: 'id, matchId, action, createdAt',
     });
   }
