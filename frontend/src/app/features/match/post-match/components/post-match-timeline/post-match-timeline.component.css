@@ -3,7 +3,8 @@
   background: var(--surface, #ffffff);
   border: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
   border-radius: 14px;
-  padding: 8px 12px;
+  padding: 0;
+  overflow: hidden;
   margin-bottom: 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   container-type: inline-size;
@@ -16,7 +17,7 @@
 
 @media (max-width: 768px) {
   .timeline-card {
-    padding: 8px;
+    padding: 0;
     height: auto;
   }
 }
@@ -28,11 +29,12 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 0.5rem;
-  padding: 4px 8px;
+  padding: 6px 12px;
   background: var(--surface-toolbar, #eaf3e6);
-  border: 1px solid var(--border, rgba(27, 33, 22, 0.10));
-  border-radius: 8px;
-  margin-bottom: 6px;
+  border: none;
+  border-bottom: 1px solid var(--border-sport, rgba(32, 75, 34, 0.28));
+  border-radius: 0;
+  margin-bottom: 0;
   flex: none;
 }
 
@@ -183,11 +185,12 @@
 /* Tablero de Línea de Tiempo */
 .timeline-scroll-container {
   width: 100%;
-  border: 1px solid var(--border, rgba(27, 33, 22, 0.10));
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
   background: var(--surface, #ffffff);
   overflow-x: auto; /* Permite scroll horizontal en móviles */
   overflow-y: hidden; /* Evita que el desborde vertical por transform genere scrollbars parásitos */
+  flex: 1;
 }
 
 .timeline-board {

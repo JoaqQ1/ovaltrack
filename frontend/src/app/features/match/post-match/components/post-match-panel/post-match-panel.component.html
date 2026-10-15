@@ -71,9 +71,9 @@
   <!-- Contenido Principal: Tarjetas de Inspector -->
   <div class="sheet-content">
     <div class="panel-stack">
-      <!-- Tarjeta 1: Detalle e Inspector con Solapas Ver | Editar -->
-      <section class="panel-card inspector-main-card">
-        <!-- Barra de Solapas y Estado de Autoguardado -->
+      <!-- Tarjeta Única de Estación de Trabajo: Inspector + Cola de Revisión -->
+      <section class="panel-card inspector-station-card">
+        <!-- 1. Barra de Solapas y Estado de Autoguardado -->
         <div class="panel-tab-bar">
           <div class="tab-pill-group">
             <button type="button" 
@@ -103,7 +103,7 @@
           </div>
         </div>
 
-        <!-- Vista 1: Solapa [Ver] -->
+        <!-- 2. Vista [Ver] -->
         <div class="view-tab-content" *ngIf="activeTab() === 'view'">
           <div class="panel-section-header">
             <span class="section-label">EVENTO SELECCIONADO</span>
@@ -170,7 +170,7 @@
           </div>
         </div>
 
-        <!-- Vista 2: Solapa [Editar] con Formulario Integrado y Autoguardado -->
+        <!-- Vista [Editar] con Formulario Integrado y Autoguardado -->
         <div class="edit-tab-content" *ngIf="activeTab() === 'edit'">
           <ng-container *ngIf="store.selectedEvent() as ev">
             <app-event-form
@@ -197,52 +197,55 @@
             </div>
           </ng-container>
         </div>
-      </section>
 
-      <!-- Tarjeta 2: Cola de Revisión -->
-      <section class="panel-card queue-card">
-        <div class="panel-card-header d-flex justify-content-between align-items-center">
-          <span class="section-label">COLA DE REVISIÓN</span>
-        </div>
+        <!-- 3. Divisor Horizontal -->
+        <div class="inspector-divider"></div>
 
-        <!-- Stepper ‹ 1 de 4 › de Navegación Rápida -->
-        <div class="queue-stepper-box mb-3" *ngIf="store.kpis().unassignedEvents > 0">
-          <button type="button" 
-                  class="btn-stepper-square" 
-                  (click)="onPrevPendingClick($event)"
-                  title="Pendiente anterior">
-            <i class="bi bi-chevron-left"></i>
-          </button>
-          <span class="stepper-center-count">
-            {{ currentPendingIndex() }} de {{ store.kpis().unassignedEvents }}
-          </span>
-          <button type="button" 
-                  class="btn-stepper-square" 
-                  (click)="onNextPendingClick($event)"
-                  title="Siguiente pendiente">
-            <i class="bi bi-chevron-right"></i>
-          </button>
-        </div>
-
-        <!-- Lista de Tarjetas de Eventos Pendientes (idéntico al mockup) -->
-        <div class="queue-cards-list" *ngIf="store.pendingQueue().length > 0">
-          <div *ngFor="let item of store.pendingQueue().slice(0, 8)" 
-               class="queue-card-item" 
-               [class.selected]="item.id === store.selectedEventId()"
-               (click)="store.selectEvent(item.id)">
-            <span class="qc-time">{{ item.matchTimeFormatted }}</span>
-            <span class="qc-name">{{ item.eventTypeName }}</span>
-            <span class="qc-period">{{ item.period === 1 ? '1T' : '2T' }}</span>
+        <!-- 4. Sección Cola de Revisión Integrada -->
+        <div class="queue-section">
+          <div class="queue-section-header">
+            <span class="section-label">COLA DE REVISIÓN</span>
           </div>
-          <div *ngIf="store.pendingQueue().length > 8" class="queue-more-hint">
-            +{{ store.pendingQueue().length - 8 }} más en la tabla
-          </div>
-        </div>
 
-        <!-- Estado si no quedan pendientes -->
-        <div *ngIf="store.pendingQueue().length === 0" class="queue-completed">
-          <i class="bi bi-check-circle-fill text-success fs-4 mb-1"></i>
-          <p class="mb-0 fw-bold text-success">¡Todos los eventos asignados!</p>
+          <!-- Stepper Limpio [ < ]  1 de 4  [ > ] -->
+          <div class="stepper-row" *ngIf="store.kpis().unassignedEvents > 0">
+            <button type="button" 
+                    class="btn-stepper-square" 
+                    (click)="onPrevPendingClick($event)"
+                    title="Pendiente anterior">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="stepper-center-count">
+              {{ currentPendingIndex() }} de {{ store.kpis().unassignedEvents }}
+            </span>
+            <button type="button" 
+                    class="btn-stepper-square" 
+                    (click)="onNextPendingClick($event)"
+                    title="Siguiente pendiente">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+
+          <!-- Lista de Tarjetas de Eventos Pendientes -->
+          <div class="queue-cards-list" *ngIf="store.pendingQueue().length > 0">
+            <div *ngFor="let item of store.pendingQueue().slice(0, 5)" 
+                 class="queue-card-item" 
+                 [class.selected]="item.id === store.selectedEventId()"
+                 (click)="store.selectEvent(item.id)">
+              <span class="qc-time">{{ item.matchTimeFormatted }}</span>
+              <span class="qc-name">{{ item.eventTypeName }}</span>
+              <span class="qc-period">{{ item.period === 1 ? '1T' : '2T' }}</span>
+            </div>
+            <div *ngIf="store.pendingQueue().length > 5" class="queue-more-hint">
+              +{{ store.pendingQueue().length - 5 }} más en la tabla
+            </div>
+          </div>
+
+          <!-- Estado si no quedan pendientes -->
+          <div *ngIf="store.pendingQueue().length === 0" class="queue-completed">
+            <i class="bi bi-check-circle-fill text-success fs-5 mb-1"></i>
+            <p class="mb-0 fw-bold text-success small">¡Todos los eventos asignados!</p>
+          </div>
         </div>
       </section>
     </div>
