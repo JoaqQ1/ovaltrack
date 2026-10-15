@@ -2,7 +2,8 @@ import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatchReviewStore } from '../../store/match-review.store';
-import { ReviewPeriodFilter } from '../../types/match-review.types';
+import { RUGBY_HALF_TIME_MIN } from '../../utils/match-review.utils';
+import { ReviewEventViewModel, ReviewPeriodFilter } from '../../types/match-review.types';
 
 @Component({
   selector: 'app-post-match-timeline',
@@ -13,6 +14,12 @@ import { ReviewPeriodFilter } from '../../types/match-review.types';
 })
 export class PostMatchTimelineComponent {
   readonly store = inject(MatchReviewStore);
+  readonly halfTimeMin = RUGBY_HALF_TIME_MIN;
+
+  getTooltip(occ: ReviewEventViewModel): string {
+    const player = occ.hasPlayer ? occ.playerName : 'Sin jugador asignado';
+    return `${occ.matchTimeFormatted} • ${occ.eventTypeName} (${player})`;
+  }
 
   // Eje de marcas en minutos calculado dinámicamente
   readonly timelineTicks = computed<number[]>(() => {
@@ -21,9 +28,9 @@ export class PostMatchTimelineComponent {
     for (let i = 0; i <= max; i += 10) {
       ticks.push(i);
     }
-    // Asegurar que 40 (entretiempo) esté presente si el partido es de al menos 40'
-    if (max >= 40 && !ticks.includes(40)) {
-      ticks.push(40);
+    // Asegurar que el entretiempo esté presente si el partido es de al menos dicha duración
+    if (max >= this.halfTimeMin && !ticks.includes(this.halfTimeMin)) {
+      ticks.push(this.halfTimeMin);
       ticks.sort((a, b) => a - b);
     }
     return ticks;
@@ -41,5 +48,19 @@ export class PostMatchTimelineComponent {
 
   setPeriod(period: ReviewPeriodFilter): void {
     this.store.setPeriod(period);
+  }
+
+  getShortLabel(name: string): string {
+    const lower = name.toLowerCase();
+    if (lower.includes('infracción') || lower.includes('penal')) {
+      if (lower.includes('palos')) return 'Penal palos';
+      return 'Infracción';
+    }
+    if (lower.includes('tackle')) {
+      if (lower.includes('fallado')) return 'Tackle ✗';
+      return 'Tackle ✓';
+    }
+    if (lower.includes('drop')) return 'Drop';
+    return name;
   }
 }

@@ -105,4 +105,9 @@ export class AuthService {
     return null;
   }
 
+  public getUserRole(): string | null {
+    const user = this.loadUserFromToken();
+    return user ? user.role : null;
+  }
+
 }

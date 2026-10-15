@@ -1,0 +1,27 @@
+info:
+  name: 02 - [404 Not Found] Consultar estadisticas de partido inexistente
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/statistics/match/00000000-0000-0000-0000-000000000000?period=1"
+  headers:
+    - name: Authorization
+      value: Bearer {{coachToken}}
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Debe responder 404 Not Found para partido inexistente", function() {
+          expect(res.getStatus()).to.equal(404);
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

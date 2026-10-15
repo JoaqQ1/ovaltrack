@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("opponents")
@@ -28,5 +29,18 @@ public class OpponentController {
     public ResponseEntity<Opponent> create(@RequestBody Opponent opponent) {
         Opponent created = opponentService.createOpponent(opponent);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN_CLUB') or hasRole('ADMIN_OVALTRACK')")
+    public ResponseEntity<Opponent> update(@PathVariable UUID id, @RequestBody Opponent opponent) {
+        return ResponseEntity.ok(opponentService.updateOpponent(id, opponent));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN_CLUB') or hasRole('ADMIN_OVALTRACK')")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        opponentService.deleteOpponent(id);
+        return ResponseEntity.noContent().build();
     }
 }

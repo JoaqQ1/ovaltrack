@@ -4,17 +4,13 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public record ClubUpdateDTO(
-    @NotBlank(message = "El nombre del club es obligatorio")
-    String name,
-    
-    @NotBlank (message = "La ciudad del club es obligatoria")
-    String city,
+        @NotBlank(message = "El nombre del club es obligatorio") String name,
 
-    String logoUrl,
+        @NotBlank(message = "La ciudad del club es obligatoria") String city,
 
-    @Email(message = "Formato de email de contacto inválido")
-    String contactEmail,
-    
-    String contactPhone
-) {
+        String logoUrl,
+
+        @Email(message = "Formato de email de contacto inválido") String contactEmail,
+
+        String contactPhone) {
 }

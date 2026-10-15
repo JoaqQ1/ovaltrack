@@ -20,5 +20,8 @@ public class Opponent {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Column(nullable = false, length = 10)
+    private String alias;
+
     private String city;
 }

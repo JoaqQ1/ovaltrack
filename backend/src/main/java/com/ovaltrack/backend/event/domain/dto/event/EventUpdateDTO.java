@@ -7,6 +7,8 @@ import java.util.UUID;
 import com.ovaltrack.backend.event.domain.EventPossession;
 
 public record EventUpdateDTO(
+        UUID eventTypeId,
+
         UUID playerId,
 
         EventPossession teamPossession,

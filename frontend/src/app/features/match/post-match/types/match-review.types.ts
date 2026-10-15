@@ -4,6 +4,7 @@ export type ReviewPeriodFilter = 'ALL' | 1 | 2;
 
 export interface ReviewFilters {
   period: ReviewPeriodFilter;
+  team: 'ALL' | 'OWN' | 'OPPONENT';
   onlyUnassigned: boolean;
   searchTerm: string;
   hiddenLaneIds: string[];
@@ -19,13 +20,17 @@ export interface ReviewEventViewModel {
   minute: number; // Minutos reglamentarios (matchTime / 60)
   pct: number; // Posición porcentual horizontal (0 a 100%)
   matchTimeFormatted: string; // Formato "MM:SS"
-  realTime: string;
-  realTimeFormatted: string; // Formato "HH:mm:ss"
+  absoluteMatchTime: number; // Segundos continuos desde el inicio (empieza en 0 y sigue contando)
+  absoluteTimeFormatted: string; // Formato "MM:SS"
   playerId: string | null;
   playerName: string;
   playerJerseyNumber: number | null;
   hasPlayer: boolean;
+  isUnassigned: boolean;
   teamPossession: Possession;
+  origin?: string | null;
+  isPostMatch: boolean;
+  attributes?: Record<string, unknown> | null;
   isDimmed: boolean; // True si queda fuera de los filtros activos (para el gráfico)
 }
 

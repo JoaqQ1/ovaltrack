@@ -11,5 +11,6 @@ import lombok.Setter;
 public class OpponentDTO {
     private UUID id;
     private String name;
+    private String alias;
     private String city;      
 }

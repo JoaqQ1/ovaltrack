@@ -25,6 +25,7 @@ import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
 import com.ovaltrack.backend.match.domain.dto.RosterDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchRosterDTO;
+import com.ovaltrack.backend.match.domain.dto.MatchRosterPlayerDTO;
 import com.ovaltrack.backend.match.domain.dto.LiveMatchStateDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -224,6 +225,19 @@ public class MatchController {
     public ResponseEntity<RosterDTO> getMatchRoster(@PathVariable UUID matchId) {
         RosterDTO roster = matchService.getSavedRoster(matchId);
         return ResponseEntity.ok(roster);
+    }
+
+    @Operation(
+        summary = "Get roster players of the match",
+        description = "Returns the players officially assigned to the match roster (starters and substitutes) ordered by role and name."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Match roster players returned successfully."),
+        @ApiResponse(responseCode = "404", description = "Match not found.")
+    })
+    @GetMapping("/{matchId}/roster/players")
+    public ResponseEntity<List<MatchRosterPlayerDTO>> getMatchRosterPlayers(@PathVariable UUID matchId) {
+        return ResponseEntity.ok(matchService.getMatchRosterPlayers(matchId));
     }
 
     @Operation(

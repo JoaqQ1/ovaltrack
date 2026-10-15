@@ -18,6 +18,11 @@
       <button type="button" class="btn btn-outline" (click)="goToHistory()">
         Historial de partidos
       </button>
+      @if (isAdmin) {
+        <button type="button" class="btn btn-outline" (click)="goToOpponents()">
+          Rivales
+        </button>
+      }
     </div>
   </header>
 
@@ -34,24 +39,27 @@
 
   <!-- Selector de División -->
   <div class="division-selector-container mb-3" style="display: flex; gap: 15px; align-items: center;">
+    <!-- Se muestra si el usuario tiene MÁS de una división -->
     @if (userDivisions.length > 1) {
       <label for="divisionSelect" class="form-label mb-0"><strong>División:</strong></label>
       <select 
         #divisionSelect
         id="divisionSelect" 
         class="form-control custom-input dropdown-division" 
+        [value]="selectedDivisionId"
         (change)="onDivisionChange(divisionSelect.value)">
-        <option value="" disabled selected>Selecciona una división...</option>
+        <option value="" disabled [selected]="!selectedDivisionId">Selecciona una división...</option>
         @for (div of userDivisions; track div.id) {
           <option [value]="div.id">{{ div.name }}</option>
         }
       </select>
     }
-    
+
+    <!-- Se muestra si el usuario tiene SOLO UNA división -->
     @if (userDivisions.length === 1) {
-      <div class="badge-tech">
-        <span>{{ userDivisions[0].name }}</span>
-      </div>
+    <div class="badge-tech">
+      <span>{{ userDivisions[0].name }}</span>
+    </div>
     }
   </div>
 
@@ -192,7 +200,7 @@
             name="matchOpponent">
             <option value="" disabled selected>Selecciona un rival...</option>
             @for (opp of availableOpponents; track opp.id) {
-              <option [value]="opp.id">{{ opp.name }} ({{ opp.city }})</option>
+              <option [value]="opp.id">[{{ opp.alias }}] {{ opp.name }}</option>
             }
           </select>
         </div>

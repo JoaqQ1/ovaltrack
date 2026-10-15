@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Match } from '../types/match.types';
 import { AvailablePlayer, BackendRosterResponse, RosterPayload, SavedRoster, SaveRosterRequestDTO } from '../types/roster.types';
@@ -37,6 +37,50 @@ export class RosterService {
         substitutePlayers: response.substitutePlayers ?? response.suplentesIds ?? []
       })),
       catchError(error => error.status === 404 ? of(null) : throwError(() => error))
+    );
+  }
+
+  /**
+   * Obtiene exclusivamente los jugadores que integran el plantel convocado
+   * para el partido (titulares 1-15 y suplentes 16-23).
+   * Si no hay plantel guardado, recurre a los jugadores de la división.
+   */
+  getMatchRosterPlayers(matchId: string): Observable<AvailablePlayer[]> {
+    return forkJoin({
+      allPlayers: this.getAvailablePlayers(matchId).pipe(catchError(() => of([]))),
+      savedRoster: this.getSavedRoster(matchId).pipe(catchError(() => of(null)))
+    }).pipe(
+      map(({ allPlayers, savedRoster }) => {
+        if (!savedRoster || (!savedRoster.startingPlayers.length && !savedRoster.substitutePlayers.length)) {
+          return allPlayers;
+        }
+
+        const matchPlayers: AvailablePlayer[] = [];
+
+        // Titulares (camisetas 1 a 15)
+        savedRoster.startingPlayers.forEach((playerId, index) => {
+          const found = allPlayers.find(p => p.id === playerId);
+          if (found) {
+            matchPlayers.push({
+              ...found,
+              jerseyNumber: found.jerseyNumber ?? (index + 1)
+            });
+          }
+        });
+
+        // Suplentes (camisetas 16 a 23)
+        savedRoster.substitutePlayers.forEach((playerId, index) => {
+          const found = allPlayers.find(p => p.id === playerId);
+          if (found) {
+            matchPlayers.push({
+              ...found,
+              jerseyNumber: found.jerseyNumber ?? (index + 16)
+            });
+          }
+        });
+
+        return matchPlayers;
+      })
     );
   }
 }

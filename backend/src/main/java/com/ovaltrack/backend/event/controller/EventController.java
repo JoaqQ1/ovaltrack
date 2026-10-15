@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -123,12 +123,13 @@ public class EventController {
         @ApiResponse(responseCode = "409", description = "The request is invalid or the event cannot be saved because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> saveEvent(@Valid @RequestBody EventCreationDTO eventRequest, BindingResult bindingResult) {
+    public ResponseEntity<Object> saveEvent(@Valid @RequestBody EventCreationDTO eventRequest, BindingResult bindingResult,
+            Authentication authentication) {
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        return ResponseEntity.ok(eventService.saveEvent(eventRequest));
+        return ResponseEntity.ok(eventService.saveEvent(eventRequest, authentication));
     }
 
     @Operation(
@@ -140,8 +141,8 @@ public class EventController {
         @ApiResponse(responseCode = "409", description = "The event cannot be deleted because of a business or data-integrity conflict.")
     })
     @DeleteMapping("/{eventId}")
-    public ResponseEntity<EventResponseDTO> deleteEvent(@PathVariable UUID eventId) {
-        return ResponseEntity.ok(eventService.deleteEvent(eventId));
+    public ResponseEntity<EventResponseDTO> deleteEvent(@PathVariable UUID eventId, Authentication authentication) {
+        return ResponseEntity.ok(eventService.deleteEvent(eventId, authentication));
     }
 
     @Operation(
@@ -160,14 +161,14 @@ public class EventController {
         @ApiResponse(responseCode = "400", description = "The request body contains malformed JSON or invalid request data."),
         @ApiResponse(responseCode = "409", description = "The event cannot be updated because of a business or data-integrity conflict.")
     })
-    @PutMapping("/{eventId}")
+    @PatchMapping("/{eventId}")
     public ResponseEntity<Object> updateEvent(@PathVariable UUID eventId, @Valid @RequestBody EventUpdateDTO request,
-            BindingResult bindingResult) {
+            BindingResult bindingResult, Authentication authentication) {
         if (bindingResult.hasErrors()) {
             String message = bindingResult.getFieldError().getDefaultMessage();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
         }
-        return ResponseEntity.ok(eventService.updateEvent(eventId, request));
+        return ResponseEntity.ok(eventService.updateEvent(eventId, request, authentication));
     }
 
 }

@@ -2,10 +2,13 @@ package com.ovaltrack.backend.match.business;
 
 import com.ovaltrack.backend.match.domain.Opponent;
 import com.ovaltrack.backend.match.repository.OpponentRepository;
+
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +21,21 @@ public class OpponentService {
     }
 
     public Opponent createOpponent(Opponent opponent) {
-        // Acá podrías agregar validaciones extra si quisieras
         return opponentRepository.save(opponent);
+    }
+
+    public Opponent updateOpponent(UUID id, Opponent updateData){
+        Opponent existing = opponentRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Oponente no encontrado"));
+        
+        existing.setName(updateData.getName());
+        existing.setAlias(updateData.getAlias());
+        existing.setCity(updateData.getCity());
+        
+        return opponentRepository.save(existing);
+    }
+
+    public void deleteOpponent(UUID id){
+        opponentRepository.deleteById(id);
     }
 }

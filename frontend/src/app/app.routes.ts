@@ -11,6 +11,7 @@ import { hasClubGuard } from './core/guards/has-club.guard';
 import { PostMatchComponent } from './features/match/post-match/post-match.component';
 import { DivisionPlayerListComponent } from './features/division-player/list/division-player-list.component';
 import { MatchHistoryComponent } from './features/match/match-selection/match-history.component';
+import { OpponentManagerComponent } from './features/match/opponents/opponent-manager.component';
 
 export const routes: Routes = [
     // Raíz: redirige a /home
@@ -138,6 +139,17 @@ export const routes: Routes = [
         component: DivisionPlayerFormComponent
     },
     {
+        path: 'division-player-user-query',
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+        },
+        canMatch: [authGuard],
+        loadComponent: () =>
+            import('./features/division-player/user-query/division-player-user-query.component')
+                .then(m => m.DivisionPlayerUserQueryComponent)
+    },
+    {
         path: 'members',
         canMatch: [authGuard],
         canActivate: [hasRoleGuard, hasClubGuard],
@@ -171,7 +183,8 @@ export const routes: Routes = [
         canMatch: [authGuard],
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
-            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            layout: 'wide'
         },
         component: PostMatchComponent
     },
@@ -183,6 +196,15 @@ export const routes: Routes = [
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
         },
         component: MatchHistoryComponent
+    },
+    {
+        path: 'opponent',
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB']
+        },
+        component: OpponentManagerComponent
     },
     // Wildcard para rutas no encontradas
     {

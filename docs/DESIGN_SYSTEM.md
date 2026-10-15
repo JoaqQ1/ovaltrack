@@ -318,5 +318,109 @@ Cuando decidas abordar y definir el **Modo Oscuro** para estas vistas en una eta
    - Outline Blanco Deportivo (`.btn-outline`): Para acciones secundarias, filtros o cancelar.
    - Rojo destructivo (`.btn-logout`, `.btn-delete`): Reservado para eliminar o cerrar sesión.
 3. **Mantener la consistencia de elevación:** Toda tarjeta, tabla o contenedor de datos debe tener borde de `2px` con radio redondeado (`16px` o `20px`) y sombra de elevación profunda.
-4. **Hit-targets mínimos de 44px a 48px:** Toda área interactiva debe ser fácilmente clickeable en tablet y móvil.
-5. **No romper la pantalla de Carga en Vivo (`/live-capture/:matchId`):** Dicha pantalla es un instrumento de captura en tiempo real y debe mantenerse enfocada en su diseño de alta densidad.
+5. **No alterar ni forzar contenedores en Carga en Vivo ni Entretiempo:** Dichas pantallas (`/live-capture/:matchId` y `/live-capture/:matchId/halftime`) son instrumentos tácticos especializados para tablet en tiempo real; deben mantenerse a pantalla completa y están exentas de `.layout-container`.
+6. **Uso obligatorio de `.layout-container.page`:** Toda nueva pantalla o flujo de gestión debe construirse dentro de `.layout-container.page` para garantizar alineación pixel-perfect con la Navbar.
+
+---
+
+## 7. Arquitectura de Layout y Contenedores Unificados
+
+El sistema de interfaz de OvalTrack implementa una arquitectura de layout fluida y sincronizada entre la barra de navegación superior (`NavbarComponent`) y las vistas de la aplicación, desacoplada mediante variables CSS en el contenedor raíz `.app-shell`:
+
+### 7.1 Tokens de Layout (`:root`)
+```css
+:root {
+  --layout-max: 1180px;   /* Ancho máximo estándar para vistas de gestión */
+  --layout-pad: 24px;     /* Padding lateral en desktop */
+  --layout-pad-y: 24px;   /* Separación superior entre Navbar y contenido */
+}
+
+@media (max-width: 768px) {
+  :root {
+    --layout-pad: 16px;   /* Padding lateral reducido en tablet/móvil */
+    --layout-pad-y: 16px;
+  }
+}
+
+/* Modificador activado en .app-shell para vistas analíticas de alta densidad */
+.layout-wide {
+  --layout-max: 1560px;
+}
+```
+
+### 7.2 Clases de Layout Universales
+1. **`.layout-container`:** Clase compartida utilizada tanto en el interior de la Navbar como en las páginas. Aplica la fórmula moderna:
+   ```css
+   .layout-container {
+     width: min(100% - 2 * var(--layout-pad), var(--layout-max));
+     margin-inline: auto;
+   }
+   ```
+2. **`.page`:** Define el espaciado vertical estandarizado de las páginas ruteadas:
+   ```css
+   .page {
+     padding-block: var(--layout-pad-y) 64px;
+   }
+   ```
+
+### 7.3 Flujo y Reglas de Vistas
+* **Vistas de Gestión (Estándar):**
+  - Club, Divisiones, Miembros, Fixture, Panel de Inicio (`/home`), Admin OvalTrack (`/admin/ovaltrack`).
+  - Utilizan `.layout-container.page` (o `.app` por compatibilidad retroactiva).
+  - Ancho máximo acotado a `1180px` centrado.
+* **Vistas Analíticas Densas (Wide):**
+  - Revisión post-partido (`/post-match/:id`).
+  - Declaran `data: { layout: 'wide' }` en [app.routes.ts](file:///home/gonzalolopez/Documentos/Proyectos/ovaltrack/frontend/src/app/app.routes.ts).
+  - `LayoutService` activa automáticamente la clase `.layout-wide` en `.app-shell`, expandiendo simultáneamente la Navbar y el contenido a `1560px` con alineación vertical milimétrica.
+* **Vistas Especializadas Exentas (Pantalla Completa):**
+  - Captura en vivo (`/live-capture/:matchId`) y Resumen táctico de entretiempo (`/live-capture/:matchId/halftime`).
+  - Ocultan la Navbar y no consumen `.layout-container`, operando al 100% del viewport en tablets.
+
+---
+
+## 8. Estación de Trabajo Post-Partido (Post-Match Workstation)
+
+> **Ubicación:** `/post-match/:id`  
+> **Modo de pantalla:** `.layout-wide` (ancho sincronizado a 1560px con la Navbar).
+
+La pantalla de post-partido está estructurada como una estación de trabajo de alta densidad orientada al análisis táctico y corrección de video, eliminando el doble scroll y garantizando ergonomía táctil en tablets.
+
+### 8.1 Grilla CSS Grid y Viewport Lock
+- **Desktop ($\ge 1121\text{px}$):**
+  - Contenedor `.pm` con `height: calc(100dvh - var(--navbar-h, 64px) - var(--layout-pad-y, 24px) - 16px);`.
+  - Grid Template:
+    ```css
+    grid-template-areas:
+      "hud hud"
+      "kpi kpi"
+      "timeline inspector"
+      "table inspector";
+    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    ```
+  - La tabla aloja un `cdk-virtual-scroll-viewport` vertical que aprovecha todo el espacio remanente del viewport.
+- **Tablet y Mobile ($< 1121\text{px}$):**
+  - Flujo vertical a 1 columna: `hud`, `kpi`, `timeline`, `table`.
+  - La tarjeta de tabla adopta altura fija de `470px` y `padding-bottom: 96px !important` para dar despeje al inspector flotante.
+
+### 8.2 Componentes de la Estación de Trabajo
+1. **HUD Analítico (`PostMatchHeaderComponent`):**
+   - Botón `.hud-back` (`←`) táctil de 40px con borde suave.
+   - Píldora de marcador oscura central `.match-score-pill`: `[ 27 – 19 ]` en fuente monoespaciada tabular y alto contraste.
+   - Burbuja flotante animada `.score-delta-badge` (`+5`), animada con `scoreDeltaPop` y temporizador de 3 segundos.
+   - Botón primario verde rugby botella `+ Agregar evento`.
+2. **Tira Condensada de KPIs (`PostMatchKpiStripComponent`):**
+   - Altura de 44px con 3 secciones: total de eventos, conteo de jugadas sin jugador con botón `"Ver pendientes ›"` y porcentaje de carga con barra de progreso verde.
+3. **Timeline Táctico Compacto (`PostMatchTimelineComponent`):**
+   - Altura de carril `--lane-h: 32px;` y marcadores de jugada de `20px`.
+   - Container Queries (`@container (max-width: 650px)`) para abreviar nombres largos (*Infracción*, *Penal palos*, *Tackle ✓*, etc.).
+4. **Tabla Cronológica a 5 Columnas (`PostMatchTableComponent`):**
+   - Columnas: `PER.` (55px) | `JUEGO` (75px) | `VIDEO` (75px) | `JUGADA` (1fr) | `JUGADOR` (1.2fr).
+   - Selector inline `[ Sin asignar ▾ ]`: chip con borde discontinuo ámbar (`#d97706`), fondo crema (`#fffdf0`) y desplegable nativo sin solapamiento de virtual scroll.
+5. **Inspector Dual y Formulario Reactivo (`PostMatchPanelComponent`):**
+   - **Desktop:** Columna lateral fija de 320px con solapas `[Ver]` y `[Editar]`.
+   - **Tablet/Mobile:** Bottom Sheet flotante con estado *peek* (comprimido con handle, stepper `‹ 1 de 4 ›`, selector rápido y botón Editar) y estado *open* (expandido al 78vh con backdrop blur).
+   - **Autoguardado con Debounce:** Pipeline RxJS con `debounceTime(400)` e indicador visual en tiempo real (`Guardando...`, `Guardado ✓`, `Error al guardar`).
+   - **Cola de Revisión:** Tarjetas compactas (`02:36 Penal / infracción 1T`) con resaltado ámbar al seleccionar y stepper rápido.
+   - **`EventFormComponent` Reutilizable:** Componente común compartido entre el inspector y el modal de alta, asegurando consistencia y mantenibilidad (SRP/DRY).
+

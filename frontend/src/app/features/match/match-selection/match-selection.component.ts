@@ -15,6 +15,7 @@ import { MatchService } from '../services/match.service';
 import { DivisionService } from 'src/app/services/division.service';
 import { RosterService } from '../services/roster.service';
 import { OpponentService, Opponent } from '../services/opponent.service';
+import { AuthService } from '../../auth/services/auth.service';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -42,6 +43,7 @@ export class MatchSelectComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly divisionService = inject(DivisionService);
   private readonly opponentService = inject(OpponentService);
+    private readonly authService = inject(AuthService);
 
   /** Filtros disponibles, en el orden en que se renderizan en el control segmentado, menos el finalizado. */
   readonly filters = MATCH_FILTERS.filter(f => f !== 'finished');
@@ -306,6 +308,15 @@ export class MatchSelectComponent implements OnInit {
       next: (opponents) => this.availableOpponents = opponents,
       error: () => this.errorMessage = 'No se pudieron cargar los rivales disponibles.'
     });
+  }
+
+  goToOpponents() {
+    this.router.navigate(['/opponent']);
+  } 
+
+  get isAdmin(): boolean {
+    const role = this.authService.getUserRole();
+    return role === 'ADMIN_CLUB' || role === 'ADMIN_OVALTRACK';
   }
 
 }
