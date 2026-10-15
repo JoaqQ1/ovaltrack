@@ -35,10 +35,6 @@ export class LiveCaptureService {
   private readonly playersByMatch = new Map<string, AvailablePlayer[]>();
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('online', () => this.syncPendingEvents().subscribe());
-      this.syncPendingEvents().subscribe();
-    }
   }
 
   getLiveCaptureBootstrap(query: LiveCaptureQuery): Observable<LiveCaptureBootstrap> {
