@@ -6,11 +6,12 @@ import { EventService } from '../../../services/event.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { Possession } from '../../../types/live-capture.types';
 import { BackendEventCreationRequest, MatchTimelineEventResponse } from '../../../types/event.types';
+import { EventFormComponent, EventFormData } from '../event-form/event-form.component';
 
 @Component({
   selector: 'app-post-match-create-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EventFormComponent],
   templateUrl: './post-match-create-modal.component.html',
   styleUrl: './post-match-create-modal.component.css'
 })
@@ -34,6 +35,15 @@ export class PostMatchCreateModalComponent {
   second: number | null = 0;
   possession: Possession = 'OWN';
   playerId = '';
+
+  onFormChange(data: EventFormData): void {
+    this.eventTypeId = data.eventTypeId;
+    this.possession = data.teamPossession;
+    this.playerId = data.playerId || '';
+    if (data.period !== undefined) this.period = data.period;
+    if (data.minute !== undefined) this.minute = data.minute;
+    if (data.second !== undefined) this.second = data.second;
+  }
 
   onPossessionChange(): void {
     if (this.possession === 'OPPONENT') {

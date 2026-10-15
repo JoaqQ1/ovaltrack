@@ -1,0 +1,112 @@
+<div class="event-form-container">
+  <!-- 1. Tipo de Jugada -->
+  <div class="form-group mb-3">
+    <label class="form-label-sport">Tipo de jugada *</label>
+    <select class="form-select custom-sport-select"
+            [ngModel]="eventTypeId()"
+            (ngModelChange)="onEventTypeChange($event)"
+            [disabled]="disabled">
+      <option value="" disabled>Seleccionar tipo de jugada...</option>
+      <option *ngFor="let t of store.eventTypesList()" [value]="t.id">
+        {{ t.name }}
+      </option>
+    </select>
+  </div>
+
+  <!-- 2. Posesión / Equipo -->
+  <div class="form-group mb-3">
+    <label class="form-label-sport">Posesión *</label>
+    <div class="possession-segmented">
+      <button type="button" 
+              class="possession-segment-btn" 
+              [class.active]="teamPossession() === 'OWN'"
+              (click)="onPossessionChange('OWN')"
+              [disabled]="disabled">
+        Propia
+      </button>
+      <button type="button" 
+              class="possession-segment-btn" 
+              [class.active]="teamPossession() === 'OPPONENT'"
+              (click)="onPossessionChange('OPPONENT')"
+              [disabled]="disabled">
+        Rival
+      </button>
+      <button type="button" 
+              class="possession-segment-btn" 
+              [class.active]="teamPossession() === 'NEUTRAL'"
+              (click)="onPossessionChange('NEUTRAL')"
+              [disabled]="disabled">
+        Neutral
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. Asignación de Jugador -->
+  <div class="form-group mb-3">
+    <label class="form-label-sport">Jugador</label>
+    <div *ngIf="teamPossession() === 'OPPONENT'" class="opponent-notice">
+      <i class="bi bi-info-circle me-1"></i> Jugada del equipo rival (no asignable)
+    </div>
+    <div *ngIf="teamPossession() !== 'OPPONENT'">
+      <select class="form-select custom-sport-select"
+              [ngModel]="playerId() || ''"
+              (ngModelChange)="onPlayerChange($event)"
+              [disabled]="disabled">
+        <option value="">Sin asignar (Pendiente)</option>
+        <option *ngFor="let p of store.availablePlayers()" [value]="p.id">
+          {{ p.jerseyNumber ? '#' + p.jerseyNumber + ' ' : '' }}{{ p.fullName }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 4. Campos Opcionales de Tiempo (Período y Minutos/Segundos) -->
+  <ng-container *ngIf="showTimeFields">
+    <div class="form-group mb-3">
+      <label class="form-label-sport">Período *</label>
+      <div class="possession-segmented">
+        <button type="button" 
+                class="possession-segment-btn" 
+                [class.active]="period() === 1"
+                (click)="onPeriodChange(1)"
+                [disabled]="disabled">
+          1° Tiempo
+        </button>
+        <button type="button" 
+                class="possession-segment-btn" 
+                [class.active]="period() === 2"
+                (click)="onPeriodChange(2)"
+                [disabled]="disabled">
+          2° Tiempo
+        </button>
+      </div>
+    </div>
+
+    <div class="row g-2">
+      <div class="col-6">
+        <label class="form-label-sport">Minuto (0-40)</label>
+        <input type="number" 
+               class="form-control custom-sport-input"
+               [ngModel]="minute()"
+               (ngModelChange)="onMinuteChange($event)"
+               min="0"
+               max="80"
+               [disabled]="disabled">
+      </div>
+      <div class="col-6">
+        <label class="form-label-sport">Segundo (0-59)</label>
+        <input type="number" 
+               class="form-control custom-sport-input"
+               [ngModel]="second()"
+               (ngModelChange)="onSecondChange($event)"
+               min="0"
+               max="59"
+               [disabled]="disabled">
+      </div>
+    </div>
+    <div class="mt-1 small text-muted">
+      <span *ngIf="period() === 1">Tiempo de juego: 1T {{ formattedDisplayTime }} (máx. 40 min)</span>
+      <span *ngIf="period() === 2">Tiempo de juego: 2T {{ formattedDisplayTime }} &bull; Equivale al <strong>minuto {{ formattedMatchTotalTime }}</strong> de partido</span>
+    </div>
+  </ng-container>
+</div>
