@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, computed, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { LayoutService } from 'src/app/core/services/layout.service';
 import { MatchService } from '../services/match.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
@@ -11,25 +12,29 @@ import { LiveCaptureService } from '../services/live-capture.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { MatchReviewStore } from './store/match-review.store';
-import { PostMatchKpisComponent } from './components/post-match-kpis/post-match-kpis.component';
+import { PostMatchHeaderComponent } from './components/post-match-header/post-match-header.component';
+import { PostMatchKpiStripComponent } from './components/post-match-kpi-strip/post-match-kpi-strip.component';
 import { PostMatchTimelineComponent } from './components/post-match-timeline/post-match-timeline.component';
 import { PostMatchTableComponent } from './components/post-match-table/post-match-table.component';
 import { PostMatchPanelComponent } from './components/post-match-panel/post-match-panel.component';
+import { PostMatchCreateModalComponent } from './components/post-match-create-modal/post-match-create-modal.component';
 
 @Component({
   selector: 'app-post-match',
   standalone: true,
   imports: [
     CommonModule,
-    PostMatchKpisComponent,
+    PostMatchHeaderComponent,
+    PostMatchKpiStripComponent,
     PostMatchTimelineComponent,
     PostMatchTableComponent,
-    PostMatchPanelComponent
+    PostMatchPanelComponent,
+    PostMatchCreateModalComponent
   ],
   templateUrl: './post-match.component.html',
   styleUrl: './post-match.component.css'
 })
-export class PostMatchComponent implements OnInit {
+export class PostMatchComponent implements OnInit, OnDestroy {
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -40,6 +45,7 @@ export class PostMatchComponent implements OnInit {
   private readonly cacheService = inject(LiveCaptureCacheService);
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly toastService = inject(ToastService);
+  private readonly layoutService = inject(LayoutService);
   readonly userContext = inject(UserContextService);
   readonly store = inject(MatchReviewStore);
 
@@ -54,6 +60,15 @@ export class PostMatchComponent implements OnInit {
   readonly errorMessage = signal<string>('');
   readonly isLoading = signal<boolean>(true);
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
+  readonly showCreateModal = signal<boolean>(false);
+
+  openCreateModal(): void {
+    this.showCreateModal.set(true);
+  }
+
+  closeCreateModal(): void {
+    this.showCreateModal.set(false);
+  }
 
   onEditRequested(): void {
     if (this.panel) {
@@ -67,7 +82,55 @@ export class PostMatchComponent implements OnInit {
     }
   }
 
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement;
+    const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA');
+
+    if (event.key === 'Escape') {
+      if (this.showCreateModal()) {
+        this.closeCreateModal();
+        return;
+      }
+      if (this.panel?.sheetState() === 'open') {
+        this.panel.closeSheet();
+        return;
+      }
+      if (this.store.selectedEventId()) {
+        this.store.selectEvent(null);
+        return;
+      }
+    }
+
+    if (!isEditingField) {
+      // 1. Atajos de Triage dedicados (saltar entre pendientes sin importar qué está visible)
+      if (event.key === ']' || (event.shiftKey && event.key === 'ArrowRight')) {
+        event.preventDefault();
+        this.store.selectNextPending();
+        return;
+      }
+      if (event.key === '[' || (event.shiftKey && event.key === 'ArrowLeft')) {
+        event.preventDefault();
+        this.store.selectPrevPending();
+        return;
+      }
+
+      // 2. Navegación fluida por Eventos Visibles (siguiente / anterior en orden cronológico)
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        this.store.selectNextVisible();
+        return;
+      }
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        this.store.selectPrevVisible();
+        return;
+      }
+    }
+  }
+
   ngOnInit(): void {
+    this.layoutService.setWide(true);
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
     if (this.matchId) {
       this.store.setMatchId(this.matchId);
@@ -77,8 +140,12 @@ export class PostMatchComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.layoutService.setWide(null);
+  }
+
   loadRoster(): void {
-    this.rosterService.getAvailablePlayers(this.matchId).subscribe({
+    this.rosterService.getMatchRosterPlayers(this.matchId).subscribe({
       next: (players) => {
         this.store.setAvailablePlayers(players);
       },
@@ -91,15 +158,29 @@ export class PostMatchComponent implements OnInit {
   loadMatchDetails(): void {
     this.matchService.getMatchById(this.matchId).subscribe({
       next: (match) => {
-        this.opponent.set(match.opponent || 'Visitante');
-        if (match.startedAt) {
-          this.store.matchStartTime.set(match.startedAt);
-        }
+        this.applyMatchDetails(match);
       },
-      error: () => {
+      error: async () => {
+        try {
+          const cached = await this.cacheService.getMatch(this.matchId);
+          if (cached) {
+            this.applyMatchDetails(cached);
+            return;
+          }
+        } catch {
+          // Fallback falló
+        }
         this.toastService.error('No se pudieron obtener los detalles del partido');
       }
     });
+  }
+
+  private applyMatchDetails(match: { opponent?: string | null; startedAt?: string | null; homeScore?: number; awayScore?: number }): void {
+    this.opponent.set(match.opponent || 'Visitante');
+    if (match.startedAt) {
+      this.store.matchStartTime.set(match.startedAt);
+    }
+    this.store.setInitialScores(match.homeScore ?? 0, match.awayScore ?? 0);
   }
 
   loadEventTypesAndEvents(): void {
@@ -168,7 +249,7 @@ export class PostMatchComponent implements OnInit {
           playerName: e.playerId ? 'Jugador' : null,
           playerJerseyNumber: null,
           matchTime: e.matchTime ?? 0,
-          realTime: e.realTime ?? new Date().toISOString(),
+          absoluteMatchTime: e.absoluteMatchTime ?? null,
           period: e.period ?? 1,
           teamPossession: e.teamPossession
         }));

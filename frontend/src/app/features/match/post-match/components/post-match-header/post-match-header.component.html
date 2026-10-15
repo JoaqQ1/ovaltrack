@@ -1,0 +1,63 @@
+<header class="hud-container">
+  <div class="hud-left">
+    <!-- Botón de Retroceso (.hud-back) -->
+    <button 
+      type="button" 
+      class="hud-back" 
+      (click)="onBack()" 
+      aria-label="Volver a partidos" 
+      title="Volver a partidos"
+    >
+      <i class="bi bi-arrow-left"></i>
+    </button>
+
+    <div class="hud-content">
+      <!-- Badge de Sección -->
+      <div class="badge-tech">
+        <span>Análisis • Post-partido</span>
+      </div>
+
+      <!-- Título con Tanteador Central y Delta -->
+      <div class="hud-title-row">
+        <h1 class="hud-title">
+          <span class="club-name">{{ ownClubName }}</span>
+          
+          <div class="score-wrapper" [attr.aria-label]="'Marcador: ' + homeScore + ' a ' + awayScore">
+            <span class="match-score-pill">
+              {{ homeScore }} – {{ awayScore }}
+            </span>
+            <span 
+              *ngIf="scoreDelta" 
+              class="score-delta-badge"
+              aria-live="polite"
+              [title]="'Actualización de marcador: ' + scoreDelta.text"
+            >
+              {{ scoreDelta.text }}
+            </span>
+          </div>
+
+          <span class="club-name">{{ opponentName }}</span>
+        </h1>
+      </div>
+
+      <!-- Subtítulo / Estado -->
+      <p class="hud-subtitle">
+        {{ statusLabel }} · pitazo {{ startTimeFormatted }}
+      </p>
+    </div>
+  </div>
+
+  <div class="hud-right">
+    <!-- CTA Principal Verde Sólido -->
+    <button 
+      type="button" 
+      class="btn-invite btn-add-event" 
+      (click)="onAddEvent()"
+      aria-label="Agregar evento"
+      title="Agregar evento"
+    >
+      <i class="bi bi-plus-lg"></i>
+      <span class="btn-text">Agregar evento</span>
+    </button>
+  </div>
+</header>

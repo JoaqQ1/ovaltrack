@@ -1,0 +1,50 @@
+<div class="kpi-strip-card" role="region" aria-label="Resumen de carga">
+  <!-- Eventos totales -->
+  <div class="kpi-strip-item">
+    <span class="strip-value">{{ store.kpis().totalEvents }}</span>
+    <span class="strip-label">eventos</span>
+  </div>
+
+  <!-- Separador de acento -->
+  <div class="strip-accent-bar" [class.is-warning]="store.kpis().unassignedEvents > 0"></div>
+
+  <!-- Eventos sin jugador y disparador del filtro -->
+  <div class="kpi-strip-item">
+    <span class="strip-value" [class.text-amber]="store.kpis().unassignedEvents > 0">
+      {{ store.kpis().unassignedEvents }}
+    </span>
+    <span class="strip-label">sin jugador</span>
+    <button 
+      type="button" 
+      class="strip-filter-btn" 
+      (click)="onTogglePending()"
+      [attr.aria-pressed]="store.filters().onlyUnassigned"
+      [class.active]="store.filters().onlyUnassigned"
+      title="Filtrar jugadas sin jugador asignado"
+    >
+      <span>Ver pendientes</span>
+      <i class="bi bi-chevron-right"></i>
+    </button>
+  </div>
+
+  <!-- Separador neutro -->
+  <div class="strip-divider"></div>
+
+  <!-- Porcentaje de carga completa y mini barra de progreso -->
+  <div class="kpi-strip-item kpi-progress-item">
+    <span class="strip-value">{{ store.kpis().coveragePercentage }}%</span>
+    <span class="strip-label">carga completa</span>
+    <div 
+      class="strip-progress-track" 
+      role="progressbar" 
+      [attr.aria-valuenow]="store.kpis().coveragePercentage" 
+      aria-valuemin="0" 
+      aria-valuemax="100"
+    >
+      <div 
+        class="strip-progress-fill" 
+        [style.width.%]="store.kpis().coveragePercentage"
+      ></div>
+    </div>
+  </div>
+</div>

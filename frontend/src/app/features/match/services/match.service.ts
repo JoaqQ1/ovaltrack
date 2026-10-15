@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, catchError, firstValueFrom, from, map, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, from, map, of, switchMap, throwError, firstValueFrom } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, NewMatchDraft, PendingMatchAction, PendingMatchMutation } from '../types/match.types';
 import { RosterPayload } from '../types/roster.types';
@@ -180,6 +180,14 @@ export class MatchService {
       map(match => this.normalizeMatch(match)),
       switchMap(match => from(this.cache.saveMatches([match])).pipe(
         map(() => match)
+      )),
+      catchError(error => from(this.cache.getMatch(matchId)).pipe(
+        switchMap(cachedMatch => {
+          if (cachedMatch) {
+            return of(cachedMatch);
+          }
+          return throwError(() => error);
+        })
       ))
     );
   }

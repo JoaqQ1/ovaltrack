@@ -9,8 +9,10 @@ import {
   LiveCapturePersistedState,
   Possession,
 } from '../types/live-capture.types';
-import { LiveCaptureEventType } from '../types/event-type.types';
+import { LiveCaptureEventType, TemplateField } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
+import { AvailablePlayer } from '../types/roster.types';
+import { countsAsScoring, liveFields } from '../services/calculators/event-rules';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../services/statistic-calculation.service';
@@ -20,26 +22,37 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
 
+type CaptureTeam = 'OWN' | 'OPPONENT';
+
+/** Un paso del modal: elegir jugador, o completar un campo `live` de la plantilla. */
+interface CaptureStep {
+  kind: 'player' | 'field';
+  field?: TemplateField;
+}
+
 /**
- * Representa un evento que ya fue tocado pero todavía está esperando a que
- * el usuario elija qué jugador lo realizó.
- *
- * Mientras esto está seteado, todos los chips de evento salvo `event`
- * deberían estar deshabilitados, y solo la(s) columna(s) de números
- * permitidas por `homeEnabled` / `awayEnabled` deberían ser interactivas.
- * El evento no se escribe en `history` (y no afecta el marcador ni la
- * posesión) hasta que la selección se resuelve en
- * {@link CargaEnVivoComponent.onPlayerNumberTap}.
+ * Sesión del modal de captura. Los pasos se arman a partir del evento:
+ * `[jugador si requiresPlayer] + [un paso por cada campo con phase = 'live']`.
+ * Cada toque en una opción avanza; el último paso guarda el evento.
  */
-interface PendingPlayerSelection {
-  /** El evento del catálogo que disparó esta selección pendiente. */
+interface CaptureSession {
   event: LiveCaptureEventType;
-  /** Id pre-generado para la entrada de historial que producirá esta selección una vez confirmada. */
   eventId: string;
-  /** Si la columna de jugadores del equipo local debería estar habilitada. */
-  homeEnabled: boolean;
-  /** Si la columna de jugadores del equipo visitante debería estar habilitada. */
-  awayEnabled: boolean;
+  steps: CaptureStep[];
+  stepIndex: number;
+  team: CaptureTeam;
+  /** Solo con posesión NEUTRAL se puede elegir entre Propio y Rival. */
+  canChooseTeam: boolean;
+  /** Posesión vigente al abrir el modal; es la que se guarda en el evento. */
+  possession: Possession;
+  playerNumber: number | null;
+  values: Record<string, unknown>;
+}
+
+/** Botón de jugador en la cuadrícula del modal. */
+interface SlotView {
+  number: number;
+  name: string;
 }
 
 /**
@@ -54,17 +67,12 @@ const POSSESSIONS: readonly Possession[] = ['OWN', 'NEUTRAL', 'OPPONENT'] as con
  * número de jugador a los eventos que lo requieran, y deshaciendo el
  * último evento o uno específico del historial.
  *
- * ### Flujo de selección de jugador
- * Algunos tipos de evento (`event.requiresPlayer === true`) necesitan un
- * número de jugador antes de poder confirmarse en el historial. Para esos:
- * 1. {@link onEventTap} guarda un {@link PendingPlayerSelection} en vez de
- *    escribir en el historial de inmediato.
- * 2. El template deshabilita todos los chips de evento salvo el pendiente,
- *    y habilita solo la(s) columna(s) de número correspondiente(s).
- * 3. {@link onPlayerNumberTap} resuelve la selección pendiente llamando a
- *    {@link commitEvent}, y luego la limpia.
- *
- * Los eventos que no requieren jugador van directo a {@link commitEvent}.
+ * ### Flujo de captura (modal por pasos)
+ * 1. {@link onEventTap} abre una {@link CaptureSession} con los pasos del evento
+ *    (jugador y/o campos `live` de su plantilla). Si no tiene pasos, lo guarda directo.
+ * 2. Cada toque en una opción avanza al paso siguiente; el último guarda con
+ *    {@link commitWithFollowUp}. Si el tipo define un evento de seguimiento
+ *    (p. ej. Try → Conversión), se abre otra sesión justo después.
  */
 @Component({
   selector: 'ot-live-capture',
@@ -86,8 +94,14 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   /** Estados de posesión, en el orden en que se renderizan en la barra de posesión. */
   readonly possessions = POSSESSIONS;
 
-  /** Números de camiseta del 1 al 15, renderizados en ambas columnas de jugadores. */
-  readonly numeracionColumna = Array.from({ length: 15 }, (_, index) => index + 1);
+  /** Jugadores titulares indexados por su puesto de alineación, del 1 al 15. */
+  private readonly playersByStartingNumber = new Map<number, AvailablePlayer>();
+
+  /** Los 15 titulares en cancha, agrupados para la cuadrícula del modal. */
+  forwardSlots: SlotView[] = [];
+  backSlots: SlotView[] = [];
+  /** El rival solo se registra por número (1 a 23). */
+  readonly rivalNumbers: number[] = Array.from({ length: 23 }, (_, index) => index + 1);
 
   readonly periods = ['inicio', '1er tiempo', '2do tiempo'];
 
@@ -112,24 +126,19 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   isOfflineMode = false;
   currentStats: PeriodStatisticDTO | null = null;
 
-  showConversionModal = false;
-  pendingTryData: any = null; 
-  kickerNumber: number | null = null;
+  /** Sesión del modal de captura; `null` si no hay modal abierto. */
+  capture: CaptureSession | null = null;
 
   private clockElapsedSeconds = 0;
   private clockStartedAt: number | null = null;
   private matchStartedAt: number | null = null;
   private clockTimer: ReturnType<typeof setInterval> | null = null;
 
-  /**
-   * El evento que actualmente espera un número de jugador, o `null` cuando
-   * no hay ninguna selección en curso. Las condiciones `[disabled]` del
-   * template (chips de evento y columnas de números) se bindean contra
-   * esta propiedad.
-   */
-  pendingSelection: PendingPlayerSelection | null = null;
 
   currentPossession: Possession = 'OWN';
+  /** Catálogo completo (incluye tipos ocultos de la botonera). Se usa para lookups. */
+  eventTypes: LiveCaptureEventType[] = [];
+  /** Solo lo que se dibuja en la botonera (showInPalette). */
   categories: EventCategoryGroup[] = [];
   history: HistoryItem[] = [];
   errorMessage = '';
@@ -187,7 +196,13 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
           }
         }
         this.currentPossession = state.currentPossession;
-        this.categories = this.groupEventTypes(response.eventTypes);
+        this.eventTypes = response.eventTypes;
+        this.categories = this.groupEventTypes(response.eventTypes.filter(e => e.showInPalette !== false));
+        this.playersByStartingNumber.clear();
+        response.rosterPlayers.forEach((player, index) => {
+          this.playersByStartingNumber.set(index + 1, player);
+        });
+        this.buildSlots();
         this.events = response.recentEvents;
         this.rebuildStateFromEvents();
         this.liveCaptureService.syncPendingEvents(this.matchId).subscribe();
@@ -260,87 +275,20 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.persistState();
   }
 
-  /**
-   * Maneja el toque sobre un chip de evento.
-   *
-  * Si ya hay una {@link pendingSelection} en curso, solo el mismo chip sigue
-  * habilitado: volver a tocarlo confirma el evento sin jugador. Los demás
-  * eventos se ignoran mientras se espera la selección.
-   *
-   * Si el evento necesita un número de jugador, esto abre una nueva
-   * {@link PendingPlayerSelection} — el marcador, la posesión y el
-   * historial quedan intactos hasta que {@link onPlayerNumberTap} confirme
-   * el jugador. Caso contrario, el evento se confirma de inmediato vía
-   * {@link commitEvent}.
-   *
-  * La selección pendiente se guarda en el estado de UI; el evento completo
-  * solo se persiste cuando queda asociado a un jugador.
-   */
+  /** Maneja el toque sobre un chip de evento: abre el modal de captura (o guarda directo). */
   onEventTap(event: LiveCaptureEventType): void {
-    if (!this.isStarted) {
+    if (!this.isStarted || this.capture) {
       return;
     }
 
-    if (this.pendingSelection) {
-      if (this.pendingSelection.event.id === event.id) {
-        const pendingEvent = this.pendingSelection;
-        this.pendingSelection = null;
-        this.commitEvent(pendingEvent.event, pendingEvent.eventId, null);
-      }
-      return;
-    }
-    if (event.requiresPlayer) {
-      this.pendingSelection = {
-        event,
-        eventId: this.createHistoryId(),
-        homeEnabled: this.currentPossession !== 'OPPONENT',
-        awayEnabled: this.currentPossession !== 'OWN',
-      };
-      this.persistState();
-      return;
-    }
-
-    this.commitEvent(event, this.createHistoryId(), null);
-  }
-
-  onPlayerNumberTap(playerNumber: number, team: 'OWN' | 'OPPONENT'): void {
-    if (!this.isStarted || !this.pendingSelection) {
-      return;
-    }
-
-    const teamIsEnabled = team === 'OWN'
-      ? this.pendingSelection.homeEnabled
-      : this.pendingSelection.awayEnabled;
-    if (!teamIsEnabled) {
-      return;
-    }
-
-    const pendingEvent = this.pendingSelection;
-    
-    // 👉 INTERCEPCIÓN DEL TRY (Validamos por nombre en vez de ID para evitar fallos)
-    if (pendingEvent.event.name.toLowerCase() === 'try') {
-      this.pendingTryData = {
-        event: pendingEvent.event,
-        eventId: pendingEvent.eventId,
-        playerNumber: playerNumber,
-        team: team
-      };
-      this.pendingSelection = null;
-      this.kickerNumber = playerNumber; // Autocompleta con el jugador que apoyó
-      this.showConversionModal = true;
-      return; // ¡Frenamos la ejecución aquí para que se quede esperando el modal!
-    }
-
-    // Flujo normal para el resto de los eventos
-    this.pendingSelection = null;
-    this.commitEvent(pendingEvent.event, pendingEvent.eventId, playerNumber);
+    this.openCapture(event, this.createHistoryId(), this.currentPossession, null);
   }
 
   /** Crea y persiste un evento asociado al partido actual. */
   private commitEvent(
     event: any,
     eventId: string,
-    player: number | null,
+    player: AvailablePlayer | null,
     customAttributes?: any,
     onSuccess?: () => void,
     teamPossessionOverride?: string // 👈 1. NUEVO PARÁMETRO
@@ -348,16 +296,16 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     const timestamp = new Date().toISOString();
 
     let finalAttributes: any = customAttributes ? { ...customAttributes } : null;
-    if (player !== null) {
+    if (player !== null && finalAttributes?.playerNumber === undefined) {
       finalAttributes = finalAttributes || {};
-      finalAttributes.playerNumber = player;
+      finalAttributes.playerNumber = player.jerseyNumber;
     }
 
     const localEvent: any = {
       id: eventId,
       eventTypeId: event.id,
       matchId: this.matchId,
-      playerId: null,
+      playerId: player?.id ?? null,
       teamPossession: teamPossessionOverride || this.currentPossession, // 👈 2. USAMOS EL EQUIPO FORZADO SI EXISTE
       matchTime: this.parseClock(this.gameClock),
       absoluteMatchTime: this.matchStartedAt === null
@@ -380,12 +328,11 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.rebuildStateFromEvents();
         this.synchronized = savedEvent.synchronizedAt !== null;
         this.persistState();
-
-      this.liveCaptureService
-        .syncPendingEvents(this.matchId)
-        .subscribe({
-          next: () => onSuccess?.(),
-        });
+        this.liveCaptureService
+          .syncPendingEvents(this.matchId)
+          .subscribe({
+            next: () => onSuccess?.(),
+          });
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
@@ -399,9 +346,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.pendingSelection) {
-      this.pendingSelection = null;
-      this.persistState();
+    if (this.capture) {
+      this.capture = null;
       return;
     }
 
@@ -571,7 +517,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     try {
       await firstValueFrom(this.liveCaptureService.syncPendingEvents(this.matchId));
       this.events = await firstValueFrom(this.liveCaptureService.getLocalEvents(this.matchId));
-      const allEventTypes = this.categories.flatMap(category => category.events);
+      const allEventTypes = this.eventTypes;
       this.currentStats = await this.statisticCalculationService.calculateMatchStatistics(
         this.matchId,
         this.events,
@@ -634,9 +580,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       isHalftime: this.isHalftime,
       synchronized: this.synchronized,
       clockPaused: this.clockPaused,
-      pendingSelection: this.pendingSelection
-        ? { ...this.pendingSelection, event: { ...this.pendingSelection.event } }
-        : null,
+      pendingSelection: null,
       clockElapsedSeconds: this.parseClock(this.gameClock),
       savedAt: Date.now(),
       currentPossession: this.currentPossession,
@@ -660,9 +604,6 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.periodLabel = this.isStarted ? state.periodLabel : 'Iniciar partido';
     this.isHalftime = state.isHalftime ?? (state.periodLabel === 'Entretiempo');
     this.synchronized = state.synchronized;
-    this.pendingSelection = state.pendingSelection
-      ? { ...state.pendingSelection, event: { ...state.pendingSelection.event } }
-      : null;
     // El entretiempo siempre tiene prioridad sobre un valor antiguo del reloj.
     this.clockPaused = state.clockPaused || this.isHalftime;
     this.clockElapsedSeconds = state.clockElapsedSeconds;
@@ -758,7 +699,6 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   /** Reconstruye marcador, posesión e historial recorriendo los eventos. */
   private rebuildStateFromEvents(preservePossession = false): void {
-    let possession: Possession = this.currentPossession;
     const scoreboard = { home: 0, away: 0 };
     const history: HistoryItem[] = [];
 
@@ -768,7 +708,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         continue;
       }
 
-      if (eventType.isScoring) {
+      const counts = countsAsScoring(eventType, event.attributes);
+      if (counts) {
         const points = eventType.points ?? 0;
         if (event.teamPossession === 'OPPONENT') {
           scoreboard.away += points;
@@ -786,25 +727,31 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
           playerNumber,
           event.teamPossession,
           `${scoreboard.home}-${scoreboard.away}`,
+          counts,
         ),
       });
 
-      if (eventType.affectsPossession) {
-        possession = this.nextPossession(event.teamPossession);
-      }
     }
 
     this.scoreboard = scoreboard;
     if (!preservePossession) {
-      this.currentPossession = possession;
+      const latestEvent = this.events[this.events.length - 1];
+      const latestEventType = latestEvent
+        ? this.eventTypeById(latestEvent.eventTypeId)
+        : undefined;
+
+      if (latestEvent && latestEventType) {
+        this.currentPossession = latestEventType.affectsPossession
+          ? this.nextPossession(latestEvent.teamPossession)
+          : latestEvent.teamPossession;
+      }
     }
     this.history = history.slice(0, 12);
   }
 
   /** Busca un tipo de evento por su identificador. */
   private eventTypeById(eventTypeId: string): LiveCaptureEventType | undefined {
-    return this.categories.flatMap(category => category.events)
-      .find(eventType => eventType.id === eventTypeId);
+    return this.eventTypes.find(eventType => eventType.id === eventTypeId);
   }
 
   /** Lee el número de jugador almacenado en los atributos del evento. */
@@ -828,11 +775,13 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     player: number | null,
     possession: Possession = this.currentPossession,
     score = `${this.scoreboard.home}-${this.scoreboard.away}`,
+    counts = true,
   ): string {
     const playerTag = player != null ? ` #${player}` : '';
 
     if (event.isScoring) {
-      return `${event.name}${playerTag} — ${this.teamForPossession(possession)} ${score}`;
+      const name = counts ? event.name : `${event.name} (errado)`;
+      return `${name}${playerTag} — ${this.teamForPossession(possession)} ${score}`;
     }
 
     if (possession === 'NEUTRAL') {
@@ -900,6 +849,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
    */
   private groupEventTypes(eventTypes: LiveCaptureEventType[]): EventCategoryGroup[] {
     return eventTypes
+      .filter(event => event.isActive !== false)
       .reduce<EventCategoryGroup[]>((categories, event) => {
         const category = categories.find(item => item.name === event.groupName);
 
@@ -920,7 +870,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     this.period += 1;
     this.periodLabel = this.periods[this.period - 1];
-    this.pendingSelection = null;
+    this.capture = null;
     this.synchronized = false;
 
     if (this.period === this.periods.length) {
@@ -943,69 +893,192 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  cancelConversion(): void {
-    // Si cancela, guardamos el Try aclarando que fue exitoso pero NO convertido
-    if (this.pendingTryData) {
-      this.commitEvent(
-        this.pendingTryData.event,
-        this.pendingTryData.eventId,
-        this.pendingTryData.playerNumber,
-        { 
-          wasSuccessful: true,   // ¡Este dato faltaba y rompía el historial!
-          wasConverted: false 
-        }
-      );
+  // ───────────────────────── Captura de eventos (modal por pasos) ─────────────────────────
+
+  /**
+   * Arma los botones de los 15 jugadores en cancha a partir del roster guardado.
+   * TODO(cambio): cuando se defina la lógica de cambios, esta lista debe derivarse
+   * de los titulares más los eventos `Cambio` del partido.
+   */
+  private buildSlots(): void {
+    const slot = (number: number): SlotView => ({
+      number,
+      name: this.shortName(this.playersByStartingNumber.get(number)?.fullName),
+    });
+    this.forwardSlots = Array.from({ length: 8 }, (_, index) => slot(index + 1));
+    this.backSlots = Array.from({ length: 7 }, (_, index) => slot(index + 9));
+  }
+
+  /** Apellido para el botón: «Apellido, Nombre» → Apellido; «Nombre Apellido» → Apellido. */
+  private shortName(fullName: string | undefined): string {
+    if (!fullName) {
+      return '';
     }
-    this.resetConversionState();
+    const comma = fullName.indexOf(',');
+    if (comma > 0) {
+      return fullName.slice(0, comma).trim();
+    }
+    const parts = fullName.trim().split(/\s+/);
+    return parts[parts.length - 1];
   }
 
-  confirmConversion(wasSuccessful: boolean): void {
-    if (!this.pendingTryData) return;
+  get captureStep(): CaptureStep | null {
+    return this.capture ? this.capture.steps[this.capture.stepIndex] ?? null : null;
+  }
 
-    const kicker = this.kickerNumber;
-    const isConvSuccessful = wasSuccessful;
-    const originalPossession = this.currentPossession; 
+  get captureField(): TemplateField | null {
+    return this.captureStep?.kind === 'field' ? this.captureStep.field ?? null : null;
+  }
 
-    // 1. ENVIAMOS EL TRY (Siempre)
-    this.commitEvent(
-      this.pendingTryData.event,
-      this.pendingTryData.eventId,
-      this.pendingTryData.playerNumber,
-      { 
-        wasSuccessful: true, 
-        wasConverted: isConvSuccessful 
-      },
-      () => {
-        // 2. SOLO ENVIAMOS LA CONVERSIÓN SI FUE ADENTRO
-        if (isConvSuccessful) {
-            const conversionEventMock = {
-              id: '550e8400-e29b-41d4-a716-446655440113',
-              name: 'Conversión'
-            };
-    
-            const newEventId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
-              ? crypto.randomUUID() 
-              : '11111111-1111-4111-a111-' + Math.floor(Math.random() * 1000000000000).toString(16);
-    
-            this.commitEvent(
-              conversionEventMock,
-              newEventId,
-              kicker,
-              { wasSuccessful: true },
-              undefined, 
-              originalPossession 
-            );
-        }
-      },
-      originalPossession 
+  /** Abre el modal con los pasos del evento, o lo guarda directo si no tiene ninguno. */
+  private openCapture(
+    event: LiveCaptureEventType,
+    eventId: string,
+    possession: Possession,
+    lockedTeam: CaptureTeam | null,
+  ): void {
+    const steps: CaptureStep[] = [];
+    if (event.requiresPlayer) {
+      steps.push({ kind: 'player' });
+    }
+    liveFields(event).forEach(field => steps.push({ kind: 'field', field }));
+
+    const team: CaptureTeam = lockedTeam ?? (possession === 'OPPONENT' ? 'OPPONENT' : 'OWN');
+    if (steps.length === 0) {
+      this.commitWithFollowUp(event, eventId, null, null, {}, possession, team);
+      return;
+    }
+
+    this.capture = {
+      event,
+      eventId,
+      steps,
+      stepIndex: 0,
+      team,
+      canChooseTeam: lockedTeam === null && possession === 'NEUTRAL',
+      possession,
+      playerNumber: null,
+      values: {},
+    };
+  }
+
+  chooseTeam(team: CaptureTeam): void {
+    if (!this.capture?.canChooseTeam) {
+      return;
+    }
+    this.capture.team = team;
+    this.capture.playerNumber = null;
+  }
+
+  /** `null` = «Sin jugador». */
+  pickPlayer(number: number | null): void {
+    if (!this.capture) {
+      return;
+    }
+    this.capture.playerNumber = number;
+    this.advanceCapture();
+  }
+
+  chooseOption(field: TemplateField, value: unknown): void {
+    if (!this.capture) {
+      return;
+    }
+    this.capture.values[field.key] = value;
+    this.advanceCapture();
+  }
+
+  sliderValue(field: TemplateField): number {
+    const current = this.capture?.values[field.key];
+    if (typeof current === 'number') {
+      return current;
+    }
+    return typeof field.default === 'number' ? field.default : field.min ?? 0;
+  }
+
+  onSlider(field: TemplateField, raw: string): void {
+    if (this.capture) {
+      this.capture.values[field.key] = Math.round(Number(raw));
+    }
+  }
+
+  confirmSlider(field: TemplateField): void {
+    if (!this.capture) {
+      return;
+    }
+    this.capture.values[field.key] = this.sliderValue(field);
+    this.advanceCapture();
+  }
+
+  skipField(field: TemplateField): void {
+    if (!this.capture) {
+      return;
+    }
+    delete this.capture.values[field.key];
+    this.advanceCapture();
+  }
+
+  captureBack(): void {
+    if (this.capture && this.capture.stepIndex > 0) {
+      this.capture.stepIndex -= 1;
+    }
+  }
+
+  /** Cierra el modal sin guardar: descarta el evento, o solo omite el seguimiento si lo era. */
+  cancelCapture(): void {
+    this.capture = null;
+  }
+
+  private advanceCapture(): void {
+    const session = this.capture;
+    if (!session) {
+      return;
+    }
+
+    if (session.stepIndex < session.steps.length - 1) {
+      session.stepIndex += 1;
+      return;
+    }
+
+    this.capture = null;
+    const player = session.team === 'OWN' && session.playerNumber != null
+      ? this.playersByStartingNumber.get(session.playerNumber) ?? null
+      : null;
+    this.commitWithFollowUp(
+      session.event,
+      session.eventId,
+      player,
+      session.playerNumber,
+      session.values,
+      session.possession,
+      session.team,
     );
-
-    this.resetConversionState();
   }
 
-  private resetConversionState(): void {
-    this.showConversionModal = false;
-    this.pendingTryData = null;
-    this.kickerNumber = null;
+  /** Guarda el evento y, si su tipo define un seguimiento, abre el modal del seguimiento. */
+  private commitWithFollowUp(
+    event: LiveCaptureEventType,
+    eventId: string,
+    player: AvailablePlayer | null,
+    playerNumber: number | null,
+    values: Record<string, unknown>,
+    possession: Possession,
+    team: CaptureTeam,
+  ): void {
+    const attributes: Record<string, unknown> = {
+      ...values,
+      ...(playerNumber != null ? { playerNumber } : {}),
+    };
+    const followUp = event.followUpEventTypeId
+      ? this.eventTypeById(event.followUpEventTypeId)
+      : undefined;
+
+    this.commitEvent(
+      event,
+      eventId,
+      player,
+      Object.keys(attributes).length > 0 ? attributes : undefined,
+      followUp ? () => this.openCapture(followUp, this.createHistoryId(), possession, team) : undefined,
+      possession,
+    );
   }
 }

@@ -1,0 +1,42 @@
+<div class="custom-modal-backdrop" *ngIf="isOpen">
+  <div class="custom-modal-dialog">
+    <div class="form-card w-100">
+      <!-- Header -->
+      <div class="form-card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <div class="header-icon-box">
+            <i class="bi bi-plus-circle-fill text-success"></i>
+          </div>
+          <div>
+            <h5 class="form-card-title mb-0">Agregar evento post-partido</h5>
+            <small class="text-muted">Carga manual de acciones ocurridas durante el partido</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close" (click)="onClose()" [disabled]="isSubmitting()"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="form-card-body p-4">
+        <app-event-form
+          [showTimeFields]="true"
+          [disabled]="isSubmitting()"
+          (formChange)="onFormChange($event)"
+        />
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer-actions">
+        <button type="button" class="btn btn-outline" (click)="onClose()" [disabled]="isSubmitting()">
+          Cancelar
+        </button>
+        <button type="button" 
+                class="btn btn-invite d-flex align-items-center justify-content-center gap-2" 
+                (click)="save()" 
+                [disabled]="isSubmitting()">
+          <span *ngIf="isSubmitting()" class="spinner-border spinner-border-sm"></span>
+          <span>{{ isSubmitting() ? 'Guardando...' : 'Guardar evento' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,21 +1,5 @@
 <section class="timeline-card">
-  <!-- Cabecera de la sección -->
-  <div class="timeline-card-header">
-    <div>
-      <span class="section-label">VISTA GENERAL</span>
-      <h2 class="section-title">Distribución temporal de jugadas</h2>
-    </div>
-    <div class="timeline-legend">
-      <span class="legend-item">
-        <span class="legend-indicator normal"></span> Con jugador
-      </span>
-      <span class="legend-item">
-        <span class="legend-indicator striped"></span> Sin jugador asignado
-      </span>
-    </div>
-  </div>
-
-  <!-- Barra de Filtros Deportiva -->
+  <!-- Barra de Filtros Deportiva Integrada -->
   <div class="filter-bar">
     <div class="filter-left-group">
       <!-- Botones de Período estilo Pill -->
@@ -67,25 +51,37 @@
               class="filter-pill-btn unassigned-pill" 
               [class.active]="store.filters().onlyUnassigned" 
               (click)="store.toggleOnlyUnassigned()">
-        Solo sin jugador <span class="badge-count-text">{{ store.kpis().unassignedEvents }}</span>
+        Solo sin jugador &bull; {{ store.kpis().unassignedEvents }}
       </button>
 
-      <!-- Limpiar Filtros -->
-      <button type="button" 
+      <!-- Limpiar Filtros (Visible solo cuando hay filtros activos) -->
+      <button *ngIf="store.hasActiveFilters()"
+              type="button" 
               class="filter-pill-btn clear-pill" 
-              (click)="store.clearFilters()">
-        Limpiar filtros
+              (click)="store.clearFilters()"
+              aria-label="Limpiar filtros activos"
+              title="Restablecer todos los filtros a sus valores por defecto">
+        <i class="bi bi-x-circle-fill me-1"></i>
+        <span>Limpiar filtros</span>
       </button>
     </div>
 
     <!-- Búsqueda por jugador o tipo -->
     <div class="search-wrapper">
-      <i class="bi bi-search search-icon"></i>
+      <i class="bi bi-search search-icon" aria-hidden="true"></i>
       <input type="text" 
              class="search-input" 
              placeholder="Buscar jugador o tipo" 
              [value]="store.filters().searchTerm" 
              (input)="onSearchChange($event)">
+      <button *ngIf="store.filters().searchTerm" 
+              type="button" 
+              class="search-clear-btn" 
+              (click)="store.setSearchTerm('')" 
+              aria-label="Limpiar búsqueda"
+              title="Limpiar búsqueda">
+        <i class="bi bi-x-circle-fill"></i>
+      </button>
     </div>
   </div>
 
@@ -95,7 +91,7 @@
       <!-- Cabecera de la Regla (Eje Temporal) -->
       <div class="ruler-row">
         <div class="ruler-sidebar-label">
-          <span>EVENTOS • clic para ocultar</span>
+          <span title="Clic en una jugada para mostrar u ocultar su carril">JUGADA</span>
         </div>
         <div class="ruler-track">
           <div class="ruler-tick" 
@@ -137,10 +133,14 @@
                 class="lane-btn" 
                 [attr.aria-pressed]="!lane.hidden" 
                 (click)="store.toggleLane(lane.eventTypeId)"
-                [title]="lane.hidden ? 'Mostrar carril' : 'Ocultar carril'">
+                [attr.aria-label]="(lane.hidden ? 'Mostrar carril de ' : 'Ocultar carril de ') + lane.eventName"
+                [title]="(lane.hidden ? 'Mostrar carril • ' : 'Ocultar carril • ') + lane.eventName">
           <span class="lane-color-bar" [style.backgroundColor]="lane.color"></span>
-          <span class="lane-name">{{ lane.eventName }}</span>
-          <span class="lane-badge">{{ lane.totalCount }}</span>
+          <span class="lane-name" [title]="lane.eventName">
+            <span class="lane-name-full">{{ lane.eventName }}</span>
+            <span class="lane-name-short">{{ getShortLabel(lane.eventName) }}</span>
+          </span>
+          <span class="lane-count">{{ lane.totalCount }}</span>
         </button>
 
         <!-- Pista Horizontal del Carril con Marcadores -->
