@@ -62,6 +62,21 @@
   --layout-max: 1180px;
   --layout-pad: 24px;
   --layout-pad-y: 24px;
+  --navbar-h: 64px;
+
+  /* Tokens de Eventos y Línea de Tiempo */
+  --lane-h: 36px;
+  --event-try: #15803d;
+  --event-penalty: #b91c1c;
+  --event-tackle: #1e3a8a;
+  --event-setpiece: #c2410c;
+  --event-neutral: #475569;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --lane-h: 44px;
+  }
 }
 
 @media (max-width: 768px) {

@@ -1,6 +1,6 @@
-<div class="layout-container page">
+<div class="layout-container page pm">
   <!-- Page Header Integrado OvalTrack -->
-  <header class="hud">
+  <header class="hud pm-area-hud">
     <div class="hud-brand">
       <div class="badge-tech">
         <span>Análisis • Post-partido</span>
@@ -57,20 +57,28 @@
     </div>
   </div>
 
-  <!-- Contenido Principal: Layout de Dos Columnas (Fase 2) -->
-  <div class="review-layout" *ngIf="!isLoading() && !errorMessage()">
-    <!-- Columna Principal: KPIs, Distribución Temporal y Tabla Detallada -->
-    <main class="review-main-column">
+  <!-- Contenido Principal: Grilla de Estación de Trabajo (Fase 1) -->
+  <ng-container *ngIf="!isLoading() && !errorMessage()">
+    <!-- Área de KPIs -->
+    <div class="pm-area-kpi">
       <app-post-match-kpis />
-      <app-post-match-timeline />
-      <app-post-match-table (editRequested)="onEditRequested()" (deleteRequested)="onDeleteRequested()" />
-    </main>
+    </div>
 
-    <!-- Columna Lateral (Sidebar 340px): Detalle del Evento y Cola de Revisión -->
-    <aside class="review-sidebar-column">
+    <!-- Área de Línea Temporal -->
+    <div class="pm-area-timeline">
+      <app-post-match-timeline />
+    </div>
+
+    <!-- Área de Tabla Detallada -->
+    <div class="pm-area-table">
+      <app-post-match-table (editRequested)="onEditRequested()" (deleteRequested)="onDeleteRequested()" />
+    </div>
+
+    <!-- Área del Inspector Lateral (320px) -->
+    <aside class="pm-area-inspector">
       <app-post-match-panel />
     </aside>
-  </div>
+  </ng-container>
 
   <!-- Modal de Alta de Eventos Post-Partido (HU-8.4) -->
   <app-post-match-create-modal [isOpen]="showCreateModal()" [matchId]="matchId" (close)="closeCreateModal()" />

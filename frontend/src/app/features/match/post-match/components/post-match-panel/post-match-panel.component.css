@@ -1,10 +1,39 @@
 
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
 .panel-stack {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  position: sticky;
-  top: 100px; /* Offset aumentado para no chocar con la navbar global fija */
+  gap: 12px;
+  position: static;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-sport, rgba(32, 75, 34, 0.28)) transparent;
+}
+
+.panel-stack::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel-stack::-webkit-scrollbar-thumb {
+  background: var(--border-sport, rgba(32, 75, 34, 0.28));
+  border-radius: 4px;
+}
+
+@media (max-width: 1120px) {
+  :host {
+    height: auto;
+  }
+
+  .panel-stack {
+    height: auto;
+    overflow-y: visible;
+  }
 }
 
 .panel-card {
