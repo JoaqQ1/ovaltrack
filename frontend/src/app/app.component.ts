@@ -6,6 +6,7 @@ import { environment } from '@environments/environment.docker';
 import { HttpClient } from '@angular/common/http';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
+import { SyncManagerService } from './core/synchronization/SyncManagerService';
 
 interface PingResponse {
   status: string;
@@ -33,6 +34,8 @@ export class AppComponent {
       .subscribe((event: any) => {
         this.currentUrl.set(event.urlAfterRedirects || event.url);
       });
+    inject(SyncManagerService)
+
   }
 
   get showNavbar(): boolean {
