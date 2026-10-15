@@ -101,12 +101,7 @@ export class PostMatchPanelComponent {
     if (event) {
       event.stopPropagation();
     }
-    const queue = this.store.pendingQueue();
-    if (queue.length === 0) return;
-    const currentId = this.store.selectedEventId();
-    const currentIndex = queue.findIndex(e => e.id === currentId);
-    const prevIndex = currentIndex > 0 ? currentIndex - 1 : queue.length - 1;
-    this.store.selectEvent(queue[prevIndex].id);
+    this.store.selectPrevPending();
   }
 
   onNextPendingClick(event?: MouseEvent): void {

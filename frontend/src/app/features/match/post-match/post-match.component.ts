@@ -103,10 +103,28 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     }
 
     if (!isEditingField) {
-      if (event.key === 'ArrowRight' || event.key === ']') {
-        this.panel?.onNextPendingClick();
-      } else if (event.key === 'ArrowLeft' || event.key === '[') {
-        this.panel?.onPrevPendingClick();
+      // 1. Atajos de Triage dedicados (saltar entre pendientes sin importar qué está visible)
+      if (event.key === ']' || (event.shiftKey && event.key === 'ArrowRight')) {
+        event.preventDefault();
+        this.store.selectNextPending();
+        return;
+      }
+      if (event.key === '[' || (event.shiftKey && event.key === 'ArrowLeft')) {
+        event.preventDefault();
+        this.store.selectPrevPending();
+        return;
+      }
+
+      // 2. Navegación fluida por Eventos Visibles (siguiente / anterior en orden cronológico)
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        this.store.selectNextVisible();
+        return;
+      }
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        this.store.selectPrevVisible();
+        return;
       }
     }
   }

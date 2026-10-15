@@ -242,6 +242,34 @@ export class MatchReviewStore {
     this.selectedEventId.set(id);
   }
 
+  selectNextVisible(): void {
+    const events = this.visibleEvents();
+    if (events.length === 0) return;
+
+    const currentId = this.selectedEventId();
+    const currentIndex = events.findIndex(e => e.id === currentId);
+
+    if (currentIndex === -1 || currentIndex === events.length - 1) {
+      this.selectedEventId.set(events[0].id);
+    } else {
+      this.selectedEventId.set(events[currentIndex + 1].id);
+    }
+  }
+
+  selectPrevVisible(): void {
+    const events = this.visibleEvents();
+    if (events.length === 0) return;
+
+    const currentId = this.selectedEventId();
+    const currentIndex = events.findIndex(e => e.id === currentId);
+
+    if (currentIndex <= 0) {
+      this.selectedEventId.set(events[events.length - 1].id);
+    } else {
+      this.selectedEventId.set(events[currentIndex - 1].id);
+    }
+  }
+
   selectNextPending(): void {
     const queue = this.pendingQueue();
     if (queue.length === 0) return;
@@ -253,6 +281,20 @@ export class MatchReviewStore {
       this.selectedEventId.set(queue[0].id);
     } else {
       this.selectedEventId.set(queue[currentIndex + 1].id);
+    }
+  }
+
+  selectPrevPending(): void {
+    const queue = this.pendingQueue();
+    if (queue.length === 0) return;
+
+    const currentId = this.selectedEventId();
+    const currentIndex = queue.findIndex(e => e.id === currentId);
+
+    if (currentIndex <= 0) {
+      this.selectedEventId.set(queue[queue.length - 1].id);
+    } else {
+      this.selectedEventId.set(queue[currentIndex - 1].id);
     }
   }
 
