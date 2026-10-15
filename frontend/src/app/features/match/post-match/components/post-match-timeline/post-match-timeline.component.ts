@@ -49,4 +49,18 @@ export class PostMatchTimelineComponent {
   setPeriod(period: ReviewPeriodFilter): void {
     this.store.setPeriod(period);
   }
+
+  getShortLabel(name: string): string {
+    const lower = name.toLowerCase();
+    if (lower.includes('infracción') || lower.includes('penal')) {
+      if (lower.includes('palos')) return 'Penal palos';
+      return 'Infracción';
+    }
+    if (lower.includes('tackle')) {
+      if (lower.includes('fallado')) return 'Tackle ✗';
+      return 'Tackle ✓';
+    }
+    if (lower.includes('drop')) return 'Drop';
+    return name;
+  }
 }

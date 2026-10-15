@@ -16,6 +16,7 @@ import com.ovaltrack.backend.person.domain.Person;
 import com.ovaltrack.backend.club.business.ClubService;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.event.domain.Event;
+import com.ovaltrack.backend.event.domain.EventPossession;
 import com.ovaltrack.backend.event.domain.EventType;
 import com.ovaltrack.backend.event.domain.dto.EventDTOMapper;
 import com.ovaltrack.backend.event.domain.dto.event.EventCreationDTO;
@@ -32,8 +33,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EventService {
 
-	public static final int MAX_FIRST_HALF_MATCH_SECONDS = 2700; // 45 min (40 reglamentarios + 5 descuento)
-	public static final int MAX_SECOND_HALF_MATCH_SECONDS = 5100; // 85 min (80 reglamentarios + 5 descuento)
+	public static final int MAX_FIRST_HALF_MATCH_SECONDS = 2400; // 40 min reglamentarios
+	public static final int MAX_SECOND_HALF_MATCH_SECONDS = 4800; // 80 min reglamentarios (40 + 40)
 
 	private final EventRepository eventRepository;
 	private final EventTypeService eventTypeService;
@@ -125,6 +126,7 @@ public class EventService {
 		}
 
 		validateMatchTimePeriod(eventRequest.period(), eventRequest.matchTime());
+		validatePlayerPossession(eventRequest.teamPossession(), eventRequest.playerId());
 
 		Person aPerson = resolveEventPlayer(eventRequest.playerId(), match);
 
@@ -226,8 +228,20 @@ public class EventService {
 			result.setEventType(aEventType);
 		}
 
-		Person person = resolveEventPlayer(eventRequest.playerId(), result.getMatch());
-		result.setPlayer(person);
+		EventPossession effectivePossession = eventRequest.teamPossession() != null ? eventRequest.teamPossession()
+				: result.getTeamPossession();
+		UUID effectivePlayerId = eventRequest.playerId() != null ? eventRequest.playerId()
+				: (eventRequest.teamPossession() == EventPossession.OPPONENT ? null
+						: (result.getPlayer() != null ? result.getPlayer().getId() : null));
+
+		validatePlayerPossession(effectivePossession, effectivePlayerId);
+
+		if (effectivePossession == EventPossession.OPPONENT) {
+			result.setPlayer(null);
+		} else if (eventRequest.playerId() != null) {
+			Person person = resolveEventPlayer(eventRequest.playerId(), result.getMatch());
+			result.setPlayer(person);
+		}
 
 		if (eventRequest.teamPossession() != null) {
 			result.setTeamPossession(eventRequest.teamPossession());
@@ -272,7 +286,8 @@ public class EventService {
 			int points = eventType.getPoints() != null ? eventType.getPoints() : 0;
 			if (event.getTeamPossession() == com.ovaltrack.backend.event.domain.EventPossession.OPPONENT) {
 				awayScore += points;
-			} else {
+			} else if (event.getTeamPossession() == com.ovaltrack.backend.event.domain.EventPossession.OWN
+					|| event.getPlayer() != null) {
 				homeScore += points;
 			}
 		}
@@ -288,11 +303,17 @@ public class EventService {
 				throw new BusinessException("El tiempo de juego no puede ser negativo");
 			}
 			if (Integer.valueOf(1).equals(period) && matchTime > MAX_FIRST_HALF_MATCH_SECONDS) {
-				throw new BusinessException("El tiempo de juego del 1° Tiempo no puede exceder los 45 minutos");
+				throw new BusinessException("El tiempo de juego del 1° Tiempo no puede exceder los 40 minutos");
 			}
 			if (Integer.valueOf(2).equals(period) && matchTime > MAX_SECOND_HALF_MATCH_SECONDS) {
-				throw new BusinessException("El tiempo de juego del 2° Tiempo no puede exceder los 85 minutos");
+				throw new BusinessException("El tiempo de juego del 2° Tiempo no puede exceder los 80 minutos");
 			}
+		}
+	}
+
+	private void validatePlayerPossession(EventPossession possession, UUID playerId) {
+		if (possession == EventPossession.OPPONENT && playerId != null) {
+			throw new BusinessException("No se puede asignar un jugador a un evento del equipo rival");
 		}
 	}
 
