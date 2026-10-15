@@ -301,8 +301,13 @@ export class MatchSelectComponent implements OnInit {
       return;
     }
 
-    forkJoin(matches.map(match => this.rosterService.getSavedRoster(match.id).pipe(
-      catchError(() => of(null)),
-    ))).subscribe();
+    forkJoin(
+      matches.map(match => 
+        forkJoin([
+          this.rosterService.getSavedRoster(match.id).pipe(catchError(() => of(null))),
+          this.rosterService.getAvailablePlayers(match.id).pipe(catchError(() => of([])))
+        ])
+      )
+    ).subscribe();
   }
 }
