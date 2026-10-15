@@ -14,6 +14,7 @@ import {
 import { MatchService } from '../services/match.service';
 import { DivisionService } from 'src/app/services/division.service';
 import { RosterService } from '../services/roster.service';
+import { OpponentService, Opponent } from '../services/opponent.service';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -40,6 +41,7 @@ export class MatchSelectComponent implements OnInit {
   private readonly rosterService = inject(RosterService);
   private readonly router = inject(Router);
   private readonly divisionService = inject(DivisionService);
+  private readonly opponentService = inject(OpponentService);
 
   /** Filtros disponibles, en el orden en que se renderizan en el control segmentado, menos el finalizado. */
   readonly filters = MATCH_FILTERS.filter(f => f !== 'finished');
@@ -48,7 +50,7 @@ export class MatchSelectComponent implements OnInit {
   matches: Match[] = [];
   userDivisions: any[] = [];
   selectedDivisionId: string = '';
-
+  availableOpponents: Opponent[] = []
   /** Filtro actualmente seleccionado en el control segmentado. */
   activeFilter: MatchFilter = 'all';
 
@@ -56,7 +58,7 @@ export class MatchSelectComponent implements OnInit {
   isCreateOpen = false;
 
   /** Datos del formulario de alta, en curso de carga. */
-  draft: NewMatchDraft = { date: '', opponent: '' };
+  draft: NewMatchDraft = { date: '', opponentId: '' };
   errorMessage = '';
 
   
@@ -95,18 +97,14 @@ export class MatchSelectComponent implements OnInit {
     return activeMatches.filter(match => match.status === this.activeFilter);
   }
 
-  /** Si el formulario de alta tiene los dos campos requeridos completos. */
   get canCreateMatch(): boolean {
-    return this.draft.date.trim().length > 0 && this.draft.opponent.trim().length > 0 && this.selectedDivisionId.length > 0;
+    return this.draft.date.trim().length > 0 
+        && this.draft.opponentId.trim().length > 0 
+        && this.selectedDivisionId.length > 0;
   }
 
   setFilter(filter: MatchFilter): void {
     this.activeFilter = filter;
-  }
-
-  openCreateModal(): void {
-    this.draft = { date: '', opponent: '' };
-    this.isCreateOpen = true;
   }
 
   closeCreateModal(): void {
@@ -296,6 +294,17 @@ export class MatchSelectComponent implements OnInit {
         this.errorMessage = 'No se pudieron cargar los partidos de esta división.';
         this.matches = [];
       }
+    });
+  }
+
+  openCreateModal(): void {
+    this.draft = { date: '', opponentId: '' };
+    this.isCreateOpen = true;
+    
+    // Traemos los rivales del backend
+    this.opponentService.getAllOpponents().subscribe({
+      next: (opponents) => this.availableOpponents = opponents,
+      error: () => this.errorMessage = 'No se pudieron cargar los rivales disponibles.'
     });
   }
 

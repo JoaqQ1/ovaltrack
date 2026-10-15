@@ -1,7 +1,7 @@
 -- OvalTrack Data Seeder
 -- =========================================
 
-TRUNCATE TABLE events, event_types, matches, division_players, division_coaches, divisions, clubs, users, persons RESTART IDENTITY CASCADE;
+TRUNCATE TABLE events, event_types, matches, opponents, division_players, division_coaches, divisions, clubs, users, persons RESTART IDENTITY CASCADE;
 
 ALTER TABLE matches DROP CONSTRAINT IF EXISTS matches_status_check;
 ALTER TABLE matches ADD CONSTRAINT matches_status_check CHECK (status IN ('NOT_STARTED', 'IN_PROGRESS', 'HALFTIME', 'FINISHED', 'CANCELLED'));
@@ -180,27 +180,41 @@ INSERT INTO division_players (id, person_id, division_id, jersey_number, positio
 
 
 -- =========================================
+-- OPPONENTS (Clubes rivales)
+-- =========================================
+INSERT INTO opponents (id, name, city) VALUES
+    ('22222222-1111-1111-1111-000000000001', 'Trelew Rugby Club', 'Trelew'),
+    ('22222222-1111-1111-1111-000000000002', 'Bigornia Club', 'Rawson'),
+    ('22222222-1111-1111-1111-000000000003', 'Chenque Rugby Club', 'Comodoro Rivadavia'),
+    ('22222222-1111-1111-1111-000000000004', 'Patoruzú Rugby Club', 'Trelew'),
+    ('22222222-1111-1111-1111-000000000005', 'Deportivo Portugués', 'Comodoro Rivadavia'),
+    ('22222222-1111-1111-1111-000000000006', 'Calafate Rugby Club', 'Comodoro Rivadavia');
+
+
+-- =========================================
 -- MATCHES (Partidos)
 -- =========================================
 
+-- =========================================
+-- MATCHES (Partidos)
+-- =========================================
 INSERT INTO matches (
-  id, date, division_id, opponent, status, current_period,
+  id, date, division_id, opponent_id, status, current_period,
   clock_elapsed_seconds, clock_paused, clock_updated_at,
   current_possession, home_score, away_score, started_at, finished_at
 ) VALUES
-    -- 1: Trelew RC (En progreso, 1T -> ideal para probar captura en vivo y pasar a entretiempo)
-  ('11111111-1111-1111-1111-000000000040', '2026-09-28 15:30:00', '11111111-1111-1111-1111-000000000020', 'Trelew Rugby Club', 'IN_PROGRESS', 1, 0, false, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
-    -- 2: Bigornia Club (No iniciado -> ideal para probar alineación/roster y comienzo de partido)
-  ('11111111-1111-1111-1111-000000000041', '2026-10-05 16:00:00', '11111111-1111-1111-1111-000000000020', 'Bigornia Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL),
-    -- 3: Chenque RC (Entretiempo -> ideal para probar resumen táctico e Iniciar 2T)
-  ('11111111-1111-1111-1111-000000000042', '2026-09-28 14:00:00', '11111111-1111-1111-1111-000000000020', 'Chenque Rugby Club', 'HALFTIME', 1, 2400, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
-    -- 4: Patoruzú RC (En progreso, 2T -> ideal para probar eventos durante el segundo tiempo)
-  ('11111111-1111-1111-1111-000000000043', '2026-09-28 16:45:00', '11111111-1111-1111-1111-000000000020', 'Patoruzú Rugby Club', 'IN_PROGRESS', 2, 2400, false, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
-    -- 5: Deportivo Portugués (Finalizado -> ideal para probar consulta de partidos concluidos)
-  ('11111111-1111-1111-1111-000000000044', '2026-09-21 15:30:00', '11111111-1111-1111-1111-000000000020', 'Deportivo Portugués', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    -- 6: Calafate RC (División M19, no iniciado)
-  ('11111111-1111-1111-1111-000000000045', '2026-10-12 14:00:00', '11111111-1111-1111-1111-000000000021', 'Calafate Rugby Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL);
-
+    -- 1: Trelew RC (En progreso) -> Usa el ID de Trelew
+  ('11111111-1111-1111-1111-000000000040', '2026-09-28 15:30:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000001', 'IN_PROGRESS', 1, 0, false, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
+    -- 2: Bigornia Club (No iniciado) -> Usa el ID de Bigornia
+  ('11111111-1111-1111-1111-000000000041', '2026-10-05 16:00:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000002', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL),
+    -- 3: Chenque RC (Entretiempo) -> Usa el ID de Chenque
+  ('11111111-1111-1111-1111-000000000042', '2026-09-28 14:00:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000003', 'HALFTIME', 1, 2400, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
+    -- 4: Patoruzú RC (En progreso, 2T) -> Usa el ID de Patoruzú
+  ('11111111-1111-1111-1111-000000000043', '2026-09-28 16:45:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000004', 'IN_PROGRESS', 2, 2400, false, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
+    -- 5: Deportivo Portugués (Finalizado) -> Usa el ID de Dep. Portugués
+  ('11111111-1111-1111-1111-000000000044', '2026-09-21 15:30:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000005', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    -- 6: Calafate RC (División M19) -> Usa el ID de Calafate
+  ('11111111-1111-1111-1111-000000000045', '2026-10-12 14:00:00', '11111111-1111-1111-1111-000000000021', '22222222-1111-1111-1111-000000000006', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL);
 
 -- =========================================
 -- EVENT_TYPES (Catálogo Estándar de Tipos de Eventos)

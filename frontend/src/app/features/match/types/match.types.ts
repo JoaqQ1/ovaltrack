@@ -45,7 +45,7 @@ export interface LiveMatchStateRequest {
 /** Datos mínimos necesarios para dar de alta un partido nuevo. */
 export interface NewMatchDraft {
   date: string;
-  opponent: string;
+  opponentId: string;
 }
 
 /** Estados posibles de un partido en el listado. */
