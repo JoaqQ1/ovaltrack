@@ -286,7 +286,8 @@ public class EventService {
 			int points = eventType.getPoints() != null ? eventType.getPoints() : 0;
 			if (event.getTeamPossession() == com.ovaltrack.backend.event.domain.EventPossession.OPPONENT) {
 				awayScore += points;
-			} else {
+			} else if (event.getTeamPossession() == com.ovaltrack.backend.event.domain.EventPossession.OWN
+					|| event.getPlayer() != null) {
 				homeScore += points;
 			}
 		}

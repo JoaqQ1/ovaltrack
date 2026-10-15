@@ -63,7 +63,7 @@ export class MatchReviewStore {
         const pts = type.points || 0;
         if (ev.teamPossession === 'OPPONENT') {
           away += pts;
-        } else if (ev.teamPossession === 'OWN') {
+        } else if (ev.teamPossession === 'OWN' || ev.playerId) {
           home += pts;
         }
       }

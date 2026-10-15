@@ -95,7 +95,7 @@ class EventServiceTest {
                 null,
                 1,
                 Event.ORIGIN_POST_CAPTURE,
-                Map.of("note", "Post-match try"),
+                Map.of(),
                 null
         );
 
@@ -420,8 +420,12 @@ class EventServiceTest {
         Match match = new Match();
         match.setId(UUID.randomUUID());
 
+        EventType eventType = new EventType();
+        eventType.setId(UUID.randomUUID());
+
         Event existingEvent = new Event();
         existingEvent.setId(eventId);
+        existingEvent.setEventType(eventType);
         existingEvent.setMatch(match);
         existingEvent.setTeamPossession(EventPossession.OPPONENT);
         existingEvent.setPeriod(1);
@@ -476,5 +480,54 @@ class EventServiceTest {
         assertNull(res.playerId());
         assertEquals(EventPossession.OPPONENT, res.teamPossession());
         assertNull(existingEvent.getPlayer());
+    }
+
+    @Test
+    @DisplayName("saveEvent: Recalcula tanteador sumando al local si es OWN o tiene jugador, y al rival si es OPPONENT")
+    void saveEvent_shouldRecalculateScoresProperly() {
+        UUID matchId = UUID.randomUUID();
+        UUID tryTypeId = UUID.randomUUID();
+
+        EventType tryType = new EventType();
+        tryType.setId(tryTypeId);
+        tryType.setIsScoring(true);
+        tryType.setPoints(5);
+
+        Match match = new Match();
+        match.setId(matchId);
+        match.setStatus(MatchStatus.IN_PROGRESS);
+
+        when(eventTypeService.findEventTypeEntityById(tryTypeId)).thenReturn(tryType);
+        when(matchService.findMatchEntityById(matchId)).thenReturn(match);
+
+        Person player = new Person();
+        player.setId(UUID.randomUUID());
+
+        Event ownTry = new Event();
+        ownTry.setEventType(tryType);
+        ownTry.setTeamPossession(EventPossession.OWN);
+        ownTry.setPlayer(player);
+
+        Event opponentTry = new Event();
+        opponentTry.setEventType(tryType);
+        opponentTry.setTeamPossession(EventPossession.OPPONENT);
+
+        when(eventRepository.findEventsByMatchId(matchId)).thenReturn(List.of(ownTry, opponentTry));
+        when(eventRepository.save(any(Event.class))).thenAnswer(i -> {
+            Event e = i.getArgument(0);
+            e.setId(UUID.randomUUID());
+            return e;
+        });
+
+        EventCreationDTO request = new EventCreationDTO(
+                tryTypeId, matchId, null, null, EventPossession.OWN,
+                100, 100, null, 1, "APP", null, null
+        );
+
+        eventService.saveEvent(request);
+
+        assertEquals(5, match.getHomeScore());
+        assertEquals(5, match.getAwayScore());
+        verify(matchRepository).save(match);
     }
 }

@@ -155,4 +155,30 @@ describe('MatchReviewStore (HU-8.4)', () => {
       expect(estimated).toBe(2710);
     });
   });
+
+  describe('scoreboard', () => {
+    it('should calculate points according to event types and possessions, attributing player events to home', () => {
+      store.setEventTypesList([
+        { id: 't-try', name: 'Try', isScoring: true, points: 5, category: 'OFFENSIVE', icon: 'shield', defaultPossession: 'OWN', templateEventFields: [] },
+        { id: 't-penal', name: 'Penal a los palos', isScoring: true, points: 3, category: 'OFFENSIVE', icon: 'shield', defaultPossession: 'OWN', templateEventFields: [] }
+      ]);
+
+      store.setEvents([
+        // Try propio (5)
+        { id: 'e1', eventTypeId: 't-try', matchTime: 100, teamPossession: 'OWN', period: 1 },
+        // Try con jugador pero sin posesión OWN explícita (5) -> suma a home
+        { id: 'e2', eventTypeId: 't-try', matchTime: 200, playerId: 'player-x', teamPossession: 'NEUTRAL', period: 1 },
+        // Penal rival (3) -> suma a away
+        { id: 'e3', eventTypeId: 't-penal', matchTime: 300, teamPossession: 'OPPONENT', period: 1 }
+      ]);
+
+      expect(store.scoreboard()).toEqual({ home: 10, away: 3 });
+    });
+
+    it('should use initial scores when no scoring events exist', () => {
+      store.setInitialScores(33, 25);
+      store.setEvents([]);
+      expect(store.scoreboard()).toEqual({ home: 33, away: 25 });
+    });
+  });
 });
