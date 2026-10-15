@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatchReviewStore } from '../../store/match-review.store';
@@ -20,6 +20,9 @@ export class PostMatchPanelComponent {
   private readonly eventService = inject(EventService);
   private readonly toastService = inject(ToastService);
 
+  // Estado del Bottom Sheet en Tablet/Mobile (< 1121px)
+  readonly sheetState = signal<'peek' | 'open'>('peek');
+
   // Estados de Modales
   readonly showEditModal = signal<boolean>(false);
   readonly showDeleteModal = signal<boolean>(false);
@@ -30,8 +33,50 @@ export class PostMatchPanelComponent {
   editTeamPossession: Possession = 'OWN';
   editPlayerId = '';
 
-  onNextPendingClick(): void {
+  readonly currentPendingIndex = computed(() => {
+    const selectedId = this.store.selectedEventId();
+    const queue = this.store.pendingQueue();
+    const index = queue.findIndex(e => e.id === selectedId);
+    return index >= 0 ? index + 1 : (queue.length > 0 ? 1 : 0);
+  });
+
+  toggleSheet(event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.sheetState.update(s => s === 'peek' ? 'open' : 'peek');
+  }
+
+  openSheet(): void {
+    this.sheetState.set('open');
+  }
+
+  closeSheet(): void {
+    this.sheetState.set('peek');
+  }
+
+  onPrevPendingClick(event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    const queue = this.store.pendingQueue();
+    if (queue.length === 0) return;
+    const currentId = this.store.selectedEventId();
+    const currentIndex = queue.findIndex(e => e.id === currentId);
+    const prevIndex = currentIndex > 0 ? currentIndex - 1 : queue.length - 1;
+    this.store.selectEvent(queue[prevIndex].id);
+  }
+
+  onNextPendingClick(event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
     this.store.selectNextPending();
+  }
+
+  onEditModalFromPeek(event: MouseEvent): void {
+    event.stopPropagation();
+    this.openEditModal();
   }
 
   // --- Asignación Rápida desde el Panel ---
