@@ -6,6 +6,8 @@
   padding: 1.25rem 1.5rem;
   margin-bottom: 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  container-type: inline-size;
+  container-name: timeline-card;
 }
 
 @media (max-width: 768px) {
@@ -366,7 +368,7 @@
   position: relative;
   z-index: 2;
   display: flex;
-  height: 36px;
+  height: var(--lane-h, 32px);
   border-bottom: 1px solid var(--border, rgba(27, 33, 22, 0.10));
   transition: background-color 0.15s ease;
 }
@@ -377,7 +379,7 @@
 
 .timeline-lane-row.lane-hidden {
   opacity: 0.45;
-  height: 32px;
+  height: calc(var(--lane-h, 32px) - 4px);
   background: var(--surface-alt, #eef1e7);
 }
 
@@ -410,13 +412,30 @@
 .lane-name {
   flex: 1;
   min-width: 0;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.2;
   color: var(--text-primary, #111d0e);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.lane-name-short {
+  display: none;
+}
+
+.lane-name-full {
+  display: inline;
+}
+
+@container timeline-card (max-width: 650px) {
+  .lane-name-short {
+    display: inline;
+  }
+  .lane-name-full {
+    display: none;
+  }
 }
 
 .lane-count {
@@ -443,7 +462,7 @@
   top: 50%;
   transform: translate(-50%, -50%);
   width: 6px;
-  height: 22px;
+  height: 20px;
   border-radius: 2px;
   border: none;
   cursor: pointer;

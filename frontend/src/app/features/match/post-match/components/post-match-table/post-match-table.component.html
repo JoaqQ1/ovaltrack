@@ -15,12 +15,11 @@
     <div class="table-grid-wrapper">
       <!-- Cabecera de la tabla fija -->
       <div class="table-grid-header">
-        <div class="col-period">PERÍODO</div>
-        <div class="col-time">TIEMPO</div>
-        <div class="col-realtime">HORA ABSOLUTA</div>
-        <div class="col-type">TIPO DE EVENTO</div>
-        <div class="col-player">JUGADOR ASOCIADO</div>
-        <div class="col-action">ACCIÓN</div>
+        <div class="col-period">PER.</div>
+        <div class="col-time">JUEGO</div>
+        <div class="col-video">VIDEO</div>
+        <div class="col-type">JUGADA</div>
+        <div class="col-player">JUGADOR</div>
       </div>
 
       <!-- Viewport con Virtual Scroll (Rendimiento 60fps con cientos de eventos) -->
@@ -39,13 +38,13 @@
           <div class="col-time">
             <span class="time-mono">{{ ev.matchTimeFormatted }}</span>
           </div>
-          <div class="col-realtime">
-            <span class="realtime-mono">{{ ev.absoluteTimeFormatted }}</span>
+          <div class="col-video">
+            <span class="video-mono">{{ ev.absoluteTimeFormatted }}</span>
           </div>
           <div class="col-type">
             <span class="event-chip">
               <span class="event-dot" [style.backgroundColor]="ev.color"></span>
-              {{ ev.eventTypeName }}
+              <span class="event-name">{{ ev.eventTypeName }}</span>
               <i *ngIf="ev.isPostMatch"
                  class="bi bi-clock-history ms-1 text-muted"
                  title="Cargado post-partido"></i>
@@ -53,23 +52,22 @@
           </div>
           <div class="col-player">
             <span *ngIf="ev.hasPlayer" class="player-assigned">
-              <span class="player-initial">{{ ev.playerName.charAt(0).toUpperCase() }}</span>
               {{ ev.playerName }}
             </span>
             <span *ngIf="!ev.hasPlayer && ev.teamPossession === 'OPPONENT'" class="player-rival">
               Rival
             </span>
-            <span *ngIf="ev.isUnassigned" class="player-unassigned">
-              Sin asignar
-            </span>
-          </div>
-          <div class="col-action">
-            <button type="button" class="btn-row-action btn-edit" title="Editar evento" (click)="onEditClick(ev, $event)">
-              <i class="bi bi-pencil"></i>
-            </button>
-            <button type="button" class="btn-row-action btn-delete" title="Eliminar evento" (click)="onDeleteClick(ev, $event)">
-              <i class="bi bi-trash3"></i>
-            </button>
+            <div *ngIf="ev.isUnassigned" class="player-unassigned-wrapper" (click)="$event.stopPropagation()">
+              <select class="unassigned-inline-select"
+                      [disabled]="isAssigning()"
+                      (change)="onQuickAssignPlayer(ev, $event)"
+                      title="Asignar jugador del plantel">
+                <option value="" disabled selected>Sin asignar ▾</option>
+                <option *ngFor="let p of store.availablePlayers()" [value]="p.id">
+                  {{ p.jerseyNumber ? '#' + p.jerseyNumber + ' ' : '' }}{{ p.fullName }}
+                </option>
+              </select>
+            </div>
           </div>
         </div>
       </cdk-virtual-scroll-viewport>

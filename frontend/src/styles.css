@@ -65,7 +65,7 @@
   --navbar-h: 64px;
 
   /* Tokens de Eventos y Línea de Tiempo */
-  --lane-h: 36px;
+  --lane-h: 32px;
   --event-try: #15803d;
   --event-penalty: #b91c1c;
   --event-tackle: #1e3a8a;
@@ -75,7 +75,7 @@
 
 @media (pointer: coarse) {
   :root {
-    --lane-h: 44px;
+    --lane-h: 40px;
   }
 }
 

@@ -152,7 +152,10 @@
                 [attr.aria-label]="(lane.hidden ? 'Mostrar carril de ' : 'Ocultar carril de ') + lane.eventName"
                 [title]="(lane.hidden ? 'Mostrar carril • ' : 'Ocultar carril • ') + lane.eventName">
           <span class="lane-color-bar" [style.backgroundColor]="lane.color"></span>
-          <span class="lane-name" [title]="lane.eventName">{{ lane.eventName }}</span>
+          <span class="lane-name" [title]="lane.eventName">
+            <span class="lane-name-full">{{ lane.eventName }}</span>
+            <span class="lane-name-short">{{ getShortLabel(lane.eventName) }}</span>
+          </span>
           <span class="lane-count">{{ lane.totalCount }}</span>
         </button>
 
