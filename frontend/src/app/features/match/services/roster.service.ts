@@ -18,8 +18,20 @@ export class RosterService {
         if (!match?.divisionId) {
           return throwError(() => new Error(`Partido ${matchId} no encontrado o sin división asignada`));
         }
-        return this.http.get<AvailablePlayer[]>(`${environment.apiUrl}/division/${match.divisionId}/players`);
-      })
+        return this.http.get<AvailablePlayer[]>(`${environment.apiUrl}/division/${match.divisionId}/players`).pipe(
+          switchMap(players =>
+            from(this.cache.savePersonsByDivisionId(players.map(p => ({ ...p, divisionId: match.divisionId })))).pipe(map(() => players))
+          )
+        );
+      }),
+      catchError(() => 
+        from(this.cache.getMatch(matchId)).pipe(
+          switchMap(match => {
+            if (!match?.divisionId) return of([]);
+            return from(this.cache.getPersonsByDivisionId(match.divisionId));
+          })
+        )
+      ) 
     );
   }
 
