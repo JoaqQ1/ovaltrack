@@ -80,12 +80,20 @@
 
     <!-- Búsqueda por jugador o tipo -->
     <div class="search-wrapper">
-      <i class="bi bi-search search-icon"></i>
+      <i class="bi bi-search search-icon" aria-hidden="true"></i>
       <input type="text" 
              class="search-input" 
              placeholder="Buscar jugador o tipo" 
              [value]="store.filters().searchTerm" 
              (input)="onSearchChange($event)">
+      <button *ngIf="store.filters().searchTerm" 
+              type="button" 
+              class="search-clear-btn" 
+              (click)="store.setSearchTerm('')" 
+              aria-label="Limpiar búsqueda"
+              title="Limpiar búsqueda">
+        <i class="bi bi-x-circle-fill"></i>
+      </button>
     </div>
   </div>
 

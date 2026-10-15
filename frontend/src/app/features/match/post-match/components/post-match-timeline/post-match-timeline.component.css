@@ -163,12 +163,14 @@
   border-color: var(--btn-primary-bg, #204b22);
 }
 
+.search-wrapper,
 .search-wrap {
   position: relative;
   min-width: 220px;
 }
 
 @media (max-width: 768px) {
+  .search-wrapper,
   .search-wrap {
     flex: 1 1 100%;
   }
@@ -181,11 +183,16 @@
   transform: translateY(-50%);
   color: var(--text-muted, #7a8c74);
   font-size: 0.85rem;
+  pointer-events: none;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .search-input {
   width: 100%;
-  padding: 0.35rem 0.85rem 0.35rem 2.2rem;
+  padding: 0.35rem 2rem 0.35rem 2.2rem;
   font-size: 0.82rem;
   background: var(--surface, #ffffff);
   border: 1px solid var(--border-strong, rgba(27, 33, 22, 0.22));
@@ -211,6 +218,11 @@
   padding: 0;
   display: flex;
   align-items: center;
+  transition: color 0.15s ease;
+}
+
+.search-clear-btn:hover {
+  color: var(--text-primary, #111d0e);
 }
 
 /* Tablero de Línea de Tiempo */
@@ -224,10 +236,16 @@
 
 .timeline-board {
   width: 100%;
-  min-width: 800px; /* Asegura legibilidad de la gráfica en pantallas pequeñas */
+  min-width: 0;
   position: relative;
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .timeline-board {
+    min-width: 680px;
+  }
 }
 
 .ruler-row {
@@ -253,6 +271,7 @@
 .ruler-track {
   flex: 1;
   position: relative;
+  margin: 0 24px 0 16px;
 }
 
 .ruler-tick {
@@ -271,6 +290,7 @@
   font-weight: 700;
   color: var(--text-secondary, #3b4e33);
   margin-bottom: 2px;
+  white-space: nowrap;
 }
 
 .ruler-tick.milestone .tick-label {
@@ -288,8 +308,8 @@
   position: absolute;
   top: 38px;
   bottom: 0;
-  left: 175px;
-  right: 0;
+  left: calc(175px + 16px);
+  right: 24px;
   pointer-events: none;
   z-index: 4;
 }
@@ -388,6 +408,7 @@
   flex: 1;
   position: relative;
   height: 100%;
+  margin: 0 24px 0 16px;
 }
 
 /* Marcadores de Evento */
