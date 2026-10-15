@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { EventTypeService } from 'src/app/features/match/services/event-type.service';
 import { EventService } from 'src/app/features/match/services/event.service';
 import { LiveCaptureCacheService } from 'src/app/features/match/services/live-capture-cache.service';
 import { MatchService } from 'src/app/features/match/services/match.service';
@@ -9,6 +10,7 @@ export class SyncManagerService {
   private readonly cache = inject(LiveCaptureCacheService);
   private readonly matchService = inject(MatchService);
   private readonly eventService = inject(EventService);
+  private readonly eventTypeService = inject(EventTypeService);
 
   private isSyncing = false;
 
@@ -32,12 +34,24 @@ export class SyncManagerService {
     this.isSyncing = true;
 
     try {
+      await this.syncEventTypes();
       await this.flushMatchMutations();
       await this.flushPendingEvents();
     } catch (error) {
       console.error('Background synchronization failed:', error);
     } finally {
       this.isSyncing = false;
+    }
+  }
+
+  private async syncEventTypes(): Promise<void> {
+    try {
+      const eventTypes = await firstValueFrom(this.eventTypeService.getAll());
+      if (eventTypes && eventTypes.length > 0) {
+        await this.cache.saveEventTypes(eventTypes);
+      }
+    } catch (error) {
+      console.warn('Could not sync event types in background:', error);
     }
   }
 
