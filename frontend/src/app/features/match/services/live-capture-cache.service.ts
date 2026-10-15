@@ -5,7 +5,7 @@ import { LiveCaptureEventType } from '../types/event-type.types';
 import { BackendEventResponse, LocalMatchEvent } from '../types/event.types';
 import { Match, PendingMatchMutation } from '../types/match.types';
 import { Division } from '../../division/types/division.types';
-import { SavedRoster } from '../types/roster.types';
+import { AvailablePlayer, SavedRoster } from '../types/roster.types';
 import { UserContext } from '../../auth/types/auth.types';
 
 @Injectable({ providedIn: 'root' })
@@ -35,9 +35,8 @@ export class LiveCaptureCacheService {
   }
 
   saveMatches(matches: Match[]): Promise<void> {
-    //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-    const savedMatches = matches.filter(match => match.status === 'not_started' || match.status === 'in_progress')
-    return matchDatabase.matches.bulkPut(matches).then(() => undefined);
+    const savedMatches = matches.filter(match => match.status === 'not_started' || match.status === 'in_progress' || match.status === 'halftime')
+    return matchDatabase.matches.bulkPut(savedMatches).then(() => undefined);
   }
 
   getMatchesByDivision(divisionId: string): Promise<Match[]> {
@@ -64,6 +63,14 @@ export class LiveCaptureCacheService {
     return matchDatabase.rosters.get(matchId);
   }
   
+  savePersonsByDivisionId(players: (AvailablePlayer & { divisionId?: string })[]): Promise<void> {
+    return matchDatabase.divisionPlayers.bulkPut(players as any).then(() => undefined)
+  }
+
+  getPersonsByDivisionId(divisionId: string): Promise<AvailablePlayer[]> {
+    return matchDatabase.divisionPlayers.where('divisionId').equals(divisionId).toArray();
+  }
+
   savePendingMatchMutation(mutation: PendingMatchMutation): Promise<void> {
     return matchDatabase.pendingMatchMutations.put(mutation).then(() => undefined);
   }
