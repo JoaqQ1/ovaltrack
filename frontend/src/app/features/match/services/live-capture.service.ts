@@ -35,10 +35,6 @@ export class LiveCaptureService {
   private readonly playersByMatch = new Map<string, AvailablePlayer[]>();
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('online', () => this.syncPendingEvents().subscribe());
-      this.syncPendingEvents().subscribe();
-    }
   }
 
   getLiveCaptureBootstrap(query: LiveCaptureQuery): Observable<LiveCaptureBootstrap> {
@@ -64,9 +60,8 @@ export class LiveCaptureService {
   }
 
   saveEvent(event: LocalMatchEvent): Observable<LocalMatchEvent> {
-    const localEvent = this.resolvePlayer(event);
-
-    return from(this.cache.saveEvent(localEvent)).pipe(
+    return from(this.resolvePlayer(event)).pipe(
+      switchMap(localEvent => from(this.cache.saveEvent(localEvent))),
       map(savedEvent => ({
         ...savedEvent,
         localSequence: event.localSequence,
@@ -221,7 +216,7 @@ export class LiveCaptureService {
       .then(({ state, events }) => this.resolveMatchStatus(state, events));
   }
 
-  private resolvePlayer(event: LocalMatchEvent): LocalMatchEvent {
+  private async resolvePlayer(event: LocalMatchEvent): Promise<LocalMatchEvent> {
     if (event.playerId || event.teamPossession !== 'OWN') {
       return event;
     }
@@ -231,8 +226,16 @@ export class LiveCaptureService {
       return event;
     }
 
-    const player = this.playersByMatch.get(event.matchId)
+    let player = this.playersByMatch.get(event.matchId)
       ?.find(currentPlayer => currentPlayer.jerseyNumber === playerNumber);
+
+    if (!player) {
+      const match = await this.cache.getMatch(event.matchId);
+      if (match?.divisionId) {
+        const divisionPlayers = await this.cache.getPersonsByDivisionId(match.divisionId);
+        player = divisionPlayers.find(p => p.jerseyNumber === playerNumber);
+      }
+    }
 
     return player ? { ...event, playerId: player.id } : event;
   }

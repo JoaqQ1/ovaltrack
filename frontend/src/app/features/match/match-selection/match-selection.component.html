@@ -138,7 +138,7 @@
 
       @if (match.status !== 'cancelled') {
       <footer class="match-card-action">
-        @if (match.status === 'not_started') {
+        @if ( match.status === 'empty_roster' || match.status === 'not_started') {
         <div class="match-actions-group">
           <button
             type="button"
@@ -146,12 +146,15 @@
             (click)="onSelectMatch(match)">
             Definir alineación
           </button>
-          <button
-            type="button"
-            class="btn btn-invite"
-            (click)="startMatch(match.id)">
-            Empezar partido
-          </button>
+          @if (match.status === 'not_started') {
+            <button
+              type="button"
+              class="btn btn-invite"
+              (click)="startMatch(match.id)">
+              Empezar partido
+            </button>
+          }
+
         </div>
         } @else if (match.status === 'finished' || match.status === 'halftime') {
           <button

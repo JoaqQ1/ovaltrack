@@ -2,7 +2,8 @@ import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { catchError, forkJoin, of } from 'rxjs';
 import {
   Match,
   MATCH_FILTERS,
@@ -80,6 +81,10 @@ export class MatchSelectComponent implements OnInit {
 
     if (this.activeFilter === 'in_progress') {
       return this.matches.filter(match => match.status === 'in_progress' || match.status === 'halftime');
+    }
+
+    if (this.activeFilter === 'not_started') {
+      return this.matches.filter(match => match.status === 'not_started' || match.status === 'empty_roster');
     }
 
     return this.matches.filter(match => match.status === this.activeFilter);
@@ -169,7 +174,7 @@ export class MatchSelectComponent implements OnInit {
   openMatch(match: Match): void {
     if (match.status === 'cancelled') return;
 
-    if (match.status === 'not_started') {
+    if (match.status === 'not_started' || match.status === 'empty_roster') {
       void this.router.navigate(['/selection-roster', match.id]);
     } else if (match.status === 'halftime') {
       void this.router.navigate(['/live-capture/', match.id, 'halftime'])
@@ -262,6 +267,7 @@ export class MatchSelectComponent implements OnInit {
           // Autoseleccionar la primera división
           this.selectedDivisionId = this.userDivisions[0].id;
           this.loadMatchesForDivision(this.selectedDivisionId);
+          
         }
       });
 
@@ -281,11 +287,27 @@ export class MatchSelectComponent implements OnInit {
       next: (matches) => {
         this.matches = matches;
         this.errorMessage = '';
+        this.cacheRosters(matches);
       },
       error: () => {
         this.errorMessage = 'No se pudieron cargar los partidos de esta división.';
         this.matches = [];
       }
     });
+  }
+
+  private cacheRosters(matches: Match[]): void {
+    if (matches.length === 0) {
+      return;
+    }
+
+    forkJoin(
+      matches.map(match => 
+        forkJoin([
+          this.rosterService.getSavedRoster(match.id).pipe(catchError(() => of(null))),
+          this.rosterService.getAvailablePlayers(match.id).pipe(catchError(() => of([])))
+        ])
+      )
+    ).subscribe();
   }
 }

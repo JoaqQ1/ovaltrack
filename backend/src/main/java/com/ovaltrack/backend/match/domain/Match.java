@@ -80,17 +80,21 @@ public class Match {
         if (this.status == MatchStatus.HALFTIME || (this.currentPeriod != null && this.currentPeriod == 2)) {
             throw new BusinessException("El primer tiempo ya ha sido cerrado");
         }
+/* 
         if (this.status != MatchStatus.IN_PROGRESS) {
             throw new BusinessException("El partido no se encuentra en curso en el primer tiempo");
         }
+         */
         this.status = MatchStatus.HALFTIME;
         this.currentPeriod = 1;
     }
 
     public void startSecondHalf() {
+/*         
         if (this.status != MatchStatus.HALFTIME) {
             throw new BusinessException("El partido no se encuentra en el entretiempo");
         }
+         */
         this.status = MatchStatus.IN_PROGRESS;
         this.currentPeriod = 2;
     }
