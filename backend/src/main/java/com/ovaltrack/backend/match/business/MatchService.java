@@ -25,6 +25,7 @@ import com.ovaltrack.backend.match.domain.Match;
 import com.ovaltrack.backend.match.domain.MatchPlayer;
 import com.ovaltrack.backend.match.domain.MatchPlayerRole;
 import com.ovaltrack.backend.match.domain.MatchStatus;
+import com.ovaltrack.backend.match.domain.Opponent;
 import com.ovaltrack.backend.match.domain.dto.MatchCreationDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchDTOMapper;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
@@ -35,6 +36,7 @@ import com.ovaltrack.backend.match.domain.dto.LiveMatchBootstrapDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchRosterPlayerDTO;
 import com.ovaltrack.backend.match.repository.MatchPlayerRepository;
 import com.ovaltrack.backend.match.repository.MatchRepository;
+import com.ovaltrack.backend.match.repository.OpponentRepository;
 import java.util.Comparator;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -65,6 +67,7 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final EventRepository eventRepository;
     private final EventTypeRepository eventTypeRepository;
+    private final OpponentRepository opponentRepository;
     private final MatchSecurityValidator matchSecurityValidator;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -152,11 +155,15 @@ public class MatchService {
             throw new BusinessException("Ya existe un partido planeado en esa franja horaria");
         }
 
+        // Buscar el oponente real en la base de datos
+        Opponent opponent = opponentRepository.findById(request.opponentId())
+                .orElseThrow(() -> new EntityNotFoundException("Oponente no encontrado"));
+
         Match match = new Match();
         match.setDate(request.date());
         match.setDivision(division);
-        match.setOpponent(request.opponent());
-        match.setStatus(MatchStatus.EMPTY_ROSTER);
+        match.setOpponent(opponent);
+        match.setStatus(MatchStatus.NOT_STARTED);
 
         match = matchRepository.save(match);
         return MatchDTOMapper.toResponseDTO(match);
@@ -169,8 +176,12 @@ public class MatchService {
             throw new BusinessException("Partido no encontrado");
         }
 
+        // Buscar el oponente real para la actualización
+        Opponent opponent = opponentRepository.findById(request.opponentId())
+                .orElseThrow(() -> new EntityNotFoundException("Oponente no encontrado"));
+
         match.setDate(request.date());
-        match.setOpponent(request.opponent());
+        match.setOpponent(opponent); // <-- Inyectamos el objeto real
 
         return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
     }

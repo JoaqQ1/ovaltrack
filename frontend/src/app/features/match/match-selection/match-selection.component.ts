@@ -15,6 +15,8 @@ import {
 import { MatchService } from '../services/match.service';
 import { DivisionService } from 'src/app/services/division.service';
 import { RosterService } from '../services/roster.service';
+import { OpponentService, Opponent } from '../services/opponent.service';
+import { AuthService } from '../../auth/services/auth.service';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -41,15 +43,17 @@ export class MatchSelectComponent implements OnInit {
   private readonly rosterService = inject(RosterService);
   private readonly router = inject(Router);
   private readonly divisionService = inject(DivisionService);
+  private readonly opponentService = inject(OpponentService);
+    private readonly authService = inject(AuthService);
 
-  /** Filtros disponibles, en el orden en que se renderizan en el control segmentado. */
-  readonly filters = MATCH_FILTERS;
+  /** Filtros disponibles, en el orden en que se renderizan en el control segmentado, menos el finalizado. */
+  readonly filters = MATCH_FILTERS.filter(f => f !== 'finished');
   readonly statusLabels = MATCH_STATUS_LABELS;
 
   matches: Match[] = [];
   userDivisions: any[] = [];
   selectedDivisionId: string = '';
-
+  availableOpponents: Opponent[] = []
   /** Filtro actualmente seleccionado en el control segmentado. */
   activeFilter: MatchFilter = 'all';
 
@@ -57,8 +61,10 @@ export class MatchSelectComponent implements OnInit {
   isCreateOpen = false;
 
   /** Datos del formulario de alta, en curso de carga. */
-  draft: NewMatchDraft = { date: '', opponent: '' };
+  draft: NewMatchDraft = { date: '', opponentId: '' };
   errorMessage = '';
+
+  
 
   /**
    * Se emite cuando el usuario toca un partido de la grilla. Quien use este
@@ -73,35 +79,34 @@ export class MatchSelectComponent implements OnInit {
     this.loadUserDivisions();
   }
 
-  /** Partidos visibles según {@link activeFilter}. */
+  
+  goToHistory() {
+    this.router.navigate(['/match-history']);
+  }
+
   get visibleMatches(): Match[] {
+    // Filtramos los finalizados de la memoria (ahora viven en la otra pantalla)
+    let activeMatches = this.matches.filter(match => match.status !== 'finished');
+
     if (this.activeFilter === 'all') {
-      return this.matches.filter(match => match.status !== 'cancelled');
+      return activeMatches.filter(match => match.status !== 'cancelled');
     }
 
     if (this.activeFilter === 'in_progress') {
-      return this.matches.filter(match => match.status === 'in_progress' || match.status === 'halftime');
+      return activeMatches.filter(match => match.status === 'in_progress' || match.status === 'halftime');
     }
 
-    if (this.activeFilter === 'not_started') {
-      return this.matches.filter(match => match.status === 'not_started' || match.status === 'empty_roster');
-    }
-
-    return this.matches.filter(match => match.status === this.activeFilter);
+    return activeMatches.filter(match => match.status === this.activeFilter);
   }
 
-  /** Si el formulario de alta tiene los dos campos requeridos completos. */
   get canCreateMatch(): boolean {
-    return this.draft.date.trim().length > 0 && this.draft.opponent.trim().length > 0 && this.selectedDivisionId.length > 0;
+    return this.draft.date.trim().length > 0 
+        && this.draft.opponentId.trim().length > 0 
+        && this.selectedDivisionId.length > 0;
   }
 
   setFilter(filter: MatchFilter): void {
     this.activeFilter = filter;
-  }
-
-  openCreateModal(): void {
-    this.draft = { date: '', opponent: '' };
-    this.isCreateOpen = true;
   }
 
   closeCreateModal(): void {
@@ -282,7 +287,6 @@ export class MatchSelectComponent implements OnInit {
   }
 
   loadMatchesForDivision(divisionId: string) {
-    // Usamos el servicio y asignamos el resultado a this.matches
     this.matchService.getAllMatchesByDivisionId(divisionId).subscribe({
       next: (matches) => {
         this.matches = matches;
@@ -294,6 +298,25 @@ export class MatchSelectComponent implements OnInit {
         this.matches = [];
       }
     });
+  }
+
+  openCreateModal(): void {
+    this.draft = { date: '', opponentId: '' };
+    this.isCreateOpen = true;
+    
+    this.opponentService.getAllOpponents().subscribe({
+      next: (opponents) => this.availableOpponents = opponents,
+      error: () => this.errorMessage = 'No se pudieron cargar los rivales disponibles.'
+    });
+  }
+
+  goToOpponents() {
+    this.router.navigate(['/opponent']);
+  } 
+
+  get isAdmin(): boolean {
+    const role = this.authService.getUserRole();
+    return role === 'ADMIN_CLUB' || role === 'ADMIN_OVALTRACK';
   }
 
   private cacheRosters(matches: Match[]): void {

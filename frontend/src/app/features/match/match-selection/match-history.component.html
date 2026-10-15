@@ -1,0 +1,135 @@
+<div class="app">
+  <!-- Page Header Historial -->
+  <header class="hud">
+    <div class="hud-brand">
+      <div class="badge-tech">
+        <span>Historial</span>
+      </div>
+      <div class="brand-text">
+        <h1 class="title">Partidos Finalizados</h1>
+        <p class="club">Consulta los resultados y estadísticas de partidos pasados</p>
+      </div>
+    </div>
+    
+    <div class="hud-actions">
+      <!-- Botón para volver atrás -->
+      <button type="button" class="btn btn-outline" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i> Volver a Selección
+      </button>
+    </div>
+  </header>
+
+  @if (errorMessage) {
+  <div class="custom-alert mb-4 d-flex align-items-center justify-content-between" role="alert">
+    <span>{{ errorMessage }}</span>
+    <button type="button" class="btn-close-alert" (click)="errorMessage = ''">✕</button>
+  </div>
+  }
+
+  <!-- Selector de División -->
+  <div class="division-selector-container mb-4" style="display: flex; gap: 15px; align-items: center;">
+    @if (userDivisions.length > 1) {
+      <label for="divisionSelect" class="form-label mb-0"><strong>División:</strong></label>
+      <select 
+        #divisionSelect
+        id="divisionSelect" 
+        class="form-control custom-input dropdown-division" 
+        (change)="onDivisionChange(divisionSelect.value)"
+        [value]="selectedDivisionId">
+        @for (div of userDivisions; track div.id) {
+          <option [value]="div.id">{{ div.name }}</option>
+        }
+      </select>
+    }
+    @if (userDivisions.length === 1) {
+      <div class="badge-tech">
+        <span>{{ userDivisions[0].name }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- Barra de Filtros de Historial -->
+  <div class="secondary-filters" style="display: flex; gap: 16px; margin-bottom: 24px; align-items: center; background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+    
+    <!-- Búsqueda de Oponente (Texto + Desplegable) -->
+    <input 
+      type="text" 
+      [(ngModel)]="filterOponent" 
+      class="form-control" 
+      placeholder="Buscar rival..." 
+      list="oponentes-list"
+      style="border-radius: 20px; padding: 8px 16px; min-width: 220px;">
+      
+    <datalist id="oponentes-list">
+      @for (oponente of oponentsAvailables; track oponente) {
+        <option [value]="oponente"></option>
+      }
+    </datalist>
+
+    <!-- Píldoras de Resultado -->
+    <div class="filter-pills" style="display: flex; gap: 8px;">
+      <button type="button" [class]="filterResult === 'ALL' ? 'btn btn-invite' : 'btn btn-outline'" (click)="filterResult = 'ALL'">Todos</button>
+      <button type="button" [class]="filterResult === 'WON' ? 'btn btn-invite' : 'btn btn-outline'" (click)="filterResult = 'WON'">Ganados</button>
+      <button type="button" [class]="filterResult === 'LOST' ? 'btn btn-invite' : 'btn btn-outline'" (click)="filterResult = 'LOST'">Perdidos</button>
+      <button type="button" [class]="filterResult === 'TIED' ? 'btn btn-invite' : 'btn btn-outline'" (click)="filterResult = 'TIED'">Empatados</button>
+    </div>
+
+    <!-- Orden de Fecha -->
+    <button type="button" class="btn btn-outline icon-btn" (click)="toggleOrdenFecha()" title="Ordenar fechas">
+      <i [class]="filterOrderDate === 'DESC' ? 'bi bi-sort-down' : 'bi bi-sort-up'"></i>
+    </button>
+  </div>
+
+  <!-- Grilla de Tarjetas -->
+  <div class="match-grid">
+    @for (match of visibleMatches; track match.id) {
+    <article class="match-card-shell">
+      <header class="match-card-header">
+        <span class="status-pill status-finished">
+          <span class="status-dot"></span>
+          Finalizado
+        </span>
+      </header>
+
+      <div class="match-card-body">
+        <div class="match-opponent-row">
+          <span class="vs-label">VS</span>
+          <h2 class="match-opponent-name">
+            <button type="button" class="match-card-link" (click)="openMatch(match)">
+              {{ match.opponent }}
+            </button>
+          </h2>
+        </div>
+
+        <div class="match-meta-row">
+          <div class="match-date-badge">
+            <i class="bi bi-calendar-fill"></i>
+            <time [attr.datetime]="match.date">{{ formatMatchDate(match.date) }}</time>
+          </div>
+          <div class="match-score-badge">
+            <span [style.color]="match.homeScore > match.awayScore ? '#2e7d32' : (match.homeScore < match.awayScore ? '#c62828' : 'inherit')">
+              {{ match.homeScore}} – {{ match.awayScore }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <footer class="match-card-action">
+        <button type="button" class="btn btn-invite" (click)="openMatch(match)" style="width: 100%;">
+          Ver estadísticas completas
+        </button>
+      </footer>
+    </article>
+    } @empty {
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="bi bi-journal-x" style="font-size: 2rem;"></i>
+      </div>
+      <h2 class="empty-title">No hay historial</h2>
+      <p class="empty-copy">
+        No se encontraron partidos finalizados con los filtros actuales.
+      </p>
+    </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,82 @@
+<div class="app">
+  <header class="hud">
+    <div class="hud-brand">
+      <div class="badge-tech"><span>Administración</span></div>
+      <div class="brand-text">
+        <h1 class="title">Gestión de Rivales</h1>
+        <p class="club">Administra los clubes oponentes disponibles para crear partidos</p>
+      </div>
+    </div>
+    <div class="hud-actions">
+      <button type="button" class="btn btn-invite" (click)="openCreateModal()">
+        + Añadir Rival
+      </button>
+      <button type="button" class="btn btn-outline" (click)="goToBack()">
+        Volver a selección
+      </button>
+    </div>
+  </header>
+
+  @if (errorMessage) {
+  <div class="custom-alert mb-4 d-flex align-items-center justify-content-between" role="alert">
+    <span>{{ errorMessage }}</span>
+    <button type="button" class="btn-close-alert" (click)="errorMessage = ''">✕</button>
+  </div>
+  }
+
+  <div class="match-grid">
+    @for (opp of opponents; track opp.id) {
+    <article class="match-card-shell" style="padding: 16px;">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="match-opponent-name" style="margin-bottom: 4px;">{{ opp.name }}</h2>
+          <div class="badge-tech" style="display: inline-block;"><span>{{ opp.alias }}</span></div>
+          <span style="margin-left: 10px; color: #666; font-size: 0.9rem;">📍 {{ opp.city }}</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-outline icon-btn" (click)="openEditModal(opp)">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button type="button" class="btn btn-outline icon-btn" (click)="confirmDelete(opp.id!, opp.name)" style="color: #c62828;">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+    </article>
+    }
+  </div>
+
+  @if (isModalOpen) {
+  <div class="match-modal__backdrop" (click)="closeModal()">
+    <div class="match-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header-salvia">
+        <h2 class="modal-title">{{ editingId ? 'Editar Rival' : 'Nuevo Rival' }}</h2>
+      </div>
+
+      <div class="modal-body-content">
+        <div class="form-group mb-3">
+          <label class="form-label">Nombre Completo *</label>
+          <input type="text" class="form-control custom-input" [(ngModel)]="draft.name" placeholder="Ej. Patoruzú Rugby Club" />
+        </div>
+
+        <div class="form-group mb-3">
+          <label class="form-label">Alias / Siglas *</label>
+          <input type="text" class="form-control custom-input" [(ngModel)]="draft.alias" placeholder="Ej. PRC" maxlength="10" />
+        </div>
+
+        <div class="form-group mb-4">
+          <label class="form-label">Ciudad *</label>
+          <input type="text" class="form-control custom-input" [(ngModel)]="draft.city" placeholder="Ej. Trelew" />
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" (click)="closeModal()">Cancelar</button>
+          <button type="button" class="btn btn-invite" [disabled]="!isFormValid" (click)="saveOpponent()">
+            {{ editingId ? 'Guardar Cambios' : 'Añadir' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+</div>

@@ -14,6 +14,7 @@ DELETE FROM matches;
 DELETE FROM division_players;
 DELETE FROM division_coaches;
 DELETE FROM divisions;
+DELETE FROM opponents;
 
 -- Borrar usuarios excepto el administrador general del sistema
 DELETE FROM users WHERE role != 'ADMIN_OVALTRACK';
@@ -222,29 +223,44 @@ INSERT INTO division_players (id, person_id, division_id, jersey_number, positio
     ('11111111-1111-1111-1111-000000000226', '11111111-1111-1111-1111-000000000127', '11111111-1111-1111-1111-000000000021', 12, 'Back', '2023-01-01', NULL);
 
 
+
+-- =========================================
+-- OPPONENTS (Clubes rivales)
+-- =========================================
+
+INSERT INTO opponents (id, name, city, alias) VALUES
+    ('22222222-1111-1111-1111-000000000001', 'Trelew Rugby Club', 'Trelew', 'TRC'),
+    ('22222222-1111-1111-1111-000000000002', 'Bigornia Club', 'Rawson', 'BRC'),
+    ('22222222-1111-1111-1111-000000000003', 'Chenque Rugby Club', 'Comodoro Rivadavia', 'CRC'),
+    ('22222222-1111-1111-1111-000000000004', 'Patoruzú Rugby Club', 'Trelew', 'PRC'),
+    ('22222222-1111-1111-1111-000000000005', 'Deportivo Portugués', 'Comodoro Rivadavia', 'DP'),
+    ('22222222-1111-1111-1111-000000000006', 'Calafate Rugby Club', 'Comodoro Rivadavia', 'CalRC'),
+    ('22222222-1111-1111-1111-000000000007', 'Comodoro Rugby Club', 'Comodoro Rivadavia', 'ComRC');
+
+
 -- =========================================
 -- MATCHES (Partidos)
 -- =========================================
 
 INSERT INTO matches (
-  id, date, division_id, opponent, status, current_period,
+  id, date, division_id, opponent_id, status, current_period,
   clock_elapsed_seconds, clock_paused, clock_updated_at,
   current_possession, home_score, away_score, started_at, finished_at
 ) VALUES
-    -- 1: Trelew RC (En progreso, 1T -> ideal para probar captura en vivo y pasar a entretiempo)
-  ('11111111-1111-1111-1111-000000000040', '2026-09-28 15:30:00', '11111111-1111-1111-1111-000000000020', 'Trelew Rugby Club', 'IN_PROGRESS', 1, 1800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
-    -- 2: Bigornia Club (No iniciado -> ideal para probar alineación/roster y comienzo de partido)
-  ('11111111-1111-1111-1111-000000000041', '2026-10-05 16:00:00', '11111111-1111-1111-1111-000000000020', 'Bigornia Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL),
-    -- 3: Chenque RC (Entretiempo -> ideal para probar resumen táctico e Iniciar 2T)
-  ('11111111-1111-1111-1111-000000000042', '2026-09-28 14:00:00', '11111111-1111-1111-1111-000000000020', 'Chenque Rugby Club', 'HALFTIME', 1, 2400, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
-    -- 4: Patoruzú RC (En progreso, 2T -> ideal para probar eventos durante el segundo tiempo)
-  ('11111111-1111-1111-1111-000000000043', '2026-09-28 16:45:00', '11111111-1111-1111-1111-000000000020', 'Patoruzú Rugby Club', 'IN_PROGRESS', 2, 4500, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
-    -- 5: Deportivo Portugués (Finalizado -> ideal para probar consulta de partidos concluidos)
-  ('11111111-1111-1111-1111-000000000044', '2026-09-21 15:30:00', '11111111-1111-1111-1111-000000000020', 'Deportivo Portugués', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, '2026-09-21 15:30:00', '2026-09-21 17:30:00'),
-    -- 6: Calafate RC (División M19, no iniciado)
-  ('11111111-1111-1111-1111-000000000045', '2026-10-12 14:00:00', '11111111-1111-1111-1111-000000000021', 'Calafate Rugby Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL),
-    -- 7: Comodoro Rugby Club (Entretiempo -> con 75 eventos de diversos tipos, propios y rivales)
-  ('11111111-1111-1111-1111-000000000046', '2026-10-09 15:30:00', '11111111-1111-1111-1111-000000000020', 'Comodoro Rugby Club', 'HALFTIME', 1, 2400, true, CURRENT_TIMESTAMP, 'OWN', 21, 13, '2026-10-09 15:30:00', NULL);
+    -- 1: Trelew RC
+  ('11111111-1111-1111-1111-000000000040', '2026-09-28 15:30:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000001', 'IN_PROGRESS', 1, 1800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
+    -- 2: Bigornia Club
+  ('11111111-1111-1111-1111-000000000041', '2026-10-05 16:00:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000002', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL),
+    -- 3: Chenque RC
+  ('11111111-1111-1111-1111-000000000042', '2026-09-28 14:00:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000003', 'HALFTIME', 1, 2400, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
+    -- 4: Patoruzú RC
+  ('11111111-1111-1111-1111-000000000043', '2026-09-28 16:45:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000004', 'IN_PROGRESS', 2, 4500, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
+    -- 5: Deportivo Portugués
+  ('11111111-1111-1111-1111-000000000044', '2026-09-21 15:30:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000005', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, '2026-09-21 15:30:00', '2026-09-21 17:30:00'),
+    -- 6: Calafate RC
+  ('11111111-1111-1111-1111-000000000045', '2026-10-12 14:00:00', '11111111-1111-1111-1111-000000000021', '22222222-1111-1111-1111-000000000006', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL),
+    -- 7: Comodoro Rugby Club
+  ('11111111-1111-1111-1111-000000000046', '2026-10-09 15:30:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000007', 'HALFTIME', 1, 2400, true, CURRENT_TIMESTAMP, 'OWN', 21, 13, '2026-10-09 15:30:00', NULL);
 
 
 
@@ -1441,8 +1457,8 @@ INSERT INTO events (id, match_id, player_id, event_type_id, team_possession, mat
 -- =========================================
 -- NUEVO PARTIDO FINALIZADO (300 EVENTOS, 60 PENDIENTES)
 -- =========================================
-INSERT INTO matches (id, date, division_id, opponent, status, current_period, clock_elapsed_seconds, clock_paused, clock_updated_at, current_possession, home_score, away_score, started_at, finished_at) VALUES
-('11111111-1111-1111-1111-000000000047', '2026-09-10 15:30:00', '11111111-1111-1111-1111-000000000020', 'Puerto Madryn RC', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, '2026-09-10 15:30:00', '2026-09-10 17:15:00');
+INSERT INTO matches (id, date, division_id, opponent_id, status, current_period, clock_elapsed_seconds, clock_paused, clock_updated_at, current_possession, home_score, away_score, started_at, finished_at) VALUES
+('11111111-1111-1111-1111-000000000047', '2026-09-10 15:30:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000002', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, '2026-09-10 15:30:00', '2026-09-10 17:15:00');
 
 INSERT INTO matches_players (id, role, division_id, match_id) VALUES
     ('55555555-5555-5555-5555-000000470000', 'TITULAR', '11111111-1111-1111-1111-000000000200', '11111111-1111-1111-1111-000000000047'),
