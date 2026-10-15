@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../auth/services/auth.service';
 import { UserContextService } from '../../core/services/user-context.service';
-import { CurrentUserSession, UserRole } from '../auth/types/auth.types';
+import { UserRole } from '../auth/types/auth.types';
 import { NavigationCard } from './types/home.types';
 
 @Component({
