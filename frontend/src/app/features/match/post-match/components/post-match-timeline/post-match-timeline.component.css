@@ -29,7 +29,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 0.5rem;
-  padding: 6px 12px;
+  padding: 4px 12px;
   background: var(--surface-toolbar, #eaf3e6);
   border: none;
   border-bottom: 1px solid var(--border-sport, rgba(32, 75, 34, 0.28));
@@ -42,7 +42,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .filter-pill-btn {
@@ -52,8 +52,8 @@
   background: var(--surface, #ffffff);
   border: 1px solid var(--border-strong, rgba(27, 33, 22, 0.22));
   border-radius: 9999px;
-  padding: 0.35rem 0.85rem;
-  font-size: 0.82rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-primary, #111d0e);
   cursor: pointer;
@@ -149,8 +149,8 @@
 
 .search-input {
   width: 100%;
-  padding: 0.35rem 2rem 0.35rem 2.2rem;
-  font-size: 0.82rem;
+  padding: 0.25rem 2rem 0.25rem 2.2rem;
+  font-size: 0.8rem;
   background: var(--surface, #ffffff);
   border: 1px solid var(--border-strong, rgba(27, 33, 22, 0.22));
   border-radius: 9999px;
@@ -200,7 +200,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  padding-bottom: 4px;
+  padding-bottom: 0;
 }
 
 @media (max-width: 768px) {
@@ -211,7 +211,7 @@
 
 .ruler-row {
   display: flex;
-  height: 28px;
+  height: 26px;
   border-bottom: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
   background: var(--surface-alt, #eef1e7);
 }
@@ -245,14 +245,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .tick-label {
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--text-secondary, #3b4e33);
-  margin-bottom: 2px;
+  line-height: 1;
   white-space: nowrap;
 }
 
@@ -262,14 +262,16 @@
 }
 
 .tick-line {
+  position: absolute;
+  bottom: 0;
   width: 1px;
-  height: 6px;
+  height: 4px;
   background: var(--border-strong, rgba(27, 33, 22, 0.22));
 }
 
 .timeline-tracks-overlay {
   position: absolute;
-  top: 28px;
+  top: 26px;
   bottom: 0;
   left: calc(var(--lane-label-w) + 24px);
   right: 24px;
@@ -315,7 +317,7 @@
   position: relative;
   z-index: 2;
   display: flex;
-  height: var(--lane-h, 28px);
+  height: var(--lane-h, 27px);
   border-bottom: 1px solid var(--border, rgba(27, 33, 22, 0.10));
   transition: background-color 0.15s ease;
 }

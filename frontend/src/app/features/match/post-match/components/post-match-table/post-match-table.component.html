@@ -4,15 +4,16 @@
     <div class="table-grid-wrapper">
       <!-- Cabecera de la tabla fija -->
       <div class="table-grid-header">
-        <div class="col-period">PER.</div>
+        <div class="col-period">PERIODO</div>
         <div class="col-time">JUEGO</div>
         <div class="col-video">VIDEO</div>
         <div class="col-type">JUGADA</div>
         <div class="col-player">JUGADOR</div>
+        <div class="col-action">ACCIÓN</div>
       </div>
 
       <!-- Viewport con Virtual Scroll (Rendimiento 60fps con cientos de eventos) -->
-      <cdk-virtual-scroll-viewport itemSize="42" class="table-virtual-viewport" *ngIf="store.visibleEvents().length > 0">
+      <cdk-virtual-scroll-viewport itemSize="34" class="table-virtual-viewport" *ngIf="store.visibleEvents().length > 0">
         <div *cdkVirtualFor="let ev of store.visibleEvents(); trackBy: trackById"
              class="table-grid-row"
              [attr.data-event-id]="ev.id"
@@ -54,6 +55,20 @@
                 </option>
               </select>
             </div>
+          </div>
+          <div class="col-action" (click)="$event.stopPropagation()">
+            <button type="button" 
+                    class="btn-row-action btn-edit" 
+                    title="Editar evento" 
+                    (click)="onEditClick(ev, $event)">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button type="button" 
+                    class="btn-row-action btn-delete" 
+                    title="Eliminar evento" 
+                    (click)="onDeleteClick(ev, $event)">
+              <i class="bi bi-trash3"></i>
+            </button>
           </div>
         </div>
       </cdk-virtual-scroll-viewport>
