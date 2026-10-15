@@ -132,7 +132,7 @@
 
       @if (match.status !== 'cancelled') {
       <footer class="match-card-action">
-        @if (match.status === 'not_started') {
+        @if ( match.status === 'empty_roster' || match.status === 'not_started') {
         <div class="match-actions-group">
           <button type="button" class="action-link" (click)="onSelectMatch(match)">
             Definir alineación

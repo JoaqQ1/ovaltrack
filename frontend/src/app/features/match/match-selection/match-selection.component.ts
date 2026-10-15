@@ -2,7 +2,8 @@ import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { catchError, forkJoin, of } from 'rxjs';
 import {
   Match,
   MATCH_FILTERS,
@@ -83,7 +84,6 @@ export class MatchSelectComponent implements OnInit {
     this.router.navigate(['/match-history']);
   }
 
-  // 3. Modificamos los partidos visibles para que NO muestre los finalizados
   get visibleMatches(): Match[] {
     // Filtramos los finalizados de la memoria (ahora viven en la otra pantalla)
     let activeMatches = this.matches.filter(match => match.status !== 'finished');
@@ -179,7 +179,7 @@ export class MatchSelectComponent implements OnInit {
   openMatch(match: Match): void {
     if (match.status === 'cancelled') return;
 
-    if (match.status === 'not_started') {
+    if (match.status === 'not_started' || match.status === 'empty_roster') {
       void this.router.navigate(['/selection-roster', match.id]);
     } else if (match.status === 'halftime') {
       void this.router.navigate(['/live-capture/', match.id, 'halftime'])
@@ -272,6 +272,7 @@ export class MatchSelectComponent implements OnInit {
           // Autoseleccionar la primera división
           this.selectedDivisionId = this.userDivisions[0].id;
           this.loadMatchesForDivision(this.selectedDivisionId);
+          
         }
       });
 
@@ -286,11 +287,11 @@ export class MatchSelectComponent implements OnInit {
   }
 
   loadMatchesForDivision(divisionId: string) {
-    // Usamos el servicio y asignamos el resultado a this.matches
     this.matchService.getAllMatchesByDivisionId(divisionId).subscribe({
       next: (matches) => {
         this.matches = matches;
         this.errorMessage = '';
+        this.cacheRosters(matches);
       },
       error: () => {
         this.errorMessage = 'No se pudieron cargar los partidos de esta división.';
@@ -303,7 +304,6 @@ export class MatchSelectComponent implements OnInit {
     this.draft = { date: '', opponentId: '' };
     this.isCreateOpen = true;
     
-    // Traemos los rivales del backend
     this.opponentService.getAllOpponents().subscribe({
       next: (opponents) => this.availableOpponents = opponents,
       error: () => this.errorMessage = 'No se pudieron cargar los rivales disponibles.'
@@ -319,4 +319,18 @@ export class MatchSelectComponent implements OnInit {
     return role === 'ADMIN_CLUB' || role === 'ADMIN_OVALTRACK';
   }
 
+  private cacheRosters(matches: Match[]): void {
+    if (matches.length === 0) {
+      return;
+    }
+
+    forkJoin(
+      matches.map(match => 
+        forkJoin([
+          this.rosterService.getSavedRoster(match.id).pipe(catchError(() => of(null))),
+          this.rosterService.getAvailablePlayers(match.id).pipe(catchError(() => of([])))
+        ])
+      )
+    ).subscribe();
+  }
 }
