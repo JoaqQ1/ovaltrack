@@ -11,11 +11,12 @@ import { DivisionPlayerResponse } from '../type/division-player.types';
 import { PersonResponse } from '../../person/types/person.types';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { ResultsPage } from '../../pagination/results-page';
+import { ModalComponent } from '../../modal/modal.component';
 
 @Component({
   selector: 'app-division-player-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, PaginationComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, PaginationComponent, ModalComponent],
   templateUrl: './division-player-list.component.html',
   styleUrl: './division-player-list.component.css'
 })
@@ -33,8 +34,10 @@ export class DivisionPlayerListComponent implements OnInit {
     
     mensajeExito = '';
     mensajeError = '';
-
     private autoDismissTimer: any = null;
+    eliminandoId: string | null = null;
+    playerToRemove: DivisionPlayerResponse | null = null;
+    mostrarModalConfirmacion = false;
 
     resultsPage: ResultsPage = <ResultsPage>{};
     currentPage: number = 1;
@@ -207,18 +210,46 @@ export class DivisionPlayerListComponent implements OnInit {
     }
 
     desasociarJugador(player: DivisionPlayerResponse): void {
-        this.mensajeError = '';
-        this.divisionPlayerService.remove(player.id).subscribe({
-            next: () => {
-                this.cargarJugadoresActivos();
-            },
-            error: (err) => {
-                console.error('Error al desasociar jugador', err);
-                this.mensajeError = typeof err.error === 'string'
-                ? err.error
-                : (err.error?.message || 'No se pudo desasociar el jugador.');
-            }
-        });
+      if (player.endDate || this.eliminandoId) {
+        return;
+      }
+
+      this.mensajeError = '';
+      this.cerrarHistorial();
+      this.playerToRemove = player;
+      this.mostrarModalConfirmacion = true;
+    }
+
+    cancelarDesasociacion(): void {
+      if (!this.eliminandoId) {
+        this.mostrarModalConfirmacion = false;
+        this.playerToRemove = null;
+      }
+    }
+
+    confirmarDesasociacion(): void {
+      if (!this.playerToRemove) {
+        return;
+      }
+
+      this.eliminandoId = this.playerToRemove.id;
+      this.divisionPlayerService.remove(this.playerToRemove.id).subscribe({
+        next: () => {
+          this.eliminandoId = null;
+          this.mostrarModalConfirmacion = false;
+          this.playerToRemove = null;
+          this.cargarJugadoresActivos();
+        },
+        error: (err) => {
+          console.error('Error al desasociar jugador', err);
+          this.eliminandoId = null;
+          this.mostrarModalConfirmacion = false;
+          this.playerToRemove = null;
+          this.mensajeError = typeof err.error === 'string'
+            ? err.error
+            : (err.error?.message || 'No se pudo desasociar el jugador.');
+        }
+      });
     }
 
   closeSuccess(): void {
