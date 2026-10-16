@@ -25,26 +25,6 @@
     </div>
   </header>
 
-  <!-- Alerts -->
-  <div class="banner-region" aria-live="polite">
-    <div class="banner banner-success" role="alert" *ngIf="mensajeExito">
-      <div style="flex: 1">
-        <strong>¡Excelente!</strong>
-        <p>{{ mensajeExito }}</p>
-      </div>
-      <button class="close" (click)="closeSuccess()" aria-label="Cerrar aviso">✕</button>
-    </div>
-
-    <div class="banner banner-error" role="alert" *ngIf="mensajeError">
-      <div style="flex: 1">
-        <strong>Error</strong>
-        <p>{{ mensajeError }}</p>
-      </div>
-      <button class="close" (click)="closeError()" aria-label="Cerrar aviso">✕</button>
-    </div>
-  </div>
-
-
   <!-- Section: Available Club Players to Register (Visible when toggled ON) -->
   <section class="table-card" *ngIf="mostrarFormularioAsociacion && resultsPage.content.length > 0">
     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
