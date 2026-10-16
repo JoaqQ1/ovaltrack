@@ -17,6 +17,8 @@ import { DivisionService } from 'src/app/services/division.service';
 import { RosterService } from '../services/roster.service';
 import { OpponentService, Opponent } from '../services/opponent.service';
 import { AuthService } from '../../auth/services/auth.service';
+import { ModalComponent } from '../../modal/modal.component';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -34,7 +36,7 @@ import { AuthService } from '../../auth/services/auth.service';
 @Component({
   selector: 'ot-match-select',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent],
   templateUrl: './match-selection.component.html',
   styleUrl: './match-selection.component.css',
 })
@@ -44,8 +46,9 @@ export class MatchSelectComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly divisionService = inject(DivisionService);
   private readonly opponentService = inject(OpponentService);
-    private readonly authService = inject(AuthService);
-
+  private readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
+  
   /** Filtros disponibles, en el orden en que se renderizan en el control segmentado, menos el finalizado. */
   readonly filters = MATCH_FILTERS.filter(f => f !== 'finished');
   readonly statusLabels = MATCH_STATUS_LABELS;
@@ -62,9 +65,10 @@ export class MatchSelectComponent implements OnInit {
 
   /** Datos del formulario de alta, en curso de carga. */
   draft: NewMatchDraft = { date: '', opponentId: '' };
-  errorMessage = '';
 
-  
+  matchToRemove: Match | null = null;
+  eliminatingMatchId: string | null = null;
+  mostrarModalConfirmacion = false;
 
   /**
    * Se emite cuando el usuario toca un partido de la grilla. Quien use este
@@ -129,24 +133,51 @@ export class MatchSelectComponent implements OnInit {
         this.isCreateOpen = false;
       },
       error: (error: HttpErrorResponse) => {
-        this.errorMessage = this.readBackendError(error) ?? 'No se pudo crear el partido.';
+        const msg = this.readBackendError(error) ?? 'No se pudo crear el partido.';
+        this.toastService.show('error', msg, 'Error al crear partido');
       },
     });
   }
 
   confirmDeleteMatch(match: Match): void {
-    if (!window.confirm(`¿Eliminar el partido contra ${match.opponent}?`)) {
+    if (match.status === 'cancelled' || this.eliminatingMatchId) {
       return;
     }
 
-    this.matchService.deleteMatch(match.id).subscribe({
+    this.matchToRemove = match;
+    this.mostrarModalConfirmacion = true;
+  }
+
+  cancelarEliminacion(): void {
+    if (!this.eliminatingMatchId) {
+      this.mostrarModalConfirmacion = false;
+      this.matchToRemove = null;
+    }
+  }
+
+  ejecutarEliminacion(): void {
+    if (!this.matchToRemove) {
+      return;
+    }
+
+    this.eliminatingMatchId = this.matchToRemove.id;
+    this.matchService.deleteMatch(this.matchToRemove.id).subscribe({
       next: () => {
-        this.matches = this.matches.map(currentMatch => currentMatch.id === match.id
-          ? { ...currentMatch, status: 'cancelled' }
-          : currentMatch);
+        this.matches = this.matches.map(currentMatch => 
+          currentMatch.id === this.matchToRemove?.id
+            ? { ...currentMatch, status: 'cancelled' }
+            : currentMatch
+        );
+        this.eliminatingMatchId = null;
+        this.mostrarModalConfirmacion = false;
+        this.matchToRemove = null;
       },
       error: (error: HttpErrorResponse) => {
-        this.errorMessage = this.readBackendError(error) ?? 'No se pudo eliminar el partido.';
+        const msg = this.readBackendError(error) ?? 'No se pudo eliminar el partido.';
+        this.toastService.show('error', msg, 'Error al eliminar');
+        this.eliminatingMatchId = null;
+        this.mostrarModalConfirmacion = false;
+        this.matchToRemove = null;
       },
     });
   }
@@ -198,11 +229,10 @@ export class MatchSelectComponent implements OnInit {
           return;
         }
 
-        this.errorMessage = 'Debes completar los 15 titulares antes de capturar el partido.';
-        //void this.router.navigate(['/selection-roster', matchId]);
+        this.toastService.show('error', 'Debes completar los 15 titulares antes de capturar el partido.', 'Alineación incompleta');
       },
       error: () => {
-        this.errorMessage = 'No se pudo validar la alineación del partido.';
+        this.toastService.show('error', 'No se pudo validar la alineación del partido.', 'Error de validación');
       },
     });
   }
@@ -228,18 +258,26 @@ export class MatchSelectComponent implements OnInit {
     const days = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
     const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
     let date: Date;
+    let timeStr = '';
 
     if (Array.isArray(dateInput)) {
-      date = new Date(dateInput[0], dateInput[1] - 1, dateInput[2]);
+      date = new Date(dateInput[0], dateInput[1] - 1, dateInput[2], dateInput[3] || 0, dateInput[4] || 0);
+      if (dateInput[3] !== undefined && dateInput[4] !== undefined) {
+        timeStr = ` - ${String(dateInput[3]).padStart(2, '0')}:${String(dateInput[4]).padStart(2, '0')} hs`;
+      }
     } else if (typeof dateInput === 'string') {
-      const datePart = dateInput.split('T')[0];
+      const [datePart, timePart] = dateInput.split('T');
       const [year, month, day] = datePart.split('-').map(Number);
       date = new Date(year, month - 1, day);
+      if (timePart) {
+        const [hours, minutes] = timePart.split(':');
+        timeStr = ` - ${hours}:${minutes} hs`;
+      }
     } else {
       return 'Fecha inválida';
     }
 
-    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}${timeStr}`;
   }
 
   loadUserDivisions() {
@@ -290,11 +328,10 @@ export class MatchSelectComponent implements OnInit {
     this.matchService.getAllMatchesByDivisionId(divisionId).subscribe({
       next: (matches) => {
         this.matches = matches;
-        this.errorMessage = '';
         this.cacheRosters(matches);
       },
       error: () => {
-        this.errorMessage = 'No se pudieron cargar los partidos de esta división.';
+        this.toastService.show('error', 'No se pudieron cargar los partidos de esta división.', 'Error de carga');
         this.matches = [];
       }
     });
@@ -306,7 +343,7 @@ export class MatchSelectComponent implements OnInit {
     
     this.opponentService.getAllOpponents().subscribe({
       next: (opponents) => this.availableOpponents = opponents,
-      error: () => this.errorMessage = 'No se pudieron cargar los rivales disponibles.'
+      error: () => this.toastService.show('error', 'No se pudieron cargar los rivales disponibles.', 'Error')
     });
   }
 

@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { Match } from '../types/match.types';
 import { MatchService } from '../services/match.service';
 import { DivisionService } from 'src/app/services/division.service';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 @Component({
   selector: 'ot-match-history',
@@ -18,12 +19,12 @@ export class MatchHistoryComponent implements OnInit {
   private readonly matchService = inject(MatchService);
   private readonly divisionService = inject(DivisionService);
   private readonly router = inject(Router);
-
+  private readonly toastService = inject(ToastService);
+  
   matches: Match[] = [];
   userDivisions: any[] = [];
   selectedDivisionId: string = '';
-  errorMessage = '';
-
+ 
   filterOponent: string = '';
   filterResult: 'ALL' | 'WON' | 'LOST' | 'TIED' = 'ALL';
   filterOrderDate: 'DESC' | 'ASC' = 'DESC';
@@ -120,10 +121,9 @@ export class MatchHistoryComponent implements OnInit {
     this.matchService.getAllMatchesByDivisionId(divisionId).subscribe({
       next: (matches) => {
         this.matches = matches;
-        this.errorMessage = '';
       },
       error: () => {
-        this.errorMessage = 'No se pudieron cargar los partidos de esta división.';
+        this.toastService.show('error', 'No se pudieron cargar los partidos de esta división.', 'Error de carga');
         this.matches = [];
       }
     });
