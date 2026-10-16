@@ -35,8 +35,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
-
 @RestController
 @RequestMapping("matches")
 @Tag(name = "Matches", description = "Create, query, update, and delete matches")
@@ -213,12 +211,8 @@ public class MatchController {
     public ResponseEntity<Void> saveMatchRoster(
             @PathVariable UUID matchId,
             @RequestBody MatchRosterDTO request) {
-        
-        
         matchService.saveMatchRoster(matchId, request.titularesIds(), request.suplentesIds());
-
         return ResponseEntity.ok().build();
-    
     }
 
     @GetMapping("/{matchId}/roster")
