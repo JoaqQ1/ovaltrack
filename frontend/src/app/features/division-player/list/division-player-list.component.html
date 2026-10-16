@@ -186,8 +186,9 @@
                   *ngIf="!player.endDate"
                   type="button"
                   class="btn btn-danger-outline"
+                  [disabled]="eliminandoId === player.id"
                   (click)="desasociarJugador(player)">
-                  Desasociar
+                  {{ eliminandoId === player.id ? 'Desasociando...' : 'Desasociar' }}
                 </button>
               </div>
             </td>
@@ -249,4 +250,13 @@
       </div>
     </div>
   </section>
+  <app-modal
+    *ngIf="mostrarModalConfirmacion && playerToRemove"
+    title="Desasociar jugador"
+    message="¿Está seguro de que quiere desasociar a este jugador de la división?"
+    description="La asociación quedará finalizada y conservará su historial."
+    [isProcessing]="!!eliminandoId"
+    (confirm)="confirmarDesasociacion()"
+    (cancel)="cancelarDesasociacion()">
+  </app-modal>  
 </div>
