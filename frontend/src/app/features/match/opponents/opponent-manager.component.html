@@ -17,12 +17,6 @@
     </div>
   </header>
 
-  @if (errorMessage) {
-  <div class="custom-alert mb-4 d-flex align-items-center justify-content-between" role="alert">
-    <span>{{ errorMessage }}</span>
-  </div>
-  }
-
   <div class="match-grid">
     @for (opp of opponents; track opp.id) {
     <article class="match-card-shell" style="padding: 16px;">
