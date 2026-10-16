@@ -17,6 +17,7 @@ import { DivisionService } from 'src/app/services/division.service';
 import { RosterService } from '../services/roster.service';
 import { OpponentService, Opponent } from '../services/opponent.service';
 import { AuthService } from '../../auth/services/auth.service';
+import { ModalComponent } from '../../modal/modal.component';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -34,7 +35,7 @@ import { AuthService } from '../../auth/services/auth.service';
 @Component({
   selector: 'ot-match-select',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent],
   templateUrl: './match-selection.component.html',
   styleUrl: './match-selection.component.css',
 })
@@ -44,7 +45,7 @@ export class MatchSelectComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly divisionService = inject(DivisionService);
   private readonly opponentService = inject(OpponentService);
-    private readonly authService = inject(AuthService);
+  private readonly authService = inject(AuthService);
 
   /** Filtros disponibles, en el orden en que se renderizan en el control segmentado, menos el finalizado. */
   readonly filters = MATCH_FILTERS.filter(f => f !== 'finished');
@@ -64,7 +65,9 @@ export class MatchSelectComponent implements OnInit {
   draft: NewMatchDraft = { date: '', opponentId: '' };
   errorMessage = '';
 
-  
+  matchToRemove: Match | null = null;
+  eliminatingMatchId: string | null = null;
+  mostrarModalConfirmacion = false;
 
   /**
    * Se emite cuando el usuario toca un partido de la grilla. Quien use este
@@ -135,18 +138,44 @@ export class MatchSelectComponent implements OnInit {
   }
 
   confirmDeleteMatch(match: Match): void {
-    if (!window.confirm(`¿Eliminar el partido contra ${match.opponent}?`)) {
+    if (match.status === 'cancelled' || this.eliminatingMatchId) {
       return;
     }
 
-    this.matchService.deleteMatch(match.id).subscribe({
+    this.errorMessage = '';
+    this.matchToRemove = match;
+    this.mostrarModalConfirmacion = true;
+  }
+
+  cancelarEliminacion(): void {
+    if (!this.eliminatingMatchId) {
+      this.mostrarModalConfirmacion = false;
+      this.matchToRemove = null;
+    }
+  }
+
+  ejecutarEliminacion(): void {
+    if (!this.matchToRemove) {
+      return;
+    }
+
+    this.eliminatingMatchId = this.matchToRemove.id;
+    this.matchService.deleteMatch(this.matchToRemove.id).subscribe({
       next: () => {
-        this.matches = this.matches.map(currentMatch => currentMatch.id === match.id
-          ? { ...currentMatch, status: 'cancelled' }
-          : currentMatch);
+        this.matches = this.matches.map(currentMatch => 
+          currentMatch.id === this.matchToRemove?.id
+            ? { ...currentMatch, status: 'cancelled' }
+            : currentMatch
+        );
+        this.eliminatingMatchId = null;
+        this.mostrarModalConfirmacion = false;
+        this.matchToRemove = null;
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage = this.readBackendError(error) ?? 'No se pudo eliminar el partido.';
+        this.eliminatingMatchId = null;
+        this.mostrarModalConfirmacion = false;
+        this.matchToRemove = null;
       },
     });
   }
