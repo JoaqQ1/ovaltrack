@@ -26,7 +26,7 @@ export interface TemplateField {
   }[];
   min?: number; max?: number;
   default?: unknown;
-  effect?: 'scoring';
+  effects?: ('scoring' | 'possession')[];
   trueLabel?: string;
   falseLabel?: string;
 }

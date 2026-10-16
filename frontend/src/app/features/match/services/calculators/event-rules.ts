@@ -3,8 +3,12 @@ import { LiveCaptureEventType, TemplateField } from '../../types/event-type.type
 export const liveFields = (t: LiveCaptureEventType): TemplateField[] =>
   (t.templateEventFields ?? []).filter(f => f.phase === 'live');
 
-export function countsAsScoring(t: LiveCaptureEventType, attrs?: Record<string, unknown> | null): boolean {
-  if (!t.isScoring) return false;
-  const f = t.templateEventFields?.find(x => x.effect === 'scoring');
-  return !f || attrs?.[f.key] !== false;
+function effectActive(type: LiveCaptureEventType, effect: string, attrs?: Record<string, unknown> | null): boolean {
+  const field = type.templateEventFields?.find(f => f.effects?.includes(effect as never));
+  return !field || attrs?.[field.key] !== false;
 }
+export const countsAsScoring = (t: LiveCaptureEventType, a?: Record<string, unknown> | null) =>
+  !!t.isScoring && effectActive(t, 'scoring', a);
+
+export const flipsPossession = (t: LiveCaptureEventType, a?: Record<string, unknown> | null) =>
+  !!t.affectsPossession && effectActive(t, 'possession', a);

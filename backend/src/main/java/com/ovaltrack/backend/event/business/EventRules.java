@@ -15,16 +15,22 @@ public final class EventRules {
 
     private static final Set<String> RESERVED_KEYS = Set.of("playerNumber");
 
-    public static boolean countsAsScoring(EventType type, Map<String, Object> attrs) {
-        if (!Boolean.TRUE.equals(type.getIsScoring()))
-            return false;
+    private static boolean effectActive(EventType type, String effect, Map<String, Object> attrs) {
         if (type.getTemplateEventFields() == null)
             return true;
         return type.getTemplateEventFields().stream()
-                .filter(f -> "scoring".equals(f.effect()))
+                .filter(f -> f.effects() != null && f.effects().contains(effect))
                 .findFirst()
                 .map(f -> attrs == null || !Boolean.FALSE.equals(attrs.get(f.key())))
                 .orElse(true);
+    }
+
+    public static boolean countsAsScoring(EventType t, Map<String, Object> attrs) {
+        return Boolean.TRUE.equals(t.getIsScoring()) && effectActive(t, "scoring", attrs);
+    }
+
+    public static boolean flipsPossession(EventType t, Map<String, Object> attrs) {
+        return Boolean.TRUE.equals(t.getAffectsPossession()) && effectActive(t, "possession", attrs);
     }
 
     public static void validateAttributes(EventType type, Map<String, Object> attrs) {
@@ -52,7 +58,7 @@ public final class EventRules {
                     if (!(v instanceof Boolean))
                         throw new BusinessException("Valor inválido en " + f.label());
                 }
-                case "number"-> {
+                case "number" -> {
                     if (!(v instanceof Number))
                         throw new BusinessException("Valor inválido en " + f.label());
                 }

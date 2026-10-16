@@ -12,7 +12,7 @@ import {
 import { LiveCaptureEventType, TemplateField } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
 import { AvailablePlayer } from '../types/roster.types';
-import { countsAsScoring, liveFields } from '../services/calculators/event-rules';
+import { countsAsScoring, liveFields, flipsPossession } from '../services/calculators/event-rules';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../services/statistic-calculation.service';
@@ -741,7 +741,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         : undefined;
 
       if (latestEvent && latestEventType) {
-        this.currentPossession = latestEventType.affectsPossession
+        this.currentPossession = flipsPossession(latestEventType, latestEvent.attributes)
           ? this.nextPossession(latestEvent.teamPossession)
           : latestEvent.teamPossession;
       }
