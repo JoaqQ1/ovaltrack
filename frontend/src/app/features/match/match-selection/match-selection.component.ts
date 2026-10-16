@@ -18,6 +18,7 @@ import { RosterService } from '../services/roster.service';
 import { OpponentService, Opponent } from '../services/opponent.service';
 import { AuthService } from '../../auth/services/auth.service';
 import { ModalComponent } from '../../modal/modal.component';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -46,7 +47,8 @@ export class MatchSelectComponent implements OnInit {
   private readonly divisionService = inject(DivisionService);
   private readonly opponentService = inject(OpponentService);
   private readonly authService = inject(AuthService);
-
+  private readonly toastService = inject(ToastService);
+  
   /** Filtros disponibles, en el orden en que se renderizan en el control segmentado, menos el finalizado. */
   readonly filters = MATCH_FILTERS.filter(f => f !== 'finished');
   readonly statusLabels = MATCH_STATUS_LABELS;
@@ -63,7 +65,6 @@ export class MatchSelectComponent implements OnInit {
 
   /** Datos del formulario de alta, en curso de carga. */
   draft: NewMatchDraft = { date: '', opponentId: '' };
-  errorMessage = '';
 
   matchToRemove: Match | null = null;
   eliminatingMatchId: string | null = null;
@@ -132,7 +133,8 @@ export class MatchSelectComponent implements OnInit {
         this.isCreateOpen = false;
       },
       error: (error: HttpErrorResponse) => {
-        this.errorMessage = this.readBackendError(error) ?? 'No se pudo crear el partido.';
+        const msg = this.readBackendError(error) ?? 'No se pudo crear el partido.';
+        this.toastService.show('error', msg, 'Error al crear partido');
       },
     });
   }
@@ -142,7 +144,6 @@ export class MatchSelectComponent implements OnInit {
       return;
     }
 
-    this.errorMessage = '';
     this.matchToRemove = match;
     this.mostrarModalConfirmacion = true;
   }
@@ -172,7 +173,8 @@ export class MatchSelectComponent implements OnInit {
         this.matchToRemove = null;
       },
       error: (error: HttpErrorResponse) => {
-        this.errorMessage = this.readBackendError(error) ?? 'No se pudo eliminar el partido.';
+        const msg = this.readBackendError(error) ?? 'No se pudo eliminar el partido.';
+        this.toastService.show('error', msg, 'Error al eliminar');
         this.eliminatingMatchId = null;
         this.mostrarModalConfirmacion = false;
         this.matchToRemove = null;
@@ -227,11 +229,10 @@ export class MatchSelectComponent implements OnInit {
           return;
         }
 
-        this.errorMessage = 'Debes completar los 15 titulares antes de capturar el partido.';
-        //void this.router.navigate(['/selection-roster', matchId]);
+        this.toastService.show('error', 'Debes completar los 15 titulares antes de capturar el partido.', 'Alineación incompleta');
       },
       error: () => {
-        this.errorMessage = 'No se pudo validar la alineación del partido.';
+        this.toastService.show('error', 'No se pudo validar la alineación del partido.', 'Error de validación');
       },
     });
   }
@@ -319,11 +320,10 @@ export class MatchSelectComponent implements OnInit {
     this.matchService.getAllMatchesByDivisionId(divisionId).subscribe({
       next: (matches) => {
         this.matches = matches;
-        this.errorMessage = '';
         this.cacheRosters(matches);
       },
       error: () => {
-        this.errorMessage = 'No se pudieron cargar los partidos de esta división.';
+        this.toastService.show('error', 'No se pudieron cargar los partidos de esta división.', 'Error de carga');
         this.matches = [];
       }
     });
@@ -335,7 +335,7 @@ export class MatchSelectComponent implements OnInit {
     
     this.opponentService.getAllOpponents().subscribe({
       next: (opponents) => this.availableOpponents = opponents,
-      error: () => this.errorMessage = 'No se pudieron cargar los rivales disponibles.'
+      error: () => this.toastService.show('error', 'No se pudieron cargar los rivales disponibles.', 'Error')
     });
   }
 
