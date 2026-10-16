@@ -26,17 +26,6 @@
     </div>
   </header>
 
-  <!-- Banner de Error Backend -->
-  @if (errorMessage) {
-  <div class="custom-alert mb-4 d-flex align-items-center justify-content-between" role="alert">
-    <div class="d-flex align-items-center gap-2">
-      <i class="bi bi-exclamation-circle"></i>
-      <span>{{ errorMessage }}</span>
-    </div>
-    <button type="button" class="btn-close-alert" (click)="errorMessage = ''" aria-label="Cerrar aviso">✕</button>
-  </div>
-  }
-
   <!-- Selector de División -->
   <div class="division-selector-container mb-3" style="display: flex; gap: 15px; align-items: center;">
     <!-- Se muestra si el usuario tiene MÁS de una división -->
