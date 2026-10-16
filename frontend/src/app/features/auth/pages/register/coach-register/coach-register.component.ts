@@ -5,7 +5,6 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { ClubService } from '../../../../../services/club.service';
 import { ClubRegistrationOption } from '../../../../club/types/club.types';
-import { RegistrationRequest } from '../types/register.type';
 import { MemberRegistrationDTO } from '../../../types/auth.types';
 
 @Component({
