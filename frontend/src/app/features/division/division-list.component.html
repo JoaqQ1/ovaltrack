@@ -18,17 +18,6 @@
     </div>
   </header>
 
-  <!-- Región de Banners -->
-  <div class="banner-region" aria-live="polite" *ngIf="error">
-    <div class="banner banner-error" role="alert">
-      <div style="flex: 1">
-        <strong>{{ errorTitle }}</strong>
-        <p>{{ error }}</p>
-      </div>
-      <button class="close" (click)="closeError()" aria-label="Cerrar aviso">✕</button>
-    </div>
-  </div>
-
   <!-- Estado Skeleton / Cargando -->
   <div class="skeleton-state" *ngIf="cargando">
     <div class="sk-row" *ngFor="let i of [1, 2, 3, 4]">
@@ -59,7 +48,7 @@
   </div>
 
   <!-- Listado de Divisiones -->
-  <div class="division-list" *ngIf="!cargando && !error && divisions.length > 0">
+  <div class="division-list" *ngIf="!cargando && divisions.length > 0">
     <div class="division-card" *ngFor="let division of divisions">
       <div class="division-main">
         <div class="division-badge-icon" aria-hidden="true">
