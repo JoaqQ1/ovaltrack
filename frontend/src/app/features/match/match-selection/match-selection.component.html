@@ -91,14 +91,15 @@
         </span>
 
         @if (match.status !== 'cancelled') {
-        <button
-          type="button"
-          class="btn-delete-match"
-          [attr.aria-label]="'Eliminar partido contra ' + match.opponent"
-          (click)="confirmDeleteMatch(match); $event.stopPropagation()"
-          title="Eliminar partido">
-          <i class="bi bi-trash" aria-hidden="true"></i>
-        </button>
+          <button
+            type="button"
+            class="btn-delete-match"
+            [attr.aria-label]="'Eliminar partido contra ' + match.opponent"
+            [disabled]="eliminatingMatchId === match.id"
+            (click)="confirmDeleteMatch(match); $event.stopPropagation()"
+            title="Eliminar partido">
+            <i class="bi bi-trash" aria-hidden="true"></i>
+          </button>
         }
       </header>
 
@@ -220,5 +221,15 @@
       </div>
     </div>
   </div>
+  }
+  @if (mostrarModalConfirmacion && matchToRemove) {
+  <app-modal
+    title="Eliminar partido"
+    [message]="'¿Está seguro de que quiere eliminar el partido contra ' + matchToRemove.opponent + '?'"
+    description="El partido pasará a estado cancelado y dejará de estar activo en la programación."
+    [isProcessing]="!!eliminatingMatchId"
+    (confirm)="ejecutarEliminacion()"
+    (cancel)="cancelarEliminacion()">
+  </app-modal>
   }
 </div>
