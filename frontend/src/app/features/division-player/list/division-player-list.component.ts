@@ -11,215 +11,220 @@ import { DivisionPlayerResponse } from '../type/division-player.types';
 import { PersonResponse } from '../../person/types/person.types';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { ResultsPage } from '../../pagination/results-page';
+import { InvitePlayerModalComponent } from '../invite-player-modal/invite-player-modal.component';
 
 @Component({
   selector: 'app-division-player-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, PaginationComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, PaginationComponent, InvitePlayerModalComponent],
   templateUrl: './division-player-list.component.html',
   styleUrl: './division-player-list.component.css'
 })
 export class DivisionPlayerListComponent implements OnInit {
-    private readonly divisionService = inject(DivisionService);
-    private readonly personService = inject(PersonService);
-    private readonly divisionPlayerService = inject(DivisionPlayerService);
-    private readonly route = inject(ActivatedRoute);
-    private readonly router = inject(Router);
+  private readonly divisionService = inject(DivisionService);
+  private readonly personService = inject(PersonService);
+  private readonly divisionPlayerService = inject(DivisionPlayerService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-    division: Division | null = null;
-    activePlayers: DivisionPlayerResponse[] = [];
-    playerHistory: DivisionPlayerResponse[] = [];
-    activePersons: PersonResponse[] = [];
-    
-    mensajeExito = '';
-    mensajeError = '';
+  division: Division | null = null;
+  activePlayers: DivisionPlayerResponse[] = [];
+  playerHistory: DivisionPlayerResponse[] = [];
+  activePersons: PersonResponse[] = [];
 
-    private autoDismissTimer: any = null;
+  mensajeExito = '';
+  mensajeError = '';
 
-    resultsPage: ResultsPage = <ResultsPage>{};
-    currentPage: number = 1;
-    activePlayersResultsPage: ResultsPage = <ResultsPage>{};
-    activePlayersCurrentPage: number = 1;
-    mostrarFormularioAsociacion = false;
+  private autoDismissTimer: any = null;
 
-    ngOnInit(): void {
+  resultsPage: ResultsPage = <ResultsPage>{};
+  currentPage: number = 1;
+  activePlayersResultsPage: ResultsPage = <ResultsPage>{};
+  activePlayersCurrentPage: number = 1;
+  mostrarFormularioAsociacion = false;
+
+  // variables para invitar jugador
+  showInvite: boolean = false;
+  sending: any
+
+  ngOnInit(): void {
+    this.cargarJugadoresActivos();
+  }
+
+  mostrarJugadoresInactivos(): void {
+    if (this.mostrarFormularioAsociacion) {
+      this.mostrarFormularioAsociacion = false;
+      return;
+    }
+
+    if (!this.division?.clubId) {
+      this.mensajeError = 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.';
+      return;
+    }
+    this.cerrarHistorial();
+    this.cargarJugadoresDisponibles(1);
+  }
+
+  cargarJugadoresDisponibles(page: number): void {
+    if (!this.division?.clubId) {
+      this.mensajeError = 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.';
+      return;
+    }
+
+    this.currentPage = page;
+    this.personService.getPagedInactivePlayersByClubAndDivision(this.division.clubId, this.division.id, page, 10).subscribe({
+      next: (response: ResultsPage) => {
+        this.resultsPage = response;
+        this.mostrarFormularioAsociacion = true;
+      },
+      error: (err) => {
+        console.error('Error al cargar personas del club', err);
+        this.mensajeError = 'No se pudieron obtener las personas del club.';
+      }
+    });
+  }
+
+  onPageChangeRequested(page: number): void {
+    this.cargarJugadoresDisponibles(page);
+  }
+
+  crearAsociacion(personId: string, position: string, jerseyNumber?: number): void {
+    if (!personId || !position) {
+      this.mensajeError = 'Por favor selecciona una persona y define una posición.';
+      return;
+    }
+
+    const creationDto = {
+      divisionId: this.division?.id,
+      personId,
+      position,
+      jerseyNumber
+    };
+
+    this.mensajeError = '';
+    this.mensajeExito = '';
+    this.divisionPlayerService.registerPlayer(creationDto).subscribe({
+      next: () => {
+        this.mensajeExito = 'Jugador asociado a la division.';
         this.cargarJugadoresActivos();
+        this.cargarJugadoresDisponibles(this.currentPage);
+      },
+      error: (err) => {
+        console.error('Error al asociar jugador a la división', err);
+        this.mensajeError = typeof err.error === 'string'
+          ? err.error
+          : (err.error?.message || 'Ocurrió un conflicto o error al crear la asociación.');
+      }
+    });
+  }
+
+  mostrarAsociaciones(player: DivisionPlayerResponse): void {
+    const divisionId = this.division?.id;
+    if (!divisionId) {
+      this.mensajeError = 'No se pudo obtener el historial del jugador porque la división no está disponible.';
+      return;
     }
 
-    mostrarJugadoresInactivos(): void {
-      if (this.mostrarFormularioAsociacion) {
-        this.mostrarFormularioAsociacion = false;
-        return;
+    this.playerHistory = [];
+    this.divisionPlayerService.getByDivisionIdAndPersonId(divisionId, player.personId).subscribe({
+      next: (history) => {
+        this.playerHistory = history;
+      },
+      error: (err) => {
+        console.error('Error al cargar el historial del jugador', err);
+        this.playerHistory = [];
+        this.mensajeError = typeof err.error === 'string'
+          ? err.error
+          : (err.error?.message || 'No se pudo cargar el historial del jugador.');
       }
+    });
+  }
 
-      if (!this.division?.clubId) {
-        this.mensajeError = 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.';
-        return;
-      }
-      this.cerrarHistorial();
-      this.cargarJugadoresDisponibles(1);
-    }
+  cerrarHistorial(): void {
+    this.playerHistory = [];
+  }
 
-    cargarJugadoresDisponibles(page: number): void {
-      if (!this.division?.clubId) {
-        this.mensajeError = 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.';
-        return;
-      }
+  cargarJugadoresActivos(page: number = this.activePlayersCurrentPage): void {
+    this.mensajeError = '';
 
-      this.currentPage = page;
-      this.personService.getPagedInactivePlayersByClubAndDivision(this.division.clubId, this.division.id, page, 10).subscribe({
-        next: (response: ResultsPage) => {
-          this.resultsPage = response;
-          this.mostrarFormularioAsociacion = true;
-        },
-        error: (err) => {
-          console.error('Error al cargar personas del club', err);
-          this.mensajeError = 'No se pudieron obtener las personas del club.';
+    this.route.paramMap.pipe(
+      switchMap((params) => {
+        const divisionId = params.get('divisionId');
+        if (!divisionId) {
+          throw new Error('No se recibió el ID de la división.');
         }
-      });
-    }
 
-    onPageChangeRequested(page: number): void {
-      this.cargarJugadoresDisponibles(page);
-    }
-
-    crearAsociacion(personId: string, position: string, jerseyNumber?: number): void {
-      if (!personId || !position) {
-        this.mensajeError = 'Por favor selecciona una persona y define una posición.';
-        return;
-      }
-
-      const creationDto = {
-        divisionId: this.division?.id,
-        personId,
-        position,
-        jerseyNumber
-      };
-
-      this.mensajeError = '';
-      this.mensajeExito = '';
-      this.divisionPlayerService.registerPlayer(creationDto).subscribe({
-        next: () => {
-          this.mensajeExito = 'Jugador asociado a la division.';
-          this.cargarJugadoresActivos();
-          this.cargarJugadoresDisponibles(this.currentPage);
-        },
-        error: (err) => {
-          console.error('Error al asociar jugador a la división', err);
-          this.mensajeError = typeof err.error === 'string'
-            ? err.error
-            : (err.error?.message || 'Ocurrió un conflicto o error al crear la asociación.');
-        }
-      });
-    }
-
-    mostrarAsociaciones(player: DivisionPlayerResponse): void {
-      const divisionId = this.division?.id;
-      if (!divisionId) {
-        this.mensajeError = 'No se pudo obtener el historial del jugador porque la división no está disponible.';
-        return;
-      }
-
-      this.playerHistory = [];
-      this.divisionPlayerService.getByDivisionIdAndPersonId(divisionId, player.personId).subscribe({
-        next: (history) => {
-          this.playerHistory = history;
-        },
-        error: (err) => {
-          console.error('Error al cargar el historial del jugador', err);
-          this.playerHistory = [];
-          this.mensajeError = typeof err.error === 'string'
-            ? err.error
-            : (err.error?.message || 'No se pudo cargar el historial del jugador.');
-        }
-      });
-    }
-
-    cerrarHistorial(): void {
-      this.playerHistory = [];
-    }
-
-    cargarJugadoresActivos(page: number = this.activePlayersCurrentPage): void {
-      this.mensajeError = '';
-
-      this.route.paramMap.pipe(
-        switchMap((params) => {
-          const divisionId = params.get('divisionId');
-          if (!divisionId) {
-            throw new Error('No se recibió el ID de la división.');
-          }
-
-          return forkJoin({
-            division: this.divisionService.getDivisionById(divisionId),
-            activePlayersPage: this.divisionPlayerService.getActiveByDivisionId(divisionId, page, 10)
-          });
-        }),
-        switchMap(({ division, activePlayersPage }) => {
-          const activePlayers = activePlayersPage.content as DivisionPlayerResponse[];
-          if (activePlayers.length === 0) {
-            return of({ division, activePlayersPage, activePlayers, activePersons: [] as PersonResponse[] });
-          }
-
-          return forkJoin(
-            activePlayers.map(player => this.personService.getPersonById(player.personId))
-          ).pipe(
-            switchMap((activePersons) => of({ division, activePlayersPage, activePlayers, activePersons }))
-          );
-        })
-      ).subscribe({
-        next: ({ division, activePlayersPage, activePlayers, activePersons }) => {
-          this.division = division;
-          this.activePlayersResultsPage = activePlayersPage;
-          this.activePlayersCurrentPage = activePlayersPage.number + 1;
-          this.activePlayers = activePlayers;
-          this.activePersons = activePersons;
-        },
-        error: (err) => {
-          console.error('Error al cargar los jugadores de la división', err);
-          this.activePlayersResultsPage = <ResultsPage>{};
-          this.activePlayers = [];
-          this.activePersons = [];
-
-          if (err.status === 403) {
-            const msg = typeof err.error === 'string'
-              ? err.error
-              : (err.error?.message || 'Acceso denegado: no tienes permisos para acceder a esta división.');
-            this.router.navigate(['/divisions'], {
-              state: { errorMessage: msg, errorTitle: 'Acceso denegado' }
-            });
-            return;
-          }
-
-          if (err.status === 404) {
-            this.router.navigate(['/divisions'], {
-              state: { errorMessage: 'División no encontrada.', errorTitle: 'No encontrado' }
-            });
-            return;
-          }
-
-          this.mensajeError = 'No se pudieron cargar los jugadores de la división.';
-        }
-      });
-    }
-
-    onActivePlayersPageChangeRequested(page: number): void {
-      this.cargarJugadoresActivos(page);
-    }
-
-    desasociarJugador(player: DivisionPlayerResponse): void {
-        this.mensajeError = '';
-        this.divisionPlayerService.remove(player.id).subscribe({
-            next: () => {
-                this.cargarJugadoresActivos();
-            },
-            error: (err) => {
-                console.error('Error al desasociar jugador', err);
-                this.mensajeError = typeof err.error === 'string'
-                ? err.error
-                : (err.error?.message || 'No se pudo desasociar el jugador.');
-            }
+        return forkJoin({
+          division: this.divisionService.getDivisionById(divisionId),
+          activePlayersPage: this.divisionPlayerService.getActiveByDivisionId(divisionId, page, 10)
         });
-    }
+      }),
+      switchMap(({ division, activePlayersPage }) => {
+        const activePlayers = activePlayersPage.content as DivisionPlayerResponse[];
+        if (activePlayers.length === 0) {
+          return of({ division, activePlayersPage, activePlayers, activePersons: [] as PersonResponse[] });
+        }
+
+        return forkJoin(
+          activePlayers.map(player => this.personService.getPersonById(player.personId))
+        ).pipe(
+          switchMap((activePersons) => of({ division, activePlayersPage, activePlayers, activePersons }))
+        );
+      })
+    ).subscribe({
+      next: ({ division, activePlayersPage, activePlayers, activePersons }) => {
+        this.division = division;
+        this.activePlayersResultsPage = activePlayersPage;
+        this.activePlayersCurrentPage = activePlayersPage.number + 1;
+        this.activePlayers = activePlayers;
+        this.activePersons = activePersons;
+      },
+      error: (err) => {
+        console.error('Error al cargar los jugadores de la división', err);
+        this.activePlayersResultsPage = <ResultsPage>{};
+        this.activePlayers = [];
+        this.activePersons = [];
+
+        if (err.status === 403) {
+          const msg = typeof err.error === 'string'
+            ? err.error
+            : (err.error?.message || 'Acceso denegado: no tienes permisos para acceder a esta división.');
+          this.router.navigate(['/divisions'], {
+            state: { errorMessage: msg, errorTitle: 'Acceso denegado' }
+          });
+          return;
+        }
+
+        if (err.status === 404) {
+          this.router.navigate(['/divisions'], {
+            state: { errorMessage: 'División no encontrada.', errorTitle: 'No encontrado' }
+          });
+          return;
+        }
+
+        this.mensajeError = 'No se pudieron cargar los jugadores de la división.';
+      }
+    });
+  }
+
+  onActivePlayersPageChangeRequested(page: number): void {
+    this.cargarJugadoresActivos(page);
+  }
+
+  desasociarJugador(player: DivisionPlayerResponse): void {
+    this.mensajeError = '';
+    this.divisionPlayerService.remove(player.id).subscribe({
+      next: () => {
+        this.cargarJugadoresActivos();
+      },
+      error: (err) => {
+        console.error('Error al desasociar jugador', err);
+        this.mensajeError = typeof err.error === 'string'
+          ? err.error
+          : (err.error?.message || 'No se pudo desasociar el jugador.');
+      }
+    });
+  }
 
   closeSuccess(): void {
     this.mensajeExito = '';
@@ -236,4 +241,13 @@ export class DivisionPlayerListComponent implements OnInit {
       this.autoDismissTimer = null;
     }
   }
+  // Logica para invitar a un jugador
+  sendInvitation(): void {
+    this.showModalInvitation();
+  }
+  showModalInvitation(): void {
+    this.showInvite = true;
+  }
+  onInvite($event: any): void { }
+
 }
