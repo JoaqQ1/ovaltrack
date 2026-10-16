@@ -258,18 +258,26 @@ export class MatchSelectComponent implements OnInit {
     const days = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
     const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
     let date: Date;
+    let timeStr = '';
 
     if (Array.isArray(dateInput)) {
-      date = new Date(dateInput[0], dateInput[1] - 1, dateInput[2]);
+      date = new Date(dateInput[0], dateInput[1] - 1, dateInput[2], dateInput[3] || 0, dateInput[4] || 0);
+      if (dateInput[3] !== undefined && dateInput[4] !== undefined) {
+        timeStr = ` - ${String(dateInput[3]).padStart(2, '0')}:${String(dateInput[4]).padStart(2, '0')} hs`;
+      }
     } else if (typeof dateInput === 'string') {
-      const datePart = dateInput.split('T')[0];
+      const [datePart, timePart] = dateInput.split('T');
       const [year, month, day] = datePart.split('-').map(Number);
       date = new Date(year, month - 1, day);
+      if (timePart) {
+        const [hours, minutes] = timePart.split(':');
+        timeStr = ` - ${hours}:${minutes} hs`;
+      }
     } else {
       return 'Fecha inválida';
     }
 
-    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}${timeStr}`;
   }
 
   loadUserDivisions() {
