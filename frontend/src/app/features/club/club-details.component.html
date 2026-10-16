@@ -21,25 +21,7 @@
     <div class="sk-row" style="margin-top: 16px;">
       <div class="sk-block sk" style="height: 200px;"></div>
     </div>
-  </div>
-
-  <!-- Región de Banners de Retroalimentación -->
-  <div class="banner-region" *ngIf="errorMessage || successMessage" style="margin-top: 24px;" aria-live="polite">
-    <div *ngIf="errorMessage" class="banner banner-error" role="alert">
-      <div style="flex: 1">
-        <strong>Error</strong>
-        <p>{{ errorMessage }}</p>
-      </div>
-      <button class="close" type="button" (click)="errorMessage = ''" aria-label="Cerrar aviso">✕</button>
-    </div>
-    <div *ngIf="successMessage" class="banner banner-success" role="alert">
-      <div style="flex: 1">
-        <strong>Guardado exitoso</strong>
-        <p>{{ successMessage }}</p>
-      </div>
-      <button class="close" type="button" (click)="successMessage = ''" aria-label="Cerrar aviso">✕</button>
-    </div>
-  </div>
+  </div> 
 
   <!-- Contenedor Principal del Club -->
   <div class="config-layout" *ngIf="!isLoading && club">
