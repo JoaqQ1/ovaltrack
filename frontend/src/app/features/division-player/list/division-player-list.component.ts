@@ -12,6 +12,7 @@ import { PersonResponse } from '../../person/types/person.types';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { ResultsPage } from '../../pagination/results-page';
 import { ModalComponent } from '../../modal/modal.component';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 @Component({
   selector: 'app-division-player-list',
@@ -26,15 +27,13 @@ export class DivisionPlayerListComponent implements OnInit {
     private readonly divisionPlayerService = inject(DivisionPlayerService);
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
-
+    private readonly toastService = inject(ToastService);
+    
     division: Division | null = null;
     activePlayers: DivisionPlayerResponse[] = [];
     playerHistory: DivisionPlayerResponse[] = [];
     activePersons: PersonResponse[] = [];
     
-    mensajeExito = '';
-    mensajeError = '';
-    private autoDismissTimer: any = null;
     eliminandoId: string | null = null;
     playerToRemove: DivisionPlayerResponse | null = null;
     mostrarModalConfirmacion = false;
@@ -56,7 +55,7 @@ export class DivisionPlayerListComponent implements OnInit {
       }
 
       if (!this.division?.clubId) {
-        this.mensajeError = 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.';
+        this.toastService.show('error', 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.', 'Error');
         return;
       }
       this.cerrarHistorial();
@@ -65,7 +64,7 @@ export class DivisionPlayerListComponent implements OnInit {
 
     cargarJugadoresDisponibles(page: number): void {
       if (!this.division?.clubId) {
-        this.mensajeError = 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.';
+        this.toastService.show('error', 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.', 'Error');
         return;
       }
 
@@ -77,7 +76,7 @@ export class DivisionPlayerListComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error al cargar personas del club', err);
-          this.mensajeError = 'No se pudieron obtener las personas del club.';
+          this.toastService.show('error', 'No se pudieron obtener las personas del club.', 'Error');
         }
       });
     }
@@ -88,7 +87,7 @@ export class DivisionPlayerListComponent implements OnInit {
 
     crearAsociacion(personId: string, position: string, jerseyNumber?: number): void {
       if (!personId || !position) {
-        this.mensajeError = 'Por favor selecciona una persona y define una posición.';
+        this.toastService.show('warning', 'Por favor selecciona una persona y define una posición.', 'Datos incompletos');
         return;
       }
 
@@ -99,19 +98,18 @@ export class DivisionPlayerListComponent implements OnInit {
         jerseyNumber
       };
 
-      this.mensajeError = '';
-      this.mensajeExito = '';
       this.divisionPlayerService.registerPlayer(creationDto).subscribe({
         next: () => {
-          this.mensajeExito = 'Jugador asociado a la division.';
+          this.toastService.show('success', 'Jugador asociado a la división.', '¡Excelente!');
           this.cargarJugadoresActivos();
           this.cargarJugadoresDisponibles(this.currentPage);
         },
         error: (err) => {
           console.error('Error al asociar jugador a la división', err);
-          this.mensajeError = typeof err.error === 'string'
+          const msg = typeof err.error === 'string'
             ? err.error
             : (err.error?.message || 'Ocurrió un conflicto o error al crear la asociación.');
+          this.toastService.show('error', msg, 'Error');
         }
       });
     }
@@ -119,7 +117,7 @@ export class DivisionPlayerListComponent implements OnInit {
     mostrarAsociaciones(player: DivisionPlayerResponse): void {
       const divisionId = this.division?.id;
       if (!divisionId) {
-        this.mensajeError = 'No se pudo obtener el historial del jugador porque la división no está disponible.';
+        this.toastService.show('error', 'No se pudo obtener el historial del jugador porque la división no está disponible.', 'Error');
         return;
       }
 
@@ -131,9 +129,10 @@ export class DivisionPlayerListComponent implements OnInit {
         error: (err) => {
           console.error('Error al cargar el historial del jugador', err);
           this.playerHistory = [];
-          this.mensajeError = typeof err.error === 'string'
+          const msg = typeof err.error === 'string'
             ? err.error
             : (err.error?.message || 'No se pudo cargar el historial del jugador.');
+          this.toastService.show('error', msg, 'Error');
         }
       });
     }
@@ -143,8 +142,6 @@ export class DivisionPlayerListComponent implements OnInit {
     }
 
     cargarJugadoresActivos(page: number = this.activePlayersCurrentPage): void {
-      this.mensajeError = '';
-
       this.route.paramMap.pipe(
         switchMap((params) => {
           const divisionId = params.get('divisionId');
@@ -200,7 +197,7 @@ export class DivisionPlayerListComponent implements OnInit {
             return;
           }
 
-          this.mensajeError = 'No se pudieron cargar los jugadores de la división.';
+          this.toastService.show('error', 'No se pudieron cargar los jugadores de la división.', 'Error');
         }
       });
     }
@@ -213,8 +210,6 @@ export class DivisionPlayerListComponent implements OnInit {
       if (player.endDate || this.eliminandoId) {
         return;
       }
-
-      this.mensajeError = '';
       this.cerrarHistorial();
       this.playerToRemove = player;
       this.mostrarModalConfirmacion = true;
@@ -238,6 +233,7 @@ export class DivisionPlayerListComponent implements OnInit {
           this.eliminandoId = null;
           this.mostrarModalConfirmacion = false;
           this.playerToRemove = null;
+          this.toastService.show('success', 'El jugador fue desasociado correctamente.', 'Desasociado');
           this.cargarJugadoresActivos();
         },
         error: (err) => {
@@ -245,26 +241,11 @@ export class DivisionPlayerListComponent implements OnInit {
           this.eliminandoId = null;
           this.mostrarModalConfirmacion = false;
           this.playerToRemove = null;
-          this.mensajeError = typeof err.error === 'string'
+          const msg = typeof err.error === 'string'
             ? err.error
             : (err.error?.message || 'No se pudo desasociar el jugador.');
+          this.toastService.show('error', msg, 'Error');
         }
       });
     }
-
-  closeSuccess(): void {
-    this.mensajeExito = '';
-    if (this.autoDismissTimer) {
-      clearTimeout(this.autoDismissTimer);
-      this.autoDismissTimer = null;
-    }
-  }
-
-  closeError(): void {
-    this.mensajeError = '';
-    if (this.autoDismissTimer) {
-      clearTimeout(this.autoDismissTimer);
-      this.autoDismissTimer = null;
-    }
-  }
 }
