@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ClubService } from 'src/app/services/club.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { Club, ClubUpdateRequest } from './types/club.types';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 @Component({
   selector: 'app-club-details',
@@ -15,14 +16,13 @@ import { Club, ClubUpdateRequest } from './types/club.types';
 export class ClubDetailsComponent implements OnInit {
   private readonly clubService = inject(ClubService);
   private readonly userContextService = inject(UserContextService);
+  private readonly toastService = inject(ToastService);
   
   club: Club | null = null;
   clubDraft: ClubUpdateRequest | null = null;
   isEditing: boolean = false;
   isLoading: boolean = true;
   isSaving: boolean = false;
-  errorMessage: string = '';
-  successMessage: string = '';
 
   ngOnInit(): void {
     this.loadMyClub();
@@ -36,7 +36,7 @@ export class ClubDetailsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al cargar la información del club', err);
-        this.errorMessage = 'No se pudo cargar la información de tu club.';
+        this.toastService.show('error', 'No se pudo cargar la información de tu club.', 'Error de carga');
         this.isLoading = false;
       }
     });
@@ -48,8 +48,6 @@ export class ClubDetailsComponent implements OnInit {
   }
 
   startEditing(): void {
-    this.errorMessage = '';
-    this.successMessage = '';
     if (this.club) {
       this.clubDraft = {
         name: this.club.name || '',
@@ -64,25 +62,21 @@ export class ClubDetailsComponent implements OnInit {
 
   cancelEditing(): void {
     this.clubDraft = null;
-    this.errorMessage = '';
     this.isEditing = false;
   }
 
   saveChanges(): void {
-    this.errorMessage = '';
-    this.successMessage = '';
-
     if (!this.clubDraft || !this.club) return;
 
     const trimmedName = this.clubDraft.name?.trim();
     if (!trimmedName) {
-      this.errorMessage = 'El nombre del club es obligatorio';
+      this.toastService.show('warning', 'El nombre del club es obligatorio', 'Campo requerido');
       return;
     }
 
     const trimmedCity = this.clubDraft.city?.trim();
     if (!trimmedCity) {
-      this.errorMessage = 'La ciudad del club es obligatoria';
+      this.toastService.show('warning', 'La ciudad del club es obligatoria', 'Campo requerido');
       return;
     }
 
@@ -90,7 +84,7 @@ export class ClubDetailsComponent implements OnInit {
     if (email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        this.errorMessage = 'Formato de email de contacto inválido';
+        this.toastService.show('warning', 'Formato de email de contacto inválido', 'Email inválido');
         return;
       }
     }
@@ -108,7 +102,7 @@ export class ClubDetailsComponent implements OnInit {
     this.clubService.updateClub(this.club.id, updatePayload).subscribe({
       next: (data: Club) => {
         this.club = data;
-        this.successMessage = 'Información actualizada correctamente';
+        this.toastService.show('success', 'Información actualizada correctamente', 'Guardado exitoso');
         this.isSaving = false;
         this.isEditing = false;
 
@@ -123,11 +117,11 @@ export class ClubDetailsComponent implements OnInit {
       error: (err) => {
         this.isSaving = false;
         console.error('Error al actualizar club', err);
+        let errorMsg = 'Error al actualizar el club. Intenta nuevamente.';
         if (err.status === 409 || err.status === 400) {
-          this.errorMessage = err.error?.message || (typeof err.error === 'string' ? err.error : 'Conflicto al actualizar la información del club.');
-        } else {
-          this.errorMessage = 'Error al actualizar el club. Intenta nuevamente.';
+          errorMsg = err.error?.message || (typeof err.error === 'string' ? err.error : 'Conflicto al actualizar la información del club.');
         }
+        this.toastService.show('error', errorMsg, 'Error');
       }
     });
   }
