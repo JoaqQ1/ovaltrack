@@ -7,6 +7,7 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
 import { DivisionService } from 'src/app/services/division.service';
 import { ClubService } from 'src/app/services/club.service';
 import { Division, ClubSummary } from './types/division.types';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 @Component({
   selector: 'app-division-list',
@@ -20,18 +21,16 @@ export class DivisionListComponent implements OnInit {
   private readonly clubService = inject(ClubService);
   private readonly userContextService = inject(UserContextService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toastService = inject(ToastService);
 
   myClub: ClubSummary | null = null;
   divisions: Division[] = [];
   cargando: boolean = false;
-  error: string = '';
-  errorTitle: string = 'Error de carga';
 
   ngOnInit(): void {
     const navState = history.state;
     if (navState?.errorMessage) {
-      this.error = navState.errorMessage;
-      this.errorTitle = navState.errorTitle || 'Acceso denegado';
+      this.toastService.show('error', navState.errorMessage, navState.errorTitle || 'Acceso denegado');
       history.replaceState({ ...navState, errorMessage: undefined, errorTitle: undefined }, '');
     }
     this.cargarClubYDivisiones();
@@ -65,18 +64,12 @@ export class DivisionListComponent implements OnInit {
     return mapping[gender] || gender;
   }
 
-  closeError(): void {
-    this.error = '';
-    this.errorTitle = 'Error de carga';
-  }
-
   get esCoach(): boolean {
     return this.userContextService.currentRole() === 'COACH_ANALYST';
   }
 
   cargarClubYDivisiones(): void {
     this.cargando = true;
-    this.error = '';
 
     if (this.userContextService.currentRole() === 'COACH_ANALYST') {
       this.myClub = this.userContextService.currentClub();
@@ -96,14 +89,14 @@ export class DivisionListComponent implements OnInit {
           return this.divisionService.getDivisiones(club.id).pipe(
             catchError((err) => {
               console.error('Error al cargar las divisiones', err);
-              this.error = 'No se pudieron cargar las divisiones de tu club.';
+              this.toastService.show('error', 'No se pudieron cargar las divisiones de tu club.', 'Error de carga');
               return of([]);
             })
           );
         }),
         catchError((err) => {
           console.error('Error al cargar el club del usuario', err);
-          this.error = 'No se pudo obtener la información de tu club.';
+          this.toastService.show('error', 'No se pudo obtener la información de tu club.', 'Error de carga');
           return of([]);
         })
       )
