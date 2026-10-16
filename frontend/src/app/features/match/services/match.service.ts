@@ -39,7 +39,7 @@ export class MatchService {
     const payload = {
       date: formattedDate,
       divisionId: divisionId,
-      opponent: draft.opponentId.trim()
+      opponentId: draft.opponentId.trim()
     };
 
     return this.http.post<BackendMatchResponse>(this.apiUrl, payload).pipe(
