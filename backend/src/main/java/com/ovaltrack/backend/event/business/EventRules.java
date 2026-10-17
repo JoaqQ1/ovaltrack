@@ -29,10 +29,6 @@ public final class EventRules {
         return Boolean.TRUE.equals(t.getIsScoring()) && effectActive(t, "scoring", attrs);
     }
 
-    public static boolean flipsPossession(EventType t, Map<String, Object> attrs) {
-        return Boolean.TRUE.equals(t.getAffectsPossession()) && effectActive(t, "possession", attrs);
-    }
-
     public static void validateAttributes(EventType type, Map<String, Object> attrs) {
         Map<String, Object> a = attrs == null ? Map.of() : attrs;
 

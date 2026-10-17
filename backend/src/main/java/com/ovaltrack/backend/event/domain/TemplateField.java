@@ -12,6 +12,7 @@ public record TemplateField(
         @JsonProperty("default") Object defaultValue,
         List<String> effects, String trueLabel, String falseLabel) {
 
-    public record Option(String value, String label) {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Option(String value, String label, String possession, List<FollowUpChoice> followUps) {
     }
 }

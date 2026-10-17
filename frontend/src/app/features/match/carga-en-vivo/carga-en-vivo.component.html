@@ -198,6 +198,26 @@
     </div>
     }
 
+    @if (followUpChooser; as chooser) {
+    <div class="capture-backdrop">
+        <div class="capture" role="dialog" aria-modal="true" [attr.aria-label]="chooser.title">
+            <header class="capture__header">
+                <h2 class="capture__title">{{ chooser.title }}</h2>
+            </header>
+            <div class="capture__body">
+                <div class="capture__choices">
+                    @for (choice of chooser.choices; track choice.type.code) {
+                    <button type="button" class="capture__choice" (click)="pickFollowUp(choice)">{{ choice.label }}</button>
+                    }
+                </div>
+            </div>
+            <footer class="capture__footer">
+                <button type="button" class="capture__skip" (click)="closeChooser()">Nada más</button>
+            </footer>
+        </div>
+    </div>
+    }
+
     @if (capture; as c) {
     <div class="capture-backdrop">
         <div class="capture" role="dialog" aria-modal="true" [attr.aria-label]="c.event.name">
@@ -259,6 +279,15 @@
                         </div>
                     </section>
                     }
+                }
+
+                @if (captureStep?.kind === 'team') {
+                <section class="capture__group">
+                    <div class="capture__choices capture__choices--two">
+                        <button type="button" class="capture__choice" (click)="pickTeam('OWN')">Propio</button>
+                        <button type="button" class="capture__choice" (click)="pickTeam('OPPONENT')">Rival</button>
+                    </div>
+                </section>
                 }
 
                 @if (captureField; as field) {

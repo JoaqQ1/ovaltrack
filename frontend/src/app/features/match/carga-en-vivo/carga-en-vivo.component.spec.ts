@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../services/statistic-calculation.service';
+import { LiveCaptureEventType } from '../types/event-type.types';
 import { CargaEnVivoComponent } from './carga-en-vivo.component';
 
 declare const describe: (description: string, specDefinitions: () => void) => void;
@@ -16,6 +17,21 @@ declare const expect: (actual: unknown) => {
     toBe(expected: unknown): void;
   };
 };
+
+const eventType = (overrides: Partial<LiveCaptureEventType> = {}): LiveCaptureEventType => ({
+  id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK',
+  isScoring: true, points: 5, requiresPlayer: true, isActive: true,
+  code: 'TRY', showInPalette: true, followUpEventTypeId: null,
+  actor: 'ATTACKING', possessionAfter: 'KEEP', followUpChoices: [], templateEventFields: [],
+  createdAt: '2026-09-14T12:00:00Z',
+  ...overrides,
+});
+
+const storedEvent = (id: string, eventTypeId: string, teamPossession: 'OWN' | 'OPPONENT' | 'NEUTRAL', sequence: number) => ({
+  id, eventTypeId, matchId: 'match', playerId: null, teamPossession, matchTime: sequence * 10, realTime: null,
+  period: 1, origin: 'live-capture', attributes: null, createdAt: '2026-09-14T12:00:00Z',
+  synchronizedAt: null, localSequence: sequence,
+});
 
 describe('CargaEnVivoComponent', () => {
   let fixture: ComponentFixture<CargaEnVivoComponent>;
@@ -63,7 +79,7 @@ describe('CargaEnVivoComponent', () => {
               rosterPlayers: [],
             }),
             saveLiveCaptureState: () => of(undefined),
-            saveEvent: () => of(undefined),
+            saveEvent: (event: unknown) => of(event),
             syncPendingEvents: () => of([]),
             deleteEvent: () => of(undefined),
           },
@@ -118,30 +134,8 @@ describe('CargaEnVivoComponent', () => {
   });
 
   it('should remove a persisted event from the rendered history', () => {
-    const event = {
-      id: '550e8400-e29b-41d4-a716-446655440011',
-      eventTypeId: 'event-type-try',
-      matchId: '550e8400-e29b-41d4-a716-446655440002',
-      playerId: null,
-      teamPossession: 'OWN' as const,
-      matchTime: 10,
-      realTime: null,
-      period: 1,
-      origin: 'live-capture',
-      attributes: null,
-      createdAt: '2026-09-14T12:00:00Z',
-      synchronizedAt: null,
-      localSequence: 1,
-    };
-    component.categories = [{
-      name: 'Ataque',
-      events: [{
-        id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK',
-        affectsPossession: false, isScoring: true, points: 5, requiresPlayer: false,
-        templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
-      }],
-    }];
-    (component as any).events = [event];
+    component.eventTypes = [eventType({ requiresPlayer: false })];
+    (component as any).events = [storedEvent('550e8400-e29b-41d4-a716-446655440011', 'event-type-try', 'OWN', 1)];
 
     component.removeHistoryEvent('550e8400-e29b-41d4-a716-446655440011');
 
@@ -156,58 +150,90 @@ describe('CargaEnVivoComponent', () => {
     expect(component.historyVisible).toBe(true);
   });
 
-  it('should cancel pending player selection without deleting an event', () => {
-    const pendingEvent = {
-      id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK' as const,
-      affectsPossession: false, isScoring: true, points: 5, requiresPlayer: true,
-      templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
-    };
-    component.pendingSelection = {
-      event: pendingEvent,
-      eventId: 'pending-event',
-      homeEnabled: true,
-      awayEnabled: false,
-    };
+  it('should open the capture modal with a player step and cancel it without deleting an event', () => {
+    component.isStarted = true;
     component.currentPossession = 'OWN';
+
+    component.onEventTap(eventType());
+
+    expect(component.capture).not.toBe(null);
+    expect(component.captureStep?.kind).toBe('player');
 
     component.undoLastEvent();
 
-    expect(component.pendingSelection).toBe(null);
+    expect(component.capture).toBe(null);
     expect(component.currentPossession).toBe('OWN');
   });
 
-  it('should confirm the pending event without a player when its button is tapped again', () => {
-    const pendingEvent = {
-      id: 'event-type-try', name: 'Try', groupName: 'Ataque', category: 'ATTACK' as const,
-      affectsPossession: false, isScoring: true, points: 5, requiresPlayer: true,
-      templateEventFields: null, createdAt: '2026-09-14T12:00:00Z',
-    };
-    component.pendingSelection = {
-      event: pendingEvent,
-      eventId: 'pending-event',
-      homeEnabled: true,
-      awayEnabled: false,
-    };
-    component.onEventTap(pendingEvent);
+  it('should save the event without a player when "Sin jugador" is picked', () => {
+    component.eventTypes = [eventType()];
+    component.isStarted = true;
+    component.currentPossession = 'OWN';
 
-    expect(component.pendingSelection).toBe(null);
-    expect((component as any).events[0].id).toBe('pending-event');
+    component.onEventTap(eventType());
+    component.pickPlayer(null);
+
+    expect(component.capture).toBe(null);
+    expect((component as any).events[0].eventTypeId).toBe('event-type-try');
     expect((component as any).events[0].attributes).toBe(null);
   });
 
-  it('should revert score without changing possession when deleting an older event', () => {
-    const eventType = (id: string, name: string, affectsPossession: boolean, isScoring: boolean, points: number) => ({
-      id, name, groupName: 'Test', category: 'ATTACK' as const, affectsPossession, isScoring,
-      points, requiresPlayer: false, templateEventFields: null,
-      createdAt: '2026-09-14T12:00:00Z',
+  it('should assign a defensive event to the team without the ball', () => {
+    component.eventTypes = [eventType({ id: 'tackle', name: 'Tackle completado', code: 'TACKLE_MADE', isScoring: false, points: 0, actor: 'DEFENDING' })];
+    component.isStarted = true;
+    component.currentPossession = 'OPPONENT';
+
+    component.onEventTap(component.eventTypes[0]);
+
+    expect(component.capture?.team).toBe('OWN');
+    expect(component.capture?.canChooseTeam).toBe(false);
+  });
+
+  it('should let the analyst choose the team when the actor is CHOOSE', () => {
+    component.isStarted = true;
+    component.currentPossession = 'OWN';
+
+    component.onEventTap(eventType({ id: 'card', name: 'Amonestación', code: 'YELLOW_CARD', isScoring: false, points: 0, actor: 'CHOOSE' }));
+
+    expect(component.capture?.canChooseTeam).toBe(true);
+  });
+
+  it('should ask for the team first on events without a player when possession is neutral', () => {
+    component.isStarted = true;
+    component.currentPossession = 'NEUTRAL';
+
+    component.onEventTap(eventType({ id: 'ruck', name: 'Ruck ofensivo', code: 'RUCK_OFFENSIVE', isScoring: false, points: 0, requiresPlayer: false }));
+
+    expect(component.captureStep?.kind).toBe('team');
+  });
+
+  it('should skip preset steps and resolve the follow-up team with the updated possession', () => {
+    const touch = eventType({
+      id: 'touch', name: 'Patada a touch', code: 'KICK_TO_TOUCH', isScoring: false, points: 0,
+      templateEventFields: [{
+        key: 'kind', label: 'Tipo', type: 'select', phase: 'live', required: true,
+        options: [{ value: 'penalty_touch', label: 'Penal a touch' }, { value: 'open_play', label: 'Juego abierto' }],
+      }],
     });
-    component.categories = [{ name: 'Test', events: [
-      eventType('event-type-try', 'Try', true, true, 5),
-      eventType('event-type-turnover', 'Turnover', true, false, 0),
-    ] }];
+    component.eventTypes = [touch];
+    component.currentPossession = 'OPPONENT';
+
+    component.pickFollowUp({ type: touch, label: touch.name, preset: { kind: 'penalty_touch' } });
+
+    expect(component.capture?.steps.map(step => step.kind)).toEqual(['player']);
+    expect(component.capture?.values).toEqual({ kind: 'penalty_touch' });
+    expect(component.capture?.team).toBe('OPPONENT');
+  });
+
+  it('should revert score without changing possession when deleting an older event', () => {
+    component.eventTypes = [
+      eventType({ id: 'event-type-try', requiresPlayer: false, possessionAfter: 'OTHER' }),
+      eventType({ id: 'event-type-turnover', name: 'Turnover ganado', code: 'TURNOVER_WON', isScoring: false, points: 0,
+        requiresPlayer: false, actor: 'DEFENDING', possessionAfter: 'ACTOR' }),
+    ];
     (component as any).events = [
-      { id: 'event-1', eventTypeId: 'event-type-try', matchId: 'match', playerId: null, teamPossession: 'OWN', matchTime: 10, realTime: null, period: 1, origin: 'live-capture', attributes: null, createdAt: '2026-09-14T12:00:00Z', synchronizedAt: null, localSequence: 1 },
-      { id: 'event-2', eventTypeId: 'event-type-turnover', matchId: 'match', playerId: null, teamPossession: 'OPPONENT', matchTime: 20, realTime: null, period: 1, origin: 'live-capture', attributes: null, createdAt: '2026-09-14T12:00:01Z', synchronizedAt: null, localSequence: 2 },
+      storedEvent('event-1', 'event-type-try', 'OWN', 1),
+      storedEvent('event-2', 'event-type-turnover', 'OPPONENT', 2),
     ];
     component.currentPossession = 'OWN';
     (component as any).rebuildStateFromEvents();
@@ -215,23 +241,38 @@ describe('CargaEnVivoComponent', () => {
     component.undoHistoryEvent('event-1');
 
     expect(component.scoreboard.home).toBe(0);
-    expect(component.currentPossession).toBe('OWN');
+    // El robo lo hizo OPPONENT y la pelota queda en él; borrar un evento viejo no la mueve.
+    expect(component.currentPossession).toBe('OPPONENT');
   });
 
-  it('should keep the possession recorded by a line-out after a possession-changing event', () => {
-    const eventType = (id: string, name: string, affectsPossession: boolean) => ({
-      id, name, groupName: 'Test', category: 'SET_PIECE' as const, affectsPossession,
-      isScoring: false, points: 0, requiresPlayer: false, isActive: true, active: true, templateEventFields: null,
-      createdAt: '2026-09-14T12:00:00Z',
-    });
-    component.categories = [{ name: 'Test', events: [
-      eventType('event-type-turnover', 'Turnover', true),
-      eventType('event-type-lineout', 'Line-out', false),
-    ] }];
-    (component as any).events = [
-      { eventTypeId: 'event-type-turnover', teamPossession: 'OWN', localSequence: 1 },
-      { eventTypeId: 'event-type-lineout', teamPossession: 'OPPONENT', localSequence: 2 },
+  it('should derive possession from the actor and the possession rule of the last event', () => {
+    component.eventTypes = [
+      eventType({ id: 'error', name: 'Error de manejo', code: 'HANDLING_ERROR', isScoring: false, points: 0, requiresPlayer: false, possessionAfter: 'OTHER' }),
+      eventType({ id: 'lineout', name: 'Line-out', code: 'LINEOUT', isScoring: false, points: 0, requiresPlayer: false, possessionAfter: 'KEEP' }),
     ];
+    (component as any).events = [
+      storedEvent('event-1', 'error', 'OWN', 1),
+      storedEvent('event-2', 'lineout', 'OPPONENT', 2),
+    ];
+    component.currentPossession = 'OWN';
+
+    (component as any).rebuildStateFromEvents();
+
+    expect(component.currentPossession).toBe('OPPONENT');
+  });
+
+  it('should apply the possession of the chosen option', () => {
+    component.eventTypes = [eventType({
+      id: 'scrum', name: 'Scrum', code: 'SCRUM', isScoring: false, points: 0, requiresPlayer: false,
+      templateEventFields: [{
+        key: 'scrumResult', label: 'Resultado', type: 'select', phase: 'live', required: true,
+        options: [
+          { value: 'won_clean', label: 'Ganó', possession: 'KEEP' },
+          { value: 'lost_own', label: 'Perdió', possession: 'OTHER' },
+        ],
+      }],
+    })];
+    (component as any).events = [{ ...storedEvent('event-1', 'scrum', 'OWN', 1), attributes: { scrumResult: 'lost_own' } }];
     component.currentPossession = 'OWN';
 
     (component as any).rebuildStateFromEvents();
