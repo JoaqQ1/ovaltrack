@@ -60,7 +60,7 @@ VALUES
         "type": "boolean",
         "phase": "live",
         "required": true,
-        "effect": "scoring",
+        "effects": "scoring",
         "trueLabel": "Convertido",
         "falseLabel": "Errado"
       },
@@ -72,6 +72,27 @@ VALUES
         "required": false,
         "min": 0,
         "max": 80
+      },
+      {
+        "key": "zone",
+        "label": "Zona del campo",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "left",
+            "label": "Izquierda"
+          },
+          {
+            "value": "center",
+            "label": "Centro"
+          },
+          {
+            "value": "right",
+            "label": "Derecha"
+          }
+        ]
       }
     ]$$::jsonb,
     CURRENT_TIMESTAMP
@@ -96,7 +117,7 @@ VALUES
         "type": "boolean",
         "phase": "live",
         "required": true,
-        "effect": "scoring",
+        "effects": ["scoring", "possession"],
         "trueLabel": "Convertido",
         "falseLabel": "Errado"
       },
@@ -108,6 +129,27 @@ VALUES
         "required": false,
         "min": 0,
         "max": 80
+      },
+      {
+        "key": "zone",
+        "label": "Zona del campo",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "left",
+            "label": "Izquierda"
+          },
+          {
+            "value": "center",
+            "label": "Centro"
+          },
+          {
+            "value": "right",
+            "label": "Derecha"
+          }
+        ]
       }
     ]$$::jsonb,
     CURRENT_TIMESTAMP
@@ -132,7 +174,7 @@ VALUES
         "type": "boolean",
         "phase": "live",
         "required": true,
-        "effect": "scoring",
+        "effects": ["scoring", "possession"],
         "trueLabel": "Convertido",
         "falseLabel": "Errado"
       },
@@ -144,6 +186,27 @@ VALUES
         "required": false,
         "min": 0,
         "max": 80
+      },
+      {
+        "key": "zone",
+        "label": "Zona del campo",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "left",
+            "label": "Izquierda"
+          },
+          {
+            "value": "center",
+            "label": "Centro"
+          },
+          {
+            "value": "right",
+            "label": "Derecha"
+          }
+        ]
       }
     ]$$::jsonb,
     CURRENT_TIMESTAMP

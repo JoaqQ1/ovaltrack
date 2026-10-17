@@ -33,8 +33,6 @@ public class EventType {
     @Enumerated(EnumType.STRING)
     private EventCategory category;
 
-    private Boolean affectsPossession;
-
     private Boolean isScoring;
 
     private Integer points;
@@ -49,6 +47,21 @@ public class EventType {
     private Boolean showInPalette;
     
     private UUID followUpEventTypeId; // UUID plano, sin @ManyToOne
+
+    /** Qué equipo ejecuta el evento (relativo a quién tiene la pelota). */
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private Actor actor = Actor.ATTACKING;
+
+    /** Posesión resultante, relativa al equipo que ejecuta el evento. */
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private PossessionAfter possessionAfter = PossessionAfter.KEEP;
+
+    /** Eventos entre los que el analista elige al guardar este tipo (cómo se juega un penal, etc.). */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private List<FollowUpChoice> followUpChoices;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")

@@ -9,10 +9,12 @@ import {
   LiveCapturePersistedState,
   Possession,
 } from '../types/live-capture.types';
-import { LiveCaptureEventType, TemplateField } from '../types/event-type.types';
+import { FollowUpChoice, LiveCaptureEventType, TemplateField } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
 import { AvailablePlayer } from '../types/roster.types';
-import { countsAsScoring, liveFields } from '../services/calculators/event-rules';
+import {
+  Team, countsAsScoring, followUpChoices, liveFields, opposite, possessionRule, resolveActor,
+} from '../services/calculators/event-rules';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../services/statistic-calculation.service';
@@ -22,11 +24,11 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
 
-type CaptureTeam = 'OWN' | 'OPPONENT';
+type CaptureTeam = Team;
 
 /** Un paso del modal: elegir jugador, o completar un campo `live` de la plantilla. */
 interface CaptureStep {
-  kind: 'player' | 'field';
+  kind: 'team' | 'player' | 'field';
   field?: TemplateField;
 }
 
@@ -41,12 +43,18 @@ interface CaptureSession {
   steps: CaptureStep[];
   stepIndex: number;
   team: CaptureTeam;
-  /** Solo con posesión NEUTRAL se puede elegir entre Propio y Rival. */
+  /** Con actor CHOOSE o posesión NEUTRAL el analista elige entre Propio y Rival. */
   canChooseTeam: boolean;
-  /** Posesión vigente al abrir el modal; es la que se guarda en el evento. */
+  /** Posesión vigente al abrir el modal. */
   possession: Possession;
   playerNumber: number | null;
   values: Record<string, unknown>;
+}
+
+/** Botonera para elegir el evento siguiente (p. ej. cómo se juega un penal). */
+interface FollowUpChooser {
+  title: string;
+  choices: { type: LiveCaptureEventType; label: string; preset?: Record<string, unknown> }[];
 }
 
 /** Botón de jugador en la cuadrícula del modal. */
@@ -128,6 +136,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   /** Sesión del modal de captura; `null` si no hay modal abierto. */
   capture: CaptureSession | null = null;
+  /** Botonera de eventos siguientes; `null` si no hay ninguna abierta. */
+  followUpChooser: FollowUpChooser | null = null;
 
   private clockElapsedSeconds = 0;
   private clockStartedAt: number | null = null;
@@ -145,6 +155,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   isLoading = true;
   theme: 'light' | 'dark' = 'light';
   private events: LocalMatchEvent[] = [];
+  private readonly eventVariantRotation: EventVariant[] = ['success', 'danger', 'warning', 'primary'];
+  private readonly eventVariants = new Map<string, EventVariant>();
+  private nextEventVariantIndex = 0;
 
   /** Inicializa la pantalla, carga el partido y restaura su estado guardado. */
   ngOnInit(): void {
@@ -197,6 +210,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         }
         this.currentPossession = state.currentPossession;
         this.eventTypes = response.eventTypes;
+        this.eventVariants.clear();
+        this.nextEventVariantIndex = 0;
         this.categories = this.groupEventTypes(response.eventTypes.filter(e => e.showInPalette !== false));
         this.playersByStartingNumber.clear();
         response.rosterPlayers.forEach((player, index) => {
@@ -735,15 +750,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     this.scoreboard = scoreboard;
     if (!preservePossession) {
-      const latestEvent = this.events[this.events.length - 1];
-      const latestEventType = latestEvent
-        ? this.eventTypeById(latestEvent.eventTypeId)
-        : undefined;
-
-      if (latestEvent && latestEventType) {
-        this.currentPossession = latestEventType.affectsPossession
-          ? this.nextPossession(latestEvent.teamPossession)
-          : latestEvent.teamPossession;
+      const derived = this.derivePossession();
+      if (derived) {
+        this.currentPossession = derived;
       }
     }
     this.history = history.slice(0, 12);
@@ -809,18 +818,36 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     return this.teamForPossession(this.currentPossession);
   }
 
-  /** Alterna la posesión entre `own` y `opponent`; `neutral` siempre resuelve a `own`. */
-  /** Calcula qué equipo tendrá la posesión después de un evento. */
-  private nextPossession(possession: Possession): Possession {
-    if (possession === 'OWN') {
-      return 'OPPONENT';
-    }
+  /**
+   * Posesión resultante del último evento que informa quién tiene la pelota.
+   * `teamPossession` guarda el equipo que ejecutó el evento; la regla del tipo
+   * (o de la opción elegida) dice si la pelota queda en él, pasa al rival o no cambia.
+   */
+  private derivePossession(): Possession | null {
+    for (let index = this.events.length - 1; index >= 0; index--) {
+      const event = this.events[index];
+      const type = this.eventTypeById(event.eventTypeId);
+      if (!type || event.teamPossession === 'NEUTRAL') {
+        continue;
+      }
 
-    if (possession === 'OPPONENT') {
-      return 'OWN';
+      const actor = event.teamPossession as Team;
+      switch (possessionRule(type, event.attributes)) {
+        case 'ACTOR':
+          return actor;
+        case 'OTHER':
+          return opposite(actor);
+        default:
+          if (type.actor === 'ATTACKING') {
+            return actor;
+          }
+          if (type.actor === 'DEFENDING') {
+            return opposite(actor);
+          }
+          // CHOOSE sin cambio (tarjetas, lesión, cambio): no informa quién tiene la pelota.
+      }
     }
-
-    return 'OWN';
+    return null;
   }
 
   /**
@@ -828,19 +855,17 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
    * chip. Se usa desde el template vía `eventVariant(event)`.
    */
   eventVariant(event: LiveCaptureEventType): EventVariant {
-    if (event.category === 'DEFENSE' && event.name.toLowerCase().includes('fallado')) {
-      return 'danger';
+    const assignedVariant = this.eventVariants.get(event.id);
+    if (assignedVariant) {
+      return assignedVariant;
     }
 
-    if (event.isScoring) {
-      return 'success';
-    }
-
-    if (event.category === 'POSSESSION' || event.category === 'NEUTRAL') {
-      return 'warning';
-    }
-
-    return 'default';
+    const variant = this.eventVariantRotation[
+      this.nextEventVariantIndex % this.eventVariantRotation.length
+    ];
+    this.nextEventVariantIndex += 1;
+    this.eventVariants.set(event.id, variant);
+    return variant;
   }
 
   /**
@@ -930,22 +955,33 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     return this.captureStep?.kind === 'field' ? this.captureStep.field ?? null : null;
   }
 
-  /** Abre el modal con los pasos del evento, o lo guarda directo si no tiene ninguno. */
+  /**
+   * Abre el modal con los pasos del evento, o lo guarda directo si no tiene ninguno.
+   * El equipo sale del `actor` del tipo y la posesión; `preset` pre-llena campos en
+   * vivo y salta esos pasos.
+   */
   private openCapture(
     event: LiveCaptureEventType,
     eventId: string,
     possession: Possession,
     lockedTeam: CaptureTeam | null,
+    preset: Record<string, unknown> = {},
   ): void {
+    const resolved = lockedTeam ?? resolveActor(event, possession);
     const steps: CaptureStep[] = [];
+    if (resolved === null && !event.requiresPlayer) {
+      steps.push({ kind: 'team' });
+    }
     if (event.requiresPlayer) {
       steps.push({ kind: 'player' });
     }
-    liveFields(event).forEach(field => steps.push({ kind: 'field', field }));
+    liveFields(event)
+      .filter(field => !(field.key in preset))
+      .forEach(field => steps.push({ kind: 'field', field }));
 
-    const team: CaptureTeam = lockedTeam ?? (possession === 'OPPONENT' ? 'OPPONENT' : 'OWN');
+    const team: CaptureTeam = resolved ?? 'OWN';
     if (steps.length === 0) {
-      this.commitWithFollowUp(event, eventId, null, null, {}, possession, team);
+      this.commitWithFollowUp(event, eventId, null, null, { ...preset }, possession, team);
       return;
     }
 
@@ -955,11 +991,20 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       steps,
       stepIndex: 0,
       team,
-      canChooseTeam: lockedTeam === null && possession === 'NEUTRAL',
+      canChooseTeam: resolved === null,
       possession,
       playerNumber: null,
-      values: {},
+      values: { ...preset },
     };
+  }
+
+  /** Paso «equipo» (eventos sin jugador con posesión neutral). */
+  pickTeam(team: CaptureTeam): void {
+    if (!this.capture) {
+      return;
+    }
+    this.capture.team = team;
+    this.advanceCapture();
   }
 
   chooseTeam(team: CaptureTeam): void {
@@ -1054,7 +1099,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     );
   }
 
-  /** Guarda el evento y, si su tipo define un seguimiento, abre el modal del seguimiento. */
+  /**
+   * Guarda el evento (asignado al equipo que lo ejecutó) y abre lo que siga: el evento de
+   * seguimiento único (Try → Conversión) o la botonera de eventos siguientes (penal, etc.).
+   */
   private commitWithFollowUp(
     event: LiveCaptureEventType,
     eventId: string,
@@ -1071,14 +1119,44 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     const followUp = event.followUpEventTypeId
       ? this.eventTypeById(event.followUpEventTypeId)
       : undefined;
+    const choices = followUp ? [] : followUpChoices(event, attributes);
+
+    let onSuccess: (() => void) | undefined;
+    if (followUp) {
+      onSuccess = () => this.openCapture(followUp, this.createHistoryId(), possession, team);
+    } else if (choices.length > 0) {
+      onSuccess = () => this.openChooser(event, choices);
+    }
 
     this.commitEvent(
       event,
       eventId,
       player,
       Object.keys(attributes).length > 0 ? attributes : undefined,
-      followUp ? () => this.openCapture(followUp, this.createHistoryId(), possession, team) : undefined,
-      possession,
+      onSuccess,
+      team,
     );
+  }
+
+  // ───────────────────────── Evento siguiente a elección ─────────────────────────
+
+  private openChooser(event: LiveCaptureEventType, choices: FollowUpChoice[]): void {
+    const resolved = choices.flatMap(choice => {
+      const type = this.eventTypes.find(candidate => candidate.code === choice.code);
+      return type ? [{ type, label: choice.label ?? type.name, preset: choice.preset }] : [];
+    });
+    if (resolved.length > 0) {
+      this.followUpChooser = { title: event.name, choices: resolved };
+    }
+  }
+
+  /** El equipo del evento elegido se resuelve con la posesión ya actualizada por el anterior. */
+  pickFollowUp(choice: FollowUpChooser['choices'][number]): void {
+    this.followUpChooser = null;
+    this.openCapture(choice.type, this.createHistoryId(), this.currentPossession, null, choice.preset ?? {});
+  }
+
+  closeChooser(): void {
+    this.followUpChooser = null;
   }
 }
