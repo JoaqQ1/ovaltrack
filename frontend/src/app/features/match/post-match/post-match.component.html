@@ -1,42 +1,17 @@
-<div class="layout-container page">
-  <!-- Page Header Integrado OvalTrack -->
-  <header class="hud">
-    <div class="hud-brand">
-      <div class="badge-tech">
-        <span>Análisis • Post-Partido</span>
-      </div>
-      <div class="brand-text">
-        <h1 class="title">{{ userClubName() }} vs {{ opponent() }}</h1>
-        <p class="club">Revisión de la carga: verificá que cada evento esté completo y correcto</p>
-      </div>
-    </div>
-
-    <div class="hud-actions">
-      <!-- Secundario a la izquierda -->
-      <button 
-        type="button" 
-        class="btn btn-outline btn-hud" 
-        (click)="comeBack()"
-        aria-label="Volver a partidos"
-        title="Volver a partidos"
-      >
-        <i class="bi bi-arrow-left"></i>
-        <span class="hud-btn-text">Volver a partidos</span>
-      </button>
-
-      <!-- Primario Verde Sólido a la derecha -->
-      <button 
-        type="button" 
-        class="btn-invite btn-hud" 
-        (click)="openCreateModal()"
-        aria-label="Agregar evento"
-        title="Agregar evento"
-      >
-        <i class="bi bi-plus-lg"></i>
-        <span class="hud-btn-text">Agregar evento</span>
-      </button>
-    </div>
-  </header>
+<div class="layout-container page pm">
+  <!-- Page Header Integrado con Tanteador y Delta (Fase 2) -->
+  <div class="pm-area-hud">
+    <app-post-match-header
+      [ownClubName]="userClubName()"
+      [opponentName]="opponent()"
+      [homeScore]="store.scoreboard().home"
+      [awayScore]="store.scoreboard().away"
+      [scoreDelta]="store.scoreDelta()"
+      [startTimeFormatted]="store.kpis().startTimeFormatted"
+      (back)="comeBack()"
+      (addEvent)="openCreateModal()"
+    />
+  </div>
 
   <!-- Banner de Error Semántico -->
   <div *ngIf="errorMessage()" class="alert-error" role="alert">
@@ -57,20 +32,28 @@
     </div>
   </div>
 
-  <!-- Contenido Principal: Layout de Dos Columnas (Fase 2) -->
-  <div class="review-layout" *ngIf="!isLoading() && !errorMessage()">
-    <!-- Columna Principal: KPIs, Distribución Temporal y Tabla Detallada -->
-    <main class="review-main-column">
-      <app-post-match-kpis />
-      <app-post-match-timeline />
-      <app-post-match-table (editRequested)="onEditRequested()" (deleteRequested)="onDeleteRequested()" />
-    </main>
+  <!-- Contenido Principal: Grilla de Estación de Trabajo (Fase 1 y 2) -->
+  <ng-container *ngIf="!isLoading() && !errorMessage()">
+    <!-- Área de KPIs: Strip Horizontal Compacto -->
+    <div class="pm-area-kpi">
+      <app-post-match-kpi-strip />
+    </div>
 
-    <!-- Columna Lateral (Sidebar 340px): Detalle del Evento y Cola de Revisión -->
-    <aside class="review-sidebar-column">
+    <!-- Área de Línea Temporal -->
+    <div class="pm-area-timeline">
+      <app-post-match-timeline />
+    </div>
+
+    <!-- Área de Tabla Detallada -->
+    <div class="pm-area-table">
+      <app-post-match-table (editRequested)="onEditRequested()" (deleteRequested)="onDeleteRequested()" />
+    </div>
+
+    <!-- Área del Inspector Lateral (320px) -->
+    <aside class="pm-area-inspector">
       <app-post-match-panel />
     </aside>
-  </div>
+  </ng-container>
 
   <!-- Modal de Alta de Eventos Post-Partido (HU-8.4) -->
   <app-post-match-create-modal [isOpen]="showCreateModal()" [matchId]="matchId" (close)="closeCreateModal()" />

@@ -13,6 +13,7 @@ import { PersonResponse } from '../person/types/person.types';
 import { PersonService } from 'src/app/services/person.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ModalComponent } from '../modal/modal.component';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 @Component({
   selector: 'app-division-coach-list',
@@ -30,6 +31,7 @@ export class DivisionCoachListComponent implements OnInit {
   private readonly membersService = inject(MembersService);
   private readonly personService = inject(PersonService);
   private readonly userContextService = inject(UserContextService);
+  private readonly toastService = inject(ToastService);
 
   division: Division | null = null;
   coaches: DivisionCoachResponse[] = [];
@@ -44,8 +46,6 @@ export class DivisionCoachListComponent implements OnInit {
   mostrarModalConfirmacion = false;
   cargando = true;
   cargandoMiembros = false;
-  error = '';
-  mensajeError = '';
 
   ngOnInit(): void {
     this.coachForm = this.fb.group({
@@ -64,7 +64,6 @@ export class DivisionCoachListComponent implements OnInit {
       return;
     }
     this.cerrarHistorial();
-    this.mensajeError = '';
     this.availableCoaches = [];
     this.cargandoMiembros = true;
 
@@ -77,7 +76,7 @@ export class DivisionCoachListComponent implements OnInit {
       error: (err) => {
         console.error('Error al cargar los usuarios disponibles', err);
         this.cargandoMiembros = false;
-        this.mensajeError = 'No se pudieron cargar los entrenadores disponibles.';
+        this.toastService.show('error', 'No se pudieron cargar los entrenadores disponibles.', 'Error de carga');
       }
     });
   }
@@ -95,7 +94,6 @@ export class DivisionCoachListComponent implements OnInit {
     }
 
     this.guardando = true;
-    this.mensajeError = '';
     this.divisionCoachService.create({
       divisionId,
       personId: this.coachForm.value.personId
@@ -104,13 +102,15 @@ export class DivisionCoachListComponent implements OnInit {
         this.mostrarFormulario = false;
         this.coachForm.reset({ personId: '' });
         this.guardando = false;
+        this.toastService.show('success', 'Entrenador asociado a la división correctamente.', '¡Excelente!');
         this.cargarEntrenadores();
       },
       error: (err) => {
         console.error('Error al asociar entrenador', err);
-        this.mensajeError = typeof err.error === 'string'
+        const msg = typeof err.error === 'string'
           ? err.error
           : (err.error?.message || 'No se pudo asociar el entrenador a la división.');
+        this.toastService.show('error', msg, 'Error');
         this.guardando = false;
       }
     });
@@ -121,7 +121,6 @@ export class DivisionCoachListComponent implements OnInit {
       return;
     }
 
-    this.mensajeError = '';
     this.cerrarHistorial();
     this.coachToRemove = coach;
     this.mostrarModalConfirmacion = true;
@@ -145,6 +144,7 @@ export class DivisionCoachListComponent implements OnInit {
         this.eliminandoId = null;
         this.mostrarModalConfirmacion = false;
         this.coachToRemove = null;
+        this.toastService.show('success', 'El entrenador fue desasociado correctamente.', 'Desasociado');
         this.cargarEntrenadores();
       },
       error: (err) => {
@@ -152,9 +152,10 @@ export class DivisionCoachListComponent implements OnInit {
         this.eliminandoId = null;
         this.mostrarModalConfirmacion = false;
         this.coachToRemove = null;
-        this.mensajeError = typeof err.error === 'string'
+        const msg = typeof err.error === 'string'
           ? err.error
           : (err.error?.message || 'No se pudo desasociar el entrenador.');
+        this.toastService.show('error', msg, 'Error');
       }
     });
   }
@@ -162,7 +163,7 @@ export class DivisionCoachListComponent implements OnInit {
   mostrarHistorial(coach: DivisionCoachResponse): void {
     const divisionId = this.division?.id;
     if (!divisionId) {
-      this.mensajeError = 'No se pudo obtener el historial porque la división no está disponible.';
+      this.toastService.show('error', 'No se pudo obtener el historial porque la división no está disponible.', 'Error');
       return;
     }
 
@@ -173,9 +174,10 @@ export class DivisionCoachListComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al cargar el historial del entrenador', err);
-        this.mensajeError = typeof err.error === 'string'
+        const msg = typeof err.error === 'string'
           ? err.error
           : (err.error?.message || 'No se pudo cargar el historial del entrenador.');
+        this.toastService.show('error', msg, 'Error');
       }
     });
   }
@@ -186,7 +188,6 @@ export class DivisionCoachListComponent implements OnInit {
 
   cargarEntrenadores(): void {
     this.cargando = true;
-    this.error = '';
 
     this.route.paramMap.pipe(
       switchMap((params) => {
@@ -242,14 +243,9 @@ export class DivisionCoachListComponent implements OnInit {
           return;
         }
 
-        this.error = 'No se pudieron cargar los entrenadores de la división.';
+        this.toastService.show('error', 'No se pudieron cargar los entrenadores de la división.', 'Error de carga');
       }
     });
-  }
-
-  closeError(): void {
-    this.error = '';
-    this.mensajeError = '';
   }
 
   getCoachName(coach: DivisionCoachResponse): string {

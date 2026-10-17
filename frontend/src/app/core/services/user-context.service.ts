@@ -1,15 +1,19 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, from, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { UserContext, UserRole } from '../../features/auth/types/auth.types';
 import { ClubSummary, Division } from '../../features/division/types/division.types';
+import { TokenService } from './token.service';
+import { LiveCaptureCacheService } from '../../features/match/services/live-capture-cache.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserContextService {
   private readonly http = inject(HttpClient);
+  private readonly tokenService = inject(TokenService);
+  private readonly cache = inject(LiveCaptureCacheService);
   private readonly apiUrl = environment.apiUrl;
 
   private readonly contextSignal = signal<UserContext | null>(null);
@@ -31,6 +35,37 @@ export class UserContextService {
   });
 
   loadUserContext(): Observable<UserContext | null> {
+    const tokenPayload = this.tokenService.getPayload();
+    if (!tokenPayload || !this.tokenService.isAuthenticated()) {
+      this.contextSignal.set(null);
+      return of(null);
+    }
+
+    return this.http.get<UserContext>(`${this.apiUrl}/api/me`).pipe(
+      switchMap(ctx => from(this.cache.saveUserContext(ctx)).pipe(
+        tap(() => this.contextSignal.set(ctx)),
+        switchMap(() => of(ctx)),
+      )),
+      catchError(err => {
+        console.error('Error al cargar el contexto de usuario:', err);
+
+        if (err.status === 401 || err.status === 403) {
+          this.contextSignal.set(null);
+          return of(null);
+        }
+
+        return from(this.cache.getUserContext(tokenPayload.userId)).pipe(
+          tap(context => this.contextSignal.set(context ?? null)),
+          switchMap(context => of(context ?? null)),
+        );
+      })
+    );
+  }
+
+/*
+Previous loadUserContext
+
+  loadUserContext(): Observable<UserContext | null> {
     return this.http.get<UserContext>(`${this.apiUrl}/api/me`).pipe(
       tap(ctx => this.contextSignal.set(ctx)),
       catchError(err => {
@@ -40,12 +75,20 @@ export class UserContextService {
       })
     );
   }
+*/
+
 
   setContext(context: UserContext | null): void {
     this.contextSignal.set(context);
   }
 
   clear(): void {
+    const tokenPayload = this.tokenService.getPayload();
     this.contextSignal.set(null);
+    if (!tokenPayload) {
+      return;
+    }
+
+    this.cache.clearUserContext(tokenPayload.userId);
   }
 }

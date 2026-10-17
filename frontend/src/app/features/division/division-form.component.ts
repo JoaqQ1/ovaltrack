@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { DivisionService } from 'src/app/services/division.service';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 @Component({
   selector: 'app-division-form',
@@ -16,11 +17,10 @@ export class DivisionFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly divisionService = inject(DivisionService);
   readonly userContext = inject(UserContextService);
+  private readonly toastService = inject(ToastService);
 
   divisionDetails!: FormGroup;
   guardando: boolean = false;
-  mensajeExito: string = '';
-  mensajeError: string = '';
 
   readonly myClub = this.userContext.currentClub;
 
@@ -33,14 +33,6 @@ export class DivisionFormComponent implements OnInit {
     return name ? name.charAt(0).toUpperCase() : 'O';
   }
 
-  closeSuccess(): void {
-    this.mensajeExito = '';
-  }
-
-  closeError(): void {
-    this.mensajeError = '';
-  }
-
   iniciarFormulario(): void {
     this.divisionDetails = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
@@ -50,12 +42,9 @@ export class DivisionFormComponent implements OnInit {
   }
 
   guardarDivision(): void {
-    this.mensajeExito = '';
-    this.mensajeError = '';
-
     const club = this.myClub();
     if (!club?.id) {
-      this.mensajeError = 'No se puede crear una división sin un club asignado.';
+      this.toastService.show('error', 'No se puede crear una división sin un club asignado.', 'Error');
       return;
     }
 
@@ -68,7 +57,7 @@ export class DivisionFormComponent implements OnInit {
 
       this.divisionService.createDivision(payload).subscribe({
         next: () => {
-          this.mensajeExito = '¡División creada con éxito!';
+          this.toastService.show('success', '¡División creada con éxito!', 'División creada');
           this.divisionDetails.reset({
             name: '',
             ageCategory: '',
@@ -78,9 +67,10 @@ export class DivisionFormComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error al crear la división', err);
-          this.mensajeError = typeof err.error === 'string'
+          const msg = typeof err.error === 'string'
             ? err.error
             : (err.error?.message || err.error?.mensaje || 'Error al crear la división.');
+          this.toastService.show('error', msg, 'Error');
           this.guardando = false;
         }
       });
