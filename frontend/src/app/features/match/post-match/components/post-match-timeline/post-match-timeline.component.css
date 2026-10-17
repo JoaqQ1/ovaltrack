@@ -1,5 +1,8 @@
-
 .timeline-card {
+  --chrome: 68px;
+  --lanes: 8;
+  --lane-h: clamp(24px, calc(260px / var(--lanes, 8)), 30px);
+  --lane-label-w: 168px;
   background: var(--surface, #ffffff);
   border: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
   border-radius: 14px;
@@ -12,13 +15,22 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  height: 100%;
+  height: auto;
+  max-height: calc(var(--chrome) + 11 * var(--lane-h));
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1120px) {
   .timeline-card {
     padding: 0;
     height: auto;
+    max-height: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .timeline-card {
+    --lane-h: 40px !important;
+    max-height: none !important;
   }
 }
 
@@ -87,12 +99,8 @@
   margin: 0 0.25rem;
 }
 
-.filter-pill-btn.unassigned-pill {
-  /* Hereda estilos neutrales inactivos */
-}
-
 .filter-pill-btn.unassigned-pill .badge-count-text {
-  color: #b45309; /* Solo el número lleva el acento para indicar advertencia */
+  color: #b45309;
 }
 
 .filter-pill-btn.unassigned-pill.active {
@@ -182,38 +190,15 @@
   color: var(--text-primary, #111d0e);
 }
 
-/* Tablero de Línea de Tiempo */
-.timeline-scroll-container {
-  width: 100%;
-  border: none;
-  border-radius: 0;
-  background: var(--surface, #ffffff);
-  overflow-x: auto; /* Permite scroll horizontal en móviles */
-  overflow-y: hidden; /* Evita que el desborde vertical por transform genere scrollbars parásitos */
-  flex: 1;
-}
-
-.timeline-board {
-  --lane-label-w: 168px;
-  width: 100%;
-  min-width: 0;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  padding-bottom: 0;
-}
-
-@media (max-width: 768px) {
-  .timeline-board {
-    min-width: 680px;
-  }
-}
-
+/* Regla Temporal Superior Fija (fuera del scroller vertical) */
 .ruler-row {
   display: flex;
   height: 26px;
+  flex: none;
   border-bottom: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
   background: var(--surface-alt, #eef1e7);
+  position: relative;
+  z-index: 5;
 }
 
 .ruler-sidebar-label {
@@ -269,14 +254,41 @@
   background: var(--border-strong, rgba(27, 33, 22, 0.22));
 }
 
+/* Scroller Vertical para Carriles */
+.timeline-scroll-container {
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  background: var(--surface, #ffffff);
+  overflow-x: auto;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.timeline-content {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .ruler-row,
+  .timeline-content {
+    min-width: 680px;
+  }
+}
+
+/* Overlay de Referencias Verticales (Aguja y Entretiempo) */
 .timeline-tracks-overlay {
   position: absolute;
-  top: 26px;
-  bottom: 0;
+  inset: 0;
   left: calc(var(--lane-label-w) + 24px);
   right: 24px;
   pointer-events: none;
-  z-index: 1;
+  z-index: 4;
 }
 
 .halftime-vertical-line {
@@ -295,7 +307,7 @@
   width: 2px;
   background: var(--btn-primary-bg, #204b22);
   box-shadow: 0 0 8px rgba(32, 75, 34, 0.5);
-  z-index: 1;
+  z-index: 2;
   transition: left 0.15s ease-out;
 }
 
@@ -317,18 +329,21 @@
   position: relative;
   z-index: 2;
   display: flex;
-  height: var(--lane-h, 27px);
+  height: var(--lane-h);
   border-bottom: 1px solid var(--border, rgba(27, 33, 22, 0.10));
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
 .timeline-lane-row:hover {
   background-color: var(--surface-hover, #f1f3ea);
 }
 
-.timeline-lane-row.lane-hidden {
+.timeline-lane-row.lane-dimmed {
   opacity: 0.45;
-  height: calc(var(--lane-h, 32px) - 4px);
+}
+
+.timeline-lane-row.lane-hidden {
+  opacity: 0.35;
   background: var(--surface-alt, #eef1e7);
 }
 
@@ -353,7 +368,8 @@
 
 .lane-color-bar {
   width: 3px;
-  height: 16px;
+  height: calc(var(--lane-h) - 10px);
+  min-height: 12px;
   border-radius: 2px;
   flex: none;
 }
@@ -390,7 +406,7 @@
 .lane-count {
   font-family: var(--font-mono, monospace);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary, #4b5540);
   flex: none;
@@ -405,18 +421,22 @@
   margin: 0 24px;
 }
 
-/* Marcadores de Evento */
+/* ==========================================================================
+   Marcadores de Evento
+   ========================================================================== */
 .marker {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
   width: 6px;
-  height: 18px;
+  height: calc(var(--lane-h) - 8px);
+  min-height: 16px;
   border-radius: 2px;
   border: none;
   cursor: pointer;
-  z-index: 2;
-  box-shadow: 0 0 0 1px var(--surface, #ffffff), 0 1px 3px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 1px var(--surface, #ffffff), 0 1px 3px rgba(0, 0, 0, 0.15);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
@@ -426,28 +446,25 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 20px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
+}
+
+@media (pointer: coarse) {
+  .marker::after {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 .marker:hover {
-  transform: translate(-50%, -50%) scale(1.35);
-  box-shadow: 0 0 0 1.5px var(--surface, #ffffff), 0 3px 8px rgba(0, 0, 0, 0.35);
-  z-index: 6;
-}
-
-.marker.marker-selected {
-  transform: translate(-50%, -50%) scale(1.4);
-  outline: none;
-  box-shadow: 0 0 0 2px var(--surface, #ffffff), 0 0 0 4px var(--btn-primary-bg, #204b22), 0 2px 8px rgba(0, 0, 0, 0.35);
-  z-index: 10;
-}
-
-:host-context([data-theme="dark"]) .marker.marker-selected {
-  box-shadow: 0 0 0 2px #151d14, 0 0 0 4px #a3e635, 0 2px 8px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%) scale(1.25);
+  box-shadow: 0 0 0 1px var(--surface, #ffffff), 0 2px 6px rgba(0, 0, 0, 0.3);
+  z-index: 5;
 }
 
 .marker.marker-unassigned {
+  z-index: 2;
   background: repeating-linear-gradient(
     45deg,
     #f59e0b,
@@ -455,11 +472,23 @@
     #ffffff 2px,
     #ffffff 4px
   ) !important;
-  border: 1px solid #d97706;
+  border: 1px solid #d97706 !important;
+}
+
+.marker.marker-selected {
+  z-index: 3;
+  transform: translate(-50%, -50%) scale(1.3);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--surface, #ffffff), 0 0 0 3px var(--btn-primary-bg, #204b22), 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .marker.marker-dimmed {
   opacity: 0.12;
   box-shadow: none;
   pointer-events: none;
+}
+
+/* Modo Oscuro */
+:host-context([data-theme="dark"]) .marker.marker-selected {
+  box-shadow: 0 0 0 1px #151d14, 0 0 0 3px #a3e635, 0 2px 8px rgba(0, 0, 0, 0.5);
 }

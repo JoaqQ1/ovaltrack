@@ -159,17 +159,17 @@ describe('MatchReviewStore (HU-8.4)', () => {
   describe('scoreboard', () => {
     it('should calculate points according to event types and possessions, attributing player events to home', () => {
       store.setEventTypesList([
-        { id: 't-try', name: 'Try', isScoring: true, points: 5, category: 'OFFENSIVE', icon: 'shield', defaultPossession: 'OWN', templateEventFields: [] },
-        { id: 't-penal', name: 'Penal a los palos', isScoring: true, points: 3, category: 'OFFENSIVE', icon: 'shield', defaultPossession: 'OWN', templateEventFields: [] }
-      ]);
+        { id: 't-try', name: 'Try', groupName: 'General', isScoring: true, points: 5, category: 'ATTACK', affectsPossession: false, requiresPlayer: false, isActive: true, createdAt: '', showInPalette: true, followUpEventTypeId: null, defaultPossession: 'OWN', templateEventFields: [] },
+        { id: 't-penal', name: 'Penal a los palos', groupName: 'General', isScoring: true, points: 3, category: 'ATTACK', affectsPossession: false, requiresPlayer: false, isActive: true, createdAt: '', showInPalette: true, followUpEventTypeId: null, defaultPossession: 'OWN', templateEventFields: [] }
+      ] as any);
 
       store.setEvents([
         // Try propio (5)
-        { id: 'e1', eventTypeId: 't-try', matchTime: 100, teamPossession: 'OWN', period: 1 },
+        { id: 'e1', eventTypeId: 't-try', eventTypeName: 'Try', matchTime: 100, teamPossession: 'OWN', period: 1 },
         // Try con jugador pero sin posesión OWN explícita (5) -> suma a home
-        { id: 'e2', eventTypeId: 't-try', matchTime: 200, playerId: 'player-x', teamPossession: 'NEUTRAL', period: 1 },
+        { id: 'e2', eventTypeId: 't-try', eventTypeName: 'Try', matchTime: 200, playerId: 'player-x', teamPossession: 'NEUTRAL', period: 1 },
         // Penal rival (3) -> suma a away
-        { id: 'e3', eventTypeId: 't-penal', matchTime: 300, teamPossession: 'OPPONENT', period: 1 }
+        { id: 'e3', eventTypeId: 't-penal', eventTypeName: 'Penal a los palos', matchTime: 300, teamPossession: 'OPPONENT', period: 1 }
       ]);
 
       expect(store.scoreboard()).toEqual({ home: 10, away: 3 });
@@ -179,6 +179,45 @@ describe('MatchReviewStore (HU-8.4)', () => {
       store.setInitialScores(33, 25);
       store.setEvents([]);
       expect(store.scoreboard()).toEqual({ home: 33, away: 25 });
+    });
+  });
+
+  describe('timelineLanes and activeLanesCount', () => {
+    it('should maintain stable activeLanesCount and keep lanes present when filtering', () => {
+      store.setEventTypesList([
+        { id: 't-try', code: 'TRY', name: 'Try', groupName: 'General', isScoring: true, points: 5, category: 'ATTACK', affectsPossession: false, requiresPlayer: false, isActive: true, createdAt: '', showInPalette: true, followUpEventTypeId: null, templateEventFields: [] },
+        { id: 't-tackle', code: 'TACKLE_MADE', name: 'Tackle acertado', groupName: 'General', isScoring: false, points: 0, category: 'DEFENSE', affectsPossession: false, requiresPlayer: false, isActive: true, createdAt: '', showInPalette: true, followUpEventTypeId: null, templateEventFields: [] }
+      ] as any);
+
+      // Try tiene jugador asignado, Tackle no tiene jugador asignado (isUnassigned = true)
+      store.setEvents([
+        { id: 'e1', eventTypeId: 't-try', eventTypeName: 'Try', playerId: 'p1', teamPossession: 'OWN', matchTime: 100, period: 1 },
+        { id: 'e2', eventTypeId: 't-tackle', eventTypeName: 'Tackle acertado', playerId: null, teamPossession: 'OWN', matchTime: 200, period: 1 }
+      ]);
+
+      expect(store.activeLanesCount()).toBe(2);
+      expect(store.timelineLanes().length).toBe(2);
+
+      // Activar filtro solo pendientes (solo sin jugador)
+      store.toggleOnlyUnassigned();
+
+      const filteredLanes = store.timelineLanes();
+      expect(store.activeLanesCount()).toBe(2); // Estabilidad garantizada
+      expect(filteredLanes.length).toBe(2);
+
+      // Try debe seguir presente en la lista, pero dimmed y con filteredCount = 0
+      const tryLane = filteredLanes.find(l => l.eventTypeId === 't-try');
+      expect(tryLane).toBeDefined();
+      expect(tryLane?.totalCount).toBe(1);
+      expect(tryLane?.filteredCount).toBe(0);
+      expect(tryLane?.isDimmed).toBeTrue();
+
+      // Tackle debe tener filteredCount = 1 y no estar dimmed
+      const tackleLane = filteredLanes.find(l => l.eventTypeId === 't-tackle');
+      expect(tackleLane).toBeDefined();
+      expect(tackleLane?.totalCount).toBe(1);
+      expect(tackleLane?.filteredCount).toBe(1);
+      expect(tackleLane?.isDimmed).toBeFalse();
     });
   });
 });

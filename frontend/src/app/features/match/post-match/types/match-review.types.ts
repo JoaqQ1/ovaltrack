@@ -39,7 +39,9 @@ export interface ReviewTimelineLane {
   eventName: string;
   color: string;
   totalCount: number;
+  filteredCount: number;
   hidden: boolean;
+  isDimmed: boolean;
   occurrences: ReviewEventViewModel[];
 }
 

@@ -1,4 +1,4 @@
-import { Component, ViewChild, effect, inject, Output, EventEmitter, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, effect, inject, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { MatchReviewStore } from '../../store/match-review.store';
@@ -13,16 +13,18 @@ import { ToastService } from 'src/app/core/services/toast.service';
   templateUrl: './post-match-table.component.html',
   styleUrl: './post-match-table.component.css'
 })
-export class PostMatchTableComponent {
+export class PostMatchTableComponent implements AfterViewInit, OnDestroy {
   @Output() editRequested = new EventEmitter<ReviewEventViewModel>();
   @Output() deleteRequested = new EventEmitter<ReviewEventViewModel>();
   readonly store = inject(MatchReviewStore);
   private readonly eventService = inject(EventService);
   private readonly toastService = inject(ToastService);
+  private readonly elementRef = inject(ElementRef);
 
   readonly isAssigning = signal<boolean>(false);
 
   @ViewChild(CdkVirtualScrollViewport) viewport?: CdkVirtualScrollViewport;
+  private resizeObserver?: ResizeObserver;
 
   constructor() {
     effect(() => {
@@ -35,6 +37,19 @@ export class PostMatchTableComponent {
         this.viewport.scrollToIndex(index, 'smooth');
       }
     });
+  }
+
+  ngAfterViewInit(): void {
+    if (typeof ResizeObserver !== 'undefined' && this.elementRef?.nativeElement) {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.viewport?.checkViewportSize();
+      });
+      this.resizeObserver.observe(this.elementRef.nativeElement);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
   }
 
   onRowClick(ev: ReviewEventViewModel): void {

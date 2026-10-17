@@ -269,6 +269,6 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   }
 
   comeBack(): void {
-    this.router.navigate(['/match-selection']);
+    this.router.navigate(['/match-history']);
   }
 }

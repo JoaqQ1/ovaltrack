@@ -158,17 +158,30 @@ export class MatchReviewStore {
     const lanes: ReviewTimelineLane[] = [];
     lanesMap.forEach((occurrences, typeId) => {
       const first = occurrences[0];
+      const isHidden = hidden.has(typeId);
+      const filteredOccurrences = occurrences.filter(ev => !ev.isDimmed);
+      const filteredCount = filteredOccurrences.length;
+      const isDimmed = isHidden || filteredCount === 0;
+
       lanes.push({
         eventTypeId: typeId,
         eventName: first.eventTypeName,
         color: first.color,
         totalCount: occurrences.length,
-        hidden: hidden.has(typeId),
+        filteredCount,
+        hidden: isHidden,
+        isDimmed,
         occurrences
       });
     });
 
     return lanes;
+  });
+
+  // Cantidad total de carriles presentes en el partido (inmune a filtros para estabilidad de layout)
+  readonly activeLanesCount = computed<number>(() => {
+    const lanes = this.timelineLanes();
+    return Math.max(1, lanes.length);
   });
 
   // --- KPIs del Resumen Superior ---
