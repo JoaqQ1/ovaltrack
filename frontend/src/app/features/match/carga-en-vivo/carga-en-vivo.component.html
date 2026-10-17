@@ -119,6 +119,7 @@
                         [class.event-chip--success]="eventVariant(event) === 'success'"
                         [class.event-chip--danger]="eventVariant(event) === 'danger'"
                         [class.event-chip--warning]="eventVariant(event) === 'warning'"
+                        [class.event-chip--primary]="eventVariant(event) === 'primary'"
                         [disabled]="!isStarted"
                         (click)="onEventTap(event)">
                         {{ event.name }}

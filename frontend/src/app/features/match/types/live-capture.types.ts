@@ -13,7 +13,7 @@ export type { BackendEventResponse, LocalMatchEvent } from './event.types';
 export type Possession = 'OWN' | 'NEUTRAL' | 'OPPONENT';
 
 /** Variante visual usada para pintar un evento en la interfaz. */
-export type EventVariant = 'success' | 'danger' | 'warning' | 'default';
+export type EventVariant = 'success' | 'danger' | 'warning' | 'default' | 'primary';
 
 /** Grupo visual de eventos para mostrar el catálogo organizado por secciones. */
 export interface EventCategoryGroup {

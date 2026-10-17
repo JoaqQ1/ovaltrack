@@ -4,5 +4,6 @@ public enum EventCategory {
     ATTACK,
     DEFENSE,
     NEUTRAL,
-    SET_PIECE
+    SET_PIECE,
+    POSSESSION
 }

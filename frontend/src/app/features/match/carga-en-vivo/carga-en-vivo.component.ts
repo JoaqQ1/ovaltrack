@@ -145,6 +145,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   isLoading = true;
   theme: 'light' | 'dark' = 'light';
   private events: LocalMatchEvent[] = [];
+  private readonly eventVariantRotation: EventVariant[] = ['success', 'danger', 'warning', 'primary'];
+  private readonly eventVariants = new Map<string, EventVariant>();
+  private nextEventVariantIndex = 0;
 
   /** Inicializa la pantalla, carga el partido y restaura su estado guardado. */
   ngOnInit(): void {
@@ -197,6 +200,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         }
         this.currentPossession = state.currentPossession;
         this.eventTypes = response.eventTypes;
+        this.eventVariants.clear();
+        this.nextEventVariantIndex = 0;
         this.categories = this.groupEventTypes(response.eventTypes.filter(e => e.showInPalette !== false));
         this.playersByStartingNumber.clear();
         response.rosterPlayers.forEach((player, index) => {
@@ -828,19 +833,17 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
    * chip. Se usa desde el template vía `eventVariant(event)`.
    */
   eventVariant(event: LiveCaptureEventType): EventVariant {
-    if (event.category === 'DEFENSE' && event.name.toLowerCase().includes('fallado')) {
-      return 'danger';
+    const assignedVariant = this.eventVariants.get(event.id);
+    if (assignedVariant) {
+      return assignedVariant;
     }
 
-    if (event.isScoring) {
-      return 'success';
-    }
-
-    if (event.category === 'POSSESSION' || event.category === 'NEUTRAL') {
-      return 'warning';
-    }
-
-    return 'default';
+    const variant = this.eventVariantRotation[
+      this.nextEventVariantIndex % this.eventVariantRotation.length
+    ];
+    this.nextEventVariantIndex += 1;
+    this.eventVariants.set(event.id, variant);
+    return variant;
   }
 
   /**

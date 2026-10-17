@@ -38,6 +38,8 @@
 	--orange-100: #FDE9D3;
 	--red-600: #C6403A;
 	--red-100: #FBE1DF;
+	--purple-900: #7952B3;
+	--purple-100: #e5d3ff;
 
 	/* Neutros — Modo claro (default en cancha) */
 	--bg: #F6F7F9;
@@ -471,6 +473,17 @@
 	background: var(--green-100);
 	border-color: var(--green-500);
 	color: var(--green-700);
+}
+
+.event-chip--primary {
+	background: var(--purple-900);
+	color: #FFFFFF;
+}
+
+.event-chip--primary:hover {
+	background: var(--purple-100);
+	border-color: var(--purple-900);
+	color: var(--purple-900);
 }
 
 .event-chip--danger {
