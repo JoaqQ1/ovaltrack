@@ -19,6 +19,7 @@ import { OpponentService, Opponent } from '../services/opponent.service';
 import { AuthService } from '../../auth/services/auth.service';
 import { ModalComponent } from '../../modal/modal.component';
 import { ToastService } from 'src/app/core/services/toast.service';
+import { LiveCaptureService } from '../services/live-capture.service';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -46,9 +47,9 @@ export class MatchSelectComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly divisionService = inject(DivisionService);
   private readonly opponentService = inject(OpponentService);
+  private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
-  
   /** Filtros disponibles, en el orden en que se renderizan en el control segmentado, menos el finalizado. */
   readonly filters = MATCH_FILTERS.filter(f => f !== 'finished');
   readonly statusLabels = MATCH_STATUS_LABELS;
@@ -328,7 +329,7 @@ export class MatchSelectComponent implements OnInit {
     this.matchService.getAllMatchesByDivisionId(divisionId).subscribe({
       next: (matches) => {
         this.matches = matches;
-        this.cacheRosters(matches);
+        this.cacheMatchData(matches);
       },
       error: () => {
         this.toastService.show('error', 'No se pudieron cargar los partidos de esta división.', 'Error de carga');
@@ -356,10 +357,15 @@ export class MatchSelectComponent implements OnInit {
     return role === 'ADMIN_CLUB' || role === 'ADMIN_OVALTRACK';
   }
 
-  private cacheRosters(matches: Match[]): void {
+  //ta raro esto, no me gusta del todo usar el mismo filtro de partidos tanto en LiveCaptureCacheService como aca
+  private cacheMatchData(matches: Match[]): void {
     if (matches.length === 0) {
       return;
     }
+
+    const offlineMatches = matches.filter(
+      m => m.status === 'not_started' || m.status === 'in_progress' || m.status === 'halftime'
+    );
 
     forkJoin(
       matches.map(match => 
@@ -369,5 +375,16 @@ export class MatchSelectComponent implements OnInit {
         ])
       )
     ).subscribe();
+
+    if (offlineMatches.length > 0) {
+      forkJoin(
+        offlineMatches.map(match =>
+          this.liveCaptureService.hydrateMatchEvents(match.id).pipe(
+            catchError(() => of([]))
+          )
+        )
+      ).subscribe();
+    }
   }
+
 }
