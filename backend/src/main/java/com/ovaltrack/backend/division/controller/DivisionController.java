@@ -73,7 +73,7 @@ public class DivisionController {
             @ApiResponse(responseCode = "404", description = "No division exists with the specified ID.")
     })
     @GetMapping("/{divisionId}")
-    @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
+    // @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
     public ResponseEntity<Object> findDivisionById(
             @PathVariable UUID divisionId,
             Authentication authentication) {
