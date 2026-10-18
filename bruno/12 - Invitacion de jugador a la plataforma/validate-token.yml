@@ -1,0 +1,27 @@
+info:
+  name: validate-token
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/invitation/validate"
+  params:
+    - name: token
+      value: pRCtoDHYgzMEQHcpt8BRBXDCj3dyVYiZ3Cmy0-sP04U
+      type: query
+      disabled: true
+  body:
+    type: json
+    data: |-
+      {
+        "token":"pRCtoDHYgzMEQHcpt8BRBXDCj3dyVYiZ3Cmy0-sP04U"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

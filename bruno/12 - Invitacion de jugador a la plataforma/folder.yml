@@ -1,0 +1,7 @@
+info:
+  name: 12 - Invitacion de jugador a la plataforma
+  type: folder
+  seq: 12
+
+request:
+  auth: inherit
