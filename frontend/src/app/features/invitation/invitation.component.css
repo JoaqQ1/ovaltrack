@@ -1,0 +1,168 @@
+/* Usa las clases y tokens globales de DESIGN_SYSTEM.md:
+   .layout-container, .page, .form-card, .form-card-header, .form-card-title,
+   .form-control, .btn, .btn-invite y .btn-outline. Aquí solo lo específico de esta vista. */
+
+.invitation-card {
+  width: min(100%, 520px);
+  margin-inline: auto;
+}
+
+.form-card-subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form-card-body {
+  padding: 24px 32px 32px;
+}
+
+/* Datos de solo lectura */
+.summary {
+  margin: 0 0 24px;
+  padding: 16px 18px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+  font-size: 14px;
+}
+.summary-row dt { font-weight: 600; color: var(--text-secondary); }
+.summary-row dd { margin: 0; text-align: right; font-weight: 600; overflow-wrap: anywhere; }
+.mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--btn-primary-bg);
+}
+
+.lead {
+  margin: 0 0 24px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* Campos */
+.field { margin-bottom: 18px; }
+.field-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.form-control.is-invalid { border-color: var(--error-border); }
+.form-control.is-invalid:focus { box-shadow: 0 0 0 3px var(--error-tint); }
+.field-error {
+  margin: 6px 0 0;
+  min-height: 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--error);
+}
+
+/* Requisitos de contraseña */
+.rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.rules li { display: flex; align-items: center; gap: 6px; }
+.rule-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--btn-primary-fg);
+}
+.rules li.is-ok { color: var(--success); font-weight: 600; }
+.rules li.is-ok .rule-mark { background: var(--success); border-color: var(--success); }
+
+.show-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.show-toggle input { width: 18px; height: 18px; accent-color: var(--btn-primary-bg); }
+
+/* Botones */
+a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.btn-block { width: 100%; }
+.btn-invite:disabled { opacity: 0.6; cursor: progress; }
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.btn:focus-visible,
+.show-toggle input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--border-sport);
+}
+
+/* Estados: cargando, inválido, éxito */
+.state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 32px;
+  text-align: center;
+}
+.state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-pill);
+  color: var(--btn-primary-fg);
+}
+.state-icon--ok { background: var(--success); }
+.state-icon--error { background: var(--error); }
+.state-title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--text-primary);
+}
+.state-text {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.state-box .btn { margin-top: 16px; }
+
+@media (max-width: 768px) {
+  .form-card-body { padding: 20px 20px 24px; }
+  .state-box { padding: 32px 20px; }
+  .actions { flex-direction: column-reverse; }
+  .actions .btn { width: 100%; }
+}
