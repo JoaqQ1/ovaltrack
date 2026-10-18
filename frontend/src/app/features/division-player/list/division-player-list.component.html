@@ -12,24 +12,29 @@
     </div>
 
     <div class="hud-actions">
-      <a routerLink="/divisions" class="btn btn-outline">
-        ← Volver a divisiones
-      </a>
-      <!-- Toggle button for showing/hiding available players -->
+      <!-- Botón de máxima jerarquía: Invitar a la plataforma (Acción de sistema / Onboarding) -->
+      <button class="btn btn-invite-platform" (click)="sendInvitation()">
+        <i class="bx bx-user-plus"></i> Invitar a la plataforma
+      </button>
+
+      <!-- Botón secundario: Asociar jugadores existentes del club -->
       <button
         type="button"
-        class="btn btn-invite"
+        class="btn btn-secondary"
         (click)="mostrarJugadoresInactivos()"
       >
+        <i class="bx" [ngClass]="mostrarFormularioAsociacion ? 'bx-chevron-up' : 'bx-plus-circle'"></i>
         {{
           mostrarFormularioAsociacion
             ? "Ocultar registro"
-            : "+ Asociar jugadores"
+            : "Asociar del club"
         }}
       </button>
-      <button class="btn btn-send-intitation" (click)="sendInvitation()">
-        + Invitar jugador a la plataforma
-      </button>
+
+      <!-- Enlace / Botón auxiliar de navegación -->
+      <a routerLink="/divisions" class="btn btn-outline">
+        <i class="bx bx-arrow-back"></i> Volver
+      </a>
     </div>
   </header>
 

@@ -3,6 +3,9 @@ import { PaginationComponent } from '../../pagination/pagination.component';
 import { ResultsPage } from '../../pagination/results-page';
 import { PersonService } from 'src/app/services/person.service';
 import { Division } from '../../division/types/division.types';
+import { InvitationService } from '../../invitation/service/invitation.service';
+import { BackendResponse, STATUS_CODE } from 'src/app/shared/types/shared-types';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 
 @Component({
@@ -14,7 +17,16 @@ import { Division } from '../../division/types/division.types';
 })
 export class InvitePlayerModalComponent implements OnInit {
   /** Jugadores disponibles para invitar. */
-  resultsPage!: ResultsPage;
+  resultsPage: ResultsPage = {
+    content: [],
+    totalPages: 1,
+    totalElements: 1,
+    last: false,
+    first: true,
+    numberOfElements: 1,
+    size: 1,
+    number: 1
+  };
 
   currentPage: number = 1;
   /** Deshabilita el envío y muestra "Enviando…" mientras se procesa la solicitud. */
@@ -31,25 +43,24 @@ export class InvitePlayerModalComponent implements OnInit {
   readonly selectedId = signal<string | null>(null);
 
   constructor(
-    private personService: PersonService
+    private personService: PersonService,
+    private invitationService: InvitationService,
+    private toastService: ToastService
   ) { }
 
   cargarJugadoresDisponibles(page: number): void {
     if (!this.division?.clubId) {
-      // this.mensajeError = 'No se pudo obtener los jugadores del club porque el ID del club no está disponible.';
       return;
     }
 
     this.currentPage = page;
-    this.personService.getPagedInactivePlayersByClubAndDivision(this.division.clubId, this.division.id, page, 10).subscribe({
+    this.personService.findAllPlayersByDivision( this.division.id, page, 10).subscribe({
       next: (response: ResultsPage) => {
         this.resultsPage = response;
-        console.log(this.resultsPage)
-        // this.mostrarFormularioAsociacion = true;
       },
       error: (err) => {
-        console.error('Error al cargar personas del club', err);
-        // this.mensajeError = 'No se pudieron obtener las personas del club.';
+        this.toastService.error('error', err.message);
+        this.close();
       }
     });
   }
@@ -91,9 +102,24 @@ export class InvitePlayerModalComponent implements OnInit {
   }
 
   send(): void {
-    // Enviar invitacion al jugador
-    
     const player = this.resultsPage.content.find((p) => p.id === this.selectedId());
+    const payload = {
+      divisionId: this.division?.id,
+      personId: player.id
+    }
+    this.invitationService.sendInvitation(payload).subscribe({
+      next: (response: BackendResponse) => {
+        if (response.status !== STATUS_CODE.OK)
+          this.toastService.error(response.message,'Error');
+        this.toastService.success(response.message, 'Invitacion enviada con exito', 2000);
+        this.close();
+      },
+      error: (error) => {
+        console.log(error)
+        this.toastService.error(error.error.message,'Error',3000);
+        this.close();
+      }
+    });
     if (player && !this.sending) this.invited.emit(player);
   }
 
@@ -102,5 +128,5 @@ export class InvitePlayerModalComponent implements OnInit {
     this.closed.emit();
   }
 
-  
+
 }

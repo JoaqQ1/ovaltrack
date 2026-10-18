@@ -295,3 +295,175 @@
   .modal-backdrop, .form-card { animation: none; }
   .btn, .player-row { transition: none; }
 }
+
+/* ==========================================================================
+   Paginación integrada y estilizada para el modal
+   ========================================================================== */
+app-pagination {
+  display: block;
+  padding: 12px 32px;
+  border-top: 1px solid var(--_border-sport-subtle);
+  background: var(--surface-alt, #f9fbf7);
+}
+
+/* Forzar que los controles de paginación dentro del modal mantengan proporciones limpias */
+app-pagination ::ng-deep .pagination-container,
+app-pagination ::ng-deep nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+app-pagination ::ng-deep button {
+  height: 34px !important;
+  padding: 0 12px !important;
+  border-radius: var(--radius-md, 8px) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+
+/* ==========================================================================
+   Modo Oscuro (Dark Rugby Tech) para el Modal de Invitación
+   ========================================================================== */
+:host-context([data-theme="dark"]) .form-card {
+  background: #131c2e;
+  border-color: #1f2e47;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+}
+
+:host-context([data-theme="dark"]) .form-card-header {
+  background: linear-gradient(180deg, #162238 0%, #10192a 100%);
+  border-bottom-color: #1f2e47;
+}
+
+:host-context([data-theme="dark"]) .form-card-title {
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .form-card-subtitle {
+  color: #94a3b8;
+}
+
+:host-context([data-theme="dark"]) .form-card-footer {
+  border-top-color: #1f2e47;
+  background: #131c2e;
+}
+
+:host-context([data-theme="dark"]) .field-label {
+  color: #cbd5e1;
+}
+
+:host-context([data-theme="dark"]) .search-icon {
+  color: #94a3b8;
+}
+
+:host-context([data-theme="dark"]) .form-control {
+  background: #162238;
+  border-color: #2a3c5a;
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .form-control::placeholder {
+  color: #64748b;
+}
+
+:host-context([data-theme="dark"]) .form-control:focus {
+  border-color: #a3e635;
+  background: #1c2b44;
+  box-shadow: 0 0 0 3px rgba(163, 230, 53, 0.2);
+}
+
+:host-context([data-theme="dark"]) .player-row {
+  background: #162238;
+  border-color: #2a3c5a;
+}
+
+:host-context([data-theme="dark"]) .player-row:hover {
+  background: #1c2b44;
+  border-color: #3b4252;
+}
+
+:host-context([data-theme="dark"]) .player-row.is-selected {
+  background: #1a273e;
+  border-color: #a3e635;
+  box-shadow: 0 0 0 3px rgba(163, 230, 53, 0.2);
+}
+
+:host-context([data-theme="dark"]) .avatar {
+  background: #10192a;
+  border-color: #2a3c5a;
+  color: #a3e635;
+}
+
+:host-context([data-theme="dark"]) .player-row.is-selected .avatar {
+  background: #a3e635;
+  color: #0b111e;
+  border-color: #a3e635;
+}
+
+:host-context([data-theme="dark"]) .player-name {
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .player-email {
+  color: #94a3b8;
+}
+
+:host-context([data-theme="dark"]) .radio-mark {
+  border-color: #3b4252;
+  background: #10192a;
+}
+
+:host-context([data-theme="dark"]) .player-row.is-selected .radio-mark {
+  border-color: #a3e635;
+  background: #a3e635;
+  color: #0b111e;
+}
+
+:host-context([data-theme="dark"]) .empty {
+  color: #94a3b8;
+}
+
+:host-context([data-theme="dark"]) .btn-outline {
+  background: #162238;
+  border-color: #2a3c5a;
+  color: #cbd5e1;
+}
+
+:host-context([data-theme="dark"]) .btn-outline:hover {
+  background: #1c2b44;
+  border-color: #a3e635;
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .btn-icon {
+  background: #162238;
+  border-color: #2a3c5a;
+  color: #cbd5e1;
+}
+
+:host-context([data-theme="dark"]) .btn-icon:hover {
+  background: #1c2b44;
+  border-color: #a3e635;
+  color: #ffffff;
+}
+
+:host-context([data-theme="dark"]) .btn-invite {
+  background: #a3e635;
+  color: #0b111e;
+  border-color: #a3e635;
+  box-shadow: 0 4px 12px rgba(163, 230, 53, 0.25);
+}
+
+:host-context([data-theme="dark"]) .btn-invite:hover:not(:disabled) {
+  background: #bef264;
+  box-shadow: 0 6px 16px rgba(163, 230, 53, 0.35);
+}
+
+:host-context([data-theme="dark"]) app-pagination {
+  background: #162238;
+  border-top-color: #1f2e47;
+}
