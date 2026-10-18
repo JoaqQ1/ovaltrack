@@ -1,5 +1,6 @@
 package com.ovaltrack.backend.common.mail.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,8 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender javaMailSender;
     private final TemplateEngine templateEngine;
+    @Value("${invitation.url}")
+    private String url;
 
     public EmailServiceImpl(final JavaMailSender javaMailSender, final TemplateEngine templateEngine) {
         this.javaMailSender = javaMailSender;
@@ -45,22 +48,14 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    @Override 
-    public void sendInvitation(Invitation invitation, String hash) throws MessagingException {
+    @Override
+    public void sendInvitation(Invitation invitation, String token) throws MessagingException {
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF8");
-            // helper.setTo(invitation.getPerson().getContactEmail());
-            helper.setTo("ovaltrack7@gmail.com");
+            helper.setTo(invitation.getPerson().getContactEmail());
             helper.setSubject("Unite a Ovaltrack!");
-
-            String userName = invitation.getPerson().getFirstName() + " " + invitation.getPerson().getLastName(); 
-            Context context = new Context();
-            context.setVariable("userName", userName);
-            context.setVariable("clubName", invitation.getClub().getName());
-            context.setVariable("userEmail", invitation.getPerson().getContactEmail());
-            context.setVariable("hash", hash);
-            // context.setVariable("message", email.getContent());
+            Context context = setVariables(invitation, token);
 
             String contentHTML = templateEngine.process("email", context);
 
@@ -70,6 +65,20 @@ public class EmailServiceImpl implements EmailService {
         } catch (Exception e) {
             throw new BusinessException("Error al enviar el correo" + e.getMessage());
         }
+    }
+
+    private Context setVariables(Invitation invitation, String token) {
+        String userName = invitation.getPerson().getFirstName() + " " + invitation.getPerson().getLastName();
+        Context context = new Context();
+        context.setVariable("userName", userName);
+        context.setVariable("clubName", invitation.getClub().getName());
+        context.setVariable("userEmail", invitation.getPerson().getContactEmail());
+        context.setVariable("urlInvitation", getUrlInvitationWithToken(token));
+        return context;
+    }
+
+    private String getUrlInvitationWithToken(String token){
+        return String.format("%s?%s=%s", this.url,"token",token);
     }
 
 }
