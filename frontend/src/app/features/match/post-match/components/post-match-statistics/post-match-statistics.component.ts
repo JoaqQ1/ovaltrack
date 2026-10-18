@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal, ElementRef, ViewChild} from '@angular/core';
+import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
@@ -12,8 +13,10 @@ import { LiveCaptureService } from '../../../services/live-capture.service';
 import { StatisticCalculationService } from '../../../services/statistic-calculation.service';
 import { LocalMatchEvent } from '../../../types/event.types';
 import { LiveCaptureEventType } from '../../../types/event-type.types';
-import { computePlayerPeriodStats, RosterPlayerInfo } from '../../../services/calculators';
-import { PeriodStatisticDTO, PlayerPeriodStatistic } from '../../../types/statistic.types';
+import { RosterPlayerInfo } from '../../../services/calculators';
+import { PeriodStatisticDTO } from '../../../types/statistic.types';
+import { computeMatchDetailStats, DetailMetric, DetailSection, MatchDetailStatistics } from '../../../services/match-detail-calculator';
+import { computePlayerDetailStats, PlayerDetailStatistic } from '../../../services/player-detail-calculator';
 
 export type StatsPeriodFilter = 'ALL' | 1 | 2;
 export type StatsTab = 'team' | 'players';
@@ -25,16 +28,14 @@ interface CompareRow {
   hint?: string;
 }
 
-const TACKLE_SUCCESS_THRESHOLD = 70;
-
 @Component({
   selector: 'app-post-match-statistics',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ScrollingModule],
   templateUrl: './post-match-statistics.component.html',
   styleUrl: './post-match-statistics.component.css',
 })
-export class MatchStatisticsComponent implements OnInit, OnDestroy {
+export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly layoutService = inject(LayoutService);
@@ -55,6 +56,9 @@ export class MatchStatisticsComponent implements OnInit, OnDestroy {
   readonly activeTab = signal<StatsTab>('team');
   readonly period = signal<StatsPeriodFilter>('ALL');
 
+  @ViewChild(CdkVirtualScrollViewport) private viewport?: CdkVirtualScrollViewport;
+  @ViewChild('teamScroll') private teamScroll?: ElementRef<HTMLElement>;
+
   // Datos base: se cargan una sola vez y todo lo demás se recalcula en memoria.
   private readonly events = signal<LocalMatchEvent[]>([]);
   private readonly eventTypes = signal<LiveCaptureEventType[]>([]);
@@ -62,31 +66,48 @@ export class MatchStatisticsComponent implements OnInit, OnDestroy {
 
   readonly hasEvents = computed(() => this.events().length > 0);
 
+  private readonly eventTypeMap = computed(() => new Map(this.eventTypes().map(t => [t.id, t])));
+
+  /** Eventos del período seleccionado (los de período null cuentan en ambos tiempos). */
+  private readonly periodEvents = computed(() => {
+    const period = this.period();
+    return period === 'ALL'
+      ? this.events()
+      : this.events().filter(e => e.period === null || e.period === period);
+  });
+
   readonly stats = computed<PeriodStatisticDTO | null>(() => {
-    const events = this.events();
     const types = this.eventTypes();
     if (types.length === 0) return null;
     const period = this.period();
     return this.statisticService.computeStatistics(
       this.matchId(),
       period === 'ALL' ? 0 : period,
-      events,
+      this.events(),
       types,
       period !== 'ALL'
     );
   });
 
-  readonly players = computed<PlayerPeriodStatistic[]>(() => {
-    const types = this.eventTypes();
-    if (types.length === 0) return [];
-    const period = this.period();
-    const events = period === 'ALL'
-      ? this.events()
-      : this.events().filter(e => e.period === null || e.period === period);
-    const typeMap = new Map(types.map(t => [t.id, t]));
+  /** Estadísticas detalladas (todos los campos live/post del catálogo). */
+  readonly detail = computed<MatchDetailStatistics>(() => {
+    if (this.eventTypes().length === 0) {
+      return { sections: [], penaltyTries: { own: 0, opponent: 0 } };
+    }
+    return computeMatchDetailStats(this.periodEvents(), this.eventTypeMap());
+  });
 
-    return computePlayerPeriodStats(events, this.roster(), typeMap)
-      .filter(p => p.totalPoints > 0 || p.yellowCards > 0 || p.redCards > 0)
+  readonly detailSections = computed<DetailSection[]>(() =>
+    this.detail().sections.filter(section =>
+      section.metrics.some(m => (m.own ?? 0) !== 0 || (m.opponent ?? 0) !== 0) ||
+      section.breakdowns.some(b => b.rows.length > 0)
+    )
+  );
+
+  readonly players = computed<PlayerDetailStatistic[]>(() => {
+    if (this.eventTypes().length === 0) return [];
+    return computePlayerDetailStats(this.periodEvents(), this.roster(), this.eventTypeMap())
+      .filter(p => p.hasActivity)
       .sort((a, b) => b.totalPoints - a.totalPoints || a.jerseyNumber - b.jerseyNumber);
   });
 
@@ -97,56 +118,14 @@ export class MatchStatisticsComponent implements OnInit, OnDestroy {
   readonly scoreRows = computed<CompareRow[]>(() => {
     const s = this.stats();
     if (!s) return [];
+    const penaltyTries = this.detail().penaltyTries;
     return [
-      { label: 'Tries', own: s.ownTries, opponent: s.opponentTries, hint: '5 pts (7 si es try penal)' },
+      { label: 'Tries', own: s.ownTries - penaltyTries.own, opponent: s.opponentTries - penaltyTries.opponent, hint: '5 pts' },
+      { label: 'Tries penal', own: penaltyTries.own, opponent: penaltyTries.opponent, hint: '7 pts' },
       { label: 'Conversiones', own: s.ownConversions, opponent: s.opponentConversions, hint: '2 pts' },
       { label: 'Penales a palos', own: s.ownPenalties, opponent: s.opponentPenalties, hint: '3 pts' },
       { label: 'Drop goals', own: s.ownDropGoals, opponent: s.opponentDropGoals, hint: '3 pts' },
     ];
-  });
-
-  readonly disciplineRows = computed<CompareRow[]>(() => {
-    const s = this.stats();
-    if (!s) return [];
-    return [
-      { label: 'Penales cometidos', own: s.ownPenaltiesConceded, opponent: s.opponentPenaltiesConceded },
-      { label: 'Tarjetas amarillas', own: s.ownYellowCards, opponent: s.opponentYellowCards },
-      { label: 'Tarjetas rojas', own: s.ownRedCards, opponent: s.opponentRedCards },
-    ];
-  });
-
-  readonly turnoverBalance = computed(() => {
-    const s = this.stats();
-    return s ? s.ownTurnoversWon - s.ownTurnoversLost : 0;
-  });
-
-  readonly tackleStatus = computed(() => {
-    const s = this.stats();
-    if (!s || s.ownTacklesCompleted + s.ownTacklesMissed === 0) {
-      return { label: 'Sin datos', type: 'neutral' };
-    }
-    return s.ownTackleEffectiveness >= TACKLE_SUCCESS_THRESHOLD
-      ? { label: 'Bien', type: 'success' }
-      : { label: 'A mejorar', type: 'warning' };
-  });
-
-  readonly turnoverStatus = computed(() => {
-    const s = this.stats();
-    if (!s || (s.ownTurnoversWon === 0 && s.ownTurnoversLost === 0)) {
-      return { label: 'Sin datos', type: 'neutral' };
-    }
-    const diff = this.turnoverBalance();
-    if (diff > 0) return { label: 'Favorable', type: 'success' };
-    if (diff === 0) return { label: 'Parejo', type: 'neutral' };
-    return { label: 'Desfavorable', type: 'warning' };
-  });
-
-  readonly disciplineStatus = computed(() => {
-    const s = this.stats();
-    if (!s) return { label: 'Sin datos', type: 'neutral' };
-    if (s.ownRedCards > 0 || s.ownPenaltiesConceded > 10) return { label: 'Crítico', type: 'danger' };
-    if (s.ownYellowCards > 0 || s.ownPenaltiesConceded > 6) return { label: 'Atención', type: 'warning' };
-    return { label: 'Bien', type: 'success' };
   });
 
   readonly periodLabel = computed(() => {
@@ -172,6 +151,16 @@ export class MatchStatisticsComponent implements OnInit, OnDestroy {
 
   setPeriod(period: StatsPeriodFilter): void {
     this.period.set(period);
+    this.resetScroll();
+  }
+
+  trackByPlayerId(_index: number, player: PlayerDetailStatistic): string {
+    return player.playerId;
+  }
+
+  private resetScroll(): void {
+    this.viewport?.scrollToIndex(0);
+    this.teamScroll?.nativeElement.scrollTo({ top: 0 });
   }
 
   switchTab(tab: StatsTab): void {
@@ -259,7 +248,21 @@ export class MatchStatisticsComponent implements OnInit, OnDestroy {
     return total === 0 ? 50 : Math.round((value / total) * 100);
   }
 
-  formatKicking(p: PlayerPeriodStatistic): string {
-    return p.penaltyKicks + p.dropGoals > 0 ? `${p.penaltyKicks} / ${p.dropGoals}` : '—';
+  formatMetric(value: number | null, metric: DetailMetric): string {
+    if (value === null) return '—';
+    const unit = metric.unit ? ` ${metric.unit}` : '';
+    switch (metric.format) {
+      case 'percent': return `${value}%`;
+      case 'decimal': return `${(Math.round(value * 10) / 10).toFixed(1)}${unit}`;
+      default: return `${value}${unit}`;
+    }
+  }
+
+  isEmptyValue(value: number | null): boolean {
+    return value === null || value === 0;
+  }
+
+  formatRatio(made: number, attempts: number): string {
+    return attempts > 0 ? `${made}/${attempts}` : '—';
   }
 }
