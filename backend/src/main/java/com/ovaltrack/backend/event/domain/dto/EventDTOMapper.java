@@ -1,9 +1,12 @@
 package com.ovaltrack.backend.event.domain.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import com.ovaltrack.backend.event.domain.Actor;
 import com.ovaltrack.backend.event.domain.Event;
 import com.ovaltrack.backend.event.domain.EventType;
+import com.ovaltrack.backend.event.domain.PossessionAfter;
 import com.ovaltrack.backend.event.domain.dto.event.EventCreationDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventResponseDTO;
 import com.ovaltrack.backend.event.domain.dto.event.MatchTimelineEventResponseDTO;
@@ -70,10 +73,16 @@ public final class EventDTOMapper {
                 eventType.getName(),
                 eventType.getGroupName(),
                 eventType.getCategory(),
-                Boolean.TRUE.equals(eventType.getAffectsPossession()),
                 Boolean.TRUE.equals(eventType.getIsScoring()),
                 eventType.getPoints(),
                 Boolean.TRUE.equals(eventType.getRequiresPlayer()),
+                Boolean.TRUE.equals(eventType.getIsActive()),
+                eventType.getCode(),
+                Boolean.TRUE.equals(eventType.getShowInPalette()),
+                eventType.getFollowUpEventTypeId(),
+                eventType.getActor() == null ? Actor.ATTACKING : eventType.getActor(),
+                eventType.getPossessionAfter() == null ? PossessionAfter.KEEP : eventType.getPossessionAfter(),
+                eventType.getFollowUpChoices() == null ? List.of() : eventType.getFollowUpChoices(),
                 eventType.getTemplateEventFields());
     }
 

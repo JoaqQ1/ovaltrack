@@ -14,7 +14,7 @@ import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/
         <li class="page-item">
           <a class="page-link" (click)="onPageChange(-1)">&lsaquo;</a>
         </li>
-        <li *ngFor="let t of pages" [ngClass]="t === number ? 'active' : ''">
+        <li class="page-item" *ngFor="let t of pages" [class.active]="t === number">
           <a class="page-link" (click)="onPageChange(t + 1)">{{t+1}}</a>
         </li>
         <li class="page-item">
@@ -26,7 +26,53 @@ import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/
       </ul>
     </nav>
   `,
-  styles: ``
+  styles: `
+    .pagination {
+      display: flex;
+      gap: 6px;
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .page-item {
+      display: inline-block;
+    }
+
+    .page-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      min-width: 36px;
+      padding: 0 12px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1.5px solid rgba(32, 75, 34, 0.20);
+      color: #204b22;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 6px rgba(15, 35, 15, 0.04);
+    }
+
+    .page-link:hover {
+      background: #edf5e9;
+      border-color: #204b22;
+      color: #143216;
+    }
+
+    .page-item.active .page-link {
+      background: #204b22;
+      border-color: #204b22;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(32, 75, 34, 0.25);
+    }
+  `
 })
 export class PaginationComponent {
   @Input() totalPages: number = 0;

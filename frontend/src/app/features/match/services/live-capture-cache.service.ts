@@ -3,10 +3,29 @@ import { liveCaptureDatabase, matchDatabase } from '../data/local-databases';
 import { LiveCapturePersistedState, LiveCaptureQuery } from '../types/live-capture.types';
 import { LiveCaptureEventType } from '../types/event-type.types';
 import { BackendEventResponse, LocalMatchEvent } from '../types/event.types';
-import { Match } from '../types/match.types';
+import { Match, PendingMatchMutation } from '../types/match.types';
+import { Division } from '../../division/types/division.types';
+import { AvailablePlayer, SavedRoster } from '../types/roster.types';
+import { UserContext } from '../../auth/types/auth.types';
 
 @Injectable({ providedIn: 'root' })
 export class LiveCaptureCacheService {
+
+  saveUserContext(context: UserContext): Promise<void> {
+    return matchDatabase.userContexts.put({
+      ...context,
+      cachedAt: Date.now(),
+    }).then(() => undefined);
+  }
+
+  getUserContext(userId: string): Promise<UserContext | undefined> {
+    return matchDatabase.userContexts.get(userId);
+  }
+
+  clearUserContext(userId: string): Promise<void> {
+    return matchDatabase.userContexts.delete(userId).then(() => undefined);
+  }
+
   getMatches(): Promise<Match[]> {
     return matchDatabase.matches.toArray();
   }
@@ -16,7 +35,52 @@ export class LiveCaptureCacheService {
   }
 
   saveMatches(matches: Match[]): Promise<void> {
-    return matchDatabase.matches.bulkPut(matches).then(() => undefined);
+    const savedMatches = matches.filter(match => match.status === 'not_started' || match.status === 'in_progress' || match.status === 'halftime')
+    return matchDatabase.matches.bulkPut(savedMatches).then(() => undefined);
+  }
+
+  getMatchesByDivision(divisionId: string): Promise<Match[]> {
+    return matchDatabase.matches.where('divisionId').equals(divisionId).toArray();
+  }
+
+  saveDivisions(divisions: Division[]): Promise<void> {
+    return matchDatabase.divisions.bulkPut(divisions).then(() => undefined);
+  }
+
+  getDivisionsByClub(clubId: string): Promise<Division[]> {
+    return matchDatabase.divisions.where('clubId').equals(clubId).toArray();
+  }
+
+  saveRoster(matchId: string, roster: SavedRoster): Promise<void> {
+    return matchDatabase.rosters.put({
+      matchId,
+      startingPlayers: roster.startingPlayers,
+      substitutePlayers: roster.substitutePlayers,
+    }).then(() => undefined);
+  }
+
+  getRoster(matchId: string): Promise<SavedRoster | undefined> {
+    return matchDatabase.rosters.get(matchId);
+  }
+  
+  savePersonsByDivisionId(players: (AvailablePlayer & { divisionId?: string })[]): Promise<void> {
+    return matchDatabase.divisionPlayers.bulkPut(players as any).then(() => undefined)
+  }
+
+  getPersonsByDivisionId(divisionId: string): Promise<AvailablePlayer[]> {
+    return matchDatabase.divisionPlayers.where('divisionId').equals(divisionId).toArray();
+  }
+
+  savePendingMatchMutation(mutation: PendingMatchMutation): Promise<void> {
+    return matchDatabase.pendingMatchMutations.put(mutation).then(() => undefined);
+  }
+
+  getPendingMatchMutations(): Promise<PendingMatchMutation[]> {
+    return matchDatabase.pendingMatchMutations.orderBy('createdAt').toArray();
+  }
+
+  deletePendingMatchMutation(id: string): Promise<void> {
+    return matchDatabase.pendingMatchMutations.delete(id).then(() => undefined);
   }
 
   getEventTypes(): Promise<LiveCaptureEventType[]> {

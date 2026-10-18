@@ -1,23 +1,37 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap, throwError, from } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Match } from '../types/match.types';
 import { AvailablePlayer, BackendRosterResponse, RosterPayload, SavedRoster, SaveRosterRequestDTO } from '../types/roster.types';
+import { LiveCaptureCacheService } from './live-capture-cache.service';
 
 @Injectable({ providedIn: 'root' })
 export class RosterService {
   private readonly http = inject(HttpClient);
   private readonly matchesUrl = `${environment.apiUrl}/matches`;
-
+  private readonly cache = inject(LiveCaptureCacheService);
+  
   getAvailablePlayers(matchId: string): Observable<AvailablePlayer[]> {
     return this.http.get<Match>(`${this.matchesUrl}/${matchId}`).pipe(
       switchMap(match => {
         if (!match?.divisionId) {
           return throwError(() => new Error(`Partido ${matchId} no encontrado o sin división asignada`));
         }
-        return this.http.get<AvailablePlayer[]>(`${environment.apiUrl}/division/${match.divisionId}/players`);
-      })
+        return this.http.get<AvailablePlayer[]>(`${environment.apiUrl}/division/${match.divisionId}/players`).pipe(
+          switchMap(players =>
+            from(this.cache.savePersonsByDivisionId(players.map(p => ({ ...p, divisionId: match.divisionId })))).pipe(map(() => players))
+          )
+        );
+      }),
+      catchError(() => 
+        from(this.cache.getMatch(matchId)).pipe(
+          switchMap(match => {
+            if (!match?.divisionId) return of([]);
+            return from(this.cache.getPersonsByDivisionId(match.divisionId));
+          })
+        )
+      ) 
     );
   }
 
@@ -31,12 +45,27 @@ export class RosterService {
   }
 
   getSavedRoster(matchId: string): Observable<SavedRoster | null> {
-    return this.http.get<BackendRosterResponse>(`${this.matchesUrl}/${matchId}/roster`).pipe(
+    return this.http.get<BackendRosterResponse>(
+      `${this.matchesUrl}/${matchId}/roster`
+    ).pipe(
       map(response => ({
         startingPlayers: response.startingPlayers ?? response.titularesIds ?? [],
-        substitutePlayers: response.substitutePlayers ?? response.suplentesIds ?? []
+        substitutePlayers: response.substitutePlayers ?? response.suplentesIds ?? [],
       })),
-      catchError(error => error.status === 404 ? of(null) : throwError(() => error))
+      switchMap(roster =>
+        from(this.cache.saveRoster(matchId, roster)).pipe(
+          map(() => roster)
+        )
+      ),
+      catchError(error => {
+        if (error.status === 404) {
+          return of(null);
+        }
+
+        return from(this.cache.getRoster(matchId)).pipe(
+          map(roster => roster ?? null)
+        );
+      })
     );
   }
 

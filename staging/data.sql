@@ -14,6 +14,7 @@ DELETE FROM matches;
 DELETE FROM division_players;
 DELETE FROM division_coaches;
 DELETE FROM divisions;
+DELETE FROM opponents;
 
 -- Borrar usuarios excepto el administrador general del sistema
 DELETE FROM users WHERE role != 'ADMIN_OVALTRACK';
@@ -39,7 +40,7 @@ COMMIT;
 -- =========================================
 
 ALTER TABLE matches DROP CONSTRAINT IF EXISTS matches_status_check;
-ALTER TABLE matches ADD CONSTRAINT matches_status_check CHECK (status IN ('NOT_STARTED', 'IN_PROGRESS', 'HALFTIME', 'FINISHED', 'CANCELLED'));
+ALTER TABLE matches ADD CONSTRAINT matches_status_check CHECK (status IN ('EMPTY_ROSTER', 'NOT_STARTED', 'IN_PROGRESS', 'HALFTIME', 'FINISHED', 'CANCELLED'));
 
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS clock_elapsed_seconds INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS clock_paused BOOLEAN NOT NULL DEFAULT TRUE;
@@ -50,6 +51,14 @@ ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_score INTEGER NOT NULL DEFAULT
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS started_at TIMESTAMP;
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS finished_at TIMESTAMP;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS client_event_id UUID;
+-- Catálogo de eventos v2: código estable
+ALTER TABLE event_types ADD COLUMN IF NOT EXISTS code VARCHAR(60);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_event_types_code ON event_types (code);
+-- show_in_palette = false -> el tipo no aparece en la botonera en vivo (solo se crea como seguimiento)
+-- follow_up_event_type_id -> tras registrar este tipo, la app pide automáticamente el evento de seguimiento
+ALTER TABLE event_types ADD COLUMN IF NOT EXISTS show_in_palette BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE event_types ADD COLUMN IF NOT EXISTS follow_up_event_type_id UUID;
+
 
 -- =========================================
 -- PERSONS (30 personas en total)
@@ -214,41 +223,79 @@ INSERT INTO division_players (id, person_id, division_id, jersey_number, positio
     ('11111111-1111-1111-1111-000000000226', '11111111-1111-1111-1111-000000000127', '11111111-1111-1111-1111-000000000021', 12, 'Back', '2023-01-01', NULL);
 
 
+
+-- =========================================
+-- OPPONENTS (Clubes rivales)
+-- =========================================
+
+INSERT INTO opponents (id, name, city, alias) VALUES
+    ('22222222-1111-1111-1111-000000000001', 'Trelew Rugby Club', 'Trelew', 'TRC'),
+    ('22222222-1111-1111-1111-000000000002', 'Bigornia Club', 'Rawson', 'BRC'),
+    ('22222222-1111-1111-1111-000000000003', 'Chenque Rugby Club', 'Comodoro Rivadavia', 'CRC'),
+    ('22222222-1111-1111-1111-000000000004', 'Patoruzú Rugby Club', 'Trelew', 'PRC'),
+    ('22222222-1111-1111-1111-000000000005', 'Deportivo Portugués', 'Comodoro Rivadavia', 'DP'),
+    ('22222222-1111-1111-1111-000000000006', 'Calafate Rugby Club', 'Comodoro Rivadavia', 'CalRC'),
+    ('22222222-1111-1111-1111-000000000007', 'Comodoro Rugby Club', 'Comodoro Rivadavia', 'ComRC');
+
+
 -- =========================================
 -- MATCHES (Partidos)
 -- =========================================
 
 INSERT INTO matches (
-  id, date, division_id, opponent, status, current_period,
+  id, date, division_id, opponent_id, status, current_period,
   clock_elapsed_seconds, clock_paused, clock_updated_at,
   current_possession, home_score, away_score, started_at, finished_at
 ) VALUES
-    -- 1: Trelew RC (En progreso, 1T -> ideal para probar captura en vivo y pasar a entretiempo)
-  ('11111111-1111-1111-1111-000000000040', '2026-09-28 15:30:00', '11111111-1111-1111-1111-000000000020', 'Trelew Rugby Club', 'IN_PROGRESS', 1, 1800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
-    -- 2: Bigornia Club (No iniciado -> ideal para probar alineación/roster y comienzo de partido)
-  ('11111111-1111-1111-1111-000000000041', '2026-10-05 16:00:00', '11111111-1111-1111-1111-000000000020', 'Bigornia Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL),
-    -- 3: Chenque RC (Entretiempo -> ideal para probar resumen táctico e Iniciar 2T)
-  ('11111111-1111-1111-1111-000000000042', '2026-09-28 14:00:00', '11111111-1111-1111-1111-000000000020', 'Chenque Rugby Club', 'HALFTIME', 1, 2400, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
-    -- 4: Patoruzú RC (En progreso, 2T -> ideal para probar eventos durante el segundo tiempo)
-  ('11111111-1111-1111-1111-000000000043', '2026-09-28 16:45:00', '11111111-1111-1111-1111-000000000020', 'Patoruzú Rugby Club', 'IN_PROGRESS', 2, 4500, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
-    -- 5: Deportivo Portugués (Finalizado -> ideal para probar consulta de partidos concluidos)
-  ('11111111-1111-1111-1111-000000000044', '2026-09-21 15:30:00', '11111111-1111-1111-1111-000000000020', 'Deportivo Portugués', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, '2026-09-21 15:30:00', '2026-09-21 17:30:00'),
-    -- 6: Calafate RC (División M19, no iniciado)
-  ('11111111-1111-1111-1111-000000000045', '2026-10-12 14:00:00', '11111111-1111-1111-1111-000000000021', 'Calafate Rugby Club', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL),
-    -- 7: Comodoro Rugby Club (Entretiempo -> con 75 eventos de diversos tipos, propios y rivales)
-  ('11111111-1111-1111-1111-000000000046', '2026-10-09 15:30:00', '11111111-1111-1111-1111-000000000020', 'Comodoro Rugby Club', 'HALFTIME', 1, 2400, true, CURRENT_TIMESTAMP, 'OWN', 21, 13, '2026-10-09 15:30:00', NULL);
+    -- 1: Trelew RC
+  ('11111111-1111-1111-1111-000000000040', '2026-09-28 15:30:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000001', 'IN_PROGRESS', 1, 1800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
+    -- 2: Bigornia Club
+  ('11111111-1111-1111-1111-000000000041', '2026-10-05 16:00:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000002', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL),
+    -- 3: Chenque RC
+  ('11111111-1111-1111-1111-000000000042', '2026-09-28 14:00:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000003', 'HALFTIME', 1, 2400, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
+    -- 4: Patoruzú RC
+  ('11111111-1111-1111-1111-000000000043', '2026-09-28 16:45:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000004', 'IN_PROGRESS', 2, 4500, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, CURRENT_TIMESTAMP, NULL),
+    -- 5: Deportivo Portugués
+  ('11111111-1111-1111-1111-000000000044', '2026-09-21 15:30:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000005', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, '2026-09-21 15:30:00', '2026-09-21 17:30:00'),
+    -- 6: Calafate RC
+  ('11111111-1111-1111-1111-000000000045', '2026-10-12 14:00:00', '11111111-1111-1111-1111-000000000021', '22222222-1111-1111-1111-000000000006', 'NOT_STARTED', 1, 0, true, NULL, 'OWN', 0, 0, NULL, NULL),
+    -- 7: Comodoro Rugby Club
+  ('11111111-1111-1111-1111-000000000046', '2026-10-09 15:30:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000007', 'HALFTIME', 1, 2400, true, CURRENT_TIMESTAMP, 'OWN', 21, 13, '2026-10-09 15:30:00', NULL);
+
 
 
 -- =========================================
 -- EVENT_TYPES (Catálogo Estándar de Tipos de Eventos)
 -- =========================================
+-- template_event_fields (v2) es un ARRAY ORDENADO de campos:
+--   key        identificador estable (clave dentro de events.attributes)
+--   label      texto a mostrar en el formulario
+--   type       select | number | boolean | text
+--   phase      'live'  -> se pide en el momento de la carga en vivo
+--              'post'  -> se completa después (pantalla post-partido)
+--   required   si es true y phase = 'live', bloquea el alta del evento
+--   options    [{value,label}] solo para type = select
+--   min/max/default   opcionales (number)
+--   effect     opcional; "scoring" = si el valor es false, el evento no suma puntos
+--   trueLabel/falseLabel   textos de los botones para type = boolean
+-- Claves reservadas en attributes (no se declaran en la plantilla): playerNumber
+-- Cambio: sin campos hasta definir su lógica (cambia la lista de jugadores en cancha).
+--
+-- Regla del catálogo: un solo tipo por acción (Penal a los palos, Drop gol, Conversión).
+-- El resultado se pide al registrar el evento con un campo phase = 'live' marcado
+-- con "effect": "scoring". Los puntos solo se suman si ese campo NO es false.
+-- Cualquier campo con "effect" es leído por backend y frontend (ver helper).
+--
+-- Eventos de seguimiento: Conversión se crea solo después de un Try. Por eso Try apunta a
+-- Conversión con follow_up_event_type_id y Conversión tiene show_in_palette = false.
 
 INSERT INTO event_types
-(id, name, group_name, category, affects_possession, is_scoring, points,
- requires_player, template_event_fields, created_at)
+(id, code, name, group_name, category, affects_possession, is_scoring, points,
+ requires_player, is_active, show_in_palette, follow_up_event_type_id, template_event_fields, created_at)
 VALUES
 (
     '550e8400-e29b-41d4-a716-446655440101',
+    'TRY',
     'Try',
     'Ataque',
     'ATTACK',
@@ -256,14 +303,73 @@ VALUES
     true,
     5,
     true,
-    $${
-      "wasSuccessful": { "type": "boolean", "required": true },
-      "wasConverted": { "type": "boolean", "required": true }
-    }$$::jsonb,
+    true,
+    true,
+    '550e8400-e29b-41d4-a716-446655440113',
+    $$[
+      {
+        "key": "zone",
+        "label": "Zona del campo",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "left",
+            "label": "Izquierda"
+          },
+          {
+            "value": "center",
+            "label": "Centro"
+          },
+          {
+            "value": "right",
+            "label": "Derecha"
+          }
+        ]
+      }
+    ]$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440113',
+    'CONVERSION',
+    'Conversión',
+    'Ataque',
+    'ATTACK',
+    true,
+    true,
+    2,
+    true,
+    true,
+    false,
+    NULL,
+    $$[
+      {
+        "key": "wasSuccessful",
+        "label": "Resultado",
+        "type": "boolean",
+        "phase": "live",
+        "required": true,
+        "effect": "scoring",
+        "trueLabel": "Convertido",
+        "falseLabel": "Errado"
+      },
+      {
+        "key": "distanceMeters",
+        "label": "Distancia (m)",
+        "type": "number",
+        "phase": "post",
+        "required": false,
+        "min": 0,
+        "max": 80
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440102',
+    'PENALTY_KICK',
     'Penal a los palos',
     'Ataque',
     'ATTACK',
@@ -271,14 +377,35 @@ VALUES
     true,
     3,
     true,
-    $${
-      "wasSuccessful": { "type": "boolean", "required": true },
-      "distanceMeters": { "type": "number", "required": false }
-    }$$::jsonb,
+    true,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "wasSuccessful",
+        "label": "Resultado",
+        "type": "boolean",
+        "phase": "live",
+        "required": true,
+        "effect": "scoring",
+        "trueLabel": "Convertido",
+        "falseLabel": "Errado"
+      },
+      {
+        "key": "distanceMeters",
+        "label": "Distancia (m)",
+        "type": "number",
+        "phase": "post",
+        "required": false,
+        "min": 0,
+        "max": 80
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440103',
+    'DROP_GOAL',
     'Drop gol',
     'Ataque',
     'ATTACK',
@@ -286,28 +413,59 @@ VALUES
     true,
     3,
     true,
-    $${
-      "wasSuccessful": { "type": "boolean", "required": true },
-      "distanceMeters": { "type": "number", "required": false }
-    }$$::jsonb,
+    true,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "wasSuccessful",
+        "label": "Resultado",
+        "type": "boolean",
+        "phase": "live",
+        "required": true,
+        "effect": "scoring",
+        "trueLabel": "Convertido",
+        "falseLabel": "Errado"
+      },
+      {
+        "key": "distanceMeters",
+        "label": "Distancia (m)",
+        "type": "number",
+        "phase": "post",
+        "required": false,
+        "min": 0,
+        "max": 80
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440104',
-    'Tackle completado',
+    'TACKLE_MADE',
+    'Tackle acertado',
     'Defensa',
     'DEFENSE',
     false,
     false,
     0,
     true,
-    $${
-      "forcedTurnover": { "type": "boolean", "required": false }
-    }$$::jsonb,
+    true,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "forcedTurnover",
+        "label": "Forzó turnover",
+        "type": "boolean",
+        "phase": "post",
+        "required": false
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440105',
+    'TACKLE_MISSED',
     'Tackle fallado',
     'Defensa',
     'DEFENSE',
@@ -315,13 +473,41 @@ VALUES
     false,
     0,
     true,
-    $${
-      "failReason": { "type": "string", "required": false }
-    }$$::jsonb,
+    true,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "failReason",
+        "label": "Motivo",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "missed",
+            "label": "No llegó"
+          },
+          {
+            "value": "bounced_off",
+            "label": "Lo superaron"
+          },
+          {
+            "value": "late",
+            "label": "Llegó tarde"
+          },
+          {
+            "value": "other",
+            "label": "Otro"
+          }
+        ]
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440106',
+    'TURNOVER',
     'Turnover',
     'Cambio de posesión',
     'NEUTRAL',
@@ -329,13 +515,49 @@ VALUES
     false,
     0,
     false,
-    '{
-      "turnoverType": {"type": "string", "required":false}
-    }'::jsonb,
+    true,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "turnoverType",
+        "label": "Tipo de turnover",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "ruck_steal",
+            "label": "Robo en ruck"
+          },
+          {
+            "value": "maul_steal",
+            "label": "Robo en maul"
+          },
+          {
+            "value": "interception",
+            "label": "Intercepción"
+          },
+          {
+            "value": "knock_on",
+            "label": "Pelota caída"
+          },
+          {
+            "value": "kick_regained",
+            "label": "Recuperación de patada"
+          },
+          {
+            "value": "other",
+            "label": "Otro"
+          }
+        ]
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440107',
+    'SCRUM',
     'Scrum',
     'Formación fija',
     'NEUTRAL',
@@ -343,14 +565,55 @@ VALUES
     false,
     0,
     false,
-    $${
-      "scrumResult": { "type": "string", "required": true },
-      "resetCount": { "type": "integer", "required": false }
-    }$$::jsonb,
+    true,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "scrumResult",
+        "label": "Resultado",
+        "type": "select",
+        "phase": "post",
+        "required": true,
+        "options": [
+          {
+            "value": "won_own",
+            "label": "Ganó su introducción"
+          },
+          {
+            "value": "lost_own",
+            "label": "Perdió su introducción"
+          },
+          {
+            "value": "stolen",
+            "label": "Robó introducción rival"
+          },
+          {
+            "value": "penalty_for",
+            "label": "Penal a favor"
+          },
+          {
+            "value": "penalty_against",
+            "label": "Penal en contra"
+          }
+        ]
+      },
+      {
+        "key": "resetCount",
+        "label": "Reinicios",
+        "type": "number",
+        "phase": "post",
+        "required": false,
+        "min": 0,
+        "max": 5,
+        "default": 0
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440108',
+    'LINEOUT',
     'Line-out',
     'Formación fija',
     'NEUTRAL',
@@ -358,13 +621,45 @@ VALUES
     false,
     0,
     false,
-    $${
-      "lineResult": { "type": "string", "required": true }
-    }$$::jsonb,
+    true,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "lineResult",
+        "label": "Resultado",
+        "type": "select",
+        "phase": "post",
+        "required": true,
+        "options": [
+          {
+            "value": "won_clean",
+            "label": "Ganado limpio"
+          },
+          {
+            "value": "won_dirty",
+            "label": "Ganado sucio"
+          },
+          {
+            "value": "lost",
+            "label": "Perdido"
+          },
+          {
+            "value": "stolen",
+            "label": "Robado al rival"
+          },
+          {
+            "value": "penalty",
+            "label": "Penal"
+          }
+        ]
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440109',
+    'PENALTY_CONCEDED',
     'Penal / infracción',
     'Neutro',
     'NEUTRAL',
@@ -372,13 +667,49 @@ VALUES
     false,
     0,
     false,
-    $${
-      "penaltyType": { "type": "string", "required": false }
-    }$$::jsonb,
+    true,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "penaltyType",
+        "label": "Tipo de infracción",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "offside",
+            "label": "Offside"
+          },
+          {
+            "value": "ruck_maul",
+            "label": "Ruck / maul"
+          },
+          {
+            "value": "scrum",
+            "label": "Scrum"
+          },
+          {
+            "value": "tackle",
+            "label": "Tackle"
+          },
+          {
+            "value": "lineout",
+            "label": "Line-out"
+          },
+          {
+            "value": "other",
+            "label": "Otra"
+          }
+        ]
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440110',
+    'YELLOW_CARD',
     'Amonestación',
     'Neutro',
     'NEUTRAL',
@@ -386,14 +717,55 @@ VALUES
     false,
     0,
     true,
-    $${
-      "reason": { "type": "string", "required": false },
-      "durationMinutes": { "type": "integer", "required": false }
-    }$$::jsonb,
+    true,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "reason",
+        "label": "Motivo",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "high_tackle",
+            "label": "Tackle alto"
+          },
+          {
+            "value": "dangerous_play",
+            "label": "Juego peligroso"
+          },
+          {
+            "value": "dissent",
+            "label": "Protesta"
+          },
+          {
+            "value": "repeated_infringement",
+            "label": "Infracciones repetidas"
+          },
+          {
+            "value": "other",
+            "label": "Otro"
+          }
+        ]
+      },
+      {
+        "key": "durationMinutes",
+        "label": "Minutos de suspensión",
+        "type": "number",
+        "phase": "post",
+        "required": false,
+        "min": 1,
+        "max": 20,
+        "default": 10
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440111',
+    'RED_CARD',
     'Expulsión',
     'Neutro',
     'NEUTRAL',
@@ -401,13 +773,41 @@ VALUES
     false,
     0,
     true,
-    $${
-      "reason": { "type": "string", "required": false }
-    }$$::jsonb,
+    true,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "reason",
+        "label": "Motivo",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "foul_play",
+            "label": "Juego sucio"
+          },
+          {
+            "value": "high_tackle",
+            "label": "Tackle alto"
+          },
+          {
+            "value": "second_yellow",
+            "label": "Segunda amarilla"
+          },
+          {
+            "value": "other",
+            "label": "Otro"
+          }
+        ]
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440112',
+    'INJURY',
     'Lesión',
     'Neutro',
     'NEUTRAL',
@@ -415,24 +815,60 @@ VALUES
     false,
     0,
     true,
-    $${
-      "injury": { "type": "string", "required": false }
-    }$$::jsonb,
+    true,
+    true,
+    NULL,
+    $$[
+      {
+        "key": "injury",
+        "label": "Zona de la lesión",
+        "type": "select",
+        "phase": "post",
+        "required": false,
+        "options": [
+          {
+            "value": "head",
+            "label": "Cabeza / conmoción"
+          },
+          {
+            "value": "shoulder",
+            "label": "Hombro"
+          },
+          {
+            "value": "knee",
+            "label": "Rodilla"
+          },
+          {
+            "value": "ankle",
+            "label": "Tobillo"
+          },
+          {
+            "value": "muscle",
+            "label": "Muscular"
+          },
+          {
+            "value": "other",
+            "label": "Otra"
+          }
+        ]
+      }
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
-    '550e8400-e29b-41d4-a716-446655440113',
-    'Conversion',
-    'Ataque',
-    'ATTACK',
+    '550e8400-e29b-41d4-a716-446655440114',
+    'SUBSTITUTION',
+    'Cambio',
+    'Neutro',
+    'NEUTRAL',
+    false,
+    false,
+    0,
     true,
     true,
-    2,
     true,
-    $${
-      "wasSuccessful": { "type": "boolean", "required": true },
-      "distanceMeters": { "type": "number", "required": false }
-    }$$::jsonb,
+    NULL,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 );
 
@@ -454,56 +890,56 @@ INSERT INTO events (id, match_id, player_id, event_type_id, team_possession, mat
 
     -- Eventos para Partido 5: Deportivo Portugués (FINISHED, 80 min reloj, finalizado a las 2h reales)
 INSERT INTO events (id, match_id, player_id, event_type_id, team_possession, match_time, absolute_match_time, real_time, period, origin, active, created_at, synchronized_at) VALUES
-    ('2dc019ed-223b-4c38-ac4c-ded58efd8e29', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000109', '550e8400-e29b-41d4-a716-446655440108', 'OPPONENT', 44, 58, '2026-09-21 15:30:58', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('cef3334a-c0bc-4a7b-ace8-736d6e5bad65', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000111', '550e8400-e29b-41d4-a716-446655440102', 'OPPONENT', 78, 103, '2026-09-21 15:31:43', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('2dc019ed-223b-4c38-ac4c-ded58efd8e29', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440108', 'OPPONENT', 44, 58, '2026-09-21 15:30:58', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('cef3334a-c0bc-4a7b-ace8-736d6e5bad65', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440102', 'OPPONENT', 78, 103, '2026-09-21 15:31:43', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('180cdf49-b829-4d08-aadf-71f69983a651', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440101', 'OPPONENT', 153, 203, '2026-09-21 15:33:23', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('91bafd3c-06a8-4358-9b13-eeb98d38ac93', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440109', 'OWN', 156, 207, '2026-09-21 15:33:27', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('5df3b1ae-520d-4c4c-976c-5e1f239a3da3', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000105', '550e8400-e29b-41d4-a716-446655440104', 'NEUTRAL', 185, 246, '2026-09-21 15:34:06', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('69c9c5b1-083f-4289-83d7-e4c50da153bf', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000105', '550e8400-e29b-41d4-a716-446655440109', 'OWN', 431, 579, '2026-09-21 15:39:39', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('f549de96-7e3c-4ed6-a5af-017bdc386bc0', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000109', '550e8400-e29b-41d4-a716-446655440101', 'OWN', 576, 777, '2026-09-21 15:42:57', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('df2c2461-664a-490f-bab8-7d57dd508388', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000102', '550e8400-e29b-41d4-a716-446655440109', 'NEUTRAL', 677, 915, '2026-09-21 15:45:15', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('9ec5309b-402f-4d9c-a69c-e9a01d245857', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000101', '550e8400-e29b-41d4-a716-446655440101', 'NEUTRAL', 949, 1289, '2026-09-21 15:51:29', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('2e3bc95b-49a5-492e-b13e-2125a9a721e8', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000104', '550e8400-e29b-41d4-a716-446655440108', 'OPPONENT', 1035, 1407, '2026-09-21 15:53:27', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('9ec5309b-402f-4d9c-a69c-e9a01d245857', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000101', '550e8400-e29b-41d4-a716-446655440101', 'OWN', 949, 1289, '2026-09-21 15:51:29', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('2e3bc95b-49a5-492e-b13e-2125a9a721e8', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440108', 'OPPONENT', 1035, 1407, '2026-09-21 15:53:27', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('aa55efec-95f0-46be-b7d1-70ab1bfb5414', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000112', '550e8400-e29b-41d4-a716-446655440109', 'NEUTRAL', 1041, 1415, '2026-09-21 15:53:35', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('82622c32-386c-4175-ae66-e654f338b029', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000101', '550e8400-e29b-41d4-a716-446655440106', 'OPPONENT', 1082, 1472, '2026-09-21 15:54:32', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('a2442cae-f008-4dcc-8bf0-90d04f488a33', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000111', '550e8400-e29b-41d4-a716-446655440109', 'OPPONENT', 1231, 1677, '2026-09-21 15:57:57', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('5ed1910b-8815-4703-9b64-81969f95c317', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000110', '550e8400-e29b-41d4-a716-446655440102', 'OPPONENT', 1308, 1784, '2026-09-21 15:59:44', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('82622c32-386c-4175-ae66-e654f338b029', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440106', 'OPPONENT', 1082, 1472, '2026-09-21 15:54:32', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('a2442cae-f008-4dcc-8bf0-90d04f488a33', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440109', 'OPPONENT', 1231, 1677, '2026-09-21 15:57:57', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('5ed1910b-8815-4703-9b64-81969f95c317', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440102', 'OPPONENT', 1308, 1784, '2026-09-21 15:59:44', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('ed1a63fc-fe74-48be-9737-b18fcfdc8ae6', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440109', 'OWN', 1315, 1794, '2026-09-21 15:59:54', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('8aab944d-0352-47fe-bd90-0c8fe90d2b63', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000105', '550e8400-e29b-41d4-a716-446655440101', 'OWN', 1347, 1838, '2026-09-21 16:00:38', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('39dc8574-bbdc-46cd-9f45-9b51ac01030e', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000106', '550e8400-e29b-41d4-a716-446655440106', 'OPPONENT', 1381, 1885, '2026-09-21 16:01:25', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('39dc8574-bbdc-46cd-9f45-9b51ac01030e', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440106', 'OPPONENT', 1381, 1885, '2026-09-21 16:01:25', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('974c7cd8-6a60-4bd6-8a17-0c012f4f34c0', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440108', 'OPPONENT', 1391, 1899, '2026-09-21 16:01:39', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('e41031fb-54b2-41a7-ba04-4128a1d7b190', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000112', '550e8400-e29b-41d4-a716-446655440108', 'NEUTRAL', 1482, 2025, '2026-09-21 16:03:45', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('31446a7c-1f14-424a-b639-19243e021d0f', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000104', '550e8400-e29b-41d4-a716-446655440105', 'NEUTRAL', 1488, 2033, '2026-09-21 16:03:53', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('a187ff91-4923-4b3c-b794-30356cb9f19c', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000105', '550e8400-e29b-41d4-a716-446655440102', 'OPPONENT', 1740, 2382, '2026-09-21 16:09:42', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('a187ff91-4923-4b3c-b794-30356cb9f19c', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440102', 'OPPONENT', 1740, 2382, '2026-09-21 16:09:42', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('c0cc46c0-1842-4d36-b47a-757db0860097', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000101', '550e8400-e29b-41d4-a716-446655440104', 'NEUTRAL', 1861, 2550, '2026-09-21 16:12:30', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('a463bb0b-44b6-4458-994b-993b9d5e61e2', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000107', '550e8400-e29b-41d4-a716-446655440108', 'OPPONENT', 1970, 2701, '2026-09-21 16:15:01', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('a463bb0b-44b6-4458-994b-993b9d5e61e2', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440108', 'OPPONENT', 1970, 2701, '2026-09-21 16:15:01', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('9f75da86-23a7-44a4-b54a-6cc8bdcf3013', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000110', '550e8400-e29b-41d4-a716-446655440107', 'OWN', 2058, 2824, '2026-09-21 16:17:04', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('c47eca79-18be-4106-b001-500e25070681', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000104', '550e8400-e29b-41d4-a716-446655440102', 'OWN', 2142, 2941, '2026-09-21 16:19:01', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('c3f3ce42-f32b-43e9-be3d-b060adec5408', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440109', 'OWN', 2196, 3016, '2026-09-21 16:20:16', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('4ad44d4e-77a7-4d38-8d30-77d51bd1b87c', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000112', '550e8400-e29b-41d4-a716-446655440106', 'NEUTRAL', 2364, 3250, '2026-09-21 16:24:10', 1, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('194e28dd-09af-4295-96b6-620c931557ff', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000104', '550e8400-e29b-41d4-a716-446655440104', 'OPPONENT', 2428, 4035, '2026-09-21 16:37:15', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('4455830d-ac42-4bc2-900e-403ffa8c4216', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000106', '550e8400-e29b-41d4-a716-446655440107', 'OPPONENT', 2485, 4109, '2026-09-21 16:38:29', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('194e28dd-09af-4295-96b6-620c931557ff', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440104', 'OPPONENT', 2428, 4035, '2026-09-21 16:37:15', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('4455830d-ac42-4bc2-900e-403ffa8c4216', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440107', 'OPPONENT', 2485, 4109, '2026-09-21 16:38:29', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('dfc3a67c-199c-41d1-8235-d5fcec97ebfc', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440106', 'OWN', 2819, 4547, '2026-09-21 16:45:47', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('1afc98eb-4aa7-4a71-bec0-4254686ca5e7', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000103', '550e8400-e29b-41d4-a716-446655440105', 'NEUTRAL', 2868, 4612, '2026-09-21 16:46:52', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('a65cb958-0706-4a9e-b9df-326f243aeb89', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000108', '550e8400-e29b-41d4-a716-446655440109', 'OPPONENT', 2974, 4752, '2026-09-21 16:49:12', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('a65cb958-0706-4a9e-b9df-326f243aeb89', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440109', 'OPPONENT', 2974, 4752, '2026-09-21 16:49:12', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('bf3ae683-d161-43ad-abca-c778b59d4afd', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000106', '550e8400-e29b-41d4-a716-446655440104', 'OWN', 3054, 4858, '2026-09-21 16:50:58', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('879c1eb6-1d8c-4f65-9ecd-4af69018fdd3', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000111', '550e8400-e29b-41d4-a716-446655440104', 'OPPONENT', 3102, 4922, '2026-09-21 16:52:02', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('43bd7d0c-f830-4de3-89a2-d7ef79ad9af2', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000101', '550e8400-e29b-41d4-a716-446655440109', 'OPPONENT', 3436, 5367, '2026-09-21 16:59:27', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('879c1eb6-1d8c-4f65-9ecd-4af69018fdd3', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440104', 'OPPONENT', 3102, 4922, '2026-09-21 16:52:02', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('43bd7d0c-f830-4de3-89a2-d7ef79ad9af2', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440109', 'OPPONENT', 3436, 5367, '2026-09-21 16:59:27', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('a577a61f-14be-46bb-8cfc-8c048431033f', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000109', '550e8400-e29b-41d4-a716-446655440106', 'OWN', 3540, 5506, '2026-09-21 17:01:46', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('c042f22b-6ae4-4a71-8acf-932966773f00', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440102', 'OPPONENT', 3556, 5528, '2026-09-21 17:02:08', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('d9614121-923a-4b13-8de1-c77d6c435e1e', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000108', '550e8400-e29b-41d4-a716-446655440109', 'OWN', 3586, 5568, '2026-09-21 17:02:48', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('aad5245f-688a-48a5-8785-c6d52e1e7bc7', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000106', '550e8400-e29b-41d4-a716-446655440105', 'OPPONENT', 3678, 5691, '2026-09-21 17:04:51', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('aad5245f-688a-48a5-8785-c6d52e1e7bc7', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440105', 'OPPONENT', 3678, 5691, '2026-09-21 17:04:51', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('d490971f-b027-456e-84ba-f4e7767f4adc', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000104', '550e8400-e29b-41d4-a716-446655440108', 'NEUTRAL', 3815, 5874, '2026-09-21 17:07:54', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('17c68ea6-3dfd-4d71-bdfa-4376646de749', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000104', '550e8400-e29b-41d4-a716-446655440106', 'NEUTRAL', 3850, 5921, '2026-09-21 17:08:41', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('669ec581-5412-4b1f-963c-f7dd3b721d61', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000109', '550e8400-e29b-41d4-a716-446655440109', 'OPPONENT', 3951, 6057, '2026-09-21 17:10:57', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('669ec581-5412-4b1f-963c-f7dd3b721d61', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440109', 'OPPONENT', 3951, 6057, '2026-09-21 17:10:57', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('bef0980c-9ee1-4401-9070-b877fe511ab8', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000105', '550e8400-e29b-41d4-a716-446655440105', 'OWN', 3980, 6096, '2026-09-21 17:11:36', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('dc7fd442-2faf-4c71-b73e-4712eeac9e12', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440105', 'OPPONENT', 4088, 6241, '2026-09-21 17:14:01', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('7ff293bc-cdec-4b67-8679-c25d81ad914d', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000107', '550e8400-e29b-41d4-a716-446655440101', 'NEUTRAL', 4183, 6369, '2026-09-21 17:16:09', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('7ff293bc-cdec-4b67-8679-c25d81ad914d', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000107', '550e8400-e29b-41d4-a716-446655440101', 'OWN', 4183, 6369, '2026-09-21 17:16:09', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('02d72880-4f32-448a-87a3-ddf4d60e062b', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000107', '550e8400-e29b-41d4-a716-446655440107', 'NEUTRAL', 4191, 6379, '2026-09-21 17:16:19', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('0ff1a8c5-d3c5-4ff5-9117-ec15f1d1c03a', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440101', 'OPPONENT', 4316, 6548, '2026-09-21 17:19:08', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('5d24aba0-8595-4b02-8e03-6f6e5dc7b0ee', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000102', '550e8400-e29b-41d4-a716-446655440106', 'OPPONENT', 4599, 6929, '2026-09-21 17:25:29', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('5d24aba0-8595-4b02-8e03-6f6e5dc7b0ee', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440106', 'OPPONENT', 4599, 6929, '2026-09-21 17:25:29', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('29a69428-66af-4aa8-a19a-fb5c8eb01cce', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000112', '550e8400-e29b-41d4-a716-446655440106', 'NEUTRAL', 4670, 7025, '2026-09-21 17:27:05', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('2313cc2f-efab-4959-a793-eb9f77a22942', '11111111-1111-1111-1111-000000000044', '11111111-1111-1111-1111-000000000108', '550e8400-e29b-41d4-a716-446655440102', 'OPPONENT', 4778, 7170, '2026-09-21 17:29:30', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+    ('2313cc2f-efab-4959-a793-eb9f77a22942', '11111111-1111-1111-1111-000000000044', NULL, '550e8400-e29b-41d4-a716-446655440102', 'OPPONENT', 4778, 7170, '2026-09-21 17:29:30', 2, 'APP', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
     -- Eventos para Partido 7: Comodoro Rugby Club (HALFTIME)
 INSERT INTO events (id, match_id, player_id, event_type_id, team_possession, match_time, real_time, period, origin, active, created_at, synchronized_at) VALUES
@@ -1021,8 +1457,8 @@ INSERT INTO events (id, match_id, player_id, event_type_id, team_possession, mat
 -- =========================================
 -- NUEVO PARTIDO FINALIZADO (300 EVENTOS, 60 PENDIENTES)
 -- =========================================
-INSERT INTO matches (id, date, division_id, opponent, status, current_period, clock_elapsed_seconds, clock_paused, clock_updated_at, current_possession, home_score, away_score, started_at, finished_at) VALUES
-('11111111-1111-1111-1111-000000000047', '2026-09-10 15:30:00', '11111111-1111-1111-1111-000000000020', 'Puerto Madryn RC', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, '2026-09-10 15:30:00', '2026-09-10 17:15:00');
+INSERT INTO matches (id, date, division_id, opponent_id, status, current_period, clock_elapsed_seconds, clock_paused, clock_updated_at, current_possession, home_score, away_score, started_at, finished_at) VALUES
+('11111111-1111-1111-1111-000000000047', '2026-09-10 15:30:00', '11111111-1111-1111-1111-000000000020', '22222222-1111-1111-1111-000000000002', 'FINISHED', 2, 4800, true, CURRENT_TIMESTAMP, 'OWN', 0, 0, '2026-09-10 15:30:00', '2026-09-10 17:15:00');
 
 INSERT INTO matches_players (id, role, division_id, match_id) VALUES
     ('55555555-5555-5555-5555-000000470000', 'TITULAR', '11111111-1111-1111-1111-000000000200', '11111111-1111-1111-1111-000000000047'),

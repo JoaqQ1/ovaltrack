@@ -14,13 +14,8 @@ export function computeSetPieceStats(
   events: LocalMatchEvent[],
   eventTypeMap: Map<string, LiveCaptureEventType>
 ): SetPieceStats {
-  const getName = (e: LocalMatchEvent) => eventTypeMap.get(e.eventTypeId)?.name ?? '';
+  const countByCode = (code: string) =>
+    events.filter(e => eventTypeMap.get(e.eventTypeId)?.code === code).length;
+  return { scrumsTotal: countByCode('SCRUM'), lineoutsTotal: countByCode('LINEOUT') };
 
-  return {
-    scrumsTotal: events.filter(e => getName(e) === 'Scrum').length,
-    lineoutsTotal: events.filter(e => {
-      const name = getName(e);
-      return name === 'Line-out' || name === 'Line';
-    }).length,
-  };
 }

@@ -6,6 +6,7 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
 import { DivisionService } from 'src/app/services/division.service';
 import { DivisionPlayerService } from 'src/app/services/division-player.service';
 import { Division } from '../../division/types/division.types';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 @Component({
   selector: 'app-division-player-form',
@@ -19,15 +20,12 @@ export class DivisionPlayerFormComponent implements OnInit {
   private readonly divisionService = inject(DivisionService);
   private readonly playerService = inject(DivisionPlayerService);
   readonly userContext = inject(UserContextService);
-
+  private readonly toastService = inject(ToastService);
+  
   playerForm!: FormGroup;
   readonly divisiones = signal<Division[]>([]);
   readonly cargando = signal<boolean>(true);
   readonly guardando = signal<boolean>(false);
-  mensajeExito = '';
-  mensajeError = '';
-
-  private autoDismissTimer: any = null;
 
   readonly currentClub = this.userContext.currentClub;
 
@@ -39,22 +37,6 @@ export class DivisionPlayerFormComponent implements OnInit {
   getClubCrest(): string {
     const name = this.currentClub()?.name?.trim();
     return name ? name.charAt(0).toUpperCase() : 'O';
-  }
-
-  closeSuccess(): void {
-    this.mensajeExito = '';
-    if (this.autoDismissTimer) {
-      clearTimeout(this.autoDismissTimer);
-      this.autoDismissTimer = null;
-    }
-  }
-
-  closeError(): void {
-    this.mensajeError = '';
-    if (this.autoDismissTimer) {
-      clearTimeout(this.autoDismissTimer);
-      this.autoDismissTimer = null;
-    }
   }
 
   get esCoach(): boolean {
@@ -99,7 +81,7 @@ export class DivisionPlayerFormComponent implements OnInit {
 
     if (!club?.id && role !== 'ADMIN_OVALTRACK') {
       this.cargando.set(false);
-      this.mensajeError = 'No se encontró un club asignado a tu usuario.';
+      this.toastService.show('error', 'No se encontró un club asignado a tu usuario.', 'Error');
       return;
     }
 
@@ -109,7 +91,7 @@ export class DivisionPlayerFormComponent implements OnInit {
       this.cargando.set(false);
 
       if (misDivisiones.length === 0) {
-        this.mensajeError = 'No tienes divisiones asignadas como entrenador en tu club.';
+        this.toastService.show('error', 'No tienes divisiones asignadas como entrenador en tu club.', 'Error');
       } else if (misDivisiones.length === 1) {
         this.playerForm.patchValue({ divisionId: misDivisiones[0].id });
       }
@@ -128,14 +110,12 @@ export class DivisionPlayerFormComponent implements OnInit {
       error: (err) => {
         console.error('Error al cargar divisiones', err);
         this.cargando.set(false);
+        this.toastService.show('error', 'No se pudieron cargar las divisiones.', 'Error');
       }
     });
   }
 
   guardarJugador(): void {
-    this.closeSuccess();
-    this.closeError();
-
     if (this.playerForm.valid) {
       this.guardando.set(true);
       const val = this.playerForm.value;
@@ -153,21 +133,18 @@ export class DivisionPlayerFormComponent implements OnInit {
 
       this.playerService.registerPlayer(payload).subscribe({
         next: () => {
-          this.mensajeExito = 'Jugador creado y asignado a la división exitosamente.';
+          this.toastService.show('success', 'Jugador creado y asignado a la división exitosamente.', '¡Excelente!');
           this.iniciarFormulario();
           this.guardando.set(false);
 
-          this.autoDismissTimer = setTimeout(() => {
-            this.mensajeExito = '';
-          }, 5000);
         },
         error: (err) => {
           console.error('Error al registrar jugador', err);
           const errorMsg = typeof err.error === 'string'
             ? err.error
             : (err.error?.message || 'Error al guardar el jugador.');
+          this.toastService.show('error', errorMsg, 'Error');
 
-          this.mensajeError = errorMsg;
           this.guardando.set(false);
 
           if (errorMsg.toLowerCase().includes('menor de edad')) {
@@ -197,10 +174,6 @@ export class DivisionPlayerFormComponent implements OnInit {
             const phoneInput = document.getElementById('contactPhone');
             phoneInput?.focus();
           }
-
-          this.autoDismissTimer = setTimeout(() => {
-            this.mensajeError = '';
-          }, 5000);
         }
       });
     } else {

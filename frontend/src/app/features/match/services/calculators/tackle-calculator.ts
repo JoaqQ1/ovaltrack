@@ -1,6 +1,7 @@
 import { LiveCaptureEventType } from '../../types/event-type.types';
 import { LocalMatchEvent } from '../../types/event.types';
 import { PeriodStatisticDTO } from '../../types/statistic.types';
+import { eventTeam } from './event-rules';
 import { calculatePercentage } from './math-utils';
 
 export type TackleStats = Pick<
@@ -19,14 +20,14 @@ export function computeTackleStats(
   let ownTacklesMissed = 0;
 
   for (const event of events) {
-    if (event.teamPossession !== 'OWN') continue;
-
     const et = eventTypeMap.get(event.eventTypeId);
-    const typeName = et ? et.name : '';
-
-    if (typeName === 'Tackle completado') {
+    if (eventTeam(et, event) !== 'OWN') {
+      continue;
+    } 
+    if (et?.code === 'TACKLE_MADE') {
       ownTacklesCompleted++;
-    } else if (typeName === 'Tackle fallado') {
+    } 
+    else if (et?.code === 'TACKLE_MISSED') {
       ownTacklesMissed++;
     }
   }

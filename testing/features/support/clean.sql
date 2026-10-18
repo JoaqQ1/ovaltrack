@@ -20,7 +20,7 @@ RESTART IDENTITY CASCADE;
 
 INSERT INTO event_types
 (id, name, group_name, category, affects_possession, is_scoring, points,
- requires_player, template_event_fields, created_at)
+ requires_player, is_active, template_event_fields, created_at)
 VALUES
 (
     '550e8400-e29b-41d4-a716-446655440101',
@@ -30,6 +30,7 @@ VALUES
     true,
     true,
     5,
+    true,
     true,
     $${
       "wasSuccessful": { "type": "boolean", "required": true },
@@ -46,6 +47,7 @@ VALUES
     true,
     3,
     true,
+    true,
     $${
       "wasSuccessful": { "type": "boolean", "required": true },
       "distanceMeters": { "type": "number", "required": false }
@@ -60,6 +62,7 @@ VALUES
     false,
     true,
     3,
+    true,
     true,
     $${
       "wasSuccessful": { "type": "boolean", "required": true },
@@ -76,6 +79,7 @@ VALUES
     false,
     0,
     true,
+    true,
     $${
       "forcedTurnover": { "type": "boolean", "required": false }
     }$$::jsonb,
@@ -89,6 +93,7 @@ VALUES
     false,
     false,
     0,
+    true,
     true,
     $${
       "failReason": { "type": "string", "required": false }
@@ -104,6 +109,7 @@ VALUES
     false,
     0,
     false,
+    true,
     '{
       "turnoverType": {"type": "string", "required":false}
     }'::jsonb,
@@ -118,6 +124,7 @@ VALUES
     false,
     0,
     false,
+    true,
     $${
       "scrumResult": { "type": "string", "required": true },
       "resetCount": { "type": "integer", "required": false }
@@ -133,6 +140,7 @@ VALUES
     false,
     0,
     false,
+    true,
     $${
       "lineResult": { "type": "string", "required": true }
     }$$::jsonb,
@@ -147,6 +155,7 @@ VALUES
     false,
     0,
     false,
+    true,
     $${
       "penaltyType": { "type": "string", "required": false }
     }$$::jsonb,
@@ -160,6 +169,7 @@ VALUES
     false,
     false,
     0,
+    true,
     true,
     $${
       "reason": { "type": "string", "required": false },
@@ -176,6 +186,7 @@ VALUES
     false,
     0,
     true,
+    true,
     $${
       "reason": { "type": "string", "required": false }
     }$$::jsonb,
@@ -189,6 +200,7 @@ VALUES
     false,
     false,
     0,
+    true,
     true,
     $${
       "injury": { "type": "string", "required": false }

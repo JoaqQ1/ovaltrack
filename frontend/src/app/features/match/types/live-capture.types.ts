@@ -3,6 +3,7 @@ import { LiveCaptureEventType } from './event-type.types';
 import { BackendEventResponse, LocalMatchEvent } from './event.types';
 import { BackendEventTypeResponse } from './event-type.types';
 import { Match } from './match.types';
+import { AvailablePlayer } from './roster.types';
 
 export type { UUID } from './common.types';
 export type { LiveCaptureEventType, BackendEventTypeResponse } from './event-type.types';
@@ -12,7 +13,7 @@ export type { BackendEventResponse, LocalMatchEvent } from './event.types';
 export type Possession = 'OWN' | 'NEUTRAL' | 'OPPONENT';
 
 /** Variante visual usada para pintar un evento en la interfaz. */
-export type EventVariant = 'success' | 'danger' | 'warning' | 'default';
+export type EventVariant = 'success' | 'danger' | 'warning' | 'default' | 'primary';
 
 /** Grupo visual de eventos para mostrar el catálogo organizado por secciones. */
 export interface EventCategoryGroup {
@@ -92,5 +93,6 @@ export interface LiveCaptureBootstrap {
   state: LiveCaptureState;
   recentEvents: LocalMatchEvent[];
   eventTypes: LiveCaptureEventType[];
+  rosterPlayers: AvailablePlayer[];
   persistedState?: LiveCapturePersistedState;
 }

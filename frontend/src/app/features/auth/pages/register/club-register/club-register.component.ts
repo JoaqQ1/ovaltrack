@@ -3,7 +3,6 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
-import { RegistrationRequest } from '../types/register.type';
 import { ClubRegistrationDTO } from '../../../types/auth.types';
 
 @Component({

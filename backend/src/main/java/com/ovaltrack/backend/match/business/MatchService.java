@@ -25,6 +25,7 @@ import com.ovaltrack.backend.match.domain.Match;
 import com.ovaltrack.backend.match.domain.MatchPlayer;
 import com.ovaltrack.backend.match.domain.MatchPlayerRole;
 import com.ovaltrack.backend.match.domain.MatchStatus;
+import com.ovaltrack.backend.match.domain.Opponent;
 import com.ovaltrack.backend.match.domain.dto.MatchCreationDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchDTOMapper;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
@@ -35,6 +36,7 @@ import com.ovaltrack.backend.match.domain.dto.LiveMatchBootstrapDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchRosterPlayerDTO;
 import com.ovaltrack.backend.match.repository.MatchPlayerRepository;
 import com.ovaltrack.backend.match.repository.MatchRepository;
+import com.ovaltrack.backend.match.repository.OpponentRepository;
 import java.util.Comparator;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -65,6 +67,7 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final EventRepository eventRepository;
     private final EventTypeRepository eventTypeRepository;
+    private final OpponentRepository opponentRepository;
     private final MatchSecurityValidator matchSecurityValidator;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -112,7 +115,7 @@ public class MatchService {
                 eventRepository.findEventsByMatchId(matchId).stream()
                         .map(EventDTOMapper::toResponseDTO)
                         .toList(),
-                eventTypeRepository.findAll().stream()
+                eventTypeRepository.findByIsActiveTrue().stream()
                         .map(EventDTOMapper::toResponseDTO)
                         .toList());
     }
@@ -152,10 +155,14 @@ public class MatchService {
             throw new BusinessException("Ya existe un partido planeado en esa franja horaria");
         }
 
+        // Buscar el oponente real en la base de datos
+        Opponent opponent = opponentRepository.findById(request.opponentId())
+                .orElseThrow(() -> new EntityNotFoundException("Oponente no encontrado"));
+
         Match match = new Match();
         match.setDate(request.date());
         match.setDivision(division);
-        match.setOpponent(request.opponent());
+        match.setOpponent(opponent);
         match.setStatus(MatchStatus.NOT_STARTED);
 
         match = matchRepository.save(match);
@@ -169,8 +176,12 @@ public class MatchService {
             throw new BusinessException("Partido no encontrado");
         }
 
+        // Buscar el oponente real para la actualización
+        Opponent opponent = opponentRepository.findById(request.opponentId())
+                .orElseThrow(() -> new EntityNotFoundException("Oponente no encontrado"));
+
         match.setDate(request.date());
-        match.setOpponent(request.opponent());
+        match.setOpponent(opponent); // <-- Inyectamos el objeto real
 
         return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
     }
@@ -182,44 +193,49 @@ public class MatchService {
             throw new BusinessException("Partido no encontrado");
         }
 
-        if (match.getStatus() == matchStatus) {
+        validateStatusChange(match, matchStatus);
+        applyStatusChange(match, matchStatus);
+
+        return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
+    }
+
+    private void validateStatusChange(Match match, MatchStatus targetStatus) {
+        MatchStatus currentStatus = match.getStatus();
+
+        if (currentStatus == targetStatus) {
             throw new BusinessException("No se puede asignar el mismo estado al partido");
         }
 
-        if (match.getStatus() == MatchStatus.NOT_STARTED && matchStatus == MatchStatus.IN_PROGRESS) {
-            /*
-             * boolean hasTitular = match.getRoster().stream()
-             * .anyMatch(player -> player.getRole() == MatchPlayerRole.TITULAR);
-             */
-
-            boolean hasTitular = this.getSavedRoster(match.getId()).getStartingPlayers().size() >= 1;
-            /*
-             * if (match.getRoster().isEmpty()) {
-             * logger.
-             * error("CLARAMENTE EXISTE LAZY LOADINGDSADASDASDASDADSADASDASDASDASDASDASDSADSADSADSADASDSA"
-             * );
-             * throw new BusinessException("Existe lazy loading");
-             * }
-             */
-            if (!hasTitular) {
-                throw new BusinessException(
-                        "No se puede iniciar el partido sin al menos un jugador titular registrado.");
-            }
+        if (targetStatus == MatchStatus.IN_PROGRESS
+                && (currentStatus == MatchStatus.EMPTY_ROSTER || currentStatus == MatchStatus.NOT_STARTED)) {
+            validateRosterForStart(match);
         }
 
-        if (match.getStatus() == MatchStatus.FINISHED && matchStatus == MatchStatus.CANCELLED) {
+        if (currentStatus == MatchStatus.EMPTY_ROSTER && targetStatus == MatchStatus.FINISHED) {
+            throw new BusinessException("No se puede finalizar un partido que no fue empezado");
+        }
+
+        if (currentStatus == MatchStatus.FINISHED && targetStatus == MatchStatus.CANCELLED) {
             throw new BusinessException("No se puede cancelar un partido que ya termino");
         }
+    }
 
+    private void validateRosterForStart(Match match) {
+        boolean hasTitular = getSavedRoster(match.getId()).getStartingPlayers().size() >= 1;
+        if (!hasTitular) {
+            throw new BusinessException(
+                    "No se puede iniciar el partido sin al menos un jugador titular registrado.");
+        }
+    }
 
-        match.setStatus(matchStatus);
-        if (matchStatus == MatchStatus.IN_PROGRESS && match.getStartedAt() == null) {
+    private void applyStatusChange(Match match, MatchStatus targetStatus) {
+        match.setStatus(targetStatus);
+        if (targetStatus == MatchStatus.IN_PROGRESS && match.getStartedAt() == null) {
             match.setStartedAt(LocalDateTime.now());
         }
-        if (matchStatus == MatchStatus.FINISHED) {
+        if (targetStatus == MatchStatus.FINISHED) {
             match.setFinishedAt(LocalDateTime.now());
         }
-        return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
     }
 
     @Transactional
@@ -253,6 +269,8 @@ public class MatchService {
                         .build());
             }
         }
+        match.setStatus(MatchStatus.NOT_STARTED);
+        matchRepository.save(match);
 
         // 4. Forzamos los INSERTS en la base de datos
         matchPlayerRepository.saveAll(nuevosJugadores);

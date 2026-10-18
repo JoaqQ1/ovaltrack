@@ -375,3 +375,52 @@ El sistema de interfaz de OvalTrack implementa una arquitectura de layout fluida
 * **Vistas Especializadas Exentas (Pantalla Completa):**
   - Captura en vivo (`/live-capture/:matchId`) y Resumen táctico de entretiempo (`/live-capture/:matchId/halftime`).
   - Ocultan la Navbar y no consumen `.layout-container`, operando al 100% del viewport en tablets.
+
+---
+
+## 8. Estación de Trabajo Post-Partido (Post-Match Workstation)
+
+> **Ubicación:** `/post-match/:id`  
+> **Modo de pantalla:** `.layout-wide` (ancho sincronizado a 1560px con la Navbar).
+
+La pantalla de post-partido está estructurada como una estación de trabajo de alta densidad orientada al análisis táctico y corrección de video, eliminando el doble scroll y garantizando ergonomía táctil en tablets.
+
+### 8.1 Grilla CSS Grid y Viewport Lock
+- **Desktop ($\ge 1121\text{px}$):**
+  - Contenedor `.pm` con `height: calc(100dvh - var(--navbar-h, 64px) - var(--layout-pad-y, 24px) - 16px);`.
+  - Grid Template:
+    ```css
+    grid-template-areas:
+      "hud hud"
+      "kpi kpi"
+      "timeline inspector"
+      "table inspector";
+    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    ```
+  - La tabla aloja un `cdk-virtual-scroll-viewport` vertical que aprovecha todo el espacio remanente del viewport.
+- **Tablet y Mobile ($< 1121\text{px}$):**
+  - Flujo vertical a 1 columna: `hud`, `kpi`, `timeline`, `table`.
+  - La tarjeta de tabla adopta altura fija de `470px` y `padding-bottom: 96px !important` para dar despeje al inspector flotante.
+
+### 8.2 Componentes de la Estación de Trabajo
+1. **HUD Analítico (`PostMatchHeaderComponent`):**
+   - Botón `.hud-back` (`←`) táctil de 40px con borde suave.
+   - Píldora de marcador oscura central `.match-score-pill`: `[ 27 – 19 ]` en fuente monoespaciada tabular y alto contraste.
+   - Burbuja flotante animada `.score-delta-badge` (`+5`), animada con `scoreDeltaPop` y temporizador de 3 segundos.
+   - Botón primario verde rugby botella `+ Agregar evento`.
+2. **Tira Condensada de KPIs (`PostMatchKpiStripComponent`):**
+   - Altura de 44px con 3 secciones: total de eventos, conteo de jugadas sin jugador con botón `"Ver pendientes ›"` y porcentaje de carga con barra de progreso verde.
+3. **Timeline Táctico Compacto (`PostMatchTimelineComponent`):**
+   - Altura de carril `--lane-h: 32px;` y marcadores de jugada de `20px`.
+   - Container Queries (`@container (max-width: 650px)`) para abreviar nombres largos (*Infracción*, *Penal palos*, *Tackle ✓*, etc.).
+4. **Tabla Cronológica a 5 Columnas (`PostMatchTableComponent`):**
+   - Columnas: `PER.` (55px) | `JUEGO` (75px) | `VIDEO` (75px) | `JUGADA` (1fr) | `JUGADOR` (1.2fr).
+   - Selector inline `[ Sin asignar ▾ ]`: chip con borde discontinuo ámbar (`#d97706`), fondo crema (`#fffdf0`) y desplegable nativo sin solapamiento de virtual scroll.
+5. **Inspector Dual y Formulario Reactivo (`PostMatchPanelComponent`):**
+   - **Desktop:** Columna lateral fija de 320px con solapas `[Ver]` y `[Editar]`.
+   - **Tablet/Mobile:** Bottom Sheet flotante con estado *peek* (comprimido con handle, stepper `‹ 1 de 4 ›`, selector rápido y botón Editar) y estado *open* (expandido al 78vh con backdrop blur).
+   - **Autoguardado con Debounce:** Pipeline RxJS con `debounceTime(400)` e indicador visual en tiempo real (`Guardando...`, `Guardado ✓`, `Error al guardar`).
+   - **Cola de Revisión:** Tarjetas compactas (`02:36 Penal / infracción 1T`) con resaltado ámbar al seleccionar y stepper rápido.
+   - **`EventFormComponent` Reutilizable:** Componente común compartido entre el inspector y el modal de alta, asegurando consistencia y mantenibilidad (SRP/DRY).
+

@@ -2,7 +2,8 @@ import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { catchError, forkJoin, of } from 'rxjs';
 import {
   Match,
   MATCH_FILTERS,
@@ -14,6 +15,11 @@ import {
 import { MatchService } from '../services/match.service';
 import { DivisionService } from 'src/app/services/division.service';
 import { RosterService } from '../services/roster.service';
+import { OpponentService, Opponent } from '../services/opponent.service';
+import { AuthService } from '../../auth/services/auth.service';
+import { ModalComponent } from '../../modal/modal.component';
+import { ToastService } from 'src/app/core/services/toast.service';
+import { LiveCaptureService } from '../services/live-capture.service';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -31,7 +37,7 @@ import { RosterService } from '../services/roster.service';
 @Component({
   selector: 'ot-match-select',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent],
   templateUrl: './match-selection.component.html',
   styleUrl: './match-selection.component.css',
 })
@@ -40,15 +46,18 @@ export class MatchSelectComponent implements OnInit {
   private readonly rosterService = inject(RosterService);
   private readonly router = inject(Router);
   private readonly divisionService = inject(DivisionService);
-
-  /** Filtros disponibles, en el orden en que se renderizan en el control segmentado. */
-  readonly filters = MATCH_FILTERS;
+  private readonly opponentService = inject(OpponentService);
+  private readonly liveCaptureService = inject(LiveCaptureService);
+  private readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
+  /** Filtros disponibles, en el orden en que se renderizan en el control segmentado, menos el finalizado. */
+  readonly filters = MATCH_FILTERS.filter(f => f !== 'finished');
   readonly statusLabels = MATCH_STATUS_LABELS;
 
   matches: Match[] = [];
   userDivisions: any[] = [];
   selectedDivisionId: string = '';
-
+  availableOpponents: Opponent[] = []
   /** Filtro actualmente seleccionado en el control segmentado. */
   activeFilter: MatchFilter = 'all';
 
@@ -56,8 +65,11 @@ export class MatchSelectComponent implements OnInit {
   isCreateOpen = false;
 
   /** Datos del formulario de alta, en curso de carga. */
-  draft: NewMatchDraft = { date: '', opponent: '' };
-  errorMessage = '';
+  draft: NewMatchDraft = { date: '', opponentId: '' };
+
+  matchToRemove: Match | null = null;
+  eliminatingMatchId: string | null = null;
+  mostrarModalConfirmacion = false;
 
   /**
    * Se emite cuando el usuario toca un partido de la grilla. Quien use este
@@ -72,31 +84,34 @@ export class MatchSelectComponent implements OnInit {
     this.loadUserDivisions();
   }
 
-  /** Partidos visibles según {@link activeFilter}. */
+  
+  goToHistory() {
+    this.router.navigate(['/match-history']);
+  }
+
   get visibleMatches(): Match[] {
+    // Filtramos los finalizados de la memoria (ahora viven en la otra pantalla)
+    let activeMatches = this.matches.filter(match => match.status !== 'finished');
+
     if (this.activeFilter === 'all') {
-      return this.matches.filter(match => match.status !== 'cancelled');
+      return activeMatches.filter(match => match.status !== 'cancelled');
     }
 
     if (this.activeFilter === 'in_progress') {
-      return this.matches.filter(match => match.status === 'in_progress' || match.status === 'halftime');
+      return activeMatches.filter(match => match.status === 'in_progress' || match.status === 'halftime');
     }
 
-    return this.matches.filter(match => match.status === this.activeFilter);
+    return activeMatches.filter(match => match.status === this.activeFilter);
   }
 
-  /** Si el formulario de alta tiene los dos campos requeridos completos. */
   get canCreateMatch(): boolean {
-    return this.draft.date.trim().length > 0 && this.draft.opponent.trim().length > 0 && this.selectedDivisionId.length > 0;
+    return this.draft.date.trim().length > 0 
+        && this.draft.opponentId.trim().length > 0 
+        && this.selectedDivisionId.length > 0;
   }
 
   setFilter(filter: MatchFilter): void {
     this.activeFilter = filter;
-  }
-
-  openCreateModal(): void {
-    this.draft = { date: '', opponent: '' };
-    this.isCreateOpen = true;
   }
 
   closeCreateModal(): void {
@@ -119,24 +134,51 @@ export class MatchSelectComponent implements OnInit {
         this.isCreateOpen = false;
       },
       error: (error: HttpErrorResponse) => {
-        this.errorMessage = this.readBackendError(error) ?? 'No se pudo crear el partido.';
+        const msg = this.readBackendError(error) ?? 'No se pudo crear el partido.';
+        this.toastService.show('error', msg, 'Error al crear partido');
       },
     });
   }
 
   confirmDeleteMatch(match: Match): void {
-    if (!window.confirm(`¿Eliminar el partido contra ${match.opponent}?`)) {
+    if (match.status === 'cancelled' || this.eliminatingMatchId) {
       return;
     }
 
-    this.matchService.deleteMatch(match.id).subscribe({
+    this.matchToRemove = match;
+    this.mostrarModalConfirmacion = true;
+  }
+
+  cancelarEliminacion(): void {
+    if (!this.eliminatingMatchId) {
+      this.mostrarModalConfirmacion = false;
+      this.matchToRemove = null;
+    }
+  }
+
+  ejecutarEliminacion(): void {
+    if (!this.matchToRemove) {
+      return;
+    }
+
+    this.eliminatingMatchId = this.matchToRemove.id;
+    this.matchService.deleteMatch(this.matchToRemove.id).subscribe({
       next: () => {
-        this.matches = this.matches.map(currentMatch => currentMatch.id === match.id
-          ? { ...currentMatch, status: 'cancelled' }
-          : currentMatch);
+        this.matches = this.matches.map(currentMatch => 
+          currentMatch.id === this.matchToRemove?.id
+            ? { ...currentMatch, status: 'cancelled' }
+            : currentMatch
+        );
+        this.eliminatingMatchId = null;
+        this.mostrarModalConfirmacion = false;
+        this.matchToRemove = null;
       },
       error: (error: HttpErrorResponse) => {
-        this.errorMessage = this.readBackendError(error) ?? 'No se pudo eliminar el partido.';
+        const msg = this.readBackendError(error) ?? 'No se pudo eliminar el partido.';
+        this.toastService.show('error', msg, 'Error al eliminar');
+        this.eliminatingMatchId = null;
+        this.mostrarModalConfirmacion = false;
+        this.matchToRemove = null;
       },
     });
   }
@@ -169,7 +211,7 @@ export class MatchSelectComponent implements OnInit {
   openMatch(match: Match): void {
     if (match.status === 'cancelled') return;
 
-    if (match.status === 'not_started') {
+    if (match.status === 'not_started' || match.status === 'empty_roster') {
       void this.router.navigate(['/selection-roster', match.id]);
     } else if (match.status === 'halftime') {
       void this.router.navigate(['/live-capture/', match.id, 'halftime'])
@@ -188,11 +230,10 @@ export class MatchSelectComponent implements OnInit {
           return;
         }
 
-        this.errorMessage = 'Debes completar los 15 titulares antes de capturar el partido.';
-        //void this.router.navigate(['/selection-roster', matchId]);
+        this.toastService.show('error', 'Debes completar los 15 titulares antes de capturar el partido.', 'Alineación incompleta');
       },
       error: () => {
-        this.errorMessage = 'No se pudo validar la alineación del partido.';
+        this.toastService.show('error', 'No se pudo validar la alineación del partido.', 'Error de validación');
       },
     });
   }
@@ -218,18 +259,26 @@ export class MatchSelectComponent implements OnInit {
     const days = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
     const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
     let date: Date;
+    let timeStr = '';
 
     if (Array.isArray(dateInput)) {
-      date = new Date(dateInput[0], dateInput[1] - 1, dateInput[2]);
+      date = new Date(dateInput[0], dateInput[1] - 1, dateInput[2], dateInput[3] || 0, dateInput[4] || 0);
+      if (dateInput[3] !== undefined && dateInput[4] !== undefined) {
+        timeStr = ` - ${String(dateInput[3]).padStart(2, '0')}:${String(dateInput[4]).padStart(2, '0')} hs`;
+      }
     } else if (typeof dateInput === 'string') {
-      const datePart = dateInput.split('T')[0];
+      const [datePart, timePart] = dateInput.split('T');
       const [year, month, day] = datePart.split('-').map(Number);
       date = new Date(year, month - 1, day);
+      if (timePart) {
+        const [hours, minutes] = timePart.split(':');
+        timeStr = ` - ${hours}:${minutes} hs`;
+      }
     } else {
       return 'Fecha inválida';
     }
 
-    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}${timeStr}`;
   }
 
   loadUserDivisions() {
@@ -262,6 +311,7 @@ export class MatchSelectComponent implements OnInit {
           // Autoseleccionar la primera división
           this.selectedDivisionId = this.userDivisions[0].id;
           this.loadMatchesForDivision(this.selectedDivisionId);
+          
         }
       });
 
@@ -276,16 +326,65 @@ export class MatchSelectComponent implements OnInit {
   }
 
   loadMatchesForDivision(divisionId: string) {
-    // Usamos el servicio y asignamos el resultado a this.matches
     this.matchService.getAllMatchesByDivisionId(divisionId).subscribe({
       next: (matches) => {
         this.matches = matches;
-        this.errorMessage = '';
+        this.cacheMatchData(matches);
       },
       error: () => {
-        this.errorMessage = 'No se pudieron cargar los partidos de esta división.';
+        this.toastService.show('error', 'No se pudieron cargar los partidos de esta división.', 'Error de carga');
         this.matches = [];
       }
     });
   }
+
+  openCreateModal(): void {
+    this.draft = { date: '', opponentId: '' };
+    this.isCreateOpen = true;
+    
+    this.opponentService.getAllOpponents().subscribe({
+      next: (opponents) => this.availableOpponents = opponents,
+      error: () => this.toastService.show('error', 'No se pudieron cargar los rivales disponibles.', 'Error')
+    });
+  }
+
+  goToOpponents() {
+    this.router.navigate(['/opponent']);
+  } 
+
+  get isAdmin(): boolean {
+    const role = this.authService.getUserRole();
+    return role === 'ADMIN_CLUB' || role === 'ADMIN_OVALTRACK';
+  }
+
+  //ta raro esto, no me gusta del todo usar el mismo filtro de partidos tanto en LiveCaptureCacheService como aca
+  private cacheMatchData(matches: Match[]): void {
+    if (matches.length === 0) {
+      return;
+    }
+
+    const offlineMatches = matches.filter(
+      m => m.status === 'not_started' || m.status === 'in_progress' || m.status === 'halftime'
+    );
+
+    forkJoin(
+      matches.map(match => 
+        forkJoin([
+          this.rosterService.getSavedRoster(match.id).pipe(catchError(() => of(null))),
+          this.rosterService.getAvailablePlayers(match.id).pipe(catchError(() => of([])))
+        ])
+      )
+    ).subscribe();
+
+    if (offlineMatches.length > 0) {
+      forkJoin(
+        offlineMatches.map(match =>
+          this.liveCaptureService.hydrateMatchEvents(match.id).pipe(
+            catchError(() => of([]))
+          )
+        )
+      ).subscribe();
+    }
+  }
+
 }

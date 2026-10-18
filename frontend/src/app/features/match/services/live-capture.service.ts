@@ -12,7 +12,8 @@ import { LiveCaptureCacheService } from './live-capture-cache.service';
 import { MatchService } from './match.service';
 import { EventService } from './event.service';
 import { RosterService } from './roster.service';
-import { AvailablePlayer } from '../types/roster.types';
+import { AvailablePlayer , SavedRoster} from '../types/roster.types';
+import { eventTeam } from './calculators/event-rules';
 
 const HOME_TEAM_NAME = 'PMRC';
 
@@ -35,10 +36,6 @@ export class LiveCaptureService {
   private readonly playersByMatch = new Map<string, AvailablePlayer[]>();
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('online', () => this.syncPendingEvents().subscribe());
-      this.syncPendingEvents().subscribe();
-    }
   }
 
   getLiveCaptureBootstrap(query: LiveCaptureQuery): Observable<LiveCaptureBootstrap> {
@@ -64,9 +61,8 @@ export class LiveCaptureService {
   }
 
   saveEvent(event: LocalMatchEvent): Observable<LocalMatchEvent> {
-    const localEvent = this.resolvePlayer(event);
-
-    return from(this.cache.saveEvent(localEvent)).pipe(
+    return from(this.resolvePlayer(event)).pipe(
+      switchMap(localEvent => from(this.cache.saveEvent(localEvent))),
       map(savedEvent => ({
         ...savedEvent,
         localSequence: event.localSequence,
@@ -87,7 +83,6 @@ export class LiveCaptureService {
             catchError(() => EMPTY),
           );
         }
- 
         return this.eventService.createFromLocal(event).pipe(
           switchMap(response => {
             const synchronizedEvent: LocalMatchEvent = {
@@ -127,12 +122,14 @@ export class LiveCaptureService {
   private async readBootstrap(query: LiveCaptureQuery): Promise<LiveCaptureBootstrap> {
     let bootstrap: LiveCaptureBootstrapResponse;
     let players: AvailablePlayer[];
+    let savedRoster: SavedRoster | null;
     let loadedFromBackend = true;
 
     try {
-      ({ bootstrap, players } = await firstValueFrom(forkJoin({
+      ({ bootstrap, players, savedRoster } = await firstValueFrom(forkJoin({
         bootstrap: this.matchService.getLiveMatchBootstrap(query.matchId),
         players: this.rosterService.getAvailablePlayers(query.matchId),
+        savedRoster: this.rosterService.getSavedRoster(query.matchId),
       })));
     } catch {
       loadedFromBackend = false;
@@ -152,6 +149,7 @@ export class LiveCaptureService {
         eventTypes: localEventTypes as unknown as LiveCaptureBootstrapResponse['eventTypes'],
       };
       players = [];
+      savedRoster = null;
     }
     const match = bootstrap.match;
     if (match.status === 'cancelled') {
@@ -162,12 +160,17 @@ export class LiveCaptureService {
       divisionId: match.divisionId,
     };
     this.playersByMatch.set(query.matchId, players);
+    const startingPlayerIds = savedRoster?.startingPlayers ?? [];
+    const rosterPlayers = startingPlayerIds
+      .map(playerId => players.find(player => player.id === playerId))
+      .filter((player): player is AvailablePlayer => player !== undefined);
     const eventTypes = bootstrap.eventTypes.map(eventType => ({
       ...eventType,
       groupName: eventType.groupName ?? 'General',
       category: eventType.category ?? 'NEUTRAL',
       points: eventType.points ?? 0,
       createdAt: new Date().toISOString(),
+      isActive: true,
     }));
     await this.cache.saveEventTypes(eventTypes);
     const events = loadedFromBackend
@@ -199,6 +202,7 @@ export class LiveCaptureService {
       },
       recentEvents: events,
       eventTypes,
+      rosterPlayers,
     };
   }
 
@@ -213,18 +217,28 @@ export class LiveCaptureService {
       .then(({ state, events }) => this.resolveMatchStatus(state, events));
   }
 
-  private resolvePlayer(event: LocalMatchEvent): LocalMatchEvent {
-    if (event.playerId || event.teamPossession !== 'OWN') {
-      return event;
-    }
+  private async resolvePlayer(event: LocalMatchEvent): Promise<LocalMatchEvent> {
+    if (event.playerId) return event;
 
-    const playerNumber = event.attributes?.['playerNumber'];
-    if (typeof playerNumber !== 'number') {
-      return event;
-    }
+    const eventTypes = await this.cache.getEventTypes();
+    const et = eventTypes.find(t => t.id === event.eventTypeId);
+    if (eventTeam(et, event) !== 'OWN') return event;
 
-    const player = this.playersByMatch.get(event.matchId)
+    const raw = event.attributes?.['playerNumber'];
+    if (raw === null || raw === undefined || raw === '') return event;
+    const playerNumber = Number(raw);
+    if (!Number.isFinite(playerNumber)) return event;
+
+    let player = this.playersByMatch.get(event.matchId)
       ?.find(currentPlayer => currentPlayer.jerseyNumber === playerNumber);
+
+    if (!player) {
+      const match = await this.cache.getMatch(event.matchId);
+      if (match?.divisionId) {
+        const divisionPlayers = await this.cache.getPersonsByDivisionId(match.divisionId);
+        player = divisionPlayers.find(p => p.jerseyNumber === playerNumber);
+      }
+    }
 
     return player ? { ...event, playerId: player.id } : event;
   }

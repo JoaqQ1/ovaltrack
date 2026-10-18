@@ -1,0 +1,60 @@
+<main class="query-page">
+  <header class="page-header">
+    <p class="eyebrow">Consulta interna</p>
+    <h1>Jugadores y usuarios</h1>
+    <p class="description">Selecciona una división para consultar sus asociaciones y cuentas de usuario.</p>
+  </header>
+
+  <section class="selector-panel">
+    <label for="division">División</label>
+    <select id="division" [disabled]="loadingDivisions" (change)="selectDivision($event)">
+      <option value="">Selecciona una división</option>
+      <option *ngFor="let division of divisions" [value]="division.id">
+        {{ division.name }}
+      </option>
+    </select>
+  </section>
+
+  <p class="status" *ngIf="loadingDivisions">Cargando divisiones...</p>
+  <p class="status" *ngIf="loadingResults">Cargando resultados...</p>
+  <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <section class="results-panel" *ngIf="!loadingResults && selectedDivisionId">
+    <p class="empty" *ngIf="results.length === 0">No hay jugadores asociados a esta división.</p>
+
+    <div class="table-wrapper" *ngIf="results.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>DivisionPlayer ID</th>
+            <th>Person ID</th>
+            <th>Division ID</th>
+            <th>User ID</th>
+            <th>Persona</th>
+            <th>Posición</th>
+            <th>Dorsal</th>
+            <th>Email persona</th>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let result of results">
+            <td class="id-cell">{{ result.divisionPlayerId }}</td>
+            <td class="id-cell">{{ result.personId }}</td>
+            <td class="id-cell">{{ result.divisionId }}</td>
+            <td class="id-cell">{{ result.userId || '-' }}</td>
+            <td>{{ result.firstName }} {{ result.lastName }}</td>
+            <td>{{ result.position }}</td>
+            <td>{{ result.jerseyNumber || '-' }}</td>
+            <td>{{ result.contactEmail || '-' }}</td>
+            <td>{{ result.loginEmail || 'Sin cuenta' }}</td>
+            <td>{{ result.role || '-' }}</td>
+            <td>{{ result.accountStatus || '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>

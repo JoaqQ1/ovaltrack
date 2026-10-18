@@ -68,8 +68,8 @@ export class AuthService {
     return 'No se pudo completar la operación. Inténtalo nuevamente.';
   }
   logout(): void {
-    this.tokenService.removeToken();
     this.userContextService.clear();
+    this.tokenService.removeToken();
     this.currentUserSignal.set(null);
     this.router.navigate(['/auth/login']);
   }
@@ -107,6 +107,11 @@ export class AuthService {
   }
   registerFromInvitation(request: RegisterFromInvitationRequest): Observable<BackendResponse> {
     return this.http.post<BackendResponse>(`${this.apiUrl}/register/invitation`, request);
+  }
+
+  public getUserRole(): string | null {
+    const user = this.loadUserFromToken();
+    return user ? user.role : null;
   }
 
 }
