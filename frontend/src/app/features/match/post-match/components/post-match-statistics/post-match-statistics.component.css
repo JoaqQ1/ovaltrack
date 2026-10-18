@@ -132,16 +132,77 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ---------- Detalle por área ---------- */
-.detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
-.detail-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-.detail-header .form-card-title { display: flex; align-items: center; gap: 10px; font-size: 18px; }
-.legend { display: inline-flex; align-items: center; gap: 6px; font: 600 12px var(--font-body, Inter, sans-serif); color: var(--text-secondary, #3b4e33); }
+/* ---------- Detalle por área (Fixed size & dynamic scrolling) ---------- */
+.detail-grid { 
+  display: grid; 
+  grid-template-columns: repeat(2, minmax(0, 1fr)); 
+  gap: 20px; 
+  align-items: start; 
+}
+
+.detail-card {
+  display: flex;
+  flex-direction: column;
+  height: 440px; /* Fixed height for uniform card sizing */
+  min-height: 0;
+}
+
+.detail-header { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  flex-wrap: wrap; 
+  gap: 8px; 
+  flex: none; /* Keeps header fixed at the top */
+}
+
+.detail-header .form-card-title { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  font-size: 18px; 
+}
+
+.legend { 
+  display: inline-flex; 
+  align-items: center; 
+  gap: 6px; 
+  font: 600 12px var(--font-body, Inter, sans-serif); 
+  color: var(--text-secondary, #3b4e33); 
+}
+
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .dot--own { background: var(--btn-primary-bg, #204b22); }
 .dot--opp { background: var(--navy, #16324f); margin-left: 8px; }
 
-.detail-card .form-card-body { gap: 20px; padding: 20px 24px; }
+/* Scrollable body matching post-match-table style */
+.detail-card .form-card-body { 
+  gap: 20px; 
+  padding: 20px 24px; 
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-sport, rgba(32, 75, 34, 0.28)) transparent;
+}
+
+.detail-card .form-card-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.detail-card .form-card-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.detail-card .form-card-body::-webkit-scrollbar-thumb {
+  background: var(--border-sport, rgba(32, 75, 34, 0.28));
+  border-radius: 4px;
+}
+
+.detail-card .form-card-body::-webkit-scrollbar-thumb:hover {
+  background: var(--btn-primary-bg, #204b22);
+}
+
 .metric-table { display: flex; flex-direction: column; }
 .compare-row--plain { padding: 9px 0; border-bottom: 1px solid var(--border, rgba(27, 33, 22, .1)); }
 .compare-row--plain:last-child { border-bottom: 0; }
@@ -159,7 +220,6 @@
 
 .players-table--wide th, .players-table--wide td { padding: 10px 12px; }
 .players-table--wide th { white-space: normal; min-width: 72px; }
-
 /* ---------- Responsive ---------- */
 @media (max-width: 1121px) {
   .detail-grid { grid-template-columns: 1fr; }
