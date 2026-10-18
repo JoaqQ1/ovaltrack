@@ -205,10 +205,6 @@
                                     <span th:text="${clubName}">[Nombre del Club]</span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="info-label">Hash:</span> 
-                                    <span class="info-value" th:text="${hash}">123</span>
-                                </div>
-                                <div class="info-row">
                                     <span class="info-label">Correo de acceso:</span> 
                                     <span class="info-value" th:text="${userEmail}">usuario@correo.com</span>
                                 </div>
@@ -220,7 +216,7 @@
 
                             <!-- Botón CTA -->
                             <div class="cta-container">
-                                <a th:href="${loginUrl}" href="#" class="btn-rugby" target="_blank">
+                                <a th:href="${urlInvitation}" href="#" class="btn-rugby" target="_blank">
                                     <span>Acceder a OvalTrack</span>
                                 </a>
                             </div>
