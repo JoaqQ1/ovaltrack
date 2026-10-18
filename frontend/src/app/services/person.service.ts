@@ -29,6 +29,14 @@ export class PersonService {
       .set('size', size);
     return this.http.get<ResultsPage>(`${this.apiUrl}/club`, { params });
   }
+  
+  findAllPlayersByDivision(divisionId: string, page: number, size: number): Observable<ResultsPage> {
+    const params = new HttpParams()
+      .set('divisionId', divisionId)
+      .set('page', page - 1)
+      .set('size', size);
+    return this.http.get<ResultsPage>(`${this.apiUrl}/division`, { params });
+  }
 
   createPerson(person: PersonCreationRequest): Observable<PersonResponse> {
     return this.http.post<PersonResponse>(this.apiUrl, person);
