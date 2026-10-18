@@ -25,7 +25,7 @@ import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("api/invitation")
-@PreAuthorize ("hasAnyRole('ADMIN_CLUB','COACH_ANALYST')")
+// @PreAuthorize ("hasAnyRole('ADMIN_CLUB','COACH_ANALYST')")
 @AllArgsConstructor
 public class InvitationController {
     private InvitationService service;
@@ -34,7 +34,7 @@ public class InvitationController {
     public ResponseEntity<BackendResponse<Collection<Invitation>>> findAll() {
         return BackendResponse.ok(service.findAll());
     }
-
+    @PreAuthorize ("hasAnyRole('ADMIN_CLUB','COACH_ANALYST')")
     @GetMapping("/id/{id}")
     public ResponseEntity<BackendResponse<Invitation>> findById(@PathVariable("id") UUID id) {
         Invitation invitation = service.findById(id);
@@ -42,7 +42,7 @@ public class InvitationController {
             throw new BusinessException("No se encontro la invitacion con id " + id);
         return BackendResponse.ok(invitation, "Invitacion encontrada con exito!");
     }
-
+    @PreAuthorize ("hasAnyRole('ADMIN_CLUB','COACH_ANALYST')")
     @PostMapping("/invite")
     public ResponseEntity<BackendResponse<Object>> invite(@RequestBody CreateInvitationRequest invitationRequest) {
         InvitationResponse invitation = service.save(invitationRequest);
