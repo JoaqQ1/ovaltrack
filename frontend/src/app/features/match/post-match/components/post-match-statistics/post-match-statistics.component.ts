@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, computed, inject, signal, ElementRef, ViewChild} from '@angular/core';
-import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { Component, OnDestroy, OnInit, computed, inject, signal} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
@@ -31,7 +30,7 @@ interface CompareRow {
 @Component({
   selector: 'app-post-match-statistics',
   standalone: true,
-  imports: [CommonModule, ScrollingModule],
+  imports: [CommonModule],
   templateUrl: './post-match-statistics.component.html',
   styleUrl: './post-match-statistics.component.css',
 })
@@ -55,9 +54,6 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
 
   readonly activeTab = signal<StatsTab>('team');
   readonly period = signal<StatsPeriodFilter>('ALL');
-
-  @ViewChild(CdkVirtualScrollViewport) private viewport?: CdkVirtualScrollViewport;
-  @ViewChild('teamScroll') private teamScroll?: ElementRef<HTMLElement>;
 
   // Datos base: se cargan una sola vez y todo lo demás se recalcula en memoria.
   private readonly events = signal<LocalMatchEvent[]>([]);
@@ -151,16 +147,6 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
 
   setPeriod(period: StatsPeriodFilter): void {
     this.period.set(period);
-    this.resetScroll();
-  }
-
-  trackByPlayerId(_index: number, player: PlayerDetailStatistic): string {
-    return player.playerId;
-  }
-
-  private resetScroll(): void {
-    this.viewport?.scrollToIndex(0);
-    this.teamScroll?.nativeElement.scrollTo({ top: 0 });
   }
 
   switchTab(tab: StatsTab): void {
