@@ -67,7 +67,7 @@ export class StatisticCalculationService {
       ...computeTurnoverStats(periodEvents, eventTypeMap),
       ...computeDisciplineStats(periodEvents, eventTypeMap),
       ...computeSetPieceStats(periodEvents, eventTypeMap),
-      ...computePossessionStats(periodEvents),
+      ...computePossessionStats(periodEvents, eventTypeMap),
     };
   }
 

@@ -1,6 +1,7 @@
 import { LiveCaptureEventType } from '../../types/event-type.types';
 import { LocalMatchEvent } from '../../types/event.types';
 import { PeriodStatisticDTO } from '../../types/statistic.types';
+import { eventTeam } from './event-rules';
 
 export type DisciplineStats = Pick<
   PeriodStatisticDTO,
@@ -28,33 +29,33 @@ export function computeDisciplineStats(
 
   for (const event of events) {
     const et = eventTypeMap.get(event.eventTypeId);
-    const typeName = et ? et.name : '';
-    const isOwn = event.teamPossession === 'OWN';
+    const team = eventTeam(et, event);
+    if (!et || !team) continue;
+    const own = team === 'OWN';
 
-    switch (typeName) {
-      case 'Penal / infracción':
-        if (isOwn) {
-          ownPenaltiesConceded++;
-        } else {
-          opponentPenaltiesConceded++;
-        }
+    switch (et.code) {
+      case 'PENALTY_CONCEDED':
+        own ? ownPenaltiesConceded++ : opponentPenaltiesConceded++;
         break;
-      case 'Amonestación':
-        if (isOwn) {
-          ownYellowCards++;
-        } else {
-          opponentYellowCards++;
-        }
+      case 'YELLOW_CARD':
+        own ? ownYellowCards++ : opponentYellowCards++;
         break;
-      case 'Expulsión':
-        if (isOwn) {
-          ownRedCards++;
-        } else {
-          opponentRedCards++;
-        }
+      case 'RED_CARD':
+        own ? ownRedCards++ : opponentRedCards++;
         break;
+      case 'SCRUM':
+      case 'LINEOUT': {
+        // penalty_for / penalty_against are recorded as the result, with no separate PENALTY_CONCEDED
+        const result = event.attributes?.[et.code === 'SCRUM' ? 'scrumResult' : 'lineResult'];
+        if (result === 'penalty_against') own ? ownPenaltiesConceded++ : opponentPenaltiesConceded++;
+        if (result === 'penalty_for')     own ? opponentPenaltiesConceded++ : ownPenaltiesConceded++;
+        break;
+      }
     }
   }
+
+
+
 
   return {
     ownPenaltiesConceded,

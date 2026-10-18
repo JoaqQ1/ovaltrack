@@ -1,5 +1,5 @@
 import { FollowUpChoice, LiveCaptureEventType, PossessionAfter, TemplateField } from '../../types/event-type.types';
-import { Possession } from '../../types/live-capture.types';
+import { LocalMatchEvent, Possession } from '../../types/live-capture.types';
 
 export type Team = 'OWN' | 'OPPONENT';
 
@@ -19,6 +19,14 @@ export function countsAsScoring(type: LiveCaptureEventType, attrs?: Record<strin
   }
   const field = type.templateEventFields?.find(f => f.effects?.includes('scoring'));
   return !field || attrs?.[field.key] !== false;
+}
+
+export function eventTeam(type: LiveCaptureEventType | undefined, event: LocalMatchEvent): Team | null {
+  if (!type) return null;
+  const resolved = resolveActor(type, event.teamPossession);
+  if (resolved) return resolved;
+  // CHOOSE: assumes the capture flow stores the analyst's choice in teamPossession
+  return event.teamPossession === 'NEUTRAL' ? null : event.teamPossession;
 }
 
 /**

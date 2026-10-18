@@ -62,6 +62,10 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
   readonly showCreateModal = signal<boolean>(false);
 
+  goToStatistics(): void {
+    this.router.navigate(['/post-match', this.matchId, 'statistics']);
+  }
+
   openCreateModal(): void {
     this.showCreateModal.set(true);
   }

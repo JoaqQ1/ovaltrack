@@ -1,0 +1,251 @@
+<section class="layout-container page stats-page">
+
+  <!-- HUD -->
+  <header class="hud-container">
+    <div class="hud-left">
+      <button type="button" class="hud-back" (click)="goBack()" aria-label="Volver al análisis" title="Volver al análisis">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+
+      <div class="hud-content">
+        <div class="badge-tech"><span>Análisis • Estadísticas</span></div>
+        <h1 class="hud-title">
+          <span class="club-name">{{ ownClubName() }}</span>
+          @if (stats(); as s) {
+            <span class="match-score-pill">{{ s.ownScore }} – {{ s.opponentScore }}</span>
+          }
+          <span class="club-name">{{ opponent() }}</span>
+        </h1>
+        <p class="hud-subtitle">{{ periodLabel() }}</p>
+      </div>
+    </div>
+
+    <div class="hud-right">
+      <div class="segmented" role="tablist" aria-label="Período">
+        <button type="button" class="segment" [class.segment--active]="period() === 'ALL'" (click)="setPeriod('ALL')">Total</button>
+        <button type="button" class="segment" [class.segment--active]="period() === 1" (click)="setPeriod(1)">1T</button>
+        <button type="button" class="segment" [class.segment--active]="period() === 2" (click)="setPeriod(2)">2T</button>
+      </div>
+
+      <div class="segmented" role="tablist" aria-label="Sección">
+        <button type="button" role="tab" class="segment" [class.segment--active]="activeTab() === 'team'"
+                [attr.aria-selected]="activeTab() === 'team'" (click)="switchTab('team')">
+          <i class="bi bi-grid-1x2"></i><span>Equipo</span>
+        </button>
+        <button type="button" role="tab" class="segment" [class.segment--active]="activeTab() === 'players'"
+                [attr.aria-selected]="activeTab() === 'players'" (click)="switchTab('players')">
+          <i class="bi bi-people"></i><span>Jugadores</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="state-box">
+      <div class="spinner"></div>
+      <p>Calculando estadísticas del partido...</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="state-box state-box--error">
+      <i class="bi bi-exclamation-triangle"></i>
+      <p>{{ errorMessage() }}</p>
+      <button type="button" class="btn-outline" (click)="goBack()">Volver</button>
+    </div>
+  } @else if (!hasEvents()) {
+    <div class="state-box">
+      <i class="bi bi-bar-chart"></i>
+      <p>Este partido todavía no tiene eventos registrados.</p>
+    </div>
+  } @else {
+  @if (stats(); as s) {
+
+    @if (activeTab() === 'team') {
+      <div class="stats-layout">
+
+        <!-- Marcador + posesión + desglose -->
+        <section class="form-card">
+          <div class="form-card-header">
+            <h2 class="form-card-title">Marcador y posesión</h2>
+          </div>
+          <div class="form-card-body">
+            <div class="scoreboard">
+              <div class="scoreboard__team">
+                <span class="scoreboard__name">{{ ownClubName() }}</span>
+                <span class="scoreboard__score scoreboard__score--own">{{ s.ownScore }}</span>
+              </div>
+              <div class="scoreboard__center">
+                <div class="possession-labels">
+                  <span class="text-own">Posesión {{ s.ownPossessionPercentage }}%</span>
+                  <span class="text-opp">{{ opponentPossession() }}% Posesión</span>
+                </div>
+                <div class="bar" role="progressbar" [attr.aria-valuenow]="s.ownPossessionPercentage" aria-valuemin="0" aria-valuemax="100">
+                  <div class="bar__fill bar__fill--own" [style.width.%]="s.ownPossessionPercentage"></div>
+                  <div class="bar__fill bar__fill--opp" [style.width.%]="opponentPossession()"></div>
+                </div>
+              </div>
+              <div class="scoreboard__team scoreboard__team--away">
+                <span class="scoreboard__name">{{ opponent() }}</span>
+                <span class="scoreboard__score scoreboard__score--opp">{{ s.opponentScore }}</span>
+              </div>
+            </div>
+
+            <div class="compare-list">
+              @for (row of scoreRows(); track row.label) {
+                <div class="compare-row" [attr.title]="row.hint">
+                  <strong class="text-own">{{ row.own }}</strong>
+                  <div class="compare-row__mid">
+                    <span class="compare-row__label">{{ row.label }}</span>
+                    <div class="bar bar--thin">
+                      <div class="bar__fill bar__fill--own" [style.width.%]="barWidth(row.own, row.opponent)"></div>
+                      <div class="bar__fill bar__fill--opp" [style.width.%]="100 - barWidth(row.own, row.opponent)"></div>
+                    </div>
+                  </div>
+                  <strong class="text-opp">{{ row.opponent }}</strong>
+                </div>
+              }
+            </div>
+          </div>
+        </section>
+
+        <!-- Tarjetas tácticas -->
+        <div class="metric-grid">
+
+          <section class="metric-card">
+            <div class="metric-card__head">
+              <h3><i class="bi bi-shield"></i> Tackles</h3>
+              <span class="status-pill status-pill--{{ tackleStatus().type }}">{{ tackleStatus().label }}</span>
+            </div>
+            <div class="metric-card__hero">
+              <span class="hero-number">{{ s.ownTackleEffectiveness }}%</span>
+              <span class="hero-label">Efectividad</span>
+            </div>
+            <div class="bar bar--thin">
+              <div class="bar__fill bar__fill--own" [style.width.%]="s.ownTackleEffectiveness"></div>
+              <div class="bar__fill bar__fill--opp" [style.width.%]="100 - s.ownTackleEffectiveness"></div>
+            </div>
+            <dl class="metric-card__details">
+              <div><dt>Completados</dt><dd class="text-own">{{ s.ownTacklesCompleted }}</dd></div>
+              <div><dt>Fallados</dt><dd class="text-opp">{{ s.ownTacklesMissed }}</dd></div>
+            </dl>
+          </section>
+
+          <section class="metric-card">
+            <div class="metric-card__head">
+              <h3><i class="bi bi-arrow-left-right"></i> Turnovers</h3>
+              <span class="status-pill status-pill--{{ turnoverStatus().type }}">{{ turnoverStatus().label }}</span>
+            </div>
+            <div class="metric-card__hero">
+              <span class="hero-number">{{ turnoverBalance() > 0 ? '+' : '' }}{{ turnoverBalance() }}</span>
+              <span class="hero-label">Balance neto</span>
+            </div>
+            <div class="bar bar--thin">
+              <div class="bar__fill bar__fill--own" [style.width.%]="barWidth(s.ownTurnoversWon, s.ownTurnoversLost)"></div>
+              <div class="bar__fill bar__fill--opp" [style.width.%]="100 - barWidth(s.ownTurnoversWon, s.ownTurnoversLost)"></div>
+            </div>
+            <dl class="metric-card__details">
+              <div><dt>Ganados</dt><dd class="text-own">{{ s.ownTurnoversWon }}</dd></div>
+              <div><dt>Perdidos</dt><dd class="text-opp">{{ s.ownTurnoversLost }}</dd></div>
+            </dl>
+          </section>
+
+          <section class="metric-card">
+            <div class="metric-card__head">
+              <h3><i class="bi bi-exclamation-triangle"></i> Disciplina</h3>
+              <span class="status-pill status-pill--{{ disciplineStatus().type }}">{{ disciplineStatus().label }}</span>
+            </div>
+            <div class="metric-card__hero">
+              <span class="hero-number">{{ s.ownPenaltiesConceded }}</span>
+              <span class="hero-label">Penales cometidos</span>
+            </div>
+            <dl class="metric-card__details">
+              @for (row of disciplineRows(); track row.label) {
+                <div>
+                  <dt>{{ row.label }}</dt>
+                  <dd>{{ row.own }} <span class="muted">vs</span> {{ row.opponent }}</dd>
+                </div>
+              }
+            </dl>
+          </section>
+
+          <section class="metric-card">
+            <div class="metric-card__head">
+              <h3><i class="bi bi-people"></i> Fijas</h3>
+              <span class="status-pill status-pill--neutral">{{ s.scrumsTotal + s.lineoutsTotal === 0 ? 'Sin datos' : 'Registradas' }}</span>
+            </div>
+            <div class="metric-card__hero">
+              <span class="hero-number">{{ s.scrumsTotal + s.lineoutsTotal }}</span>
+              <span class="hero-label">Jugadas disputadas</span>
+            </div>
+            <dl class="metric-card__details">
+              <div><dt>Scrums</dt><dd>{{ s.scrumsTotal }}</dd></div>
+              <div><dt>Line-outs</dt><dd>{{ s.lineoutsTotal }}</dd></div>
+            </dl>
+          </section>
+
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'players') {
+      <section class="form-card">
+        <div class="form-card-header">
+          <h2 class="form-card-title">Rendimiento individual</h2>
+          <p class="form-card-subtitle">Jugadores con puntos o tarjetas · {{ periodLabel() }}</p>
+        </div>
+
+        @if (players().length === 0) {
+          <div class="state-box state-box--inline">
+            <i class="bi bi-people"></i>
+            <p>No hay jugadores con puntos o tarjetas en este período.</p>
+          </div>
+        } @else {
+          <div class="table-scroll">
+            <table class="players-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th class="left">Jugador</th>
+                  <th>Tries</th>
+                  <th>Conv.</th>
+                  <th>Penales / Drops</th>
+                  <th>Puntos</th>
+                  <th>Tarjetas</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of players(); track p.playerId) {
+                  <tr>
+                    <td><span class="jersey">{{ p.jerseyNumber }}</span></td>
+                    <td class="left">
+                      <span class="player-name">{{ p.playerName }}</span>
+                      @if (p.position) { <span class="player-pos">{{ p.position }}</span> }
+                    </td>
+                    <td class="mono" [class.zero]="p.tries === 0">{{ p.tries || '—' }}</td>
+                    <td class="mono" [class.zero]="p.conversions === 0">{{ p.conversions || '—' }}</td>
+                    <td class="mono" [class.zero]="p.penaltyKicks + p.dropGoals === 0">{{ formatKicking(p) }}</td>
+                    <td>
+                      @if (p.totalPoints > 0) {
+                        <span class="points-badge">{{ p.totalPoints }} pts</span>
+                      } @else {
+                        <span class="mono zero">—</span>
+                      }
+                    </td>
+                    <td class="mono">
+                      @if (p.yellowCards > 0 || p.redCards > 0) {
+                        @if (p.yellowCards > 0) { <span>🟨 {{ p.yellowCards }}</span> }
+                        @if (p.redCards > 0) { <span>🟥 {{ p.redCards }}</span> }
+                      } @else {
+                        <span class="zero">—</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+  }
+}
+</section>

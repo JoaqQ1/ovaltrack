@@ -24,7 +24,7 @@ export interface BackendEventTypeResponse {
   id: UUID;
   name: string;
   groupName: string | null;
-  category: 'ATTACK' | 'DEFENSE' | 'NEUTRAL' | 'SET_PIECE' | null;
+  category: 'ATTACK' | 'DEFENSE' | 'NEUTRAL' | 'SET_PIECE' | 'POSSESSION' | null;
   isScoring: boolean;
   points: number | null;
   requiresPlayer: boolean;
