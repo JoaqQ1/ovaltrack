@@ -1,5 +1,7 @@
-import { LocalMatchEvent, LiveCaptureEventType } from '../../types/live-capture.types';
+import { LiveCaptureEventType } from '../../types/event-type.types';
+import { LocalMatchEvent } from '../../types/event.types';
 import { PlayerPeriodStatistic } from '../../types/statistic.types';
+import { countsAsScoring, eventTeam } from './event-rules';
 
 export interface RosterPlayerInfo {
   playerId: string;
@@ -17,8 +19,6 @@ export function computePlayerPeriodStats(
   roster: RosterPlayerInfo[],
   eventTypeMap: Map<string, LiveCaptureEventType>
 ): PlayerPeriodStatistic[] {
-  const getName = (e: LocalMatchEvent) => eventTypeMap.get(e.eventTypeId)?.name ?? '';
-
   const readJerseyNumber = (event: LocalMatchEvent): number | null => {
     const value = event.attributes?.['playerNumber'];
     if (typeof value === 'number' && !isNaN(value)) return value;
@@ -40,7 +40,8 @@ export function computePlayerPeriodStats(
       eventsByPlayerId.set(event.playerId, list);
     }
 
-    if (event.teamPossession !== 'OPPONENT') {
+    const et = eventTypeMap.get(event.eventTypeId);
+    if (eventTeam(et, event) !== 'OPPONENT') {
       const jersey = readJerseyNumber(event);
       if (jersey !== null) {
         const list = eventsByJersey.get(jersey) ?? [];
@@ -70,32 +71,23 @@ export function computePlayerPeriodStats(
     let yellowCards = 0;
     let redCards = 0;
 
+    let totalPoints = 0;
     for (const e of playerEvents) {
-      const typeName = getName(e);
-      switch (typeName) {
-        case 'Try':
-          tries++;
-          break;
-        case 'Conversión':
-        case 'Conversion':
-          conversions++;
-          break;
-        case 'Penal a los palos':
-          penaltyKicks++;
-          break;
-        case 'Drop gol':
-          dropGoals++;
-          break;
-        case 'Amonestación':
-          yellowCards++;
-          break;
-        case 'Expulsión':
-          redCards++;
-          break;
+      const et = eventTypeMap.get(e.eventTypeId);
+      if (!et) continue;
+      const scored = countsAsScoring(et, e.attributes);
+      if (scored) totalPoints += et.points;
+
+      switch (et.code) {
+        case 'TRY':          if (scored) tries++; break;
+        case 'CONVERSION':   if (scored) conversions++; break;
+        case 'PENALTY_KICK': if (scored) penaltyKicks++; break;
+        case 'DROP_GOAL':    if (scored) dropGoals++; break;
+        case 'YELLOW_CARD':  yellowCards++; break;
+        case 'RED_CARD':     redCards++; break;
       }
     }
 
-    const totalPoints = (tries * 5) + (conversions * 2) + (penaltyKicks * 3) + (dropGoals * 3);
     const minutesPlayed = player.isStarter ? 40 : 0;
 
     return {

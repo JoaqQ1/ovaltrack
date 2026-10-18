@@ -210,6 +210,12 @@ export const routes: Routes = [
         },
         component: OpponentManagerComponent
     },
+    {
+        path: 'post-match/:id/statistics',
+        loadComponent: () => import('./features/match/post-match/components/post-match-statistics/post-match-statistics.component')
+            .then(m => m.PostMatchStatisticsComponent),
+        data: { layout: 'wide' },
+    },
     // Wildcard para rutas no encontradas
     {
         path: '**',

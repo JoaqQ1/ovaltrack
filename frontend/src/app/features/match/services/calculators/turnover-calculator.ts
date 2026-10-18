@@ -1,6 +1,7 @@
 import { LiveCaptureEventType } from '../../types/event-type.types';
 import { LocalMatchEvent } from '../../types/event.types';
 import { PeriodStatisticDTO } from '../../types/statistic.types';
+import { eventTeam } from './event-rules';
 
 export type TurnoverStats = Pick<
   PeriodStatisticDTO,
@@ -19,15 +20,19 @@ export function computeTurnoverStats(
 
   for (const event of events) {
     const et = eventTypeMap.get(event.eventTypeId);
-    if (et?.name === 'Turnover') {
-      if (event.teamPossession === 'OWN') {
-        ownTurnoversLost++;
-      } else {
-        ownTurnoversWon++;
-      }
+    const team = eventTeam(et, event);
+    if (!et || !team) continue;
+
+    switch (et.code) {
+      case 'TURNOVER_WON':
+        team === 'OWN' ? ownTurnoversWon++ : ownTurnoversLost++;
+        break;
+      case 'HANDLING_ERROR':
+      case 'OTHER_TURNOVER':
+        team === 'OWN' ? ownTurnoversLost++ : ownTurnoversWon++;
+        break;
     }
   }
-
   return {
     ownTurnoversWon,
     ownTurnoversLost,

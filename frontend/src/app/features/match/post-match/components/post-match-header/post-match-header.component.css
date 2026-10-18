@@ -153,6 +153,24 @@
   align-items: center;
 }
 
+.btn-outline {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 10px;
+  background-color: #ffffff;
+  border: 1px solid rgba(32, 75, 34, 0.25);
+  color: #204b22;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(20, 45, 20, 0.04);
+}
+
+.btn-outline:hover {
+  background-color: #f2f7ef;
+  border-color: #204b22;
+  color: #142e15;
+  transform: translateY(-1px);
+}
+
 .btn-add-event {
   display: inline-flex;
   align-items: center;

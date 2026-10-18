@@ -19,6 +19,7 @@ export class PostMatchHeaderComponent {
 
   @Output() back = new EventEmitter<void>();
   @Output() addEvent = new EventEmitter<void>();
+  @Output() viewStats = new EventEmitter<void>();
 
   onBack(): void {
     this.back.emit();
@@ -27,4 +28,9 @@ export class PostMatchHeaderComponent {
   onAddEvent(): void {
     this.addEvent.emit();
   }
+
+  onViewStats(): void {
+    this.viewStats.emit();
+  }
+
 }

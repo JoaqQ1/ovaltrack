@@ -13,6 +13,7 @@ import { MatchService } from './match.service';
 import { EventService } from './event.service';
 import { RosterService } from './roster.service';
 import { AvailablePlayer , SavedRoster} from '../types/roster.types';
+import { eventTeam } from './calculators/event-rules';
 
 const HOME_TEAM_NAME = 'PMRC';
 
@@ -217,14 +218,16 @@ export class LiveCaptureService {
   }
 
   private async resolvePlayer(event: LocalMatchEvent): Promise<LocalMatchEvent> {
-    if (event.playerId || event.teamPossession !== 'OWN') {
-      return event;
-    }
+    if (event.playerId) return event;
 
-    const playerNumber = event.attributes?.['playerNumber'];
-    if (typeof playerNumber !== 'number') {
-      return event;
-    }
+    const eventTypes = await this.cache.getEventTypes();
+    const et = eventTypes.find(t => t.id === event.eventTypeId);
+    if (eventTeam(et, event) !== 'OWN') return event;
+
+    const raw = event.attributes?.['playerNumber'];
+    if (raw === null || raw === undefined || raw === '') return event;
+    const playerNumber = Number(raw);
+    if (!Number.isFinite(playerNumber)) return event;
 
     let player = this.playersByMatch.get(event.matchId)
       ?.find(currentPlayer => currentPlayer.jerseyNumber === playerNumber);

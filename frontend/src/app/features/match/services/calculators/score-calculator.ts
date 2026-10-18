@@ -1,6 +1,7 @@
 import { LiveCaptureEventType } from '../../types/event-type.types';
 import { LocalMatchEvent } from '../../types/event.types';
 import { PeriodStatisticDTO } from '../../types/statistic.types';
+import { countsAsScoring, eventTeam } from './event-rules';
 
 export type ScoreStats = Pick<
   PeriodStatisticDTO,
@@ -23,73 +24,33 @@ export function computeScoreStats(
   events: LocalMatchEvent[],
   eventTypeMap: Map<string, LiveCaptureEventType>
 ): ScoreStats {
-  let ownScore = 0;
-  let opponentScore = 0;
-  let ownTries = 0;
-  let opponentTries = 0;
-  let ownConversions = 0;
-  let opponentConversions = 0;
-  let ownPenalties = 0;
-  let opponentPenalties = 0;
-  let ownDropGoals = 0;
-  let opponentDropGoals = 0;
+
+  const result: ScoreStats = {
+    ownScore: 0, opponentScore: 0, ownTries: 0, opponentTries: 0,
+    ownConversions: 0, opponentConversions: 0, ownPenalties: 0, opponentPenalties: 0,
+    ownDropGoals: 0, opponentDropGoals: 0,
+  };
 
   for (const event of events) {
     const et = eventTypeMap.get(event.eventTypeId);
-    const typeName = et ? et.name : '';
-    const possession = event.teamPossession;
+    if (!et || !countsAsScoring(et, event.attributes)) continue; // missed kicks are dropped here
+    const team = eventTeam(et, event);
+    if (!team) continue;
+    const own = team === 'OWN';
 
-    switch (typeName) {
-      case 'Try':
-        if (possession === 'OWN') {
-          ownTries++;
-          ownScore += 5;
-        } else {
-          opponentTries++;
-          opponentScore += 5;
-        }
-        break;
-      case 'Conversión':
-      case 'Conversion':
-        if (possession === 'OWN') {
-          ownConversions++;
-          ownScore += 2;
-        } else {
-          opponentConversions++;
-          opponentScore += 2;
-        }
-        break;
-      case 'Penal a los palos':
-        if (possession === 'OWN') {
-          ownPenalties++;
-          ownScore += 3;
-        } else {
-          opponentPenalties++;
-          opponentScore += 3;
-        }
-        break;
-      case 'Drop gol':
-        if (possession === 'OWN') {
-          ownDropGoals++;
-          ownScore += 3;
-        } else {
-          opponentDropGoals++;
-          opponentScore += 3;
-        }
-        break;
+    if (own) result.ownScore += et.points; else result.opponentScore += et.points;
+
+    switch (et.code) {
+      case 'TRY':
+      case 'PENALTY_TRY': // 7 pts, counted as a try
+        own ? result.ownTries++ : result.opponentTries++; break;
+      case 'CONVERSION':
+        own ? result.ownConversions++ : result.opponentConversions++; break;
+      case 'PENALTY_KICK':
+        own ? result.ownPenalties++ : result.opponentPenalties++; break;
+      case 'DROP_GOAL':
+        own ? result.ownDropGoals++ : result.opponentDropGoals++; break;
     }
   }
-
-  return {
-    ownScore,
-    opponentScore,
-    ownTries,
-    opponentTries,
-    ownConversions,
-    opponentConversions,
-    ownPenalties,
-    opponentPenalties,
-    ownDropGoals,
-    opponentDropGoals,
-  };
+  return result
 }
