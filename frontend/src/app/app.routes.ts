@@ -213,7 +213,7 @@ export const routes: Routes = [
     {
         path: 'post-match/:id/statistics',
         loadComponent: () => import('./features/match/post-match/components/post-match-statistics/post-match-statistics.component')
-            .then(m => m.MatchStatisticsComponent),
+            .then(m => m.PostMatchStatisticsComponent),
         data: { layout: 'wide' },
     },
     // Wildcard para rutas no encontradas
