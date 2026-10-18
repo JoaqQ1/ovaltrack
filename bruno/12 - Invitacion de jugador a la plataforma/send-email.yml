@@ -1,0 +1,24 @@
+info:
+  name: send-email
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/invitation/send-email"
+  body:
+    type: json
+    data: |-
+      {
+        "to":"ovaltrack7@gmail.com",
+        "subject":"Saludo",
+        "content":"Hola como estas"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

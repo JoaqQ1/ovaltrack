@@ -46,15 +46,15 @@ export class AppComponent {
   }
 
   ngOnInit(): void {
-    this.http.get<PingResponse>(`${environment.apiUrl}/api`).subscribe({
-      next: (data) => {
-        this.isConnected = true;
-        this.statusMessage = `${data.message} (status: ${data.status})`;
-      },
-      error: (err) => {
-        this.isConnected = false;
-        this.statusMessage = `Error al conectar con ${environment.apiUrl}: ${err.message}`;
-      }
-    });
+    // this.http.get<PingResponse>(`${environment.apiUrl}/api`).subscribe({
+    //   next: (data) => {
+    //     this.isConnected = true;
+    //     this.statusMessage = `${data.message} (status: ${data.status})`;
+    //   },
+    //   error: (err) => {
+    //     this.isConnected = false;
+    //     this.statusMessage = `Error al conectar con ${environment.apiUrl}: ${err.message}`;
+    //   }
+    // });
   }
 }

@@ -39,6 +39,10 @@ public class PersonService {
         return personRepository.findPaginatedInactivePlayersByClubAndDivision(clubId, divisionId,PageRequest.of(page, size))
                 .map(PersonDTOMapper::toResponseDTO);
     }
+    public Page<PersonResponseDTO> findAllPlayersByDivision(UUID divisionId, int page, int size) {
+        return personRepository.findAllPlayersByDivision( divisionId,PageRequest.of(page, size))
+                .map(PersonDTOMapper::toResponseDTO);
+    }
 
     public PersonResponseDTO findPersonById(UUID personId) {
         return PersonDTOMapper.toResponseDTO(findPersonEntityById(personId));

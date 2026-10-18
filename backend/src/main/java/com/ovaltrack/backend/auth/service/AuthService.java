@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.auth.dto.AuthResponse;
 import com.ovaltrack.backend.auth.dto.LoginRequest;
+import com.ovaltrack.backend.auth.dto.RegisterFromInvitationRequest;
 import com.ovaltrack.backend.auth.registration.domain.dto.ClubRegistrationDTO;
 import com.ovaltrack.backend.auth.registration.domain.dto.ClubRegistrationDTO.AdminData;
 import com.ovaltrack.backend.auth.registration.domain.dto.ClubRegistrationDTO.ClubData;
@@ -24,8 +25,11 @@ import com.ovaltrack.backend.user.domain.UserStatus;
 import jakarta.transaction.Transactional;
 
 import com.ovaltrack.backend.common.config.exceptions.UserDeactivatedException;
+import com.ovaltrack.backend.invitations.domain.Invitation;
+import com.ovaltrack.backend.invitations.service.InvitationService;
 import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.Person;
+import com.ovaltrack.backend.token.service.TokenService;
 
 @Service
 public class AuthService {
@@ -34,17 +38,23 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private PersonService personService;
+    private InvitationService invitationService;
+    private TokenService tokenService;
 
     public AuthService(UserService userService,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             ClubService clubService,
-            PersonService personService) {
+            PersonService personService,
+            InvitationService invitationService,
+            TokenService tokenService) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.clubService = clubService;
         this.personService = personService;
+        this.invitationService = invitationService;
+        this.tokenService = tokenService;
     }
 
     @Transactional
@@ -171,5 +181,44 @@ public class AuthService {
         }
 
         return true;
+    }
+
+    // ---- AuthService ----
+    // Inyecta además: InvitationService invitationService, TokenService
+    // tokenService,
+    // UserService userService, PasswordEncoder passwordEncoder
+
+    @Transactional
+    public void registerFromInvitation(RegisterFromInvitationRequest request) {
+        // 1. Leer y comprobar (sin modificar nada todavía)
+        Invitation invitation = invitationService.findUsableInvitation(request.token());
+        Person person = invitation.getPerson();
+        String email = person.getContactEmail();
+
+        if (userService.existsByEmail(email)) {
+            throw new BusinessException(
+                    "Ya existe una cuenta con este correo. Inicia sesión para aceptar la asociación.");
+        }
+        if (userService.findUserByPersonId(person.getId()) != null) {
+            throw new BusinessException("Esta persona ya tiene una cuenta vinculada.");
+        }
+
+        // 2. Consumir el token ANTES de crear el usuario: el UPDATE atómico decide
+        // quién gana
+        // si llegan dos peticiones a la vez. Si algo falla después, la transacción
+        // revierte
+        // y el token queda libre otra vez.
+        tokenService.consume(request.token());
+
+        // 3. Crear la cuenta vinculada a la persona. Sin aprobación pendiente:
+        // el club ya invitó a este jugador, a diferencia de /register.
+        User user = new User();
+        user.setLoginEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setRole(UserRole.PLAYER);
+        user.setAccountStatus(UserStatus.ACTIVE);
+        user.setActive(true);
+        user.setPerson(person);
+        userService.saveUser(user);
     }
 }

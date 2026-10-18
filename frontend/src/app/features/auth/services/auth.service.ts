@@ -8,6 +8,7 @@ import { UserContextService } from '../../../core/services/user-context.service'
 import { Observable, tap } from 'rxjs';
 import { RegistrationRequest } from '../pages/register/types/register.type';
 import { BackendResponse } from 'src/app/shared/types/shared-types';
+import { RegisterFromInvitationRequest } from '../../invitation/types/invitation.types';
 @Injectable({
   providedIn: 'root'
 })
@@ -103,6 +104,9 @@ export class AuthService {
     }
 
     return null;
+  }
+  registerFromInvitation(request: RegisterFromInvitationRequest): Observable<BackendResponse> {
+    return this.http.post<BackendResponse>(`${this.apiUrl}/register/invitation`, request);
   }
 
   public getUserRole(): string | null {

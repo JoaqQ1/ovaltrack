@@ -38,6 +38,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/invitation/validate").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/division/{divisionId}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/person/{personId}").permitAll()
                         .requestMatchers("/club/registration-options").permitAll()
                         .requestMatchers("/club/search/{term}").permitAll()
                         .requestMatchers("/actuator/health").permitAll()

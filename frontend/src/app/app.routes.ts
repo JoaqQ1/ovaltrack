@@ -81,7 +81,7 @@ export const routes: Routes = [
     },
     {
         canMatch: [authGuard],
-        canActivate:[hasRoleGuard],
+        canActivate: [hasRoleGuard],
         data: {
             roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
         },
@@ -90,7 +90,7 @@ export const routes: Routes = [
     },
     {
         path: 'club/new',
-        canActivate:[hasRoleGuard],
+        canActivate: [hasRoleGuard],
         data: {
             roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
         },
@@ -98,7 +98,7 @@ export const routes: Routes = [
     },
     {
         path: 'divisions/new',
-        canActivate:[hasRoleGuard, hasClubGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
         },
@@ -107,7 +107,7 @@ export const routes: Routes = [
     },
     {
         path: 'divisions',
-        canActivate:[hasRoleGuard, hasClubGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB", "COACH_ANALYST"]
         },
@@ -134,7 +134,7 @@ export const routes: Routes = [
     },
     {
         path: 'players/new',
-        canActivate:[hasRoleGuard, hasClubGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB", "COACH_ANALYST"]
         },
@@ -192,6 +192,13 @@ export const routes: Routes = [
         },
         component: PostMatchComponent
     },
+    {
+        path: 'invitation',
+        loadComponent: () =>
+            import('./features/invitation/invitation.component').then(
+                c => c.InvitationComponent
+            )
+    }, 
     {
         path: 'match-history',
         canMatch: [authGuard],

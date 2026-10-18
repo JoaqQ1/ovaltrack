@@ -3,7 +3,7 @@
   <header class="hud">
     <div class="hud-brand">
       <div class="badge-tech">
-        <span>Plantel • {{ division?.name || 'División' }}</span>
+        <span>Plantel • {{ division?.name || "División" }}</span>
       </div>
       <div class="brand-text">
         <h1 class="title">Jugadores Asociados</h1>
@@ -12,22 +12,49 @@
     </div>
 
     <div class="hud-actions">
-      <a routerLink="/divisions" class="btn btn-outline">
-        ← Volver a divisiones
-      </a>
-      <!-- Toggle button for showing/hiding available players -->
+      <!-- Botón de máxima jerarquía: Invitar a la plataforma (Acción de sistema / Onboarding) -->
+      <button class="btn btn-invite-platform" (click)="sendInvitation()">
+        <i class="bx bx-user-plus"></i> Invitar a la plataforma
+      </button>
+
+      <!-- Botón secundario: Asociar jugadores existentes del club -->
       <button
         type="button"
-        class="btn btn-invite"
-        (click)="mostrarJugadoresInactivos()">
-        {{ mostrarFormularioAsociacion ? 'Ocultar registro' : '+ Asociar jugadores' }}
+        class="btn btn-secondary"
+        (click)="mostrarJugadoresInactivos()"
+      >
+        <i class="bx" [ngClass]="mostrarFormularioAsociacion ? 'bx-chevron-up' : 'bx-plus-circle'"></i>
+        {{
+          mostrarFormularioAsociacion
+            ? "Ocultar registro"
+            : "Asociar del club"
+        }}
       </button>
+
+      <!-- Enlace / Botón auxiliar de navegación -->
+      <a routerLink="/divisions" class="btn btn-outline">
+        <i class="bx bx-arrow-back"></i> Volver
+      </a>
     </div>
   </header>
 
+  @if (showInvite) {
+    <app-invite-player-modal
+      [division]="division"
+      [sending]="sending"
+      (invited)="onInvite($event)"
+      (closed)="showInvite = false"
+    />
+  }
   <!-- Section: Available Club Players to Register (Visible when toggled ON) -->
-  <section class="table-card" *ngIf="mostrarFormularioAsociacion && resultsPage.content.length > 0">
-    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+  <section
+    class="table-card"
+    *ngIf="mostrarFormularioAsociacion && resultsPage.content.length > 0"
+  >
+    <div
+      class="card-header"
+      style="display: flex; justify-content: space-between; align-items: center"
+    >
       <div>
         <p class="brand-text club">Jugadores del club disponibles</p>
         <h2 class="card-title">Seleccionar e ingresar posición</h2>
@@ -48,10 +75,14 @@
         <tbody>
           <tr *ngFor="let person of resultsPage.content">
             <td>
-              <div class="player-name">{{ person.firstName }} {{ person.lastName }}</div>
+              <div class="player-name">
+                {{ person.firstName }} {{ person.lastName }}
+              </div>
             </td>
             <td>
-              <span class="brand-text club">{{ person.contactEmail || 'Sin email' }}</span>
+              <span class="brand-text club">{{
+                person.contactEmail || "Sin email"
+              }}</span>
             </td>
             <td>
               <input
@@ -67,14 +98,17 @@
                 type="number"
                 placeholder="Nº"
                 class="form-control"
-                style="width: 80px;"
+                style="width: 80px"
               />
             </td>
             <td class="text-right">
               <button
                 type="button"
                 class="btn btn-primary"
-                (click)="crearAsociacion(person.id, posInput.value, +jerseyInput.value)">
+                (click)="
+                  crearAsociacion(person.id, posInput.value, +jerseyInput.value)
+                "
+              >
                 Asociar
               </button>
             </td>
@@ -83,14 +117,14 @@
       </table>
     </div>
 
-      <app-pagination
-        [totalPages]="resultsPage.totalPages"
-        [currentPage]="currentPage"
-        (pageChangeRequested)="onPageChangeRequested($event)"
-        [number]="resultsPage.number"
-        [hidden]="resultsPage.numberOfElements < 1"
-      >
-      </app-pagination>
+    <app-pagination
+      [totalPages]="resultsPage.totalPages"
+      [currentPage]="currentPage"
+      (pageChangeRequested)="onPageChangeRequested($event)"
+      [number]="resultsPage.number"
+      [hidden]="resultsPage.numberOfElements < 1"
+    >
+    </app-pagination>
   </section>
 
   <!-- Main Content Card (Active Players List) -->
@@ -99,7 +133,9 @@
     <div class="card-header" *ngIf="activePlayers.length > 0">
       <p class="brand-text club">Plantel de división</p>
       <h2 class="card-title" id="players-title">
-        {{ activePlayersResultsPage.totalElements }} jugador{{ activePlayersResultsPage.totalElements === 1 ? '' : 'es' }}
+        {{ activePlayersResultsPage.totalElements }} jugador{{
+          activePlayersResultsPage.totalElements === 1 ? "" : "es"
+        }}
       </h2>
     </div>
 
@@ -125,16 +161,21 @@
           <tr *ngFor="let player of activePlayers; let index = index">
             <!-- Jersey Number -->
             <td>
-              <span class="jersey-number">#{{ player.jerseyNumber || '--' }}</span>
+              <span class="jersey-number"
+                >#{{ player.jerseyNumber || "--" }}</span
+              >
             </td>
 
             <!-- Player Identity -->
             <td>
               <div class="player-name">
-                {{ activePersons[index].firstName || 'Persona' }} {{ activePersons[index].lastName || 'sin nombre' }}
+                {{ activePersons[index].firstName || "Persona" }}
+                {{ activePersons[index].lastName || "sin nombre" }}
               </div>
               <div class="brand-text club">
-                {{ activePersons[index].contactEmail || 'Sin email registrado' }}
+                {{
+                  activePersons[index].contactEmail || "Sin email registrado"
+                }}
               </div>
             </td>
 
@@ -145,11 +186,12 @@
 
             <!-- Active / Inactive Status Indicator -->
             <td>
-              <span 
-                class="status-pill" 
-                [ngClass]="player.endDate ? 'status-inactive' : 'status-active'">
+              <span
+                class="status-pill"
+                [ngClass]="player.endDate ? 'status-inactive' : 'status-active'"
+              >
                 <span class="status-dot"></span>
-                {{ player.endDate ? 'Finalizado' : 'Activo' }}
+                {{ player.endDate ? "Finalizado" : "Activo" }}
               </span>
             </td>
 
@@ -159,7 +201,8 @@
                 <button
                   type="button"
                   class="btn btn-secondary"
-                  (click)="mostrarAsociaciones(player)">
+                  (click)="mostrarAsociaciones(player)"
+                >
                   Historial
                 </button>
                 <button
@@ -183,7 +226,8 @@
       [number]="activePlayersResultsPage.number"
       [last]="activePlayersResultsPage.last"
       [hidden]="activePlayersResultsPage.numberOfElements < 1"
-      (pageChangeRequested)="onActivePlayersPageChangeRequested($event)">
+      (pageChangeRequested)="onActivePlayersPageChangeRequested($event)"
+    >
     </app-pagination>
 
     <!-- History Card -->
@@ -196,11 +240,16 @@
             class="history-close"
             aria-label="Cerrar historial del jugador"
             title="Cerrar historial"
-            (click)="cerrarHistorial()">
+            (click)="cerrarHistorial()"
+          >
             ×
           </button>
         </div>
-        <h2 class="card-title">{{ playerHistory.length }} asociación{{ playerHistory.length === 1 ? '' : 'es' }}</h2>
+        <h2 class="card-title">
+          {{ playerHistory.length }} asociación{{
+            playerHistory.length === 1 ? "" : "es"
+          }}
+        </h2>
       </div>
 
       <div class="table-responsive">
@@ -215,13 +264,26 @@
           </thead>
           <tbody>
             <tr *ngFor="let historyItem of playerHistory">
-              <td><span class="position-badge">{{ historyItem.position }}</span></td>
-              <td>{{ historyItem.startDate | date: 'dd/MM/yyyy' }}</td>
-              <td>{{ historyItem.endDate ? (historyItem.endDate | date: 'dd/MM/yyyy') : 'Actualidad' }}</td>
               <td>
-                <span class="status-pill" [ngClass]="historyItem.endDate ? 'status-inactive' : 'status-active'">
+                <span class="position-badge">{{ historyItem.position }}</span>
+              </td>
+              <td>{{ historyItem.startDate | date: "dd/MM/yyyy" }}</td>
+              <td>
+                {{
+                  historyItem.endDate
+                    ? (historyItem.endDate | date: "dd/MM/yyyy")
+                    : "Actualidad"
+                }}
+              </td>
+              <td>
+                <span
+                  class="status-pill"
+                  [ngClass]="
+                    historyItem.endDate ? 'status-inactive' : 'status-active'
+                  "
+                >
                   <span class="status-dot"></span>
-                  {{ historyItem.endDate ? 'Finalizado' : 'Activo' }}
+                  {{ historyItem.endDate ? "Finalizado" : "Activo" }}
                 </span>
               </td>
             </tr>

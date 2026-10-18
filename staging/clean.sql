@@ -15,6 +15,9 @@ DELETE FROM division_players;
 DELETE FROM division_coaches;
 DELETE FROM divisions;
 
+DELETE FROM invitations;
+DELETE FROM tokens;
+
 -- Borrado de usuarios (respetando al administrador de OvalTrack) y catálogos principales
 DELETE FROM users WHERE role != 'ADMIN_OVALTRACK';
 DELETE FROM persons;

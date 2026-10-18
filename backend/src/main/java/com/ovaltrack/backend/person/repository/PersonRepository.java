@@ -41,5 +41,14 @@ public interface PersonRepository extends JpaRepository<Person, UUID> {
         ORDER BY p.lastName, p.firstName
     """)
     Page<Person> findPaginatedInactivePlayersByClubAndDivision(@Param("clubId") UUID clubId, @Param ("divisionId") UUID divisionId, Pageable pageable);
+    
+    @Query("""
+        SELECT DISTINCT p
+        FROM Person p
+        JOIN DivisionPlayer dp ON dp.person.id = p.id
+        WHERE dp.division.id = :divisionId
+        ORDER BY p.lastName, p.firstName
+    """)
+    Page<Person> findAllPlayersByDivision(UUID divisionId, Pageable pageable);
 
 }

@@ -62,6 +62,14 @@ public class PersonController {
         return ResponseEntity.ok(personService.findPaginatedInactivePlayersByClubAndDivision(clubId, divisionId, page, size));
     }
 
+    @GetMapping("/division")
+    public ResponseEntity<Object> findAllPlayersByDivision( 
+            @RequestParam UUID divisionId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size){
+                return ResponseEntity.ok(personService.findAllPlayersByDivision( divisionId, page, size));
+            }
+
     @Operation(
         summary = "Find a person by ID",
         description = "Returns the person identified by the personId path parameter."
