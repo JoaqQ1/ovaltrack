@@ -175,6 +175,13 @@ export const routes: Routes = [
         },
         component: PostMatchComponent
     },
+    {
+        path:'invitation',
+        loadComponent:() =>
+            import('./features/invitation/invitation.component').then(
+                c => c.InvitationComponent
+            )
+    },
     // Wildcard para rutas no encontradas
     {
         path: '**',
