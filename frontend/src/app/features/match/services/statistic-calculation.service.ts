@@ -9,7 +9,7 @@ import {
   computeTurnoverStats,
   computeDisciplineStats,
   computeSetPieceStats,
-  computePossessionStats,
+  computePossessionStatsByTime as computePossessionStats,
   computePlayerPeriodStats,
   RosterPlayerInfo,
 } from './calculators';
