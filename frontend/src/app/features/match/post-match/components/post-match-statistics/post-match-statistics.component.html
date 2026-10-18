@@ -107,81 +107,58 @@
           </div>
         </section>
 
-        <!-- Tarjetas tácticas -->
-        <div class="metric-grid">
-
-          <section class="metric-card">
-            <div class="metric-card__head">
-              <h3><i class="bi bi-shield"></i> Tackles</h3>
-              <span class="status-pill status-pill--{{ tackleStatus().type }}">{{ tackleStatus().label }}</span>
-            </div>
-            <div class="metric-card__hero">
-              <span class="hero-number">{{ s.ownTackleEffectiveness }}%</span>
-              <span class="hero-label">Efectividad</span>
-            </div>
-            <div class="bar bar--thin">
-              <div class="bar__fill bar__fill--own" [style.width.%]="s.ownTackleEffectiveness"></div>
-              <div class="bar__fill bar__fill--opp" [style.width.%]="100 - s.ownTackleEffectiveness"></div>
-            </div>
-            <dl class="metric-card__details">
-              <div><dt>Completados</dt><dd class="text-own">{{ s.ownTacklesCompleted }}</dd></div>
-              <div><dt>Fallados</dt><dd class="text-opp">{{ s.ownTacklesMissed }}</dd></div>
-            </dl>
-          </section>
-
-          <section class="metric-card">
-            <div class="metric-card__head">
-              <h3><i class="bi bi-arrow-left-right"></i> Turnovers</h3>
-              <span class="status-pill status-pill--{{ turnoverStatus().type }}">{{ turnoverStatus().label }}</span>
-            </div>
-            <div class="metric-card__hero">
-              <span class="hero-number">{{ turnoverBalance() > 0 ? '+' : '' }}{{ turnoverBalance() }}</span>
-              <span class="hero-label">Balance neto</span>
-            </div>
-            <div class="bar bar--thin">
-              <div class="bar__fill bar__fill--own" [style.width.%]="barWidth(s.ownTurnoversWon, s.ownTurnoversLost)"></div>
-              <div class="bar__fill bar__fill--opp" [style.width.%]="100 - barWidth(s.ownTurnoversWon, s.ownTurnoversLost)"></div>
-            </div>
-            <dl class="metric-card__details">
-              <div><dt>Ganados</dt><dd class="text-own">{{ s.ownTurnoversWon }}</dd></div>
-              <div><dt>Perdidos</dt><dd class="text-opp">{{ s.ownTurnoversLost }}</dd></div>
-            </dl>
-          </section>
-
-          <section class="metric-card">
-            <div class="metric-card__head">
-              <h3><i class="bi bi-exclamation-triangle"></i> Disciplina</h3>
-              <span class="status-pill status-pill--{{ disciplineStatus().type }}">{{ disciplineStatus().label }}</span>
-            </div>
-            <div class="metric-card__hero">
-              <span class="hero-number">{{ s.ownPenaltiesConceded }}</span>
-              <span class="hero-label">Penales cometidos</span>
-            </div>
-            <dl class="metric-card__details">
-              @for (row of disciplineRows(); track row.label) {
-                <div>
-                  <dt>{{ row.label }}</dt>
-                  <dd>{{ row.own }} <span class="muted">vs</span> {{ row.opponent }}</dd>
+        <!-- Detalle por área (todos los campos del catálogo de carga en vivo) -->
+        <div class="detail-grid">
+          @for (section of detailSections(); track section.id) {
+            <section class="form-card detail-card">
+              <div class="form-card-header detail-header">
+                <h2 class="form-card-title"><i class="bi {{ section.icon }}"></i> {{ section.title }}</h2>
+                <div class="legend" aria-hidden="true">
+                  <span class="dot dot--own"></span><span>{{ ownClubName() }}</span>
+                  <span class="dot dot--opp"></span><span>{{ opponent() }}</span>
                 </div>
-              }
-            </dl>
-          </section>
+              </div>
 
-          <section class="metric-card">
-            <div class="metric-card__head">
-              <h3><i class="bi bi-people"></i> Fijas</h3>
-              <span class="status-pill status-pill--neutral">{{ s.scrumsTotal + s.lineoutsTotal === 0 ? 'Sin datos' : 'Registradas' }}</span>
-            </div>
-            <div class="metric-card__hero">
-              <span class="hero-number">{{ s.scrumsTotal + s.lineoutsTotal }}</span>
-              <span class="hero-label">Jugadas disputadas</span>
-            </div>
-            <dl class="metric-card__details">
-              <div><dt>Scrums</dt><dd>{{ s.scrumsTotal }}</dd></div>
-              <div><dt>Line-outs</dt><dd>{{ s.lineoutsTotal }}</dd></div>
-            </dl>
-          </section>
+              <div class="form-card-body">
+                @if (section.metrics.length > 0) {
+                  <div class="metric-table">
+                    @for (metric of section.metrics; track metric.label) {
+                      <div class="compare-row compare-row--plain" [attr.title]="metric.hint">
+                        <strong class="text-own" [class.zero]="isEmptyValue(metric.own)">{{ formatMetric(metric.own, metric) }}</strong>
+                        <span class="compare-row__label">{{ metric.label }}</span>
+                        <strong class="text-opp" [class.zero]="isEmptyValue(metric.opponent)">{{ formatMetric(metric.opponent, metric) }}</strong>
+                      </div>
+                    }
+                  </div>
+                }
 
+                @for (group of section.breakdowns; track group.title) {
+                  @if (group.rows.length > 0) {
+                    <div class="breakdown">
+                      <h4 class="breakdown__title">{{ group.title }}</h4>
+                      @for (row of group.rows; track row.label) {
+                        <div class="compare-row">
+                          <strong class="text-own">{{ row.own }}</strong>
+                          <div class="compare-row__mid">
+                            <span class="compare-row__label">{{ row.label }}</span>
+                            <div class="bar bar--thin">
+                              <div class="bar__fill bar__fill--own" [style.width.%]="barWidth(row.own, row.opponent)"></div>
+                              <div class="bar__fill bar__fill--opp" [style.width.%]="100 - barWidth(row.own, row.opponent)"></div>
+                            </div>
+                          </div>
+                          <strong class="text-opp">{{ row.opponent }}</strong>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+
+                @if (section.note) {
+                  <p class="note"><i class="bi bi-info-circle"></i> {{ section.note }}</p>
+                }
+              </div>
+            </section>
+          }
         </div>
       </div>
     }
@@ -190,26 +167,33 @@
       <section class="form-card">
         <div class="form-card-header">
           <h2 class="form-card-title">Rendimiento individual</h2>
-          <p class="form-card-subtitle">Jugadores con puntos o tarjetas · {{ periodLabel() }}</p>
+          <p class="form-card-subtitle">Jugadores con actividad registrada · {{ periodLabel() }}</p>
         </div>
 
         @if (players().length === 0) {
           <div class="state-box state-box--inline">
             <i class="bi bi-people"></i>
-            <p>No hay jugadores con puntos o tarjetas en este período.</p>
+            <p>No hay jugadores con actividad en este período.</p>
           </div>
         } @else {
           <div class="table-scroll">
-            <table class="players-table">
+            <table class="players-table players-table--wide">
               <thead>
                 <tr>
                   <th>#</th>
                   <th class="left">Jugador</th>
-                  <th>Tries</th>
-                  <th>Conv.</th>
-                  <th>Penales / Drops</th>
                   <th>Puntos</th>
+                  <th>Tries</th>
+                  <th title="Convertidas / intentadas">Conv.</th>
+                  <th title="Convertidos / intentados">Penales</th>
+                  <th>Pases</th>
+                  <th>Offloads</th>
+                  <th>Pases compr.</th>
+                  <th>Patadas a touch</th>
+                  <th>Salidas</th>
+                  <th>Penales cometidos</th>
                   <th>Tarjetas</th>
+                  <th>Lesiones</th>
                 </tr>
               </thead>
               <tbody>
@@ -220,9 +204,6 @@
                       <span class="player-name">{{ p.playerName }}</span>
                       @if (p.position) { <span class="player-pos">{{ p.position }}</span> }
                     </td>
-                    <td class="mono" [class.zero]="p.tries === 0">{{ p.tries || '—' }}</td>
-                    <td class="mono" [class.zero]="p.conversions === 0">{{ p.conversions || '—' }}</td>
-                    <td class="mono" [class.zero]="p.penaltyKicks + p.dropGoals === 0">{{ formatKicking(p) }}</td>
                     <td>
                       @if (p.totalPoints > 0) {
                         <span class="points-badge">{{ p.totalPoints }} pts</span>
@@ -230,6 +211,15 @@
                         <span class="mono zero">—</span>
                       }
                     </td>
+                    <td class="mono" [class.zero]="p.tries === 0">{{ p.tries || '—' }}</td>
+                    <td class="mono" [class.zero]="p.conversionAttempts === 0">{{ formatRatio(p.conversionsMade, p.conversionAttempts) }}</td>
+                    <td class="mono" [class.zero]="p.penaltyKickAttempts === 0">{{ formatRatio(p.penaltyKicksMade, p.penaltyKickAttempts) }}</td>
+                    <td class="mono" [class.zero]="p.passes === 0">{{ p.passes || '—' }}</td>
+                    <td class="mono" [class.zero]="p.offloads === 0">{{ p.offloads || '—' }}</td>
+                    <td class="mono" [class.zero]="p.badPasses === 0">{{ p.badPasses || '—' }}</td>
+                    <td class="mono" [class.zero]="p.kicksToTouch === 0">{{ p.kicksToTouch || '—' }}</td>
+                    <td class="mono" [class.zero]="p.restarts === 0">{{ p.restarts || '—' }}</td>
+                    <td class="mono" [class.zero]="p.penaltiesConceded === 0">{{ p.penaltiesConceded || '—' }}</td>
                     <td class="mono">
                       @if (p.yellowCards > 0 || p.redCards > 0) {
                         @if (p.yellowCards > 0) { <span>🟨 {{ p.yellowCards }}</span> }
@@ -238,6 +228,7 @@
                         <span class="zero">—</span>
                       }
                     </td>
+                    <td class="mono" [class.zero]="p.injuries === 0">{{ p.injuries || '—' }}</td>
                   </tr>
                 }
               </tbody>
