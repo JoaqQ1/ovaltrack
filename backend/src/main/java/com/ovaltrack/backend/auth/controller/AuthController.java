@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ovaltrack.backend.auth.dto.AuthResponse;
 import com.ovaltrack.backend.auth.dto.LoginRequest;
 import com.ovaltrack.backend.auth.dto.PasswordResetRequest;
+import com.ovaltrack.backend.auth.dto.RegisterFromInvitationRequest;
 import com.ovaltrack.backend.auth.registration.domain.dto.ClubRegistrationDTO;
 import com.ovaltrack.backend.auth.registration.domain.dto.MemberRegistrationDTO;
 import com.ovaltrack.backend.auth.service.AuthService;
@@ -110,5 +111,22 @@ public class AuthController {
     public ResponseEntity<Object> passwordReset(@RequestBody PasswordResetRequest request) {
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(Map.of("message", "Solicitud enviada correctamente"));
+    }
+
+    // ---- AuthController (agrega este método junto a los otros) ----
+
+    @Operation(summary = "Create an account from an invitation", description = "Creates the player's account linked to the invited person and consumes the invitation token.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Account created and linked to the person."),
+            @ApiResponse(responseCode = "400", description = "Invalid data, invalid or expired token, or an account already exists.")
+    })
+    @PostMapping("/register/invitation")
+    public ResponseEntity<BackendResponse<Object>> registerFromInvitation(
+            @Valid @RequestBody RegisterFromInvitationRequest request,
+            BindingResult bindingResult) {
+        if (bindingResult.hasErrors())
+            throw new BusinessException("Campos invalidos");
+        authService.registerFromInvitation(request);
+        return BackendResponse.response(HttpStatus.CREATED, "Cuenta creada con éxito", null);
     }
 }
