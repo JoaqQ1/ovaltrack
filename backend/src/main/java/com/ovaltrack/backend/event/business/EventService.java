@@ -107,7 +107,7 @@ public class EventService {
 					"No se puede crear un nuevo evento a partir de un tipo de evento que no existe");
 		}
 
-		EventRules.validateAttributes(aEventType, eventRequest.attributes());
+		EventAttributeValidator.validate(aEventType, eventRequest.attributes());
 		
 		Match match = matchService.findMatchEntityById(eventRequest.matchId());
 		if (match == null) {
@@ -117,11 +117,9 @@ public class EventService {
 			throw new BusinessException("No se puede asignar un evento a un partido cancelado");
 		}
 
-/* 	
-		if (aMatch.getStatus() == MatchStatus.FINISHED && !Event.ORIGIN_POST_CAPTURE.equals(eventRequest.origin())) {
+		if (match.getStatus() == MatchStatus.FINISHED && !Event.ORIGIN_POST_CAPTURE.equals(eventRequest.origin())) {
 			throw new BusinessException("No se puede cargar eventos mediante esta pantalla para un partido que ya termino");
 		}
- */
 
 		if (authentication != null) {
 			matchSecurityValidator.validateCanManageMatch(match, authentication);
@@ -215,19 +213,29 @@ public class EventService {
 			matchSecurityValidator.validateCanManageMatch(result.getMatch(), authentication);
 		}
 
-		EventRules.validateAttributes(result.getEventType(), eventRequest.attributes());
-
 		Integer effectivePeriod = eventRequest.period() != null ? eventRequest.period() : result.getPeriod();
 		Integer effectiveMatchTime = eventRequest.matchTime() != null ? eventRequest.matchTime()
 				: result.getMatchTime();
 		validateMatchTimePeriod(effectivePeriod, effectiveMatchTime);
 
+		boolean eventTypeChanged = false;
 		if (eventRequest.eventTypeId() != null) {
 			EventType aEventType = eventTypeService.findEventTypeEntityById(eventRequest.eventTypeId());
 			if (aEventType == null) {
 				throw new BusinessException("No se puede asociar un evento a un tipo de evento que no existe");
 			}
+			if (result.getEventType() == null || !aEventType.getId().equals(result.getEventType().getId())) {
+				eventTypeChanged = true;
+			}
 			result.setEventType(aEventType);
+		}
+
+		if (eventTypeChanged && eventRequest.attributes() == null) {
+			result.setAttributes(null);
+		}
+
+		if (eventRequest.attributes() != null) {
+			EventAttributeValidator.validate(result.getEventType(), eventRequest.attributes());
 		}
 
 		EventPossession effectivePossession = eventRequest.teamPossession() != null ? eventRequest.teamPossession()
@@ -276,6 +284,10 @@ public class EventService {
 	}
 
 	private void recalculateMatchScore(Match match) {
+		if (match == null || match.getId() == null) {
+			return;
+		}
+
 		int homeScore = 0;
 		int awayScore = 0;
 
