@@ -15,8 +15,14 @@ export interface Toast {
 })
 export class ToastService {
   readonly toasts = signal<Toast[]>([]);
+  private activeTimer: ReturnType<typeof setTimeout> | null = null;
 
   show(type: ToastType, message: string, title?: string, durationMs?: number): string {
+    if (this.activeTimer) {
+      clearTimeout(this.activeTimer);
+      this.activeTimer = null;
+    }
+
     const id = crypto.randomUUID();
     const effectiveDuration = durationMs !== undefined ? durationMs : (type === 'error' ? 7000 : 4500);
 
@@ -28,11 +34,13 @@ export class ToastService {
       durationMs: effectiveDuration
     };
 
-    this.toasts.update(current => [...current, newToast]);
+    // Opción A: Siempre un único toast a la vez (reemplazo inmediato)
+    this.toasts.set([newToast]);
 
     if (effectiveDuration > 0) {
-      setTimeout(() => {
+      this.activeTimer = setTimeout(() => {
         this.dismiss(id);
+        this.activeTimer = null;
       }, effectiveDuration);
     }
 
@@ -56,10 +64,18 @@ export class ToastService {
   }
 
   dismiss(id: string): void {
+    if (this.activeTimer) {
+      clearTimeout(this.activeTimer);
+      this.activeTimer = null;
+    }
     this.toasts.update(current => current.filter(t => t.id !== id));
   }
 
   clear(): void {
+    if (this.activeTimer) {
+      clearTimeout(this.activeTimer);
+      this.activeTimer = null;
+    }
     this.toasts.set([]);
   }
 }
