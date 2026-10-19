@@ -9,7 +9,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary, #3b4e33);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   display: block;
 }
 
@@ -19,8 +19,8 @@
   border-radius: 8px;
   background-color: var(--surface, #ffffff);
   color: var(--text-primary, #111d0e);
-  font-size: 0.85rem;
-  padding: 8px 12px;
+  font-size: 0.84rem;
+  padding: 6px 10px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -36,8 +36,8 @@
   display: flex;
   border-radius: 8px;
   background: var(--surface-alt, #eef1e7);
-  padding: 3px;
-  gap: 4px;
+  padding: 2px;
+  gap: 3px;
 }
 
 .possession-segment-btn {
@@ -45,8 +45,8 @@
   border: 1px solid transparent;
   background: transparent;
   border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 0.82rem;
+  padding: 5px 8px;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-secondary, #3b4e33);
   cursor: pointer;
@@ -75,19 +75,70 @@
 }
 
 .opponent-notice {
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 8px;
   background: var(--surface-alt, #eef1e7);
   color: var(--text-muted, #7a8c74);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   border: 1px dashed var(--border, rgba(27, 33, 22, 0.15));
 }
 
-/* ================= ESPACIO RESERVADO PARA ENRIQUECIMIENTO (HU COMPAÑERO) ================= */
-.enrichment-reserved-slot {
-  flex: 1;
-  min-height: 48px;
+/* ================= ENRIQUECIMIENTO TÁCTICO ================= */
+.enrichment-section {
+  border-top: 1px dashed var(--border-sport, rgba(32, 75, 34, 0.28));
+  padding-top: 10px;
   margin-top: 10px;
+}
+
+.custom-sport-switch {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  padding-left: 2.8em;
+}
+
+.custom-sport-switch .form-check-input {
+  cursor: pointer;
+  width: 2.2em;
+  height: 1.2em;
+}
+
+.custom-sport-switch .form-check-input:checked {
+  background-color: var(--btn-primary-bg, #204b22);
+  border-color: var(--btn-primary-bg, #204b22);
+}
+
+.custom-sport-switch .form-check-label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-primary, #111d0e);
+  cursor: pointer;
+}
+
+.form-hint-sport {
+  font-size: 0.72rem;
+  color: var(--text-muted, #7a8c74);
+  margin-top: 2px;
+  display: block;
+}
+
+.custom-sport-input.is-invalid {
+  border-color: var(--danger, #dc3545) !important;
+}
+
+.custom-sport-input.is-invalid:focus {
+  border-color: var(--danger, #dc3545) !important;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.18) !important;
+}
+
+.invalid-feedback-sport {
+  font-size: 0.75rem;
+  color: var(--danger, #dc3545);
+  font-weight: 600;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 

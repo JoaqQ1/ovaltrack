@@ -107,7 +107,7 @@ public class EventService {
 					"No se puede crear un nuevo evento a partir de un tipo de evento que no existe");
 		}
 
-		EventRules.validateAttributes(aEventType, eventRequest.attributes());
+		EventAttributeValidator.validate(aEventType, eventRequest.attributes());
 		
 		Match match = matchService.findMatchEntityById(eventRequest.matchId());
 		if (match == null) {
@@ -117,11 +117,9 @@ public class EventService {
 			throw new BusinessException("No se puede asignar un evento a un partido cancelado");
 		}
 
-/* 	
-		if (aMatch.getStatus() == MatchStatus.FINISHED && !Event.ORIGIN_POST_CAPTURE.equals(eventRequest.origin())) {
+		if (match.getStatus() == MatchStatus.FINISHED && !Event.ORIGIN_POST_CAPTURE.equals(eventRequest.origin())) {
 			throw new BusinessException("No se puede cargar eventos mediante esta pantalla para un partido que ya termino");
 		}
- */
 
 		if (authentication != null) {
 			matchSecurityValidator.validateCanManageMatch(match, authentication);
@@ -206,68 +204,97 @@ public class EventService {
 
 	@Transactional
 	public EventResponseDTO updateEvent(UUID eventId, EventUpdateDTO eventRequest, Authentication authentication) {
-		Event result = findEventEntityById(eventId);
-		if (result == null) {
-			throw new BusinessException("No se puede modificar un evento que no existe");
-		}
+		Event event = findActiveEventOrThrow(eventId);
 
 		if (authentication != null) {
-			matchSecurityValidator.validateCanManageMatch(result.getMatch(), authentication);
+			matchSecurityValidator.validateCanManageMatch(event.getMatch(), authentication);
 		}
 
-		EventRules.validateAttributes(result.getEventType(), eventRequest.attributes());
+		validateTimingPeriod(eventRequest, event);
+		applyEventTypeAndAttributes(event, eventRequest);
+		applyPossessionAndPlayer(event, eventRequest);
+		applyTimingFields(event, eventRequest);
 
-		Integer effectivePeriod = eventRequest.period() != null ? eventRequest.period() : result.getPeriod();
-		Integer effectiveMatchTime = eventRequest.matchTime() != null ? eventRequest.matchTime()
-				: result.getMatchTime();
+		event.setSynchronizedAt(LocalDateTime.now());
+		Event savedEvent = eventRepository.save(event);
+		recalculateMatchScore(event.getMatch());
+		return EventDTOMapper.toResponseDTO(savedEvent);
+	}
+
+	private Event findActiveEventOrThrow(UUID eventId) {
+		Event event = findEventEntityById(eventId);
+		if (event == null) {
+			throw new BusinessException("No se puede modificar un evento que no existe");
+		}
+		return event;
+	}
+
+	private void validateTimingPeriod(EventUpdateDTO request, Event event) {
+		Integer effectivePeriod = request.period() != null ? request.period() : event.getPeriod();
+		Integer effectiveMatchTime = request.matchTime() != null ? request.matchTime() : event.getMatchTime();
 		validateMatchTimePeriod(effectivePeriod, effectiveMatchTime);
+	}
 
-		if (eventRequest.eventTypeId() != null) {
-			EventType aEventType = eventTypeService.findEventTypeEntityById(eventRequest.eventTypeId());
-			if (aEventType == null) {
+	private void applyEventTypeAndAttributes(Event event, EventUpdateDTO request) {
+		boolean eventTypeChanged = false;
+		if (request.eventTypeId() != null) {
+			EventType newType = eventTypeService.findEventTypeEntityById(request.eventTypeId());
+			if (newType == null) {
 				throw new BusinessException("No se puede asociar un evento a un tipo de evento que no existe");
 			}
-			result.setEventType(aEventType);
+			if (event.getEventType() == null || !newType.getId().equals(event.getEventType().getId())) {
+				eventTypeChanged = true;
+			}
+			event.setEventType(newType);
 		}
 
-		EventPossession effectivePossession = eventRequest.teamPossession() != null ? eventRequest.teamPossession()
-				: result.getTeamPossession();
-		UUID effectivePlayerId = eventRequest.playerId() != null ? eventRequest.playerId()
-				: (eventRequest.teamPossession() == EventPossession.OPPONENT ? null
-						: (result.getPlayer() != null ? result.getPlayer().getId() : null));
+		if (eventTypeChanged && request.attributes() == null) {
+			event.setAttributes(null);
+		}
+
+		if (request.attributes() != null) {
+			EventAttributeValidator.validate(event.getEventType(), request.attributes());
+			event.setAttributes(request.attributes());
+		}
+	}
+
+	private void applyPossessionAndPlayer(Event event, EventUpdateDTO request) {
+		EventPossession effectivePossession = request.teamPossession() != null
+				? request.teamPossession()
+				: event.getTeamPossession();
+		UUID effectivePlayerId = resolveEffectivePlayerId(request, event, effectivePossession);
 
 		validatePlayerPossession(effectivePossession, effectivePlayerId);
 
+		if (request.teamPossession() != null) {
+			event.setTeamPossession(request.teamPossession());
+		}
+
 		if (effectivePossession == EventPossession.OPPONENT) {
-			result.setPlayer(null);
-		} else if (eventRequest.playerId() != null) {
-			Person person = resolveEventPlayer(eventRequest.playerId(), result.getMatch());
-			result.setPlayer(person);
+			event.setPlayer(null);
+		} else if (request.playerId() != null) {
+			Person person = resolveEventPlayer(request.playerId(), event.getMatch());
+			event.setPlayer(person);
 		}
+	}
 
-		if (eventRequest.teamPossession() != null) {
-			result.setTeamPossession(eventRequest.teamPossession());
+	private UUID resolveEffectivePlayerId(EventUpdateDTO request, Event event, EventPossession effectivePossession) {
+		if (request.playerId() != null) {
+			return request.playerId();
 		}
-		if (eventRequest.matchTime() != null) {
-			result.setMatchTime(eventRequest.matchTime());
+		if (effectivePossession == EventPossession.OPPONENT) {
+			return null;
 		}
-		if (eventRequest.absoluteMatchTime() != null) {
-			result.setAbsoluteMatchTime(eventRequest.absoluteMatchTime());
-		}
-		if (eventRequest.period() != null) {
-			result.setPeriod(eventRequest.period());
-		}
-		if (eventRequest.origin() != null) {
-			result.setOrigin(eventRequest.origin());
-		}
-		if (eventRequest.attributes() != null) {
-			result.setAttributes(eventRequest.attributes());
-		}
-		result.setSynchronizedAt(LocalDateTime.now());
+		return event.getPlayer() != null ? event.getPlayer().getId() : null;
+	}
 
-		Event savedEvent = eventRepository.save(result);
-		recalculateMatchScore(result.getMatch());
-		return EventDTOMapper.toResponseDTO(savedEvent);
+	private void applyTimingFields(Event event, EventUpdateDTO request) {
+		event.updateTimingAndOrigin(
+				request.matchTime(),
+				request.absoluteMatchTime(),
+				request.period(),
+				request.origin()
+		);
 	}
 
 	@Transactional
@@ -276,6 +303,10 @@ public class EventService {
 	}
 
 	private void recalculateMatchScore(Match match) {
+		if (match == null || match.getId() == null) {
+			return;
+		}
+
 		int homeScore = 0;
 		int awayScore = 0;
 

@@ -114,6 +114,49 @@
   transition: width 0.3s ease;
 }
 
+/* Leyenda Visual Compacta */
+.legend-divider {
+  margin-left: auto;
+}
+
+.kpi-legend-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.legend-chip {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.legend-unassigned {
+  background: repeating-linear-gradient(
+    45deg,
+    #f59e0b,
+    #f59e0b 2px,
+    #ffffff 2px,
+    #ffffff 4px
+  );
+  border: 1px solid #d97706;
+}
+
+.legend-text {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary, #4b5540);
+}
+
 /* Modo Oscuro */
 :host-context([data-theme="dark"]) .strip-progress-track {
   background: rgba(163, 230, 53, 0.15);
@@ -136,7 +179,18 @@
   color: #fbbf24;
 }
 
+:host-context([data-theme="dark"]) .legend-text {
+  color: #94a3b8;
+}
+
 /* Responsive */
+@media (max-width: 900px) {
+  .legend-divider,
+  .kpi-legend-group {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .kpi-strip-card {
     flex-wrap: wrap;

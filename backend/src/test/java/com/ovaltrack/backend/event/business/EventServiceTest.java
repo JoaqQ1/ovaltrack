@@ -24,6 +24,7 @@ import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.event.domain.Event;
 import com.ovaltrack.backend.event.domain.EventPossession;
 import com.ovaltrack.backend.event.domain.EventType;
+import com.ovaltrack.backend.event.domain.TemplateField;
 import com.ovaltrack.backend.event.domain.dto.event.EventCreationDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventResponseDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventUpdateDTO;
@@ -483,6 +484,57 @@ class EventServiceTest {
     }
 
     @Test
+    @DisplayName("updateEvent: Permite asignar jugador sin enviar atributos aunque el tipo de evento tenga campos requeridos")
+    void updateEvent_shouldSucceed_whenAttributesNullEvenIfEventTypeHasRequiredFields() {
+        UUID eventId = UUID.randomUUID();
+        UUID playerId = UUID.randomUUID();
+        UUID matchId = UUID.randomUUID();
+
+        Match match = new Match();
+        match.setId(matchId);
+
+        Person person = new Person();
+        person.setId(playerId);
+        person.setFirstName("Agustin");
+        person.setLastName("Creevy");
+
+        com.ovaltrack.backend.division.domain.DivisionPlayer divPlayer = new com.ovaltrack.backend.division.domain.DivisionPlayer();
+        divPlayer.setPerson(person);
+
+        com.ovaltrack.backend.match.domain.MatchPlayer matchPlayer = new com.ovaltrack.backend.match.domain.MatchPlayer();
+        matchPlayer.setDivisionPlayer(divPlayer);
+        match.setRoster(List.of(matchPlayer));
+
+        com.ovaltrack.backend.event.domain.TemplateField requiredField = new com.ovaltrack.backend.event.domain.TemplateField(
+                "passType", "Tipo de pase", "select", "live", true, null, null, null, null, null, null, null
+        );
+        EventType eventType = new EventType();
+        eventType.setId(UUID.randomUUID());
+        eventType.setTemplateEventFields(List.of(requiredField));
+
+        Event existingEvent = new Event();
+        existingEvent.setId(eventId);
+        existingEvent.setMatch(match);
+        existingEvent.setEventType(eventType);
+        existingEvent.setTeamPossession(EventPossession.OWN);
+        existingEvent.setPeriod(1);
+        existingEvent.setMatchTime(500);
+
+        when(eventRepository.findActiveEventById(eventId)).thenReturn(existingEvent);
+        when(personService.findPersonEntityById(playerId)).thenReturn(person);
+        when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        EventUpdateDTO updateDTO = new EventUpdateDTO(
+                null, playerId, EventPossession.OWN, null, null, null, null, null, null
+        );
+
+        EventResponseDTO res = eventService.updateEvent(eventId, updateDTO);
+        assertNotNull(res);
+        assertEquals(playerId, res.playerId());
+        assertEquals(person, existingEvent.getPlayer());
+    }
+
+    @Test
     @DisplayName("saveEvent: Recalcula tanteador sumando al local si es OWN o tiene jugador, y al rival si es OPPONENT")
     void saveEvent_shouldRecalculateScoresProperly() {
         UUID matchId = UUID.randomUUID();
@@ -529,5 +581,180 @@ class EventServiceTest {
         assertEquals(5, match.getHomeScore());
         assertEquals(5, match.getAwayScore());
         verify(matchRepository).save(match);
+    }
+
+    private EventType createSampleTypeWithFields() {
+        TemplateField penaltyTypeField = new TemplateField(
+                "penaltyType", "Causa del penal", "select", "live", false,
+                List.of(
+                        new TemplateField.Option("OFFSIDE", "Offside", null, null),
+                        new TemplateField.Option("NOT_RELEASING", "No suelta", null, null)
+                ),
+                null, null, null, null, null, null
+        );
+        TemplateField metersField = new TemplateField(
+                "metersGained", "Metros ganados", "number", "post", false,
+                null, 0.0, 100.0, null, null, null, null
+        );
+        TemplateField badPassField = new TemplateField(
+                "isBadPass", "Pase defectuoso", "boolean", "post", false,
+                null, null, null, null, null, "Sí", "No"
+        );
+
+        EventType type = new EventType();
+        type.setId(UUID.randomUUID());
+        type.setName("Infracción");
+        type.setTemplateEventFields(List.of(penaltyTypeField, metersField, badPassField));
+        return type;
+    }
+
+    @Test
+    @DisplayName("updateEvent: Guarda atributos tácticos válidos correctamente")
+    void updateEvent_shouldSaveValidAttributes() {
+        UUID eventId = UUID.randomUUID();
+        EventType type = createSampleTypeWithFields();
+
+        Event event = new Event();
+        event.setId(eventId);
+        event.setEventType(type);
+        event.setPeriod(1);
+        event.setMatchTime(200);
+        Match match = new Match();
+        match.setId(UUID.randomUUID());
+        event.setMatch(match);
+
+        when(eventRepository.findActiveEventById(eventId)).thenReturn(event);
+        when(eventRepository.save(any(Event.class))).thenAnswer(i -> i.getArgument(0));
+
+        Map<String, Object> attrs = Map.of(
+                "penaltyType", "OFFSIDE",
+                "metersGained", 15,
+                "isBadPass", true
+        );
+        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null);
+
+        EventResponseDTO res = eventService.updateEvent(eventId, dto);
+        assertNotNull(res);
+        assertEquals(attrs, res.attributes());
+        assertEquals(attrs, event.getAttributes());
+    }
+
+    @Test
+    @DisplayName("updateEvent: Falla con BusinessException cuando valor numérico supera el máximo permitido")
+    void updateEvent_shouldThrowWhenNumericAttributeExceedsMax() {
+        UUID eventId = UUID.randomUUID();
+        EventType type = createSampleTypeWithFields();
+
+        Event event = new Event();
+        event.setId(eventId);
+        event.setEventType(type);
+        event.setPeriod(1);
+        event.setMatchTime(200);
+
+        when(eventRepository.findActiveEventById(eventId)).thenReturn(event);
+
+        Map<String, Object> attrs = Map.of("metersGained", 150);
+        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null);
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> eventService.updateEvent(eventId, dto));
+        assertTrue(ex.getMessage().contains("máximo"));
+    }
+
+    @Test
+    @DisplayName("updateEvent: Falla con BusinessException cuando valor numérico es menor al mínimo permitido")
+    void updateEvent_shouldThrowWhenNumericAttributeBelowMin() {
+        UUID eventId = UUID.randomUUID();
+        EventType type = createSampleTypeWithFields();
+
+        Event event = new Event();
+        event.setId(eventId);
+        event.setEventType(type);
+        event.setPeriod(1);
+        event.setMatchTime(200);
+
+        when(eventRepository.findActiveEventById(eventId)).thenReturn(event);
+
+        Map<String, Object> attrs = Map.of("metersGained", -10);
+        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null);
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> eventService.updateEvent(eventId, dto));
+        assertTrue(ex.getMessage().contains("mínimo"));
+    }
+
+    @Test
+    @DisplayName("updateEvent: Falla con BusinessException cuando opción de select es inválida")
+    void updateEvent_shouldThrowWhenSelectOptionInvalid() {
+        UUID eventId = UUID.randomUUID();
+        EventType type = createSampleTypeWithFields();
+
+        Event event = new Event();
+        event.setId(eventId);
+        event.setEventType(type);
+        event.setPeriod(1);
+        event.setMatchTime(200);
+
+        when(eventRepository.findActiveEventById(eventId)).thenReturn(event);
+
+        Map<String, Object> attrs = Map.of("penaltyType", "OPCION_INEXISTENTE");
+        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null);
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> eventService.updateEvent(eventId, dto));
+        assertTrue(ex.getMessage().contains("Opción inválida"));
+    }
+
+    @Test
+    @DisplayName("updateEvent: Falla con BusinessException cuando se envía una clave no permitida")
+    void updateEvent_shouldThrowWhenAttributeKeyUndeclared() {
+        UUID eventId = UUID.randomUUID();
+        EventType type = createSampleTypeWithFields();
+
+        Event event = new Event();
+        event.setId(eventId);
+        event.setEventType(type);
+        event.setPeriod(1);
+        event.setMatchTime(200);
+
+        when(eventRepository.findActiveEventById(eventId)).thenReturn(event);
+
+        Map<String, Object> attrs = Map.of("campoInexistente", 99);
+        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null);
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> eventService.updateEvent(eventId, dto));
+        assertTrue(ex.getMessage().contains("Atributo no permitido"));
+    }
+
+    @Test
+    @DisplayName("updateEvent: Resetea los atributos huérfanos a null cuando cambia el tipo de evento sin nuevos atributos")
+    void updateEvent_shouldResetAttributes_whenEventTypeChangesWithoutAttributes() {
+        UUID eventId = UUID.randomUUID();
+        EventType oldType = createSampleTypeWithFields();
+
+        UUID newTypeId = UUID.randomUUID();
+        EventType newType = new EventType();
+        newType.setId(newTypeId);
+        newType.setName("Try");
+        newType.setTemplateEventFields(List.of());
+
+        Event event = new Event();
+        event.setId(eventId);
+        event.setEventType(oldType);
+        event.setPeriod(1);
+        event.setMatchTime(200);
+        event.setAttributes(Map.of("penaltyType", "OFFSIDE", "metersGained", 10));
+        Match match = new Match();
+        match.setId(UUID.randomUUID());
+        event.setMatch(match);
+
+        when(eventRepository.findActiveEventById(eventId)).thenReturn(event);
+        when(eventTypeService.findEventTypeEntityById(newTypeId)).thenReturn(newType);
+        when(eventRepository.save(any(Event.class))).thenAnswer(i -> i.getArgument(0));
+
+        EventUpdateDTO dto = new EventUpdateDTO(newTypeId, null, null, null, null, null, null, null, null);
+
+        EventResponseDTO res = eventService.updateEvent(eventId, dto);
+        assertNotNull(res);
+        assertNull(res.attributes());
+        assertNull(event.getAttributes());
+        assertEquals(newType, event.getEventType());
     }
 }
