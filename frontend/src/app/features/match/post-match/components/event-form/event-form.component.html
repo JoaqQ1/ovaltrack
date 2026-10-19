@@ -140,15 +140,17 @@
       <div *ngIf="field.type === 'number'">
         <input type="number"
                class="form-control custom-sport-input"
+               [class.is-invalid]="isFieldInvalid(field)"
                [ngModel]="getAttributeValue(field.key)"
                (ngModelChange)="onNumericAttributeChange(field.key, $event)"
                [min]="field.min != null ? field.min : null"
                [max]="field.max != null ? field.max : null"
-               [placeholder]="(field.min != null && field.max != null) ? 'Entre ' + field.min + ' y ' + field.max : 'Ingresar valor numérico...'"
+               [placeholder]="getNumberPlaceholder(field)"
                [disabled]="disabled">
-        <small class="form-hint-sport" *ngIf="field.min != null || field.max != null">
-          Rango permitido: {{ field.min != null ? field.min : 'Sin mín.' }} a {{ field.max != null ? field.max : 'Sin máx.' }}
-        </small>
+        <div class="invalid-feedback-sport" *ngIf="isFieldInvalid(field)">
+          <i class="bi bi-exclamation-circle-fill"></i>
+          <span>{{ getFieldValidationMessage(field) }}</span>
+        </div>
       </div>
 
       <!-- 3. BOOLEAN -->

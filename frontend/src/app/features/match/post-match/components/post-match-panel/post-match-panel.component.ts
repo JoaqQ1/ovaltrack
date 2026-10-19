@@ -70,6 +70,9 @@ export class PostMatchPanelComponent implements OnDestroy {
   }
 
   onFormChange(formData: EventFormData): void {
+    if (formData.isValid === false) {
+      return;
+    }
     const ev = this.store.selectedEvent();
     if (!ev) return;
     this.saveStatus.set('saving');

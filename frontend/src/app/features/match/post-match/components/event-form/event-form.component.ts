@@ -14,6 +14,7 @@ export interface EventFormData {
   minute?: number | null;
   second?: number | null;
   attributes?: Record<string, unknown> | null;
+  isValid?: boolean;
 }
 
 @Component({
@@ -68,6 +69,8 @@ export class EventFormComponent {
       }
     }
 
+    const isValid = !this.hasAnyInvalidField();
+
     this.formChange.emit({
       eventTypeId: this.eventTypeId(),
       teamPossession: this.teamPossession(),
@@ -75,8 +78,63 @@ export class EventFormComponent {
       period: this.period(),
       minute: this.minute(),
       second: this.second(),
-      attributes: Object.keys(cleanAttrs).length > 0 ? cleanAttrs : null
+      attributes: Object.keys(cleanAttrs).length > 0 ? cleanAttrs : null,
+      isValid
     });
+  }
+
+  isFieldInvalid(field: TemplateField): boolean {
+    const val = this.getAttributeValue(field.key);
+    if (val === null || val === undefined || val === '') {
+      return false;
+    }
+    const num = Number(val);
+    if (isNaN(num)) {
+      return true;
+    }
+    if (field.min != null && num < field.min) {
+      return true;
+    }
+    if (field.max != null && num > field.max) {
+      return true;
+    }
+    return false;
+  }
+
+  getNumberPlaceholder(field: TemplateField): string {
+    if (field.min != null && field.max != null) {
+      return `Entre ${field.min} y ${field.max}`;
+    }
+    if (field.min != null) {
+      return `Mínimo ${field.min}`;
+    }
+    if (field.max != null) {
+      return `Máximo ${field.max}`;
+    }
+    return 'Ingresar valor numérico...';
+  }
+
+  getFieldValidationMessage(field: TemplateField): string {
+    if (field.min != null && field.max != null) {
+      return `Inserte un valor entre ${field.min} y ${field.max}`;
+    }
+    if (field.min != null) {
+      return `Inserte un valor mayor o igual a ${field.min}`;
+    }
+    if (field.max != null) {
+      return `Inserte un valor menor o igual a ${field.max}`;
+    }
+    return 'Valor numérico fuera de rango';
+  }
+
+  hasAnyInvalidField(): boolean {
+    const fields = this.currentTemplateFields();
+    for (const field of fields) {
+      if (field.type === 'number' && this.isFieldInvalid(field)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   onEventTypeChange(id: string): void {

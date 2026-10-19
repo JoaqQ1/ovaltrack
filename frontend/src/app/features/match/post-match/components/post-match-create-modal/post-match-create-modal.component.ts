@@ -36,6 +36,7 @@ export class PostMatchCreateModalComponent {
   possession: Possession = 'OWN';
   playerId = '';
   attributes: Record<string, unknown> | null = null;
+  isFormValid = true;
 
   onFormChange(data: EventFormData): void {
     this.eventTypeId = data.eventTypeId;
@@ -45,6 +46,7 @@ export class PostMatchCreateModalComponent {
     if (data.minute !== undefined) this.minute = data.minute;
     if (data.second !== undefined) this.second = data.second;
     this.attributes = data.attributes ?? null;
+    this.isFormValid = data.isValid !== false;
   }
 
   onPossessionChange(): void {
@@ -74,6 +76,11 @@ export class PostMatchCreateModalComponent {
   save(): void {
     if (!this.eventTypeId) {
       this.toastService.warning('Debés seleccionar un tipo de evento');
+      return;
+    }
+
+    if (!this.isFormValid) {
+      this.toastService.warning('Corregí los valores inválidos antes de guardar');
       return;
     }
 
