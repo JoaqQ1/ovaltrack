@@ -74,4 +74,19 @@ public class Event {
     public String getEventTypeName() {
         return this.eventType != null && this.eventType.getName() != null ? this.eventType.getName() : "";
     }
+
+    public void updateTimingAndOrigin(Integer matchTime, Integer absoluteMatchTime, Integer period, String origin) {
+        if (matchTime != null) {
+            this.matchTime = matchTime;
+        }
+        if (absoluteMatchTime != null) {
+            this.absoluteMatchTime = absoluteMatchTime;
+        }
+        if (period != null) {
+            this.period = period;
+        }
+        if (origin != null) {
+            this.origin = origin;
+        }
+    }
 }

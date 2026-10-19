@@ -256,18 +256,12 @@ public class EventService {
 		if (eventRequest.teamPossession() != null) {
 			result.setTeamPossession(eventRequest.teamPossession());
 		}
-		if (eventRequest.matchTime() != null) {
-			result.setMatchTime(eventRequest.matchTime());
-		}
-		if (eventRequest.absoluteMatchTime() != null) {
-			result.setAbsoluteMatchTime(eventRequest.absoluteMatchTime());
-		}
-		if (eventRequest.period() != null) {
-			result.setPeriod(eventRequest.period());
-		}
-		if (eventRequest.origin() != null) {
-			result.setOrigin(eventRequest.origin());
-		}
+		result.updateTimingAndOrigin(
+				eventRequest.matchTime(),
+				eventRequest.absoluteMatchTime(),
+				eventRequest.period(),
+				eventRequest.origin()
+		);
 		if (eventRequest.attributes() != null) {
 			result.setAttributes(eventRequest.attributes());
 		}
