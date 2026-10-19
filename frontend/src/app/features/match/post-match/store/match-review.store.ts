@@ -131,15 +131,8 @@ export class MatchReviewStore {
   // --- Evento Actualmente Seleccionado ---
   readonly selectedEvent = computed<ReviewEventViewModel | null>(() => {
     const id = this.selectedEventId();
-    const all = this.allViewModels();
-    if (!id) {
-      // Por defecto sugerir el primer pendiente si existe, sino el primer visible
-      const pending = this.pendingQueue();
-      if (pending.length > 0) return pending[0];
-      const visible = this.visibleEvents();
-      return visible.length > 0 ? visible[0] : null;
-    }
-    return all.find(e => e.id === id) ?? null;
+    if (!id) return null;
+    return this.allViewModels().find(e => e.id === id) ?? null;
   });
 
   // --- Carriles de la Línea de Tiempo (Timeline Lanes) ---
@@ -345,6 +338,12 @@ export class MatchReviewStore {
       searchTerm: '',
       hiddenLaneIds: []
     });
+  }
+
+  resetSession(): void {
+    this.selectedEventId.set(null);
+    this.scoreDelta.set(null);
+    this.clearFilters();
   }
 
   removeEvent(eventId: string): void {

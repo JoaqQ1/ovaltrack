@@ -91,11 +91,18 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     const target = event.target as HTMLElement;
     const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA');
 
-    if (event.key === 'Escape') {
-      if (this.showCreateModal()) {
-        this.closeCreateModal();
-        return;
+    if (this.showCreateModal() || this.panel?.showDeleteModal()) {
+      if (event.key === 'Escape') {
+        if (this.showCreateModal()) {
+          this.closeCreateModal();
+        } else if (this.panel?.showDeleteModal()) {
+          this.panel.closeDeleteModal();
+        }
       }
+      return;
+    }
+
+    if (event.key === 'Escape') {
       if (this.panel?.sheetState() === 'open') {
         this.panel.closeSheet();
         return;
@@ -137,6 +144,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     this.layoutService.setWide(true);
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
     if (this.matchId) {
+      this.store.resetSession();
       this.store.setMatchId(this.matchId);
       this.loadMatchDetails();
       this.loadRoster();
@@ -146,6 +154,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.layoutService.setWide(null);
+    this.store.resetSession();
   }
 
   loadRoster(): void {

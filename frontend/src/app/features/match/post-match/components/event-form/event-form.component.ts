@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { MatchReviewStore } from '../../store/match-review.store';
 import { Possession } from '../../../types/live-capture.types';
 
+import { TemplateField } from '../../../types/event-type.types';
+
 export interface EventFormData {
   eventTypeId: string;
   teamPossession: Possession;
@@ -11,6 +13,7 @@ export interface EventFormData {
   period?: 1 | 2;
   minute?: number | null;
   second?: number | null;
+  attributes?: Record<string, unknown> | null;
 }
 
 @Component({
@@ -31,6 +34,7 @@ export class EventFormComponent {
       if (data.period !== undefined) this.period.set(data.period);
       if (data.minute !== undefined) this.minute.set(data.minute);
       if (data.second !== undefined) this.second.set(data.second);
+      this.attributes.set(data.attributes ? { ...data.attributes } : {});
     }
   }
 
@@ -46,21 +50,65 @@ export class EventFormComponent {
   readonly period = signal<1 | 2>(1);
   readonly minute = signal<number | null>(1);
   readonly second = signal<number | null>(0);
+  readonly attributes = signal<Record<string, unknown>>({});
+
+  readonly currentTemplateFields = computed<TemplateField[]>(() => {
+    const typeId = this.eventTypeId();
+    if (!typeId) return [];
+    const type = this.store.eventTypesList().find(t => t.id === typeId);
+    return type?.templateEventFields || [];
+  });
 
   private emitChange(): void {
+    const rawAttrs = this.attributes();
+    const cleanAttrs: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(rawAttrs)) {
+      if (v !== undefined && v !== null && v !== '') {
+        cleanAttrs[k] = v;
+      }
+    }
+
     this.formChange.emit({
       eventTypeId: this.eventTypeId(),
       teamPossession: this.teamPossession(),
       playerId: this.playerId(),
       period: this.period(),
       minute: this.minute(),
-      second: this.second()
+      second: this.second(),
+      attributes: Object.keys(cleanAttrs).length > 0 ? cleanAttrs : null
     });
   }
 
   onEventTypeChange(id: string): void {
+    const changed = this.eventTypeId() !== id;
     this.eventTypeId.set(id);
+    if (changed) {
+      this.attributes.set({});
+    }
     this.emitChange();
+  }
+
+  onAttributeChange(key: string, value: unknown): void {
+    const current = { ...this.attributes() };
+    if (value === null || value === undefined || value === '') {
+      delete current[key];
+    } else {
+      current[key] = value;
+    }
+    this.attributes.set(current);
+    this.emitChange();
+  }
+
+  onNumericAttributeChange(key: string, rawVal: number | string | null): void {
+    if (rawVal === null || rawVal === '' || rawVal === undefined || isNaN(Number(rawVal))) {
+      this.onAttributeChange(key, null);
+    } else {
+      this.onAttributeChange(key, Number(rawVal));
+    }
+  }
+
+  getAttributeValue(key: string): unknown {
+    return this.attributes()[key] ?? null;
   }
 
   onPossessionChange(pos: Possession): void {

@@ -19,6 +19,7 @@
       <div class="form-card-body p-4">
         <app-event-form
           [showTimeFields]="true"
+          [showEnrichmentSlot]="true"
           [disabled]="isSubmitting()"
           (formChange)="onFormChange($event)"
         />

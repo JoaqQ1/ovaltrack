@@ -17,8 +17,11 @@ export class PostMatchTimelineComponent {
   readonly halfTimeMin = RUGBY_HALF_TIME_MIN;
 
   getTooltip(occ: ReviewEventViewModel): string {
-    const player = occ.hasPlayer ? occ.playerName : 'Sin jugador asignado';
-    return `${occ.matchTimeFormatted} • ${occ.eventTypeName} (${player})`;
+    if (occ.isUnassigned) {
+      return `${occ.matchTimeFormatted} • ${occ.eventTypeName} (Sin jugador asignado • Clic para inspeccionar)`;
+    }
+    const playerInfo = occ.hasPlayer ? ` • ${occ.playerName}` : (occ.teamPossession === 'OPPONENT' ? ' • Rival' : '');
+    return `${occ.matchTimeFormatted} • ${occ.eventTypeName}${playerInfo}`;
   }
 
   // Eje de marcas en minutos calculado dinámicamente

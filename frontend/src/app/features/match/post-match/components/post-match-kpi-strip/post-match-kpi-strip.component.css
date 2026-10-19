@@ -140,11 +140,6 @@
   flex: none;
 }
 
-.legend-own {
-  background-color: var(--btn-primary-bg, #204b22);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
-}
-
 .legend-unassigned {
   background: repeating-linear-gradient(
     45deg,
@@ -182,10 +177,6 @@
 :host-context([data-theme="dark"]) .strip-filter-btn.active {
   background: rgba(245, 158, 11, 0.2);
   color: #fbbf24;
-}
-
-:host-context([data-theme="dark"]) .legend-own {
-  background-color: #a3e635;
 }
 
 :host-context([data-theme="dark"]) .legend-text {

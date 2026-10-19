@@ -35,6 +35,7 @@ export class PostMatchCreateModalComponent {
   second: number | null = 0;
   possession: Possession = 'OWN';
   playerId = '';
+  attributes: Record<string, unknown> | null = null;
 
   onFormChange(data: EventFormData): void {
     this.eventTypeId = data.eventTypeId;
@@ -43,6 +44,7 @@ export class PostMatchCreateModalComponent {
     if (data.period !== undefined) this.period = data.period;
     if (data.minute !== undefined) this.minute = data.minute;
     if (data.second !== undefined) this.second = data.second;
+    this.attributes = data.attributes ?? null;
   }
 
   onPossessionChange(): void {
@@ -115,7 +117,8 @@ export class PostMatchCreateModalComponent {
       teamPossession: this.possession,
       playerId: assignedPlayerId,
       origin: 'post_capture',
-      realTime: new Date().toISOString()
+      realTime: new Date().toISOString(),
+      attributes: this.attributes ?? undefined
     };
 
     this.isSubmitting.set(true);
@@ -166,5 +169,6 @@ export class PostMatchCreateModalComponent {
     this.second = 0;
     this.possession = 'OWN';
     this.playerId = '';
+    this.attributes = null;
   }
 }

@@ -24,7 +24,9 @@
           
           <div class="score-wrapper" [attr.aria-label]="'Marcador: ' + homeScore + ' a ' + awayScore">
             <span class="match-score-pill">
-              {{ homeScore }} – {{ awayScore }}
+              <span class="score-num">{{ homeScore }}</span>
+              <span class="score-sep">–</span>
+              <span class="score-num">{{ awayScore }}</span>
             </span>
             <span 
               *ngIf="scoreDelta" 

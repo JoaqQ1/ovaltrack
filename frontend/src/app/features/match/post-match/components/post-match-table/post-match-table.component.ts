@@ -34,7 +34,10 @@ export class PostMatchTableComponent implements AfterViewInit, OnDestroy {
       const events = this.store.visibleEvents();
       const index = events.findIndex(e => e.id === selectedId);
       if (index >= 0 && this.viewport) {
-        this.viewport.scrollToIndex(index, 'smooth');
+        const viewportHeight = this.viewport.getViewportSize() || 272;
+        const itemsInView = Math.floor(viewportHeight / 34);
+        const targetIndex = Math.max(0, index - Math.floor(itemsInView / 2));
+        this.viewport.scrollToIndex(targetIndex, 'smooth');
       }
     });
   }
