@@ -2,6 +2,7 @@ import { Injectable, computed, signal } from '@angular/core';
 import { MatchTimelineEventResponse } from '../../types/event.types';
 import { AvailablePlayer } from '../../types/roster.types';
 import { LiveCaptureEventType } from '../../types/event-type.types';
+import { countsAsScoring } from '../../services/calculators/event-rules';
 import {
   ReviewEventViewModel,
   ReviewFilters,
@@ -58,15 +59,9 @@ export class MatchReviewStore {
     let away = 0;
 
     for (const ev of events) {
-      const type = typesMap.get(ev.eventTypeId);
-      if (type?.isScoring) {
-        const pts = type.points || 0;
-        if (ev.teamPossession === 'OPPONENT') {
-          away += pts;
-        } else if (ev.teamPossession === 'OWN' || ev.playerId) {
-          home += pts;
-        }
-      }
+      const pts = this.getEventPoints(ev, typesMap);
+      home += pts.home;
+      away += pts.away;
     }
 
     // Fallback al tanteador de cabecera si los eventos aún no tienen scores calculados
@@ -350,9 +345,11 @@ export class MatchReviewStore {
     const current = this.rawEvents();
     const toRemove = current.find(e => e.id === eventId);
     if (toRemove) {
-      const typeObj = this.eventTypesList().find(t => t.id === toRemove.eventTypeId);
-      if (typeObj?.isScoring && typeObj.points > 0) {
-        this.triggerScoreDelta(-typeObj.points, toRemove.teamPossession === 'OPPONENT' ? 'OPPONENT' : 'OWN');
+      const pts = this.getEventPoints(toRemove);
+      if (pts.away > 0) {
+        this.triggerScoreDelta(-pts.away, 'OPPONENT');
+      } else if (pts.home > 0) {
+        this.triggerScoreDelta(-pts.home, 'OWN');
       }
     }
     this.rawEvents.set(current.filter(e => e.id !== eventId));
@@ -365,8 +362,9 @@ export class MatchReviewStore {
     const current = this.rawEvents();
     const index = current.findIndex(e => e.id === eventId);
     if (index !== -1) {
+      const existing = current[index];
       const dict = this.eventTypesDict();
-      const updated = { ...current[index], ...partial };
+      const updated = { ...existing, ...partial };
       if (partial.eventTypeId && dict[partial.eventTypeId]) {
         updated.eventTypeName = dict[partial.eventTypeId];
       }
@@ -375,6 +373,22 @@ export class MatchReviewStore {
         updated.playerName = playerObj ? playerObj.fullName : null;
         updated.playerJerseyNumber = playerObj ? playerObj.jerseyNumber : null;
       }
+
+      const before = this.getEventPoints(existing);
+      const after = this.getEventPoints(updated);
+      const deltaAway = after.away - before.away;
+      const deltaHome = after.home - before.home;
+
+      if (deltaAway > 0) {
+        this.triggerScoreDelta(deltaAway, 'OPPONENT');
+      } else if (deltaHome > 0) {
+        this.triggerScoreDelta(deltaHome, 'OWN');
+      } else if (deltaAway < 0) {
+        this.triggerScoreDelta(deltaAway, 'OPPONENT');
+      } else if (deltaHome < 0) {
+        this.triggerScoreDelta(deltaHome, 'OWN');
+      }
+
       const newArray = [...current];
       newArray[index] = updated;
       this.rawEvents.set(newArray);
@@ -417,9 +431,11 @@ export class MatchReviewStore {
     this.rawEvents.set(updated);
     this.selectedEventId.set(enrichedEvent.id);
 
-    const typeObj = this.eventTypesList().find(t => t.id === enrichedEvent.eventTypeId);
-    if (typeObj?.isScoring && typeObj.points > 0) {
-      this.triggerScoreDelta(typeObj.points, enrichedEvent.teamPossession === 'OPPONENT' ? 'OPPONENT' : 'OWN');
+    const pts = this.getEventPoints(enrichedEvent);
+    if (pts.away > 0) {
+      this.triggerScoreDelta(pts.away, 'OPPONENT');
+    } else if (pts.home > 0) {
+      this.triggerScoreDelta(pts.home, 'OWN');
     }
   }
 
@@ -498,5 +514,18 @@ export class MatchReviewStore {
     const matchesLane = !filters.hiddenLaneIds.includes(ev.eventTypeId);
 
     return matchesPeriod && matchesTeam && matchesUnassigned && matchesSearch && matchesLane;
+  }
+
+  private getEventPoints(ev: MatchTimelineEventResponse, typesMap?: Map<string, LiveCaptureEventType>): { home: number; away: number } {
+    const type = typesMap ? typesMap.get(ev.eventTypeId) : this.eventTypesList().find(t => t.id === ev.eventTypeId);
+    if (!type || !countsAsScoring(type, ev.attributes)) return { home: 0, away: 0 };
+    const pts = type.points || 0;
+    if (ev.teamPossession === 'OPPONENT') {
+      return { home: 0, away: pts };
+    }
+    if (ev.teamPossession === 'OWN' || ev.playerId) {
+      return { home: pts, away: 0 };
+    }
+    return { home: 0, away: 0 };
   }
 }

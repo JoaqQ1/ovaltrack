@@ -180,6 +180,110 @@ describe('MatchReviewStore (HU-8.4)', () => {
       store.setEvents([]);
       expect(store.scoreboard()).toEqual({ home: 33, away: 25 });
     });
+
+    it('should not add points when a kick event has wasSuccessful = false and reactively update when changed to true', () => {
+      store.setEventTypesList([
+        {
+          id: 't-penal',
+          name: 'Penal a los palos',
+          isScoring: true,
+          points: 3,
+          templateEventFields: [
+            { key: 'wasSuccessful', label: 'Resultado', type: 'boolean', phase: 'live', required: true, effects: ['scoring'] }
+          ]
+        }
+      ] as any);
+
+      store.setEvents([
+        {
+          id: 'e-kick-1',
+          eventTypeId: 't-penal',
+          eventTypeName: 'Penal a los palos',
+          matchTime: 120,
+          teamPossession: 'OWN',
+          period: 1,
+          attributes: { wasSuccessful: false }
+        }
+      ]);
+
+      // Errado -> 0 puntos
+      expect(store.scoreboard().home).toBe(0);
+
+      // Cambiar a Convertido -> 3 puntos y scoreDelta +3 OWN
+      store.updateEvent('e-kick-1', { attributes: { wasSuccessful: true } });
+      expect(store.scoreboard().home).toBe(3);
+      expect(store.scoreDelta()).toEqual({ text: '+3', type: 'OWN' });
+
+      // Cambiar nuevamente a Errado -> 0 puntos y scoreDelta -3 OWN
+      store.updateEvent('e-kick-1', { attributes: { wasSuccessful: false } });
+      expect(store.scoreboard().home).toBe(0);
+      expect(store.scoreDelta()).toEqual({ text: '-3', type: 'OWN' });
+    });
+
+    it('should trigger scoreDelta and update scoreboard when changing possession of a scoring event', () => {
+      store.setEventTypesList([
+        {
+          id: 't-try',
+          name: 'Try',
+          isScoring: true,
+          points: 5,
+          templateEventFields: []
+        }
+      ] as any);
+
+      store.setEvents([
+        {
+          id: 'e-try-1',
+          eventTypeId: 't-try',
+          eventTypeName: 'Try',
+          matchTime: 100,
+          teamPossession: 'OWN',
+          period: 1
+        }
+      ]);
+
+      expect(store.scoreboard()).toEqual({ home: 5, away: 0 });
+
+      // Transferir Try de OWN a OPPONENT -> rival suma +5, propio pierde 5
+      store.updateEvent('e-try-1', { teamPossession: 'OPPONENT' });
+      expect(store.scoreboard()).toEqual({ home: 0, away: 5 });
+      expect(store.scoreDelta()).toEqual({ text: '+5', type: 'OPPONENT' });
+
+      // Transferir Try de OPPONENT a OWN -> propio suma +5, rival pierde 5
+      store.updateEvent('e-try-1', { teamPossession: 'OWN' });
+      expect(store.scoreboard()).toEqual({ home: 5, away: 0 });
+      expect(store.scoreDelta()).toEqual({ text: '+5', type: 'OWN' });
+    });
+
+    it('should trigger scoreDelta when adding and removing scoring events', () => {
+      store.setEventTypesList([
+        {
+          id: 't-try',
+          name: 'Try',
+          isScoring: true,
+          points: 5,
+          templateEventFields: []
+        }
+      ] as any);
+      store.setEvents([]);
+
+      // Agregar Try rival
+      store.addEvent({
+        id: 'e-rival-try',
+        eventTypeId: 't-try',
+        eventTypeName: 'Try',
+        matchTime: 200,
+        teamPossession: 'OPPONENT',
+        period: 1
+      });
+      expect(store.scoreboard()).toEqual({ home: 0, away: 5 });
+      expect(store.scoreDelta()).toEqual({ text: '+5', type: 'OPPONENT' });
+
+      // Eliminar Try rival
+      store.removeEvent('e-rival-try');
+      expect(store.scoreboard()).toEqual({ home: 0, away: 0 });
+      expect(store.scoreDelta()).toEqual({ text: '-5', type: 'OPPONENT' });
+    });
   });
 
   describe('timelineLanes and activeLanesCount', () => {
