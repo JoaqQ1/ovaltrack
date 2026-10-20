@@ -158,17 +158,31 @@
 .hud-right {
   display: flex;
   align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   height: 44px;
-  padding: 0 20px;
+  padding: 0 18px;
   border-radius: 10px;
   background-color: #ffffff;
-  border: 1px solid rgba(32, 75, 34, 0.25);
+  border: 1.5px solid rgba(32, 75, 34, 0.28);
   color: #204b22;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.88rem;
   box-shadow: 0 2px 6px rgba(20, 45, 20, 0.04);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn-outline i {
+  font-size: 1.1rem;
 }
 
 .btn-outline:hover {
@@ -176,6 +190,11 @@
   border-color: #204b22;
   color: #142e15;
   transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(32, 75, 34, 0.12);
+}
+
+.btn-outline:active {
+  transform: translateY(0);
 }
 
 .btn-add-event {
@@ -186,9 +205,19 @@
   height: 44px;
   border-radius: 10px;
   font-weight: 700;
+  font-size: 0.88rem;
   padding: 0 20px;
   transition: all 0.15s ease;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn-add-event i {
+  font-size: 1.1rem;
+}
+
+.btn-add-event:active {
+  transform: translateY(0);
 }
 
 /* Modo Oscuro */
@@ -215,7 +244,19 @@
   color: #a3e635;
 }
 
-/* Responsive Móvil */
+:host-context([data-theme="dark"]) .btn-outline {
+  background-color: var(--surface, #131c2e);
+  border-color: var(--border-sport, #2a3c5a);
+  color: #f1f5f9;
+}
+
+:host-context([data-theme="dark"]) .btn-outline:hover {
+  background-color: var(--surface-hover, #1c2b44);
+  border-color: #a3e635;
+  color: #a3e635;
+}
+
+/* Responsive Tablets y Pantallas Medianas */
 @media (max-width: 768px) {
   .hud-title {
     font-size: 1.25rem;
@@ -226,16 +267,42 @@
     font-size: 1.05rem;
     padding: 2px 10px;
   }
+
+  .hud-right {
+    gap: 8px;
+  }
+
+  .btn-outline,
+  .btn-add-event {
+    padding: 0 12px;
+    font-size: 0.82rem;
+    gap: 6px;
+  }
 }
 
-@media (max-width: 576px) {
+/* Responsive Móvil Compacto */
+@media (max-width: 600px) {
+  .hud-right {
+    gap: 8px;
+  }
+
+  .btn-outline,
   .btn-add-event {
     padding: 0;
     width: 44px;
     height: 44px;
+    min-width: 44px;
+    justify-content: center;
   }
 
+  .btn-outline .btn-text,
   .btn-add-event .btn-text {
     display: none;
+  }
+
+  .btn-outline i,
+  .btn-add-event i {
+    font-size: 1.25rem;
+    margin: 0;
   }
 }
