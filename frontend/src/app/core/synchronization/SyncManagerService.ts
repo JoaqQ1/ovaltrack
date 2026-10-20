@@ -4,6 +4,7 @@ import { EventTypeService } from 'src/app/features/match/services/event-type.ser
 import { EventService } from 'src/app/features/match/services/event.service';
 import { LiveCaptureCacheService } from 'src/app/features/match/services/live-capture-cache.service';
 import { MatchService } from 'src/app/features/match/services/match.service';
+import { UserContextService } from '../services/user-context.service';
 
 @Injectable({ providedIn: 'root' })
 export class SyncManagerService {
@@ -11,6 +12,7 @@ export class SyncManagerService {
   private readonly matchService = inject(MatchService);
   private readonly eventService = inject(EventService);
   private readonly eventTypeService = inject(EventTypeService);
+  private readonly userCtxService = inject(UserContextService)
 
   private isSyncing = false;
 
@@ -27,7 +29,7 @@ export class SyncManagerService {
   }
 
   async synchronizeAll(): Promise<void> {
-    if (this.isSyncing || !navigator.onLine) {
+    if (this.isSyncing || !navigator.onLine || !this.userCtxService.userContext()) {
       return;
     }
 
