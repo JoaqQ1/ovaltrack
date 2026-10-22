@@ -161,7 +161,11 @@ export class LiveCaptureService {
     };
     this.playersByMatch.set(query.matchId, players);
     const startingPlayerIds = savedRoster?.startingPlayers ?? [];
+    const substitutePlayerIds = savedRoster?.substitutePlayers ?? [];
     const rosterPlayers = startingPlayerIds
+      .map(playerId => players.find(player => player.id === playerId))
+      .filter((player): player is AvailablePlayer => player !== undefined);
+    const substitutePlayers = substitutePlayerIds
       .map(playerId => players.find(player => player.id === playerId))
       .filter((player): player is AvailablePlayer => player !== undefined);
     const eventTypes = bootstrap.eventTypes.map(eventType => ({
@@ -203,6 +207,7 @@ export class LiveCaptureService {
       recentEvents: events,
       eventTypes,
       rosterPlayers,
+      substitutePlayers,
     };
   }
 

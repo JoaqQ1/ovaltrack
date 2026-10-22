@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.UUID;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -274,6 +275,65 @@ public class MatchService {
 
         // 4. Forzamos los INSERTS en la base de datos
         matchPlayerRepository.saveAll(nuevosJugadores);
+    }
+
+    @Transactional
+    public void applySubstitution(Match match, Map<String, Object> attributes, boolean forward) {
+        if (match == null || attributes == null) {
+            throw new BusinessException("El cambio requiere jugadores de entrada y salida");
+        }
+
+        MatchPlayer outgoing = findRosterPlayer(match, attributes, "playerOutId", "playerOutNumber");
+        MatchPlayer incoming = findRosterPlayer(match, attributes, "playerInId", "playerInNumber");
+
+        if (outgoing == null || incoming == null) {
+            throw new BusinessException("Los jugadores indicados no pertenecen al plantel del partido");
+        }
+
+        MatchPlayer starter = forward ? outgoing : incoming;
+        MatchPlayer substitute = forward ? incoming : outgoing;
+        if (starter.getRole() != MatchPlayerRole.TITULAR
+                || substitute.getRole() != MatchPlayerRole.SUPLENTE) {
+            throw new BusinessException("El cambio requiere un titular y un suplente vigentes");
+        }
+
+        starter.setRole(MatchPlayerRole.SUPLENTE);
+        substitute.setRole(MatchPlayerRole.TITULAR);
+        matchPlayerRepository.saveAll(List.of(starter, substitute));
+    }
+
+    private MatchPlayer findRosterPlayer(Match match, Map<String, Object> attributes,
+            String idKey, String numberKey) {
+        Object rawId = attributes.get(idKey);
+        if (rawId instanceof String id) {
+            try {
+                UUID personId = UUID.fromString(id);
+                MatchPlayer byId = match.getRoster().stream()
+                        .filter(player -> player.getDivisionPlayer().getPerson().getId().equals(personId))
+                        .findFirst()
+                        .orElse(null);
+                if (byId != null) {
+                    return byId;
+                }
+            } catch (IllegalArgumentException ignored) {
+                // Legacy events may contain only the position number.
+            }
+        }
+
+        int jerseyNumber = readJerseyNumber(attributes, numberKey);
+        return match.getRoster().stream()
+                .filter(player -> player.getDivisionPlayer().getJerseyNumber() != null
+                        && player.getDivisionPlayer().getJerseyNumber() == jerseyNumber)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private int readJerseyNumber(Map<String, Object> attributes, String key) {
+        Object value = attributes.get(key);
+        if (!(value instanceof Number number) || number.intValue() != number.doubleValue()) {
+            throw new BusinessException("El campo " + key + " debe ser un número entero");
+        }
+        return number.intValue();
     }
 
     @Transactional(readOnly = true)

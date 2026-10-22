@@ -133,6 +133,10 @@ public class EventService {
 		Event result = EventDTOMapper.toEntity(eventRequest, match, aEventType, aPerson);
 
 		Event savedEvent = eventRepository.save(result);
+		if ("SUBSTITUTION".equals(aEventType.getCode())
+				&& eventRequest.teamPossession() == EventPossession.OWN) {
+			matchService.applySubstitution(match, eventRequest.attributes(), true);
+		}
 		recalculateMatchScore(match);
 		return EventDTOMapper.toResponseDTO(savedEvent);
 	}
@@ -192,6 +196,10 @@ public class EventService {
 
 		result.setActive(false);
 		result.setSynchronizedAt(LocalDateTime.now());
+		if ("SUBSTITUTION".equals(result.getEventType().getCode())
+				&& result.getTeamPossession() == EventPossession.OWN) {
+			matchService.applySubstitution(result.getMatch(), result.getAttributes(), false);
+		}
 		Event savedEvent = eventRepository.save(result);
 		recalculateMatchScore(result.getMatch());
 		return EventDTOMapper.toResponseDTO(savedEvent);
