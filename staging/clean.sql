@@ -1343,14 +1343,17 @@ VALUES
     'NEUTRAL',
     false,
     0,
-    true,
+    false,
     true,
     true,
     NULL,
     'CHOOSE',
     'KEEP',
     $$[]$$::jsonb,
-    $$[]$$::jsonb,
+    $$[
+      {"key":"playerOutNumber","label":"Jugador que sale","type":"number","phase":"live","required":true,"min":1,"max":15},
+      {"key":"playerInNumber","label":"Jugador que entra","type":"number","phase":"live","required":true,"min":16,"max":23}
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 )
 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, template_event_fields = EXCLUDED.template_event_fields;

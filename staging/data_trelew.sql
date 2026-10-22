@@ -661,24 +661,25 @@ VALUES
         "required": false,
         "options": [
           {
-            "value": "touch_won",
-            "label": "Touch ganado"
+            "value": "opp_possession",
+            "label": "Perdida",
+            "possession": "OTHER"
           },
           {
             "value": "retained",
-            "label": "Recuperada propia"
+            "label": "Recuperada",
+            "possession": "KEEP"
           },
-          {
-            "value": "opp_possession",
-            "label": "Recepcionada por rival"
-          },
+
           {
             "value": "out_in_full",
-            "label": "Directa afuera (Error)"
+            "label": "Directa afuera",
+            "possession": "OTHER"
           },
           {
-            "value": "dead_ball",
-            "label": "Pelota muerta"
+            "value": "50/22",
+            "label": "50/22",
+            "possession": "KEEP"
           }
         ]
       }
@@ -693,7 +694,7 @@ VALUES
     'ATTACK',
     false,
     0,
-    true,
+    false,
     true,
     false,
     NULL,
@@ -710,13 +711,23 @@ VALUES
         "options": [
           {
             "value": "penalty_touch",
-            "label": "Penal a touch",
-            "possession": "KEEP"
+            "label": "Sale directo",
+            "possession": "KEEP",
+            "followUps":[
+              {
+                "code": "LINEOUT"
+              }
+            ]
           },
           {
-            "value": "open_play",
-            "label": "Juego abierto",
+            "value": "lost_onw",
+            "label": "Recupera rival",
             "possession": "OTHER"
+          },
+          {
+            "value": "won",
+            "label": "Recupera propio",
+            "possession": "KEEP"
           }
         ]
       }
@@ -772,13 +783,7 @@ VALUES
             "possession": "KEEP",
             "followUps": [
               {
-                "code": "PENALTY_KICK"
-              },
-              {
-                "code": "KICK_TO_TOUCH",
-                "preset": {
-                  "kind": "penalty_touch"
-                }
+                "code": "PENALTY_CONCEDED"
               }
             ]
           },
@@ -788,13 +793,7 @@ VALUES
             "possession": "OTHER",
             "followUps": [
               {
-                "code": "PENALTY_KICK"
-              },
-              {
-                "code": "KICK_TO_TOUCH",
-                "preset": {
-                  "kind": "penalty_touch"
-                }
+                "code": "PENALTY_CONCEDED"
               }
             ]
           }
@@ -1028,6 +1027,34 @@ VALUES
     CURRENT_TIMESTAMP
 ),
 (
+    '550e8400-e29b-41d4-a716-446655440129',
+    'QUICK_PLAY',
+    'Jugada rapida',
+    'Juego Fijo',
+    'ATTACK',
+    false,
+    0,
+    false,
+    true,
+    false,
+    NULL,
+    'ATTACKING',
+    'KEEP',
+    $$[]$$::jsonb,
+    $$[
+      {
+        "key": "quickPlayOutcome",
+        "label": "Resultado",
+        "type": "boolean",
+        "phase": "post",
+        "required": false,
+        "trueLabel": "Postivo",
+        "falseLabel": "Negativo"
+      }
+    ]$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
     '550e8400-e29b-41d4-a716-446655440115',
     'TACKLE_MADE',
     'Tackle completado',
@@ -1100,7 +1127,7 @@ VALUES
 (
     '550e8400-e29b-41d4-a716-446655440117',
     'TURNOVER_WON',
-    'Turnover ganado',
+    'Turnover',
     'Cambio de Posesión',
     'NEUTRAL',
     false,
@@ -1126,7 +1153,7 @@ VALUES
           },
           {
             "value": "rip_standing",
-            "label": "Arrancón de pie (Strip)"
+            "label": "Arrancón de pelota"
           },
           {
             "value": "interception",
@@ -1135,35 +1162,7 @@ VALUES
           {
             "value": "other",
             "label": "Otro"
-          }
-        ]
-      }
-    ]$$::jsonb,
-    CURRENT_TIMESTAMP
-),
-(
-    '550e8400-e29b-41d4-a716-446655440119',
-    'HANDLING_ERROR',
-    'Knock-on / Error de manejo',
-    'Cambio de Posesión',
-    'NEUTRAL',
-    false,
-    0,
-    false,
-    true,
-    true,
-    NULL,
-    'ATTACKING',
-    'OTHER',
-    $$[]$$::jsonb,
-    $$[
-      {
-        "key": "errorType",
-        "label": "Tipo de error",
-        "type": "select",
-        "phase": "live",
-        "required": true,
-        "options": [
+          },
           {
             "value": "knock_on",
             "label": "Knock-on (Caída adelante)"
@@ -1175,6 +1174,18 @@ VALUES
           {
             "value": "dropped_unforced",
             "label": "Caída no forzada"
+          },
+          {
+            "value": "pushed_touch",
+            "label": "Empujado a touch"
+          },
+          {
+            "value": "held_ingoal",
+            "label": "Trabado en ingoal"
+          },
+          {
+            "value": "offensive_penalty",
+            "label": "Penal del atacante"
           }
         ]
       }
@@ -1191,7 +1202,7 @@ VALUES
     0,
     false,
     true,
-    true,
+    false,
     NULL,
     'ATTACKING',
     'KEEP',
@@ -1225,46 +1236,6 @@ VALUES
     CURRENT_TIMESTAMP
 ),
 (
-    '550e8400-e29b-41d4-a716-446655440121',
-    'OTHER_TURNOVER',
-    'Otro cambio de posesión',
-    'Cambio de Posesión',
-    'NEUTRAL',
-    false,
-    0,
-    false,
-    true,
-    true,
-    NULL,
-    'ATTACKING',
-    'OTHER',
-    $$[]$$::jsonb,
-    $$[
-      {
-        "key": "reason",
-        "label": "Causa",
-        "type": "select",
-        "phase": "post",
-        "required": false,
-        "options": [
-          {
-            "value": "pushed_touch",
-            "label": "Empujado a touch"
-          },
-          {
-            "value": "held_ingoal",
-            "label": "Trabado en ingoal"
-          },
-          {
-            "value": "offensive_penalty",
-            "label": "Penal del atacante"
-          }
-        ]
-      }
-    ]$$::jsonb,
-    CURRENT_TIMESTAMP
-),
-(
     '550e8400-e29b-41d4-a716-446655440122',
     'PENALTY_CONCEDED',
     'Penal / Infracción',
@@ -1272,19 +1243,19 @@ VALUES
     'NEUTRAL',
     false,
     0,
-    true,
+    false,
     true,
     true,
     NULL,
     'CHOOSE',
     'OTHER',
-    $$[{"code": "PENALTY_KICK"}, {"code": "KICK_TO_TOUCH", "preset": {"kind": "penalty_touch"}}]$$::jsonb,
+    $$[{"code": "PENALTY_KICK"}, {"code": "KICK_TO_TOUCH"}, {"code": "SCRUM"}, {"code": "QUICK_PLAY"}]$$::jsonb,
     $$[
       {
         "key": "penaltyType",
         "label": "Infracción",
         "type": "select",
-        "phase": "live",
+        "phase": "post",
         "required": true,
         "options": [
           {
@@ -1474,14 +1445,17 @@ VALUES
     'NEUTRAL',
     false,
     0,
-    true,
+    false,
     true,
     true,
     NULL,
     'CHOOSE',
     'KEEP',
     $$[]$$::jsonb,
-    $$[]$$::jsonb,
+    $$[
+      {"key":"playerOutNumber","label":"Jugador que sale","type":"number","phase":"live","required":true,"min":1,"max":15},
+      {"key":"playerInNumber","label":"Jugador que entra","type":"number","phase":"live","required":true,"min":16,"max":23}
+    ]$$::jsonb,
     CURRENT_TIMESTAMP
 );
 
