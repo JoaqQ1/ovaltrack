@@ -16,6 +16,9 @@ export interface PlayerDetailStatistic {
   conversionAttempts: number;
   penaltyKicksMade: number;
   penaltyKickAttempts: number;
+  tacklesMade: number;
+  tacklesMissed: number;
+  tackleEffectiveness: number;
 
   passes: number;
   offloads: number;
@@ -27,8 +30,7 @@ export interface PlayerDetailStatistic {
   yellowCards: number;
   redCards: number;
   injuries: number;
-
-  hasActivity: boolean;
+  hasActivity: boolean; 
 }
 
 const readJerseyNumber = (event: LocalMatchEvent): number | null => {
@@ -80,7 +82,7 @@ export function computePlayerDetailStats(
     const s = {
       totalPoints: 0, tries: 0, conversionsMade: 0, conversionAttempts: 0,
       penaltyKicksMade: 0, penaltyKickAttempts: 0,passes: 0, offloads: 0, badPasses: 0, kicksToTouch: 0, restarts: 0,
-      penaltiesConceded: 0, yellowCards: 0, redCards: 0, injuries: 0,
+      penaltiesConceded: 0, yellowCards: 0, redCards: 0, injuries: 0, tacklesMade: 0,  tacklesMissed: 0, tackleEffectiveness: 0
     };
 
     for (const e of own.values()) {
@@ -98,6 +100,12 @@ export function computePlayerDetailStats(
           if (e.attributes?.['passType'] === 'offload') s.offloads++;
           if (e.attributes?.['isBadPass'] === true) s.badPasses++;
           break;
+        case 'TACKLE_MADE':
+          s.tacklesMade++;
+          break;
+        case 'TACKLE_MISSED':
+          s.tacklesMissed++;
+          break;
         case 'KICK_TO_TOUCH': s.kicksToTouch++; break;
         case 'RESTART_KICK': s.restarts++; break;
         case 'PENALTY_CONCEDED': s.penaltiesConceded++; break;
@@ -106,7 +114,7 @@ export function computePlayerDetailStats(
         case 'INJURY': s.injuries++; break;
       }
     }
-
+    s.tackleEffectiveness = calculatePercentage(s.tacklesMade, s.tacklesMade + s.tacklesMissed, 0);
     const hasActivity = Object.values(s).some(value => value > 0);
 
     return {
