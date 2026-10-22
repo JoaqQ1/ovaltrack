@@ -435,7 +435,7 @@ class EventServiceTest {
         when(eventRepository.findActiveEventById(eventId)).thenReturn(existingEvent);
 
         EventUpdateDTO updateDTO = new EventUpdateDTO(
-                null, playerId, null, null, null, null, null, null, null
+                null, playerId, null, null, null, null, null, null, null, null
         );
 
         BusinessException ex = assertThrows(BusinessException.class, () -> eventService.updateEvent(eventId, updateDTO));
@@ -473,7 +473,7 @@ class EventServiceTest {
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         EventUpdateDTO updateDTO = new EventUpdateDTO(
-                null, null, EventPossession.OPPONENT, null, null, null, null, null, null
+                null, null, EventPossession.OPPONENT, null, null, null, null, null, null, null
         );
 
         EventResponseDTO res = eventService.updateEvent(eventId, updateDTO);
@@ -525,7 +525,7 @@ class EventServiceTest {
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         EventUpdateDTO updateDTO = new EventUpdateDTO(
-                null, playerId, EventPossession.OWN, null, null, null, null, null, null
+                null, playerId, EventPossession.OWN, null, null, null, null, null, null, null
         );
 
         EventResponseDTO res = eventService.updateEvent(eventId, updateDTO);
@@ -631,7 +631,7 @@ class EventServiceTest {
                 "metersGained", 15,
                 "isBadPass", true
         );
-        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null);
+        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null, null);
 
         EventResponseDTO res = eventService.updateEvent(eventId, dto);
         assertNotNull(res);
@@ -654,7 +654,7 @@ class EventServiceTest {
         when(eventRepository.findActiveEventById(eventId)).thenReturn(event);
 
         Map<String, Object> attrs = Map.of("metersGained", 150);
-        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null);
+        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null, null);
 
         BusinessException ex = assertThrows(BusinessException.class, () -> eventService.updateEvent(eventId, dto));
         assertTrue(ex.getMessage().contains("máximo"));
@@ -675,7 +675,7 @@ class EventServiceTest {
         when(eventRepository.findActiveEventById(eventId)).thenReturn(event);
 
         Map<String, Object> attrs = Map.of("metersGained", -10);
-        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null);
+        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null, null);
 
         BusinessException ex = assertThrows(BusinessException.class, () -> eventService.updateEvent(eventId, dto));
         assertTrue(ex.getMessage().contains("mínimo"));
@@ -696,7 +696,7 @@ class EventServiceTest {
         when(eventRepository.findActiveEventById(eventId)).thenReturn(event);
 
         Map<String, Object> attrs = Map.of("penaltyType", "OPCION_INEXISTENTE");
-        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null);
+        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null, null);
 
         BusinessException ex = assertThrows(BusinessException.class, () -> eventService.updateEvent(eventId, dto));
         assertTrue(ex.getMessage().contains("Opción inválida"));
@@ -717,7 +717,7 @@ class EventServiceTest {
         when(eventRepository.findActiveEventById(eventId)).thenReturn(event);
 
         Map<String, Object> attrs = Map.of("campoInexistente", 99);
-        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null);
+        EventUpdateDTO dto = new EventUpdateDTO(null, null, null, null, null, null, null, attrs, null, null);
 
         BusinessException ex = assertThrows(BusinessException.class, () -> eventService.updateEvent(eventId, dto));
         assertTrue(ex.getMessage().contains("Atributo no permitido"));
@@ -749,7 +749,7 @@ class EventServiceTest {
         when(eventTypeService.findEventTypeEntityById(newTypeId)).thenReturn(newType);
         when(eventRepository.save(any(Event.class))).thenAnswer(i -> i.getArgument(0));
 
-        EventUpdateDTO dto = new EventUpdateDTO(newTypeId, null, null, null, null, null, null, null, null);
+        EventUpdateDTO dto = new EventUpdateDTO(newTypeId, null, null, null, null, null, null, null, null, null);
 
         EventResponseDTO res = eventService.updateEvent(eventId, dto);
         assertNotNull(res);

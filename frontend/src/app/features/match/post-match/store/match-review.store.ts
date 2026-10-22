@@ -500,6 +500,7 @@ export class MatchReviewStore {
       origin: e.origin,
       isPostMatch,
       attributes: e.attributes,
+      note: e.note || null,
       isDimmed: false
     };
   }

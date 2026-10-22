@@ -60,7 +60,8 @@ public final class EventDTOMapper {
                 event.getAttributes(),
                 event.getCreatedAt(),
                 event.getSynchronizedAt(),
-                event.getActive());
+                event.getActive(),
+                event.getNote());
     }
 
     public static EventTypeResponseDTO toResponseDTO(EventType eventType) {
@@ -110,6 +111,7 @@ public final class EventDTOMapper {
                 event.getPeriod(),
                 event.getTeamPossession(),
                 event.getOrigin(),
-                event.getAttributes());
+                event.getAttributes(),
+                event.getNote());
     }
 }

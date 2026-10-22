@@ -215,6 +215,11 @@ public class EventService {
 		applyPossessionAndPlayer(event, eventRequest);
 		applyTimingFields(event, eventRequest);
 
+		//para las notas
+		if (eventRequest.note() != null) {
+            event.setNote(eventRequest.note().trim().isEmpty() ? null : eventRequest.note());
+        }
+
 		event.setSynchronizedAt(LocalDateTime.now());
 		Event savedEvent = eventRepository.save(event);
 		recalculateMatchScore(event.getMatch());

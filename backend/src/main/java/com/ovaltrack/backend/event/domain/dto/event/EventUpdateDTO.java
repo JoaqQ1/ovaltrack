@@ -25,6 +25,8 @@ public record EventUpdateDTO(
 
         Map<String, Object> attributes,
         
-        LocalDateTime synchronizedAt
+        LocalDateTime synchronizedAt,
+
+        String note
 ) {
 }

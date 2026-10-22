@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, effect, inject, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { MatchReviewStore } from '../../store/match-review.store';
 import { ReviewEventViewModel } from '../../types/match-review.types';
@@ -9,7 +10,7 @@ import { ToastService } from 'src/app/core/services/toast.service';
 @Component({
   selector: 'app-post-match-table',
   standalone: true,
-  imports: [CommonModule, ScrollingModule],
+  imports: [CommonModule, ScrollingModule, FormsModule],
   templateUrl: './post-match-table.component.html',
   styleUrl: './post-match-table.component.css'
 })
@@ -22,6 +23,10 @@ export class PostMatchTableComponent implements AfterViewInit, OnDestroy {
   private readonly elementRef = inject(ElementRef);
 
   readonly isAssigning = signal<boolean>(false);
+
+  isNoteModalOpen = false;
+  activeEventForNote: ReviewEventViewModel | null = null;
+  draftNote = '';
 
   @ViewChild(CdkVirtualScrollViewport) viewport?: CdkVirtualScrollViewport;
   private resizeObserver?: ResizeObserver;
@@ -93,6 +98,37 @@ export class PostMatchTableComponent implements AfterViewInit, OnDestroy {
       error: () => {
         this.isAssigning.set(false);
         this.toastService.error('Error al asignar jugador');
+      }
+    });
+  }
+
+  openNoteModal(ev: ReviewEventViewModel): void {
+    console.log('Evento clickeado:', ev); // <-- AGREGÁ ESTO
+    this.activeEventForNote = ev;
+    this.draftNote = ev.note || ''; 
+    this.isNoteModalOpen = true;
+  }
+
+  closeNoteModal(): void {
+    this.isNoteModalOpen = false;
+    this.activeEventForNote = null;
+    this.draftNote = '';
+  }
+
+  saveNote(): void {
+    if (!this.activeEventForNote) return;
+    const eventId = this.activeEventForNote.id;
+    
+    this.eventService.update(eventId, { note: this.draftNote }).subscribe({
+      next: () => {
+        // ESTA LÍNEA actualiza la tabla en tiempo real:
+        this.store.updateEvent(eventId, { note: this.draftNote }); 
+        
+        this.toastService.success('Nota guardada correctamente');
+        this.closeNoteModal();
+      },
+      error: () => {
+        this.toastService.error('Error al guardar la nota');
       }
     });
   }
