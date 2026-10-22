@@ -164,78 +164,84 @@
     }
 
     @if (activeTab() === 'players') {
-      <section class="form-card">
-        <div class="form-card-header">
-          <h2 class="form-card-title">Rendimiento individual</h2>
-          <p class="form-card-subtitle">Jugadores con actividad registrada · {{ periodLabel() }}</p>
-        </div>
+      <div class="players-layout">
 
-        @if (players().length === 0) {
-          <div class="state-box state-box--inline">
-            <i class="bi bi-people"></i>
-            <p>No hay jugadores con actividad en este período.</p>
+        <!-- Plantel del partido -->
+        <section class="form-card players-card roster-card">
+          <div class="form-card-header">
+            <h2 class="form-card-title">Plantel</h2>
+            <p class="form-card-subtitle">{{ players().length }} jugadores · elegí uno para ver su rendimiento</p>
           </div>
-        } @else {
-          <div class="table-scroll">
-            <table class="players-table players-table--wide">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th class="left">Jugador</th>
-                  <th>Puntos</th>
-                  <th>Tries</th>
-                  <th title="Convertidas / intentadas">Conv.</th>
-                  <th title="Convertidos / intentados">Penales</th>
-                  <th>Pases</th>
-                  <th>Offloads</th>
-                  <th>Pases compr.</th>
-                  <th>Patadas a touch</th>
-                  <th>Salidas</th>
-                  <th>Penales cometidos</th>
-                  <th>Tarjetas</th>
-                  <th>Lesiones</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (p of players(); track p.playerId) {
-                  <tr>
-                    <td><span class="jersey">{{ p.jerseyNumber }}</span></td>
-                    <td class="left">
+
+          @if (players().length === 0) {
+            <div class="state-box state-box--inline">
+              <i class="bi bi-people"></i>
+              <p>No hay jugadores cargados para este partido.</p>
+            </div>
+          } @else {
+            <div class="roster-scroll" role="group" aria-label="Plantel del partido">
+              @for (group of rosterGroups(); track group.label) {
+                <h3 class="roster-group">{{ group.label }}</h3>
+                @for (p of group.players; track p.playerId) {
+                  <button type="button" class="roster-item"
+                          [class.roster-item--active]="p.playerId === selectedPlayerId()"
+                          [class.roster-item--idle]="!p.hasActivity"
+                          [attr.aria-pressed]="p.playerId === selectedPlayerId()"
+                          (click)="selectPlayer(p.playerId)">
+                    <span class="jersey">{{ p.jerseyNumber }}</span>
+                    <span class="roster-item__info">
                       <span class="player-name">{{ p.playerName }}</span>
                       @if (p.position) { <span class="player-pos">{{ p.position }}</span> }
-                    </td>
-                    <td>
-                      @if (p.totalPoints > 0) {
-                        <span class="points-badge">{{ p.totalPoints }} pts</span>
-                      } @else {
-                        <span class="mono zero">—</span>
-                      }
-                    </td>
-                    <td class="mono" [class.zero]="p.tries === 0">{{ p.tries || '—' }}</td>
-                    <td class="mono" [class.zero]="p.conversionAttempts === 0">{{ formatRatio(p.conversionsMade, p.conversionAttempts) }}</td>
-                    <td class="mono" [class.zero]="p.penaltyKickAttempts === 0">{{ formatRatio(p.penaltyKicksMade, p.penaltyKickAttempts) }}</td>
-                    <td class="mono" [class.zero]="p.passes === 0">{{ p.passes || '—' }}</td>
-                    <td class="mono" [class.zero]="p.offloads === 0">{{ p.offloads || '—' }}</td>
-                    <td class="mono" [class.zero]="p.badPasses === 0">{{ p.badPasses || '—' }}</td>
-                    <td class="mono" [class.zero]="p.kicksToTouch === 0">{{ p.kicksToTouch || '—' }}</td>
-                    <td class="mono" [class.zero]="p.restarts === 0">{{ p.restarts || '—' }}</td>
-                    <td class="mono" [class.zero]="p.penaltiesConceded === 0">{{ p.penaltiesConceded || '—' }}</td>
-                    <td class="mono">
-                      @if (p.yellowCards > 0 || p.redCards > 0) {
-                        @if (p.yellowCards > 0) { <span>🟨 {{ p.yellowCards }}</span> }
-                        @if (p.redCards > 0) { <span>🟥 {{ p.redCards }}</span> }
-                      } @else {
-                        <span class="zero">—</span>
-                      }
-                    </td>
-                    <td class="mono" [class.zero]="p.injuries === 0">{{ p.injuries || '—' }}</td>
-                  </tr>
+                    </span>
+                    @if (p.totalPoints > 0) {
+                      <span class="points-badge">{{ p.totalPoints }} pts</span>
+                    }
+                  </button>
                 }
-              </tbody>
-            </table>
-          </div>
-        }
-      </section>
+              }
+            </div>
+          }
+        </section>
+
+        <!-- Rendimiento individual -->
+        <section class="form-card players-card player-detail">
+          @if (selectedPlayer(); as p) {
+            <div class="form-card-header player-head">
+              <span class="jersey jersey--lg">{{ p.jerseyNumber }}</span>
+              <div class="player-head__info">
+                <h2 class="form-card-title">{{ p.playerName }}</h2>
+                <p class="form-card-subtitle">
+                  {{ p.position || 'Sin posición' }} · {{ p.isStarter ? 'Titular' : 'Suplente' }} · {{ periodLabel() }}
+                </p>
+              </div>
+            </div>
+
+            <div class="player-body">
+              @if (!p.hasActivity) {
+                <p class="note"><i class="bi bi-info-circle"></i> Sin acciones registradas para este jugador en {{ periodLabel().toLowerCase() }}.</p>
+              }
+              @for (group of selectedPlayerGroups(); track group.title) {
+                <div class="stat-group">
+                  <h4 class="breakdown__title"><i class="bi {{ group.icon }}"></i> {{ group.title }}</h4>
+                  <div class="stat-grid">
+                    @for (tile of group.tiles; track tile.label) {
+                      <div class="stat-tile">
+                        <span class="stat-tile__label">{{ tile.label }}</span>
+                        <span class="stat-tile__value" [class.zero]="tile.empty">{{ tile.value }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="state-box state-box--inline">
+              <i class="bi bi-person-lines-fill"></i>
+              <p>Seleccioná un jugador del plantel para ver sus estadísticas.</p>
+            </div>
+          }
+        </section>
+      </div>
     }
   }
 }
