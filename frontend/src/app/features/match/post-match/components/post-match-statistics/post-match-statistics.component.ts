@@ -20,6 +20,10 @@ import { computePlayerDetailStats, PlayerDetailStatistic } from '../../../servic
 export type StatsPeriodFilter = 'ALL' | 1 | 2;
 export type StatsTab = 'team' | 'players';
 
+interface StatTile { label: string; value: string; empty: boolean; }
+interface StatGroup { title: string; icon: string; tiles: StatTile[]; }
+interface RosterGroup { label: string; players: PlayerDetailStatistic[]; }
+
 interface CompareRow {
   label: string;
   own: number;
@@ -54,6 +58,7 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
 
   readonly activeTab = signal<StatsTab>('team');
   readonly period = signal<StatsPeriodFilter>('ALL');
+  readonly selectedPlayerId = signal<string | null>(null);
 
   // Datos base: se cargan una sola vez y todo lo demás se recalcula en memoria.
   private readonly events = signal<LocalMatchEvent[]>([]);
@@ -100,11 +105,66 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
     )
   );
 
+  /** Plantel completo del partido con las estadísticas del período (sin actividad figuran en cero). */
   readonly players = computed<PlayerDetailStatistic[]>(() => {
     if (this.eventTypes().length === 0) return [];
     return computePlayerDetailStats(this.periodEvents(), this.roster(), this.eventTypeMap())
-      .filter(p => p.hasActivity)
-      .sort((a, b) => b.totalPoints - a.totalPoints || a.jerseyNumber - b.jerseyNumber);
+      .sort((a, b) => a.jerseyNumber - b.jerseyNumber);
+  });
+
+  readonly rosterGroups = computed<RosterGroup[]>(() => {
+    const all = this.players();
+    return [
+      { label: 'Titulares', players: all.filter(p => p.isStarter) },
+      { label: 'Suplentes', players: all.filter(p => !p.isStarter) },
+    ].filter(g => g.players.length > 0);
+  });
+
+  /** Se recalcula con el período, por eso la selección se mantiene al cambiar de tiempo. */
+  readonly selectedPlayer = computed<PlayerDetailStatistic | null>(() => {
+    const id = this.selectedPlayerId();
+    return id ? this.players().find(p => p.playerId === id) ?? null : null;
+  });
+
+  readonly selectedPlayerGroups = computed<StatGroup[]>(() => {
+    const p = this.selectedPlayer();
+    if (!p) return [];
+    const count = (label: string, value: number): StatTile => ({ label, value: value > 0 ? String(value) : '—', empty: value === 0 });
+    const ratio = (label: string, made: number, attempts: number): StatTile => 
+      ({ label, value: this.formatRatio(made, attempts), empty: attempts === 0 });
+    const tackles = p.tacklesMade + p.tacklesMissed;
+    return [
+      { title: 'Anotación', icon: 'bi-trophy', tiles: [
+        count('Puntos conseguidos', p.totalPoints),
+        count('Tries', p.tries),
+        count('Conversiones realizadas', p.conversionsMade),
+        count('Conversiones falladas', p.conversionAttempts),
+        //ratio('Conversiones realizadas', p.conversionsMade, p.conversionAttempts),
+        count('Penales a palos realizados', p.penaltyKicksMade),
+        count('Penales a palos fallados', p.penaltyKickAttempts),
+        //ratio('Penales a palos', p.penaltyKicksMade, p.penaltyKickAttempts),
+      ] },
+      { title: 'Defensa', icon: 'bi-shield-check', tiles: [
+        count('Tackles realizados', p.tacklesMade),
+        count('Tackles exitosos', p.tacklesMade - p.tacklesMissed),
+        count('Tackles fallados', p.tacklesMissed),
+        
+        { label: 'Efectividad', value: tackles > 0 ? `${p.tackleEffectiveness}%` : '—', empty: tackles === 0 },
+      ] },
+      { title: 'Juego', icon: 'bi-lightning', tiles: [
+        count('Pases', p.passes),
+        count('Offloads', p.offloads),
+        count('Pases comprometidos', p.badPasses),
+        count('Patadas a touch', p.kicksToTouch),
+        count('Salidas', p.restarts),
+      ] },
+      { title: 'Disciplina', icon: 'bi-exclamation-triangle', tiles: [
+        count('Penales cometidos', p.penaltiesConceded),
+        count('Tarjetas amarillas', p.yellowCards),
+        count('Tarjetas rojas', p.redCards),
+        count('Lesiones', p.injuries),
+      ] },
+    ];
   });
 
   readonly opponentPossession = computed(() =>
@@ -147,6 +207,10 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
 
   setPeriod(period: StatsPeriodFilter): void {
     this.period.set(period);
+  }
+
+  selectPlayer(playerId: string): void {
+    this.selectedPlayerId.set(playerId);
   }
 
   switchTab(tab: StatsTab): void {
@@ -209,7 +273,7 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Plantel simplificado: jugadores disponibles del partido. Solo se muestran los que tienen actividad.
+   * Plantel simplificado: jugadores disponibles del partido (incluye a los que no registraron acciones).
    * Si querés titulares/suplentes exactos, extraé `resolveRoster` del resumen de entretiempo a un servicio compartido.
    */
   private async loadRoster(matchId: string): Promise<RosterPlayerInfo[]> {
