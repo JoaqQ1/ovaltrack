@@ -17,6 +17,7 @@ export interface BackendEventResponse {
   createdAt: string;
   synchronizedAt: string | null;
   active: boolean;
+  note?: string | null;
 }
 
 export interface BackendEventCreationRequest {
@@ -32,6 +33,7 @@ export interface BackendEventCreationRequest {
   origin?: string | null;
   attributes?: Record<string, unknown>;
   synchronizedAt?: string | null;
+  note?: string | null;
 }
 
 export interface BackendEventUpdateRequest {
@@ -44,6 +46,7 @@ export interface BackendEventUpdateRequest {
   origin?: string | null;
   attributes?: Record<string, unknown> | null;
   synchronizedAt?: string | null;
+  note?: string | null;
 }
 
 export interface LocalMatchEvent extends BackendEventResponse {
@@ -65,4 +68,5 @@ export interface MatchTimelineEventResponse {
   teamPossession: Possession;
   origin?: string | null;
   attributes?: Record<string, unknown> | null;
+  note?: string | null;
 }

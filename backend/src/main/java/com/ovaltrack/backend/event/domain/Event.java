@@ -89,4 +89,7 @@ public class Event {
             this.origin = origin;
         }
     }
+
+    @Column(columnDefinition = "TEXT")
+    private String note;
 }

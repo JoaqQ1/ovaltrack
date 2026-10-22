@@ -35,6 +35,8 @@ public record EventResponseDTO(
 
         LocalDateTime synchronizedAt,
 
-        Boolean active
+        Boolean active,
+
+        String note
 ) {
 }
