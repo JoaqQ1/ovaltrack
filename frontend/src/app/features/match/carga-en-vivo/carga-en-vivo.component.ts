@@ -14,11 +14,11 @@ import { LocalMatchEvent } from '../types/event.types';
 import { AvailablePlayer } from '../types/roster.types';
 import {
   Team, countsAsScoring, followUpChoices, liveFields, opposite, possessionRule, resolveActor,
-} from '../services/calculators/event-rules';
+} from '../statistics/calculators/event-rules';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
-import { StatisticCalculationService } from '../services/statistic-calculation.service';
-import { PeriodStatisticDTO } from '../types/statistic.types';
+import { StatisticCalculationService } from '../statistics/services/statistic-calculation.service';
+import { PeriodStatisticDTO } from '../statistics/types/statistic.types';
 import { CurrentStatsModalComponent } from './components/current-stats-modal/current-stats-modal.component';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';

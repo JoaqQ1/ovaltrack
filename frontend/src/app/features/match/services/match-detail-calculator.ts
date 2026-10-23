@@ -1,7 +1,7 @@
 import { LiveCaptureEventType } from "../types/event-type.types";
 import { LocalMatchEvent } from "../types/event.types";
-import { countsAsScoring, eventTeam, Team } from "./calculators/event-rules";
-import { calculatePercentage } from "./calculators/math-utils";
+import { countsAsScoring, eventTeam, Team } from "../statistics/calculators/event-rules";
+import { calculatePercentage } from "../statistics/calculators/math-utils";
 
 export type MetricFormat = 'int' | 'percent' | 'decimal';
 

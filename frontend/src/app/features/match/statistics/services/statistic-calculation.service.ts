@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { liveCaptureDatabase } from '../data/local-databases';
-import { LiveCaptureEventType } from '../types/event-type.types';
-import { LocalMatchEvent } from '../types/event.types';
+import { liveCaptureDatabase } from '../../../local-database/local-databases';
+import { LiveCaptureEventType } from '../../types/event-type.types';
+import { LocalMatchEvent } from '../../types/event.types';
 import { PeriodStatisticDTO, PlayerPeriodStatistic } from '../types/statistic.types';
 import {
   computeScoreStats,
@@ -12,7 +12,7 @@ import {
   computePossessionStatsByTime as computePossessionStats,
   computePlayerPeriodStats,
   RosterPlayerInfo,
-} from './calculators';
+} from '../calculators';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticCalculationService {

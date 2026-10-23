@@ -2,7 +2,6 @@ import { Injectable, computed, signal } from '@angular/core';
 import { MatchTimelineEventResponse } from '../../types/event.types';
 import { AvailablePlayer } from '../../types/roster.types';
 import { LiveCaptureEventType } from '../../types/event-type.types';
-import { countsAsScoring } from '../../services/calculators/event-rules';
 import {
   ReviewEventViewModel,
   ReviewFilters,
@@ -21,6 +20,7 @@ import {
   formatAbsoluteTime,
   formatOnlyTime
 } from '../utils/match-review.utils';
+import { countsAsScoring } from '../../statistics/calculators/event-rules';
 
 export { RUGBY_HALF_TIME_MIN, RUGBY_FULL_TIME_MIN, EMPTY_TIME_PLACEHOLDER };
 

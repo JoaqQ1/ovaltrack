@@ -1,6 +1,6 @@
 import { LiveCaptureEventType } from '../../types/event-type.types';
 import { LocalMatchEvent } from '../../types/event.types';
-import { PeriodStatisticDTO } from '../../types/statistic.types';
+import { PeriodStatisticDTO } from '../../statistics/types/statistic.types';
 import { calculatePercentage } from './math-utils';
 
 export type PossessionStats = Pick<PeriodStatisticDTO, 'ownPossessionPercentage'>;

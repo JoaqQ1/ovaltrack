@@ -4,13 +4,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { MatchService } from '../services/match.service';
 import { RosterService } from '../services/roster.service';
-import { StatisticCalculationService } from '../services/statistic-calculation.service';
-import { LiveCaptureCacheService } from '../services/live-capture-cache.service';
-import { PeriodStatisticDTO, PlayerPeriodStatistic } from '../types/statistic.types';
+import { StatisticCalculationService } from '../statistics/services/statistic-calculation.service';
+import { PeriodStatisticDTO, PlayerPeriodStatistic } from '../statistics/types/statistic.types';
 import { LiveCapturePersistedState } from '../types/live-capture.types';
 import { LiveCaptureService } from '../services/live-capture.service';
-import { RosterPlayerInfo } from '../services/calculators';
+
 import { AvailablePlayer, SavedRoster } from '../types/roster.types';
+import { RosterPlayerInfo } from '../statistics/calculators';
+import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 
 const TACKLE_SUCCESS_THRESHOLD = 70;
 const DISCIPLINE_CRITICAL_PENALTIES = 6;
@@ -30,7 +31,7 @@ export class HalftimeSummaryComponent implements OnInit {
   private readonly matchService = inject(MatchService);
   private readonly rosterService = inject(RosterService);
   private readonly statisticCalculationService = inject(StatisticCalculationService);
-  private readonly cacheService = inject(LiveCaptureCacheService);
+  private readonly cacheService = inject(LocalDatabaseService);
   private readonly liveCaptureService = inject(LiveCaptureService);
 
   readonly matchId = signal<string>('');

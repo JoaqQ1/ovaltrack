@@ -4,15 +4,15 @@ import { Observable, catchError, from, map, of, switchMap, throwError, firstValu
 import { environment } from '../../../../environments/environment';
 import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, NewMatchDraft, PendingMatchAction, PendingMatchMutation } from '../types/match.types';
 import { RosterPayload } from '../types/roster.types';
-import { PeriodStatisticDTO } from '../types/statistic.types';
+import { PeriodStatisticDTO } from '../statistics/types/statistic.types';
 import { LiveCaptureBootstrapResponse } from '../types/live-capture.types';
-import { LiveCaptureCacheService } from './live-capture-cache.service';
-import { StatisticApiService } from './statistic-api.service';
+import { StatisticApiService } from '../statistics/services/statistic-api.service';
+import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 
 @Injectable({ providedIn: 'root' })
 export class MatchService {
   private readonly http = inject(HttpClient);
-  private readonly cache = inject(LiveCaptureCacheService);
+  private readonly cache = inject(LocalDatabaseService);
   private readonly statisticApiService = inject(StatisticApiService);
   private readonly apiUrl = `${environment.apiUrl}/matches`;
 

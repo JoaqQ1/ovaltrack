@@ -1,4 +1,4 @@
-import { UUID } from './common.types';
+import { UUID } from '../../types/common.types';
 
 export interface PeriodStatisticDTO {
   matchId: UUID;
@@ -43,4 +43,34 @@ export interface PlayerPeriodStatistic {
   totalPoints: number;
   yellowCards: number;
   redCards: number;
+}
+
+export interface PlayerDetailStatistic {
+  playerId: string;
+  jerseyNumber: number;
+  playerName: string;
+  position?: string;
+  isStarter: boolean;
+
+  totalPoints: number;
+  tries: number;
+  conversionsMade: number;
+  conversionAttempts: number;
+  penaltyKicksMade: number;
+  penaltyKickAttempts: number;
+  tacklesMade: number;
+  tacklesMissed: number;
+  tackleEffectiveness: number;
+
+  passes: number;
+  offloads: number;
+  badPasses: number;
+  kicksToTouch: number;
+  restarts: number;
+
+  penaltiesConceded: number;
+  yellowCards: number;
+  redCards: number;
+  injuries: number;
+  hasActivity: boolean; 
 }

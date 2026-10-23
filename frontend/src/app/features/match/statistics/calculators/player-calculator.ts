@@ -1,6 +1,6 @@
 import { LiveCaptureEventType } from '../../types/event-type.types';
 import { LocalMatchEvent } from '../../types/event.types';
-import { PlayerPeriodStatistic } from '../../types/statistic.types';
+import { PlayerPeriodStatistic } from '../../statistics/types/statistic.types';
 import { countsAsScoring, eventTeam } from './event-rules';
 
 export interface RosterPlayerInfo {

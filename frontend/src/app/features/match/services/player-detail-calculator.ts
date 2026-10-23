@@ -1,37 +1,8 @@
 import { LiveCaptureEventType } from "../types/event-type.types";
 import { LocalMatchEvent } from "../types/event.types";
-import { calculatePercentage, RosterPlayerInfo } from "./calculators";
-import { countsAsScoring, eventTeam } from "./calculators/event-rules";
-
-export interface PlayerDetailStatistic {
-  playerId: string;
-  jerseyNumber: number;
-  playerName: string;
-  position?: string;
-  isStarter: boolean;
-
-  totalPoints: number;
-  tries: number;
-  conversionsMade: number;
-  conversionAttempts: number;
-  penaltyKicksMade: number;
-  penaltyKickAttempts: number;
-  tacklesMade: number;
-  tacklesMissed: number;
-  tackleEffectiveness: number;
-
-  passes: number;
-  offloads: number;
-  badPasses: number;
-  kicksToTouch: number;
-  restarts: number;
-
-  penaltiesConceded: number;
-  yellowCards: number;
-  redCards: number;
-  injuries: number;
-  hasActivity: boolean; 
-}
+import { calculatePercentage, RosterPlayerInfo} from "../statistics/calculators";
+import { countsAsScoring, eventTeam } from "../statistics/calculators/event-rules";
+import { PlayerDetailStatistic } from "../statistics/types/statistic.types";
 
 const readJerseyNumber = (event: LocalMatchEvent): number | null => {
   const value = event.attributes?.['playerNumber'];

@@ -8,12 +8,12 @@ import {
 } from '../types/live-capture.types';
 import { LocalMatchEvent } from '../types/event.types';
 import { LiveMatchStateRequest, MatchStatus } from '../types/match.types';
-import { LiveCaptureCacheService } from './live-capture-cache.service';
 import { MatchService } from './match.service';
 import { EventService } from './event.service';
 import { RosterService } from './roster.service';
 import { AvailablePlayer , SavedRoster} from '../types/roster.types';
-import { eventTeam } from './calculators/event-rules';
+import { eventTeam } from '../statistics/calculators/event-rules';
+import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 
 const HOME_TEAM_NAME = 'PMRC';
 
@@ -29,7 +29,7 @@ export const LIVE_CAPTURE_BACKEND_CONTRACT = [
   providedIn: 'root',
 })
 export class LiveCaptureService {
-  private readonly cache = inject(LiveCaptureCacheService);
+  private readonly cache = inject(LocalDatabaseService);
   private readonly matchService = inject(MatchService);
   private readonly eventService = inject(EventService);
   private readonly rosterService = inject(RosterService);

@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
-import { StatisticCalculationService } from '../services/statistic-calculation.service';
+import { StatisticCalculationService } from '../statistics/services/statistic-calculation.service';
 import { LiveCaptureEventType } from '../types/event-type.types';
 import { CargaEnVivoComponent } from './carga-en-vivo.component';
 

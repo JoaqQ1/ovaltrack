@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PeriodStatisticDTO } from '../../../types/statistic.types';
+import { PeriodStatisticDTO } from '../../../statistics/types/statistic.types';
 
 @Component({
   selector: 'ot-current-stats-modal',

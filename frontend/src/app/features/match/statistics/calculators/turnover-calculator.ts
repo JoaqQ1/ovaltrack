@@ -1,6 +1,6 @@
 import { LiveCaptureEventType } from '../../types/event-type.types';
 import { LocalMatchEvent } from '../../types/event.types';
-import { PeriodStatisticDTO } from '../../types/statistic.types';
+import { PeriodStatisticDTO } from '../../statistics/types/statistic.types';
 import { eventTeam } from './event-rules';
 
 export type TurnoverStats = Pick<
