@@ -1,15 +1,14 @@
 import { Injectable } from '@angular/core';
-import { liveCaptureDatabase, matchDatabase } from '../data/local-databases';
-import { LiveCapturePersistedState, LiveCaptureQuery } from '../types/live-capture.types';
-import { LiveCaptureEventType } from '../types/event-type.types';
-import { BackendEventResponse, LocalMatchEvent } from '../types/event.types';
-import { Match, PendingMatchMutation } from '../types/match.types';
+import { liveCaptureDatabase, matchDatabase } from '../local-databases';
+import { LiveCaptureEventType, LiveCapturePersistedState, LiveCaptureQuery } from '../../match/types/live-capture.types';
+import { BackendEventResponse, LocalMatchEvent } from '../../match/types/event.types';
+import { Match, PendingMatchMutation } from '../../match/types/match.types';
 import { Division } from '../../division/types/division.types';
-import { AvailablePlayer, SavedRoster } from '../types/roster.types';
+import { AvailablePlayer, SavedRoster } from '../../match/types/roster.types';
 import { UserContext } from '../../auth/types/auth.types';
 
 @Injectable({ providedIn: 'root' })
-export class LiveCaptureCacheService {
+export class LocalDatabaseService {
 
   saveUserContext(context: UserContext): Promise<void> {
     return matchDatabase.userContexts.put({

@@ -3,12 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { map, Observable, catchError, from, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { BackendEventTypeResponse, LiveCaptureEventType } from '../types/event-type.types';
-import { LiveCaptureCacheService } from './live-capture-cache.service';
+import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 
 @Injectable({ providedIn: 'root' })
 export class EventTypeService {
   private readonly http = inject(HttpClient);
-  private readonly cache = inject(LiveCaptureCacheService);
+  private readonly cache = inject(LocalDatabaseService);
   private readonly apiUrl = `${environment.apiUrl}/eventType`;
 
   getAll(): Observable<LiveCaptureEventType[]> {

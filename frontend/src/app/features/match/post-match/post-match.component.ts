@@ -7,7 +7,6 @@ import { MatchService } from '../services/match.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
 import { RosterService } from '../services/roster.service';
-import { LiveCaptureCacheService } from '../services/live-capture-cache.service';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ToastService } from 'src/app/core/services/toast.service';
@@ -18,6 +17,7 @@ import { PostMatchTimelineComponent } from './components/post-match-timeline/pos
 import { PostMatchTableComponent } from './components/post-match-table/post-match-table.component';
 import { PostMatchPanelComponent } from './components/post-match-panel/post-match-panel.component';
 import { PostMatchCreateModalComponent } from './components/post-match-create-modal/post-match-create-modal.component';
+import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 
 @Component({
   selector: 'app-post-match',
@@ -42,7 +42,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   private readonly eventService = inject(EventService);
   private readonly eventTypeService = inject(EventTypeService);
   private readonly rosterService = inject(RosterService);
-  private readonly cacheService = inject(LiveCaptureCacheService);
+  private readonly cacheService = inject(LocalDatabaseService);
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly toastService = inject(ToastService);
   private readonly layoutService = inject(LayoutService);

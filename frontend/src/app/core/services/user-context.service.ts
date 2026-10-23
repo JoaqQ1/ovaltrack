@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { UserContext, UserRole } from '../../features/auth/types/auth.types';
 import { ClubSummary, Division } from '../../features/division/types/division.types';
 import { TokenService } from './token.service';
-import { LiveCaptureCacheService } from '../../features/match/services/live-capture-cache.service';
+import { LocalDatabaseService } from 'src/app/features/local-database/services/local-database.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +13,7 @@ import { LiveCaptureCacheService } from '../../features/match/services/live-capt
 export class UserContextService {
   private readonly http = inject(HttpClient);
   private readonly tokenService = inject(TokenService);
-  private readonly cache = inject(LiveCaptureCacheService);
+  private readonly cache = inject(LocalDatabaseService);
   private readonly apiUrl = environment.apiUrl;
 
   private readonly contextSignal = signal<UserContext | null>(null);
