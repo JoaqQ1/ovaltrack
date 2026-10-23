@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, concatMap, defer, firstValueFrom, forkJoin, from, map, switchMap, toArray, catchError, EMPTY } from 'rxjs';
+import { Observable, concatMap, defer, firstValueFrom, forkJoin, from, map, switchMap, toArray, catchError, EMPTY, of } from 'rxjs';
 import {
   LiveCaptureBootstrap,
   LiveCaptureBootstrapResponse,
@@ -55,8 +55,23 @@ export class LiveCaptureService {
       currentPossession: state.currentPossession ?? 'OWN',
     };
 
-    return this.matchService.updateLiveMatchState(state.matchId, request).pipe(
+    return from(this.cache.saveState(state)).pipe(
+      switchMap(() => from(this.cache.getMatch(state.matchId))),
+      switchMap(match => {
+        if (match) {
+          const updatedMatch = {
+            ...match,
+            clockElapsedSeconds: state.clockElapsedSeconds,
+            clockPaused: state.clockPaused,
+            currentPossession: state.currentPossession ?? match.currentPossession,
+          };
+          return from(this.cache.saveMatches([updatedMatch]));
+        }
+        return of(undefined);
+      }),
+      switchMap(() => this.matchService.updateLiveMatchState(state.matchId, request)),
       map(() => undefined),
+      catchError(() => of(undefined))
     );
   }
 
