@@ -126,12 +126,14 @@ export class MatchService {
     if (action === 'start-second-half') {
       currentPeriod = 2;
       clockPaused = false;
-      clockElapsedSeconds = Math.max(2400, cachedMatch?.clockElapsedSeconds ?? 2400);
+      clockElapsedSeconds = Math.max(2400, clockElapsedSeconds);
     } else if (action === 'close-first-half') {
       clockPaused = true;
+      clockElapsedSeconds = Math.max(2400, clockElapsedSeconds);
     } else if (action === 'start') {
       currentPeriod = 1;
       clockPaused = false;
+      clockElapsedSeconds = clockElapsedSeconds > 0 ? clockElapsedSeconds : 0;
     } else if (action === 'finish') {
       clockPaused = true;
     }
@@ -151,7 +153,7 @@ export class MatchService {
           date: '',
           divisionId: '' as any,
           currentPeriod,
-          clockElapsedSeconds: 0,
+          clockElapsedSeconds,
           clockPaused,
           currentPossession: 'OWN',
           homeScore: 0,
