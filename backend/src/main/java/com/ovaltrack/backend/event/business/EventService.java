@@ -117,10 +117,6 @@ public class EventService {
 			throw new BusinessException("No se puede asignar un evento a un partido cancelado");
 		}
 
-		if (match.getStatus() == MatchStatus.FINISHED && !Event.ORIGIN_POST_CAPTURE.equals(eventRequest.origin())) {
-			throw new BusinessException("No se puede cargar eventos mediante esta pantalla para un partido que ya termino");
-		}
-
 		if (authentication != null) {
 			matchSecurityValidator.validateCanManageMatch(match, authentication);
 		}
