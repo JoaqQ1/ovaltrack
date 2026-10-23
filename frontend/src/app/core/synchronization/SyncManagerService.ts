@@ -1,30 +1,36 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, effect, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { EventTypeService } from 'src/app/features/match/services/event-type.service';
 import { EventService } from 'src/app/features/match/services/event.service';
-import { LiveCaptureCacheService } from 'src/app/features/match/services/live-capture-cache.service';
 import { MatchService } from 'src/app/features/match/services/match.service';
 import { UserContextService } from '../services/user-context.service';
+import { LocalDatabaseService } from 'src/app/features/local-database/services/local-database.service';
 
 @Injectable({ providedIn: 'root' })
 export class SyncManagerService {
-  private readonly cache = inject(LiveCaptureCacheService);
+  private readonly cache = inject(LocalDatabaseService);
   private readonly matchService = inject(MatchService);
   private readonly eventService = inject(EventService);
   private readonly eventTypeService = inject(EventTypeService);
   private readonly userCtxService = inject(UserContextService)
 
   private isSyncing = false;
+  private hasSynced = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
       window.addEventListener('online', () => {
+        this.hasSynced = false;
         void this.synchronizeAll();
       });
 
-      if (navigator.onLine) {
-        void this.synchronizeAll();
-      }
+      effect(() => {
+        const context = this.userCtxService.userContext();
+        if (context && navigator.onLine && !this.hasSynced) {
+          this.hasSynced = true;
+          void this.synchronizeAll();
+        }
+      });
     }
   }
 
