@@ -1,104 +1,74 @@
-import { Injectable } from '@angular/core';
-import { liveCaptureDatabase } from '../../../local-database/local-databases';
+import { Injectable, inject } from '@angular/core';
 import { LiveCaptureEventType } from '../../types/event-type.types';
 import { LocalMatchEvent } from '../../types/event.types';
-import { PeriodStatisticDTO, PlayerPeriodStatistic } from '../types/statistic.types';
-import {
-  computeScoreStats,
-  computeTackleStats,
-  computeTurnoverStats,
-  computeDisciplineStats,
-  computeSetPieceStats,
-  computePossessionStatsByTime as computePossessionStats,
-  computePlayerPeriodStats,
-  RosterPlayerInfo,
-} from '../calculators';
+import { MatchStatistics, PlayerStatistics, StatView } from '../types/statistic.types';
+import { computeMatchStatistics, computePlayerStatistics, RosterPlayerInfo } from '../calculators';
+import { LocalDatabaseService } from '../../../local-database/services/local-database.service';
+
+/** Datos ya cargados en memoria; lo que falte se lee de la caché local. */
+export interface StatisticSource {
+  events?: LocalMatchEvent[];
+  eventTypes?: LiveCaptureEventType[];
+}
+
+/** Eventos activos del período (los de período null cuentan en ambos). Sin período: partido completo. */
+function eventsOfPeriod(events: LocalMatchEvent[], period?: number): LocalMatchEvent[] {
+  return events.filter(event => event.active && (period === undefined || event.period === null || event.period === period));
+}
 
 @Injectable({ providedIn: 'root' })
 export class StatisticCalculationService {
-
-  async calculatePeriodStatistics(
-    matchId: string,
-    period: number = 1,
-    inMemoryEvents?: LocalMatchEvent[],
-    inMemoryEventTypes?: LiveCaptureEventType[]
-  ): Promise<PeriodStatisticDTO> {
-    const [events, eventTypes] = await Promise.all([
-      inMemoryEvents ?? liveCaptureDatabase.events.where('matchId').equals(matchId).toArray(),
-      inMemoryEventTypes && inMemoryEventTypes.length > 0
-        ? inMemoryEventTypes
-        : liveCaptureDatabase.eventTypes.toArray(),
-    ]);
-
-    return this.computeStatistics(matchId, period, events.filter(event => event.active), eventTypes);
-  }
+  private readonly cache = inject(LocalDatabaseService);
 
   async calculateMatchStatistics(
     matchId: string,
-    inMemoryEvents?: LocalMatchEvent[],
-    inMemoryEventTypes?: LiveCaptureEventType[]
-  ): Promise<PeriodStatisticDTO> {
-    const [events, eventTypes] = await Promise.all([
-      inMemoryEvents ?? liveCaptureDatabase.events.where('matchId').equals(matchId).toArray(),
-      inMemoryEventTypes && inMemoryEventTypes.length > 0
-        ? inMemoryEventTypes
-        : liveCaptureDatabase.eventTypes.toArray(),
-    ]);
-
-    return this.computeStatistics(matchId, 0, events.filter(event => event.active), eventTypes, false);
-  }
-
-  computeStatistics(
-    matchId: string,
-    period: number,
-    events: LocalMatchEvent[],
-    eventTypes: LiveCaptureEventType[],
-    filterByPeriod = true
-  ): PeriodStatisticDTO {
-    const eventTypeMap = new Map(eventTypes.map(et => [et.id, et]));
-    const isInPeriod = (e: LocalMatchEvent) => e.period === null || e.period === period;
-    const periodEvents = filterByPeriod ? events.filter(isInPeriod) : events;
-
-    return {
-      matchId,
-      period,
-      ...computeScoreStats(periodEvents, eventTypeMap),
-      ...computeTackleStats(periodEvents, eventTypeMap),
-      ...computeTurnoverStats(periodEvents, eventTypeMap),
-      ...computeDisciplineStats(periodEvents, eventTypeMap),
-      ...computeSetPieceStats(periodEvents, eventTypeMap),
-      ...computePossessionStats(periodEvents, eventTypeMap),
-    };
+    view: StatView,
+    period?: number,
+    source: StatisticSource = {},
+  ): Promise<MatchStatistics> {
+    const { events, eventTypes } = await this.resolveSource(matchId, source);
+    return this.computeMatchStatistics(events, eventTypes, view, period);
   }
 
   async calculatePlayerStatistics(
     matchId: string,
     roster: RosterPlayerInfo[],
-    period: number = 1,
-    inMemoryEvents?: LocalMatchEvent[],
-    inMemoryEventTypes?: LiveCaptureEventType[]
-  ): Promise<PlayerPeriodStatistic[]> {
-    const [events, eventTypes] = await Promise.all([
-      inMemoryEvents ?? liveCaptureDatabase.events.where('matchId').equals(matchId).toArray(),
-      inMemoryEventTypes && inMemoryEventTypes.length > 0
-        ? inMemoryEventTypes
-        : liveCaptureDatabase.eventTypes.toArray(),
-    ]);
+    view: StatView,
+    period?: number,
+    source: StatisticSource = {},
+  ): Promise<PlayerStatistics> {
+    const { events, eventTypes } = await this.resolveSource(matchId, source);
+    return this.computePlayerStatistics(events, roster, eventTypes, view, period);
+  }
 
-    return this.computePlayerStatistics(roster, period, events.filter(event => event.active), eventTypes);
+  computeMatchStatistics(
+    events: LocalMatchEvent[],
+    eventTypes: LiveCaptureEventType[],
+    view: StatView,
+    period?: number,
+  ): MatchStatistics {
+    return computeMatchStatistics(eventsOfPeriod(events, period), eventTypes, view);
   }
 
   computePlayerStatistics(
-    roster: RosterPlayerInfo[],
-    period: number,
     events: LocalMatchEvent[],
-    eventTypes: LiveCaptureEventType[]
-  ): PlayerPeriodStatistic[] {
-    const eventTypeMap = new Map(eventTypes.map(et => [et.id, et]));
-    const isInPeriod = (e: LocalMatchEvent) => e.period === null || e.period === period;
-    const periodEvents = events.filter(isInPeriod);
+    roster: RosterPlayerInfo[],
+    eventTypes: LiveCaptureEventType[],
+    view: StatView,
+    period?: number,
+  ): PlayerStatistics {
+    return computePlayerStatistics(eventsOfPeriod(events, period), roster, eventTypes, view);
+  }
 
-    return computePlayerPeriodStats(periodEvents, roster, eventTypeMap);
+  private async resolveSource(
+    matchId: string,
+    source: StatisticSource,
+  ): Promise<Required<StatisticSource>> {
+    const [events, eventTypes] = await Promise.all([
+      source.events ?? this.cache.getEventsByMatch(matchId),
+      // Incluye los tipos dados de baja: sus eventos ya cargados siguen contando.
+      source.eventTypes && source.eventTypes.length > 0 ? source.eventTypes : this.cache.getEventTypes(),
+    ]);
+    return { events, eventTypes };
   }
 }
-
