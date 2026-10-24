@@ -12,6 +12,7 @@ import { PostMatchComponent } from './features/match/post-match/post-match.compo
 import { DivisionPlayerListComponent } from './features/division-player/list/division-player-list.component';
 import { MatchHistoryComponent } from './features/match/match-selection/match-history.component';
 import { OpponentManagerComponent } from './features/match/opponents/opponent-manager.component';
+import { PlayerStatisticsComponent } from './features/player-statistics/player-statistics.component';
 
 export const routes: Routes = [
     // Raíz: redirige a /home
@@ -198,7 +199,7 @@ export const routes: Routes = [
             import('./features/invitation/invitation.component').then(
                 c => c.InvitationComponent
             )
-    }, 
+    },
     {
         path: 'match-history',
         canMatch: [authGuard],
@@ -222,6 +223,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/match/post-match/components/post-match-statistics/post-match-statistics.component')
             .then(m => m.PostMatchStatisticsComponent),
         data: { layout: 'wide' },
+    },
+    {
+        path: 'player-statistics',
+        loadComponent: () => import('./features/player-statistics/player-statistics.component')
+            .then(c => c.PlayerStatisticsComponent),
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard],
+        data: { roles: ['PLAYER'] },
     },
     // Wildcard para rutas no encontradas
     {
