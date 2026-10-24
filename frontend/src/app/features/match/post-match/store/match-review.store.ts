@@ -49,9 +49,21 @@ export class MatchReviewStore {
     hiddenLaneIds: []
   });
 
+  /**
+   * Eventos que se muestran en el post-partido: se ocultan los de tipos dados de baja en el
+   * catálogo (inactivos o que ya no devuelve el servidor). Sin catálogo cargado se muestran todos.
+   */
+  readonly reviewEvents = computed<MatchTimelineEventResponse[]>(() => {
+    const types = this.eventTypesList();
+    const raw = this.rawEvents();
+    if (types.length === 0) return raw;
+    const activeTypeIds = new Set(types.filter(type => type.isActive !== false).map(type => type.id));
+    return raw.filter(event => activeTypeIds.has(event.eventTypeId));
+  });
+
   // --- Tanteador Reactivo Oficial ---
   readonly scoreboard = computed<{ home: number; away: number }>(() => {
-    const events = this.rawEvents();
+    const events = this.reviewEvents();
     const typesMap = new Map<string, LiveCaptureEventType>();
     this.eventTypesList().forEach(t => typesMap.set(t.id, t));
 
@@ -85,7 +97,7 @@ export class MatchReviewStore {
   // --- Duración Dinámica y Escala (Eje X) ---
   readonly matchDurationScale = computed<number>(() => {
     let maxMinutes = RUGBY_FULL_TIME_MIN; // Estándar mínimo reglamentario de rugby
-    for (const ev of this.rawEvents()) {
+    for (const ev of this.reviewEvents()) {
       const mins = (ev.matchTime ?? 0) / 60;
       if (mins > maxMinutes) {
         maxMinutes = Math.ceil(mins);
@@ -96,7 +108,7 @@ export class MatchReviewStore {
 
   // --- Transformación DTO a ViewModels Puros ---
   readonly allViewModels = computed<ReviewEventViewModel[]>(() => {
-    const raw = this.rawEvents();
+    const raw = this.reviewEvents();
     const dict = this.eventTypesDict();
     const scale = this.matchDurationScale();
     const currentFilters = this.filters();
