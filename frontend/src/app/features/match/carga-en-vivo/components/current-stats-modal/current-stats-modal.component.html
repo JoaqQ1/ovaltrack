@@ -118,8 +118,9 @@
                 </article>
               }
 
-              @for (group of groups; track group.name) {
-                <article class="panel">
+              @for (group of groups; track group.name; let index = $index, last = $last) {
+                <!-- Una tarjeta que queda sola en la última fila ocupa todo el ancho -->
+                <article class="panel" [class.panel--wide]="last && (stats.derived.length + index) % 2 === 0">
                   <h4 class="panel__title">
                     <i class="ti ti-list-details" aria-hidden="true"></i>
                     {{ group.name }}

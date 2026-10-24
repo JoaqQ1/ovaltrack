@@ -308,6 +308,18 @@
   gap: 12px;
 }
 
+/* Tarjeta sola en su fila: usa todo el ancho y reparte los tipos en columnas */
+.panel--wide {
+  grid-column: 1 / -1;
+}
+
+.panel--wide .rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  column-gap: 32px;
+  row-gap: 8px;
+}
+
 @media (max-width: 600px) {
   .cards-grid {
     grid-template-columns: 1fr;
