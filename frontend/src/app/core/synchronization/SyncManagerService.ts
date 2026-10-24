@@ -2,13 +2,11 @@ import { Injectable, effect, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { EventTypeService } from 'src/app/features/match/services/event-type.service';
 import { UserContextService } from '../services/user-context.service';
-import { LocalDatabaseService } from 'src/app/features/local-database/services/local-database.service';
 import { PendingMatchMutationSyncService } from './pending-match-mutation-sync.service';
 import { PendingEventSyncService } from './pending-event-sync.service';
 
 @Injectable({ providedIn: 'root' })
 export class SyncManagerService {
-  private readonly cache = inject(LocalDatabaseService);
   private readonly pendingMatchMutationSync = inject(PendingMatchMutationSyncService);
   private readonly pendingEventSync = inject(PendingEventSyncService);
   private readonly eventTypeService = inject(EventTypeService);
@@ -54,10 +52,7 @@ export class SyncManagerService {
 
   private async syncEventTypes(): Promise<void> {
     try {
-      const eventTypes = await firstValueFrom(this.eventTypeService.getAll());
-      if (eventTypes && eventTypes.length > 0) {
-        await this.cache.saveEventTypes(eventTypes);
-      }
+      await firstValueFrom(this.eventTypeService.getAll());
     } catch (error) {
       console.warn('Could not sync event types in background:', error);
     }
