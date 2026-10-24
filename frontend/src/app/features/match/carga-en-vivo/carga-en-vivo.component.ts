@@ -13,7 +13,7 @@ import { FollowUpChoice, LiveCaptureEventType, TemplateField } from '../types/ev
 import { LocalMatchEvent } from '../types/event.types';
 import { AvailablePlayer } from '../types/roster.types';
 import {
-  Team, countsAsScoring, followUpChoices, liveFields, opposite, possessionRule, resolveActor,
+  Team, countsAsScoring, followUpChoices, liveFields, opposite, possessionRule, resolveActor, scoringTeam,
 } from '../statistics/calculators/event-rules';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
@@ -301,27 +301,26 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   /** Crea y persiste un evento asociado al partido actual. */
   private commitEvent(
-    event: any,
+    event: LiveCaptureEventType,
     eventId: string,
     player: AvailablePlayer | null,
-    customAttributes?: any,
+    customAttributes?: Record<string, unknown>,
     onSuccess?: () => void,
-    teamPossessionOverride?: string // 👈 1. NUEVO PARÁMETRO
+    teamPossessionOverride?: Possession,
   ): void {
     const timestamp = new Date().toISOString();
 
-    let finalAttributes: any = customAttributes ? { ...customAttributes } : null;
-    if (player !== null && finalAttributes?.playerNumber === undefined) {
-      finalAttributes = finalAttributes || {};
-      finalAttributes.playerNumber = player.jerseyNumber;
+    let finalAttributes: Record<string, unknown> | null = customAttributes ? { ...customAttributes } : null;
+    if (player !== null && finalAttributes?.['playerNumber'] === undefined) {
+      finalAttributes = { ...(finalAttributes ?? {}), playerNumber: player.jerseyNumber };
     }
 
-    const localEvent: any = {
+    const localEvent: LocalMatchEvent = {
       id: eventId,
       eventTypeId: event.id,
       matchId: this.matchId,
       playerId: player?.id ?? null,
-      teamPossession: teamPossessionOverride || this.currentPossession, // 👈 2. USAMOS EL EQUIPO FORZADO SI EXISTE
+      teamPossession: teamPossessionOverride ?? this.currentPossession,
       matchTime: this.parseClock(this.gameClock),
       absoluteMatchTime: this.matchStartedAt === null
         ? null
@@ -487,9 +486,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       this.synchronized = true;
       this.isOfflineMode = false;
       this.router?.navigate(['/post-match/', this.matchId]);
-    } catch (error: any) {
+    } catch (error) {
       this.synchronized = false;
-      this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error al finalizar el partido.';
+      this.errorMessage = (error instanceof HttpErrorResponse ? this.readBackendError(error) : null)
+        ?? 'Ocurrió un error al finalizar el partido.';
       this.toastService.error(this.errorMessage);
     }
   }
@@ -724,13 +724,11 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       }
 
       const counts = countsAsScoring(eventType, event.attributes);
-      if (counts) {
-        const points = eventType.points ?? 0;
-        if (event.teamPossession === 'OPPONENT') {
-          scoreboard.away += points;
-        } else {
-          scoreboard.home += points;
-        }
+      const team = counts ? scoringTeam(event) : null;
+      if (team === 'OPPONENT') {
+        scoreboard.away += eventType.points ?? 0;
+      } else if (team === 'OWN') {
+        scoreboard.home += eventType.points ?? 0;
       }
 
       const playerNumber = this.readPlayerNumber(event);
@@ -810,12 +808,6 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       default:
         return this.homeTeam;
     }
-  }
-
-  /** Resuelve el nombre a mostrar del equipo que tiene la posesión actualmente. */
-  /** Devuelve el nombre del equipo que tiene la posesión actual. */
-  private teamInPossession(): string {
-    return this.teamForPossession(this.currentPossession);
   }
 
   /**
