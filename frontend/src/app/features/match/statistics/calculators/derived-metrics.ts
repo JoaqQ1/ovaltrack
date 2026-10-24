@@ -13,6 +13,8 @@ interface DerivedMetricDefinition {
   id: string;
   label: string;
   format: MetricFormat;
+  /** Las métricas deshabilitadas no se calculan ni se muestran en ninguna vista. */
+  enabled: boolean;
   /** Tipos que tienen que estar visibles en la vista para mostrar la métrica. */
   requires: string[];
   compute(stat: StatLookup): OptionalTeamValue;
@@ -30,6 +32,7 @@ const DERIVED_METRICS: DerivedMetricDefinition[] = [
     id: 'tackle-effectiveness',
     label: 'Efectividad de tackles',
     format: 'percent',
+    enabled: false,
     requires: ['TACKLE_MADE', 'TACKLE_MISSED'],
     compute: stat => {
       const made = countOf(stat('TACKLE_MADE'));
@@ -49,6 +52,7 @@ const DERIVED_METRICS: DerivedMetricDefinition[] = [
     id: 'turnover-balance',
     label: 'Balance de turnovers',
     format: 'signed',
+    enabled: false,
     requires: ['TURNOVER_WON'],
     // El turnover que gana un equipo es el que pierde el otro.
     compute: stat => {
@@ -65,9 +69,10 @@ const DERIVED_METRICS: DerivedMetricDefinition[] = [
   },
 ];
 
-/** Métricas combinadas cuyos tipos requeridos están visibles en la vista. */
+/** Métricas combinadas habilitadas cuyos tipos requeridos están visibles en la vista. */
 export function computeDerivedMetrics(stat: StatLookup): DerivedMetric[] {
   return DERIVED_METRICS
+    .filter(definition => definition.enabled)
     .filter(definition => definition.requires.every(code => stat(code) !== undefined))
     .map(definition => {
       const value = definition.compute(stat);
