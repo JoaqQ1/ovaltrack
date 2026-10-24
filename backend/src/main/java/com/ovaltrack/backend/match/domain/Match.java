@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 @Entity
-@Table(name = "matches")
+@Table(name = "matches", indexes = {@Index(name = "idx_matches_division", columnList = "division_id")})
 @DynamicUpdate
 @Getter
 @Setter
