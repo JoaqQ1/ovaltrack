@@ -15,7 +15,6 @@ ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_score INTEGER NOT NULL DEFAULT
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS started_at TIMESTAMP;
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS finished_at TIMESTAMP;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS client_event_id UUID;
-ALTER TABLE events ADD COLUMN IF NOT EXISTS note TEXT;
 -- Catálogo de eventos v3
 ALTER TABLE event_types ADD COLUMN IF NOT EXISTS code VARCHAR(60);
 CREATE UNIQUE INDEX IF NOT EXISTS uk_event_types_code ON event_types (code);
@@ -38,7 +37,7 @@ ALTER TABLE event_types ADD COLUMN IF NOT EXISTS follow_up_choices JSONB NOT NUL
 -- =========================================
 
 -- =========================================
--- PERSONS (27 filas: 3 de staff + 23 jugadores + 1 admin OvalTrack)
+-- PERSONS (31 filas: 3 de staff + 27 jugadores + 1 admin OvalTrack)
 -- =========================================
 
 INSERT INTO persons (id, first_name, last_name, birth_date, contact_email, contact_phone, created_at) VALUES
@@ -46,28 +45,32 @@ INSERT INTO persons (id, first_name, last_name, birth_date, contact_email, conta
     ('11111111-1111-1111-1111-000000000002', 'Gonzalo', 'Entrenador', '1985-05-10', 'gonzalo@mail.com', '123456789', '2026-10-17 17:04:12.744'),
     ('11111111-1111-1111-1111-000000000003', 'Mario', 'Analista', '1982-11-20', 'coach2@ovaltrack.com', '123456789', '2026-10-17 17:04:12.744'),
     ('11111111-1111-1111-1111-000000000101', 'Matías', 'Salari', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000102', 'Facundo', 'Gangas', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000103', 'Juan Manuel', 'Gelvez', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000102', 'Joaquín', 'Guerra', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000103', 'Leonel', 'Llanquitru', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
     ('11111111-1111-1111-1111-000000000104', 'Luciano', 'Belmar', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000105', 'Agustín', 'Galarza', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000106', 'Emiliano', 'Villegas', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000107', 'Joaquin', 'Villa', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000105', 'Matías', 'Iribarra', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000106', 'Gonzalo', 'Mangini', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000107', 'Tomas', 'Luffi', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
     ('11111111-1111-1111-1111-000000000108', 'Nazareno', 'Rocha', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000109', 'Joaquin', 'Peroy', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000110', 'Rodrigo', 'Aman', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000111', 'Rodrigo', 'Carrizo', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000112', 'Luciano', 'Balmaceda', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000113', 'Manuel', 'Rocha', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000114', 'Jaime', 'Leiva', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000115', 'Pedro', 'Arbeletche', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000116', 'Lautaro', 'Salinas', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000117', 'Lautaro', 'Villegas', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000118', 'Facundo', 'Soria', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000119', 'Jose', 'Montiquin', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000109', 'Ariel', 'Ferrufino', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000110', 'Hernán', 'Vera', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000111', 'Rodrigo', 'Aman', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000112', 'Francisco', 'Peña', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000113', 'Bautista', 'Mengoni', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000114', 'Luciano', 'Balmaceda', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000115', 'Bautista', 'Guerra', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000116', 'Esteban', 'Ceballos', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000117', 'Facundo', 'Gangas', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000118', 'Alejandro', 'Cañiu', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000119', 'Rodrigo', 'Silva', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
     ('11111111-1111-1111-1111-000000000120', 'Juan', 'Pistilli', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000121', 'Tomas', 'Rolando', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000122', 'Lorenzo', 'Becchi', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
-    ('11111111-1111-1111-1111-000000000123', 'Agustin', 'Albornoz', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000121', 'Manuel', 'Rocha', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000122', 'Agustín', 'Albornoz', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000123', 'Bruno', 'Carrizo', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000124', 'Facundo', 'Soria', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000125', 'Emiliano', 'Villegas', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000126', 'Joaquín', 'Devitt', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
+    ('11111111-1111-1111-1111-000000000127', 'Alejo', 'Zotelo', NULL, NULL, NULL, '2026-10-17 17:04:12.744'),
     ('b62a7203-3291-411b-a090-2e5b7e466c35', 'administrador', 'ovaltrack', NULL, 'admin@ovaltrack.com', '0123456789', '2026-10-17 19:04:52.314');
 
 
@@ -112,7 +115,7 @@ INSERT INTO division_coaches (id, person_id, division_id, start_date, end_date) 
 
 
 -- =========================================
--- DIVISION_PLAYERS (23 jugadores de Primera)
+-- DIVISION_PLAYERS (27 jugadores de Primera: 23 convocables + 4 adicionales del plantel)
 -- =========================================
 
 INSERT INTO division_players (id, person_id, division_id, jersey_number, position, start_date, end_date) VALUES
@@ -138,7 +141,12 @@ INSERT INTO division_players (id, person_id, division_id, jersey_number, positio
     ('11111111-1111-1111-1111-000000000220', '11111111-1111-1111-1111-000000000120', '11111111-1111-1111-1111-000000000020', 20, 'Forward', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000221', '11111111-1111-1111-1111-000000000121', '11111111-1111-1111-1111-000000000020', 21, 'Forward', '2023-01-01', NULL),
     ('11111111-1111-1111-1111-000000000222', '11111111-1111-1111-1111-000000000122', '11111111-1111-1111-1111-000000000020', 22, 'Back', '2023-01-01', NULL),
-    ('11111111-1111-1111-1111-000000000223', '11111111-1111-1111-1111-000000000123', '11111111-1111-1111-1111-000000000020', 23, 'Back', '2023-01-01', NULL);
+    ('11111111-1111-1111-1111-000000000223', '11111111-1111-1111-1111-000000000123', '11111111-1111-1111-1111-000000000020', 23, 'Back', '2023-01-01', NULL),
+
+    ('11111111-1111-1111-1111-000000000224', '11111111-1111-1111-1111-000000000124', '11111111-1111-1111-1111-000000000020', 24, 'Forward', '2023-01-01', NULL),
+    ('11111111-1111-1111-1111-000000000225', '11111111-1111-1111-1111-000000000125', '11111111-1111-1111-1111-000000000020', 25, 'Forward', '2023-01-01', NULL),
+    ('11111111-1111-1111-1111-000000000226', '11111111-1111-1111-1111-000000000126', '11111111-1111-1111-1111-000000000020', 26, 'Forward', '2023-01-01', NULL),
+    ('11111111-1111-1111-1111-000000000227', '11111111-1111-1111-1111-000000000127', '11111111-1111-1111-1111-000000000020', 27, 'Back', '2023-01-01', NULL);
 
 
 -- =========================================
@@ -192,7 +200,7 @@ INSERT INTO matches (id, date, division_id, opponent_id, status, current_period,
 
 INSERT INTO event_types
 (id, code, name, group_name, category, is_scoring, points,
- requires_player, is_active, show_in_palette, follow_up_event_type_id, actor, possession_after, follow_up_choices, template_event_fields, created_at)
+ requires_player, is_active, show_in_palette, follow_up_event_type_id, actor, possession_after, follow_up_choices, template_event_fields, stat_view, created_at)
 VALUES
 (
     '550e8400-e29b-41d4-a716-446655440101',
@@ -232,6 +240,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -293,6 +302,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -337,6 +347,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -399,6 +410,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -440,6 +452,7 @@ VALUES
         "max": 80
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -478,6 +491,7 @@ VALUES
         "max": 6
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -525,6 +539,7 @@ VALUES
         "required": false
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -565,6 +580,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -593,6 +609,7 @@ VALUES
         "max": 100
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -611,6 +628,7 @@ VALUES
     'KEEP',
     $$[]$$::jsonb,
     $$[]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -662,28 +680,30 @@ VALUES
         "required": false,
         "options": [
           {
-            "value": "touch_won",
-            "label": "Touch ganado"
+            "value": "opp_possession",
+            "label": "Perdida",
+            "possession": "OTHER"
           },
           {
             "value": "retained",
-            "label": "Recuperada propia"
+            "label": "Recuperada",
+            "possession": "KEEP"
           },
-          {
-            "value": "opp_possession",
-            "label": "Recepcionada por rival"
-          },
+
           {
             "value": "out_in_full",
-            "label": "Directa afuera (Error)"
+            "label": "Directa afuera",
+            "possession": "OTHER"
           },
           {
-            "value": "dead_ball",
-            "label": "Pelota muerta"
+            "value": "50/22",
+            "label": "50/22",
+            "possession": "KEEP"
           }
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -694,7 +714,7 @@ VALUES
     'ATTACK',
     false,
     0,
-    true,
+    false,
     true,
     false,
     NULL,
@@ -711,17 +731,28 @@ VALUES
         "options": [
           {
             "value": "penalty_touch",
-            "label": "Penal a touch",
-            "possession": "KEEP"
+            "label": "Sale directo",
+            "possession": "KEEP",
+            "followUps":[
+              {
+                "code": "LINEOUT"
+              }
+            ]
           },
           {
-            "value": "open_play",
-            "label": "Juego abierto",
+            "value": "lost_onw",
+            "label": "Recupera rival",
             "possession": "OTHER"
+          },
+          {
+            "value": "won",
+            "label": "Recupera propio",
+            "possession": "KEEP"
           }
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -773,13 +804,7 @@ VALUES
             "possession": "KEEP",
             "followUps": [
               {
-                "code": "PENALTY_KICK"
-              },
-              {
-                "code": "KICK_TO_TOUCH",
-                "preset": {
-                  "kind": "penalty_touch"
-                }
+                "code": "PENALTY_CONCEDED"
               }
             ]
           },
@@ -789,19 +814,14 @@ VALUES
             "possession": "OTHER",
             "followUps": [
               {
-                "code": "PENALTY_KICK"
-              },
-              {
-                "code": "KICK_TO_TOUCH",
-                "preset": {
-                  "kind": "penalty_touch"
-                }
+                "code": "PENALTY_CONCEDED"
               }
             ]
           }
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -910,6 +930,7 @@ VALUES
         "required": false
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -974,6 +995,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1026,6 +1048,36 @@ VALUES
         "max": 30
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440129',
+    'QUICK_PLAY',
+    'Jugada rapida',
+    'Juego Fijo',
+    'ATTACK',
+    false,
+    0,
+    false,
+    true,
+    false,
+    NULL,
+    'ATTACKING',
+    'KEEP',
+    $$[]$$::jsonb,
+    $$[
+      {
+        "key": "quickPlayOutcome",
+        "label": "Resultado",
+        "type": "boolean",
+        "phase": "post",
+        "required": false,
+        "trueLabel": "Postivo",
+        "falseLabel": "Negativo"
+      }
+    ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1052,6 +1104,7 @@ VALUES
         "required": false
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1096,12 +1149,13 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440117',
     'TURNOVER_WON',
-    'Turnover ganado',
+    'Turnover',
     'Cambio de Posesión',
     'NEUTRAL',
     false,
@@ -1127,7 +1181,7 @@ VALUES
           },
           {
             "value": "rip_standing",
-            "label": "Arrancón de pie (Strip)"
+            "label": "Arrancón de pelota"
           },
           {
             "value": "interception",
@@ -1136,35 +1190,7 @@ VALUES
           {
             "value": "other",
             "label": "Otro"
-          }
-        ]
-      }
-    ]$$::jsonb,
-    CURRENT_TIMESTAMP
-),
-(
-    '550e8400-e29b-41d4-a716-446655440119',
-    'HANDLING_ERROR',
-    'Knock-on / Error de manejo',
-    'Cambio de Posesión',
-    'NEUTRAL',
-    false,
-    0,
-    false,
-    true,
-    true,
-    NULL,
-    'ATTACKING',
-    'OTHER',
-    $$[]$$::jsonb,
-    $$[
-      {
-        "key": "errorType",
-        "label": "Tipo de error",
-        "type": "select",
-        "phase": "live",
-        "required": true,
-        "options": [
+          },
           {
             "value": "knock_on",
             "label": "Knock-on (Caída adelante)"
@@ -1176,10 +1202,23 @@ VALUES
           {
             "value": "dropped_unforced",
             "label": "Caída no forzada"
+          },
+          {
+            "value": "pushed_touch",
+            "label": "Empujado a touch"
+          },
+          {
+            "value": "held_ingoal",
+            "label": "Trabado en ingoal"
+          },
+          {
+            "value": "offensive_penalty",
+            "label": "Penal del atacante"
           }
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1192,7 +1231,7 @@ VALUES
     0,
     false,
     true,
-    true,
+    false,
     NULL,
     'ATTACKING',
     'KEEP',
@@ -1223,46 +1262,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
-    CURRENT_TIMESTAMP
-),
-(
-    '550e8400-e29b-41d4-a716-446655440121',
-    'OTHER_TURNOVER',
-    'Otro cambio de posesión',
-    'Cambio de Posesión',
-    'NEUTRAL',
-    false,
-    0,
-    false,
-    true,
-    true,
-    NULL,
-    'ATTACKING',
-    'OTHER',
     $$[]$$::jsonb,
-    $$[
-      {
-        "key": "reason",
-        "label": "Causa",
-        "type": "select",
-        "phase": "post",
-        "required": false,
-        "options": [
-          {
-            "value": "pushed_touch",
-            "label": "Empujado a touch"
-          },
-          {
-            "value": "held_ingoal",
-            "label": "Trabado en ingoal"
-          },
-          {
-            "value": "offensive_penalty",
-            "label": "Penal del atacante"
-          }
-        ]
-      }
-    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1273,19 +1273,19 @@ VALUES
     'NEUTRAL',
     false,
     0,
-    true,
+    false,
     true,
     true,
     NULL,
     'CHOOSE',
     'OTHER',
-    $$[{"code": "PENALTY_KICK"}, {"code": "KICK_TO_TOUCH", "preset": {"kind": "penalty_touch"}}]$$::jsonb,
+    $$[{"code": "PENALTY_KICK"}, {"code": "KICK_TO_TOUCH"}, {"code": "SCRUM"}, {"code": "QUICK_PLAY"}]$$::jsonb,
     $$[
       {
         "key": "penaltyType",
         "label": "Infracción",
         "type": "select",
-        "phase": "live",
+        "phase": "post",
         "required": true,
         "options": [
           {
@@ -1323,6 +1323,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1377,6 +1378,7 @@ VALUES
         "max": 20
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1417,6 +1419,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1465,6 +1468,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1475,20 +1479,24 @@ VALUES
     'NEUTRAL',
     false,
     0,
-    true,
+    false,
     true,
     true,
     NULL,
     'CHOOSE',
     'KEEP',
     $$[]$$::jsonb,
-    $$[]$$::jsonb,
+    $$[
+      {"key":"playerOutNumber","label":"Jugador que sale","type":"number","phase":"live","required":true,"min":1,"max":15},
+      {"key":"playerInNumber","label":"Jugador que entra","type":"number","phase":"live","required":true,"min":16,"max":23}
+    ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 );
 
 
 -- =========================================
--- MATCHES_PLAYERS (convocatoria: 46 filas = 2 partidos x 23; division_id referencia a division_players.id)
+-- MATCHES_PLAYERS (convocatoria: 46 filas = 2 partidos x 23; los 4 jugadores adicionales no integran estas convocatorias)
 -- =========================================
 
 INSERT INTO matches_players (id, role, division_id, match_id) VALUES

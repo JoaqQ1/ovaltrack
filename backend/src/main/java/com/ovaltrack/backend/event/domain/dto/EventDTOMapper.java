@@ -81,6 +81,7 @@ public final class EventDTOMapper {
                 eventType.getCode(),
                 Boolean.TRUE.equals(eventType.getShowInPalette()),
                 eventType.getFollowUpEventTypeId(),
+                eventType.getStatView(),
                 eventType.getActor() == null ? Actor.ATTACKING : eventType.getActor(),
                 eventType.getPossessionAfter() == null ? PossessionAfter.KEEP : eventType.getPossessionAfter(),
                 eventType.getFollowUpChoices() == null ? List.of() : eventType.getFollowUpChoices(),
