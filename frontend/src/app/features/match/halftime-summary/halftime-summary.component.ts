@@ -12,6 +12,7 @@ import { LiveCaptureService } from '../services/live-capture.service';
 import { AvailablePlayer, SavedRoster } from '../types/roster.types';
 import { RosterPlayerInfo } from '../statistics/calculators';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
+import { HALF_DURATION_SECONDS } from '../types/match.types';
 
 const TACKLE_SUCCESS_THRESHOLD = 70;
 const DISCIPLINE_CRITICAL_PENALTIES = 6;
@@ -393,7 +394,7 @@ export class HalftimeSummaryComponent implements OnInit {
       clockPaused: false,
       isHalftime: false,
       pendingSelection: null,
-      clockElapsedSeconds: Math.max(2400, currentState?.clockElapsedSeconds ?? 2400),
+      clockElapsedSeconds: Math.max(HALF_DURATION_SECONDS, currentState?.clockElapsedSeconds ?? HALF_DURATION_SECONDS),
       savedAt: Date.now(),
       currentPossession: currentState?.currentPossession ?? 'OWN',
       scoreboard: {
