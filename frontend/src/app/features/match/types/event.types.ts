@@ -52,6 +52,11 @@ export interface BackendEventUpdateRequest {
 export interface LocalMatchEvent extends BackendEventResponse {
   backendEventId?: UUID | null;
   localSequence: number;
+  /** Intentos de sincronización fallidos. Solo local, no se envía al backend. */
+  syncAttempts?: number;
+  /** Momento en que el servidor rechazó el evento; a partir de ahí no se reintenta automáticamente. */
+  syncFailedAt?: string | null;
+  syncErrorMessage?: string | null;
 }
 
 export interface MatchTimelineEventResponse {

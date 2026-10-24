@@ -1,23 +1,23 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, catchError, from, map, of, switchMap, throwError, firstValueFrom } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, catchError, from, map, of, switchMap, throwError, timeout } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, NewMatchDraft, PendingMatchAction, PendingMatchMutation } from '../types/match.types';
-import { RosterPayload } from '../types/roster.types';
-import { PeriodStatisticDTO } from '../types/statistic.types';
+import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, MatchTransitionRequest, NewMatchDraft, PendingMatchAction, HALF_DURATION_SECONDS } from '../types/match.types';
+import { PeriodStatisticDTO } from '../statistics/types/statistic.types';
 import { LiveCaptureBootstrapResponse } from '../types/live-capture.types';
-import { LiveCaptureCacheService } from './live-capture-cache.service';
-import { StatisticApiService } from './statistic-api.service';
+import { StatisticApiService } from '../statistics/services/statistic-api.service';
+import { LocalDatabaseService } from '../../local-database/services/local-database.service';
+import { isRetryableSyncError } from '../../../core/synchronization/sync-errors';
+
+/** Pasado este tiempo la transición se da por perdida y se encola para reintentarla. */
+const TRANSITION_TIMEOUT_MS = 15_000;
 
 @Injectable({ providedIn: 'root' })
 export class MatchService {
   private readonly http = inject(HttpClient);
-  private readonly cache = inject(LiveCaptureCacheService);
+  private readonly cache = inject(LocalDatabaseService);
   private readonly statisticApiService = inject(StatisticApiService);
   private readonly apiUrl = `${environment.apiUrl}/matches`;
-
-  constructor() {
-  }
 
   getAllMatchesByDivisionId(divisionId: string): Observable<Match[]> {
     return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${divisionId}`).pipe(
@@ -51,21 +51,11 @@ export class MatchService {
   }
 
   closeFirstHalf(matchId: string): Observable<Match> {
-    return this.transitionMatch(
-      matchId,
-      'close-first-half',
-      () => this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/close-first-half`, {}),
-      'halftime',
-    );
+    return this.transitionMatch(matchId, 'close-first-half', 'halftime');
   }
 
   startSecondHalf(matchId: string): Observable<Match> {
-    return this.transitionMatch(
-      matchId,
-      'start-second-half',
-      () => this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start-second-half`, {}),
-      'in_progress',
-    );
+    return this.transitionMatch(matchId, 'start-second-half', 'in_progress');
   }
 
   getPeriodStatistics(matchId: string, period: number = 1): Observable<PeriodStatisticDTO> {
@@ -86,24 +76,34 @@ export class MatchService {
   }
 
   startMatch(matchId: string): Observable<Match> {
-    return this.transitionMatch(matchId, 'start', () => this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/start`, {}), 'in_progress');
+    return this.transitionMatch(matchId, 'start', 'in_progress');
   }
 
   finishMatch(matchId: string): Observable<Match> {
-    return this.transitionMatch(matchId, 'finish', () => this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/finish`, {}), 'finished');
+    return this.transitionMatch(matchId, 'finish', 'finished');
+  }
+
+  /**
+   * Envía la transición al backend sin tocar la caché ni encolarla offline.
+   * La usa el flush de mutaciones pendientes, que decide por sí mismo qué persistir.
+   */
+  sendTransition(matchId: string, action: PendingMatchAction, occurredAt?: string): Observable<Match> {
+    const body: MatchTransitionRequest = occurredAt ? { occurredAt } : {};
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/${action}`, body).pipe(
+      timeout(TRANSITION_TIMEOUT_MS),
+      map(match => this.normalizeMatch(match)),
+    );
   }
 
   private transitionMatch(
     matchId: string,
     action: PendingMatchAction,
-    request: () => Observable<BackendMatchResponse>,
     nextLocalStatus: MatchStatus,
   ): Observable<Match> {
-    return request().pipe(
-      map(match => this.normalizeMatch(match)),
+    return this.sendTransition(matchId, action).pipe(
       switchMap(normalizedMatch => from(this.cache.saveMatches([normalizedMatch])).pipe(map(() => normalizedMatch))),
-      catchError((error: HttpErrorResponse) => {
-        if (error.status !== 0) {
+      catchError((error: unknown) => {
+        if (!isRetryableSyncError(error)) {
           return throwError(() => error);
         }
 
@@ -118,7 +118,9 @@ export class MatchService {
     nextLocalStatus: MatchStatus,
   ): Promise<Match> {
     const cachedMatch = await this.cache.getMatch(matchId);
-    
+    const occurredAt = Date.now();
+    const occurredAtIso = new Date(occurredAt).toISOString();
+
     let currentPeriod = cachedMatch?.currentPeriod ?? 1;
     let clockPaused = cachedMatch?.clockPaused ?? true;
     let clockElapsedSeconds = cachedMatch?.clockElapsedSeconds ?? 0;
@@ -126,37 +128,41 @@ export class MatchService {
     if (action === 'start-second-half') {
       currentPeriod = 2;
       clockPaused = false;
-      clockElapsedSeconds = Math.max(2400, cachedMatch?.clockElapsedSeconds ?? 2400);
+      clockElapsedSeconds = Math.max(HALF_DURATION_SECONDS, clockElapsedSeconds);
     } else if (action === 'close-first-half') {
       clockPaused = true;
+      clockElapsedSeconds = Math.max(HALF_DURATION_SECONDS, clockElapsedSeconds);
     } else if (action === 'start') {
       currentPeriod = 1;
       clockPaused = false;
+      clockElapsedSeconds = clockElapsedSeconds > 0 ? clockElapsedSeconds : 0;
     } else if (action === 'finish') {
       clockPaused = true;
     }
 
-    const nextMatch: Match = cachedMatch
-      ? { 
-          ...cachedMatch,
-          status: nextLocalStatus, 
-          currentPeriod, 
-          clockPaused,
-          clockElapsedSeconds 
-        }
-      : {
-          id: matchId,
-          status: nextLocalStatus,
-          opponent: '',
-          date: '',
-          divisionId: '' as any,
-          currentPeriod,
-          clockElapsedSeconds: 0,
-          clockPaused,
-          currentPossession: 'OWN',
-          homeScore: 0,
-          awayScore: 0,
-        } as Match;
+    const baseMatch: Match = cachedMatch ?? {
+      id: matchId,
+      status: nextLocalStatus,
+      opponent: '',
+      date: '',
+      divisionId: '',
+      currentPeriod,
+      clockElapsedSeconds,
+      clockPaused,
+      currentPossession: 'OWN',
+      homeScore: 0,
+      awayScore: 0,
+    };
+    const nextMatch: Match = {
+      ...baseMatch,
+      status: nextLocalStatus,
+      currentPeriod,
+      clockPaused,
+      clockElapsedSeconds,
+      clockUpdatedAt: occurredAtIso,
+      startedAt: action === 'start' ? (baseMatch.startedAt ?? occurredAtIso) : baseMatch.startedAt,
+      finishedAt: action === 'finish' ? occurredAtIso : baseMatch.finishedAt,
+    };
 
     await this.cache.saveMatches([nextMatch]);
 
@@ -165,14 +171,18 @@ export class MatchService {
       id: mutationId,
       matchId,
       action,
-      createdAt: Date.now(),
+      createdAt: occurredAt,
     });
 
     return nextMatch;
   }
 
   deleteMatch(matchId: string): Observable<BackendMatchResponse> {
-    return this.http.delete<BackendMatchResponse>(`${this.apiUrl}/${matchId}/cancel`);
+    return this.http.delete<BackendMatchResponse>(`${this.apiUrl}/${matchId}/cancel`).pipe(
+      switchMap(response => from(this.cache.saveMatches([this.normalizeMatch(response)])).pipe(
+        map(() => response)
+      )),
+    );
   }
 
   getMatchById(matchId: string): Observable<Match> {
@@ -190,14 +200,6 @@ export class MatchService {
         })
       ))
     );
-  }
-
-  saveRoster(payload: RosterPayload): Observable<void> {
-    const dtoParaJava = {
-      titularesIds: payload.startingPlayers,
-      suplentesIds: payload.substitutePlayers
-    };
-    return this.http.post<void>(`${this.apiUrl}/${payload.matchId}/roster`, dtoParaJava);
   }
 
   getLiveMatchState(matchId: string): Observable<Match> {

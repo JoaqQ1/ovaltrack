@@ -7,6 +7,7 @@ import { ToastService } from 'src/app/core/services/toast.service';
 import { Possession } from '../../../types/live-capture.types';
 import { BackendEventCreationRequest, MatchTimelineEventResponse } from '../../../types/event.types';
 import { EventFormComponent, EventFormData } from '../event-form/event-form.component';
+import { HALF_DURATION_SECONDS } from '../../../types/match.types';
 
 @Component({
   selector: 'app-post-match-create-modal',
@@ -108,8 +109,8 @@ export class PostMatchCreateModalComponent {
     }
 
     let matchTimeSeconds = Math.floor(this.minute) * 60 + Math.floor(secVal);
-    if (this.period === 2 && this.minute < 40) {
-      matchTimeSeconds = 2400 + matchTimeSeconds;
+    if (this.period === 2 && this.minute * 60 < HALF_DURATION_SECONDS) {
+      matchTimeSeconds = HALF_DURATION_SECONDS + matchTimeSeconds;
     }
 
     const assignedPlayerId = (this.possession === 'OPPONENT') ? null : (this.playerId.trim() || null);

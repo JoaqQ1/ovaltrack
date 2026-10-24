@@ -1,30 +1,40 @@
 <div class="current-stats-backdrop" [attr.data-theme]="theme" (click)="onClose()">
-  <div class="current-stats-dialog" [attr.data-theme]="theme" role="dialog" aria-modal="true" aria-labelledby="current-stats-title" (click)="$event.stopPropagation()">
-    
-    <!-- Header -->
+  <div
+    class="current-stats-dialog"
+    [attr.data-theme]="theme"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="current-stats-title"
+    (click)="$event.stopPropagation()">
+
+    <!-- Cabecera de tarjeta (degradé salvia) -->
     <header class="current-stats-header">
-      <div class="current-stats-header__left">
+      <div class="current-stats-heading">
+        <span class="badge-tech">
+          <i class="ti ti-chart-bar" aria-hidden="true"></i>
+          Estadísticas en vivo
+        </span>
         <h2 id="current-stats-title" class="current-stats-title">Resumen táctico actual</h2>
       </div>
 
-      <div class="current-stats-header__right">
+      <div class="current-stats-actions">
         @if (isOffline) {
-          <span class="offline-badge" title="Estadísticas calculadas en el dispositivo sin conexión">
-            <i class="ti ti-cloud-off" aria-hidden="true"></i> Modo Offline
+          <span class="offline-chip" title="Estadísticas calculadas en el dispositivo sin conexión">
+            <i class="ti ti-cloud-off" aria-hidden="true"></i> Offline
           </span>
         }
-        <div class="current-stats-clock">
-          <span class="current-stats-clock__time">{{ gameClock }}</span>
+        <div class="clock-chip">
+          <span class="clock-chip__time">{{ gameClock }}</span>
           <button
             type="button"
-            class="current-stats-clock__button"
+            class="icon-button"
             (click)="toggleClock.emit()"
             [attr.aria-label]="clockPaused ? 'Reanudar reloj' : 'Pausar reloj'"
             [attr.aria-pressed]="clockPaused">
             <i [class]="clockPaused ? 'ti ti-player-play' : 'ti ti-player-pause'" aria-hidden="true"></i>
           </button>
         </div>
-        <button type="button" class="btn-close" (click)="onClose()" aria-label="Cerrar modal">
+        <button type="button" class="icon-button icon-button--outline" (click)="onClose()" aria-label="Cerrar modal">
           <i class="ti ti-x" aria-hidden="true"></i>
         </button>
       </div>
@@ -35,180 +45,117 @@
         <div class="spinner"></div>
         <p>Calculando estadísticas del período...</p>
       </div>
-    } @else if (stats) {
-      <div class="current-stats-content">
+    } @else {
+      @if (current; as stats) {
+        <div class="current-stats-content">
 
-        <!-- Marcador Principal -->
+          <!-- Marcador -->
+          <section class="scoreboard">
+            <div class="scoreboard__team">
+              <span class="scoreboard__name">{{ homeTeam }}</span>
+              <span class="scoreboard__score scoreboard__score--own">{{ stats.score.own }}</span>
+            </div>
+            <span class="scoreboard__divider" aria-hidden="true">–</span>
+            <div class="scoreboard__team scoreboard__team--away">
+              <span class="scoreboard__score scoreboard__score--opp">{{ stats.score.opponent }}</span>
+              <span class="scoreboard__name">{{ awayTeam }}</span>
+            </div>
+          </section>
 
-        
-        <section class="scoreboard-banner">
-          <div class="team-side team-side--home">
-            <span class="team-name">{{ homeTeam }}</span>
-            <span class="team-score">{{ stats.ownScore }}</span>
-          </div>
-          <div class="team-side team-side--away">
-            <span class="team-score">{{ stats.opponentScore }}</span>
-            <span class="team-name">{{ awayTeam }}</span>
-          </div>
-        </section>
-
-
-        <!-- Desglose de Tantos -->
-        <section class="metric-section">
-          <h3 class="section-title">Desglose de Puntos</h3>
-          <div class="breakdown-grid">
-            <div class="breakdown-item">
-              <span class="stat-val stat-val--home">{{ stats.ownTries }}</span>
-              <span class="stat-label">Tries</span>
-              <span class="stat-val stat-val--away">{{ stats.opponentTries }}</span>
-            </div>
-            <div class="breakdown-item">
-              <span class="stat-val stat-val--home">{{ stats.ownConversions }}</span>
-              <span class="stat-label">Conversiones</span>
-              <span class="stat-val stat-val--away">{{ stats.opponentConversions }}</span>
-            </div>
-            <div class="breakdown-item">
-              <span class="stat-val stat-val--home">{{ stats.ownPenalties }}</span>
-              <span class="stat-label">Penales a palos</span>
-              <span class="stat-val stat-val--away">{{ stats.opponentPenalties }}</span>
-            </div>
-            <div class="breakdown-item">
-              <span class="stat-val stat-val--home">{{ stats.ownDropGoals }}</span>
-              <span class="stat-label">Drops</span>
-              <span class="stat-val stat-val--away">{{ stats.opponentDropGoals }}</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- Posesión Neta -->
-        <section class="metric-section">
-          <div class="section-header-row">
-            <h3 class="section-title">Posesión de Eventos</h3>
-            <span class="possession-ratio">{{ stats.ownPossessionPercentage }}% vs {{ opponentPossessionPercentage }}%</span>
-          </div>
-          <div class="possession-bar-track">
-            <div class="possession-bar-fill possession-bar-fill--home" [style.width.%]="stats.ownPossessionPercentage">
-              <span>{{ stats.ownPossessionPercentage }}%</span>
-            </div>
-            <div class="possession-bar-fill possession-bar-fill--away" [style.width.%]="opponentPossessionPercentage">
-              <span>{{ opponentPossessionPercentage }}%</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- Grid de Métricas Clave (Tackles, Turnovers, Disciplina, Fijas) -->
-        <section class="stats-cards-grid">
-          
-          <!-- Tackles -->
-          <div class="stat-card">
-            <div class="stat-card__header">
-              <i class="ti ti-shield" aria-hidden="true"></i>
-              <h4>Defensa & Tackles</h4>
-            </div>
-            <div class="stat-card__big">
-              <span class="stat-big-val">{{ stats.ownTackleEffectiveness }}%</span>
-              <span class="stat-big-sub">Efectividad</span>
-            </div>
-            <div class="stat-card__details">
-              <div class="detail-row">
-                <span>Completados</span>
-                <strong>{{ stats.ownTacklesCompleted }}</strong>
+          <!-- Desglose de tantos: tipos que suman en la vista básica -->
+          @if (scoring.length > 0) {
+            <section class="panel">
+              <h3 class="panel__title">Desglose de puntos</h3>
+              <div class="score-grid">
+                @for (line of scoring; track line.label) {
+                  <div class="score-tile">
+                    <span class="value value--own">{{ line.own }}</span>
+                    <span class="score-tile__label">{{ line.label }}</span>
+                    <span class="value value--opp">{{ line.opponent }}</span>
+                  </div>
+                }
               </div>
-              <div class="detail-row">
-                <span>Fallados</span>
-                <strong class="text-danger">{{ stats.ownTacklesMissed }}</strong>
-              </div>
-            </div>
-          </div>
+            </section>
+          }
 
-          <!-- Contacto & Turnovers -->
-          <div class="stat-card">
-            <div class="stat-card__header">
-              <i class="ti ti-arrows-exchange" aria-hidden="true"></i>
-              <h4>Obtención / Turnovers</h4>
-            </div>
-            <div class="stat-card__big">
-              <span
-                class="stat-big-val"
-                [class.text-success]="stats.ownTurnoversWon - stats.ownTurnoversLost > 0"
-                [class.text-danger]="stats.ownTurnoversWon - stats.ownTurnoversLost < 0">
-                {{ stats.ownTurnoversWon - stats.ownTurnoversLost }}
+          <!-- Posesión -->
+          <section class="panel">
+            <div class="panel__header-row">
+              <h3 class="panel__title">Posesión</h3>
+              <span class="possession-ratio">
+                <span class="value value--own">{{ stats.ownPossessionPercentage }}%</span>
+                <span class="possession-ratio__vs">vs</span>
+                <span class="value value--opp">{{ opponentPossessionPercentage }}%</span>
               </span>
-              <span class="stat-big-sub">Balance neto</span>
             </div>
-            <div class="stat-card__details">
-              <div class="detail-row">
-                <span>Ganados / Recuperados</span>
-                <strong class="text-success">{{ stats.ownTurnoversWon }}</strong>
-              </div>
-              <div class="detail-row">
-                <span>Perdidos</span>
-                <strong class="text-danger">{{ stats.ownTurnoversLost }}</strong>
-              </div>
+            <div class="possession-bar" role="progressbar" [attr.aria-valuenow]="stats.ownPossessionPercentage" aria-valuemin="0" aria-valuemax="100">
+              <div class="possession-bar__fill possession-bar__fill--own" [style.width.%]="stats.ownPossessionPercentage"></div>
+              <div class="possession-bar__fill possession-bar__fill--opp" [style.width.%]="opponentPossessionPercentage"></div>
             </div>
-          </div>
+          </section>
 
-          <!-- Disciplina -->
-          <div class="stat-card">
-            <div class="stat-card__header">
-              <i class="ti ti-alert-triangle" aria-hidden="true"></i>
-              <h4>Disciplina & Infracciones</h4>
-            </div>
-            <div class="stat-card__big">
-              <span class="stat-big-val text-warning">{{ stats.ownPenaltiesConceded }}</span>
-              <span class="stat-big-sub">Penales concedidos</span>
-            </div>
-            <div class="stat-card__details">
-              <div class="detail-row">
-                <span>Penales concedidos del rival</span>
-                <strong>{{ stats.opponentPenaltiesConceded }}</strong>
-              </div>
-              <div class="detail-row">
-                <span>Tarjetas (A / R)</span>
-                <strong>{{ stats.ownYellowCards }} / {{ stats.ownRedCards }}</strong>
-              </div>
-            </div>
-          </div>
+          <!-- Indicadores combinados y un bloque por grupo del catálogo -->
+          @if (stats.derived.length > 0 || groups.length > 0) {
+            <section class="cards-grid">
+              @for (metric of stats.derived; track metric.id) {
+                <article class="panel metric">
+                  <div class="metric__head">
+                    <h4 class="panel__title">{{ metric.label }}</h4>
+                    @if (metric.status; as status) {
+                      <span class="status-chip status-chip--{{ status.type }}">{{ status.label }}</span>
+                    }
+                  </div>
+                  <div class="metric__hero">
+                    <span class="metric__value value--own">{{ formatMetric(metric.value.own, metric.format) }}</span>
+                    <span class="metric__caption">{{ homeTeam }}</span>
+                  </div>
+                  <div class="rows">
+                    <div class="stat-row">
+                      <span class="stat-row__label">{{ awayTeam }}</span>
+                      <span class="value value--opp">{{ formatMetric(metric.value.opponent, metric.format) }}</span>
+                    </div>
+                  </div>
+                </article>
+              }
 
-          <!-- Formaciones Fijas -->
-          <div class="stat-card">
-            <div class="stat-card__header">
-              <i class="ti ti-users-group" aria-hidden="true"></i>
-              <h4>Formaciones Fijas</h4>
-            </div>
-            <div class="stat-card__big">
-              <span class="stat-big-val">{{ stats.scrumsTotal + stats.lineoutsTotal }}</span>
-              <span class="stat-big-sub">Total disputadas</span>
-            </div>
-            <div class="stat-card__details">
-              <div class="detail-row">
-                <span>Scrums disputados</span>
-                <strong>{{ stats.scrumsTotal }}</strong>
-              </div>
-              <div class="detail-row">
-                <span>Line-outs disputados</span>
-                <strong>{{ stats.lineoutsTotal }}</strong>
-              </div>
-            </div>
-          </div>
+              @for (group of groups; track group.name; let index = $index, last = $last) {
+                <!-- Una tarjeta que queda sola en la última fila ocupa todo el ancho -->
+                <article class="panel" [class.panel--wide]="last && (stats.derived.length + index) % 2 === 0">
+                  <h4 class="panel__title">
+                    <i class="ti ti-list-details" aria-hidden="true"></i>
+                    {{ group.name }}
+                  </h4>
+                  <div class="rows">
+                    @for (type of group.types; track type.eventTypeId) {
+                      <div class="stat-row">
+                        <span class="stat-row__label">{{ type.main.label }}</span>
+                        <span class="pair">
+                          <span class="value value--own">{{ type.main.own }}</span>
+                          <span class="pair__dot">·</span>
+                          <span class="value value--opp">{{ type.main.opponent }}</span>
+                        </span>
+                      </div>
+<!--                       @for (breakdown of type.breakdowns; track breakdown.title) {
+                        @for (line of breakdown.lines; track line.label) {
+                          <div class="stat-row stat-row--sub">
+                            <span class="stat-row__label">{{ line.label }}</span>
+                            <span class="pair">
+                              <span class="value value--own">{{ line.own }}</span>
+                              <span class="pair__dot">·</span>
+                              <span class="value value--opp">{{ line.opponent }}</span>
+                            </span>
+                          </div>
+                        }
+                      } -->
+                    }
+                  </div>
+                </article>
+              }
+            </section>
+          }
 
-        </section>
-
-      </div>
+        </div>
+      }
     }
-
-    <!-- Footer Acciones -->
-<!--      
-    <footer class="current-stats-footer">
-      <button type="button" class="btn btn-secondary" (click)="onClose()">
-        <i class="ti ti-layout-grid" aria-hidden="true"></i>
-        Ver grilla de captura
-      </button>
-      <button type="button" class="btn btn-primary" (click)="onStartSecondHalf()">
-        <i class="ti ti-player-play" aria-hidden="true"></i>
-        Iniciar 2° Tiempo (Minuto 40)
-      </button>
-    </footer>
- -->
   </div>
 </div>

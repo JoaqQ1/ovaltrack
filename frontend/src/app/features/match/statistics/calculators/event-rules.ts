@@ -23,9 +23,6 @@ export function countsAsScoring(type: LiveCaptureEventType, attrs?: Record<strin
 
 export function eventTeam(type: LiveCaptureEventType | undefined, event: LocalMatchEvent): Team | null {
   if (!type) return null;
-  const resolved = resolveActor(type, event.teamPossession);
-  if (resolved) return resolved;
-  // CHOOSE: assumes the capture flow stores the analyst's choice in teamPossession
   return event.teamPossession === 'NEUTRAL' ? null : event.teamPossession;
 }
 
@@ -38,6 +35,19 @@ export function resolveActor(type: LiveCaptureEventType, possession: Possession)
     return null;
   }
   return type.actor === 'DEFENDING' ? opposite(possession) : possession;
+}
+
+/**
+ * Equipo al que se le suman los puntos de un evento. un evento NEUTRAL sin jugador no suma a nadie.
+ */
+export function scoringTeam(event: { teamPossession: Possession; playerId?: string | null }): Team | null {
+  if (event.teamPossession === 'OPPONENT') {
+    return 'OPPONENT';
+  }
+  if (event.teamPossession === 'OWN' || event.playerId != null) {
+    return 'OWN';
+  }
+  return null;
 }
 
 /**

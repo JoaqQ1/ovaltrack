@@ -6,7 +6,7 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "matches_players")
+@Table(name = "matches_players", indexes = {@Index(name = "idx_matches_players_match", columnList = "match_id")})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,4 +31,8 @@ public class MatchPlayer {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MatchPlayerRole role;
+
+    /** Posición dentro de su rol (titulares 0-14, suplentes 0-7). Null en planteles anteriores a esta columna. */
+    @Column(name = "slot_order")
+    private Integer slotOrder;
 }
