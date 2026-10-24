@@ -179,7 +179,7 @@ public class MatchService {
     public MatchResponseDTO updateMatch(UUID matchId, MatchUpdateDTO request) {
         Match match = findMatchEntityById(matchId);
         if (match == null) {
-            throw new BusinessException("Partido no encontrado");
+            throw new EntityNotFoundException("Partido no encontrado");
         }
 
         Opponent opponent = opponentRepository.findById(request.opponentId())
@@ -204,7 +204,7 @@ public class MatchService {
     public MatchResponseDTO changeMatchStatus(UUID matchId, MatchStatus matchStatus, Instant occurredAt) {
         Match match = findMatchEntityById(matchId);
         if (match == null) {
-            throw new BusinessException("Partido no encontrado");
+            throw new EntityNotFoundException("Partido no encontrado");
         }
 
         validateStatusChange(match, matchStatus);
@@ -274,7 +274,7 @@ public class MatchService {
     public void saveMatchRoster(UUID matchId, List<UUID> titularesIds, List<UUID> suplentesIds) {
         Match match = findMatchEntityById(matchId);
         if (match == null) {
-            throw new BusinessException("Partido no encontrado");
+            throw new EntityNotFoundException("Partido no encontrado");
         }
         if (match.getStatus() == MatchStatus.CANCELLED) {
             throw new BusinessException("No se puede modificar el plantel de un partido cancelado");
@@ -291,7 +291,9 @@ public class MatchService {
         addRosterPlayers(match, titularesIds, MatchPlayerRole.TITULAR, divisionPlayersByPersonId, assignedPersonIds, nuevosJugadores);
         addRosterPlayers(match, suplentesIds, MatchPlayerRole.SUPLENTE, divisionPlayersByPersonId, assignedPersonIds, nuevosJugadores);
 
-        match.setStatus(MatchStatus.NOT_STARTED);
+        if (match.getStatus() == null || match.getStatus() == MatchStatus.EMPTY_ROSTER) {
+            match.setStatus(MatchStatus.NOT_STARTED);
+        }
         matchRepository.save(match);
 
         matchPlayerRepository.saveAll(nuevosJugadores);
