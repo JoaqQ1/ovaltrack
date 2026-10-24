@@ -31,4 +31,8 @@ public class MatchPlayer {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MatchPlayerRole role;
+
+    /** Posición dentro de su rol (titulares 0-14, suplentes 0-7). Null en planteles anteriores a esta columna. */
+    @Column(name = "slot_order")
+    private Integer slotOrder;
 }
