@@ -2,8 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, from, map, of, switchMap, throwError, timeout } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, MatchTransitionRequest, NewMatchDraft, PendingMatchAction, PendingMatchMutation } from '../types/match.types';
-import { RosterPayload } from '../types/roster.types';
+import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, MatchTransitionRequest, NewMatchDraft, PendingMatchAction, HALF_DURATION_SECONDS } from '../types/match.types';
 import { PeriodStatisticDTO } from '../statistics/types/statistic.types';
 import { LiveCaptureBootstrapResponse } from '../types/live-capture.types';
 import { StatisticApiService } from '../statistics/services/statistic-api.service';
@@ -19,9 +18,6 @@ export class MatchService {
   private readonly cache = inject(LocalDatabaseService);
   private readonly statisticApiService = inject(StatisticApiService);
   private readonly apiUrl = `${environment.apiUrl}/matches`;
-
-  constructor() {
-  }
 
   getAllMatchesByDivisionId(divisionId: string): Observable<Match[]> {
     return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/division?divisionId=${divisionId}`).pipe(
@@ -132,10 +128,10 @@ export class MatchService {
     if (action === 'start-second-half') {
       currentPeriod = 2;
       clockPaused = false;
-      clockElapsedSeconds = Math.max(2400, clockElapsedSeconds);
+      clockElapsedSeconds = Math.max(HALF_DURATION_SECONDS, clockElapsedSeconds);
     } else if (action === 'close-first-half') {
       clockPaused = true;
-      clockElapsedSeconds = Math.max(2400, clockElapsedSeconds);
+      clockElapsedSeconds = Math.max(HALF_DURATION_SECONDS, clockElapsedSeconds);
     } else if (action === 'start') {
       currentPeriod = 1;
       clockPaused = false;
@@ -204,14 +200,6 @@ export class MatchService {
         })
       ))
     );
-  }
-
-  saveRoster(payload: RosterPayload): Observable<void> {
-    const dtoParaJava = {
-      titularesIds: payload.startingPlayers,
-      suplentesIds: payload.substitutePlayers
-    };
-    return this.http.post<void>(`${this.apiUrl}/${payload.matchId}/roster`, dtoParaJava);
   }
 
   getLiveMatchState(matchId: string): Observable<Match> {
