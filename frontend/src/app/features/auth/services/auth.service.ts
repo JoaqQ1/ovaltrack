@@ -77,7 +77,6 @@ export class AuthService {
     this.router.navigate(['/auth/login']);
   }
 
-  /** Evita que el siguiente usuario del dispositivo vea partidos y planteles cacheados. */
   private async clearLocalData(): Promise<void> {
     try {
       const keptChanges = await this.cache.clearCachedDataOnLogout();
