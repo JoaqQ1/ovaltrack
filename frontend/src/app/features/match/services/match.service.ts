@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, from, map, of, switchMap, throwError, timeout } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, NewMatchDraft, PendingMatchAction, PendingMatchMutation } from '../types/match.types';
+import { BackendMatchResponse, LiveMatchStateRequest, Match, MatchStatus, MatchTransitionRequest, NewMatchDraft, PendingMatchAction, PendingMatchMutation } from '../types/match.types';
 import { RosterPayload } from '../types/roster.types';
 import { PeriodStatisticDTO } from '../statistics/types/statistic.types';
 import { LiveCaptureBootstrapResponse } from '../types/live-capture.types';
@@ -91,8 +91,9 @@ export class MatchService {
    * Envía la transición al backend sin tocar la caché ni encolarla offline.
    * La usa el flush de mutaciones pendientes, que decide por sí mismo qué persistir.
    */
-  sendTransition(matchId: string, action: PendingMatchAction): Observable<Match> {
-    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/${action}`, {}).pipe(
+  sendTransition(matchId: string, action: PendingMatchAction, occurredAt?: string): Observable<Match> {
+    const body: MatchTransitionRequest = occurredAt ? { occurredAt } : {};
+    return this.http.put<BackendMatchResponse>(`${this.apiUrl}/${matchId}/${action}`, body).pipe(
       timeout(TRANSITION_TIMEOUT_MS),
       map(match => this.normalizeMatch(match)),
     );
@@ -121,7 +122,9 @@ export class MatchService {
     nextLocalStatus: MatchStatus,
   ): Promise<Match> {
     const cachedMatch = await this.cache.getMatch(matchId);
-    
+    const occurredAt = Date.now();
+    const occurredAtIso = new Date(occurredAt).toISOString();
+
     let currentPeriod = cachedMatch?.currentPeriod ?? 1;
     let clockPaused = cachedMatch?.clockPaused ?? true;
     let clockElapsedSeconds = cachedMatch?.clockElapsedSeconds ?? 0;
@@ -141,27 +144,29 @@ export class MatchService {
       clockPaused = true;
     }
 
-    const nextMatch: Match = cachedMatch
-      ? { 
-          ...cachedMatch,
-          status: nextLocalStatus, 
-          currentPeriod, 
-          clockPaused,
-          clockElapsedSeconds 
-        }
-      : {
-          id: matchId,
-          status: nextLocalStatus,
-          opponent: '',
-          date: '',
-          divisionId: '' as any,
-          currentPeriod,
-          clockElapsedSeconds,
-          clockPaused,
-          currentPossession: 'OWN',
-          homeScore: 0,
-          awayScore: 0,
-        } as Match;
+    const baseMatch: Match = cachedMatch ?? {
+      id: matchId,
+      status: nextLocalStatus,
+      opponent: '',
+      date: '',
+      divisionId: '',
+      currentPeriod,
+      clockElapsedSeconds,
+      clockPaused,
+      currentPossession: 'OWN',
+      homeScore: 0,
+      awayScore: 0,
+    };
+    const nextMatch: Match = {
+      ...baseMatch,
+      status: nextLocalStatus,
+      currentPeriod,
+      clockPaused,
+      clockElapsedSeconds,
+      clockUpdatedAt: occurredAtIso,
+      startedAt: action === 'start' ? (baseMatch.startedAt ?? occurredAtIso) : baseMatch.startedAt,
+      finishedAt: action === 'finish' ? occurredAtIso : baseMatch.finishedAt,
+    };
 
     await this.cache.saveMatches([nextMatch]);
 
@@ -170,7 +175,7 @@ export class MatchService {
       id: mutationId,
       matchId,
       action,
-      createdAt: Date.now(),
+      createdAt: occurredAt,
     });
 
     return nextMatch;
