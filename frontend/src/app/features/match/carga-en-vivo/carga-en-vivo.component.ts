@@ -18,7 +18,7 @@ import {
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../statistics/services/statistic-calculation.service';
-import { PeriodStatisticDTO } from '../statistics/types/statistic.types';
+import { MatchStatistics } from '../statistics/types/statistic.types';
 import { CurrentStatsModalComponent } from './components/current-stats-modal/current-stats-modal.component';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -132,7 +132,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   showCurrentStatisticsModal = false;
   isCalculatingStats = false;
   isOfflineMode = false;
-  currentStats: PeriodStatisticDTO | null = null;
+  currentStats: MatchStatistics | null = null;
 
   /** Sesión del modal de captura; `null` si no hay modal abierto. */
   capture: CaptureSession | null = null;
@@ -532,11 +532,11 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     try {
       await firstValueFrom(this.liveCaptureService.syncPendingEvents(this.matchId));
       this.events = await firstValueFrom(this.liveCaptureService.getLocalEvents(this.matchId));
-      const allEventTypes = this.eventTypes;
       this.currentStats = await this.statisticCalculationService.calculateMatchStatistics(
         this.matchId,
-        this.events,
-        allEventTypes
+        'basic',
+        undefined,
+        { events: this.events, eventTypes: this.eventTypes },
       );
     } catch (error) {
       console.error('Error al calcular estadísticas tácticas:', error);
