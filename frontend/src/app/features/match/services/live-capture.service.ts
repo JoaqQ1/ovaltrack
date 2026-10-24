@@ -2,12 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, defer, firstValueFrom, forkJoin, from, map, switchMap, catchError, of } from 'rxjs';
 import {
   LiveCaptureBootstrap,
-  LiveCaptureBootstrapResponse,
+  LiveCaptureEventType,
   LiveCapturePersistedState,
   LiveCaptureQuery,
 } from '../types/live-capture.types';
-import { LocalMatchEvent } from '../types/event.types';
-import { LiveMatchStateRequest, MatchStatus } from '../types/match.types';
+import { BackendEventResponse, LocalMatchEvent } from '../types/event.types';
+import { LiveMatchStateRequest, Match, MatchStatus } from '../types/match.types';
 import { MatchService } from './match.service';
 import { EventService } from './event.service';
 import { RosterService } from './roster.service';
@@ -35,7 +35,7 @@ export class LiveCaptureService {
   private readonly eventService = inject(EventService);
   private readonly rosterService = inject(RosterService);
   private readonly pendingEventSync = inject(PendingEventSyncService);
-  private readonly playersByMatch = new Map<string, AvailablePlayer[]>();
+  private readonly startingPlayersByMatch = new Map<string, AvailablePlayer[]>();
 
   constructor() {
   }
@@ -65,6 +65,7 @@ export class LiveCaptureService {
             ...match,
             clockElapsedSeconds: state.clockElapsedSeconds,
             clockPaused: state.clockPaused,
+            clockUpdatedAt: new Date(state.savedAt).toISOString(),
             currentPossession: state.currentPossession ?? match.currentPossession,
           };
           return from(this.cache.saveMatches([updatedMatch]));
@@ -111,38 +112,45 @@ export class LiveCaptureService {
   }
 
   private async readBootstrap(query: LiveCaptureQuery): Promise<LiveCaptureBootstrap> {
-    let bootstrap: LiveCaptureBootstrapResponse;
+    let match: Match;
+    let remoteEvents: BackendEventResponse[] | null = null;
+    let eventTypes: LiveCaptureEventType[];
     let players: AvailablePlayer[];
     let savedRoster: SavedRoster | null;
-    let loadedFromBackend = true;
 
     try {
-      ({ bootstrap, players, savedRoster } = await firstValueFrom(forkJoin({
+      const remote = await firstValueFrom(forkJoin({
         bootstrap: this.matchService.getLiveMatchBootstrap(query.matchId),
         players: this.rosterService.getAvailablePlayers(query.matchId),
         savedRoster: this.rosterService.getSavedRoster(query.matchId),
-      })));
+      }));
+      match = remote.bootstrap.match;
+      remoteEvents = remote.bootstrap.events;
+      players = remote.players;
+      savedRoster = remote.savedRoster;
+      eventTypes = remote.bootstrap.eventTypes.map(eventType => ({
+        ...eventType,
+        groupName: eventType.groupName ?? 'General',
+        category: eventType.category ?? 'NEUTRAL',
+        points: eventType.points ?? 0,
+        createdAt: new Date().toISOString(),
+        isActive: true,
+      }));
+      await this.cache.syncActiveEventTypes(eventTypes);
     } catch {
-      loadedFromBackend = false;
-      const [localMatch, localStatus, localEventTypes] = await Promise.all([
-        this.cache.getMatch(query.matchId),
-        this.cache.getStatusData(query.matchId),
-        this.cache.getEventTypes(),
-      ]);
-
+      const localMatch = await this.cache.getMatch(query.matchId);
       if (!localMatch) {
         throw new Error(`Match ${query.matchId} is unavailable offline`);
       }
 
-      bootstrap = {
-        match: localMatch,
-        events: localStatus.events,
-        eventTypes: localEventTypes as unknown as LiveCaptureBootstrapResponse['eventTypes'],
-      };
-      players = [];
-      savedRoster = null;
+      match = localMatch;
+      [eventTypes, players, savedRoster] = await Promise.all([
+        this.cache.getActiveEventTypes(),
+        localMatch.divisionId ? this.cache.getPersonsByDivisionId(localMatch.divisionId) : Promise.resolve([]),
+        this.cache.getRoster(query.matchId).then(roster => roster ?? null),
+      ]);
     }
-    const match = bootstrap.match;
+
     if (match.status === 'cancelled') {
       throw new Error(`Match ${query.matchId} was cancelled`);
     }
@@ -150,22 +158,10 @@ export class LiveCaptureService {
       ...query,
       divisionId: match.divisionId,
     };
-    this.playersByMatch.set(query.matchId, players);
-    const startingPlayerIds = savedRoster?.startingPlayers ?? [];
-    const rosterPlayers = startingPlayerIds
-      .map(playerId => players.find(player => player.id === playerId))
-      .filter((player): player is AvailablePlayer => player !== undefined);
-    const eventTypes = bootstrap.eventTypes.map(eventType => ({
-      ...eventType,
-      groupName: eventType.groupName ?? 'General',
-      category: eventType.category ?? 'NEUTRAL',
-      points: eventType.points ?? 0,
-      createdAt: new Date().toISOString(),
-      isActive: true,
-    }));
-    await this.cache.saveEventTypes(eventTypes);
-    const events = loadedFromBackend
-      ? await this.cache.mergeRemoteEvents(query.matchId, bootstrap.events)
+    const rosterPlayers = this.toStartingPlayers(savedRoster, players);
+    this.startingPlayersByMatch.set(query.matchId, rosterPlayers);
+    const events = remoteEvents
+      ? await this.cache.mergeRemoteEvents(query.matchId, remoteEvents)
       : await this.cache.getEventsByMatch(query.matchId);
     const isHalftime = match.status === 'halftime';
     const period = match.currentPeriod ?? 1;
@@ -208,6 +204,12 @@ export class LiveCaptureService {
       .then(({ state, events }) => this.resolveMatchStatus(state, events));
   }
 
+  private toStartingPlayers(savedRoster: SavedRoster | null, players: AvailablePlayer[]): AvailablePlayer[] {
+    return (savedRoster?.startingPlayers ?? [])
+      .map(playerId => players.find(player => player.id === playerId))
+      .filter((player): player is AvailablePlayer => player !== undefined);
+  }
+
   private async resolvePlayer(event: LocalMatchEvent): Promise<LocalMatchEvent> {
     if (event.playerId) return event;
 
@@ -217,22 +219,28 @@ export class LiveCaptureService {
 
     const raw = event.attributes?.['playerNumber'];
     if (raw === null || raw === undefined || raw === '') return event;
-    const playerNumber = Number(raw);
-    if (!Number.isFinite(playerNumber)) return event;
+    const slotNumber = Number(raw);
+    if (!Number.isInteger(slotNumber) || slotNumber < 1) return event;
 
-    let player = this.playersByMatch.get(event.matchId)
-      ?.find(currentPlayer => currentPlayer.jerseyNumber === playerNumber);
-
-    if (!player) {
-      const match = await this.cache.getMatch(event.matchId);
-      if (match?.divisionId) {
-        const divisionPlayers = await this.cache.getPersonsByDivisionId(match.divisionId);
-        player = divisionPlayers.find(p => p.jerseyNumber === playerNumber);
-      }
-    }
+    const startingPlayers = this.startingPlayersByMatch.get(event.matchId)
+      ?? await this.readCachedStartingPlayers(event.matchId);
+    const player = startingPlayers[slotNumber - 1];
 
     return player ? { ...event, playerId: player.id } : event;
   }
+
+  private async readCachedStartingPlayers(matchId: string): Promise<AvailablePlayer[]> {
+    const [match, savedRoster] = await Promise.all([
+      this.cache.getMatch(matchId),
+      this.cache.getRoster(matchId),
+    ]);
+    if (!match?.divisionId || !savedRoster) {
+      return [];
+    }
+    const players = await this.cache.getPersonsByDivisionId(match.divisionId);
+    return this.toStartingPlayers(savedRoster, players);
+  }
+
 
   private resolveMatchStatus(
     state: LiveCapturePersistedState | undefined,
