@@ -31,6 +31,7 @@ export interface ReviewEventViewModel {
   origin?: string | null;
   isPostMatch: boolean;
   attributes?: Record<string, unknown> | null;
+  note?: string | null;
   isDimmed: boolean; // True si queda fuera de los filtros activos (para el gráfico)
 }
 

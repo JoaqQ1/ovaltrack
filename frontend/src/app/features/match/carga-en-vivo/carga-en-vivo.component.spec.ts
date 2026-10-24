@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
-import { StatisticCalculationService } from '../services/statistic-calculation.service';
+import { StatisticCalculationService } from '../statistics/services/statistic-calculation.service';
 import { LiveCaptureEventType } from '../types/event-type.types';
 import { CargaEnVivoComponent } from './carga-en-vivo.component';
 
@@ -95,33 +95,12 @@ describe('CargaEnVivoComponent', () => {
         {
           provide: StatisticCalculationService,
           useValue: {
-            calculatePeriodStatistics: () => Promise.resolve({
-              matchId: '550e8400-e29b-41d4-a716-446655440002',
-              period: 1,
-              ownScore: 10,
-              opponentScore: 5,
-              ownTries: 2,
-              opponentTries: 1,
-              ownConversions: 0,
-              opponentConversions: 0,
-              ownPenalties: 0,
-              opponentPenalties: 0,
-              ownDropGoals: 0,
-              opponentDropGoals: 0,
-              ownTacklesCompleted: 15,
-              ownTacklesMissed: 2,
-              ownTackleEffectiveness: 88.2,
-              ownTurnoversWon: 3,
-              ownTurnoversLost: 1,
-              ownPenaltiesConceded: 4,
-              opponentPenaltiesConceded: 6,
-              ownYellowCards: 0,
-              opponentYellowCards: 0,
-              ownRedCards: 0,
-              opponentRedCards: 0,
-              scrumsTotal: 4,
-              lineoutsTotal: 6,
-              ownPossessionPercentage: 55.0,
+            calculateMatchStatistics: () => Promise.resolve({
+              view: 'basic',
+              score: { own: 10, opponent: 5 },
+              ownPossessionPercentage: 50,
+              groups: [],
+              derived: [],
             }),
           },
         },

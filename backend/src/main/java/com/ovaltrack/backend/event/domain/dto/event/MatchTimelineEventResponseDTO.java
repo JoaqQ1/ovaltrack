@@ -19,6 +19,7 @@ public record MatchTimelineEventResponseDTO(
         Integer period,
         EventPossession teamPossession,
         String origin,
-        Map<String, Object> attributes
+        Map<String, Object> attributes,
+        String note
 ) {
 }

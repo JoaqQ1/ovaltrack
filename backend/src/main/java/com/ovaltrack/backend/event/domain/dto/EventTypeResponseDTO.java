@@ -32,6 +32,8 @@ public record EventTypeResponseDTO(
 
     UUID followUpEventTypeId,
 
+    List<String> statView,
+
     Actor actor,
 
     PossessionAfter possessionAfter,

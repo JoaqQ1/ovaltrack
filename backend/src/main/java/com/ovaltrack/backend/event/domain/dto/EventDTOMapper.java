@@ -60,7 +60,8 @@ public final class EventDTOMapper {
                 event.getAttributes(),
                 event.getCreatedAt(),
                 event.getSynchronizedAt(),
-                event.getActive());
+                event.getActive(),
+                event.getNote());
     }
 
     public static EventTypeResponseDTO toResponseDTO(EventType eventType) {
@@ -80,6 +81,7 @@ public final class EventDTOMapper {
                 eventType.getCode(),
                 Boolean.TRUE.equals(eventType.getShowInPalette()),
                 eventType.getFollowUpEventTypeId(),
+                eventType.getStatView(),
                 eventType.getActor() == null ? Actor.ATTACKING : eventType.getActor(),
                 eventType.getPossessionAfter() == null ? PossessionAfter.KEEP : eventType.getPossessionAfter(),
                 eventType.getFollowUpChoices() == null ? List.of() : eventType.getFollowUpChoices(),
@@ -110,6 +112,7 @@ public final class EventDTOMapper {
                 event.getPeriod(),
                 event.getTeamPossession(),
                 event.getOrigin(),
-                event.getAttributes());
+                event.getAttributes(),
+                event.getNote());
     }
 }

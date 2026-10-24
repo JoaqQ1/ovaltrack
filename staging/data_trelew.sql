@@ -200,7 +200,7 @@ INSERT INTO matches (id, date, division_id, opponent_id, status, current_period,
 
 INSERT INTO event_types
 (id, code, name, group_name, category, is_scoring, points,
- requires_player, is_active, show_in_palette, follow_up_event_type_id, actor, possession_after, follow_up_choices, template_event_fields, created_at)
+ requires_player, is_active, show_in_palette, follow_up_event_type_id, actor, possession_after, follow_up_choices, template_event_fields, stat_view, created_at)
 VALUES
 (
     '550e8400-e29b-41d4-a716-446655440101',
@@ -240,6 +240,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -301,6 +302,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -345,6 +347,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -407,6 +410,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -448,6 +452,7 @@ VALUES
         "max": 80
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -486,6 +491,7 @@ VALUES
         "max": 6
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -533,6 +539,7 @@ VALUES
         "required": false
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -573,6 +580,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -601,6 +609,7 @@ VALUES
         "max": 100
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -619,6 +628,7 @@ VALUES
     'KEEP',
     $$[]$$::jsonb,
     $$[]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -693,6 +703,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -741,6 +752,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -809,6 +821,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -917,6 +930,7 @@ VALUES
         "required": false
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -981,6 +995,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1033,6 +1048,36 @@ VALUES
         "max": 30
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440129',
+    'QUICK_PLAY',
+    'Jugada rapida',
+    'Juego Fijo',
+    'ATTACK',
+    false,
+    0,
+    false,
+    true,
+    false,
+    NULL,
+    'ATTACKING',
+    'KEEP',
+    $$[]$$::jsonb,
+    $$[
+      {
+        "key": "quickPlayOutcome",
+        "label": "Resultado",
+        "type": "boolean",
+        "phase": "post",
+        "required": false,
+        "trueLabel": "Postivo",
+        "falseLabel": "Negativo"
+      }
+    ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1087,6 +1132,7 @@ VALUES
         "required": false
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1131,6 +1177,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1199,6 +1246,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1242,6 +1290,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1302,6 +1351,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1356,6 +1406,7 @@ VALUES
         "max": 20
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1396,6 +1447,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1444,6 +1496,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1465,6 +1518,7 @@ VALUES
       {"key":"playerOutNumber","label":"Jugador que sale","type":"number","phase":"live","required":true,"min":1,"max":15},
       {"key":"playerInNumber","label":"Jugador que entra","type":"number","phase":"live","required":true,"min":16,"max":23}
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 );
 

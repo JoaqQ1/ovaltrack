@@ -1,30 +1,36 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, effect, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { EventTypeService } from 'src/app/features/match/services/event-type.service';
-import { EventService } from 'src/app/features/match/services/event.service';
-import { LiveCaptureCacheService } from 'src/app/features/match/services/live-capture-cache.service';
-import { MatchService } from 'src/app/features/match/services/match.service';
 import { UserContextService } from '../services/user-context.service';
+import { PendingMatchMutationSyncService } from './pending-match-mutation-sync.service';
+import { PendingEventSyncService } from './pending-event-sync.service';
+import { ActiveMatchPullService } from './active-match-pull.service';
 
 @Injectable({ providedIn: 'root' })
 export class SyncManagerService {
-  private readonly cache = inject(LiveCaptureCacheService);
-  private readonly matchService = inject(MatchService);
-  private readonly eventService = inject(EventService);
+  private readonly pendingMatchMutationSync = inject(PendingMatchMutationSyncService);
+  private readonly pendingEventSync = inject(PendingEventSyncService);
+  private readonly activeMatchPull = inject(ActiveMatchPullService);
   private readonly eventTypeService = inject(EventTypeService);
   private readonly userCtxService = inject(UserContextService)
 
   private isSyncing = false;
+  private hasSynced = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
       window.addEventListener('online', () => {
+        this.hasSynced = false;
         void this.synchronizeAll();
       });
 
-      if (navigator.onLine) {
-        void this.synchronizeAll();
-      }
+      effect(() => {
+        const context = this.userCtxService.userContext();
+        if (context && navigator.onLine && !this.hasSynced) {
+          this.hasSynced = true;
+          void this.synchronizeAll();
+        }
+      });
     }
   }
 
@@ -37,8 +43,9 @@ export class SyncManagerService {
 
     try {
       await this.syncEventTypes();
-      await this.flushMatchMutations();
-      await this.flushPendingEvents();
+      await this.pendingMatchMutationSync.flush();
+      await this.pendingEventSync.flush();
+      await this.activeMatchPull.pull();
     } catch (error) {
       console.error('Background synchronization failed:', error);
     } finally {
@@ -48,78 +55,9 @@ export class SyncManagerService {
 
   private async syncEventTypes(): Promise<void> {
     try {
-      const eventTypes = await firstValueFrom(this.eventTypeService.getAll());
-      if (eventTypes && eventTypes.length > 0) {
-        await this.cache.saveEventTypes(eventTypes);
-      }
+      await firstValueFrom(this.eventTypeService.getAll());
     } catch (error) {
       console.warn('Could not sync event types in background:', error);
-    }
-  }
-
-  private async flushMatchMutations(): Promise<void> {
-    const pendingMutations = await this.cache.getPendingMatchMutations();
-    if (pendingMutations.length === 0) return;
-
-    for (const mutation of pendingMutations) {
-      try {
-        let request$;
-        switch (mutation.action) {
-          case 'start':
-            request$ = this.matchService.startMatch(mutation.matchId);
-            break;
-          case 'close-first-half':
-            request$ = this.matchService.closeFirstHalf(mutation.matchId);
-            break;
-          case 'start-second-half':
-            request$ = this.matchService.startSecondHalf(mutation.matchId);
-            break;
-          case 'finish':
-            request$ = this.matchService.finishMatch(mutation.matchId);
-            break;
-        }
-
-        if (request$) {
-          await firstValueFrom(request$);
-          await this.cache.deletePendingMatchMutation(mutation.id);
-        }
-      } catch (error: any) {
-        if (error?.status === 409) {
-          console.warn(`Match mutation conflict (409) for ${mutation.matchId}. Aligning state...`);
-          await this.cache.deletePendingMatchMutation(mutation.id);
-          continue;
-        }
-
-        if (error?.status >= 400 && error?.status < 500 && error?.status !== 401 && error?.status !== 403) {
-          await this.cache.deletePendingMatchMutation(mutation.id);
-          continue;
-        }
-        
-        break;
-      }
-    }
-  }
-
-  private async flushPendingEvents(): Promise<void> {
-    const pendingEvents = await this.cache.getPendingEvents();
-    if (pendingEvents.length === 0) return;
-
-    for (const event of pendingEvents) {
-      try {
-        if (!event.active && event.backendEventId != null) {
-          const res = await firstValueFrom(this.eventService.delete(event.backendEventId));
-          await this.cache.saveEvent({ ...event, synchronizedAt: res.synchronizedAt });
-        } else {
-          const res = await firstValueFrom(this.eventService.createFromLocal(event));
-          await this.cache.saveEvent({
-            ...event,
-            backendEventId: res.id,
-            synchronizedAt: res.synchronizedAt,
-          });
-        }
-      } catch (error) {
-        break;
-      }
     }
   }
 }
