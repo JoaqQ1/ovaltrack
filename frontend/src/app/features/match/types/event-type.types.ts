@@ -35,7 +35,15 @@ export interface BackendEventTypeResponse {
   possessionAfter: PossessionAfter;
   followUpChoices: FollowUpChoice[];
   templateEventFields: TemplateField[];
+  /**
+   * Vistas de estadísticas en vivo donde aparece el tipo (`event_types.stat_view`). Las estadísticas
+   * post-partido muestran todos los tipos. Puede faltar en tipos cacheados antes de esta columna.
+   */
+  statView?: LiveStatView[] | null;
 }
+
+/** `basic`: modal de estadísticas de la carga en vivo · `intermediate`: resumen de entretiempo. */
+export type LiveStatView = 'basic' | 'intermediate';
 
 export interface TemplateField {
   key: string; label: string;
