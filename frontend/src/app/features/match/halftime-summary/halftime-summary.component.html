@@ -93,7 +93,7 @@
               <!-- Local Score -->
               <div class="telemetry-team telemetry-team--home">
                 <span class="team-label">{{ homeTeam() }}</span>
-                <span class="team-score text-home">{{ stats.ownScore }}</span>
+                <span class="team-score text-home">{{ stats.score.own }}</span>
               </div>
 
               <!-- Centro: Posesión + Desglose Comparativo -->
@@ -112,43 +112,18 @@
                   <div class="possession-fill fill--away" [style.width.%]="opponentPossessionPercentage()"></div>
                 </div>
 
-                <!-- Cápsulas Comparativas de Tantos -->
+                <!-- Cápsulas Comparativas de Tantos: tipos que suman en la vista intermedia -->
                 <div class="breakdown-capsules">
-                  <div class="capsule" title="Tries: Local vs Rival (5 pts c/u)">
-                    <div class="capsule-nums">
-                      <strong class="text-home">{{ stats.ownTries }}</strong>
-                      <span class="capsule-dot">·</span>
-                      <strong class="text-away">{{ stats.opponentTries }}</strong>
+                  @for (line of scoringLines(); track line.label) {
+                    <div class="capsule" [title]="line.label + ': Local vs Rival'">
+                      <div class="capsule-nums">
+                        <strong class="text-home">{{ line.own }}</strong>
+                        <span class="capsule-dot">·</span>
+                        <strong class="text-away">{{ line.opponent }}</strong>
+                      </div>
+                      <span class="capsule-label">{{ line.label }}</span>
                     </div>
-                    <span class="capsule-label">Tries</span>
-                  </div>
-
-                  <div class="capsule" title="Conversiones: Local vs Rival (2 pts c/u)">
-                    <div class="capsule-nums">
-                      <strong class="text-home">{{ stats.ownConversions }}</strong>
-                      <span class="capsule-dot">·</span>
-                      <strong class="text-away">{{ stats.opponentConversions }}</strong>
-                    </div>
-                    <span class="capsule-label">Conversiones</span>
-                  </div>
-
-                  <div class="capsule" title="Penales a los palos: Local vs Rival (3 pts c/u)">
-                    <div class="capsule-nums">
-                      <strong class="text-home">{{ stats.ownPenalties }}</strong>
-                      <span class="capsule-dot">·</span>
-                      <strong class="text-away">{{ stats.opponentPenalties }}</strong>
-                    </div>
-                    <span class="capsule-label">Penales</span>
-                  </div>
-
-                  <div class="capsule" title="Drop Goals: Local vs Rival (3 pts c/u)">
-                    <div class="capsule-nums">
-                      <strong class="text-home">{{ stats.ownDropGoals }}</strong>
-                      <span class="capsule-dot">·</span>
-                      <strong class="text-away">{{ stats.opponentDropGoals }}</strong>
-                    </div>
-                    <span class="capsule-label">Drops</span>
-                  </div>
+                  }
                 </div>
 
               </div>
@@ -156,160 +131,82 @@
               <!-- Rival Score -->
               <div class="telemetry-team telemetry-team--away">
                 <span class="team-label">{{ opponent() }}</span>
-                <span class="team-score text-away">{{ stats.opponentScore }}</span>
+                <span class="team-score text-away">{{ stats.score.opponent }}</span>
               </div>
 
             </section>
 
-            <!-- GRILLA CENTRAL: 4 TARJETAS TÁCTICAS -->
+            <!-- GRILLA CENTRAL: indicadores combinados y un bloque por grupo del catálogo -->
             <div class="tactical-grid">
 
-              <!-- Tarjeta 1: Tackles -->
-              <section class="metric-card">
-                <div class="card-head">
-                  <div class="card-title-group">
-                    <span class="card-icon card-icon--tackle">
-                      <i class="ti ti-shield" aria-hidden="true"></i>
-                    </span>
-                    <h3 class="card-name">Tackles</h3>
+              @for (metric of stats.derived; track metric.id) {
+                <section class="metric-card">
+                  <div class="card-head">
+                    <div class="card-title-group">
+                      <span class="card-icon card-icon--tackle">
+                        <i class="ti ti-chart-bar" aria-hidden="true"></i>
+                      </span>
+                      <h3 class="card-name">{{ metric.label }}</h3>
+                    </div>
+                    @if (metric.status; as status) {
+                      <span class="status-pill status-pill--{{ status.type }}">{{ status.label }}</span>
+                    }
                   </div>
-                  <span class="status-pill status-pill--{{ tackleStatus().type }}">
-                    {{ tackleStatus().label }}
-                  </span>
-                </div>
 
-                <div class="card-hero">
-                  <div class="hero-number">{{ stats.ownTackleEffectiveness }}%</div>
-                  <div class="hero-label">Efectividad</div>
-                </div>
-
-                <!-- Mini Barra Bicolor de Efectividad -->
-                <div class="mini-bar">
-                  <div class="mini-fill fill--home" [style.width.%]="stats.ownTackleEffectiveness"></div>
-                  <div class="mini-fill fill--away" [style.width.%]="100 - stats.ownTackleEffectiveness"></div>
-                </div>
-
-                <div class="card-details">
-                  <div class="detail-row">
-                    <span class="detail-name">Completados</span>
-                    <span class="detail-val text-home">{{ stats.ownTacklesCompleted }}</span>
+                  <div class="card-hero">
+                    <div class="hero-number text-home">{{ formatMetric(metric.value.own, metric.format) }}</div>
+                    <div class="hero-label">{{ homeTeam() }}</div>
                   </div>
-                  <div class="detail-row">
-                    <span class="detail-name">Fallados</span>
-                    <span class="detail-val text-away">{{ stats.ownTacklesMissed }}</span>
+
+                  <div class="card-details">
+                    <div class="detail-row">
+                      <span class="detail-name">{{ opponent() }}</span>
+                      <span class="detail-val text-away">{{ formatMetric(metric.value.opponent, metric.format) }}</span>
+                    </div>
                   </div>
-                </div>
-              </section>
+                </section>
+              }
 
-              <!-- Tarjeta 2: Turnovers (Preservando terminología Rugby) -->
-              <section class="metric-card">
-                <div class="card-head">
-                  <div class="card-title-group">
-                    <span class="card-icon card-icon--turnovers">
-                      <i class="ti ti-arrows-exchange" aria-hidden="true"></i>
-                    </span>
-                    <h3 class="card-name">Turnovers</h3>
+              @for (group of groupCards(); track group.name) {
+                <section class="metric-card">
+                  <div class="card-head">
+                    <div class="card-title-group">
+                      <span class="card-icon card-icon--setpieces">
+                        <i class="ti ti-list-details" aria-hidden="true"></i>
+                      </span>
+                      <h3 class="card-name">{{ group.name }}</h3>
+                    </div>
+                    @if (!group.hasData) {
+                      <span class="status-pill status-pill--neutral">Sin datos</span>
+                    }
                   </div>
-                  <span class="status-pill status-pill--{{ turnoverStatus().type }}">
-                    {{ turnoverStatus().label }}
-                  </span>
-                </div>
 
-                <div class="card-hero">
-                  <div class="hero-number text-home">
-                    {{ (stats.ownTurnoversWon - stats.ownTurnoversLost) > 0 ? '+' : '' }}{{ stats.ownTurnoversWon - stats.ownTurnoversLost }}
+                  <div class="card-details">
+                    @for (type of group.types; track type.eventTypeId) {
+                      <div class="detail-row">
+                        <span class="detail-name">{{ type.main.label }}</span>
+                        <span class="detail-val">
+                          <span class="text-home">{{ type.main.own }}</span>
+                          <span class="capsule-dot">·</span>
+                          <span class="text-away">{{ type.main.opponent }}</span>
+                        </span>
+                      </div>
+                      @for (breakdown of type.breakdowns; track breakdown.title) {
+                        @for (line of breakdown.lines; track line.label) {
+                          <div class="detail-row detail-row--sub">
+                            <span class="detail-name">{{ line.label }}</span>
+                            <span class="detail-val">
+                              <span class="text-home">{{ line.own }}</span>
+                              <span class="capsule-dot">·</span>
+                              <span class="text-away">{{ line.opponent }}</span>
+                            </span>
+                          </div>
+                        }
+                      }
+                    }
                   </div>
-                  <div class="hero-label">Balance Neto</div>
-                </div>
-
-                <!-- Mini Barra Bicolor de Turnovers -->
-                <div class="mini-bar">
-                  <div class="mini-fill fill--home" [style.width.%]="turnoverHomeRatio()"></div>
-                  <div class="mini-fill fill--away" [style.width.%]="100 - turnoverHomeRatio()"></div>
-                </div>
-
-                <div class="card-details">
-                  <div class="detail-row">
-                    <span class="detail-name">Ganados</span>
-                    <span class="detail-val text-home">{{ stats.ownTurnoversWon }}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-name">Perdidos</span>
-                    <span class="detail-val text-away">{{ stats.ownTurnoversLost }}</span>
-                  </div>
-                </div>
-              </section>
-
-              <!-- Tarjeta 3: Disciplina -->
-              <section class="metric-card">
-                <div class="card-head">
-                  <div class="card-title-group">
-                    <span class="card-icon card-icon--discipline">
-                      <i class="ti ti-alert-triangle" aria-hidden="true"></i>
-                    </span>
-                    <h3 class="card-name">Disciplina</h3>
-                  </div>
-                  <span class="status-pill status-pill--{{ disciplineStatus().type }}">
-                    {{ disciplineStatus().label }}
-                  </span>
-                </div>
-
-                <div class="card-hero">
-                  <div class="hero-number text-home">{{ stats.ownPenaltiesConceded }}</div>
-                  <div class="hero-label">Penales Cometidos</div>
-                </div>
-
-                <!-- Mini Gráfico de Tarjetas Física Amarilla y Roja -->
-                <div class="cards-visual-box">
-                  <div class="visual-card visual-card--yellow" title="Tarjetas amarillas propias"></div>
-                  <div class="visual-card visual-card--red" title="Tarjetas rojas propias"></div>
-                </div>
-
-                <div class="card-details">
-                  <div class="detail-row">
-                    <span class="detail-name">Penales del rival</span>
-                    <span class="detail-val">{{ stats.opponentPenaltiesConceded }}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-name">Tarjetas (A / R)</span>
-                    <span class="detail-val">{{ stats.ownYellowCards }} / {{ stats.ownRedCards }}</span>
-                  </div>
-                </div>
-              </section>
-
-              <!-- Tarjeta 4: Fijas -->
-              <section class="metric-card">
-                <div class="card-head">
-                  <div class="card-title-group">
-                    <span class="card-icon card-icon--setpieces">
-                      <i class="ti ti-users-group" aria-hidden="true"></i>
-                    </span>
-                    <h3 class="card-name">Fijas</h3>
-                  </div>
-                  <span class="status-pill status-pill--neutral">
-                    {{ setPieceStatus().label }}
-                  </span>
-                </div>
-
-                <div class="card-hero">
-                  <div class="hero-number">{{ stats.scrumsTotal + stats.lineoutsTotal }}</div>
-                  <div class="hero-label">Jugadas Disputadas</div>
-                </div>
-
-                <!-- Línea Indicadora punteada -->
-                <div class="mini-bar mini-bar--dashed"></div>
-
-                <div class="card-details">
-                  <div class="detail-row">
-                    <span class="detail-name">Scrums</span>
-                    <span class="detail-val">{{ stats.scrumsTotal }}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-name">Line-outs</span>
-                    <span class="detail-val">{{ stats.lineoutsTotal }}</span>
-                  </div>
-                </div>
-              </section>
+                </section>
+              }
 
             </div>
 
@@ -330,7 +227,7 @@
                   </span>
                   <h2 class="table-title">Planilla de Jugadores</h2>
                 </div>
-                <p class="table-subtitle">Tantos, minutos jugados y disciplina del 1° Tiempo</p>
+                <p class="table-subtitle">Acciones por jugador del 1° Tiempo</p>
               </div>
 
               <!-- SELECTOR RÁPIDO DE FILTROS -->
@@ -385,11 +282,10 @@
                       <th class="col-name">Jugador</th>
                       <th class="col-condition">Condición</th>
                       <th class="col-min">Minutos 1T</th>
-                      <th class="col-stat">Tries</th>
-                      <th class="col-stat">Conversiones</th>
-                      <th class="col-stat">Penales / Drops</th>
+                      @for (column of playerColumns(); track column.eventTypeId) {
+                        <th class="col-stat">{{ column.label }}</th>
+                      }
                       <th class="col-pts">Puntos</th>
-                      <th class="col-cards">Tarjetas</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -416,40 +312,21 @@
                         <td class="col-min">
                           <span class="stat-mono">{{ player.minutesPlayed }}'</span>
                         </td>
-                        <td class="col-stat">
-                          <span class="stat-mono" [class.stat-highlight]="player.tries > 0" [class.stat-zero]="player.tries === 0">
-                            {{ player.tries > 0 ? player.tries : '—' }}
-                          </span>
-                        </td>
-                        <td class="col-stat">
-                          <span class="stat-mono" [class.stat-highlight]="player.conversions > 0" [class.stat-zero]="player.conversions === 0">
-                            {{ player.conversions > 0 ? player.conversions : '—' }}
-                          </span>
-                        </td>
-                        <td class="col-stat">
-                          <span class="stat-mono" [class.stat-highlight]="(player.penaltyKicks + player.dropGoals) > 0" [class.stat-zero]="(player.penaltyKicks + player.dropGoals) === 0">
-                            {{ formatKickingStats(player) }}
-                          </span>
-                        </td>
+                        @for (column of playerColumns(); track column.eventTypeId) {
+                          <td class="col-stat">
+                            <span
+                              class="stat-mono"
+                              [class.stat-highlight]="hasPlayerValue(column, player.values)"
+                              [class.stat-zero]="!hasPlayerValue(column, player.values)">
+                              {{ formatPlayerValue(column, player.values[column.eventTypeId]) }}
+                            </span>
+                          </td>
+                        }
                         <td class="col-pts">
                           @if (player.totalPoints > 0) {
                             <span class="total-points-badge total-points-badge--active">
                               {{ player.totalPoints }} pts
                             </span>
-                          } @else {
-                            <span class="stat-mono stat-zero">—</span>
-                          }
-                        </td>
-                        <td class="col-cards">
-                          @if (player.yellowCards > 0 || player.redCards > 0) {
-                            <div class="cards-wrapper">
-                              @if (player.yellowCards > 0) {
-                                <span class="card-badge card-badge--yellow" title="Amonestación">🟨 {{ player.yellowCards }}</span>
-                              }
-                              @if (player.redCards > 0) {
-                                <span class="card-badge card-badge--red" title="Expulsión">🟥 {{ player.redCards }}</span>
-                              }
-                            </div>
                           } @else {
                             <span class="stat-mono stat-zero">—</span>
                           }
