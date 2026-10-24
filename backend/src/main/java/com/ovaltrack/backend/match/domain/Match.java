@@ -5,6 +5,7 @@ import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.event.domain.EventPossession;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 
 @Entity
 @Table(name = "matches")
+@DynamicUpdate
 @Getter
 @Setter
 @NoArgsConstructor
@@ -75,28 +77,33 @@ public class Match {
 
 
     @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("slotOrder ASC")
     @Builder.Default
     private List<MatchPlayer> roster = new ArrayList<>();
 
+    public boolean isTerminal() {
+        return this.status == MatchStatus.FINISHED || this.status == MatchStatus.CANCELLED;
+    }
+
+    public void ensureNotTerminal() {
+        if (isTerminal()) {
+            throw new BusinessException("El partido ya fue finalizado o cancelado");
+        }
+    }
+
     public void closeFirstHalf() {
+        ensureNotTerminal();
         if (this.status == MatchStatus.HALFTIME || (this.currentPeriod != null && this.currentPeriod == 2)) {
             throw new BusinessException("El primer tiempo ya ha sido cerrado");
         }
-/* 
-        if (this.status != MatchStatus.IN_PROGRESS) {
-            throw new BusinessException("El partido no se encuentra en curso en el primer tiempo");
-        }
-         */
+
         this.status = MatchStatus.HALFTIME;
         this.currentPeriod = 1;
     }
 
     public void startSecondHalf() {
-/*         
-        if (this.status != MatchStatus.HALFTIME) {
-            throw new BusinessException("El partido no se encuentra en el entretiempo");
-        }
-         */
+        ensureNotTerminal();
+
         this.status = MatchStatus.IN_PROGRESS;
         this.currentPeriod = 2;
     }
