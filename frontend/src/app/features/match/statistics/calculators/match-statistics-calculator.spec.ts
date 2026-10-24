@@ -51,10 +51,10 @@ describe('computeMatchStatistics', () => {
     event({ eventTypeId: 'lineout', teamPossession: 'OWN', attributes: { lineResult: 'won_clean', isMaulFormed: true } }),
     event({ eventTypeId: 'lineout', teamPossession: 'OPPONENT', attributes: { lineResult: 'penalty_against' } }),
     event({ eventTypeId: 'lineout', teamPossession: 'OWN', attributes: {} }),
-    // DEFENDING: con posesión rival, el tackle es del equipo propio.
-    event({ eventTypeId: 'tackle-made', teamPossession: 'OPPONENT' }),
-    event({ eventTypeId: 'tackle-made', teamPossession: 'OPPONENT' }),
-    event({ eventTypeId: 'tackle-missed', teamPossession: 'OPPONENT' }),
+    // teamPossession guarda el equipo que ejecutó la acción: tackles propios.
+    event({ eventTypeId: 'tackle-made', teamPossession: 'OWN' }),
+    event({ eventTypeId: 'tackle-made', teamPossession: 'OWN' }),
+    event({ eventTypeId: 'tackle-missed', teamPossession: 'OWN' }),
     event({ eventTypeId: 'penalty', teamPossession: 'OWN' }),
   ];
 
@@ -131,20 +131,9 @@ describe('computeMatchStatistics', () => {
     expect(typeStat(withEvents, 'RETIRED')?.count).toEqual({ own: 1, opponent: 0 });
   });
 
-  describe('métricas combinadas', () => {
-    it('se muestran solo si sus tipos están en la vista', () => {
-      const ids = (stats: MatchStatistics) => stats.derived.map(metric => metric.id);
-
-      expect(ids(computeMatchStatistics(events, types, 'basic'))).toEqual([]);
-      expect(ids(computeMatchStatistics(events, types, 'full'))).toEqual(['tackle-effectiveness']);
-    });
-
-    it('calculan la efectividad de tackles', () => {
-      const full = computeMatchStatistics(events, types, 'full');
-      const metric = full.derived.find(candidate => candidate.id === 'tackle-effectiveness');
-
-      expect(metric?.value).toEqual({ own: 66.7, opponent: null });
-      expect(metric?.status).toEqual({ label: 'A mejorar', type: 'warning' });
-    });
+  it('no calcula las métricas combinadas deshabilitadas (tackles y turnovers)', () => {
+    for (const view of ['basic', 'intermediate', 'full'] as const) {
+      expect(computeMatchStatistics(events, types, view).derived).withContext(view).toEqual([]);
+    }
   });
 });
