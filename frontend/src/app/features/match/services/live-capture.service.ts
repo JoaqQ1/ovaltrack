@@ -7,24 +7,17 @@ import {
   LiveCaptureQuery,
 } from '../types/live-capture.types';
 import { BackendEventResponse, LocalMatchEvent } from '../types/event.types';
-import { LiveMatchStateRequest, Match, MatchStatus } from '../types/match.types';
+import { LiveMatchStateRequest, Match } from '../types/match.types';
 import { MatchService } from './match.service';
 import { EventService } from './event.service';
 import { RosterService } from './roster.service';
+import { toLiveCaptureEventType } from './event-type.service';
 import { AvailablePlayer , SavedRoster} from '../types/roster.types';
 import { eventTeam } from '../statistics/calculators/event-rules';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 import { PendingEventSyncService } from '../../../core/synchronization/pending-event-sync.service';
 
 const HOME_TEAM_NAME = 'PMRC';
-
-export const LIVE_CAPTURE_BACKEND_CONTRACT = [
-  'Match identification with clubId, divisionId, and matchId.',
-  'Initial state with scoreboard, game clock, period, possession, synchronization, and paused clock.',
-  'Active event catalog grouped by visual category.',
-  'Recent history with minute and interface-readable description.',
-  'Event metadata to distinguish scoring, possession, and player requirements.',
-] as const;
 
 @Injectable({
   providedIn: 'root',
@@ -36,9 +29,6 @@ export class LiveCaptureService {
   private readonly rosterService = inject(RosterService);
   private readonly pendingEventSync = inject(PendingEventSyncService);
   private readonly startingPlayersByMatch = new Map<string, AvailablePlayer[]>();
-
-  constructor() {
-  }
 
   getLiveCaptureBootstrap(query: LiveCaptureQuery): Observable<LiveCaptureBootstrap> {
     return defer(() => from(this.readBootstrap(query)));
@@ -107,10 +97,6 @@ export class LiveCaptureService {
     return defer(() => from(this.cache.deleteMatchData(matchId)));
   }
 
-  getMatchStatus(matchId: string): Observable<MatchStatus> {
-    return defer(() => from(this.readLiveCaptureStatus(matchId)));
-  }
-
   private async readBootstrap(query: LiveCaptureQuery): Promise<LiveCaptureBootstrap> {
     let match: Match;
     let remoteEvents: BackendEventResponse[] | null = null;
@@ -128,14 +114,7 @@ export class LiveCaptureService {
       remoteEvents = remote.bootstrap.events;
       players = remote.players;
       savedRoster = remote.savedRoster;
-      eventTypes = remote.bootstrap.eventTypes.map(eventType => ({
-        ...eventType,
-        groupName: eventType.groupName ?? 'General',
-        category: eventType.category ?? 'NEUTRAL',
-        points: eventType.points ?? 0,
-        createdAt: new Date().toISOString(),
-        isActive: true,
-      }));
+      eventTypes = remote.bootstrap.eventTypes.map(toLiveCaptureEventType);
       await this.cache.syncActiveEventTypes(eventTypes);
     } catch {
       const localMatch = await this.cache.getMatch(query.matchId);
@@ -199,11 +178,6 @@ export class LiveCaptureService {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 
-  private readLiveCaptureStatus(matchId: string): Promise<MatchStatus> {
-    return this.cache.getStatusData(matchId)
-      .then(({ state, events }) => this.resolveMatchStatus(state, events));
-  }
-
   private toStartingPlayers(savedRoster: SavedRoster | null, players: AvailablePlayer[]): AvailablePlayer[] {
     return (savedRoster?.startingPlayers ?? [])
       .map(playerId => players.find(player => player.id === playerId))
@@ -241,20 +215,5 @@ export class LiveCaptureService {
     return this.toStartingPlayers(savedRoster, players);
   }
 
-
-  private resolveMatchStatus(
-    state: LiveCapturePersistedState | undefined,
-    events: LocalMatchEvent[],
-  ): MatchStatus {
-    if (state?.period === 3) {
-      return 'finished';
-    }
-
-    if (events.length > 0 || (state?.clockElapsedSeconds ?? 0) > 0) {
-      return 'in_progress';
-    }
-
-    return 'not_started';
-  }
 
 }
