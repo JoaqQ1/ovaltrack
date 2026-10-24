@@ -208,7 +208,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
         this.loadEvents();
       },
       error: () => {
-        this.cacheService.getEventTypes().then(types => {
+        this.cacheService.getActiveEventTypes().then(types => {
           const dict: { [id: string]: string } = {};
           types.forEach(type => {
             dict[type.id] = type.name;
