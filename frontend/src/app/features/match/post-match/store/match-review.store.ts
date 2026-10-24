@@ -20,7 +20,7 @@ import {
   formatAbsoluteTime,
   formatOnlyTime
 } from '../utils/match-review.utils';
-import { countsAsScoring } from '../../statistics/calculators/event-rules';
+import { countsAsScoring, scoringTeam } from '../../statistics/calculators/event-rules';
 
 export { RUGBY_HALF_TIME_MIN, RUGBY_FULL_TIME_MIN, EMPTY_TIME_PLACEHOLDER };
 
@@ -521,12 +521,10 @@ export class MatchReviewStore {
     const type = typesMap ? typesMap.get(ev.eventTypeId) : this.eventTypesList().find(t => t.id === ev.eventTypeId);
     if (!type || !countsAsScoring(type, ev.attributes)) return { home: 0, away: 0 };
     const pts = type.points || 0;
-    if (ev.teamPossession === 'OPPONENT') {
+    const team = scoringTeam(ev);
+    if (team === 'OPPONENT') {
       return { home: 0, away: pts };
     }
-    if (ev.teamPossession === 'OWN' || ev.playerId) {
-      return { home: pts, away: 0 };
-    }
-    return { home: 0, away: 0 };
+    return team === 'OWN' ? { home: pts, away: 0 } : { home: 0, away: 0 };
   }
 }
