@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { liveCaptureDatabase, matchDatabase } from '../local-databases';
-import { LiveCaptureEventType, LiveCapturePersistedState, LiveCaptureQuery } from '../../match/types/live-capture.types';
+import { LiveCaptureEventType, LiveCapturePersistedState } from '../../match/types/live-capture.types';
 import { BackendEventResponse, LocalMatchEvent } from '../../match/types/event.types';
-import { Match, PendingMatchMutation } from '../../match/types/match.types';
+import { Match, MatchStatus, PendingMatchMutation } from '../../match/types/match.types';
 import { Division } from '../../division/types/division.types';
 import { AvailablePlayer, SavedRoster } from '../../match/types/roster.types';
 import { UserContext } from '../../auth/types/auth.types';
@@ -21,20 +21,16 @@ export class LocalDatabaseService {
     return matchDatabase.userContexts.get(userId);
   }
 
-  clearUserContext(userId: string): Promise<void> {
-    return matchDatabase.userContexts.delete(userId).then(() => undefined);
-  }
-
-  getMatches(): Promise<Match[]> {
-    return matchDatabase.matches.toArray();
-  }
-
   getMatch(matchId: string): Promise<Match | undefined> {
     return matchDatabase.matches.get(matchId);
   }
 
   saveMatches(matches: Match[]): Promise<void> {
     return matchDatabase.matches.bulkPut(matches).then(() => undefined);
+  }
+
+  getMatchesByStatus(statuses: readonly MatchStatus[]): Promise<Match[]> {
+    return matchDatabase.matches.filter(match => statuses.includes(match.status)).toArray();
   }
 
   getMatchesByDivision(divisionId: string): Promise<Match[]> {
@@ -61,8 +57,8 @@ export class LocalDatabaseService {
     return matchDatabase.rosters.get(matchId);
   }
   
-  savePersonsByDivisionId(players: (AvailablePlayer & { divisionId?: string })[]): Promise<void> {
-    return matchDatabase.divisionPlayers.bulkPut(players as any).then(() => undefined)
+  savePersonsByDivisionId(players: (AvailablePlayer & { divisionId: string })[]): Promise<void> {
+    return matchDatabase.divisionPlayers.bulkPut(players).then(() => undefined);
   }
 
   getPersonsByDivisionId(divisionId: string): Promise<AvailablePlayer[]> {
@@ -139,18 +135,6 @@ export class LocalDatabaseService {
         .modify({ isActive: false });
       await liveCaptureDatabase.eventTypes.bulkPut(activeEventTypes);
     });
-  }
-
-  getBootstrapData(query: LiveCaptureQuery): Promise<{
-    persistedState: LiveCapturePersistedState | undefined;
-    eventTypes: LiveCaptureEventType[];
-    events: LocalMatchEvent[];
-  }> {
-    return Promise.all([
-      liveCaptureDatabase.states.get(query.matchId),
-      this.getEventTypes(),
-      liveCaptureDatabase.events.where('matchId').equals(query.matchId).filter(event => event.active).sortBy('localSequence'),
-    ]).then(([persistedState, eventTypes, events]) => ({ persistedState, eventTypes, events }));
   }
 
   saveState(state: LiveCapturePersistedState): Promise<void> {
@@ -274,15 +258,6 @@ export class LocalDatabaseService {
     });
 
     return this.getEventsByMatch(matchId);
-  }
-
-  replaceEvents(matchId: string, events: LocalMatchEvent[]): Promise<void> {
-    return liveCaptureDatabase.transaction('rw', liveCaptureDatabase.events, async () => {
-      await liveCaptureDatabase.events.where('matchId').equals(matchId).delete();
-      if (events.length > 0) {
-        await liveCaptureDatabase.events.bulkPut(events);
-      }
-    });
   }
 
   async deleteEvent(event: LocalMatchEvent): Promise<void> {
