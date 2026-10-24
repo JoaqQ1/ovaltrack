@@ -377,6 +377,11 @@
   color: #a8b8ae;
 }
 
+.detail-row--sub {
+  padding-left: 0.75rem;
+  font-size: 0.72rem;
+}
+
 .text-success { color: #68cf90; }
 .text-warning { color: #f1b34c; }
 .text-danger { color: #ff6b6b; }
