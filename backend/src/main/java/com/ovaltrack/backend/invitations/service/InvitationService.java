@@ -39,7 +39,7 @@ import lombok.AllArgsConstructor;
 public class InvitationService {
 
     private static final Logger logger = LoggerFactory.getLogger(InvitationService.class);
-    
+
     private InvitationRepository repository;
     private PersonService personService;
     private DivisionService divisionService;
@@ -62,7 +62,7 @@ public class InvitationService {
     }
 
     public InvitationResponse save(CreateInvitationRequest invitationCreation) {
-        logger.info("Iniciando proceso de creación de invitación para persona ID: {} y división ID: {}", 
+        logger.info("Iniciando proceso de creación de invitación para persona ID: {} y división ID: {}",
                 invitationCreation.personId(), invitationCreation.divisionId());
 
         Person person = personService.findPersonEntityById(invitationCreation.personId());
@@ -84,28 +84,31 @@ public class InvitationService {
         }
 
         if (repository.existsByPersonIdAndDivisionId(person, division)) {
-            logger.warn("La persona con ID {} ya fue invitada a la división con ID {}", person.getId(), division.getId());
+            logger.warn("La persona con ID {} ya fue invitada a la división con ID {}", person.getId(),
+                    division.getId());
             throw new BusinessException("Esta persona ya fue invitada a la división.");
         }
 
+        String rawValue = tokenService.generateRawValue();
+        try {
+            emailService.sendInvitation(person, rawValue);
+            logger.info("Correo de invitación enviado exitosamente a: {}", person.getContactEmail());
+        } catch (MessagingException e) {
+            logger.error("Error al enviar el correo de invitación a {}: {}", person.getContactEmail(), e.getMessage(),
+                    e);
+        }
+
         Club club = person.getClub();
-        IssuedToken issued = tokenService.create(person.getContactEmail(), Duration.ofHours(72));
+        IssuedToken issued = tokenService.create(person.getContactEmail(), Duration.ofHours(72), rawValue);
 
         Invitation invitation = new Invitation();
         invitation.setDivision(division);
         invitation.setPerson(person);
         invitation.setClub(club);
         invitation.setToken(issued.token());
-        
+
         Invitation savedInvitation = this.repository.save(invitation);
         logger.info("Invitación guardada exitosamente con ID: {}", savedInvitation.getId());
-
-        try {
-            emailService.sendInvitation(savedInvitation, issued.rawValue());
-            logger.info("Correo de invitación enviado exitosamente a: {}", person.getContactEmail());
-        } catch (MessagingException e) {
-            logger.error("Error al enviar el correo de invitación a {}: {}", person.getContactEmail(), e.getMessage(), e);
-        }
 
         return InvitationResponse.from(savedInvitation);
     }
@@ -163,7 +166,7 @@ public class InvitationService {
     @Transactional(readOnly = true)
     public Invitation findUsableInvitation(String rawValue) {
         logger.info("Buscando invitación usable a partir del token en bruto");
-        Token token = tokenService.findUsable(rawValue); 
+        Token token = tokenService.findUsable(rawValue);
         return repository.findByTokenHash(token.getHash())
                 .orElseThrow(() -> {
                     logger.error("No se encontró la invitación para el token proporcionado");
