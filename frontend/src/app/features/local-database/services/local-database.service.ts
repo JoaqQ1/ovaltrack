@@ -34,8 +34,7 @@ export class LocalDatabaseService {
   }
 
   saveMatches(matches: Match[]): Promise<void> {
-    const savedMatches = matches.filter(match => match.status === 'not_started' || match.status === 'in_progress' || match.status === 'halftime')
-    return matchDatabase.matches.bulkPut(savedMatches).then(() => undefined);
+    return matchDatabase.matches.bulkPut(matches).then(() => undefined);
   }
 
   getMatchesByDivision(divisionId: string): Promise<Match[]> {
@@ -82,6 +81,46 @@ export class LocalDatabaseService {
     return matchDatabase.pendingMatchMutations.delete(id).then(() => undefined);
   }
 
+  /**
+   * Cierra una mutación ya confirmada por el servidor: la elimina y guarda el partido
+   * devuelto, salvo que durante la petición se haya encolado otra mutación con el mismo id.
+   * En ese caso se conservan ambas cosas para que la mutación nueva se envíe en el próximo flush.
+   * @returns `true` si la mutación seguía vigente y se cerró.
+   */
+  completePendingMatchMutation(mutation: PendingMatchMutation, serverMatch: Match): Promise<boolean> {
+    return matchDatabase.transaction(
+      'rw',
+      matchDatabase.pendingMatchMutations,
+      matchDatabase.matches,
+      async () => {
+        if (!await this.isPendingMutationUnchanged(mutation)) {
+          return false;
+        }
+        await matchDatabase.pendingMatchMutations.delete(mutation.id);
+        await matchDatabase.matches.put(serverMatch);
+        return true;
+      },
+    );
+  }
+
+  /** Descarta una mutación rechazada, salvo que haya sido reemplazada por otra más nueva. */
+  discardPendingMatchMutation(mutation: PendingMatchMutation): Promise<boolean> {
+    return matchDatabase.transaction('rw', matchDatabase.pendingMatchMutations, async () => {
+      if (!await this.isPendingMutationUnchanged(mutation)) {
+        return false;
+      }
+      await matchDatabase.pendingMatchMutations.delete(mutation.id);
+      return true;
+    });
+  }
+
+  private async isPendingMutationUnchanged(mutation: PendingMatchMutation): Promise<boolean> {
+    const current = await matchDatabase.pendingMatchMutations.get(mutation.id);
+    return current !== undefined
+      && current.createdAt === mutation.createdAt
+      && current.action === mutation.action;
+  }
+
   getEventTypes(): Promise<LiveCaptureEventType[]> {
     return liveCaptureDatabase.eventTypes.toArray();
   }
@@ -110,6 +149,68 @@ export class LocalDatabaseService {
     return liveCaptureDatabase.events.put(event).then(() => event);
   }
 
+  /**
+   * Aplica la confirmación del servidor sobre la versión actual del evento, no sobre la copia
+   * que se envió. Si se borró localmente mientras la petición estaba en vuelo, se guarda el id
+   * del backend pero el evento sigue pendiente para que el borrado también se sincronice.
+   * @returns el evento actualizado, o `undefined` si ya no existe localmente.
+   */
+  markEventSynchronized(sentEvent: LocalMatchEvent, response: BackendEventResponse): Promise<LocalMatchEvent | undefined> {
+    return liveCaptureDatabase.transaction('rw', liveCaptureDatabase.events, async () => {
+      const currentEvent = await liveCaptureDatabase.events.get(sentEvent.id);
+      if (!currentEvent) {
+        return undefined;
+      }
+
+      const changedWhileInFlight = currentEvent.active !== sentEvent.active;
+      const synchronizedEvent: LocalMatchEvent = {
+        ...currentEvent,
+        backendEventId: response.id,
+        synchronizedAt: changedWhileInFlight ? null : response.synchronizedAt,
+        syncAttempts: 0,
+        syncFailedAt: null,
+        syncErrorMessage: null,
+      };
+      await liveCaptureDatabase.events.put(synchronizedEvent);
+      return synchronizedEvent;
+    });
+  }
+
+  /**
+   * Marca un evento como rechazado por el servidor para que deje de bloquear la cola.
+   * Se ignora si el evento cambió mientras la petición estaba en vuelo: el rechazo era de otra versión.
+   * @returns `true` si el evento quedó marcado como fallido.
+   */
+  markEventSyncFailed(sentEvent: LocalMatchEvent, errorMessage: string): Promise<boolean> {
+    return liveCaptureDatabase.transaction('rw', liveCaptureDatabase.events, async () => {
+      const currentEvent = await liveCaptureDatabase.events.get(sentEvent.id);
+      if (!currentEvent || currentEvent.active !== sentEvent.active) {
+        return false;
+      }
+
+      await liveCaptureDatabase.events.put({
+        ...currentEvent,
+        syncAttempts: (currentEvent.syncAttempts ?? 0) + 1,
+        syncFailedAt: new Date().toISOString(),
+        syncErrorMessage: errorMessage,
+      });
+      return true;
+    });
+  }
+
+  /** Cuenta un intento fallido por un error transitorio; el evento sigue pendiente. */
+  recordEventSyncAttempt(eventId: string): Promise<void> {
+    return liveCaptureDatabase.transaction('rw', liveCaptureDatabase.events, async () => {
+      const currentEvent = await liveCaptureDatabase.events.get(eventId);
+      if (currentEvent) {
+        await liveCaptureDatabase.events.put({
+          ...currentEvent,
+          syncAttempts: (currentEvent.syncAttempts ?? 0) + 1,
+        });
+      }
+    });
+  }
+
   async mergeRemoteEvents(matchId: string, remoteEvents: BackendEventResponse[]): Promise<LocalMatchEvent[]> {
     await liveCaptureDatabase.transaction('rw', liveCaptureDatabase.events, async () => {
       const localEvents = await liveCaptureDatabase.events.where('matchId').equals(matchId).toArray();
@@ -134,7 +235,14 @@ export class LocalDatabaseService {
           ?? (remoteEvent.clientEventId ? byLocalId.get(remoteEvent.clientEventId) : undefined)
           ?? (remoteEvent.clientEventId ? byClientId.get(remoteEvent.clientEventId) : undefined);
 
-        if (localEvent && !localEvent.active && localEvent.synchronizedAt === null && localEvent.backendEventId) {
+        const hasPendingLocalDeletion = localEvent && !localEvent.active && localEvent.synchronizedAt === null;
+        if (hasPendingLocalDeletion) {
+          if (!localEvent.backendEventId) {
+            // Borrado mientras su creación estaba en vuelo: se guarda el id para enviar el DELETE.
+            const pendingDeletion: LocalMatchEvent = { ...localEvent, backendEventId: remoteEvent.id };
+            await liveCaptureDatabase.events.put(pendingDeletion);
+            byBackendId.set(remoteEvent.id, pendingDeletion);
+          }
           continue;
         }
 
@@ -171,6 +279,8 @@ export class LocalDatabaseService {
     await liveCaptureDatabase.events.update(event.id, {
       active: false,
       synchronizedAt: null,
+      syncFailedAt: null,
+      syncErrorMessage: null,
     });
   }
 
@@ -198,7 +308,9 @@ export class LocalDatabaseService {
       : liveCaptureDatabase.events.toCollection();
 
     return eventsQuery.toArray().then(events => events
-      .filter(event => event.synchronizedAt === null && (event.active || event.backendEventId != null))
+      .filter(event => event.synchronizedAt === null
+        && !event.syncFailedAt
+        && (event.active || event.backendEventId != null))
       .sort((first, second) => first.localSequence - second.localSequence));
   }
 
