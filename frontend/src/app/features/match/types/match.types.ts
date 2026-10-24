@@ -53,6 +53,12 @@ export type MatchStatus = 'empty_roster' | 'not_started' | 'in_progress' | 'half
 
 export type PendingMatchAction = 'start' | 'close-first-half' | 'start-second-half' | 'finish';
 
+/** Cuerpo opcional de PUT /matches/{id}/start|finish según MatchTransitionDTO. */
+export interface MatchTransitionRequest {
+  /** Momento real de la transición (ISO-8601 UTC); el servidor lo usa para startedAt/finishedAt. */
+  occurredAt?: string;
+}
+
 export interface PendingMatchMutation {
   id: string;
   matchId: string;
