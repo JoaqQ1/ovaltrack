@@ -51,6 +51,9 @@ export interface NewMatchDraft {
 /** Estados posibles de un partido en el listado. */
 export type MatchStatus = 'empty_roster' | 'not_started' | 'in_progress' | 'halftime' | 'finished' | 'cancelled';
 
+/** Duración reglamentaria de un tiempo: el 2° tiempo arranca en este segundo del reloj de juego. */
+export const HALF_DURATION_SECONDS = 40 * 60;
+
 export type PendingMatchAction = 'start' | 'close-first-half' | 'start-second-half' | 'finish';
 
 /** Cuerpo opcional de PUT /matches/{id}/start|finish según MatchTransitionDTO. */
