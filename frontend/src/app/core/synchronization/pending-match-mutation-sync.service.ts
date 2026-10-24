@@ -6,7 +6,6 @@ import { MatchStatus, PendingMatchAction, PendingMatchMutation } from 'src/app/f
 import { ToastService } from '../services/toast.service';
 import { classifySyncError, readSyncErrorMessage } from './sync-errors';
 
-/** Estado en el que queda el partido cuando el servidor acepta cada transición. */
 const TARGET_STATUS: Record<PendingMatchAction, MatchStatus> = {
   'start': 'in_progress',
   'close-first-half': 'halftime',
@@ -20,14 +19,23 @@ export class PendingMatchMutationSyncService {
   private readonly matchService = inject(MatchService);
   private readonly toastService = inject(ToastService);
 
-  async flush(): Promise<void> {
+  private inFlightFlush: Promise<void> | null = null;
+
+  flush(): Promise<void> {
+    this.inFlightFlush ??= this.flushNow().finally(() => {
+      this.inFlightFlush = null;
+    });
+    return this.inFlightFlush;
+  }
+
+  private async flushNow(): Promise<void> {
     const pendingMutations = await this.cache.getPendingMatchMutations();
 
     for (const mutation of pendingMutations) {
       try {
-        // Se usa sendTransition y no startMatch/finishMatch/...: esos métodos vuelven a
-        // encolar la mutación ante un fallo de red y la reportan como exitosa.
-        const serverMatch = await firstValueFrom(this.matchService.sendTransition(mutation.matchId, mutation.action));
+        const serverMatch = await firstValueFrom(
+          this.matchService.sendTransition(mutation.matchId, mutation.action, this.occurredAt(mutation)),
+        );
         await this.cache.completePendingMatchMutation(mutation, serverMatch);
       } catch (error) {
         if (classifySyncError(error) !== 'rejected') {
@@ -41,7 +49,12 @@ export class PendingMatchMutationSyncService {
     }
   }
 
-  /** Reemplaza el estado optimista local por el del servidor y avisa si la transición no se aplicó. */
+  private occurredAt(mutation: PendingMatchMutation): string | undefined {
+    return mutation.action === 'start' || mutation.action === 'finish'
+      ? new Date(mutation.createdAt).toISOString()
+      : undefined;
+  }
+
   private async realignRejectedMutation(mutation: PendingMatchMutation, error: unknown): Promise<void> {
     let serverStatus: MatchStatus | null = null;
     try {
@@ -52,7 +65,6 @@ export class PendingMatchMutationSyncService {
       console.warn(`Could not realign match ${mutation.matchId} after a rejected mutation.`, realignError);
     }
 
-    // Una transición repetida (p. ej. tras un timeout) puede rechazarse aunque ya se haya aplicado.
     if (serverStatus === TARGET_STATUS[mutation.action]) {
       return;
     }
