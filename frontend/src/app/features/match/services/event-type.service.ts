@@ -21,10 +21,10 @@ export class EventTypeService {
         isActive: true,
         createdAt: new Date().toISOString(),
       }))),
-      switchMap(mappedTypes => from(this.cache.saveEventTypes(mappedTypes)).pipe(
+      switchMap(mappedTypes => from(this.cache.syncActiveEventTypes(mappedTypes)).pipe(
         map(() => mappedTypes)
       )),
-      catchError(() => from(this.cache.getEventTypes()))
+      catchError(() => from(this.cache.getActiveEventTypes()))
     );
   }
 }
