@@ -4,11 +4,13 @@ import { EventTypeService } from 'src/app/features/match/services/event-type.ser
 import { UserContextService } from '../services/user-context.service';
 import { PendingMatchMutationSyncService } from './pending-match-mutation-sync.service';
 import { PendingEventSyncService } from './pending-event-sync.service';
+import { ActiveMatchPullService } from './active-match-pull.service';
 
 @Injectable({ providedIn: 'root' })
 export class SyncManagerService {
   private readonly pendingMatchMutationSync = inject(PendingMatchMutationSyncService);
   private readonly pendingEventSync = inject(PendingEventSyncService);
+  private readonly activeMatchPull = inject(ActiveMatchPullService);
   private readonly eventTypeService = inject(EventTypeService);
   private readonly userCtxService = inject(UserContextService)
 
@@ -43,6 +45,7 @@ export class SyncManagerService {
       await this.syncEventTypes();
       await this.pendingMatchMutationSync.flush();
       await this.pendingEventSync.flush();
+      await this.activeMatchPull.pull();
     } catch (error) {
       console.error('Background synchronization failed:', error);
     } finally {
