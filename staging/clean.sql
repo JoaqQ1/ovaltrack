@@ -9,7 +9,10 @@ SET session_replication_role = 'replica';
 
 -- 2. Ejecutar la limpieza de datos en orden seguro (desde los hijos hacia los padres)
 DELETE FROM events;
+DELETE FROM event_types;
+DELETE FROM matches_players;
 DELETE FROM matches;
+DELETE FROM opponents;
 DELETE FROM division_players;
 DELETE FROM division_coaches;
 DELETE FROM divisions;
@@ -57,10 +60,35 @@ ALTER TABLE event_types ADD COLUMN IF NOT EXISTS possession_after VARCHAR(10) NO
 ALTER TABLE event_types ADD COLUMN IF NOT EXISTS follow_up_choices JSONB NOT NULL DEFAULT '[]';
 
 
--- Catálogo de 27 Tipos de Eventos v3
-INSERT INTO event_types
+-- =========================================
+-- EVENT_TYPES (Catálogo Estándar de Tipos de Eventos, v3)
+-- =========================================
+-- template_event_fields es un ARRAY ORDENADO de campos:
+--   key        identificador estable (clave dentro de events.attributes)
+--   label      texto a mostrar
+--   type       select | number | boolean
+--   phase      'live' -> se pide al cargar el evento (un paso del modal) | 'post' -> se completa después, con el video
+--   required   en 'live' es obligatorio (solo los number/slider pueden omitirse)
+--   options    [{value, label, possession?}] solo para select; possession (KEEP | ACTOR | OTHER) define la
+--              posesión resultante cuando se elige esa opción (pisa possession_after del tipo)
+--   min/max/default   obligatorios en number (slider)
+--   effects    solo boolean: "scoring" (si es false no suma puntos), "possession" (si es false la posesión no cambia)
+--   trueLabel/falseLabel   textos de los botones de un boolean
+--   followUps (en una opción) | follow_up_choices (en el tipo): lista de {code, label?, preset?}; al guardar el evento
+--              se muestra una botonera con esos eventos (más «Nada más»). preset pre-llena campos en vivo del evento elegido
+--              y salta ese paso. El equipo del evento elegido se resuelve con la posesión ya actualizada (actor).
+-- Reglas del catálogo:
+--   * Máximo 2 toques por evento en el modal: jugador (si requires_player) + 1 campo 'live'.
+--   * Un solo tipo por acción; el resultado va en un campo, no en tipos duplicados.
+--   * actor decide qué equipo se asigna: ATTACKING = el que tiene la pelota, DEFENDING = el otro, CHOOSE = el analista elige.
+--   * Claves reservadas en attributes: playerNumber.
+--   * Turnovers: 'Turnover ganado' (forzado, se acredita a quien lo gana) y 'Error de manejo' (no forzado, se carga a quien lo pierde).
+--     Un turnover se registra una sola vez; los resultados de Maul/Scrum/Line-out ya cambian la posesión por sí solos.
+-- Pendientes: Cambio sin campos (cambia la lista de jugadores en cancha); elegir el evento siguiente tras un penal.
+
+/* INSERT INTO event_types
 (id, code, name, group_name, category, is_scoring, points,
- requires_player, is_active, show_in_palette, follow_up_event_type_id, actor, possession_after, follow_up_choices, template_event_fields, created_at)
+ requires_player, is_active, show_in_palette, follow_up_event_type_id, actor, possession_after, follow_up_choices, template_event_fields, stat_view, created_at)
 VALUES
 (
     '550e8400-e29b-41d4-a716-446655440101',
@@ -100,6 +128,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -161,6 +190,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -205,6 +235,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -267,6 +298,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -308,6 +340,7 @@ VALUES
         "max": 80
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -346,6 +379,7 @@ VALUES
         "max": 6
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -393,6 +427,7 @@ VALUES
         "required": false
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -433,6 +468,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -461,6 +497,7 @@ VALUES
         "max": 100
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -479,6 +516,7 @@ VALUES
     'KEEP',
     $$[]$$::jsonb,
     $$[]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -530,28 +568,30 @@ VALUES
         "required": false,
         "options": [
           {
-            "value": "touch_won",
-            "label": "Touch ganado"
+            "value": "opp_possession",
+            "label": "Perdida",
+            "possession": "OTHER"
           },
           {
             "value": "retained",
-            "label": "Recuperada propia"
+            "label": "Recuperada",
+            "possession": "KEEP"
           },
-          {
-            "value": "opp_possession",
-            "label": "Recepcionada por rival"
-          },
+
           {
             "value": "out_in_full",
-            "label": "Directa afuera (Error)"
+            "label": "Directa afuera",
+            "possession": "OTHER"
           },
           {
-            "value": "dead_ball",
-            "label": "Pelota muerta"
+            "value": "50/22",
+            "label": "50/22",
+            "possession": "KEEP"
           }
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -562,7 +602,7 @@ VALUES
     'ATTACK',
     false,
     0,
-    true,
+    false,
     true,
     false,
     NULL,
@@ -579,17 +619,28 @@ VALUES
         "options": [
           {
             "value": "penalty_touch",
-            "label": "Penal a touch",
-            "possession": "KEEP"
+            "label": "Sale directo",
+            "possession": "KEEP",
+            "followUps":[
+              {
+                "code": "LINEOUT"
+              }
+            ]
           },
           {
-            "value": "open_play",
-            "label": "Juego abierto",
+            "value": "lost_onw",
+            "label": "Recupera rival",
             "possession": "OTHER"
+          },
+          {
+            "value": "won",
+            "label": "Recupera propio",
+            "possession": "KEEP"
           }
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -641,13 +692,7 @@ VALUES
             "possession": "KEEP",
             "followUps": [
               {
-                "code": "PENALTY_KICK"
-              },
-              {
-                "code": "KICK_TO_TOUCH",
-                "preset": {
-                  "kind": "penalty_touch"
-                }
+                "code": "PENALTY_CONCEDED"
               }
             ]
           },
@@ -657,19 +702,14 @@ VALUES
             "possession": "OTHER",
             "followUps": [
               {
-                "code": "PENALTY_KICK"
-              },
-              {
-                "code": "KICK_TO_TOUCH",
-                "preset": {
-                  "kind": "penalty_touch"
-                }
+                "code": "PENALTY_CONCEDED"
               }
             ]
           }
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -778,6 +818,7 @@ VALUES
         "required": false
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -842,6 +883,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -894,6 +936,36 @@ VALUES
         "max": 30
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+    '550e8400-e29b-41d4-a716-446655440129',
+    'QUICK_PLAY',
+    'Jugada rapida',
+    'Juego Fijo',
+    'ATTACK',
+    false,
+    0,
+    false,
+    true,
+    false,
+    NULL,
+    'ATTACKING',
+    'KEEP',
+    $$[]$$::jsonb,
+    $$[
+      {
+        "key": "quickPlayOutcome",
+        "label": "Resultado",
+        "type": "boolean",
+        "phase": "post",
+        "required": false,
+        "trueLabel": "Postivo",
+        "falseLabel": "Negativo"
+      }
+    ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -920,6 +992,7 @@ VALUES
         "required": false
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -964,12 +1037,13 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
     '550e8400-e29b-41d4-a716-446655440117',
     'TURNOVER_WON',
-    'Turnover ganado',
+    'Turnover',
     'Cambio de Posesión',
     'NEUTRAL',
     false,
@@ -995,7 +1069,7 @@ VALUES
           },
           {
             "value": "rip_standing",
-            "label": "Arrancón de pie (Strip)"
+            "label": "Arrancón de pelota"
           },
           {
             "value": "interception",
@@ -1004,35 +1078,7 @@ VALUES
           {
             "value": "other",
             "label": "Otro"
-          }
-        ]
-      }
-    ]$$::jsonb,
-    CURRENT_TIMESTAMP
-),
-(
-    '550e8400-e29b-41d4-a716-446655440119',
-    'HANDLING_ERROR',
-    'Knock-on / Error de manejo',
-    'Cambio de Posesión',
-    'NEUTRAL',
-    false,
-    0,
-    false,
-    true,
-    true,
-    NULL,
-    'ATTACKING',
-    'OTHER',
-    $$[]$$::jsonb,
-    $$[
-      {
-        "key": "errorType",
-        "label": "Tipo de error",
-        "type": "select",
-        "phase": "live",
-        "required": true,
-        "options": [
+          },
           {
             "value": "knock_on",
             "label": "Knock-on (Caída adelante)"
@@ -1044,10 +1090,23 @@ VALUES
           {
             "value": "dropped_unforced",
             "label": "Caída no forzada"
+          },
+          {
+            "value": "pushed_touch",
+            "label": "Empujado a touch"
+          },
+          {
+            "value": "held_ingoal",
+            "label": "Trabado en ingoal"
+          },
+          {
+            "value": "offensive_penalty",
+            "label": "Penal del atacante"
           }
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1060,7 +1119,7 @@ VALUES
     0,
     false,
     true,
-    true,
+    false,
     NULL,
     'ATTACKING',
     'KEEP',
@@ -1091,46 +1150,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
-    CURRENT_TIMESTAMP
-),
-(
-    '550e8400-e29b-41d4-a716-446655440121',
-    'OTHER_TURNOVER',
-    'Otro cambio de posesión',
-    'Cambio de Posesión',
-    'NEUTRAL',
-    false,
-    0,
-    false,
-    true,
-    true,
-    NULL,
-    'ATTACKING',
-    'OTHER',
     $$[]$$::jsonb,
-    $$[
-      {
-        "key": "reason",
-        "label": "Causa",
-        "type": "select",
-        "phase": "post",
-        "required": false,
-        "options": [
-          {
-            "value": "pushed_touch",
-            "label": "Empujado a touch"
-          },
-          {
-            "value": "held_ingoal",
-            "label": "Trabado en ingoal"
-          },
-          {
-            "value": "offensive_penalty",
-            "label": "Penal del atacante"
-          }
-        ]
-      }
-    ]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1141,19 +1161,19 @@ VALUES
     'NEUTRAL',
     false,
     0,
-    true,
+    false,
     true,
     true,
     NULL,
     'CHOOSE',
     'OTHER',
-    $$[{"code": "PENALTY_KICK"}, {"code": "KICK_TO_TOUCH", "preset": {"kind": "penalty_touch"}}]$$::jsonb,
+    $$[{"code": "PENALTY_KICK"}, {"code": "KICK_TO_TOUCH"}, {"code": "SCRUM"}, {"code": "QUICK_PLAY"}]$$::jsonb,
     $$[
       {
         "key": "penaltyType",
         "label": "Infracción",
         "type": "select",
-        "phase": "live",
+        "phase": "post",
         "required": true,
         "options": [
           {
@@ -1191,6 +1211,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1245,6 +1266,7 @@ VALUES
         "max": 20
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1285,6 +1307,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1333,6 +1356,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1354,6 +1378,8 @@ VALUES
       {"key":"playerOutNumber","label":"Jugador que sale","type":"number","phase":"live","required":true,"min":1,"max":15},
       {"key":"playerInNumber","label":"Jugador que entra","type":"number","phase":"live","required":true,"min":16,"max":23}
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 )
 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, template_event_fields = EXCLUDED.template_event_fields;
+ */
