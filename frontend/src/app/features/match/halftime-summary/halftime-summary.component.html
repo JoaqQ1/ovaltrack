@@ -1,204 +1,183 @@
 <div class="halftime-page" [attr.data-theme]="currentTheme()">
-  
-  <!-- 1. Header Táctico Superior Flotante -->
-  <header class="page-top-bar">
-    <div class="bar-left">
-      <div class="brand-logo-container">
-        <img
-          class="brand-logo"
-          [src]="currentTheme() === 'light' ? 'assets/brand/OvalTrack-fondo-claro.png' : 'assets/brand/OvalTrack-fondo-oscuro.png'"
-          alt="OvalTrack" />
-      </div>
 
-      <div class="period-pill">
+  <!-- 1. HUD integrado (§3.2): marca, estado del período, partido y controles -->
+  <header class="hud-bar">
+    <div class="hud-bar__brand">
+      <img
+        class="brand-logo"
+        [src]="currentTheme() === 'light' ? 'assets/brand/OvalTrack-fondo-claro.png' : 'assets/brand/OvalTrack-fondo-oscuro.png'"
+        alt="OvalTrack" />
+      <span class="badge-tech">
         <i class="ti ti-clock-pause" aria-hidden="true"></i>
-        <span>ENTRETIEMPO</span>
-      </div>
+        Entretiempo
+      </span>
     </div>
 
-    <div class="bar-center">
-      <h1 class="match-heading">
-        <span class="team-name team-name--home-highlight">{{ homeTeam() }}</span>
-        <span class="vs-text">vs</span>
-        <span class="team-name team-name--away-highlight">{{ opponent() }}</span>
-      </h1>
-    </div>
+    <h1 class="match-heading">
+      <span class="match-heading__team match-heading__team--own">{{ homeTeam() }}</span>
+      <span class="match-heading__vs">vs</span>
+      <span class="match-heading__team match-heading__team--opp">{{ opponent() }}</span>
+    </h1>
 
-    <div class="bar-right">
+    <div class="hud-bar__actions">
       @if (isOffline()) {
-        <div class="offline-pill" title="Estadísticas calculadas en el dispositivo sin conexión">
+        <span class="offline-chip" title="Estadísticas calculadas en el dispositivo sin conexión">
           <i class="ti ti-cloud-off" aria-hidden="true"></i>
-          <span>Offline</span>
-        </div>
+          Offline
+        </span>
       }
 
-
-
-      <!-- Selector de Modo Claro / Oscuro -->
-      <button type="button" class="btn-theme-toggle" (click)="toggleTheme()" [title]="currentTheme() === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'">
-        @if (currentTheme() === 'light') {
-          <i class="ti ti-moon" aria-hidden="true"></i>
-        } @else {
-          <i class="ti ti-sun" aria-hidden="true"></i>
-        }
+      <button
+        type="button"
+        class="icon-button"
+        (click)="toggleTheme()"
+        [title]="currentTheme() === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'"
+        [attr.aria-label]="currentTheme() === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'">
+        <i [class]="currentTheme() === 'light' ? 'ti ti-moon' : 'ti ti-sun'" aria-hidden="true"></i>
       </button>
 
-      <!-- Segmented Control de Pestañas [Equipo] [Jugadores] -->
-      <nav class="segmented-control" role="tablist" aria-label="Secciones del resumen">
+      <!-- Control segmentado (§4.5) -->
+      <nav class="segmented" role="tablist" aria-label="Secciones del resumen">
         <button
           type="button"
           role="tab"
-          class="segment-btn"
-          [class.segment-btn--active]="activeTab() === 'general'"
+          class="segment"
+          [class.segment--active]="activeTab() === 'general'"
           [attr.aria-selected]="activeTab() === 'general'"
           (click)="switchTab('general')">
           <i class="ti ti-layout-grid" aria-hidden="true"></i>
           <span>Equipo</span>
         </button>
-
         <button
           type="button"
           role="tab"
-          class="segment-btn"
-          [class.segment-btn--active]="activeTab() === 'players'"
+          class="segment"
+          [class.segment--active]="activeTab() === 'players'"
           [attr.aria-selected]="activeTab() === 'players'"
           (click)="switchTab('players')">
           <i class="ti ti-users" aria-hidden="true"></i>
           <span>Jugadores</span>
           @if (playerStats().length > 0) {
-            <span class="segment-badge">({{ playerStats().length }})</span>
+            <span class="segment__count">{{ playerStats().length }}</span>
           }
         </button>
       </nav>
     </div>
   </header>
 
-  <!-- 2. Contenedor Principal HUD -->
-  <main class="page-main-area">
+  <!-- 2. Área principal -->
+  <main class="page-main">
     @if (isLoading()) {
-      <div class="loading-state">
+      <div class="state-box">
         <div class="spinner"></div>
         <p>Calculando estadísticas del primer tiempo...</p>
       </div>
     } @else {
 
-      <!-- TAB 1: ESTADÍSTICAS GENERALES (EQUIPO) -->
+      <!-- TAB 1: EQUIPO -->
       @if (activeTab() === 'general') {
         @if (generalStats(); as stats) {
           <div class="tactical-layout animate-fade-in">
-            
-            <!-- PANEL SUPERIOR: TELEMETRÍA Y MARCADOR PANORÁMICO -->
-            <section class="telemetry-card">
-              
-              <!-- Local Score -->
-              <div class="telemetry-team telemetry-team--home">
-                <span class="team-label">{{ homeTeam() }}</span>
-                <span class="team-score text-home">{{ stats.score.own }}</span>
+
+            <!-- Marcador, posesión y desglose de tantos -->
+            <section class="sport-card scoreboard">
+              <div class="scoreboard__team">
+                <span class="scoreboard__name">{{ homeTeam() }}</span>
+                <span class="scoreboard__score value--own">{{ stats.score.own }}</span>
               </div>
 
-              <!-- Centro: Posesión + Desglose Comparativo -->
-              <div class="telemetry-center">
-                
-                <!-- Fila Superior de Posesión y Pastilla Central -->
+              <div class="scoreboard__center">
                 <div class="possession-header">
-                  <span class="possession-val val--home">Posesión {{ stats.ownPossessionPercentage }}%</span>
-                  <div class="period-pill-center">1T final · min 40</div>
-                  <span class="possession-val val--away">{{ opponentPossessionPercentage() }}% Posesión</span>
+                  <span class="possession-label value--own">Posesión {{ stats.ownPossessionPercentage }}%</span>
+                  <span class="period-chip">1T final · min 40</span>
+                  <span class="possession-label value--opp">{{ opponentPossessionPercentage() }}% Posesión</span>
                 </div>
 
-                <!-- Barra Bicolor Continua de Posesión -->
                 <div class="possession-bar" role="progressbar" [attr.aria-valuenow]="stats.ownPossessionPercentage" aria-valuemin="0" aria-valuemax="100">
-                  <div class="possession-fill fill--home" [style.width.%]="stats.ownPossessionPercentage"></div>
-                  <div class="possession-fill fill--away" [style.width.%]="opponentPossessionPercentage()"></div>
+                  <div class="possession-bar__fill possession-bar__fill--own" [style.width.%]="stats.ownPossessionPercentage"></div>
+                  <div class="possession-bar__fill possession-bar__fill--opp" [style.width.%]="opponentPossessionPercentage()"></div>
                 </div>
 
-                <!-- Cápsulas Comparativas de Tantos: tipos que suman en la vista intermedia -->
-                <div class="breakdown-capsules">
+                <!-- Tipos que suman en la vista intermedia -->
+                <div class="score-tiles">
                   @for (line of scoringLines(); track line.label) {
-                    <div class="capsule" [title]="line.label + ': Local vs Rival'">
-                      <div class="capsule-nums">
-                        <strong class="text-home">{{ line.own }}</strong>
-                        <span class="capsule-dot">·</span>
-                        <strong class="text-away">{{ line.opponent }}</strong>
+                    <div class="score-tile" [title]="line.label + ': Local vs Rival'">
+                      <div class="pair">
+                        <span class="value value--own">{{ line.own }}</span>
+                        <span class="pair__dot">·</span>
+                        <span class="value value--opp">{{ line.opponent }}</span>
                       </div>
-                      <span class="capsule-label">{{ line.label }}</span>
+                      <span class="score-tile__label">{{ line.label }}</span>
                     </div>
                   }
                 </div>
-
               </div>
 
-              <!-- Rival Score -->
-              <div class="telemetry-team telemetry-team--away">
-                <span class="team-label">{{ opponent() }}</span>
-                <span class="team-score text-away">{{ stats.score.opponent }}</span>
+              <div class="scoreboard__team scoreboard__team--away">
+                <span class="scoreboard__name">{{ opponent() }}</span>
+                <span class="scoreboard__score value--opp">{{ stats.score.opponent }}</span>
               </div>
-
             </section>
 
-            <!-- GRILLA CENTRAL: indicadores combinados y un bloque por grupo del catálogo -->
+            <!-- Indicadores combinados y un bloque por grupo del catálogo -->
             <div class="tactical-grid">
 
               @for (metric of stats.derived; track metric.id) {
-                <section class="metric-card">
-                  <div class="card-head">
-                    <div class="card-title-group">
-                      <span class="card-icon card-icon--tackle">
-                        <i class="ti ti-chart-bar" aria-hidden="true"></i>
-                      </span>
-                      <h3 class="card-name">{{ metric.label }}</h3>
-                    </div>
+                <section class="sport-card metric-card">
+                  <div class="metric-card__head">
+                    <h3 class="metric-card__title">
+                      <i class="ti ti-chart-bar" aria-hidden="true"></i>
+                      {{ metric.label }}
+                    </h3>
                     @if (metric.status; as status) {
-                      <span class="status-pill status-pill--{{ status.type }}">{{ status.label }}</span>
+                      <span class="status-chip status-chip--{{ status.type }}">{{ status.label }}</span>
                     }
                   </div>
 
-                  <div class="card-hero">
-                    <div class="hero-number text-home">{{ formatMetric(metric.value.own, metric.format) }}</div>
-                    <div class="hero-label">{{ homeTeam() }}</div>
+                  <div class="metric-card__hero">
+                    <span class="metric-card__value value--own">{{ formatMetric(metric.value.own, metric.format) }}</span>
+                    <span class="metric-card__caption">{{ homeTeam() }}</span>
                   </div>
 
-                  <div class="card-details">
-                    <div class="detail-row">
-                      <span class="detail-name">{{ opponent() }}</span>
-                      <span class="detail-val text-away">{{ formatMetric(metric.value.opponent, metric.format) }}</span>
+                  <div class="rows">
+                    <div class="stat-row">
+                      <span class="stat-row__label">{{ opponent() }}</span>
+                      <span class="value value--opp">{{ formatMetric(metric.value.opponent, metric.format) }}</span>
                     </div>
                   </div>
                 </section>
               }
 
               @for (group of groupCards(); track group.name) {
-                <section class="metric-card">
-                  <div class="card-head">
-                    <div class="card-title-group">
-                      <span class="card-icon card-icon--setpieces">
-                        <i class="ti ti-list-details" aria-hidden="true"></i>
-                      </span>
-                      <h3 class="card-name">{{ group.name }}</h3>
-                    </div>
+                <section class="sport-card metric-card">
+                  <div class="metric-card__head">
+                    <h3 class="metric-card__title">
+                      <i class="ti ti-list-details" aria-hidden="true"></i>
+                      {{ group.name }}
+                    </h3>
                     @if (!group.hasData) {
-                      <span class="status-pill status-pill--neutral">Sin datos</span>
+                      <span class="status-chip status-chip--neutral">Sin datos</span>
                     }
                   </div>
 
-                  <div class="card-details">
+                  <div class="rows">
                     @for (type of group.types; track type.eventTypeId) {
-                      <div class="detail-row">
-                        <span class="detail-name">{{ type.main.label }}</span>
-                        <span class="detail-val">
-                          <span class="text-home">{{ type.main.own }}</span>
-                          <span class="capsule-dot">·</span>
-                          <span class="text-away">{{ type.main.opponent }}</span>
+                      <div class="stat-row">
+                        <span class="stat-row__label">{{ type.main.label }}</span>
+                        <span class="pair">
+                          <span class="value value--own">{{ type.main.own }}</span>
+                          <span class="pair__dot">·</span>
+                          <span class="value value--opp">{{ type.main.opponent }}</span>
                         </span>
                       </div>
                       @for (breakdown of type.breakdowns; track breakdown.title) {
                         @for (line of breakdown.lines; track line.label) {
-                          <div class="detail-row detail-row--sub">
-                            <span class="detail-name">{{ line.label }}</span>
-                            <span class="detail-val">
-                              <span class="text-home">{{ line.own }}</span>
-                              <span class="capsule-dot">·</span>
-                              <span class="text-away">{{ line.opponent }}</span>
+                          <div class="stat-row stat-row--sub">
+                            <span class="stat-row__label">{{ line.label }}</span>
+                            <span class="pair">
+                              <span class="value value--own">{{ line.own }}</span>
+                              <span class="pair__dot">·</span>
+                              <span class="value value--opp">{{ line.opponent }}</span>
                             </span>
                           </div>
                         }
@@ -209,126 +188,100 @@
               }
 
             </div>
-
           </div>
         }
       }
 
-      <!-- TAB 2: RENDIMIENTO POR JUGADOR -->
+      <!-- TAB 2: JUGADORES -->
       @if (activeTab() === 'players') {
-        <div class="tab-pane-players animate-fade-in">
-          
-          <div class="players-table-card">
-            <div class="table-card-header">
-              <div class="table-header-titles">
-                <div class="table-title-group">
-                  <span class="card-icon card-icon--tackle">
-                    <i class="ti ti-users" aria-hidden="true"></i>
-                  </span>
-                  <h2 class="table-title">Planilla de Jugadores</h2>
-                </div>
-                <p class="table-subtitle">Acciones por jugador del 1° Tiempo</p>
+        <div class="players-pane animate-fade-in">
+          <section class="sport-card players-card">
+            <div class="players-card__header">
+              <div>
+                <h2 class="players-card__title">
+                  <i class="ti ti-users" aria-hidden="true"></i>
+                  Planilla de jugadores
+                </h2>
+                <p class="players-card__subtitle">Acciones por jugador del 1° Tiempo</p>
               </div>
 
-              <!-- SELECTOR RÁPIDO DE FILTROS -->
-              <div class="player-filters" role="tablist" aria-label="Filtro de jugadores">
-                <button
-                  type="button"
-                  class="filter-pill"
-                  [class.filter-pill--active]="playerFilter() === 'all'"
-                  (click)="setPlayerFilter('all')">
-                  Todos ({{ playerStats().length }})
+              <!-- Filtros rápidos (§4.5) -->
+              <div class="segmented" role="tablist" aria-label="Filtro de jugadores">
+                <button type="button" class="segment" [class.segment--active]="playerFilter() === 'all'" (click)="setPlayerFilter('all')">
+                  Todos <span class="segment__count">{{ playerStats().length }}</span>
                 </button>
-                <button
-                  type="button"
-                  class="filter-pill"
-                  [class.filter-pill--active]="playerFilter() === 'starters'"
-                  (click)="setPlayerFilter('starters')">
-                  Titulares ({{ startersCount() }})
+                <button type="button" class="segment" [class.segment--active]="playerFilter() === 'starters'" (click)="setPlayerFilter('starters')">
+                  Titulares <span class="segment__count">{{ startersCount() }}</span>
                 </button>
-                <button
-                  type="button"
-                  class="filter-pill"
-                  [class.filter-pill--active]="playerFilter() === 'subs'"
-                  (click)="setPlayerFilter('subs')">
-                  Suplentes ({{ subsCount() }})
+                <button type="button" class="segment" [class.segment--active]="playerFilter() === 'subs'" (click)="setPlayerFilter('subs')">
+                  Suplentes <span class="segment__count">{{ subsCount() }}</span>
                 </button>
-                <button
-                  type="button"
-                  class="filter-pill"
-                  [class.filter-pill--active]="playerFilter() === 'active'"
-                  (click)="setPlayerFilter('active')">
-                  Con actividad ({{ activeCount() }})
+                <button type="button" class="segment" [class.segment--active]="playerFilter() === 'active'" (click)="setPlayerFilter('active')">
+                  Con actividad <span class="segment__count">{{ activeCount() }}</span>
                 </button>
               </div>
             </div>
 
             @if (playerStats().length === 0) {
-              <div class="empty-state">
+              <div class="state-box state-box--inline">
                 <i class="ti ti-users" aria-hidden="true"></i>
                 <p>No se encontraron jugadores registrados en el plantel de este partido.</p>
               </div>
             } @else if (filteredPlayerStats().length === 0) {
-              <div class="empty-state">
+              <div class="state-box state-box--inline">
                 <i class="ti ti-filter" aria-hidden="true"></i>
                 <p>No hay jugadores que coincidan con el filtro seleccionado.</p>
               </div>
             } @else {
-              <div class="table-container">
+              <div class="table-scroll">
                 <table class="players-table">
                   <thead>
                     <tr>
                       <th class="col-num">#</th>
                       <th class="col-name">Jugador</th>
-                      <th class="col-condition">Condición</th>
-                      <th class="col-min">Minutos 1T</th>
+                      <th>Condición</th>
+                      <th class="col-stat">Minutos 1T</th>
                       @for (column of playerColumns(); track column.eventTypeId) {
                         <th class="col-stat">{{ column.label }}</th>
                       }
-                      <th class="col-pts">Puntos</th>
+                      <th class="col-stat">Puntos</th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (player of filteredPlayerStats(); track player.playerId) {
-                      <tr [class.row--has-points]="player.totalPoints > 0" [class.row--sub]="!player.isStarter">
+                      <tr [class.row--has-points]="player.totalPoints > 0">
                         <td class="col-num">
-                          <span class="jersey-badge">{{ player.jerseyNumber }}</span>
+                          <span class="jersey">{{ player.jerseyNumber }}</span>
                         </td>
                         <td class="col-name">
-                          <div class="player-info-cell">
-                            <span class="player-fullname">{{ player.playerName }}</span>
-                            @if (player.position) {
-                              <span class="player-position-tag">{{ player.position }}</span>
-                            }
-                          </div>
-                        </td>
-                        <td class="col-condition">
-                          @if (player.isStarter) {
-                            <span class="badge badge--starter">Titular</span>
-                          } @else {
-                            <span class="badge badge--sub">Suplente</span>
+                          <span class="player-name">{{ player.playerName }}</span>
+                          @if (player.position) {
+                            <span class="player-position">{{ player.position }}</span>
                           }
                         </td>
-                        <td class="col-min">
-                          <span class="stat-mono">{{ player.minutesPlayed }}'</span>
+                        <td>
+                          <span class="role-chip" [class.role-chip--sub]="!player.isStarter">
+                            {{ player.isStarter ? 'Titular' : 'Suplente' }}
+                          </span>
+                        </td>
+                        <td class="col-stat">
+                          <span class="value">{{ player.minutesPlayed }}'</span>
                         </td>
                         @for (column of playerColumns(); track column.eventTypeId) {
                           <td class="col-stat">
                             <span
-                              class="stat-mono"
-                              [class.stat-highlight]="hasPlayerValue(column, player.values)"
-                              [class.stat-zero]="!hasPlayerValue(column, player.values)">
+                              class="value"
+                              [class.value--own]="hasPlayerValue(column, player.values)"
+                              [class.value--empty]="!hasPlayerValue(column, player.values)">
                               {{ formatPlayerValue(column, player.values[column.eventTypeId]) }}
                             </span>
                           </td>
                         }
-                        <td class="col-pts">
+                        <td class="col-stat">
                           @if (player.totalPoints > 0) {
-                            <span class="total-points-badge total-points-badge--active">
-                              {{ player.totalPoints }} pts
-                            </span>
+                            <span class="points-chip">{{ player.totalPoints }} pts</span>
                           } @else {
-                            <span class="stat-mono stat-zero">—</span>
+                            <span class="value value--empty">—</span>
                           }
                         </td>
                       </tr>
@@ -337,20 +290,18 @@
                 </table>
               </div>
             }
-
-          </div>
-
+          </section>
         </div>
       }
 
-      <!-- BARRA INFERIOR DE ACCIONES COMÚN -->
-      <footer class="bottom-actions-row">
-        <button type="button" class="btn-action-back" (click)="goBackToLiveCapture()" title="Volver a la pantalla de captura en vivo">
+      <!-- Acciones (§3.3): secundaria outline y principal verde rugby -->
+      <footer class="actions-bar">
+        <button type="button" class="btn btn-outline action-button" (click)="goBackToLiveCapture()" title="Volver a la pantalla de captura en vivo">
           <i class="ti ti-arrow-left" aria-hidden="true"></i>
-          <span>Carga en Vivo</span>
+          <span>Carga en vivo</span>
         </button>
 
-        <button type="button" class="btn-action-start" (click)="openSecondHalfConfirmation()">
+        <button type="button" class="btn btn-invite action-button" (click)="openSecondHalfConfirmation()">
           <i class="ti ti-player-play-filled" aria-hidden="true"></i>
           <span>Comenzar 2º tiempo (min 40)</span>
         </button>
@@ -359,31 +310,35 @@
     }
   </main>
 
-  <!-- Modal / Diálogo de Confirmación para 2° Tiempo -->
+  <!-- Confirmación para iniciar el 2° Tiempo -->
   @if (isConfirmingSecondHalf()) {
     <div class="modal-backdrop" (click)="closeSecondHalfConfirmation()">
-      <div class="confirmation-modal" (click)="$event.stopPropagation()">
-        <div class="modal-icon-badge">
-          <i class="ti ti-clock-play" aria-hidden="true"></i>
+      <div class="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="second-half-title" (click)="$event.stopPropagation()">
+        <div class="confirmation-modal__header">
+          <span class="confirmation-modal__icon">
+            <i class="ti ti-clock-play" aria-hidden="true"></i>
+          </span>
+          <h3 id="second-half-title" class="confirmation-modal__title">¿Comenzar el segundo tiempo?</h3>
         </div>
-        <h3 class="modal-title">¿Comenzar el Segundo Tiempo?</h3>
-        <p class="modal-description">
-          El cronómetro del partido iniciará en el minuto 40. Las estadísticas del primer tiempo quedarán registradas de manera permanente.
-        </p>
+        <div class="confirmation-modal__body">
+          <p class="confirmation-modal__description">
+            El cronómetro del partido iniciará en el minuto 40. Las estadísticas del primer tiempo quedarán registradas de manera permanente.
+          </p>
 
-        <div class="modal-actions">
-          <button type="button" class="btn-cancel" (click)="closeSecondHalfConfirmation()" [disabled]="isStartingSecondHalf()">
-            Cancelar
-          </button>
-          <button type="button" class="btn-confirm" (click)="confirmStartSecondHalf()" [disabled]="isStartingSecondHalf()">
-            @if (isStartingSecondHalf()) {
-              <div class="spinner-sm"></div>
-              <span>Iniciando...</span>
-            } @else {
-              <i class="ti ti-player-play-filled" aria-hidden="true"></i>
-              <span>Confirmar y Comenzar 2T</span>
-            }
-          </button>
+          <div class="confirmation-modal__actions">
+            <button type="button" class="btn btn-outline action-button" (click)="closeSecondHalfConfirmation()" [disabled]="isStartingSecondHalf()">
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-invite action-button" (click)="confirmStartSecondHalf()" [disabled]="isStartingSecondHalf()">
+              @if (isStartingSecondHalf()) {
+                <span class="spinner spinner--sm" aria-hidden="true"></span>
+                <span>Iniciando...</span>
+              } @else {
+                <i class="ti ti-player-play-filled" aria-hidden="true"></i>
+                <span>Confirmar y comenzar 2T</span>
+              }
+            </button>
+          </div>
         </div>
       </div>
     </div>
