@@ -13,18 +13,22 @@ export class EventTypeService {
 
   getAll(): Observable<LiveCaptureEventType[]> {
     return this.http.get<BackendEventTypeResponse[]>(this.apiUrl).pipe(
-      map(eventTypes => eventTypes.map(eventType => ({
-        ...eventType,
-        groupName: eventType.groupName ?? 'General',
-        category: eventType.category ?? 'NEUTRAL',
-        points: eventType.points ?? 0,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      }))),
+      map(eventTypes => eventTypes.map(toLiveCaptureEventType)),
       switchMap(mappedTypes => from(this.cache.syncActiveEventTypes(mappedTypes)).pipe(
         map(() => mappedTypes)
       )),
       catchError(() => from(this.cache.getActiveEventTypes()))
     );
   }
+}
+
+export function toLiveCaptureEventType(eventType: BackendEventTypeResponse): LiveCaptureEventType {
+  return {
+    ...eventType,
+    groupName: eventType.groupName ?? 'General',
+    category: eventType.category ?? 'NEUTRAL',
+    points: eventType.points ?? 0,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  };
 }
