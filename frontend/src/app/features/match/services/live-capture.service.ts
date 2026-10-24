@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, concatMap, defer, firstValueFrom, forkJoin, from, map, switchMap, toArray, catchError, EMPTY, of } from 'rxjs';
+import { Observable, defer, firstValueFrom, forkJoin, from, map, switchMap, catchError, of } from 'rxjs';
 import {
   LiveCaptureBootstrap,
   LiveCaptureBootstrapResponse,
@@ -14,6 +14,7 @@ import { RosterService } from './roster.service';
 import { AvailablePlayer , SavedRoster} from '../types/roster.types';
 import { eventTeam } from '../statistics/calculators/event-rules';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
+import { PendingEventSyncService } from '../../../core/synchronization/pending-event-sync.service';
 
 const HOME_TEAM_NAME = 'PMRC';
 
@@ -33,6 +34,7 @@ export class LiveCaptureService {
   private readonly matchService = inject(MatchService);
   private readonly eventService = inject(EventService);
   private readonly rosterService = inject(RosterService);
+  private readonly pendingEventSync = inject(PendingEventSyncService);
   private readonly playersByMatch = new Map<string, AvailablePlayer[]>();
 
   constructor() {
@@ -86,33 +88,7 @@ export class LiveCaptureService {
   }
 
   syncPendingEvents(matchId?: string): Observable<LocalMatchEvent[]> {
-    return from(this.cache.getPendingEvents(matchId)).pipe(
-      switchMap(events => from(events)),
-      concatMap(event => {
-        if (!event.active && event.backendEventId != null) {
-          return this.eventService.delete(event.backendEventId).pipe(
-            switchMap(response => from(this.cache.saveEvent({
-              ...event,
-              synchronizedAt: response.synchronizedAt,
-            }))),
-            catchError(() => EMPTY),
-          );
-        }
-        return this.eventService.createFromLocal(event).pipe(
-          switchMap(response => {
-            const synchronizedEvent: LocalMatchEvent = {
-              ...event,
-              backendEventId: response.id,
-              synchronizedAt: response.synchronizedAt,
-            };
-
-            return from(this.cache.saveEvent(synchronizedEvent));
-          }),
-          catchError(() => EMPTY),
-        );
-      }),
-      toArray(),
-    );
+    return defer(() => from(this.pendingEventSync.flush(matchId)));
   }
 
   getLocalEvents(matchId: string): Observable<LocalMatchEvent[]> {
