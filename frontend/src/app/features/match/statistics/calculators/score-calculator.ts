@@ -1,7 +1,7 @@
 import { LiveCaptureEventType } from '../../types/event-type.types';
 import { LocalMatchEvent } from '../../types/event.types';
 import { PeriodStatisticDTO } from '../../statistics/types/statistic.types';
-import { countsAsScoring, eventTeam } from './event-rules';
+import { countsAsScoring, scoringTeam } from './event-rules';
 
 export type ScoreStats = Pick<
   PeriodStatisticDTO,
@@ -33,8 +33,8 @@ export function computeScoreStats(
 
   for (const event of events) {
     const et = eventTypeMap.get(event.eventTypeId);
-    if (!et || !countsAsScoring(et, event.attributes)) continue; // missed kicks are dropped here
-    const team = eventTeam(et, event);
+    if (!et || !countsAsScoring(et, event.attributes)) continue;
+    const team = scoringTeam(event);
     if (!team) continue;
     const own = team === 'OWN';
 
@@ -42,7 +42,7 @@ export function computeScoreStats(
 
     switch (et.code) {
       case 'TRY':
-      case 'PENALTY_TRY': // 7 pts, counted as a try
+      case 'PENALTY_TRY':
         own ? result.ownTries++ : result.opponentTries++; break;
       case 'CONVERSION':
         own ? result.ownConversions++ : result.opponentConversions++; break;
