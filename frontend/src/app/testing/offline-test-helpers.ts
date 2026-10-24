@@ -3,6 +3,7 @@ import { HttpTestingController, TestRequest } from '@angular/common/http/testing
 import { liveCaptureDatabase, matchDatabase } from '../features/local-database/local-databases';
 import { BackendMatchResponse, Match } from '../features/match/types/match.types';
 import { BackendEventResponse, LocalMatchEvent } from '../features/match/types/event.types';
+import { LiveCaptureEventType } from '../features/match/types/event-type.types';
 
 /** Vacía todas las tablas locales para aislar cada spec. */
 export async function clearLocalDatabases(): Promise<void> {
@@ -104,6 +105,28 @@ export function buildBackendEventResponse(
     id: backendEventId ?? `backend-${localEvent.id}`,
     clientEventId: localEvent.id,
     synchronizedAt: '2026-10-23T15:00:05',
+    ...overrides,
+  };
+}
+
+export function buildEventType(overrides: Partial<LiveCaptureEventType> = {}): LiveCaptureEventType {
+  return {
+    id: 'event-type-1',
+    name: 'Tackle',
+    groupName: 'Defensa',
+    category: 'DEFENSE',
+    isScoring: false,
+    points: 0,
+    requiresPlayer: true,
+    code: 'TACKLE',
+    showInPalette: true,
+    followUpEventTypeId: null,
+    actor: 'ATTACKING',
+    possessionAfter: 'KEEP',
+    followUpChoices: [],
+    templateEventFields: [],
+    isActive: true,
+    createdAt: '2026-10-23T15:00:00Z',
     ...overrides,
   };
 }

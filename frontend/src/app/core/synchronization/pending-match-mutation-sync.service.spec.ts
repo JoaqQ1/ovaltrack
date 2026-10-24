@@ -5,7 +5,7 @@ import { PendingMatchMutationSyncService } from './pending-match-mutation-sync.s
 import { LocalDatabaseService } from 'src/app/features/local-database/services/local-database.service';
 import { PendingMatchMutation } from 'src/app/features/match/types/match.types';
 import { ToastService } from '../services/toast.service';
-import { buildBackendMatch, buildMatch, clearLocalDatabases, nextRequest } from 'src/app/testing/offline-test-helpers';
+import { buildBackendMatch, buildMatch, clearLocalDatabases, nextRequest, settle } from 'src/app/testing/offline-test-helpers';
 
 describe('PendingMatchMutationSyncService', () => {
   let service: PendingMatchMutationSyncService;
@@ -108,5 +108,40 @@ describe('PendingMatchMutationSyncService', () => {
 
     expect(await cache.getPendingMatchMutations()).toEqual([]);
     expect(toastSpy).not.toHaveBeenCalled();
+  });
+
+  it('envía la hora real en que se inició o finalizó el partido offline', async () => {
+    const createdAt = Date.parse('2026-10-23T16:25:00Z');
+    await cache.savePendingMatchMutation({ id: 'match-1-latest', matchId: 'match-1', action: 'finish', createdAt });
+
+    const flushing = service.flush();
+    const request = await nextRequest(httpMock, req => req.url.endsWith('/match-1/finish'));
+    expect(request.request.body).toEqual({ occurredAt: '2026-10-23T16:25:00.000Z' });
+    request.flush(buildBackendMatch({ status: 'FINISHED' }));
+    await flushing;
+  });
+
+  it('no envía hora en las transiciones de medio tiempo', async () => {
+    await cache.savePendingMatchMutation(secondHalfMutation);
+
+    const flushing = service.flush();
+    const request = await nextRequest(httpMock, req => req.url.endsWith('/start-second-half'));
+    expect(request.request.body).toEqual({});
+    request.flush(buildBackendMatch({ status: 'IN_PROGRESS', currentPeriod: 2 }));
+    await flushing;
+  });
+
+  it('reutiliza el flush en curso en vez de enviar la misma transición dos veces', async () => {
+    await cache.savePendingMatchMutation(secondHalfMutation);
+
+    const first = service.flush();
+    const second = service.flush();
+    const request = await nextRequest(httpMock, req => req.url.endsWith('/start-second-half'));
+    await settle();
+    expect(httpMock.match(req => req.url.endsWith('/start-second-half')).length).toBe(0);
+    request.flush(buildBackendMatch({ status: 'IN_PROGRESS', currentPeriod: 2 }));
+
+    await Promise.all([first, second]);
+    expect(second).toBe(first);
   });
 });

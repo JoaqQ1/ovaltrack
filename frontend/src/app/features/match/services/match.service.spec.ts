@@ -92,4 +92,30 @@ describe('MatchService (transiciones offline)', () => {
 
     expect((await cache.getMatch('match-1'))?.status).toBe('cancelled');
   });
+
+  it('una transición encolada completa startedAt/finishedAt y clockUpdatedAt en la caché', async () => {
+    await cache.saveMatches([buildMatch({ status: 'not_started', startedAt: null, clockUpdatedAt: '2026-10-23T10:00:00' })]);
+    const before = Date.now();
+
+    const starting = firstValueFrom(service.startMatch('match-1'));
+    (await nextRequest(httpMock, req => req.url.endsWith('/start')))
+      .error(new ProgressEvent('error'), { status: 0 });
+    await starting;
+
+    const cached = await cache.getMatch('match-1');
+    const [mutation] = await cache.getPendingMatchMutations();
+    expect(cached?.startedAt).toBe(new Date(mutation.createdAt).toISOString());
+    expect(cached?.clockUpdatedAt).toBe(new Date(mutation.createdAt).toISOString());
+    expect(mutation.createdAt).toBeGreaterThanOrEqual(before);
+    expect(cached?.finishedAt ?? null).toBeNull();
+
+    const finishing = firstValueFrom(service.finishMatch('match-1'));
+    (await nextRequest(httpMock, req => req.url.endsWith('/finish')))
+      .error(new ProgressEvent('error'), { status: 0 });
+    await finishing;
+
+    const finished = await cache.getMatch('match-1');
+    expect(finished?.startedAt).withContext('no pisa el inicio').toBe(cached?.startedAt);
+    expect(finished?.finishedAt).toEqual(jasmine.any(String));
+  });
 });
