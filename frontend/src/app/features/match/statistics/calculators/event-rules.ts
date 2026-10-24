@@ -23,9 +23,6 @@ export function countsAsScoring(type: LiveCaptureEventType, attrs?: Record<strin
 
 export function eventTeam(type: LiveCaptureEventType | undefined, event: LocalMatchEvent): Team | null {
   if (!type) return null;
-  const resolved = resolveActor(type, event.teamPossession);
-  if (resolved) return resolved;
-  // CHOOSE: assumes the capture flow stores the analyst's choice in teamPossession
   return event.teamPossession === 'NEUTRAL' ? null : event.teamPossession;
 }
 
