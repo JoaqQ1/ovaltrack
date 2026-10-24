@@ -41,6 +41,19 @@ export function resolveActor(type: LiveCaptureEventType, possession: Possession)
 }
 
 /**
+ * Equipo al que se le suman los puntos de un evento. un evento NEUTRAL sin jugador no suma a nadie.
+ */
+export function scoringTeam(event: { teamPossession: Possession; playerId?: string | null }): Team | null {
+  if (event.teamPossession === 'OPPONENT') {
+    return 'OPPONENT';
+  }
+  if (event.teamPossession === 'OWN' || event.playerId != null) {
+    return 'OWN';
+  }
+  return null;
+}
+
+/**
  * Regla de posesión de un evento ya cargado: la de la opción elegida, la de un
  * campo boolean con efecto `possession` (si es `false` no cambia), o la del tipo.
  */
