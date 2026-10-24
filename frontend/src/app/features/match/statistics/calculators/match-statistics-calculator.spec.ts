@@ -135,23 +135,16 @@ describe('computeMatchStatistics', () => {
     it('se muestran solo si sus tipos están en la vista', () => {
       const ids = (stats: MatchStatistics) => stats.derived.map(metric => metric.id);
 
-      expect(ids(computeMatchStatistics(events, types, 'basic'))).toEqual(['penalties-conceded']);
-      expect(ids(computeMatchStatistics(events, types, 'full'))).toEqual(['tackle-effectiveness', 'penalties-conceded']);
+      expect(ids(computeMatchStatistics(events, types, 'basic'))).toEqual([]);
+      expect(ids(computeMatchStatistics(events, types, 'full'))).toEqual(['tackle-effectiveness']);
     });
 
-    it('calculan efectividad de tackles y penales con los resultados de las formaciones visibles', () => {
+    it('calculan la efectividad de tackles', () => {
       const full = computeMatchStatistics(events, types, 'full');
-      const metric = (id: string) => full.derived.find(candidate => candidate.id === id);
+      const metric = full.derived.find(candidate => candidate.id === 'tackle-effectiveness');
 
-      expect(metric('tackle-effectiveness')?.value).toEqual({ own: 66.7, opponent: null });
-      expect(metric('tackle-effectiveness')?.status).toEqual({ label: 'A mejorar', type: 'warning' });
-      // 1 penal propio + 1 penal en contra del rival en su line-out.
-      expect(metric('penalties-conceded')?.value).toEqual({ own: 1, opponent: 1 });
-
-      const basic = computeMatchStatistics(events, types, 'basic');
-      expect(basic.derived[0].value)
-        .withContext('el line-out no está en la vista básica')
-        .toEqual({ own: 1, opponent: 0 });
+      expect(metric?.value).toEqual({ own: 66.7, opponent: null });
+      expect(metric?.status).toEqual({ label: 'A mejorar', type: 'warning' });
     });
   });
 });
