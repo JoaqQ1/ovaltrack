@@ -20,21 +20,8 @@ interface DerivedMetricDefinition {
 }
 
 const TACKLE_SUCCESS_THRESHOLD = 70;
-const DISCIPLINE_CRITICAL_PENALTIES = 6;
-const DISCIPLINE_WARNING_PENALTIES = 3;
 
 const NO_DATA: MetricStatus = { label: 'Sin datos', type: 'neutral' };
-
-/** Eventos de un tipo con una opción concreta en un campo select (0 si el tipo no está en la vista). */
-function optionCount(stat: EventTypeStat | undefined, key: string, value: string): { own: number; opponent: number } {
-  for (const field of stat?.fields ?? []) {
-    if (field.kind === 'select' && field.key === key) {
-      const option = field.options.find(candidate => candidate.value === value);
-      if (option) return option.count;
-    }
-  }
-  return { own: 0, opponent: 0 };
-}
 
 const countOf = (stat: EventTypeStat | undefined) => stat?.count ?? { own: 0, opponent: 0 };
 
@@ -74,38 +61,6 @@ const DERIVED_METRICS: DerivedMetricDefinition[] = [
       if (value.own > 0) return { label: 'Favorable', type: 'success' };
       if (value.own === 0) return { label: 'Parejo', type: 'neutral' };
       return { label: 'Desfavorable', type: 'warning' };
-    },
-  },
-  {
-    id: 'penalties-conceded',
-    label: 'Penales concedidos',
-    format: 'int',
-    requires: ['PENALTY_CONCEDED'],
-    // En scrum y line-out el penal queda como resultado: `penalty_against` lo comete quien
-    // ejecuta la formación y `penalty_for`, el rival. Solo cuentan si la formación está en la vista.
-    compute: stat => {
-      const conceded = countOf(stat('PENALTY_CONCEDED'));
-      const setPieces = [
-        { stat: stat('SCRUM'), key: 'scrumResult' },
-        { stat: stat('LINEOUT'), key: 'lineResult' },
-      ];
-      let own = conceded.own;
-      let opponent = conceded.opponent;
-      for (const setPiece of setPieces) {
-        const against = optionCount(setPiece.stat, setPiece.key, 'penalty_against');
-        const favor = optionCount(setPiece.stat, setPiece.key, 'penalty_for');
-        own += against.own + favor.opponent;
-        opponent += against.opponent + favor.own;
-      }
-      return { own, opponent };
-    },
-    assess: (value, stat) => {
-      const penalties = value.own ?? 0;
-      const yellow = countOf(stat('YELLOW_CARD')).own;
-      const red = countOf(stat('RED_CARD')).own;
-      if (red > 0 || penalties > DISCIPLINE_CRITICAL_PENALTIES) return { label: 'Crítico', type: 'danger' };
-      if (yellow > 0 || penalties > DISCIPLINE_WARNING_PENALTIES) return { label: 'Atención', type: 'warning' };
-      return { label: 'Bien', type: 'success' };
     },
   },
 ];
