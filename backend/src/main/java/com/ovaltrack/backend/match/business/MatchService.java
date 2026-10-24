@@ -61,6 +61,8 @@ public class MatchService {
     private static final Logger logger = LoggerFactory.getLogger(MatchService.class);
 
     private static final int MATCH_DURATION_MINUTES = 90;
+    /** Los slots 1-15 son titulares; del 16 en adelante, suplentes. */
+    private static final int STARTER_SLOTS = 15;
 
     @Autowired
     private DivisionPlayerRepository divisionPlayerRepository;
@@ -319,6 +321,63 @@ public class MatchService {
                     .slotOrder(slotOrder++)
                     .build());
         }
+    }
+
+    /**
+     * Valida un cambio contra el plantel del partido. El plantel guardado es la formación inicial y
+     * no se modifica: quién está en cancha se deriva de los eventos SUBSTITUTION en orden, así un
+     * cambio cargado offline o borrado después no deja el plantel desfasado.
+     */
+    public void validateSubstitution(Match match, Map<String, Object> attributes) {
+        if (match == null || attributes == null) {
+            throw new BusinessException("El cambio requiere jugadores de entrada y salida");
+        }
+
+        MatchPlayer outgoing = findRosterPlayer(match, attributes, "playerOutId", "playerOutNumber");
+        MatchPlayer incoming = findRosterPlayer(match, attributes, "playerInId", "playerInNumber");
+
+        if (outgoing == null || incoming == null) {
+            throw new BusinessException("Los jugadores indicados no pertenecen al plantel del partido");
+        }
+        if (outgoing == incoming) {
+            throw new BusinessException("El jugador que sale y el que entra deben ser distintos");
+        }
+    }
+
+    /** Busca por id de persona y, si falta, por número de slot (titulares 1-15, suplentes 16-23). */
+    private MatchPlayer findRosterPlayer(Match match, Map<String, Object> attributes,
+            String idKey, String slotKey) {
+        Object rawId = attributes.get(idKey);
+        if (rawId instanceof String id) {
+            try {
+                UUID personId = UUID.fromString(id);
+                MatchPlayer byId = match.getRoster().stream()
+                        .filter(player -> player.getDivisionPlayer().getPerson().getId().equals(personId))
+                        .findFirst()
+                        .orElse(null);
+                if (byId != null) {
+                    return byId;
+                }
+            } catch (IllegalArgumentException ignored) {
+                // Eventos sin id válido: se resuelve por número de slot.
+            }
+        }
+
+        int slot = readSlotNumber(attributes, slotKey);
+        MatchPlayerRole role = slot <= STARTER_SLOTS ? MatchPlayerRole.TITULAR : MatchPlayerRole.SUPLENTE;
+        int slotOrder = role == MatchPlayerRole.TITULAR ? slot - 1 : slot - STARTER_SLOTS - 1;
+        return match.getRoster().stream()
+                .filter(player -> player.getRole() == role && Integer.valueOf(slotOrder).equals(player.getSlotOrder()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private int readSlotNumber(Map<String, Object> attributes, String key) {
+        Object value = attributes.get(key);
+        if (!(value instanceof Number number) || number.intValue() != number.doubleValue()) {
+            throw new BusinessException("El campo " + key + " debe ser un número entero");
+        }
+        return number.intValue();
     }
 
     @Transactional(readOnly = true)

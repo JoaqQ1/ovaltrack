@@ -130,6 +130,10 @@ public class EventService {
 
 		Event result = EventDTOMapper.toEntity(eventRequest, match, aEventType, aPerson);
 
+		if (isOwnSubstitution(aEventType, eventRequest.teamPossession())) {
+			matchService.validateSubstitution(match, eventRequest.attributes());
+		}
+
 		Event savedEvent = eventRepository.save(result);
 		recalculateMatchScore(match);
 		return EventDTOMapper.toResponseDTO(savedEvent);
@@ -140,7 +144,12 @@ public class EventService {
 		return saveEvent(eventRequest, null);
 	}
 
-	private Event findExistingClientEvent(UUID clientEventId, UUID matchId) {
+	/** Los cambios del rival no se validan: solo se registra el plantel propio. */
+	private boolean isOwnSubstitution(EventType eventType, EventPossession possession) {
+		return "SUBSTITUTION".equals(eventType.getCode()) && possession == EventPossession.OWN;
+	}
+
+		private Event findExistingClientEvent(UUID clientEventId, UUID matchId) {
 		if (clientEventId == null) {
 			return null;
 		}

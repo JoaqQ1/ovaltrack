@@ -20,6 +20,7 @@ import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../statistics/services/statistic-calculation.service';
 import { MatchStatistics } from '../statistics/types/statistic.types';
 import { CurrentStatsModalComponent } from './components/current-stats-modal/current-stats-modal.component';
+import { currentLineup } from './lineup';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
@@ -104,10 +105,14 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   /** Jugadores titulares indexados por su puesto de alineación, del 1 al 15. */
   private readonly playersByStartingNumber = new Map<number, AvailablePlayer>();
+  private readonly playersBySubstituteNumber = new Map<number, AvailablePlayer>();
+  private readonly initialStartingPlayers = new Map<number, AvailablePlayer>();
+  private readonly initialSubstitutePlayers = new Map<number, AvailablePlayer>();
 
   /** Los 15 titulares en cancha, agrupados para la cuadrícula del modal. */
   forwardSlots: SlotView[] = [];
   backSlots: SlotView[] = [];
+  substituteSlots: SlotView[] = [];
   /** El rival solo se registra por número (1 a 23). */
   readonly rivalNumbers: number[] = Array.from({ length: 23 }, (_, index) => index + 1);
 
@@ -214,8 +219,16 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.nextEventVariantIndex = 0;
         this.categories = this.groupEventTypes(response.eventTypes.filter(e => e.showInPalette !== false));
         this.playersByStartingNumber.clear();
+        this.playersBySubstituteNumber.clear();
+        this.initialStartingPlayers.clear();
+        this.initialSubstitutePlayers.clear();
         response.rosterPlayers.forEach((player, index) => {
           this.playersByStartingNumber.set(index + 1, player);
+          this.initialStartingPlayers.set(index + 1, player);
+        });
+        (response.substitutePlayers ?? []).forEach((player, index) => {
+          this.playersBySubstituteNumber.set(index + 16, player);
+          this.initialSubstitutePlayers.set(index + 16, player);
         });
         this.buildSlots();
         this.events = response.recentEvents;
@@ -714,6 +727,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   /** Reconstruye marcador, posesión e historial recorriendo los eventos. */
   private rebuildStateFromEvents(preservePossession = false): void {
+    this.rebuildRosterFromEvents();
     const scoreboard = { home: 0, away: 0 };
     const history: HistoryItem[] = [];
 
@@ -754,6 +768,21 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       }
     }
     this.history = history.slice(0, 12);
+  }
+
+  /** Aplica los cambios cargados sobre la formación inicial (ver `currentLineup`). */
+  private rebuildRosterFromEvents(): void {
+    const { starters, substitutes } = currentLineup(
+      { starters: this.initialStartingPlayers, substitutes: this.initialSubstitutePlayers },
+      this.events,
+      eventTypeId => this.eventTypeById(eventTypeId),
+    );
+
+    this.playersByStartingNumber.clear();
+    starters.forEach((player, number) => this.playersByStartingNumber.set(number, player));
+    this.playersBySubstituteNumber.clear();
+    substitutes.forEach((player, number) => this.playersBySubstituteNumber.set(number, player));
+    this.buildSlots();
   }
 
   /** Busca un tipo de evento por su identificador. */
@@ -912,11 +941,6 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   // ───────────────────────── Captura de eventos (modal por pasos) ─────────────────────────
 
-  /**
-   * Arma los botones de los 15 jugadores en cancha a partir del roster guardado.
-   * TODO(cambio): cuando se defina la lógica de cambios, esta lista debe derivarse
-   * de los titulares más los eventos `Cambio` del partido.
-   */
   private buildSlots(): void {
     const slot = (number: number): SlotView => ({
       number,
@@ -924,6 +948,13 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     });
     this.forwardSlots = Array.from({ length: 8 }, (_, index) => slot(index + 1));
     this.backSlots = Array.from({ length: 7 }, (_, index) => slot(index + 9));
+    this.substituteSlots = Array.from({ length: 8 }, (_, index) => {
+      const number = index + 16;
+      return {
+        number,
+        name: this.shortName(this.playersBySubstituteNumber.get(number)?.fullName),
+      };
+    });
   }
 
   /** Apellido para el botón: «Apellido, Nombre» → Apellido; «Nombre Apellido» → Apellido. */
@@ -997,6 +1028,23 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     }
     this.capture.team = team;
     this.advanceCapture();
+  }
+
+  /** En un cambio propio los números se eligen de la formación actual; el del rival va por número. */
+  isSubstitutionField(field: TemplateField): boolean {
+    return this.capture?.event.code === 'SUBSTITUTION'
+      && this.capture.team === 'OWN'
+      && (field.key === 'playerOutNumber' || field.key === 'playerInNumber');
+  }
+
+  substitutionPlayers(field: TemplateField): SlotView[] {
+    return field.key === 'playerOutNumber'
+      ? [...this.forwardSlots, ...this.backSlots]
+      : this.substituteSlots;
+  }
+
+  chooseSubstitutionPlayer(field: TemplateField, number: number): void {
+    this.chooseOption(field, number);
   }
 
   chooseTeam(team: CaptureTeam): void {
@@ -1108,6 +1156,14 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       ...values,
       ...(playerNumber != null ? { playerNumber } : {}),
     };
+    if (event.code === 'SUBSTITUTION' && team === 'OWN') {
+      const outgoing = this.playersByStartingNumber.get(Number(values['playerOutNumber']));
+      const incoming = this.playersBySubstituteNumber.get(Number(values['playerInNumber']));
+      if (outgoing && incoming) {
+        attributes['playerOutId'] = outgoing.id;
+        attributes['playerInId'] = incoming.id;
+      }
+    }
     const followUp = event.followUpEventTypeId
       ? this.eventTypeById(event.followUpEventTypeId)
       : undefined;

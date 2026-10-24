@@ -138,6 +138,7 @@ export class LiveCaptureService {
       divisionId: match.divisionId,
     };
     const rosterPlayers = this.toStartingPlayers(savedRoster, players);
+    const substitutePlayers = this.playersInOrder(savedRoster?.substitutePlayers ?? [], players);
     this.startingPlayersByMatch.set(query.matchId, rosterPlayers);
     const events = remoteEvents
       ? await this.cache.mergeRemoteEvents(query.matchId, remoteEvents)
@@ -169,6 +170,7 @@ export class LiveCaptureService {
       recentEvents: events,
       eventTypes,
       rosterPlayers,
+      substitutePlayers,
     };
   }
 
@@ -179,7 +181,12 @@ export class LiveCaptureService {
   }
 
   private toStartingPlayers(savedRoster: SavedRoster | null, players: AvailablePlayer[]): AvailablePlayer[] {
-    return (savedRoster?.startingPlayers ?? [])
+    return this.playersInOrder(savedRoster?.startingPlayers ?? [], players);
+  }
+
+  /** Jugadores del plantel en el orden guardado (el orden de los slots en la pantalla). */
+  private playersInOrder(playerIds: string[], players: AvailablePlayer[]): AvailablePlayer[] {
+    return playerIds
       .map(playerId => players.find(player => player.id === playerId))
       .filter((player): player is AvailablePlayer => player !== undefined);
   }
