@@ -11,10 +11,16 @@ import { LiveCaptureService } from '../../../services/live-capture.service';
 import { StatisticCalculationService } from '../../../statistics/services/statistic-calculation.service';
 import { LocalMatchEvent } from '../../../types/event.types';
 import { LiveCaptureEventType } from '../../../types/event-type.types';
-import { PeriodStatisticDTO, PlayerDetailStatistic } from '../../../statistics/types/statistic.types';
-import { computeMatchDetailStats, DetailMetric, DetailSection, MatchDetailStatistics } from '../../../services/match-detail-calculator';
-import { computePlayerDetailStats } from '../../../services/player-detail-calculator';
+import { MatchStatistics, PlayerStatistic, PlayerStatistics } from '../../../statistics/types/statistic.types';
 import { RosterPlayerInfo } from '../../../statistics/calculators';
+import {
+  formatMetric,
+  formatPlayerValue,
+  GroupStatPresentation,
+  presentGroups,
+  scoringLines,
+  StatLine,
+} from '../../../statistics/presentation/stat-presentation';
 import { LocalDatabaseService } from 'src/app/features/local-database/services/local-database.service';
 
 export type StatsPeriodFilter = 'ALL' | 1 | 2;
@@ -22,14 +28,7 @@ export type StatsTab = 'team' | 'players';
 
 interface StatTile { label: string; value: string; empty: boolean; }
 interface StatGroup { title: string; icon: string; tiles: StatTile[]; }
-interface RosterGroup { label: string; players: PlayerDetailStatistic[]; }
-
-interface CompareRow {
-  label: string;
-  own: number;
-  opponent: number;
-  hint?: string;
-}
+interface RosterGroup { label: string; players: PlayerStatistic[]; }
 
 @Component({
   selector: 'app-post-match-statistics',
@@ -67,50 +66,37 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
 
   readonly hasEvents = computed(() => this.events().length > 0);
 
-  private readonly eventTypeMap = computed(() => new Map(this.eventTypes().map(t => [t.id, t])));
-
-  /** Eventos del período seleccionado (los de período null cuentan en ambos tiempos). */
-  private readonly periodEvents = computed(() => {
+  /** Período elegido para el cálculo; `undefined` es el partido completo. */
+  private readonly selectedPeriod = computed<number | undefined>(() => {
     const period = this.period();
-    return period === 'ALL'
-      ? this.events()
-      : this.events().filter(e => e.period === null || e.period === period);
+    return period === 'ALL' ? undefined : period;
   });
 
-  readonly stats = computed<PeriodStatisticDTO | null>(() => {
+  /** Vista `full`: todos los tipos del catálogo y todos sus campos (live y post). */
+  readonly stats = computed<MatchStatistics | null>(() => {
     const types = this.eventTypes();
     if (types.length === 0) return null;
-    const period = this.period();
-    return this.statisticService.computeStatistics(
-      this.matchId(),
-      period === 'ALL' ? 0 : period,
-      this.events(),
-      types,
-      period !== 'ALL'
+    return this.statisticService.computeMatchStatistics(this.events(), types, 'full', this.selectedPeriod());
+  });
+
+  readonly scoreLines = computed<StatLine[]>(() => scoringLines(this.stats()?.groups ?? []));
+
+  /** Un bloque por `groupName` del catálogo, solo con los grupos que tienen eventos. */
+  readonly detailSections = computed<GroupStatPresentation[]>(() =>
+    presentGroups(this.stats()?.groups ?? [], { includePoints: true })
+      .map(group => ({ ...group, types: group.types.filter(type => type.hasData) }))
+      .filter(group => group.hasData)
+  );
+
+  private readonly playerStatistics = computed<PlayerStatistics>(() => {
+    if (this.eventTypes().length === 0) return { columns: [], players: [] };
+    return this.statisticService.computePlayerStatistics(
+      this.events(), this.roster(), this.eventTypes(), 'full', this.selectedPeriod()
     );
   });
 
-  /** Estadísticas detalladas (todos los campos live/post del catálogo). */
-  readonly detail = computed<MatchDetailStatistics>(() => {
-    if (this.eventTypes().length === 0) {
-      return { sections: [], penaltyTries: { own: 0, opponent: 0 } };
-    }
-    return computeMatchDetailStats(this.periodEvents(), this.eventTypeMap());
-  });
-
-  readonly detailSections = computed<DetailSection[]>(() =>
-    this.detail().sections.filter(section =>
-      section.metrics.some(m => (m.own ?? 0) !== 0 || (m.opponent ?? 0) !== 0) ||
-      section.breakdowns.some(b => b.rows.length > 0)
-    )
-  );
-
   /** Plantel completo del partido con las estadísticas del período (sin actividad figuran en cero). */
-  readonly players = computed<PlayerDetailStatistic[]>(() => {
-    if (this.eventTypes().length === 0) return [];
-    return computePlayerDetailStats(this.periodEvents(), this.roster(), this.eventTypeMap())
-      .sort((a, b) => a.jerseyNumber - b.jerseyNumber);
-  });
+  readonly players = computed<PlayerStatistic[]>(() => this.playerStatistics().players);
 
   readonly rosterGroups = computed<RosterGroup[]>(() => {
     const all = this.players();
@@ -121,68 +107,41 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
   });
 
   /** Se recalcula con el período, por eso la selección se mantiene al cambiar de tiempo. */
-  readonly selectedPlayer = computed<PlayerDetailStatistic | null>(() => {
+  readonly selectedPlayer = computed<PlayerStatistic | null>(() => {
     const id = this.selectedPlayerId();
     return id ? this.players().find(p => p.playerId === id) ?? null : null;
   });
 
+  /** Una tarjeta por `groupName` con los tipos que requieren jugador. */
   readonly selectedPlayerGroups = computed<StatGroup[]>(() => {
     const p = this.selectedPlayer();
     if (!p) return [];
-    const count = (label: string, value: number): StatTile => ({ label, value: value > 0 ? String(value) : '—', empty: value === 0 });
-    const ratio = (label: string, made: number, attempts: number): StatTile => 
-      ({ label, value: this.formatRatio(made, attempts), empty: attempts === 0 });
-    const tackles = p.tacklesMade + p.tacklesMissed;
-    return [
-      { title: 'Anotación', icon: 'bi-trophy', tiles: [
-        count('Puntos conseguidos', p.totalPoints),
-        count('Tries', p.tries),
-        count('Conversiones realizadas', p.conversionsMade),
-        count('Conversiones falladas', p.conversionAttempts),
-        //ratio('Conversiones realizadas', p.conversionsMade, p.conversionAttempts),
-        count('Penales a palos realizados', p.penaltyKicksMade),
-        count('Penales a palos fallados', p.penaltyKickAttempts),
-        //ratio('Penales a palos', p.penaltyKicksMade, p.penaltyKickAttempts),
-      ] },
-      { title: 'Defensa', icon: 'bi-shield-check', tiles: [
-        count('Tackles realizados', p.tacklesMade),
-        count('Tackles exitosos', p.tacklesMade - p.tacklesMissed),
-        count('Tackles fallados', p.tacklesMissed),
-        
-        { label: 'Efectividad', value: tackles > 0 ? `${p.tackleEffectiveness}%` : '—', empty: tackles === 0 },
-      ] },
-      { title: 'Juego', icon: 'bi-lightning', tiles: [
-        count('Pases', p.passes),
-        count('Offloads', p.offloads),
-        count('Pases comprometidos', p.badPasses),
-        count('Patadas a touch', p.kicksToTouch),
-        count('Salidas', p.restarts),
-      ] },
-      { title: 'Disciplina', icon: 'bi-exclamation-triangle', tiles: [
-        count('Penales cometidos', p.penaltiesConceded),
-        count('Tarjetas amarillas', p.yellowCards),
-        count('Tarjetas rojas', p.redCards),
-        count('Lesiones', p.injuries),
-      ] },
-    ];
+    const groups: StatGroup[] = [{
+      title: 'Puntos',
+      icon: 'bi-trophy',
+      tiles: [{ label: 'Puntos conseguidos', value: p.totalPoints > 0 ? `${p.totalPoints}` : '—', empty: p.totalPoints === 0 }],
+    }];
+    for (const column of this.playerStatistics().columns) {
+      let group = groups.find(candidate => candidate.title === column.groupName);
+      if (!group) {
+        group = { title: column.groupName, icon: 'bi-bar-chart', tiles: [] };
+        groups.push(group);
+      }
+      const value = p.values[column.eventTypeId];
+      group.tiles.push({
+        label: column.label,
+        value: formatPlayerValue(column, value),
+        empty: (value?.count ?? 0) === 0,
+      });
+    }
+    return groups;
   });
 
   readonly opponentPossession = computed(() =>
     Math.max(0, Math.round((100 - (this.stats()?.ownPossessionPercentage ?? 50)) * 10) / 10)
   );
 
-  readonly scoreRows = computed<CompareRow[]>(() => {
-    const s = this.stats();
-    if (!s) return [];
-    const penaltyTries = this.detail().penaltyTries;
-    return [
-      { label: 'Tries', own: s.ownTries - penaltyTries.own, opponent: s.opponentTries - penaltyTries.opponent, hint: '5 pts' },
-      { label: 'Tries penal', own: penaltyTries.own, opponent: penaltyTries.opponent, hint: '7 pts' },
-      { label: 'Conversiones', own: s.ownConversions, opponent: s.opponentConversions, hint: '2 pts' },
-      { label: 'Penales a palos', own: s.ownPenalties, opponent: s.opponentPenalties, hint: '3 pts' },
-      { label: 'Drop goals', own: s.ownDropGoals, opponent: s.opponentDropGoals, hint: '3 pts' },
-    ];
-  });
+  readonly formatMetric = formatMetric;
 
   readonly periodLabel = computed(() => {
     const p = this.period();
@@ -251,13 +210,15 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
     } catch { /* se usa lo que haya en IndexedDB */ }
   }
 
+  /**
+   * Sincroniza el catálogo y usa el de la caché, que conserva los tipos dados de baja: los eventos
+   * ya cargados con esos tipos siguen contando en las estadísticas.
+   */
   private async loadEventTypes(): Promise<void> {
     try {
-      const types = await firstValueFrom(this.eventTypeService.getAll());
-      this.eventTypes.set(types as LiveCaptureEventType[]);
-    } catch {
-      this.eventTypes.set(await this.cacheService.getEventTypes());
-    }
+      await firstValueFrom(this.eventTypeService.getAll());
+    } catch { /* se usa lo que haya en caché */ }
+    this.eventTypes.set(await this.cacheService.getEventTypes());
   }
 
   private async resolveOpponent(matchId: string): Promise<void> {
@@ -296,23 +257,5 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
   barWidth(value: number, other: number): number {
     const total = value + other;
     return total === 0 ? 50 : Math.round((value / total) * 100);
-  }
-
-  formatMetric(value: number | null, metric: DetailMetric): string {
-    if (value === null) return '—';
-    const unit = metric.unit ? ` ${metric.unit}` : '';
-    switch (metric.format) {
-      case 'percent': return `${value}%`;
-      case 'decimal': return `${(Math.round(value * 10) / 10).toFixed(1)}${unit}`;
-      default: return `${value}${unit}`;
-    }
-  }
-
-  isEmptyValue(value: number | null): boolean {
-    return value === null || value === 0;
-  }
-
-  formatRatio(made: number, attempts: number): string {
-    return attempts > 0 ? `${made}/${attempts}` : '—';
   }
 }

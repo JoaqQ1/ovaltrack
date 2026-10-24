@@ -12,7 +12,7 @@
         <h1 class="hud-title">
           <span class="club-name">{{ ownClubName() }}</span>
           @if (stats(); as s) {
-            <span class="match-score-pill">{{ s.ownScore }} – {{ s.opponentScore }}</span>
+            <span class="match-score-pill">{{ s.score.own }} – {{ s.score.opponent }}</span>
           }
           <span class="club-name">{{ opponent() }}</span>
         </h1>
@@ -71,7 +71,7 @@
             <div class="scoreboard">
               <div class="scoreboard__team">
                 <span class="scoreboard__name">{{ ownClubName() }}</span>
-                <span class="scoreboard__score scoreboard__score--own">{{ s.ownScore }}</span>
+                <span class="scoreboard__score scoreboard__score--own">{{ s.score.own }}</span>
               </div>
               <div class="scoreboard__center">
                 <div class="possession-labels">
@@ -85,19 +85,19 @@
               </div>
               <div class="scoreboard__team scoreboard__team--away">
                 <span class="scoreboard__name">{{ opponent() }}</span>
-                <span class="scoreboard__score scoreboard__score--opp">{{ s.opponentScore }}</span>
+                <span class="scoreboard__score scoreboard__score--opp">{{ s.score.opponent }}</span>
               </div>
             </div>
 
             <div class="compare-list">
-              @for (row of scoreRows(); track row.label) {
-                <div class="compare-row" [attr.title]="row.hint">
+              @for (row of scoreLines(); track row.label) {
+                <div class="compare-row">
                   <strong class="text-own">{{ row.own }}</strong>
                   <div class="compare-row__mid">
                     <span class="compare-row__label">{{ row.label }}</span>
                     <div class="bar bar--thin">
-                      <div class="bar__fill bar__fill--own" [style.width.%]="barWidth(row.own, row.opponent)"></div>
-                      <div class="bar__fill bar__fill--opp" [style.width.%]="100 - barWidth(row.own, row.opponent)"></div>
+                      <div class="bar__fill bar__fill--own" [style.width.%]="barWidth(row.ownValue, row.opponentValue)"></div>
+                      <div class="bar__fill bar__fill--opp" [style.width.%]="100 - barWidth(row.ownValue, row.opponentValue)"></div>
                     </div>
                   </div>
                   <strong class="text-opp">{{ row.opponent }}</strong>
@@ -107,12 +107,35 @@
           </div>
         </section>
 
-        <!-- Detalle por área (todos los campos del catálogo de carga en vivo) -->
+        <!-- Detalle por grupo del catálogo (todos los campos, live y post) -->
         <div class="detail-grid">
-          @for (section of detailSections(); track section.id) {
+          @if (s.derived.length > 0) {
             <section class="form-card detail-card">
               <div class="form-card-header detail-header">
-                <h2 class="form-card-title"><i class="bi {{ section.icon }}"></i> {{ section.title }}</h2>
+                <h2 class="form-card-title"><i class="bi bi-speedometer2"></i> Indicadores</h2>
+                <div class="legend" aria-hidden="true">
+                  <span class="dot dot--own"></span><span>{{ ownClubName() }}</span>
+                  <span class="dot dot--opp"></span><span>{{ opponent() }}</span>
+                </div>
+              </div>
+              <div class="form-card-body">
+                <div class="metric-table">
+                  @for (metric of s.derived; track metric.id) {
+                    <div class="compare-row compare-row--plain" [attr.title]="metric.status?.label">
+                      <strong class="text-own" [class.zero]="metric.value.own === null">{{ formatMetric(metric.value.own, metric.format) }}</strong>
+                      <span class="compare-row__label">{{ metric.label }}</span>
+                      <strong class="text-opp" [class.zero]="metric.value.opponent === null">{{ formatMetric(metric.value.opponent, metric.format) }}</strong>
+                    </div>
+                  }
+                </div>
+              </div>
+            </section>
+          }
+
+          @for (section of detailSections(); track section.name) {
+            <section class="form-card detail-card">
+              <div class="form-card-header detail-header">
+                <h2 class="form-card-title"><i class="bi bi-bar-chart"></i> {{ section.name }}</h2>
                 <div class="legend" aria-hidden="true">
                   <span class="dot dot--own"></span><span>{{ ownClubName() }}</span>
                   <span class="dot dot--opp"></span><span>{{ opponent() }}</span>
@@ -120,30 +143,30 @@
               </div>
 
               <div class="form-card-body">
-                @if (section.metrics.length > 0) {
-                  <div class="metric-table">
-                    @for (metric of section.metrics; track metric.label) {
-                      <div class="compare-row compare-row--plain" [attr.title]="metric.hint">
-                        <strong class="text-own" [class.zero]="isEmptyValue(metric.own)">{{ formatMetric(metric.own, metric) }}</strong>
-                        <span class="compare-row__label">{{ metric.label }}</span>
-                        <strong class="text-opp" [class.zero]="isEmptyValue(metric.opponent)">{{ formatMetric(metric.opponent, metric) }}</strong>
+                <div class="metric-table">
+                  @for (type of section.types; track type.eventTypeId) {
+                    @for (line of type.lines; track line.label) {
+                      <div class="compare-row compare-row--plain">
+                        <strong class="text-own" [class.zero]="line.ownValue === 0">{{ line.own }}</strong>
+                        <span class="compare-row__label">{{ line.label }}</span>
+                        <strong class="text-opp" [class.zero]="line.opponentValue === 0">{{ line.opponent }}</strong>
                       </div>
                     }
-                  </div>
-                }
+                  }
+                </div>
 
-                @for (group of section.breakdowns; track group.title) {
-                  @if (group.rows.length > 0) {
+                @for (type of section.types; track type.eventTypeId) {
+                  @for (group of type.breakdowns; track group.title) {
                     <div class="breakdown">
-                      <h4 class="breakdown__title">{{ group.title }}</h4>
-                      @for (row of group.rows; track row.label) {
+                      <h4 class="breakdown__title">{{ type.name }} · {{ group.title }}</h4>
+                      @for (row of group.lines; track row.label) {
                         <div class="compare-row">
                           <strong class="text-own">{{ row.own }}</strong>
                           <div class="compare-row__mid">
                             <span class="compare-row__label">{{ row.label }}</span>
                             <div class="bar bar--thin">
-                              <div class="bar__fill bar__fill--own" [style.width.%]="barWidth(row.own, row.opponent)"></div>
-                              <div class="bar__fill bar__fill--opp" [style.width.%]="100 - barWidth(row.own, row.opponent)"></div>
+                              <div class="bar__fill bar__fill--own" [style.width.%]="barWidth(row.ownValue, row.opponentValue)"></div>
+                              <div class="bar__fill bar__fill--opp" [style.width.%]="100 - barWidth(row.ownValue, row.opponentValue)"></div>
                             </div>
                           </div>
                           <strong class="text-opp">{{ row.opponent }}</strong>
@@ -151,10 +174,6 @@
                       }
                     </div>
                   }
-                }
-
-                @if (section.note) {
-                  <p class="note"><i class="bi bi-info-circle"></i> {{ section.note }}</p>
                 }
               </div>
             </section>
