@@ -62,21 +62,6 @@ export class UserContextService {
     );
   }
 
-/*
-Previous loadUserContext
-
-  loadUserContext(): Observable<UserContext | null> {
-    return this.http.get<UserContext>(`${this.apiUrl}/api/me`).pipe(
-      tap(ctx => this.contextSignal.set(ctx)),
-      catchError(err => {
-        console.error('Error al cargar el contexto de usuario:', err);
-        this.contextSignal.set(null);
-        return of(null);
-      })
-    );
-  }
-*/
-
 
   setContext(context: UserContext | null): void {
     this.contextSignal.set(context);
@@ -89,6 +74,5 @@ Previous loadUserContext
       return;
     }
 
-    this.cache.clearUserContext(tokenPayload.userId);
   }
 }
