@@ -64,7 +64,13 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
   private readonly eventTypes = signal<LiveCaptureEventType[]>([]);
   private readonly roster = signal<RosterPlayerInfo[]>([]);
 
-  readonly hasEvents = computed(() => this.events().length > 0);
+  /** Eventos de tipos activos: los de tipos dados de baja no se muestran ni cuentan. */
+  private readonly visibleEvents = computed(() => {
+    const typeIds = new Set(this.eventTypes().map(type => type.id));
+    return typeIds.size === 0 ? this.events() : this.events().filter(event => typeIds.has(event.eventTypeId));
+  });
+
+  readonly hasEvents = computed(() => this.visibleEvents().length > 0);
 
   /** Período elegido para el cálculo; `undefined` es el partido completo. */
   private readonly selectedPeriod = computed<number | undefined>(() => {
@@ -76,7 +82,7 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
   readonly stats = computed<MatchStatistics | null>(() => {
     const types = this.eventTypes();
     if (types.length === 0) return null;
-    return this.statisticService.computeMatchStatistics(this.events(), types, 'full', this.selectedPeriod());
+    return this.statisticService.computeMatchStatistics(this.visibleEvents(), types, 'full', this.selectedPeriod());
   });
 
   readonly scoreLines = computed<StatLine[]>(() => scoringLines(this.stats()?.groups ?? []));
@@ -91,7 +97,7 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
   private readonly playerStatistics = computed<PlayerStatistics>(() => {
     if (this.eventTypes().length === 0) return { columns: [], players: [] };
     return this.statisticService.computePlayerStatistics(
-      this.events(), this.roster(), this.eventTypes(), 'full', this.selectedPeriod()
+      this.visibleEvents(), this.roster(), this.eventTypes(), 'full', this.selectedPeriod()
     );
   });
 
@@ -211,14 +217,14 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Sincroniza el catálogo y usa el de la caché, que conserva los tipos dados de baja: los eventos
-   * ya cargados con esos tipos siguen contando en las estadísticas.
+   * Sincroniza el catálogo y usa solo los tipos activos: los eventos de tipos dados de baja no se
+   * muestran ni cuentan en las estadísticas del post-partido.
    */
   private async loadEventTypes(): Promise<void> {
     try {
       await firstValueFrom(this.eventTypeService.getAll());
     } catch { /* se usa lo que haya en caché */ }
-    this.eventTypes.set(await this.cacheService.getEventTypes());
+    this.eventTypes.set(await this.cacheService.getActiveEventTypes());
   }
 
   private async resolveOpponent(matchId: string): Promise<void> {
