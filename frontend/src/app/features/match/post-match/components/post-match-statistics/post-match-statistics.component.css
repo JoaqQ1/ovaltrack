@@ -86,17 +86,7 @@
 .compare-row__mid { display: flex; flex-direction: column; gap: 6px; }
 .compare-row__label { font: 600 13px var(--font-body, Inter, sans-serif); color: var(--text-secondary, #3b4e33); text-align: center; }
 
-/* ---------- Tabla de jugadores ---------- */
-.table-scroll { overflow-x: auto; }
-.players-table { width: 100%; border-collapse: collapse; }
-.players-table th {
-  background: var(--surface-header-start, #edf5e9); border-bottom: 2px solid var(--border-sport-subtle, rgba(32, 75, 34, .2));
-  padding: 12px 16px; font: 700 11.5px var(--font-body, Inter, sans-serif); text-transform: uppercase;
-  letter-spacing: .06em; color: var(--text-secondary, #3b4e33); text-align: center; white-space: nowrap;
-}
-.players-table td { padding: 12px 16px; text-align: center; border-bottom: 1px solid var(--border, rgba(27, 33, 22, .1)); }
-.players-table tbody tr:hover { background: var(--surface-hover, #f1f3ea); }
-.players-table .left { text-align: left; }
+/* ---------- Jugadores ---------- */
 .jersey {
   display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; border-radius: 50%;
   border: 2px solid var(--border-sport, rgba(32, 75, 34, .28)); background: var(--surface-alt, #eef1e7);
@@ -218,11 +208,63 @@
 .breakdown .compare-row strong { font-size: 15px; }
 .note { margin: 0; display: flex; gap: 8px; font-size: 12.5px; color: var(--text-muted, #7a8c74); }
 
-.players-table--wide th, .players-table--wide td { padding: 10px 12px; }
-.players-table--wide th { white-space: normal; min-width: 72px; }
+
+/* ---------- Rendimiento individual (plantel + detalle) ---------- */
+.players-layout { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.players-card { display: flex; flex-direction: column; height: 600px; min-height: 0; }
+.players-card .form-card-header { flex: none; }
+.players-card .state-box--inline { flex: 1; }
+.roster-scroll, .player-body {
+  flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin;
+  scrollbar-color: var(--border-sport, rgba(32, 75, 34, .28)) transparent;
+}
+.roster-scroll { padding: 6px 12px 16px; }
+.roster-group {
+  margin: 14px 8px 6px; font: 800 11.5px var(--font-head, 'Hanken Grotesk', sans-serif);
+  text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary, #3b4e33);
+}
+.roster-item {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 10px; margin-bottom: 2px;
+  border: 2px solid transparent; border-radius: var(--radius-md, 10px); background: transparent;
+  cursor: pointer; text-align: left; font: inherit; color: inherit; transition: all .15s ease;
+}
+.roster-item:hover { background: var(--surface-hover, #f1f3ea); }
+.roster-item--active, .roster-item--active:hover {
+  background: var(--surface-toolbar, #eaf3e6); border-color: var(--btn-primary-bg, #204b22);
+}
+.roster-item:focus-visible { outline: 2px solid var(--btn-primary-bg, #204b22); outline-offset: 2px; }
+.roster-item--idle .player-name { color: var(--text-secondary, #3b4e33); font-weight: 500; }
+.roster-item__info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.roster-item__info .player-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster-item__info .player-pos { margin-left: 0; }
+.roster-item .points-badge { padding: 2px 10px; font-size: 12px; }
+
+.player-head { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.player-head__info { flex: 1; min-width: 0; }
+.jersey--lg { min-width: 48px; height: 48px; font-size: 18px; }
+.player-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 22px; }
+.stat-group { display: flex; flex-direction: column; gap: 10px; }
+.stat-group .breakdown__title { display: flex; align-items: center; gap: 8px; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.stat-tile {
+  display: flex; flex-direction: column; gap: 4px; padding: 12px 14px;
+  background: var(--surface-alt, #eef1e7); border: 2px solid var(--border-sport-subtle, rgba(32, 75, 34, .2));
+  border-radius: var(--radius-lg, 14px);
+}
+.stat-tile__label { font: 600 12px var(--font-body, Inter, sans-serif); color: var(--text-secondary, #3b4e33); }
+.stat-tile__value {
+  font: 700 24px var(--font-mono, 'JetBrains Mono', monospace); font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #111d0e);
+}
+.stat-tile__value.zero { color: var(--text-muted, #7a8c74); }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1121px) {
   .detail-grid { grid-template-columns: 1fr; }
+  .players-layout { grid-template-columns: 1fr; }
+  .roster-card { height: 360px; }
+  .player-detail { height: auto; min-height: 420px; }
+  .player-detail .player-body { overflow: visible; }
 }
 
 @media (max-width: 768px) {

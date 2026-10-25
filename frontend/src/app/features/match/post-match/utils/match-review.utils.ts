@@ -1,4 +1,5 @@
 import { MatchTimelineEventResponse } from '../../types/event.types';
+import { HALF_DURATION_SECONDS } from '../../types/match.types';
 
 export const RUGBY_HALF_TIME_MIN = 40;
 export const RUGBY_FULL_TIME_MIN = 80;
@@ -101,8 +102,10 @@ export function estimateAbsoluteTime(
       .filter(e => (e.period ?? 1) === 1 && e.absoluteMatchTime != null)
       .sort((a, b) => (a.absoluteMatchTime ?? 0) - (b.absoluteMatchTime ?? 0));
     const lastP1 = p1Events.length > 0 ? p1Events[p1Events.length - 1] : null;
-    const baseP2 = lastP1?.absoluteMatchTime != null ? lastP1.absoluteMatchTime : 2400;
-    const elapsedInP2 = newMatchTimeSeconds >= 2400 ? (newMatchTimeSeconds - 2400) : newMatchTimeSeconds;
+    const baseP2 = lastP1?.absoluteMatchTime != null ? lastP1.absoluteMatchTime : HALF_DURATION_SECONDS;
+    const elapsedInP2 = newMatchTimeSeconds >= HALF_DURATION_SECONDS
+      ? (newMatchTimeSeconds - HALF_DURATION_SECONDS)
+      : newMatchTimeSeconds;
     return baseP2 + elapsedInP2;
   }
 }

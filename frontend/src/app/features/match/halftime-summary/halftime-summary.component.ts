@@ -4,17 +4,22 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { MatchService } from '../services/match.service';
 import { RosterService } from '../services/roster.service';
-import { StatisticCalculationService } from '../services/statistic-calculation.service';
-import { LiveCaptureCacheService } from '../services/live-capture-cache.service';
-import { PeriodStatisticDTO, PlayerPeriodStatistic } from '../types/statistic.types';
+import { StatisticCalculationService } from '../statistics/services/statistic-calculation.service';
+import { MatchStatistics, PlayerStatColumn, PlayerStatistic, PlayerStatistics } from '../statistics/types/statistic.types';
+import {
+  formatMetric,
+  formatPlayerValue,
+  hasPlayerValue,
+  presentGroups,
+  scoringLines,
+} from '../statistics/presentation/stat-presentation';
 import { LiveCapturePersistedState } from '../types/live-capture.types';
 import { LiveCaptureService } from '../services/live-capture.service';
-import { RosterPlayerInfo } from '../services/calculators';
-import { AvailablePlayer, SavedRoster } from '../types/roster.types';
 
-const TACKLE_SUCCESS_THRESHOLD = 70;
-const DISCIPLINE_CRITICAL_PENALTIES = 6;
-const DISCIPLINE_WARNING_PENALTIES = 3;
+import { AvailablePlayer, SavedRoster } from '../types/roster.types';
+import { RosterPlayerInfo } from '../statistics/calculators';
+import { LocalDatabaseService } from '../../local-database/services/local-database.service';
+import { HALF_DURATION_SECONDS } from '../types/match.types';
 
 @Component({
   selector: 'ot-halftime-summary',
@@ -30,7 +35,7 @@ export class HalftimeSummaryComponent implements OnInit {
   private readonly matchService = inject(MatchService);
   private readonly rosterService = inject(RosterService);
   private readonly statisticCalculationService = inject(StatisticCalculationService);
-  private readonly cacheService = inject(LiveCaptureCacheService);
+  private readonly cacheService = inject(LocalDatabaseService);
   private readonly liveCaptureService = inject(LiveCaptureService);
 
   readonly matchId = signal<string>('');
@@ -40,8 +45,11 @@ export class HalftimeSummaryComponent implements OnInit {
   readonly isOffline = signal<boolean>(!navigator.onLine);
   readonly homeTeam = signal<string>('Cardenales');
   readonly opponent = signal<string>('Rival');
-  readonly generalStats = signal<PeriodStatisticDTO | null>(null);
-  readonly playerStats = signal<PlayerPeriodStatistic[]>([]);
+  /** Vista `intermediate`: tipos marcados con `stat_view` "intermediate" en el catálogo. */
+  readonly generalStats = signal<MatchStatistics | null>(null);
+  private readonly playerStatistics = signal<PlayerStatistics>({ columns: [], players: [] });
+  readonly playerStats = computed<PlayerStatistic[]>(() => this.playerStatistics().players);
+  readonly playerColumns = computed<PlayerStatColumn[]>(() => this.playerStatistics().columns);
   readonly isConfirmingSecondHalf = signal<boolean>(false);
   readonly isStartingSecondHalf = signal<boolean>(false);
 
@@ -49,18 +57,17 @@ export class HalftimeSummaryComponent implements OnInit {
 
   readonly startersCount = computed(() => this.playerStats().filter(p => p.isStarter).length);
   readonly subsCount = computed(() => this.playerStats().filter(p => !p.isStarter).length);
-  readonly activeCount = computed(() => this.playerStats().filter(p => p.totalPoints > 0 || p.yellowCards > 0 || p.redCards > 0).length);
+  readonly activeCount = computed(() => this.playerStats().filter(p => p.hasActivity).length);
 
   readonly filteredPlayerStats = computed(() => {
     const stats = this.playerStats();
-    const filter = this.playerFilter();
-    switch (filter) {
+    switch (this.playerFilter()) {
       case 'starters':
         return stats.filter(p => p.isStarter);
       case 'subs':
         return stats.filter(p => !p.isStarter);
       case 'active':
-        return stats.filter(p => p.totalPoints > 0 || p.yellowCards > 0 || p.redCards > 0);
+        return stats.filter(p => p.hasActivity);
       default:
         return stats;
     }
@@ -71,59 +78,20 @@ export class HalftimeSummaryComponent implements OnInit {
     return Math.max(0, 100 - own);
   });
 
-  readonly turnoverHomeRatio = computed(() => {
-    const stats = this.generalStats();
-    if (!stats) return 50;
-    const total = stats.ownTurnoversWon + stats.ownTurnoversLost;
-    return total === 0 ? 50 : Math.round((stats.ownTurnoversWon / total) * 100);
+  /** Desglose del marcador: los tipos que suman. */
+  readonly scoringLines = computed(() => scoringLines(this.generalStats()?.groups ?? []));
+
+  /** Un bloque por `groupName` con los tipos que no suman (los que suman ya están en el marcador). */
+  readonly groupCards = computed(() => {
+    const groups = (this.generalStats()?.groups ?? [])
+      .map(group => ({ ...group, types: group.types.filter(type => !type.isScoring) }))
+      .filter(group => group.types.length > 0);
+    return presentGroups(groups, { includePoints: false });
   });
 
-  readonly tackleStatus = computed(() => {
-    const stats = this.generalStats();
-    if (!stats || (stats.ownTacklesCompleted + stats.ownTacklesMissed === 0)) {
-      return { label: 'Sin datos', type: 'neutral' };
-    }
-    return stats.ownTackleEffectiveness >= TACKLE_SUCCESS_THRESHOLD
-      ? { label: 'Bien', type: 'success' }
-      : { label: 'A mejorar', type: 'warning' };
-  });
-
-  readonly turnoverStatus = computed(() => {
-    const stats = this.generalStats();
-    if (!stats || (stats.ownTurnoversWon === 0 && stats.ownTurnoversLost === 0)) {
-      return { label: 'Sin datos', type: 'neutral' };
-    }
-    const diff = stats.ownTurnoversWon - stats.ownTurnoversLost;
-    if (diff > 0) return { label: 'Favorable', type: 'success' };
-    if (diff === 0) return { label: 'Parejo', type: 'neutral' };
-    return { label: 'Desfavorable', type: 'warning' };
-  });
-
-  readonly disciplineStatus = computed(() => {
-    const stats = this.generalStats();
-    if (!stats) return { label: 'Bien', type: 'success' };
-    if (stats.ownRedCards > 0 || stats.ownPenaltiesConceded > DISCIPLINE_CRITICAL_PENALTIES) {
-      return { label: 'Crítico', type: 'danger' };
-    }
-    if (stats.ownYellowCards > 0 || stats.ownPenaltiesConceded > DISCIPLINE_WARNING_PENALTIES) {
-      return { label: 'Atención', type: 'warning' };
-    }
-    return { label: 'Bien', type: 'success' };
-  });
-
-  readonly setPieceStatus = computed(() => {
-    const stats = this.generalStats();
-    if (!stats || (stats.scrumsTotal + stats.lineoutsTotal === 0)) {
-      return { label: 'Sin datos', type: 'neutral' };
-    }
-    return { label: 'Registradas', type: 'neutral' };
-  });
-
-  formatKickingStats(player: PlayerPeriodStatistic): string {
-    const totalKicks = player.penaltyKicks + player.dropGoals;
-    return totalKicks > 0 ? `${player.penaltyKicks} / ${player.dropGoals}` : '—';
-  }
-
+  readonly formatMetric = formatMetric;
+  readonly formatPlayerValue = formatPlayerValue;
+  readonly hasPlayerValue = hasPlayerValue;
 
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('matchId') || '';
@@ -156,13 +124,14 @@ export class HalftimeSummaryComponent implements OnInit {
       await firstValueFrom(this.liveCaptureService.hydrateMatchEvents(id)).catch(() => []);
 
       // 2. Calcular estadísticas generales del 1° Tiempo
-      const general = await this.statisticCalculationService.calculatePeriodStatistics(id, 1);
+      const general = await this.statisticCalculationService.calculateMatchStatistics(id, 'intermediate', 1);
       this.generalStats.set(general);
 
       // 3. Resolver plantel y calcular estadísticas individuales de jugadores
       const roster = await this.resolveRoster(id);
-      const players = await this.statisticCalculationService.calculatePlayerStatistics(id, roster, 1);
-      this.playerStats.set(players);
+      this.playerStatistics.set(
+        await this.statisticCalculationService.calculatePlayerStatistics(id, roster, 'intermediate', 1),
+      );
     } catch (err) {
       console.error('Error al calcular el resumen de entretiempo:', err);
     } finally {
@@ -392,12 +361,12 @@ export class HalftimeSummaryComponent implements OnInit {
       clockPaused: false,
       isHalftime: false,
       pendingSelection: null,
-      clockElapsedSeconds: Math.max(2400, currentState?.clockElapsedSeconds ?? 2400),
+      clockElapsedSeconds: Math.max(HALF_DURATION_SECONDS, currentState?.clockElapsedSeconds ?? HALF_DURATION_SECONDS),
       savedAt: Date.now(),
       currentPossession: currentState?.currentPossession ?? 'OWN',
       scoreboard: {
-        home: this.generalStats()?.ownScore ?? 0,
-        away: this.generalStats()?.opponentScore ?? 0,
+        home: this.generalStats()?.score.own ?? 0,
+        away: this.generalStats()?.score.opponent ?? 0,
       },
     };
   }

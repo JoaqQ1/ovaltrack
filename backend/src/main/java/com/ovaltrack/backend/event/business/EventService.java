@@ -14,6 +14,7 @@ import com.ovaltrack.backend.match.domain.MatchStatus;
 import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.Person;
 import com.ovaltrack.backend.club.business.ClubService;
+import com.ovaltrack.backend.division.business.DivisionService;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.event.domain.Event;
 import com.ovaltrack.backend.event.domain.EventPossession;
@@ -39,6 +40,7 @@ public class EventService {
 	private final EventRepository eventRepository;
 	private final EventTypeService eventTypeService;
 	private final ClubService clubService;
+	private final DivisionService divisionService;
 	private final MatchService matchService;
 	private final PersonService personService;
 	private final MatchRepository matchRepository;
@@ -54,7 +56,7 @@ public class EventService {
 	}
 
 	public Collection<EventResponseDTO> findEventsByDivisionId(UUID divisionId) {
-		if (clubService.findClubById(divisionId) == null) {
+		if (divisionService.findDivisionEntityById(divisionId) == null) {
 			throw new BusinessException("Division no encontrada");
 		}
 		return eventRepository.findEventsByDivisionId(divisionId).stream()
@@ -117,10 +119,6 @@ public class EventService {
 			throw new BusinessException("No se puede asignar un evento a un partido cancelado");
 		}
 
-		if (match.getStatus() == MatchStatus.FINISHED && !Event.ORIGIN_POST_CAPTURE.equals(eventRequest.origin())) {
-			throw new BusinessException("No se puede cargar eventos mediante esta pantalla para un partido que ya termino");
-		}
-
 		if (authentication != null) {
 			matchSecurityValidator.validateCanManageMatch(match, authentication);
 		}
@@ -132,6 +130,10 @@ public class EventService {
 
 		Event result = EventDTOMapper.toEntity(eventRequest, match, aEventType, aPerson);
 
+		if (isOwnSubstitution(aEventType, eventRequest.teamPossession())) {
+			matchService.validateSubstitution(match, eventRequest.attributes());
+		}
+
 		Event savedEvent = eventRepository.save(result);
 		recalculateMatchScore(match);
 		return EventDTOMapper.toResponseDTO(savedEvent);
@@ -142,7 +144,12 @@ public class EventService {
 		return saveEvent(eventRequest, null);
 	}
 
-	private Event findExistingClientEvent(UUID clientEventId, UUID matchId) {
+	/** Los cambios del rival no se validan: solo se registra el plantel propio. */
+	private boolean isOwnSubstitution(EventType eventType, EventPossession possession) {
+		return "SUBSTITUTION".equals(eventType.getCode()) && possession == EventPossession.OWN;
+	}
+
+		private Event findExistingClientEvent(UUID clientEventId, UUID matchId) {
 		if (clientEventId == null) {
 			return null;
 		}

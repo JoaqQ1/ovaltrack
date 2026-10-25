@@ -4,13 +4,13 @@ import { Observable, catchError, forkJoin, map, of, switchMap, throwError, from 
 import { environment } from '../../../../environments/environment';
 import { Match } from '../types/match.types';
 import { AvailablePlayer, BackendRosterResponse, RosterPayload, SavedRoster, SaveRosterRequestDTO } from '../types/roster.types';
-import { LiveCaptureCacheService } from './live-capture-cache.service';
+import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 
 @Injectable({ providedIn: 'root' })
 export class RosterService {
   private readonly http = inject(HttpClient);
   private readonly matchesUrl = `${environment.apiUrl}/matches`;
-  private readonly cache = inject(LiveCaptureCacheService);
+  private readonly cache = inject(LocalDatabaseService);
   
   getAvailablePlayers(matchId: string): Observable<AvailablePlayer[]> {
     return this.http.get<Match>(`${this.matchesUrl}/${matchId}`).pipe(

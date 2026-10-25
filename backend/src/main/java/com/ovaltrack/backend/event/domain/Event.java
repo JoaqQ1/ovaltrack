@@ -14,7 +14,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "events",
-       uniqueConstraints = {@UniqueConstraint(name = "uk_event_snapshot", columnNames = { "event_type_id", "match_id", "realTime" })})
+       uniqueConstraints = {@UniqueConstraint(name = "uk_event_snapshot", columnNames = { "event_type_id", "match_id", "realTime" })},
+       indexes = {@Index(name = "idx_events_match_active", columnList = "match_id, active")})
 @Getter
 @Setter
 @NoArgsConstructor
