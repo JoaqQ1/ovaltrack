@@ -35,7 +35,6 @@ export class MatchHistoryComponent implements OnInit {
 
   filterOponent: string = '';
   filterResult: 'ALL' | 'WON' | 'LOST' | 'TIED' = 'ALL';
-  filterOrderDate: 'DESC' | 'ASC' = 'DESC';
 
   calendarOptions: CalendarOptions = {
       initialView: 'dayGridMonth',
@@ -124,18 +123,7 @@ export class MatchHistoryComponent implements OnInit {
       });
     }
 
-    // C. Ordenamiento por Fecha
-    filtered = filtered.sort((a, b) => {
-      const dateA = this.parseDateForSort(a.date).getTime();
-      const dateB = this.parseDateForSort(b.date).getTime();
-      return this.filterOrderDate === 'DESC' ? dateB - dateA : dateA - dateB;
-    });
-
     return filtered;
-  }
-
-  toggleOrdenFecha(): void {
-    this.filterOrderDate = this.filterOrderDate === 'DESC' ? 'ASC' : 'DESC';
   }
 
   private parseDateForSort(dateInput: any): Date {

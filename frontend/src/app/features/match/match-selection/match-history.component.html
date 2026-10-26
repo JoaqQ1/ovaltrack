@@ -67,11 +67,6 @@
       <button type="button" [class]="filterResult === 'LOST' ? 'btn btn-invite' : 'btn btn-outline'" (click)="setFilterResult('LOST')">Perdidos</button>
       <button type="button" [class]="filterResult === 'TIED' ? 'btn btn-invite' : 'btn btn-outline'" (click)="setFilterResult('TIED')">Empatados</button>
     </div>
-
-    <!-- Orden de Fecha -->
-    <button type="button" class="btn btn-outline icon-btn" (click)="toggleOrdenFecha()" title="Ordenar fechas">
-      <i [class]="filterOrderDate === 'DESC' ? 'bi bi-sort-down' : 'bi bi-sort-up'"></i>
-    </button>
   </div>
 
   <!-- VISTA CALENDARIO ÚNICA -->
