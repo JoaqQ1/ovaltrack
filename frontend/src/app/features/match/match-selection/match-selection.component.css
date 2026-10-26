@@ -438,6 +438,241 @@
   }
 }
 
+
+/* ===== Variables de FullCalendar con la paleta verde de la app ===== */
+.calendar-wrapper ::ng-deep .fc {
+  --fc-button-bg-color: #1d3b20;
+  --fc-button-border-color: #1d3b20;
+  --fc-button-hover-bg-color: #2d5a32;
+  --fc-button-hover-border-color: #2d5a32;
+  --fc-button-active-bg-color: #14291a;
+  --fc-button-active-border-color: #14291a;
+  --fc-today-bg-color: rgba(29, 59, 32, 0.08); /* reemplaza el amarillo */
+  --fc-border-color: #dfe6df;
+}
+
+/* ===== Links (números de día y encabezados) en verde, sin subrayado ===== */
+.calendar-wrapper ::ng-deep .fc a,
+.calendar-wrapper ::ng-deep .fc .fc-col-header-cell-cushion,
+.calendar-wrapper ::ng-deep .fc .fc-daygrid-day-number {
+  color: #1d3b20;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.calendar-wrapper ::ng-deep .fc a:hover {
+  color: #2d5a32;
+}
+
+/* Días del mes anterior/siguiente más apagados */
+.calendar-wrapper ::ng-deep .fc .fc-day-other .fc-daygrid-day-number {
+  color: #1d3b20;
+  opacity: 0.35;
+}
+
+/* ===== Título del mes en MAYÚSCULAS ===== */
+.calendar-wrapper ::ng-deep .fc .fc-toolbar-title {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1d3b20;
+}
+
+/* ===== Botones anterior / siguiente: circulares ===== */
+.calendar-wrapper ::ng-deep .fc .fc-prev-button,
+.calendar-wrapper ::ng-deep .fc .fc-next-button {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50% !important;
+  margin-right: 6px;
+  box-shadow: none !important;
+}
+
+/* ===== Botón "Hoy" ===== */
+.calendar-wrapper ::ng-deep .fc .fc-today-button {
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-weight: 600;
+  text-transform: capitalize;
+  box-shadow: none !important;
+}
+
+/* ===== Selector Mes / Semana estilo píldora ===== */
+.calendar-wrapper ::ng-deep .fc .fc-dayGridMonth-button,
+.calendar-wrapper ::ng-deep .fc .fc-dayGridWeek-button {
+  background: #fff;
+  color: #1d3b20;
+  border-color: #1d3b20;
+  font-weight: 600;
+  padding: 8px 18px;
+  box-shadow: none !important;
+}
+
+.calendar-wrapper ::ng-deep .fc .fc-dayGridMonth-button {
+  border-radius: 20px 0 0 20px;
+}
+
+.calendar-wrapper ::ng-deep .fc .fc-dayGridWeek-button {
+  border-radius: 0 20px 20px 0;
+}
+
+.calendar-wrapper ::ng-deep .fc .fc-button-primary.fc-button-active {
+  background: #1d3b20;
+  color: #fff;
+}
+
+/* ===== Modal Match Card ===== */
+.modal-match-card {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 400px;
+  max-width: 100%;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+.card-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 12px 24px;
+}
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #eef5ef;
+  color: #1a3c20;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #d3e2d5;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #1a3c20;
+  border-radius: 50%;
+}
+
+.btn-delete-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.btn-delete-icon:hover svg {
+  stroke: #ff4d4f;
+}
+
+.card-main-info {
+  padding: 0 24px 20px 24px;
+}
+
+.opponent-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #0f2914;
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+}
+
+.vs-badge {
+  background-color: #eef5ef;
+  color: #1a3c20;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #d3e2d5;
+}
+
+.match-date-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #3b4e33;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.card-actions-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid #e9ecea;
+}
+
+.btn-text-action {
+  background: none;
+  border: none;
+  color: #1a3c20;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-text-action:hover {
+  text-decoration: underline;
+}
+
+.btn-primary-action {
+  background-color: #1d3b20;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.btn-primary-action:hover {
+  background-color: #2d5a32;
+}
+
+
+/* Overlay oscuro de fondo */
+.calendar-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(33, 37, 41, 0.6); /* Color oscuro transparente */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050; /* Por encima de todo */
+  padding: 16px;
+}
+
+/* Contenedor invisible para centrar la tarjeta */
+.calendar-modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ==========================================================================
    Modo Oscuro (Dark Rugby Tech)
    ========================================================================== */

@@ -20,6 +20,10 @@ import { AuthService } from '../../auth/services/auth.service';
 import { ModalComponent } from '../../modal/modal.component';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { LiveCaptureService } from '../services/live-capture.service';
+import { FullCalendarModule } from '@fullcalendar/angular';
+import { CalendarOptions } from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -37,7 +41,7 @@ import { LiveCaptureService } from '../services/live-capture.service';
 @Component({
   selector: 'ot-match-select',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, FullCalendarModule],
   templateUrl: './match-selection.component.html',
   styleUrl: './match-selection.component.css',
 })
@@ -50,6 +54,7 @@ export class MatchSelectComponent implements OnInit {
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
+
   /** Filtros disponibles, en el orden en que se renderizan en el control segmentado, menos el finalizado. */
   readonly filters = MATCH_FILTERS.filter(f => f !== 'finished');
   readonly statusLabels = MATCH_STATUS_LABELS;
@@ -57,7 +62,7 @@ export class MatchSelectComponent implements OnInit {
   matches: Match[] = [];
   userDivisions: any[] = [];
   selectedDivisionId: string = '';
-  availableOpponents: Opponent[] = []
+  availableOpponents: Opponent[] = [];
   /** Filtro actualmente seleccionado en el control segmentado. */
   activeFilter: MatchFilter = 'all';
 
@@ -70,6 +75,66 @@ export class MatchSelectComponent implements OnInit {
   matchToRemove: Match | null = null;
   eliminatingMatchId: string | null = null;
   mostrarModalConfirmacion = false;
+
+  selectedMatchForModal: Match | null = null;
+  isMatchModalOpen = false;
+
+  // 1. Agregá esta variable en tu clase:
+  isCalendarView = false;
+
+  // 2. Modificá tus calendarOptions para que se vean mejor:
+  calendarOptions: CalendarOptions = {
+    initialView: 'dayGridMonth',
+    plugins: [dayGridPlugin, interactionPlugin],
+    locale: 'es',
+    buttonText: {
+      today: 'Hoy',
+      month: 'Mes',
+      week: 'Semana',
+    },
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: ''
+    },
+    events: [],
+    eventClick: this.handleEventClick.bind(this),
+    // -- NUEVO ESTILO DE EVENTOS --
+    eventBackgroundColor: '#1d3b20', // El verde de tus botones
+    eventBorderColor: '#1d3b20',
+    eventTextColor: '#ffffff',
+    eventDisplay: 'block',
+    eventContent: function(arg) {
+      // 1. Extraemos la hora y minutos del objeto Date del evento
+      const date = arg.event.start;
+      let timeString = '';
+      
+      if (date) {
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        timeString = `${hours}:${minutes} hs`;
+      }
+
+      // 2. Armamos un mini-layout HTML. 
+      // Usamos text-align: left, un color un poco más transparente para la hora, y negrita para el rival.
+      return {
+        html: `
+          <div style="padding: 4px 6px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; text-align: left;">
+            <span style="font-size: 0.75em; font-weight: 600; color: #a3cda6; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              ${timeString}
+            </span>
+            <strong style="font-size: 0.85em; white-space: normal; line-height: 1.2;">
+              ${arg.event.title}
+            </strong>
+          </div>
+        `
+      };
+    }
+  };
 
   /**
    * Se emite cuando el usuario toca un partido de la grilla. Quien use este
@@ -84,7 +149,6 @@ export class MatchSelectComponent implements OnInit {
     this.loadUserDivisions();
   }
 
-  
   goToHistory() {
     this.router.navigate(['/match-history']);
   }
@@ -112,6 +176,7 @@ export class MatchSelectComponent implements OnInit {
 
   setFilter(filter: MatchFilter): void {
     this.activeFilter = filter;
+    this.actualizarEventosCalendario(this.visibleMatches);
   }
 
   closeCreateModal(): void {
@@ -131,6 +196,7 @@ export class MatchSelectComponent implements OnInit {
     this.matchService.createMatch(this.draft, this.selectedDivisionId).subscribe({
       next: newMatch => {
         this.matches = [newMatch, ...this.matches];
+        this.actualizarEventosCalendario(this.visibleMatches);
         this.isCreateOpen = false;
       },
       error: (error: HttpErrorResponse) => {
@@ -169,6 +235,7 @@ export class MatchSelectComponent implements OnInit {
             ? { ...currentMatch, status: 'cancelled' }
             : currentMatch
         );
+        this.actualizarEventosCalendario(this.visibleMatches);
         this.eliminatingMatchId = null;
         this.mostrarModalConfirmacion = false;
         this.matchToRemove = null;
@@ -187,7 +254,6 @@ export class MatchSelectComponent implements OnInit {
   startMatch(matchId: string): void {
     this.navigateToLiveCaptureIfRosterIsValid(matchId);
   }
-
 
   onSelectMatch(match: Match) {
     this.openMatch(match);
@@ -330,10 +396,12 @@ export class MatchSelectComponent implements OnInit {
       next: (matches) => {
         this.matches = matches;
         this.cacheMatchData(matches);
+        this.actualizarEventosCalendario(this.visibleMatches);
       },
       error: () => {
         this.toastService.show('error', 'No se pudieron cargar los partidos de esta división.', 'Error de carga');
         this.matches = [];
+        this.actualizarEventosCalendario(this.visibleMatches);
       }
     });
   }
@@ -385,6 +453,42 @@ export class MatchSelectComponent implements OnInit {
         )
       ).subscribe();
     }
+  }
+
+  actualizarEventosCalendario(partidosFiltrados: Match[]) {
+    const eventos = partidosFiltrados.map(partido => {
+      let isoDate = partido.date;
+
+      if (Array.isArray(partido.date)) {
+          const [year, month, day, hours = 0, minutes = 0] = partido.date;
+          isoDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+      }
+      
+      const divisionName = this.userDivisions.find(d => d.id === this.selectedDivisionId)?.name || 'División';
+
+      return {
+        id: partido.id,
+        title: `${partido.opponent || 'Rival'}`,
+        start: isoDate,
+        extendedProps: { match: partido }
+      };
+    });
+  
+    this.calendarOptions = {
+      ...this.calendarOptions,
+      events: eventos
+    };
+  }
+
+  handleEventClick(clickInfo: any) {
+    const match = clickInfo.event.extendedProps.match;
+    this.selectedMatchForModal = match;
+    this.isMatchModalOpen = true;
+  }
+
+  closeMatchModal() {
+    this.isMatchModalOpen = false;
+    this.selectedMatchForModal = null;
   }
 
 }
