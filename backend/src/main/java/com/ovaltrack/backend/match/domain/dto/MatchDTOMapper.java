@@ -1,6 +1,7 @@
 package com.ovaltrack.backend.match.domain.dto;
 
 import com.ovaltrack.backend.match.domain.Match;
+import com.ovaltrack.backend.match.domain.MatchPlayer;
 
 public final class MatchDTOMapper {
 
@@ -17,7 +18,7 @@ public final class MatchDTOMapper {
                 match.getDate(),
                 match.getDivision() == null ? null : match.getDivision().getId(),
                 // Extraemos el nombre del objeto Opponent para el DTO
-                match.getOpponent() == null ? null : match.getOpponent().getName(), 
+                match.getOpponent() == null ? null : match.getOpponent().getName(),
                 match.getStatus(),
                 match.getCurrentPeriod() != null ? match.getCurrentPeriod() : 1,
                 match.getClockElapsedSeconds() != null ? match.getClockElapsedSeconds() : 0,
@@ -27,7 +28,19 @@ public final class MatchDTOMapper {
                 match.getHomeScore() != null ? match.getHomeScore() : 0,
                 match.getAwayScore() != null ? match.getAwayScore() : 0,
                 match.getStartedAt(),
-                match.getFinishedAt()
+                match.getFinishedAt());
+    }
+
+    public static PlayerMatchResponseDTO toPlayerMatchResponseDTO(MatchPlayer mp) {
+        if(mp == null) return null;
+        return new PlayerMatchResponseDTO(
+            mp.getMatch().getId(),
+            mp.getMatch().getDate(),
+            mp.getMatch().getOpponent().getAlias(),
+            mp.getMatch().getDivision().getName(),
+            mp.getMatch().getHomeScore(),
+            mp.getMatch().getAwayScore(),
+            mp.getRole()
         );
     }
 }
