@@ -1,5 +1,6 @@
 package com.ovaltrack.backend.match.controller;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +28,7 @@ import com.ovaltrack.backend.match.domain.dto.RosterDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchRosterDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchRosterPlayerDTO;
 import com.ovaltrack.backend.match.domain.dto.LiveMatchStateDTO;
+import com.ovaltrack.backend.match.domain.dto.MatchTransitionDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -179,8 +181,10 @@ public class MatchController {
         @ApiResponse(responseCode = "200", description = "Match started successfully."),
     })
     @PutMapping("/{matchId}/start")
-    public ResponseEntity<Object> startMatch(@PathVariable UUID matchId) {
-        return ResponseEntity.ok(matchService.changeMatchStatus(matchId, MatchStatus.IN_PROGRESS));
+    public ResponseEntity<Object> startMatch(
+            @PathVariable UUID matchId,
+            @RequestBody(required = false) MatchTransitionDTO request) {
+        return ResponseEntity.ok(matchService.changeMatchStatus(matchId, MatchStatus.IN_PROGRESS, occurredAt(request)));
     }
 
     @Operation(
@@ -191,8 +195,14 @@ public class MatchController {
         @ApiResponse(responseCode = "200", description = "Match finished successfully."),
     })
     @PutMapping("/{matchId}/finish")
-    public ResponseEntity<Object> finishMatch(@PathVariable UUID matchId) {
-        return ResponseEntity.ok(matchService.changeMatchStatus(matchId, MatchStatus.FINISHED));
+    public ResponseEntity<Object> finishMatch(
+            @PathVariable UUID matchId,
+            @RequestBody(required = false) MatchTransitionDTO request) {
+        return ResponseEntity.ok(matchService.changeMatchStatus(matchId, MatchStatus.FINISHED, occurredAt(request)));
+    }
+
+    private static Instant occurredAt(MatchTransitionDTO request) {
+        return request == null ? null : request.occurredAt();
     }
 
     @Operation(

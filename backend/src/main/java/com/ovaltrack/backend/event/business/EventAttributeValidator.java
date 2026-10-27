@@ -19,7 +19,7 @@ public final class EventAttributeValidator {
     private EventAttributeValidator() {
     }
 
-    private static final Set<String> RESERVED_KEYS = Set.of("playerNumber");
+    private static final Set<String> RESERVED_KEYS = Set.of("playerNumber", "playerOutId", "playerInId");
 
     public static void validate(EventType type, Map<String, Object> attributes) {
         if (type == null) {

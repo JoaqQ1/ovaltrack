@@ -2,8 +2,15 @@ package com.ovaltrack.backend.match.business;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +61,8 @@ public class MatchService {
     private static final Logger logger = LoggerFactory.getLogger(MatchService.class);
 
     private static final int MATCH_DURATION_MINUTES = 90;
+    /** Los slots 1-15 son titulares; del 16 en adelante, suplentes. */
+    private static final int STARTER_SLOTS = 15;
 
     @Autowired
     private DivisionPlayerRepository divisionPlayerRepository;
@@ -155,7 +164,6 @@ public class MatchService {
             throw new BusinessException("Ya existe un partido planeado en esa franja horaria");
         }
 
-        // Buscar el oponente real en la base de datos
         Opponent opponent = opponentRepository.findById(request.opponentId())
                 .orElseThrow(() -> new EntityNotFoundException("Oponente no encontrado"));
 
@@ -173,28 +181,36 @@ public class MatchService {
     public MatchResponseDTO updateMatch(UUID matchId, MatchUpdateDTO request) {
         Match match = findMatchEntityById(matchId);
         if (match == null) {
-            throw new BusinessException("Partido no encontrado");
+            throw new EntityNotFoundException("Partido no encontrado");
         }
 
-        // Buscar el oponente real para la actualización
         Opponent opponent = opponentRepository.findById(request.opponentId())
                 .orElseThrow(() -> new EntityNotFoundException("Oponente no encontrado"));
 
         match.setDate(request.date());
-        match.setOpponent(opponent); // <-- Inyectamos el objeto real
+        match.setOpponent(opponent);
 
         return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
     }
 
     @Transactional
     public MatchResponseDTO changeMatchStatus(UUID matchId, MatchStatus matchStatus) {
+        return changeMatchStatus(matchId, matchStatus, null);
+    }
+
+    /**
+     * @param occurredAt momento real de la transición informado por el cliente; si es null se usa
+     *                   la hora del servidor.
+     */
+    @Transactional
+    public MatchResponseDTO changeMatchStatus(UUID matchId, MatchStatus matchStatus, Instant occurredAt) {
         Match match = findMatchEntityById(matchId);
         if (match == null) {
-            throw new BusinessException("Partido no encontrado");
+            throw new EntityNotFoundException("Partido no encontrado");
         }
 
         validateStatusChange(match, matchStatus);
-        applyStatusChange(match, matchStatus);
+        applyStatusChange(match, matchStatus, resolveTransitionTime(occurredAt));
 
         return MatchDTOMapper.toResponseDTO(matchRepository.save(match));
     }
@@ -204,6 +220,14 @@ public class MatchService {
 
         if (currentStatus == targetStatus) {
             throw new BusinessException("No se puede asignar el mismo estado al partido");
+        }
+
+        if (currentStatus == MatchStatus.CANCELLED) {
+            throw new BusinessException("No se puede modificar un partido cancelado");
+        }
+
+        if (currentStatus == MatchStatus.FINISHED && targetStatus == MatchStatus.IN_PROGRESS) {
+            throw new BusinessException("No se puede reabrir un partido que ya termino");
         }
 
         if (targetStatus == MatchStatus.IN_PROGRESS
@@ -228,52 +252,132 @@ public class MatchService {
         }
     }
 
-    private void applyStatusChange(Match match, MatchStatus targetStatus) {
+    private void applyStatusChange(Match match, MatchStatus targetStatus, LocalDateTime transitionTime) {
         match.setStatus(targetStatus);
         if (targetStatus == MatchStatus.IN_PROGRESS && match.getStartedAt() == null) {
-            match.setStartedAt(LocalDateTime.now());
+            match.setStartedAt(transitionTime);
         }
         if (targetStatus == MatchStatus.FINISHED) {
-            match.setFinishedAt(LocalDateTime.now());
+            LocalDateTime startedAt = match.getStartedAt();
+            match.setFinishedAt(startedAt != null && transitionTime.isBefore(startedAt) ? startedAt : transitionTime);
         }
+    }
+
+    private LocalDateTime resolveTransitionTime(Instant occurredAt) {
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        if (occurredAt == null) {
+            return now;
+        }
+        LocalDateTime clientTime = LocalDateTime.ofInstant(occurredAt, ZoneOffset.UTC);
+        return clientTime.isAfter(now) ? now : clientTime;
     }
 
     @Transactional
     public void saveMatchRoster(UUID matchId, List<UUID> titularesIds, List<UUID> suplentesIds) {
         Match match = findMatchEntityById(matchId);
         if (match == null) {
-            throw new BusinessException("Partido no encontrado");
+            throw new EntityNotFoundException("Partido no encontrado");
         }
         if (match.getStatus() == MatchStatus.CANCELLED) {
             throw new BusinessException("No se puede modificar el plantel de un partido cancelado");
         }
         matchPlayerRepository.deleteByMatch(match);
-        List<MatchPlayer> nuevosJugadores = new ArrayList<>();
 
-        List<DivisionPlayer> todosLosJugadores = divisionPlayerRepository.findAll();
-
-        for (DivisionPlayer dp : todosLosJugadores) {
-            UUID personId = dp.getPerson().getId();
-
-            if (titularesIds.contains(personId)) {
-                nuevosJugadores.add(MatchPlayer.builder()
-                        .match(match)
-                        .divisionPlayer(dp)
-                        .role(MatchPlayerRole.TITULAR)
-                        .build());
-            } else if (suplentesIds.contains(personId)) {
-                nuevosJugadores.add(MatchPlayer.builder()
-                        .match(match)
-                        .divisionPlayer(dp)
-                        .role(MatchPlayerRole.SUPLENTE)
-                        .build());
-            }
+        Map<UUID, DivisionPlayer> divisionPlayersByPersonId = new HashMap<>();
+        for (DivisionPlayer dp : divisionPlayerRepository.findByDivisionId(match.getDivision().getId())) {
+            divisionPlayersByPersonId.putIfAbsent(dp.getPerson().getId(), dp);
         }
-        match.setStatus(MatchStatus.NOT_STARTED);
+
+        List<MatchPlayer> nuevosJugadores = new ArrayList<>();
+        Set<UUID> assignedPersonIds = new HashSet<>();
+        addRosterPlayers(match, titularesIds, MatchPlayerRole.TITULAR, divisionPlayersByPersonId, assignedPersonIds, nuevosJugadores);
+        addRosterPlayers(match, suplentesIds, MatchPlayerRole.SUPLENTE, divisionPlayersByPersonId, assignedPersonIds, nuevosJugadores);
+
+        if (match.getStatus() == null || match.getStatus() == MatchStatus.EMPTY_ROSTER) {
+            match.setStatus(MatchStatus.NOT_STARTED);
+        }
         matchRepository.save(match);
 
-        // 4. Forzamos los INSERTS en la base de datos
         matchPlayerRepository.saveAll(nuevosJugadores);
+    }
+
+    private void addRosterPlayers(
+            Match match,
+            List<UUID> personIds,
+            MatchPlayerRole role,
+            Map<UUID, DivisionPlayer> divisionPlayersByPersonId,
+            Set<UUID> assignedPersonIds,
+            List<MatchPlayer> roster) {
+        int slotOrder = 0;
+        for (UUID personId : Objects.requireNonNullElse(personIds, List.<UUID>of())) {
+            DivisionPlayer divisionPlayer = divisionPlayersByPersonId.get(personId);
+            if (divisionPlayer == null || !assignedPersonIds.add(personId)) {
+                continue;
+            }
+            roster.add(MatchPlayer.builder()
+                    .match(match)
+                    .divisionPlayer(divisionPlayer)
+                    .role(role)
+                    .slotOrder(slotOrder++)
+                    .build());
+        }
+    }
+
+    /**
+     * Valida un cambio contra el plantel del partido. El plantel guardado es la formación inicial y
+     * no se modifica: quién está en cancha se deriva de los eventos SUBSTITUTION en orden, así un
+     * cambio cargado offline o borrado después no deja el plantel desfasado.
+     */
+    public void validateSubstitution(Match match, Map<String, Object> attributes) {
+        if (match == null || attributes == null) {
+            throw new BusinessException("El cambio requiere jugadores de entrada y salida");
+        }
+
+        MatchPlayer outgoing = findRosterPlayer(match, attributes, "playerOutId", "playerOutNumber");
+        MatchPlayer incoming = findRosterPlayer(match, attributes, "playerInId", "playerInNumber");
+
+        if (outgoing == null || incoming == null) {
+            throw new BusinessException("Los jugadores indicados no pertenecen al plantel del partido");
+        }
+        if (outgoing == incoming) {
+            throw new BusinessException("El jugador que sale y el que entra deben ser distintos");
+        }
+    }
+
+    /** Busca por id de persona y, si falta, por número de slot (titulares 1-15, suplentes 16-23). */
+    private MatchPlayer findRosterPlayer(Match match, Map<String, Object> attributes,
+            String idKey, String slotKey) {
+        Object rawId = attributes.get(idKey);
+        if (rawId instanceof String id) {
+            try {
+                UUID personId = UUID.fromString(id);
+                MatchPlayer byId = match.getRoster().stream()
+                        .filter(player -> player.getDivisionPlayer().getPerson().getId().equals(personId))
+                        .findFirst()
+                        .orElse(null);
+                if (byId != null) {
+                    return byId;
+                }
+            } catch (IllegalArgumentException ignored) {
+                // Eventos sin id válido: se resuelve por número de slot.
+            }
+        }
+
+        int slot = readSlotNumber(attributes, slotKey);
+        MatchPlayerRole role = slot <= STARTER_SLOTS ? MatchPlayerRole.TITULAR : MatchPlayerRole.SUPLENTE;
+        int slotOrder = role == MatchPlayerRole.TITULAR ? slot - 1 : slot - STARTER_SLOTS - 1;
+        return match.getRoster().stream()
+                .filter(player -> player.getRole() == role && Integer.valueOf(slotOrder).equals(player.getSlotOrder()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private int readSlotNumber(Map<String, Object> attributes, String key) {
+        Object value = attributes.get(key);
+        if (!(value instanceof Number number) || number.intValue() != number.doubleValue()) {
+            throw new BusinessException("El campo " + key + " debe ser un número entero");
+        }
+        return number.intValue();
     }
 
     @Transactional(readOnly = true)
@@ -284,7 +388,6 @@ public class MatchService {
             return new RosterDTO(List.of(), List.of());
         }
 
-        // 👉 VOLVEMOS AL ORIGINAL: Devolvemos la Persona para que Angular la reconozca
         List<UUID> startingPlayers = match.getRoster().stream()
                 .filter(mp -> mp.getRole() == MatchPlayerRole.TITULAR)
                 .map(mp -> mp.getDivisionPlayer().getPerson().getId())

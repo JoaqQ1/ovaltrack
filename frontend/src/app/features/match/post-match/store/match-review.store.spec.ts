@@ -324,4 +324,22 @@ describe('MatchReviewStore (HU-8.4)', () => {
       expect(tackleLane?.isDimmed).toBeFalse();
     });
   });
+
+  it('oculta los eventos de tipos dados de baja en el catálogo', () => {
+    const base = { matchTime: 600, absoluteMatchTime: 600, period: 1, teamPossession: 'OWN' as const, origin: 'live-capture' };
+    const type = (id: string, isActive: boolean) => ({
+      id, name: id, groupName: 'G', category: 'NEUTRAL' as const, isScoring: false, points: 0, requiresPlayer: false,
+      code: id, showInPalette: true, followUpEventTypeId: null, actor: 'ATTACKING' as const,
+      possessionAfter: 'KEEP' as const, followUpChoices: [], templateEventFields: [], isActive, createdAt: '',
+    });
+    store.setEventTypesList([type('active', true), type('retired', false)]);
+    store.setEvents([
+      { ...base, id: 'a', eventTypeId: 'active', eventTypeName: 'Activo' },
+      { ...base, id: 'b', eventTypeId: 'retired', eventTypeName: 'Dado de baja' },
+      { ...base, id: 'c', eventTypeId: 'missing', eventTypeName: 'Ya no está en el catálogo' },
+    ]);
+
+    expect(store.visibleEvents().map(event => event.id)).toEqual(['a']);
+    expect(store.rawEvents().length).withContext('los eventos no se borran').toBe(3);
+  });
 });

@@ -293,6 +293,18 @@
                 @if (captureField; as field) {
                 <section class="capture__group">
                     <p class="capture__label">{{ field.label }}</p>
+                    @if (isSubstitutionField(field)) {
+                    <div class="capture__grid">
+                        @for (slot of substitutionPlayers(field); track slot.number) {
+                        <button type="button" class="capture__player"
+                            [class.is-selected]="c.values[field.key] === slot.number"
+                            (click)="chooseSubstitutionPlayer(field, slot.number)">
+                            <span class="capture__number">{{ slot.number }}</span>
+                            <span class="capture__name">{{ slot.name }}</span>
+                        </button>
+                        }
+                    </div>
+                    } @else {
                     @switch (field.type) {
                         @case ('boolean') {
                         <div class="capture__choices capture__choices--two">
@@ -326,6 +338,7 @@
                             </div>
                         </div>
                         }
+                    }
                     }
                 </section>
                 }

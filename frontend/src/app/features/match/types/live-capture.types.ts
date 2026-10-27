@@ -94,5 +94,6 @@ export interface LiveCaptureBootstrap {
   recentEvents: LocalMatchEvent[];
   eventTypes: LiveCaptureEventType[];
   rosterPlayers: AvailablePlayer[];
+  substitutePlayers?: AvailablePlayer[];
   persistedState?: LiveCapturePersistedState;
 }
