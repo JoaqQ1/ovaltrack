@@ -116,7 +116,7 @@ public class MatchService {
                 eventRepository.findEventsByMatchId(matchId).stream()
                         .map(EventDTOMapper::toResponseDTO)
                         .toList(),
-                eventTypeRepository.findByIsActiveTrue().stream()
+                eventTypeRepository.findByIsActiveTrueOrderByNameAscIdAsc().stream()
                         .map(EventDTOMapper::toResponseDTO)
                         .toList());
     }
