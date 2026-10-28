@@ -11,6 +11,9 @@ import { CalendarOptions } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { ModalComponent } from '../../modal/modal.component';
+import { ViewChild } from '@angular/core';
+import { FullCalendarComponent } from '@fullcalendar/angular';
+import multiMonthPlugin from '@fullcalendar/multimonth';
 
 @Component({
   selector: 'ot-match-history',
@@ -28,65 +31,108 @@ export class MatchHistoryComponent implements OnInit {
   matches: Match[] = [];
   userDivisions: any[] = [];
   selectedDivisionId: string = '';
- 
+  @ViewChild('calendar') calendarComponent!: FullCalendarComponent;
+  selectedMonth: string = '';
+
   selectedMatchForModal: Match | null = null;
   isMatchModalOpen = false;
   isCalendarView = false;
+  matchesForDayModal: Match[] = [];
+  isDayModalOpen = false;
 
   filterOponent: string = '';
   filterResult: 'ALL' | 'WON' | 'LOST' | 'TIED' = 'ALL';
+  filterOrderDate: 'DESC' | 'ASC' = 'DESC';
+  isPickerOpen = false;
+  pickerYear = new Date().getFullYear();
+  readonly monthsShort = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
 
   calendarOptions: CalendarOptions = {
-      initialView: 'dayGridMonth',
-      plugins: [dayGridPlugin, interactionPlugin],
-      locale: 'es',
-      buttonText: {
-        today: 'Hoy',
-        month: 'Mes',
-        week: 'Semana',
+  initialView: 'dayGridMonth',
+  plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin],
+  locale: 'es',
+  height: 'auto',
+  buttonText: { today: 'Hoy', month: 'Mes', year: 'Año' },
+  headerToolbar: {
+    left: 'prev,next today',
+    center: 'title',
+    right: 'dayGridMonth,multiMonthYear',
+  },
+  views: {
+    // "octubre 2026" (sin el "de")
+    dayGridMonth: {
+      titleFormat: (arg) => {
+        const meses = ['enero','febrero','marzo','abril','mayo','junio','julio',
+          'agosto','septiembre','octubre','noviembre','diciembre'];
+        const d = arg.date.marker;
+        return `${meses[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
       },
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: ''
-      },
-      events: [],
-      eventClick: this.handleEventClick.bind(this),
-      // -- NUEVO ESTILO DE EVENTOS --
-      eventBackgroundColor: '#1d3b20', // El verde de tus botones
-      eventBorderColor: '#1d3b20',
-      eventTextColor: '#ffffff',
-      eventDisplay: 'block',
-      eventContent: function(arg) {
-        // 1. Extraemos la hora y minutos del objeto Date del evento
-        const date = arg.event.start;
-        let timeString = '';
-        
-        if (date) {
-          const hours = String(date.getHours()).padStart(2, '0');
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          timeString = `${hours}:${minutes} hs`;
-        }
-  
-        // 2. Armamos un mini-layout HTML. 
-        // Usamos text-align: left, un color un poco más transparente para la hora, y negrita para el rival.
-        return {
-          html: `
-            <div style="padding: 4px 6px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; text-align: left;">
-              <span style="font-size: 0.75em; font-weight: 600; color: #a3cda6; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                ${timeString}
-              </span>
-              <strong style="font-size: 0.85em; white-space: normal; line-height: 1.2;">
-                ${arg.event.title}
-              </strong>
-            </div>
-          `
-        };
-      }
+    },
+    // Vista anual estilo Google Calendar: 4 columnas, letras D L M X J V S
+    multiMonthYear: {
+      titleFormat: { year: 'numeric' },
+      multiMonthTitleFormat: { month: 'long' },
+      multiMonthMaxColumns: 4,
+      multiMonthMinWidth: 220,
+      dayHeaderFormat: { weekday: 'narrow' },
+      showNonCurrentDates: false,
+      fixedWeekCount: false,
+      dayMaxEvents: false,
+    },
+  },
+  datesSet: (arg) => {
+    const d = arg.view.currentStart;
+    this.selectedMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  },
+  events: [],
+  eventClick: this.handleEventClick.bind(this),
+  dateClick: this.handleDateClick.bind(this),
+  dayCellClassNames: this.getDayClassNames.bind(this), 
+  eventBackgroundColor: '#1d3b20',
+  eventBorderColor: '#1d3b20',
+  eventTextColor: '#ffffff',
+  eventDisplay: 'block',
+  eventContent: function (arg) {
+    if (arg.view.type === 'multiMonthYear') {
+      return { html: '<span></span>' };
+    }
+    
+    // 1. Extraemos la hora y minutos
+    const date = arg.event.start;
+    let timeString = '';
+    
+    if (date) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      timeString = `${hours}:${minutes} hs`;
+    }
+
+    // 2. Extraemos el partido para sacar el resultado
+    const match = arg.event.extendedProps['match'];
+    const scoreString = (match && match.homeScore !== undefined && match.awayScore !== undefined)
+      ? `${match.homeScore} - ${match.awayScore}`
+      : '';
+
+    // 3. Armamos el layout idéntico a la imagen
+    return {
+      html: `
+        <div style="padding: 6px 8px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; text-align: left; width: 100%; box-sizing: border-box;">
+          <span style="font-size: 0.75rem; font-weight: 500; color: #a3cda6; display: flex; align-items: center; gap: 4px; line-height: 1;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            ${timeString}
+          </span>
+          <strong style="font-size: 0.85rem; font-weight: 700; color: #ffffff; white-space: normal; line-height: 1.2;">
+            ${arg.event.title}
+          </strong>
+          ${scoreString ? `<span style="font-size: 0.9rem; font-weight: 700; color: #ffffff; line-height: 1;">${scoreString}</span>` : ''}
+        </div>
+      `
+    };
+  }
     };
 
   ngOnInit(): void {
@@ -123,7 +169,19 @@ export class MatchHistoryComponent implements OnInit {
       });
     }
 
+    // C. Ordenamiento por Fecha
+    filtered = filtered.sort((a, b) => {
+      const dateA = this.parseDateForSort(a.date).getTime();
+      const dateB = this.parseDateForSort(b.date).getTime();
+      return this.filterOrderDate === 'DESC' ? dateB - dateA : dateA - dateB;
+    });
+
+
     return filtered;
+  }
+
+  toggleOrdenFecha(): void {
+    this.filterOrderDate = this.filterOrderDate === 'DESC' ? 'ASC' : 'DESC';
   }
 
   private parseDateForSort(dateInput: any): Date {
@@ -245,7 +303,7 @@ export class MatchHistoryComponent implements OnInit {
   }
 
   handleEventClick(clickInfo: any) {
-    const match = clickInfo.event.extendedProps.match;
+    const match = clickInfo.event.extendedProps['match'];
     this.selectedMatchForModal = match;
     this.isMatchModalOpen = true;
   }
@@ -263,5 +321,95 @@ export class MatchHistoryComponent implements OnInit {
   // Método para la barra de búsqueda de texto
   onSearchChange() {
     this.actualizarEventosCalendario(this.visibleMatches);
+  }
+
+  // Método para cuando el usuario usa la ruedita/selector nativo
+  onMonthChange(event: any) {
+    const calendarApi = this.calendarComponent.getApi();
+    calendarApi.gotoDate(event.target.value); // Navega al mes elegido
+  }
+
+  get currentYear(): number {
+  return Number(this.selectedMonth.slice(0, 4)) || new Date().getFullYear();
+  }
+
+  get currentMonthIdx(): number {
+    return (Number(this.selectedMonth.slice(5, 7)) || 1) - 1;
+  }
+
+  // Detecta el click sobre el título del calendario (OCTUBRE 2026)
+  onCalendarClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (target.closest('.fc-toolbar-title')) {
+      this.pickerYear = this.currentYear;
+      this.isPickerOpen = !this.isPickerOpen;
+    }
+  }
+
+  changePickerYear(delta: number): void {
+    this.pickerYear += delta;
+  }
+
+  selectMonth(monthIdx: number): void {
+    this.calendarComponent.getApi().gotoDate(new Date(this.pickerYear, monthIdx, 1));
+    this.isPickerOpen = false;
+  }
+
+  // Colorea el recuadro entero del día si tiene partido (sólo en vista anual)
+  getDayClassNames(arg: any) {
+    if (arg.view.type === 'multiMonthYear') {
+      const dayHasMatch = this.visibleMatches.some(m => {
+        const md = this.parseDateForSort(m.date);
+        return md.getFullYear() === arg.date.getFullYear() &&
+               md.getMonth() === arg.date.getMonth() &&
+               md.getDate() === arg.date.getDate();
+      });
+      return dayHasMatch ? ['day-with-match'] : [];
+    }
+    return [];
+  }
+
+  // Al hacer clic en el día (vista anual), abre el modal de tarjetas compactas
+  handleDateClick(arg: any) {
+    if (arg.view.type === 'multiMonthYear') {
+      const clickedDate = arg.date;
+      const matchesOnDay = this.visibleMatches.filter(m => {
+        const md = this.parseDateForSort(m.date);
+        return md.getFullYear() === clickedDate.getFullYear() &&
+               md.getMonth() === clickedDate.getMonth() &&
+               md.getDate() === clickedDate.getDate();
+      });
+      
+      if (matchesOnDay.length > 0) {
+        this.matchesForDayModal = matchesOnDay;
+        this.isDayModalOpen = true;
+      }
+    }
+  }
+
+  closeDayModal() {
+    this.isDayModalOpen = false;
+    this.matchesForDayModal = [];
+  }
+
+  // Helper rápido para sacar solo la hora para las tarjetas compactas
+  getMatchTime(dateInput: any): string {
+    if (Array.isArray(dateInput)) {
+      const h = dateInput[3] !== undefined ? String(dateInput[3]).padStart(2, '0') : '00';
+      const m = dateInput[4] !== undefined ? String(dateInput[4]).padStart(2, '0') : '00';
+      return `${h}:${m}`;
+    } else if (typeof dateInput === 'string') {
+      const timePart = dateInput.split('T')[1];
+      if (timePart) {
+        const [h, m] = timePart.split(':');
+        return `${h}:${m}`;
+      }
+    }
+    return '00:00';
+  }
+  openMatchDetailsFromDayModal(match: Match) {
+    this.closeDayModal();
+    this.selectedMatchForModal = match;
+    this.isMatchModalOpen = true;
   }
 }
