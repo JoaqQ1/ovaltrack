@@ -196,6 +196,12 @@ INSERT INTO matches (id, date, division_id, opponent_id, status, current_period,
 --   * Claves reservadas en attributes: playerNumber.
 --   * Turnovers: 'Turnover ganado' (forzado, se acredita a quien lo gana) y 'Error de manejo' (no forzado, se carga a quien lo pierde).
 --     Un turnover se registra una sola vez; los resultados de Maul/Scrum/Line-out ya cambian la posesión por sí solos.
+-- Ajustes post piloto (v3.1): se quitó ENTRY_22; Kick H errado ya no conserva la posesión; Amarilla sin opciones en vivo (motivo en post);
+--   Patada en juego 'Directa afuera' y '50/22' lanzan el line-out; Penal / Infracción con más motivos en el post;
+--   penales de Scrum y Line-out lanzan Penal / Infracción con preset (scrum_illegal / lineout_foul);
+--   Scrum y Line-out quedan con 4 opciones (Ganado, Perdido, Penal a favor, Penal en contra);
+--   eventos legacy ...119 (Error de manejo) y ...121 (Otro cambio de posesión) migrados a TURNOVER_WON con el equipo invertido
+--   (antes se acreditaban a quien perdía la pelota, ahora a quien la gana).
 -- Pendientes: Cambio sin campos (cambia la lista de jugadores en cancha); elegir el evento siguiente tras un penal.
 
 INSERT INTO event_types
@@ -370,8 +376,7 @@ VALUES
         "phase": "live",
         "required": true,
         "effects": [
-          "scoring",
-          "possession"
+          "scoring"
         ],
         "trueLabel": "Convertido",
         "falseLabel": "Errado"
@@ -604,24 +609,6 @@ VALUES
     CURRENT_TIMESTAMP
 ),
 (
-    '550e8400-e29b-41d4-a716-446655440127',
-    'ENTRY_22',
-    'Ingreso a 22m rival',
-    'Ataque',
-    'ATTACK',
-    false,
-    0,
-    false,
-    true,
-    true,
-    NULL,
-    'ATTACKING',
-    'KEEP',
-    $$[]$$::jsonb,
-    $$[]$$::jsonb,
-    CURRENT_TIMESTAMP
-),
-(
     '550e8400-e29b-41d4-a716-446655440110',
     'KICK_IN_PLAY',
     'Patada en juego',
@@ -683,12 +670,22 @@ VALUES
           {
             "value": "out_in_full",
             "label": "Directa afuera",
-            "possession": "OTHER"
+            "possession": "OTHER",
+            "followUps": [
+              {
+                "code": "LINEOUT"
+              }
+            ]
           },
           {
             "value": "50/22",
             "label": "50/22",
-            "possession": "KEEP"
+            "possession": "KEEP",
+            "followUps": [
+              {
+                "code": "LINEOUT"
+              }
+            ]
           }
         ]
       }
@@ -768,23 +765,13 @@ VALUES
         "options": [
           {
             "value": "won_clean",
-            "label": "Ganó propio limpio",
+            "label": "Ganado",
             "possession": "KEEP"
           },
           {
             "value": "lost_own",
-            "label": "Perdió su introducción",
+            "label": "Perdido",
             "possession": "OTHER"
-          },
-          {
-            "value": "stolen",
-            "label": "Robó introducción rival",
-            "possession": "OTHER"
-          },
-          {
-            "value": "reset",
-            "label": "Reset / Re-scrum",
-            "possession": "KEEP"
           },
           {
             "value": "penalty_for",
@@ -792,7 +779,10 @@ VALUES
             "possession": "KEEP",
             "followUps": [
               {
-                "code": "PENALTY_CONCEDED"
+                "code": "PENALTY_CONCEDED",
+                "preset": {
+                  "penaltyType": "scrum_illegal"
+                }
               }
             ]
           },
@@ -802,7 +792,10 @@ VALUES
             "possession": "OTHER",
             "followUps": [
               {
-                "code": "PENALTY_CONCEDED"
+                "code": "PENALTY_CONCEDED",
+                "preset": {
+                  "penaltyType": "scrum_illegal"
+                }
               }
             ]
           }
@@ -836,22 +829,12 @@ VALUES
         "options": [
           {
             "value": "won_clean",
-            "label": "Ganado limpio",
-            "possession": "KEEP"
-          },
-          {
-            "value": "won_dirty",
-            "label": "Ganado sucio",
+            "label": "Ganado",
             "possession": "KEEP"
           },
           {
             "value": "lost",
-            "label": "Perdido (Parabrisas/Errado)",
-            "possession": "OTHER"
-          },
-          {
-            "value": "stolen",
-            "label": "Robado al rival",
+            "label": "Perdido",
             "possession": "OTHER"
           },
           {
@@ -860,12 +843,9 @@ VALUES
             "possession": "KEEP",
             "followUps": [
               {
-                "code": "PENALTY_KICK"
-              },
-              {
-                "code": "KICK_TO_TOUCH",
+                "code": "PENALTY_CONCEDED",
                 "preset": {
-                  "kind": "penalty_touch"
+                  "penaltyType": "lineout_foul"
                 }
               }
             ]
@@ -876,12 +856,9 @@ VALUES
             "possession": "OTHER",
             "followUps": [
               {
-                "code": "PENALTY_KICK"
-              },
-              {
-                "code": "KICK_TO_TOUCH",
+                "code": "PENALTY_CONCEDED",
                 "preset": {
-                  "kind": "penalty_touch"
+                  "penaltyType": "lineout_foul"
                 }
               }
             ]
@@ -1298,6 +1275,46 @@ VALUES
           {
             "value": "maul_illegal",
             "label": "Derrumbe / infracción en Maul"
+          },
+          {
+            "value": "hands_in_ruck",
+            "label": "Manos en el ruck / juega la pelota en el suelo"
+          },
+          {
+            "value": "dangerous_tackle",
+            "label": "Tackle peligroso (sin brazos / en el aire)"
+          },
+          {
+            "value": "late_tackle",
+            "label": "Tackle tardío"
+          },
+          {
+            "value": "obstruction",
+            "label": "Obstrucción"
+          },
+          {
+            "value": "deliberate_knock_on",
+            "label": "Knock-on intencional"
+          },
+          {
+            "value": "not_ten_meters",
+            "label": "No retrocede los 10 m"
+          },
+          {
+            "value": "foul_play",
+            "label": "Juego sucio / peligroso"
+          },
+          {
+            "value": "dissent",
+            "label": "Protesta / Falta de respeto"
+          },
+          {
+            "value": "time_wasting",
+            "label": "Demora de juego"
+          },
+          {
+            "value": "other",
+            "label": "Otro"
           }
         ]
       }
@@ -1324,8 +1341,8 @@ VALUES
         "key": "reason",
         "label": "Motivo",
         "type": "select",
-        "phase": "live",
-        "required": true,
+        "phase": "post",
+        "required": false,
         "options": [
           {
             "value": "high_tackle",
@@ -1531,10 +1548,10 @@ INSERT INTO events (id, match_id, event_type_id, player_id, period, match_time, 
     ('51b9a6f4-6196-45af-a068-dde72ad9b34f', '11111111-1111-1111-1111-000000000040', '550e8400-e29b-41d4-a716-446655440110', NULL, 1, 426, 428, '2026-10-17 17:12:19.736', 'OPPONENT', '{"outcome": "opp_possession", "playerNumber": 4}'::jsonb, 'live-capture', true, '931be833-ca23-415c-9da8-2949e191481c', '2026-10-17 17:12:19.754', '2026-10-17 17:12:19.753'),
     ('5ce7a5ea-722c-4603-9339-528acee5b788', '11111111-1111-1111-1111-000000000040', '550e8400-e29b-41d4-a716-446655440122', NULL, 1, 505, 507, '2026-10-17 17:13:38.458', 'OPPONENT', '{"penaltyType": "offside", "playerNumber": 5}'::jsonb, 'live-capture', true, 'cd283e88-e286-46f3-bc86-02a1a3e382f4', '2026-10-17 17:13:38.480', '2026-10-17 17:13:38.479'),
     ('3be402d8-cfb2-4420-818d-f056a4d31462', '11111111-1111-1111-1111-000000000040', '550e8400-e29b-41d4-a716-446655440104', '11111111-1111-1111-1111-000000000110', 1, 510, 512, '2026-10-17 17:13:43.349', 'OWN', '{"playerNumber": 10, "wasSuccessful": true}'::jsonb, 'live-capture', true, 'b6a99249-28bb-40b1-a82d-baedb376f6c8', '2026-10-17 17:13:43.375', '2026-10-17 17:13:43.373'),
-    ('88654ed2-f72b-4216-b967-25f104567fdd', '11111111-1111-1111-1111-000000000040', '550e8400-e29b-41d4-a716-446655440121', NULL, 1, 520, 522, '2026-10-17 17:13:53.673', 'OPPONENT', NULL, 'live-capture', true, '31d266fd-432a-460d-837d-f77602f57991', '2026-10-17 17:13:53.698', '2026-10-17 17:13:53.697'),
+    ('88654ed2-f72b-4216-b967-25f104567fdd', '11111111-1111-1111-1111-000000000040', '550e8400-e29b-41d4-a716-446655440117', NULL, 1, 520, 522, '2026-10-17 17:13:53.673', 'OWN', NULL, 'live-capture', true, '31d266fd-432a-460d-837d-f77602f57991', '2026-10-17 17:13:53.698', '2026-10-17 17:13:53.697'),
     ('a308d767-4614-4296-9726-948c1a96b639', '11111111-1111-1111-1111-000000000040', '550e8400-e29b-41d4-a716-446655440120', '11111111-1111-1111-1111-000000000112', 1, 529, 530, '2026-10-17 17:14:02.268', 'OWN', '{"playerNumber": 12, "receptionQuality": "contested_won"}'::jsonb, 'live-capture', true, '58bbb5a6-3d35-4db0-a982-1cc9607be30c', '2026-10-17 17:14:02.293', '2026-10-17 17:14:02.291'),
     ('dea5b59b-ba43-4a80-bfd5-b27909590f40', '11111111-1111-1111-1111-000000000040', '550e8400-e29b-41d4-a716-446655440120', '11111111-1111-1111-1111-000000000113', 1, 538, 539, '2026-10-17 17:14:11.255', 'OWN', '{"playerNumber": 13, "receptionQuality": "contested_won"}'::jsonb, 'live-capture', true, '25c0d597-fed8-4230-b56e-1e0c9a313a15', '2026-10-17 17:14:11.283', '2026-10-17 17:14:11.281'),
-    ('7ec5264d-abc9-4dce-83e5-b2dd10c57dae', '11111111-1111-1111-1111-000000000040', '550e8400-e29b-41d4-a716-446655440119', NULL, 1, 587, 590, '2026-10-17 17:15:01.337', 'OWN', '{"errorType": "knock_on"}'::jsonb, 'live-capture', true, '5e7e5a3f-fa6c-49cf-9d7e-d5a3099ffc72', '2026-10-17 17:15:01.376', '2026-10-17 17:15:01.375'),
+    ('7ec5264d-abc9-4dce-83e5-b2dd10c57dae', '11111111-1111-1111-1111-000000000040', '550e8400-e29b-41d4-a716-446655440117', NULL, 1, 587, 590, '2026-10-17 17:15:01.337', 'OPPONENT', '{"stealType": "knock_on"}'::jsonb, 'live-capture', true, '5e7e5a3f-fa6c-49cf-9d7e-d5a3099ffc72', '2026-10-17 17:15:01.376', '2026-10-17 17:15:01.375'),
     ('169114b2-daea-4497-90f3-3a8589862040', '11111111-1111-1111-1111-000000000040', '550e8400-e29b-41d4-a716-446655440120', NULL, 1, 592, 595, '2026-10-17 17:15:06.458', 'OPPONENT', '{"receptionQuality": "contested_won"}'::jsonb, 'live-capture', true, 'cc6801ac-c471-401c-9aa1-443e601db20d', '2026-10-17 17:15:06.481', '2026-10-17 17:15:06.481'),
     ('23d3c1ff-ba3d-4a2e-9bc3-6bc8bdb50db4', '11111111-1111-1111-1111-000000000040', '550e8400-e29b-41d4-a716-446655440120', NULL, 1, 596, 599, '2026-10-17 17:15:10.688', 'OPPONENT', '{"receptionQuality": "fumbled"}'::jsonb, 'live-capture', true, 'ba60e223-2604-409d-951f-17e4f1006468', '2026-10-17 17:15:10.708', '2026-10-17 17:15:10.708'),
     ('6de3a0bb-b1a9-4a07-b276-3adba6a30f52', '11111111-1111-1111-1111-000000000040', '550e8400-e29b-41d4-a716-446655440120', NULL, 1, 599, 601, '2026-10-17 17:15:13.174', 'OWN', '{"receptionQuality": "clean_mark"}'::jsonb, 'live-capture', true, 'a6e41584-dba8-4159-ae49-84b3a318537a', '2026-10-17 17:15:13.196', '2026-10-17 17:15:13.196'),
@@ -1544,7 +1561,7 @@ INSERT INTO events (id, match_id, event_type_id, player_id, period, match_time, 
     ('0f5f1814-99ae-4407-a1cd-6f3fc34dab12', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440122', NULL, 1, 50, 50, '2026-10-17 19:09:38.657', 'OWN', '{"penaltyType": "side_entry"}'::jsonb, 'live-capture', true, 'f5991201-2692-4759-83a4-f4b0c396dd6a', '2026-10-17 19:09:38.687', '2026-10-17 19:09:38.685'),
     ('ccb594f9-fb43-4b4f-b2e1-fd71629a74ae', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440128', NULL, 1, 57, 57, '2026-10-17 19:09:45.685', 'OPPONENT', '{"kind": "penalty_touch", "playerNumber": 10}'::jsonb, 'live-capture', true, '72f77134-6a18-4267-9d86-6c3d32125017', '2026-10-17 19:09:45.708', '2026-10-17 19:09:45.707'),
     ('333df087-35fa-4447-80e4-00ac37e7d887', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 71, 71, '2026-10-17 19:09:59.621', 'OPPONENT', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', true, '6dc5fcff-2aca-4445-932f-bf724da35d65', '2026-10-17 19:09:59.660', '2026-10-17 19:09:59.659'),
-    ('7effc9c5-9399-4160-ad2f-3b9646782ad7', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 1, 130, 130, '2026-10-17 19:10:58.794', 'OPPONENT', NULL, 'live-capture', true, '70e3857b-9a6b-4d2b-9093-21bdf352738a', '2026-10-17 19:10:58.823', '2026-10-17 19:10:58.821'),
+    ('7effc9c5-9399-4160-ad2f-3b9646782ad7', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 1, 130, 130, '2026-10-17 19:10:58.794', 'OWN', NULL, 'live-capture', true, '70e3857b-9a6b-4d2b-9093-21bdf352738a', '2026-10-17 19:10:58.823', '2026-10-17 19:10:58.821'),
     ('b2e6bb64-54b8-416e-8c55-20f6d587b4cd', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440110', NULL, 1, 142, 142, '2026-10-17 19:11:10.723', 'OWN', '{"outcome": "opp_possession"}'::jsonb, 'live-capture', true, '5372cec4-561c-40a1-a936-43bf2abea325', '2026-10-17 19:11:10.742', '2026-10-17 19:11:10.740'),
     ('816b4979-7b30-4a21-b62b-2be626ca5eeb', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440122', NULL, 1, 236, 236, '2026-10-17 19:12:44.225', 'OPPONENT', '{"penaltyType": "holding_on"}'::jsonb, 'live-capture', true, '62b81443-707a-4190-829a-2b24c2318a2d', '2026-10-17 19:12:44.278', '2026-10-17 19:12:44.276'),
     ('663620bd-51aa-487c-b8e1-ba65e41a7e3e', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440128', '11111111-1111-1111-1111-000000000110', 1, 244, 244, '2026-10-17 19:12:52.103', 'OWN', '{"kind": "penalty_touch", "playerNumber": 10}'::jsonb, 'live-capture', true, 'e842c36e-bbd7-425e-bf02-99080f1a2ba5', '2026-10-17 19:12:52.135', '2026-10-17 19:12:52.133'),
@@ -1553,9 +1570,9 @@ INSERT INTO events (id, match_id, event_type_id, player_id, period, match_time, 
     ('268519e9-fb87-4821-b61b-d36e809a4a63', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440101', NULL, 1, 281, 281, '2026-10-17 19:13:29.828', 'OPPONENT', '{"zone": "left"}'::jsonb, 'live-capture', true, '0476f0cd-b26b-47d1-8cd0-6c97f3ca570d', '2026-10-17 19:13:29.849', '2026-10-17 19:13:29.847'),
     ('2ed4f014-11e3-4063-809d-4b76b591a46c', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440102', NULL, 1, 337, 337, '2026-10-17 19:14:25.112', 'OPPONENT', '{"wasSuccessful": false}'::jsonb, 'live-capture', true, '1c04fc88-56a1-4492-b0a6-ae82d0e1571e', '2026-10-17 19:14:25.143', '2026-10-17 19:14:25.141'),
     ('ce96ce37-e347-44d9-a527-32bf68d4d0f4', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440113', '11111111-1111-1111-1111-000000000110', 1, 372, 372, '2026-10-17 19:15:00.481', 'OWN', '{"outcome": "received_clean", "playerNumber": 10}'::jsonb, 'live-capture', true, 'c6df7b78-01d5-45ea-97ac-79fbaddb9ca4', '2026-10-17 19:15:00.502', '2026-10-17 19:15:00.500'),
-    ('874833c5-3f6c-468d-b989-b671692b15b5', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440119', NULL, 1, 411, 411, '2026-10-17 19:15:39.547', 'OPPONENT', '{"errorType": "knock_on"}'::jsonb, 'live-capture', true, '8d86c8f8-a5ab-453f-8b5c-e49b0ee58db6', '2026-10-17 19:15:39.581', '2026-10-17 19:15:39.579'),
+    ('874833c5-3f6c-468d-b989-b671692b15b5', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 1, 411, 411, '2026-10-17 19:15:39.547', 'OWN', '{"stealType": "knock_on"}'::jsonb, 'live-capture', true, '8d86c8f8-a5ab-453f-8b5c-e49b0ee58db6', '2026-10-17 19:15:39.581', '2026-10-17 19:15:39.579'),
     ('16457158-73a2-4dfe-85ce-230f42d8b75c', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 1, 434, 434, '2026-10-17 19:16:02.759', 'OWN', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', true, 'c876c450-9779-496f-884f-e1dd040f7b2b', '2026-10-17 19:16:02.789', '2026-10-17 19:16:02.787'),
-    ('e00bf5ae-6426-4689-819b-2c11679ea261', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 1, 489, 489, '2026-10-17 19:16:57.468', 'OWN', NULL, 'live-capture', true, '234ed36f-7cf7-4048-858f-b93ec4c0ed87', '2026-10-17 19:16:57.498', '2026-10-17 19:16:57.496'),
+    ('e00bf5ae-6426-4689-819b-2c11679ea261', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 1, 489, 489, '2026-10-17 19:16:57.468', 'OPPONENT', NULL, 'live-capture', true, '234ed36f-7cf7-4048-858f-b93ec4c0ed87', '2026-10-17 19:16:57.498', '2026-10-17 19:16:57.496'),
     ('8137b9a0-0c17-4986-83b6-9fc24d523ef3', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 499, 499, '2026-10-17 19:17:07.388', 'OPPONENT', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', true, 'b02178dd-6330-4de5-b02f-c28d89a3fd84', '2026-10-17 19:17:07.421', '2026-10-17 19:17:07.419'),
     ('f8860a64-dec6-4e15-985e-9ab7a1e0383d', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440109', NULL, 1, 503, 503, '2026-10-17 19:17:11.324', 'OPPONENT', NULL, 'live-capture', true, 'c4e33682-cbb3-4ebf-bd70-61341c947aad', '2026-10-17 19:17:11.352', '2026-10-17 19:17:11.350'),
     ('1ccf0cf7-7a24-4a5b-8773-f8897db68d46', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440109', NULL, 1, 508, 508, '2026-10-17 19:17:16.246', 'OPPONENT', NULL, 'live-capture', true, '2e0e7e76-afec-46de-98b1-70f843edbdc8', '2026-10-17 19:17:16.265', '2026-10-17 19:17:16.264'),
@@ -1565,8 +1582,8 @@ INSERT INTO events (id, match_id, event_type_id, player_id, period, match_time, 
     ('9a4135bd-7e33-485e-aecc-f422a8268ce3', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440102', NULL, 1, 712, 712, '2026-10-17 19:20:40.649', 'OPPONENT', '{"playerNumber": 15, "wasSuccessful": false}'::jsonb, 'live-capture', true, 'dfa8a427-de6b-4e55-91ba-c31c8d282e13', '2026-10-17 19:20:40.673', '2026-10-17 19:20:40.671'),
     ('59760b74-a068-4ef2-a429-25ba124e6db2', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440113', '11111111-1111-1111-1111-000000000110', 1, 736, 755, '2026-10-17 19:21:22.923', 'OWN', '{"outcome": "received_clean", "playerNumber": 10}'::jsonb, 'live-capture', true, '8f04775d-e35a-4375-81d1-780f7146d208', '2026-10-17 19:21:22.982', '2026-10-17 19:21:22.979'),
     ('d2efb71d-b0dd-4043-b55b-b3652caca725', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440110', NULL, 1, 745, 764, '2026-10-17 19:21:31.970', 'OPPONENT', '{"outcome": "out_in_full"}'::jsonb, 'live-capture', true, 'db2bdacc-c1ae-4a53-84a2-a1dc4b5c7b10', '2026-10-17 19:21:32.004', '2026-10-17 19:21:32.003'),
-    ('addbb3ab-64f1-420b-8ef8-52d85ae5a3a4', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 758, 776, '2026-10-17 19:21:44.262', 'OWN', '{"lineResult": "stolen"}'::jsonb, 'live-capture', true, 'c0aaac52-8207-4506-b98e-093ce77f5bad', '2026-10-17 19:21:44.293', '2026-10-17 19:21:44.291'),
-    ('bc61e2c0-0fce-4a6c-9c31-63f0f9635e9b', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 1, 797, 815, '2026-10-17 19:22:23.204', 'OPPONENT', NULL, 'live-capture', true, '4ddc326f-e430-4cfc-ba62-68b5ca64bafd', '2026-10-17 19:22:23.234', '2026-10-17 19:22:23.233'),
+    ('addbb3ab-64f1-420b-8ef8-52d85ae5a3a4', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 758, 776, '2026-10-17 19:21:44.262', 'OWN', '{"lineResult": "lost"}'::jsonb, 'live-capture', true, 'c0aaac52-8207-4506-b98e-093ce77f5bad', '2026-10-17 19:21:44.293', '2026-10-17 19:21:44.291'),
+    ('bc61e2c0-0fce-4a6c-9c31-63f0f9635e9b', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 1, 797, 815, '2026-10-17 19:22:23.204', 'OWN', NULL, 'live-capture', true, '4ddc326f-e430-4cfc-ba62-68b5ca64bafd', '2026-10-17 19:22:23.234', '2026-10-17 19:22:23.233'),
     ('94e0741f-fe2f-4238-a140-d89be7d1460b', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 822, 840, '2026-10-17 19:22:48.491', 'OPPONENT', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', true, 'db2b6786-fcff-43f2-8172-a3330d3e5498', '2026-10-17 19:22:48.521', '2026-10-17 19:22:48.520'),
     ('86d12c3b-a92e-40eb-9f0a-97d048c29de5', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440122', NULL, 1, 840, 859, '2026-10-17 19:23:06.877', 'OPPONENT', '{"penaltyType": "side_entry"}'::jsonb, 'live-capture', true, 'f153332c-543c-4343-a180-5ad52e010b51', '2026-10-17 19:23:06.894', '2026-10-17 19:23:06.892'),
     ('6623b0d0-b93d-4872-9331-7adf83a3fe39', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 868, 887, '2026-10-17 19:23:35.068', 'OWN', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', true, 'ca8635cf-c440-4bc7-ad5c-02c4666a3dea', '2026-10-17 19:23:35.098', '2026-10-17 19:23:35.096'),
@@ -1577,11 +1594,11 @@ INSERT INTO events (id, match_id, event_type_id, player_id, period, match_time, 
     ('27f8c773-5b46-48c4-ac7a-aa25d0e2e7ca', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440101', NULL, 1, 957, 975, '2026-10-17 19:25:03.230', 'OPPONENT', '{"zone": "center", "playerNumber": 8}'::jsonb, 'live-capture', true, '71b1a155-2588-4b03-8d9f-58053355d9ca', '2026-10-17 19:25:03.243', '2026-10-17 19:25:03.242'),
     ('2a0a3e21-1a15-4732-b8e7-d28e0f755252', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440102', NULL, 1, 985, 1003, '2026-10-17 19:25:31.134', 'OPPONENT', '{"playerNumber": 15, "wasSuccessful": true}'::jsonb, 'live-capture', true, 'deae0cab-2d3d-4d2a-ba9b-a09c6c5bff1d', '2026-10-17 19:25:31.164', '2026-10-17 19:25:31.162'),
     ('e64ad6a3-90cc-49f5-af87-030cdba93cb4', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440113', NULL, 1, 1024, 1042, '2026-10-17 19:26:10.244', 'OWN', '{"outcome": "received_clean"}'::jsonb, 'live-capture', true, 'b41418fe-5747-46c2-8869-cf4418f7ae70', '2026-10-17 19:26:10.277', '2026-10-17 19:26:10.276'),
-    ('864539bb-a515-48c2-8591-becb7de20404', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 1, 1037, 1055, '2026-10-17 19:26:23.584', 'OPPONENT', NULL, 'live-capture', true, '08e414eb-16fe-41f7-b4af-2e9f75caa810', '2026-10-17 19:26:23.612', '2026-10-17 19:26:23.610'),
+    ('864539bb-a515-48c2-8591-becb7de20404', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 1, 1037, 1055, '2026-10-17 19:26:23.584', 'OWN', NULL, 'live-capture', true, '08e414eb-16fe-41f7-b4af-2e9f75caa810', '2026-10-17 19:26:23.612', '2026-10-17 19:26:23.610'),
     ('77d1cc01-abf8-41b6-9ea1-aa4cec5bc8b0', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 1069, 1087, '2026-10-17 19:26:55.291', 'OWN', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', false, '64170d60-c613-4b85-a2b3-962e74e1edbd', '2026-10-17 19:26:55.321', '2026-10-17 19:27:05.143'),
     ('17e603b0-c85b-46ca-a32e-5b7f66c5dc10', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 1097, 1115, '2026-10-17 19:27:23.524', 'OWN', '{"lineResult": "penalty_against"}'::jsonb, 'live-capture', true, '21151ed0-8021-4962-a45c-46a8b61718fc', '2026-10-17 19:27:23.555', '2026-10-17 19:27:23.553'),
     ('bc4a7d05-27ad-4c88-bf72-fd3c3fb479e4', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 1, 1111, 1130, '2026-10-17 19:27:37.947', 'OPPONENT', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', true, '46573d72-3a83-479f-9a7f-768d8ec1d403', '2026-10-17 19:27:37.976', '2026-10-17 19:27:37.975'),
-    ('c9e3179e-c9d1-4725-be5b-5f378117c883', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 1, 1150, 1169, '2026-10-17 19:28:17.110', 'OPPONENT', NULL, 'live-capture', true, 'ce06c796-a298-4910-95bf-e4da28b0f2d3', '2026-10-17 19:28:17.122', '2026-10-17 19:28:17.121'),
+    ('c9e3179e-c9d1-4725-be5b-5f378117c883', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 1, 1150, 1169, '2026-10-17 19:28:17.110', 'OWN', NULL, 'live-capture', true, 'ce06c796-a298-4910-95bf-e4da28b0f2d3', '2026-10-17 19:28:17.122', '2026-10-17 19:28:17.121'),
     ('74abb56c-74b7-4891-8951-1899b29e146c', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 1, 1208, 1227, '2026-10-17 19:29:15.058', 'OWN', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', true, '686d83b2-9234-422a-b434-bbb56c33ba32', '2026-10-17 19:29:15.087', '2026-10-17 19:29:15.086'),
     ('1c8c87a6-6620-46b0-90fa-4425d08a2f13', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440110', NULL, 1, 1218, 1237, '2026-10-17 19:29:25.110', 'OWN', '{"outcome": "out_in_full"}'::jsonb, 'live-capture', true, '96652771-060f-4c71-bc7e-88ae0cb3e7e4', '2026-10-17 19:29:25.140', '2026-10-17 19:29:25.139'),
     ('4c2840bb-3ae6-4147-8f14-bad215ff763b', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 1240, 1258, '2026-10-17 19:29:46.808', 'OPPONENT', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', true, '2c0b6167-7701-4b66-9ed7-e80b0b0e6a1e', '2026-10-17 19:29:46.834', '2026-10-17 19:29:46.833'),
@@ -1589,7 +1606,7 @@ INSERT INTO events (id, match_id, event_type_id, player_id, period, match_time, 
     ('0a50db10-acf2-4262-9902-8bef47a65173', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 1, 1389, 1407, '2026-10-17 19:32:15.704', 'OPPONENT', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', false, '02ea4a15-4f21-46c3-9101-939ae0c0d84f', '2026-10-17 19:32:15.731', '2026-10-17 19:32:21.440'),
     ('3acd4d52-bedd-4d99-acdc-b876389aa706', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 1, 1401, 1419, '2026-10-17 19:32:27.797', 'OPPONENT', '{"scrumResult": "penalty_for"}'::jsonb, 'live-capture', true, 'dadc66dc-3e7e-4873-8333-41ccd02ea331', '2026-10-17 19:32:27.825', '2026-10-17 19:32:27.824'),
     ('1c6cc3ab-3dcf-4dc2-883c-65f37484772f', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440128', NULL, 1, 1414, 1432, '2026-10-17 19:32:40.423', 'OPPONENT', '{"kind": "penalty_touch"}'::jsonb, 'live-capture', true, 'd7e611b5-fcdf-4990-94e6-71d95b9380bb', '2026-10-17 19:32:40.445', '2026-10-17 19:32:40.444'),
-    ('d3d87ed5-8d62-401b-bcba-d9680e5e47d7', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 1, 1438, 1457, '2026-10-17 19:33:05.071', 'OPPONENT', NULL, 'live-capture', true, 'da23f359-e2b3-406a-928d-28c1c2ea9269', '2026-10-17 19:33:05.094', '2026-10-17 19:33:05.092'),
+    ('d3d87ed5-8d62-401b-bcba-d9680e5e47d7', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 1, 1438, 1457, '2026-10-17 19:33:05.071', 'OWN', NULL, 'live-capture', true, 'da23f359-e2b3-406a-928d-28c1c2ea9269', '2026-10-17 19:33:05.094', '2026-10-17 19:33:05.092'),
     ('0ef9e8cb-c07e-41f9-bb8c-ed5561152dd1', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440122', NULL, 1, 1480, 1498, '2026-10-17 19:33:46.546', 'OWN', '{"penaltyType": "holding_on"}'::jsonb, 'live-capture', true, 'dc0d427b-c406-46a5-b121-1aaf22374bbc', '2026-10-17 19:33:46.571', '2026-10-17 19:33:46.570'),
     ('a3a27695-1755-4ca1-8f2d-bd27566c0493', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440128', NULL, 1, 1483, 1501, '2026-10-17 19:33:49.691', 'OPPONENT', '{"kind": "penalty_touch"}'::jsonb, 'live-capture', true, 'e4cd2594-78ce-4ceb-b393-b27ff46c5a47', '2026-10-17 19:33:49.717', '2026-10-17 19:33:49.713'),
     ('d430f6b6-4d6e-4baa-8d35-0b6e9f7c0c56', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 1505, 1523, '2026-10-17 19:34:11.802', 'OWN', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', true, 'b9281d12-665f-4aba-b99a-2f8c4e29cbe2', '2026-10-17 19:34:11.828', '2026-10-17 19:34:11.827'),
@@ -1597,7 +1614,7 @@ INSERT INTO events (id, match_id, event_type_id, player_id, period, match_time, 
     ('5f432660-fe91-46cf-972f-1468f104ef0b', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440101', '11111111-1111-1111-1111-000000000108', 1, 1626, 1645, '2026-10-17 19:36:13.445', 'OWN', '{"zone": "center", "playerNumber": 8}'::jsonb, 'live-capture', true, 'e16e1651-8943-417a-be6a-21fc1783e31d', '2026-10-17 19:36:13.461', '2026-10-17 19:36:13.460'),
     ('8f41afd8-caed-4ee5-a339-ffa00f9b52fb', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440102', '11111111-1111-1111-1111-000000000115', 1, 1634, 1653, '2026-10-17 19:36:21.477', 'OWN', '{"playerNumber": 15, "wasSuccessful": true}'::jsonb, 'live-capture', true, 'dbd1e47b-45bc-4307-929a-21c039ef3d26', '2026-10-17 19:36:21.509', '2026-10-17 19:36:21.507'),
     ('abb49554-70d3-49f5-9c50-5d18e03ca1d5', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440110', NULL, 1, 1685, 1704, '2026-10-17 19:37:12.785', 'OPPONENT', '{"outcome": "opp_possession"}'::jsonb, 'live-capture', true, '9c8f21a2-1d5f-4cf7-bf3f-babbfa0f5d97', '2026-10-17 19:37:12.815', '2026-10-17 19:37:12.814'),
-    ('f0b27c59-705f-41b0-a199-84d12d9d61b4', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 1, 1741, 1760, '2026-10-17 19:38:08.723', 'OWN', NULL, 'live-capture', true, '6a98e59c-f9e6-4e21-b1f2-ae1c511235f5', '2026-10-17 19:38:08.746', '2026-10-17 19:38:08.745'),
+    ('f0b27c59-705f-41b0-a199-84d12d9d61b4', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 1, 1741, 1760, '2026-10-17 19:38:08.723', 'OPPONENT', NULL, 'live-capture', true, '6a98e59c-f9e6-4e21-b1f2-ae1c511235f5', '2026-10-17 19:38:08.746', '2026-10-17 19:38:08.745'),
     ('fba9a95b-ee2f-4fcd-a4fd-9c1242e79871', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440109', NULL, 1, 1750, 1769, '2026-10-17 19:38:17.292', 'OPPONENT', NULL, 'live-capture', true, '1be0b9a5-d667-49c4-b7cf-da229a5cee5c', '2026-10-17 19:38:17.330', '2026-10-17 19:38:17.329'),
     ('59accf18-2fa5-4fce-b8b8-88dee2e3e1be', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440101', NULL, 1, 1768, 1787, '2026-10-17 19:38:35.297', 'OPPONENT', '{"zone": "left"}'::jsonb, 'live-capture', true, 'e7fc97d6-85d7-4c00-a6d4-b2bdc697ce24', '2026-10-17 19:38:35.325', '2026-10-17 19:38:35.324'),
     ('6b3bc139-df73-4564-94ec-56fbf2bf1851', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440102', NULL, 1, 1797, 1816, '2026-10-17 19:39:04.708', 'OPPONENT', '{"wasSuccessful": true}'::jsonb, 'live-capture', true, '56dd349c-9a0d-4ec4-80a2-44a610e9800d', '2026-10-17 19:39:04.731', '2026-10-17 19:39:04.730'),
@@ -1611,7 +1628,7 @@ INSERT INTO events (id, match_id, event_type_id, player_id, period, match_time, 
     ('59e2aa19-b9b2-47a6-abee-785a7d0c7739', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440128', NULL, 1, 1975, 1994, '2026-10-17 19:42:02.638', 'OWN', '{"kind": "penalty_touch"}'::jsonb, 'live-capture', true, 'e12bf0a9-4f19-4565-b4d8-41de6c94e5e9', '2026-10-17 19:42:02.661', '2026-10-17 19:42:02.660'),
     ('76dc9c3c-99a2-4197-a700-2c1f90ffd7c5', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 2000, 2020, '2026-10-17 19:42:28.070', 'OWN', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', false, 'ff166a1c-e410-4d38-a39e-cc1ce8389828', '2026-10-17 19:42:28.098', '2026-10-17 19:43:00.477'),
     ('2934a722-fda7-40e9-956f-74a888838123', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 2038, 2057, '2026-10-17 19:43:05.203', 'OWN', '{"lineResult": "penalty_against"}'::jsonb, 'live-capture', false, 'ed734daf-c62a-47f1-8593-fde568e623ed', '2026-10-17 19:43:05.252', '2026-10-17 19:43:27.488'),
-    ('2b7898e2-4332-4ba9-aa6a-426e54162802', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 2074, 2094, '2026-10-17 19:43:41.925', 'OWN', '{"lineResult": "stolen"}'::jsonb, 'live-capture', true, 'f2f05b27-1f1b-491c-ab68-a1c5e277a8e8', '2026-10-17 19:43:41.959', '2026-10-17 19:43:41.958'),
+    ('2b7898e2-4332-4ba9-aa6a-426e54162802', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 2074, 2094, '2026-10-17 19:43:41.925', 'OWN', '{"lineResult": "lost"}'::jsonb, 'live-capture', true, 'f2f05b27-1f1b-491c-ab68-a1c5e277a8e8', '2026-10-17 19:43:41.959', '2026-10-17 19:43:41.958'),
     ('77f5411e-b12e-4a2f-a037-9acec8568e08', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440110', NULL, 1, 2082, 2101, '2026-10-17 19:43:49.187', 'OPPONENT', '{"outcome": "out_in_full"}'::jsonb, 'live-capture', true, '42a1c7f8-c93f-4e70-a92c-2225b53a503c', '2026-10-17 19:43:49.214', '2026-10-17 19:43:49.212'),
     ('6db6b6f8-789d-4dcb-a26a-9067662a7a87', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 1, 2088, 2107, '2026-10-17 19:43:55.766', 'OWN', '{"lineResult": "lost"}'::jsonb, 'live-capture', true, 'e1c0b4e6-0e7a-4d4b-8d5c-e99e033eb56f', '2026-10-17 19:43:55.793', '2026-10-17 19:43:55.792'),
     ('757d3167-3be7-485e-be82-cf4fe9b14ea8', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440109', NULL, 1, 2096, 2115, '2026-10-17 19:44:03.781', 'OPPONENT', NULL, 'live-capture', true, 'dee47cca-f474-485a-ae76-f6bc734f9cd0', '2026-10-17 19:44:03.804', '2026-10-17 19:44:03.803'),
@@ -1619,38 +1636,38 @@ INSERT INTO events (id, match_id, event_type_id, player_id, period, match_time, 
     ('bedb4ea6-1fa9-42c9-b53a-2e08dcfcccd6', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 1, 2384, 2513, '2026-10-17 19:50:41.689', 'OWN', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', true, '0670b402-d1c6-4c97-a5c8-fe1187a125d1', '2026-10-17 19:50:41.714', '2026-10-17 19:50:41.713'),
     ('a802f37d-a1e7-4e66-beea-b426d466a029', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440101', '11111111-1111-1111-1111-000000000110', 1, 2399, 2528, '2026-10-17 19:50:56.811', 'OWN', '{"zone": "left", "playerNumber": 10}'::jsonb, 'live-capture', true, '3f9b4bbe-ee9e-4583-90ff-5df2846a9a8b', '2026-10-17 19:50:56.826', '2026-10-17 19:50:56.825'),
     ('6a8384bb-794b-4e17-a6ce-0bda04236646', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440113', NULL, 2, 3186, 3426, '2026-10-17 20:05:54.038', 'OPPONENT', '{"outcome": "regained_attack"}'::jsonb, 'live-capture', false, 'dbe42bcc-23ca-4cb2-8285-debf04a90eb9', '2026-10-17 20:05:54.167', '2026-10-17 20:06:26.844'),
-    ('c99799ca-ebe7-47cd-aabd-1e8a7120f518', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440119', NULL, 2, 3228, 3467, '2026-10-17 20:06:35.402', 'OWN', '{"errorType": "knock_on"}'::jsonb, 'live-capture', false, '18c40e81-3590-471b-bd7a-6ead895c613a', '2026-10-17 20:06:35.533', '2026-10-17 20:06:51.205'),
-    ('6389b6ba-b27a-4046-975a-a5b14a8be432', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 1, 2098, 2117, '2026-10-17 19:44:05.681', 'OPPONENT', NULL, 'live-capture', true, '0ee84640-e65c-4b83-8f29-cc82195ac0a9', '2026-10-17 19:44:05.705', '2026-10-17 19:44:05.704'),
+    ('c99799ca-ebe7-47cd-aabd-1e8a7120f518', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 2, 3228, 3467, '2026-10-17 20:06:35.402', 'OPPONENT', '{"stealType": "knock_on"}'::jsonb, 'live-capture', false, '18c40e81-3590-471b-bd7a-6ead895c613a', '2026-10-17 20:06:35.533', '2026-10-17 20:06:51.205'),
+    ('6389b6ba-b27a-4046-975a-a5b14a8be432', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 1, 2098, 2117, '2026-10-17 19:44:05.681', 'OWN', NULL, 'live-capture', true, '0ee84640-e65c-4b83-8f29-cc82195ac0a9', '2026-10-17 19:44:05.705', '2026-10-17 19:44:05.704'),
     ('3c8b42c3-827d-4d8f-97b7-6b37fefbd06c', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440122', NULL, 1, 2138, 2157, '2026-10-17 19:44:45.329', 'OWN', '{"penaltyType": "holding_on"}'::jsonb, 'live-capture', true, '6013f173-2d26-4255-a74f-34a63d50b56b', '2026-10-17 19:44:45.357', '2026-10-17 19:44:45.355'),
-    ('89d790a1-cd4e-489e-881d-9a5419a7b502', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 1, 2171, 2191, '2026-10-17 19:45:18.991', 'OPPONENT', NULL, 'live-capture', true, '66f2d832-99a9-4ec1-bbf7-8b6d7de4ed79', '2026-10-17 19:45:19.004', '2026-10-17 19:45:19.003'),
+    ('89d790a1-cd4e-489e-881d-9a5419a7b502', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 1, 2171, 2191, '2026-10-17 19:45:18.991', 'OWN', NULL, 'live-capture', true, '66f2d832-99a9-4ec1-bbf7-8b6d7de4ed79', '2026-10-17 19:45:19.004', '2026-10-17 19:45:19.003'),
     ('04813272-23b1-4b3d-b84d-cb67376efeeb', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 1, 2163, 2182, '2026-10-17 19:45:10.376', 'OPPONENT', '{"scrumResult": "penalty_for"}'::jsonb, 'live-capture', true, '99764f36-6d13-411a-b878-4a797ad176db', '2026-10-17 19:45:10.402', '2026-10-17 19:45:10.400'),
     ('99b5f2ab-fa7f-426d-949e-b03c1c09f7f4', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440126', '11111111-1111-1111-1111-000000000103', 1, 2255, 2347, '2026-10-17 19:47:55.074', 'OWN', '{"playerNumber": 3}'::jsonb, 'live-capture', true, '8209ecaa-8ffb-4605-8b05-76dc6efca711', '2026-10-17 19:47:55.090', '2026-10-17 19:47:55.089'),
     ('32108a69-5e97-41e8-ac57-cdf30ca0aaf7', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 1, 2255, 2376, '2026-10-17 19:48:24.565', 'OWN', '{"scrumResult": "penalty_for"}'::jsonb, 'live-capture', true, '5de920dd-badc-4c54-9557-e537a47759ef', '2026-10-17 19:48:24.593', '2026-10-17 19:48:24.592'),
     ('2d1a824a-03c8-4d3c-9637-a546aa2dce3b', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440113', NULL, 2, 3225, 3464, '2026-10-17 20:06:32.718', 'OPPONENT', '{"outcome": "received_clean"}'::jsonb, 'live-capture', false, '3d7ef2b2-0598-44c2-85f7-c1c69e545a80', '2026-10-17 20:06:32.859', '2026-10-17 20:06:51.682'),
     ('57a0d980-8506-4c0f-a837-2cd59f2b55ac', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440113', NULL, 2, 3251, 3490, '2026-10-17 20:06:58.773', 'OPPONENT', '{"outcome": "regained_attack"}'::jsonb, 'live-capture', true, '777ec1e6-9e65-4a2a-a61f-4197e47e6d6b', '2026-10-17 20:06:58.816', '2026-10-17 20:06:58.815'),
-    ('aca0d450-7294-4234-9f99-6d5d279fa596', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440119', NULL, 2, 3253, 3493, '2026-10-17 20:07:01.099', 'OPPONENT', '{"errorType": "knock_on"}'::jsonb, 'live-capture', true, '452c08af-68e8-4a0c-9f4f-44e4b0f3d2fb', '2026-10-17 20:07:01.144', '2026-10-17 20:07:01.143'),
+    ('aca0d450-7294-4234-9f99-6d5d279fa596', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 2, 3253, 3493, '2026-10-17 20:07:01.099', 'OWN', '{"stealType": "knock_on"}'::jsonb, 'live-capture', true, '452c08af-68e8-4a0c-9f4f-44e4b0f3d2fb', '2026-10-17 20:07:01.144', '2026-10-17 20:07:01.143'),
     ('e5e35c29-ba52-430c-a656-b67ca0ac4d4f', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 2, 3256, 3496, '2026-10-17 20:07:04.016', 'OWN', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', true, '2c2d68ea-c54f-41f3-b121-96fdee0aee03', '2026-10-17 20:07:04.054', '2026-10-17 20:07:04.053'),
     ('25dbec95-1065-4cd1-a3ea-a0d33b76c04f', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440109', NULL, 2, 3260, 3499, '2026-10-17 20:07:07.235', 'OWN', NULL, 'live-capture', true, 'cf34c9ff-3d19-4c3f-81e2-81a9384328a2', '2026-10-17 20:07:07.272', '2026-10-17 20:07:07.271'),
     ('d153a9de-8007-48c6-a518-060d363b9e4d', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440122', NULL, 2, 3282, 3554, '2026-10-17 20:08:02.643', 'OPPONENT', '{"penaltyType": "high_tackle"}'::jsonb, 'live-capture', true, '80fcc6de-9845-4ced-afec-db622b2c3948', '2026-10-17 20:08:02.681', '2026-10-17 20:08:02.680'),
     ('a7a2989a-d4e2-49c7-b6bb-7b90b05826c1', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 2, 3317, 3600, '2026-10-17 20:08:48.033', 'OWN', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', true, 'e28ddd2d-cea0-4e6d-93f8-c74812183561', '2026-10-17 20:08:48.075', '2026-10-17 20:08:48.074'),
-    ('a6c7ba95-dd59-4d78-8e7b-9189a47cacbb', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440119', NULL, 2, 3326, 3609, '2026-10-17 20:08:56.919', 'OWN', '{"errorType": "knock_on"}'::jsonb, 'live-capture', true, '5b5536f3-48bd-45b4-9e7f-b51ede1a4307', '2026-10-17 20:08:56.965', '2026-10-17 20:08:56.964'),
+    ('a6c7ba95-dd59-4d78-8e7b-9189a47cacbb', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 2, 3326, 3609, '2026-10-17 20:08:56.919', 'OPPONENT', '{"stealType": "knock_on"}'::jsonb, 'live-capture', true, '5b5536f3-48bd-45b4-9e7f-b51ede1a4307', '2026-10-17 20:08:56.965', '2026-10-17 20:08:56.964'),
     ('08f8044f-48a2-4794-ae7d-4652b0659ef0', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 2, 3373, 3656, '2026-10-17 20:09:44.164', 'OPPONENT', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', true, 'a8495707-9fba-480e-b752-dd882c586950', '2026-10-17 20:09:44.202', '2026-10-17 20:09:44.201'),
     ('4a85d6d3-c193-43cf-87a7-442fa94cf61e', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440122', NULL, 2, 3375, 3781, '2026-10-17 20:11:49.369', 'OWN', '{"penaltyType": "offside"}'::jsonb, 'live-capture', true, '02e9f707-515c-4f01-aa3f-668c6a163f19', '2026-10-17 20:11:49.430', '2026-10-17 20:11:49.429'),
     ('b10c9f04-e1ea-4881-85c4-741304ba9f7b', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 2, 3375, 3802, '2026-10-17 20:12:10.253', 'OPPONENT', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', true, '42869bd9-6df8-49ac-b364-ff9bb8adcf25', '2026-10-17 20:12:10.334', '2026-10-17 20:12:10.333'),
     ('2cb40725-b1e8-4289-8582-f3dc90920bc8', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440122', NULL, 2, 3375, 3847, '2026-10-17 20:12:55.629', 'OPPONENT', '{"penaltyType": "side_entry"}'::jsonb, 'live-capture', true, '42f2227d-256d-4959-9a95-1ab4032d7326', '2026-10-17 20:12:55.675', '2026-10-17 20:12:55.673'),
     ('2c1074a7-2a01-438b-bd98-aff84ecc2f08', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440128', NULL, 2, 3375, 3854, '2026-10-17 20:13:02.708', 'OWN', '{"kind": "penalty_touch"}'::jsonb, 'live-capture', true, 'dd190dee-975a-415c-80d1-b0b6aba616b6', '2026-10-17 20:13:02.746', '2026-10-17 20:13:02.745'),
     ('77ece904-2e6a-4a11-b721-43d50d1ec583', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 2, 3390, 3876, '2026-10-17 20:13:24.151', 'OWN', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', true, '823c888b-bb95-43e9-bbcf-3c588a429815', '2026-10-17 20:13:24.194', '2026-10-17 20:13:24.193'),
-    ('3e3f91ba-c109-41ab-9fcb-8d8a0ac566cf', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 2, 3395, 3881, '2026-10-17 20:13:29.000', 'OWN', NULL, 'live-capture', true, '4c467413-f5ad-4223-9604-c965e8d7afba', '2026-10-17 20:13:29.044', '2026-10-17 20:13:29.043'),
-    ('0e3ee475-c8f1-4e0b-8535-63494146e6c1', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 2, 3440, 3926, '2026-10-17 20:14:14.286', 'OWN', NULL, 'live-capture', false, '0515c6a5-8914-4010-b825-c14aa8190c21', '2026-10-17 20:14:14.326', '2026-10-17 20:14:17.488'),
-    ('280eb22d-7f91-4360-8a10-10264a136df6', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 2, 3438, 3924, '2026-10-17 20:14:12.183', 'OPPONENT', NULL, 'live-capture', false, 'a42a26a4-9123-4df4-962c-c3f30600b0bf', '2026-10-17 20:14:12.226', '2026-10-17 20:14:19.236'),
+    ('3e3f91ba-c109-41ab-9fcb-8d8a0ac566cf', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 2, 3395, 3881, '2026-10-17 20:13:29.000', 'OPPONENT', NULL, 'live-capture', true, '4c467413-f5ad-4223-9604-c965e8d7afba', '2026-10-17 20:13:29.044', '2026-10-17 20:13:29.043'),
+    ('0e3ee475-c8f1-4e0b-8535-63494146e6c1', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 2, 3440, 3926, '2026-10-17 20:14:14.286', 'OPPONENT', NULL, 'live-capture', false, '0515c6a5-8914-4010-b825-c14aa8190c21', '2026-10-17 20:14:14.326', '2026-10-17 20:14:17.488'),
+    ('280eb22d-7f91-4360-8a10-10264a136df6', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 2, 3438, 3924, '2026-10-17 20:14:12.183', 'OWN', NULL, 'live-capture', false, 'a42a26a4-9123-4df4-962c-c3f30600b0bf', '2026-10-17 20:14:12.226', '2026-10-17 20:14:19.236'),
     ('b96c6703-07a3-40b6-9a39-a6dc982fd7f1', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440122', NULL, 2, 3452, 3937, '2026-10-17 20:14:25.698', 'OWN', '{"penaltyType": "offside"}'::jsonb, 'live-capture', true, 'd09fcf67-5621-4d15-a750-05f89ed32155', '2026-10-17 20:14:25.738', '2026-10-17 20:14:25.737'),
-    ('36e9843f-4a98-4b30-b31e-db655a52412c', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 2, 3492, 3977, '2026-10-17 20:15:05.685', 'OPPONENT', NULL, 'live-capture', true, '50805859-eac5-4a76-bbb8-f4426ad241e7', '2026-10-17 20:15:05.726', '2026-10-17 20:15:05.725'),
-    ('a194dd25-3fee-43f2-b296-43f62efd9334', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 2, 3542, 4028, '2026-10-17 20:15:56.356', 'OWN', '{"scrumResult": "reset"}'::jsonb, 'live-capture', true, 'a4fffdcc-acb5-45d2-897d-8b04684cbce7', '2026-10-17 20:15:56.399', '2026-10-17 20:15:56.399'),
+    ('36e9843f-4a98-4b30-b31e-db655a52412c', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 2, 3492, 3977, '2026-10-17 20:15:05.685', 'OWN', NULL, 'live-capture', true, '50805859-eac5-4a76-bbb8-f4426ad241e7', '2026-10-17 20:15:05.726', '2026-10-17 20:15:05.725'),
+    ('a194dd25-3fee-43f2-b296-43f62efd9334', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 2, 3542, 4028, '2026-10-17 20:15:56.356', 'OWN', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', true, 'a4fffdcc-acb5-45d2-897d-8b04684cbce7', '2026-10-17 20:15:56.399', '2026-10-17 20:15:56.399'),
     ('43028091-1b63-499f-97bf-07278389d05f', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 2, 3572, 4057, '2026-10-17 20:16:25.534', 'OWN', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', true, 'ee690c7c-4dfb-4fe1-b415-eff0c09d701f', '2026-10-17 20:16:25.555', '2026-10-17 20:16:25.555'),
     ('01b2671b-dcde-4396-9cb6-22154830d02a', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440110', NULL, 2, 3575, 4060, '2026-10-17 20:16:28.666', 'OWN', '{"outcome": "opp_possession"}'::jsonb, 'live-capture', true, '5798d5bd-2134-4bb6-9ea4-f59df59d919c', '2026-10-17 20:16:28.706', '2026-10-17 20:16:28.705'),
-    ('b21f4616-32fa-4bbb-8112-6fd2b6961d04', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440121', NULL, 2, 3582, 4067, '2026-10-17 20:16:35.703', 'OPPONENT', NULL, 'live-capture', true, '35ba1146-4a23-4555-b053-4b3333acd1d6', '2026-10-17 20:16:35.724', '2026-10-17 20:16:35.723'),
+    ('b21f4616-32fa-4bbb-8112-6fd2b6961d04', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 2, 3582, 4067, '2026-10-17 20:16:35.703', 'OWN', NULL, 'live-capture', true, '35ba1146-4a23-4555-b053-4b3333acd1d6', '2026-10-17 20:16:35.724', '2026-10-17 20:16:35.723'),
     ('a59394b7-3b82-431a-b211-838e0e1adb84', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440110', NULL, 2, 3606, 4091, '2026-10-17 20:16:59.786', 'OWN', '{"outcome": "opp_possession"}'::jsonb, 'live-capture', true, 'ea2da54d-c42a-4602-b52a-a10d88de9fed', '2026-10-17 20:16:59.822', '2026-10-17 20:16:59.822'),
-    ('0535bad5-1921-4562-bc22-aedf68886938', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440119', NULL, 2, 3638, 4124, '2026-10-17 20:17:31.855', 'OPPONENT', '{"errorType": "knock_on"}'::jsonb, 'live-capture', true, '0e12582b-3bf2-46bf-bf21-5cf4b31ad279', '2026-10-17 20:17:31.895', '2026-10-17 20:17:31.894'),
+    ('0535bad5-1921-4562-bc22-aedf68886938', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 2, 3638, 4124, '2026-10-17 20:17:31.855', 'OWN', '{"stealType": "knock_on"}'::jsonb, 'live-capture', true, '0e12582b-3bf2-46bf-bf21-5cf4b31ad279', '2026-10-17 20:17:31.895', '2026-10-17 20:17:31.894'),
     ('c472deb3-2388-4c4f-b1e6-fca1cf87ce5a', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 2, 3687, 4172, '2026-10-17 20:18:20.614', 'OWN', '{"scrumResult": "penalty_against"}'::jsonb, 'live-capture', true, '3d67706c-4d50-42f4-ab95-547f55d17c88', '2026-10-17 20:18:20.654', '2026-10-17 20:18:20.654'),
     ('2b97e11c-4f8a-4c55-ab4c-f46ed8fbb165', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440101', NULL, 2, 3719, 4204, '2026-10-17 20:18:52.519', 'OPPONENT', '{"zone": "right"}'::jsonb, 'live-capture', true, '502c4895-2925-4643-a09f-aa8618e68699', '2026-10-17 20:18:52.569', '2026-10-17 20:18:52.568'),
     ('47367576-7637-4c4e-a47c-44756bb138ea', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440102', NULL, 2, 3760, 4245, '2026-10-17 20:19:33.603', 'OPPONENT', '{"wasSuccessful": false}'::jsonb, 'live-capture', true, 'afc06a5e-a00b-4499-bd0e-cc6873fa94cc', '2026-10-17 20:19:33.637', '2026-10-17 20:19:33.636'),
@@ -1667,7 +1684,7 @@ INSERT INTO events (id, match_id, event_type_id, player_id, period, match_time, 
     ('4aa4b444-6f77-48a5-a1d4-ff02a2662e98', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440101', NULL, 2, 4048, 4534, '2026-10-17 20:24:21.867', 'OWN', '{"zone": "left"}'::jsonb, 'live-capture', true, 'fb1e5c6d-efb1-470c-8d5c-d72de3b5ac84', '2026-10-17 20:24:21.899', '2026-10-17 20:24:21.898'),
     ('e4bab5fc-12dd-4272-8e61-c1a1e2790e8a', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440102', '11111111-1111-1111-1111-000000000115', 2, 4084, 4570, '2026-10-17 20:24:58.330', 'OWN', '{"playerNumber": 15, "wasSuccessful": false}'::jsonb, 'live-capture', true, '5d4854e7-8a6a-496e-8239-8bd6652545d0', '2026-10-17 20:24:58.382', '2026-10-17 20:24:58.380'),
     ('ec9c3932-e96c-4b53-a4b0-676e47943d31', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440113', NULL, 2, 4136, 4622, '2026-10-17 20:25:50.257', 'OPPONENT', '{"outcome": "regained_attack"}'::jsonb, 'live-capture', true, '810d763a-fc25-47f9-b036-6a912c4838a9', '2026-10-17 20:25:50.290', '2026-10-17 20:25:50.289'),
-    ('c597bfe0-c39c-4535-84ac-1038d102b1b6', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440119', NULL, 2, 4141, 4626, '2026-10-17 20:25:54.698', 'OPPONENT', '{"errorType": "knock_on"}'::jsonb, 'live-capture', true, 'e9cd1a54-b44b-4311-9ac5-a9c250ef1869', '2026-10-17 20:25:54.737', '2026-10-17 20:25:54.736'),
+    ('c597bfe0-c39c-4535-84ac-1038d102b1b6', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 2, 4141, 4626, '2026-10-17 20:25:54.698', 'OWN', '{"stealType": "knock_on"}'::jsonb, 'live-capture', true, 'e9cd1a54-b44b-4311-9ac5-a9c250ef1869', '2026-10-17 20:25:54.737', '2026-10-17 20:25:54.736'),
     ('dab1a9c1-b860-4912-8549-935f433f6952', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440128', '11111111-1111-1111-1111-000000000115', 2, 4264, 4749, '2026-10-17 20:27:57.783', 'OWN', '{"kind": "penalty_touch", "playerNumber": 15}'::jsonb, 'live-capture', true, '372f2f0c-f024-40a3-ba9e-7446dda00562', '2026-10-17 20:27:57.830', '2026-10-17 20:27:57.829'),
     ('72a29692-28b0-4586-8d23-b8a9e6eb51aa', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440110', NULL, 2, 4293, 4779, '2026-10-17 20:28:27.450', 'OPPONENT', '{"outcome": "out_in_full"}'::jsonb, 'live-capture', true, 'f5cf72b5-df43-471a-a883-de2b81ac2a1f', '2026-10-17 20:28:27.489', '2026-10-17 20:28:27.488'),
     ('e68fa5ca-84fb-4279-983b-a736abc75531', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 2, 4317, 4803, '2026-10-17 20:28:51.340', 'OWN', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', true, 'c26c94fb-4363-4847-8f8a-871bf39b5766', '2026-10-17 20:28:51.381', '2026-10-17 20:28:51.380'),
@@ -1676,12 +1693,12 @@ INSERT INTO events (id, match_id, event_type_id, player_id, period, match_time, 
     ('eebc8376-4f57-40aa-acac-b69815fc9ab4', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440128', NULL, 2, 4460, 4945, '2026-10-17 20:31:13.639', 'OPPONENT', '{"kind": "penalty_touch"}'::jsonb, 'live-capture', true, '0ed7dfb8-e842-46f7-961e-7959d58c1577', '2026-10-17 20:31:13.682', '2026-10-17 20:31:13.680'),
     ('696a4f7e-e103-4cc4-9ae9-683750192e01', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 2, 4495, 4980, '2026-10-17 20:31:48.667', 'OPPONENT', '{"lineResult": "penalty_against"}'::jsonb, 'live-capture', true, '26ed2c3f-a4c4-4591-88d2-4fc1cd08368b', '2026-10-17 20:31:48.714', '2026-10-17 20:31:48.712'),
     ('9134146b-33e3-4186-9fff-6f34372b9f20', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440101', NULL, 2, 4615, 5101, '2026-10-17 20:33:49.366', 'OPPONENT', '{"zone": "center"}'::jsonb, 'live-capture', true, 'bdbbb55a-157e-466e-8456-931b80a4c92f', '2026-10-17 20:33:49.400', '2026-10-17 20:33:49.399'),
-    ('98841f97-b21f-4fd1-bb7f-d7c1d9d4ca60', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 2, 4181, 4667, '2026-10-17 20:26:34.852', 'OWN', '{"scrumResult": "reset"}'::jsonb, 'live-capture', true, '43b8f1ee-a81e-4df6-b2fd-73dcc0504321', '2026-10-17 20:26:34.874', '2026-10-17 20:26:34.873'),
+    ('98841f97-b21f-4fd1-bb7f-d7c1d9d4ca60', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 2, 4181, 4667, '2026-10-17 20:26:34.852', 'OWN', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', true, '43b8f1ee-a81e-4df6-b2fd-73dcc0504321', '2026-10-17 20:26:34.874', '2026-10-17 20:26:34.873'),
     ('abf84c34-046d-4f63-ab92-35e59f8c204f', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440111', NULL, 2, 4213, 4698, '2026-10-17 20:27:06.549', 'OWN', '{"scrumResult": "won_clean"}'::jsonb, 'live-capture', true, '9e43fda2-dbc4-400a-8377-63784e8f8316', '2026-10-17 20:27:06.592', '2026-10-17 20:27:06.591'),
     ('dbd44f46-6601-4c75-856b-1599c20e09cd', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440122', NULL, 2, 4252, 4738, '2026-10-17 20:27:46.244', 'OPPONENT', '{"penaltyType": "side_entry"}'::jsonb, 'live-capture', true, 'd5354757-743c-49c3-a11f-163e51659287', '2026-10-17 20:27:46.265', '2026-10-17 20:27:46.264'),
-    ('844efaa7-bbfc-472f-90a6-64f5cf34f6ee', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 2, 4291, 4777, '2026-10-17 20:28:24.925', 'OWN', '{"lineResult": "stolen"}'::jsonb, 'live-capture', true, 'ad22a6ff-ce23-4bd0-8e25-e25fca75bac4', '2026-10-17 20:28:24.953', '2026-10-17 20:28:24.953'),
+    ('844efaa7-bbfc-472f-90a6-64f5cf34f6ee', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 2, 4291, 4777, '2026-10-17 20:28:24.925', 'OWN', '{"lineResult": "lost"}'::jsonb, 'live-capture', true, 'ad22a6ff-ce23-4bd0-8e25-e25fca75bac4', '2026-10-17 20:28:24.953', '2026-10-17 20:28:24.953'),
     ('d47c61f9-c8c9-4fbc-aee4-5521eb6bbfb7', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440128', NULL, 2, 4396, 4881, '2026-10-17 20:30:09.620', 'OWN', '{"kind": "penalty_touch"}'::jsonb, 'live-capture', true, 'ac77cbcb-898b-4fe7-a163-d2bf8b2e38ac', '2026-10-17 20:30:09.660', '2026-10-17 20:30:09.659'),
-    ('c273a759-5592-45ca-a6a8-0a842857ca39', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 2, 4418, 4903, '2026-10-17 20:30:31.794', 'OWN', '{"lineResult": "won_dirty"}'::jsonb, 'live-capture', true, '9ce40357-07dc-4085-a796-655306777d76', '2026-10-17 20:30:31.837', '2026-10-17 20:30:31.836'),
+    ('c273a759-5592-45ca-a6a8-0a842857ca39', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 2, 4418, 4903, '2026-10-17 20:30:31.794', 'OWN', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', true, '9ce40357-07dc-4085-a796-655306777d76', '2026-10-17 20:30:31.837', '2026-10-17 20:30:31.836'),
     ('51d7a97b-6203-478b-ae52-b5ae3eee6148', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440122', NULL, 2, 4523, 5009, '2026-10-17 20:32:17.203', 'OWN', '{"penaltyType": "holding_on"}'::jsonb, 'live-capture', true, 'afd5b1c3-af30-432f-8873-e978553ceea0', '2026-10-17 20:32:17.239', '2026-10-17 20:32:17.238'),
     ('cac16e16-1b5f-44ba-aaa1-efa7ef5b5b6d', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440128', NULL, 2, 4535, 5021, '2026-10-17 20:32:29.313', 'OPPONENT', '{"kind": "penalty_touch"}'::jsonb, 'live-capture', true, 'a8f4d6b1-fee2-4bb4-9ba9-62d9ff35c4c8', '2026-10-17 20:32:29.349', '2026-10-17 20:32:29.348'),
     ('d42c57a2-dd27-4f70-bb27-9b38ee2b60b8', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 2, 4563, 5049, '2026-10-17 20:32:57.189', 'OPPONENT', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', true, '909fb632-406d-45ef-acd2-43b883f7f148', '2026-10-17 20:32:57.226', '2026-10-17 20:32:57.225'),
