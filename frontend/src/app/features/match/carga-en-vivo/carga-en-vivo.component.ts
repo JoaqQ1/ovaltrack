@@ -1251,7 +1251,20 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       const type = this.eventTypes.find(candidate => candidate.code === choice.code);
       return type ? [{ type, label: choice.label ?? type.name, preset: choice.preset }] : [];
     });
-    if (resolved.length > 0) {
+
+    if (resolved.length === 1) {
+      const [choice] = resolved;
+      this.openCapture(
+        choice.type,
+        this.createHistoryId(),
+        this.currentPossession,
+        null,
+        choice.preset ?? {},
+      );
+      return;
+    }
+
+    if (resolved.length > 1) {
       this.followUpChooser = { title: event.name, choices: resolved };
     }
   }
