@@ -33,7 +33,7 @@ interface CaptureStep {
 }
 
 /**
- * Sesión del modal de captura. Los pasos se arman a partir del evento:
+ * Sesión del modal de captura. Los pasos se arman a partir del Fono:
  * `[jugador si requiresPlayer] + [un paso por cada campo con phase = 'live']`.
  * Cada toque en una opción avanza; el último paso guarda el evento.
  */
@@ -147,6 +147,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   private clockStartedAt: number | null = null;
   private matchStartedAt: number | null = null;
   private clockTimer: ReturnType<typeof setInterval> | null = null;
+  private pausedEventConfirmationId: string | null = null;
 
 
   currentPossession: Possession = 'OWN';
@@ -155,7 +156,6 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   /** Solo lo que se dibuja en la botonera (showInPalette). */
   categories: EventCategoryGroup[] = [];
   history: HistoryItem[] = [];
-  errorMessage = '';
   isLoading = true;
   theme: 'light' | 'dark' = 'light';
   private events: LocalMatchEvent[] = [];
@@ -176,7 +176,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     const matchId = this.route?.snapshot.paramMap.get('matchId');
     if (!matchId) {
-      this.errorMessage = 'No se indicó un partido válido.';
+      this.showError('No se indicó un partido válido.');
       this.isLoading = false;
       return;
     }
@@ -243,7 +243,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       },
       error: (error: HttpErrorResponse) => {
-        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
+        this.showError(this.readBackendError(error) ?? 'Ocurrió un error inesperado.');
         this.isLoading = false;
       },
     });
@@ -308,6 +308,16 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.clockPaused) {
+      if (this.pausedEventConfirmationId !== event.id) {
+        this.pausedEventConfirmationId = event.id;
+        this.toastService.warning('Toca de nuevo para ignorar', 'Tiempo parado', 2000);
+        return;
+      }
+      this.toastService.clear();
+      this.pausedEventConfirmationId = null;
+    }
+
     this.openCapture(event, this.createHistoryId(), this.currentPossession, null);
   }
 
@@ -362,7 +372,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
           });
       },
       error: (error: HttpErrorResponse) => {
-        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
+        this.showError(this.readBackendError(error) ?? 'Ocurrió un error inesperado.');
       },
     });
   }
@@ -415,6 +425,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.clockPaused = !this.clockPaused;
 
     if (!this.clockPaused) {
+      this.pausedEventConfirmationId = null;
       this.startClock();
     }
 
@@ -464,7 +475,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.isStartingMatch = false;
-        this.errorMessage = 'No se pudo iniciar el partido. Inténtalo nuevamente.';
+        this.showError('No se pudo iniciar el partido. Inténtalo nuevamente.');
       },
     });
   }
@@ -501,8 +512,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       this.router?.navigate(['/post-match/', this.matchId]);
     } catch (error: any) {
       this.synchronized = false;
-      this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error al finalizar el partido.';
-      this.toastService.error(this.errorMessage);
+      this.showError(this.readBackendError(error) ?? 'Ocurrió un error al finalizar el partido.');
     }
   }
 
@@ -616,7 +626,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     this.liveCaptureService.saveLiveCaptureState(state).subscribe({
       error: (error: HttpErrorResponse) => {
-        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
+        this.showError(this.readBackendError(error) ?? 'Ocurrió un error inesperado.');
       },
     });
   }
@@ -719,7 +729,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.persistState();
       },
       error: (error: HttpErrorResponse) => {
-        this.errorMessage = this.readBackendError(error) ?? 'Ocurrió un error inesperado.';
+        this.showError(this.readBackendError(error) ?? 'Ocurrió un error inesperado.');
       },
     });
   }
@@ -893,7 +903,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
           if (type.actor === 'DEFENDING') {
             return opposite(actor);
           }
-          // CHOOSE sin cambio (tarjetas, lesión, cambio): no informa quién tiene la pelota.
+        // CHOOSE sin cambio (tarjetas, lesión, cambio): no informa quién tiene la pelota.
       }
     }
     return null;
@@ -934,7 +944,12 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         }
 
         return categories;
-      }, []);
+      }, [])
+      .sort((firstCategory, secondCategory) =>
+        secondCategory.name.localeCompare(firstCategory.name, 'es', {
+          sensitivity: 'base',
+        }),
+      );
   }
 
   togglePeriod() {
@@ -953,6 +968,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     }
 
     this.persistState();
+  }
+
+  private showError(message: string): void {
+    this.toastService.error(message, 'Error', 0);
   }
 
   private readBackendError(error: HttpErrorResponse): string | null {
@@ -1023,7 +1042,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     if (resolved === null && !event.requiresPlayer) {
       steps.push({ kind: 'team' });
     }
-    if (event.requiresPlayer) {
+    if (event.requiresPlayer && resolved !== 'OPPONENT') {
       steps.push({ kind: 'player' });
     }
     liveFields(event)
@@ -1079,6 +1098,19 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     }
     this.capture.team = team;
     this.capture.playerNumber = null;
+
+    const playerStepIndex = this.capture.steps.findIndex(step => step.kind === 'player');
+    if (team === 'OPPONENT' && playerStepIndex >= 0) {
+      this.capture.steps.splice(playerStepIndex, 1);
+      if (this.capture.stepIndex > playerStepIndex) {
+        this.capture.stepIndex -= 1;
+      }
+      if (this.capture.steps.length === 0 || this.capture.stepIndex >= this.capture.steps.length) {
+        this.advanceCapture();
+      }
+    } else if (team === 'OWN' && playerStepIndex < 0) {
+      this.capture.steps.unshift({ kind: 'player' });
+    }
   }
 
   /** `null` = «Sin jugador». */
@@ -1180,7 +1212,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   ): void {
     const attributes: Record<string, unknown> = {
       ...values,
-      ...(playerNumber != null ? { playerNumber } : {}),
+      ...(team === 'OWN' && playerNumber != null ? { playerNumber } : {}),
     };
     if (event.code === 'SUBSTITUTION' && team === 'OWN') {
       const outgoing = this.playersByStartingNumber.get(Number(values['playerOutNumber']));
