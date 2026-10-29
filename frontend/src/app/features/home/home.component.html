@@ -38,18 +38,11 @@
             <line x1="12" y1="16" x2="12.01" y2="16"></line>
           </svg>
         </div>
-        @if (isPlayer()) {
-          <h4 class="warning-title fw-semibold">Portal del Jugador en desarrollo</h4>
-          <p class="warning-desc mx-auto mb-0" style="max-width: 480px">
-            Próximamente podrás consultar tus convocatorias, estado de ficha médica y estadísticas personales de rendimiento en tu club.
-          </p>
-        } @else {
-          <h4 class="warning-title fw-semibold">Cuenta pendiente de asignación</h4>
+        <h4 class="warning-title fw-semibold">Cuenta pendiente de asignación</h4>
           <p class="warning-desc mx-auto mb-0" style="max-width: 480px">
             Tu usuario está registrado, pero un administrador del club aún debe
             asignarte un rol deportivo o de gestión para habilitar las secciones.
           </p>
-        }
       </section>
     } @else {
       <!-- Grid de tarjetas dinámicas según rol -->

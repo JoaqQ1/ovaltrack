@@ -20,6 +20,7 @@ export class UserContextService {
   readonly userContext = this.contextSignal.asReadonly();
   readonly currentClub = computed<ClubSummary | null>(() => this.contextSignal()?.club ?? null);
   readonly currentRole = computed<UserRole | null>(() => this.contextSignal()?.role ?? null);
+  readonly personId = computed<string | null>(() => this.contextSignal()?.personId ?? null);
   readonly activeDivisions = computed<Division[]>(() => this.contextSignal()?.activeDivisions ?? []);
 
   readonly fullName = computed<string>(() => {

@@ -42,7 +42,7 @@ export class HomeComponent {
       description: 'Consulta de categorías, listados de equipos y gestión de convocatorias.',
       route: '/divisions',
       badge: 'Gestión',
-      allowedRoles: ['ADMIN_CLUB', 'COACH_ANALYST', 'PLAYER', 'ADMIN_OVALTRACK'] as UserRole[],
+      allowedRoles: ['ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK'] as UserRole[],
       icon: 'division'
     },
     {
@@ -68,14 +68,23 @@ export class HomeComponent {
       badge: 'Staff',
       allowedRoles: ['ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK'] as UserRole[],
       icon: 'player'
+    },
+    // Panel de jugador
+    {
+      title: 'Estadisticas del jugador',
+      description: 'Revision de tus estadisticas.',
+      route: '/player-statistics',
+      badge: 'Player',
+      allowedRoles: ['PLAYER'] as UserRole[],
+      icon: 'player'
     }
   ];
 
-  readonly isPlayer = computed(() => this.currentUser()?.role === 'PLAYER');
-
   readonly visibleCards = computed(() => {
     const user = this.currentUser();
-    if (!user || user.role === 'PLAYER') return [];
+    if(user)
+      console.log(user.role)
+    if (!user) return [];
     const roleCards = this.allNavigationCards.filter(card => card.allowedRoles.includes(user.role));
     return user.role === 'ADMIN_OVALTRACK'
       ? roleCards.filter(card => card.route === '/admin/ovaltrack')
