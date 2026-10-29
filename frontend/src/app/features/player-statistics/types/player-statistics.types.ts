@@ -71,7 +71,6 @@ export interface PlayerMatchHistory {
   ownScore: number;
   opponentScore: number;
   isStarter: boolean;
-  minutesPlayed: number;
   totalPoints: number;
   tries: number;
   conversionsMade: number;
@@ -80,4 +79,5 @@ export interface PlayerMatchHistory {
   penaltyKickAttempts: number;
   yellowCards: number;
   redCards: number;
+  divisionName: string;
 }
