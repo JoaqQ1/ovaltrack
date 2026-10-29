@@ -1,3 +1,5 @@
+import { PlayerStatColumn, PlayerStatistic } from '../../match/statistics/types/statistic.types';
+
 /** Resultado de un partido desde la perspectiva del club del jugador. */
 export type MatchResult = 'win' | 'loss' | 'draw';
 
@@ -16,6 +18,14 @@ export interface PlayerMatchDTO {
   role: MatchPlayerRole;
   /** Número de slot en la planilla (titulares 1-15, suplentes 16-23). */
   slotNumber: number | null;
+}
+
+/** Estadísticas del jugador autenticado en un partido, calculadas desde los eventos. */
+export interface PlayerMatchStatistic {
+  match: PlayerMatchDTO;
+  /** Tipos de evento que requieren jugador, con su `code` y `groupName` del catálogo. */
+  columns: PlayerStatColumn[];
+  stat: PlayerStatistic;
 }
 
 /** Filtro del historial según el rol del jugador en el partido. */
