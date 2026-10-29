@@ -210,6 +210,17 @@ export const routes: Routes = [
         component: OpponentManagerComponent
     },
     {
+        path: 'post-match/:id/zones',
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            layout: 'wide'
+        },
+        loadComponent: () => import('./features/match/post-match/components/post-match-zones/post-match-zones.component')
+            .then(m => m.PostMatchZonesComponent),
+    },
+    {
         path: 'post-match/:id/statistics',
         loadComponent: () => import('./features/match/post-match/components/post-match-statistics/post-match-statistics.component')
             .then(m => m.PostMatchStatisticsComponent),

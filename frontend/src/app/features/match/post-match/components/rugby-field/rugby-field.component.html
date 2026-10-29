@@ -1,0 +1,80 @@
+<figure class="rugby-field">
+  <svg class="field-svg" [attr.viewBox]="'0 0 ' + width + ' ' + height" role="group"
+       aria-label="Cancha de rugby: seleccioná una zona" preserveAspectRatio="xMidYMid meet">
+
+    <!-- Césped con franjas de corte, e ingoals más oscuros -->
+    <rect class="field-grass" x="0" y="0" [attr.width]="width" [attr.height]="height" />
+    <rect *ngFor="let i of stripes" class="field-stripe" [class.odd]="i % 2 === 1"
+          [attr.x]="i * 100" y="0" width="100" [attr.height]="height" />
+    <rect class="field-ingoal" x="0" y="0" [attr.width]="columns[0].width" [attr.height]="height" />
+    <rect class="field-ingoal" [attr.x]="goalLineRight" y="0" [attr.width]="columns[5].width" [attr.height]="height" />
+
+    <!-- Líneas de la cancha (blancas) -->
+    <g class="field-lines" aria-hidden="true">
+      <rect class="boundary" x="0" y="0" [attr.width]="width" [attr.height]="height" />
+      <!-- Líneas de gol, 22 m y mitad de cancha -->
+      <line [attr.x1]="goalLineLeft" y1="0" [attr.x2]="goalLineLeft" [attr.y2]="height" />
+      <line [attr.x1]="goalLineRight" y1="0" [attr.x2]="goalLineRight" [attr.y2]="height" />
+      <line [attr.x1]="line22Left" y1="0" [attr.x2]="line22Left" [attr.y2]="height" />
+      <line [attr.x1]="line22Right" y1="0" [attr.x2]="line22Right" [attr.y2]="height" />
+      <line class="halfway" [attr.x1]="halfway" y1="0" [attr.x2]="halfway" [attr.y2]="height" />
+      <!-- 10 m de la mitad (discontinuas) -->
+      <line class="dashed" [attr.x1]="line10Left" y1="0" [attr.x2]="line10Left" [attr.y2]="height" />
+      <line class="dashed" [attr.x1]="line10Right" y1="0" [attr.x2]="line10Right" [attr.y2]="height" />
+      <!-- 5 m y 15 m desde las touch (discontinuas) -->
+      <line class="dashed" [attr.x1]="goalLineLeft" [attr.y1]="line5Offset" [attr.x2]="goalLineRight" [attr.y2]="line5Offset" />
+      <line class="dashed" [attr.x1]="goalLineLeft" [attr.y1]="height - line5Offset" [attr.x2]="goalLineRight" [attr.y2]="height - line5Offset" />
+      <line class="dashed" [attr.x1]="goalLineLeft" [attr.y1]="line15Offset" [attr.x2]="goalLineRight" [attr.y2]="line15Offset" />
+      <line class="dashed" [attr.x1]="goalLineLeft" [attr.y1]="height - line15Offset" [attr.x2]="goalLineRight" [attr.y2]="height - line15Offset" />
+      <!-- Palos (H) sobre cada línea de gol -->
+      <g class="goalposts">
+        <line [attr.x1]="goalLineLeft" [attr.y1]="height / 2 - postHalfGap" [attr.x2]="goalLineLeft" [attr.y2]="height / 2 + postHalfGap" />
+        <circle [attr.cx]="goalLineLeft" [attr.cy]="height / 2 - postHalfGap" r="7" />
+        <circle [attr.cx]="goalLineLeft" [attr.cy]="height / 2 + postHalfGap" r="7" />
+        <line [attr.x1]="goalLineRight" [attr.y1]="height / 2 - postHalfGap" [attr.x2]="goalLineRight" [attr.y2]="height / 2 + postHalfGap" />
+        <circle [attr.cx]="goalLineRight" [attr.cy]="height / 2 - postHalfGap" r="7" />
+        <circle [attr.cx]="goalLineRight" [attr.cy]="height / 2 + postHalfGap" r="7" />
+      </g>
+    </g>
+
+    <!-- Capa interactiva 3x6: trazo tenue; se ilumina al apuntar, se rellena al seleccionarse -->
+    <g *ngFor="let cell of fieldCells()"
+       data-testid="zone-cell"
+       class="field-cell"
+       [class.has-events]="cell.count > 0"
+       [class.is-selected]="isSelected(cell)"
+       [class.is-readonly]="!selectable()"
+       [attr.data-row]="cell.row"
+       [attr.data-col]="cell.col"
+       role="button"
+       [attr.tabindex]="selectable() ? 0 : -1"
+       [attr.aria-pressed]="isSelected(cell)"
+       [attr.aria-label]="ariaLabel(cell)"
+       (click)="select(cell)"
+       (keydown.enter)="onKey($event, cell)"
+       (keydown.space)="onKey($event, cell)">
+      <rect class="cell-rect" [attr.x]="cell.x" [attr.y]="cell.y" [attr.width]="cell.width" [attr.height]="cell.height" />
+      <rect *ngIf="cell.count > 0" class="cell-heat" [attr.fill-opacity]="cell.heat"
+            [attr.x]="cell.x" [attr.y]="cell.y" [attr.width]="cell.width" [attr.height]="cell.height" />
+      <g *ngIf="cell.count > 0" data-testid="zone-count" class="count">
+        <circle class="count-bubble" [attr.cx]="cell.x + cell.width / 2" [attr.cy]="cell.y + cell.height / 2" r="30" />
+        <text class="count-text" [attr.x]="cell.x + cell.width / 2" [attr.y]="cell.y + cell.height / 2"
+              text-anchor="middle" dominant-baseline="central">{{ cell.count }}</text>
+      </g>
+    </g>
+  </svg>
+
+  <div class="field-axis" aria-hidden="true">
+    <span *ngFor="let column of columns" [style.flex-grow]="column.meters">{{ column.label }}</span>
+  </div>
+
+  <figcaption class="field-notes">
+    <p *ngIf="isEmpty()" class="field-empty" data-testid="zones-empty">
+      Todavía no hay eventos vinculados a una zona. Asigná un tramo del partido a una zona para verlos acá.
+    </p>
+    <p *ngIf="unzonedEventCount() > 0" class="field-unzoned" data-testid="unzoned-notice">
+      <i class="bi bi-exclamation-circle"></i>
+      {{ unzonedEventCount() }} {{ unzonedEventCount() === 1 ? 'evento sin zona' : 'eventos sin zona' }}
+    </p>
+  </figcaption>
+</figure>

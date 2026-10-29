@@ -1,0 +1,83 @@
+<section class="zone-panel">
+  <!-- Zonas asignadas -->
+  <div class="panel-card">
+    <h2 class="section-title">Zonas asignadas</h2>
+
+    <p *ngIf="store.assignments().length === 0" class="empty-state" data-testid="zones-list-empty">
+      Todavía no asignaste zonas. Los eventos quedan "sin zona" hasta que definas un tramo.
+    </p>
+
+    <ul class="zone-list" *ngIf="store.assignments().length > 0">
+      <li *ngFor="let zone of store.assignments()"
+          class="zone-item" data-testid="zone-item"
+          [class.is-editing]="zone.id === editingId">
+        <div class="zone-item-main">
+          <span class="zone-badge">{{ periodLabel(zone.period) }}</span>
+          <span class="zone-range">{{ zone.startMinute }}' – {{ zone.endMinute }}'</span>
+          <span class="zone-cell-label">{{ cellLabel(zone) }}</span>
+        </div>
+
+        <div class="zone-item-actions" *ngIf="pendingDeleteId !== zone.id">
+          <button type="button" class="btn-icon" title="Editar zona" aria-label="Editar zona"
+                  (click)="startEdit(zone)" [disabled]="store.isSaving()">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button type="button" class="btn-icon btn-icon-danger" title="Eliminar zona" aria-label="Eliminar zona"
+                  (click)="askDelete(zone.id)" [disabled]="store.isSaving()">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+
+        <div class="zone-item-actions" *ngIf="pendingDeleteId === zone.id" data-testid="zone-delete-confirm">
+          <span class="confirm-text">¿Eliminar?</span>
+          <button type="button" class="btn btn-outline btn-sm-touch" (click)="cancelDelete()"
+                  [disabled]="store.isSaving()">No</button>
+          <button type="button" class="btn btn-delete btn-sm-touch" (click)="confirmDelete()"
+                  [disabled]="store.isSaving()" data-testid="zone-delete-yes">Sí</button>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Formulario -->
+  <div class="panel-card">
+    <h2 class="section-title">{{ editingId ? 'Editar zona' : 'Nueva zona' }}</h2>
+
+    <div class="selected-cell" data-testid="selected-cell" [class.is-empty]="!selectedCell()">
+      <i class="bi bi-geo-alt"></i>
+      <span *ngIf="selectedCell() as cell; else pickHint">Zona elegida: <strong>{{ cellLabel(cell) }}</strong></span>
+      <ng-template #pickHint><span>Tocá una zona en la cancha</span></ng-template>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label-custom fw-bold" for="zone-period">Tiempo</label>
+        <select id="zone-period" class="form-select" [(ngModel)]="period" (ngModelChange)="onPeriodChange()"
+                [disabled]="store.isSaving()">
+          <option [ngValue]="1">1° Tiempo</option>
+          <option [ngValue]="2">2° Tiempo</option>
+        </select>
+      </div>
+      <div class="col-6">
+        <label class="form-label-custom fw-bold" for="zone-start">Desde (min)</label>
+        <input id="zone-start" type="number" class="form-control" min="0" max="80" step="1"
+               [(ngModel)]="startMinute" [disabled]="store.isSaving()" />
+      </div>
+      <div class="col-6">
+        <label class="form-label-custom fw-bold" for="zone-end">Hasta (min)</label>
+        <input id="zone-end" type="number" class="form-control" min="0" max="80" step="1"
+               [(ngModel)]="endMinute" [disabled]="store.isSaving()" />
+      </div>
+    </div>
+
+    <div class="panel-actions">
+      <button type="button" class="btn btn-outline" *ngIf="editingId" (click)="cancelEdit()"
+              [disabled]="store.isSaving()">Cancelar edición</button>
+      <button type="button" class="btn btn-invite d-flex align-items-center justify-content-center gap-2"
+              data-testid="zone-save" (click)="save()" [disabled]="store.isSaving()">
+        <span *ngIf="store.isSaving()" class="spinner-border spinner-border-sm"></span>
+        <span>{{ store.isSaving() ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Guardar zona') }}</span>
+      </button>
+    </div>
+  </div>
+</section>

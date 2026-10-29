@@ -1,0 +1,167 @@
+:host {
+  display: block;
+  /* Verdes del pasto derivados del verde de marca, sin introducir colores nuevos */
+  --pitch-a: color-mix(in srgb, var(--btn-primary-bg, #204b22) 58%, #a8d5a2);
+  --pitch-b: color-mix(in srgb, var(--btn-primary-bg, #204b22) 66%, #a8d5a2);
+  --pitch-ingoal: color-mix(in srgb, var(--btn-primary-bg, #204b22) 82%, #a8d5a2);
+  --pitch-line: #ffffff;
+}
+
+.rugby-field {
+  margin: 0;
+}
+
+.field-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  border: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
+  box-shadow: var(--shadow-elevation, 0 16px 36px rgba(15, 35, 15, 0.12));
+  background: var(--pitch-a);
+  overflow: hidden;
+}
+
+.field-grass {
+  fill: var(--pitch-a);
+}
+
+.field-stripe.odd {
+  fill: var(--pitch-b);
+}
+
+.field-stripe:not(.odd) {
+  fill: transparent;
+}
+
+.field-ingoal {
+  fill: var(--pitch-ingoal);
+  opacity: 0.9;
+}
+
+/* Líneas de juego */
+.field-lines line,
+.field-lines .boundary {
+  stroke: var(--pitch-line);
+  stroke-width: 4;
+  fill: none;
+  stroke-linecap: butt;
+}
+
+.field-lines .boundary {
+  stroke-width: 8;
+}
+
+.field-lines .halfway {
+  stroke-width: 7;
+}
+
+.field-lines .dashed {
+  stroke-width: 3;
+  stroke-dasharray: 18 18;
+  opacity: 0.85;
+}
+
+.goalposts line {
+  stroke-width: 6;
+}
+
+.goalposts circle {
+  fill: var(--pitch-line);
+}
+
+/* Capa interactiva */
+.field-cell {
+  cursor: pointer;
+  outline: none;
+}
+
+.field-cell.is-readonly {
+  cursor: default;
+}
+
+.cell-rect {
+  fill: transparent;
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 1.5;
+  transition: fill 0.12s ease, stroke 0.12s ease;
+}
+
+.field-cell:not(.is-readonly):hover .cell-rect {
+  fill: rgba(255, 255, 255, 0.18);
+}
+
+.field-cell:focus-visible .cell-rect {
+  stroke: #ffffff;
+  stroke-width: 6;
+  stroke-dasharray: 14 8;
+}
+
+.field-cell.is-selected .cell-rect {
+  fill: rgba(255, 255, 255, 0.34);
+  stroke: #ffffff;
+  stroke-width: 7;
+}
+
+.cell-heat {
+  fill: #ffffff;
+  pointer-events: none;
+}
+
+.count {
+  pointer-events: none;
+}
+
+.count-bubble {
+  fill: var(--surface, #ffffff);
+  stroke: var(--btn-primary-bg, #204b22);
+  stroke-width: 4;
+}
+
+.count-text {
+  fill: var(--btn-primary-bg, #204b22);
+  font-family: var(--font-mono, monospace);
+  font-size: 34px;
+  font-weight: 700;
+}
+
+/* Rótulos de columna y notas */
+.field-axis {
+  display: flex;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #3b4e33);
+}
+
+.field-axis span {
+  flex-basis: 0;
+  text-align: center;
+}
+
+.field-notes {
+  margin-top: 8px;
+}
+
+.field-empty,
+.field-unzoned {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.field-empty {
+  color: var(--text-secondary, #3b4e33);
+}
+
+.field-unzoned {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--warning-tint, rgba(253, 176, 34, 0.20));
+  color: var(--warning, #8a5700);
+  font-weight: 600;
+}

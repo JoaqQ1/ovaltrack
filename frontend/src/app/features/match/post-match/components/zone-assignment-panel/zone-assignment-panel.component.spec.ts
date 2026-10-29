@@ -2,12 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ToastService } from 'src/app/core/services/toast.service';
-import { ZoneAssignmentEditorComponent } from './zone-assignment-editor.component';
+import { ZoneAssignmentPanelComponent } from './zone-assignment-panel.component';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { MatchZonesResponse, ZoneAssignmentResponse } from '../../../types/zone.types';
 
-describe('ZoneAssignmentEditorComponent', () => {
-  let fixture: ComponentFixture<ZoneAssignmentEditorComponent>;
+describe('ZoneAssignmentPanelComponent', () => {
+  let fixture: ComponentFixture<ZoneAssignmentPanelComponent>;
+  let component: ZoneAssignmentPanelComponent;
+  let store: MatchZonesStore;
   let http: HttpTestingController;
   let toast: ToastService;
 
@@ -20,56 +22,62 @@ describe('ZoneAssignmentEditorComponent', () => {
   const query = <T extends HTMLElement>(selector: string): T | null => fixture.nativeElement.querySelector(selector);
   const queryAll = (selector: string): HTMLElement[] => Array.from(fixture.nativeElement.querySelectorAll(selector));
 
-  function open(response: MatchZonesResponse = emptyResponse): void {
+  function render(assignments: ZoneAssignmentResponse[] = []): void {
+    store.assignments.set(assignments);
     fixture.componentRef.setInput('matchId', 'match-1');
-    fixture.componentRef.setInput('isOpen', true);
-    fixture.detectChanges();
-    http.expectOne(zonesUrl).flush(response);
     fixture.detectChanges();
   }
 
-  /** Celda (fila 2, columna 3) del selector 3x6. */
-  const pickCell = (): void => {
-    queryAll('[data-testid="zone-pick"]')[8].click();
+  function selectCell(row: number, col: number): void {
+    fixture.componentRef.setInput('selectedCell', { row, col });
     fixture.detectChanges();
-  };
+  }
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ZoneAssignmentEditorComponent],
+      imports: [ZoneAssignmentPanelComponent],
       providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
-    TestBed.inject(MatchZonesStore).reset();
+    store = TestBed.inject(MatchZonesStore);
+    store.reset();
     http = TestBed.inject(HttpTestingController);
     toast = TestBed.inject(ToastService);
-    fixture = TestBed.createComponent(ZoneAssignmentEditorComponent);
+    fixture = TestBed.createComponent(ZoneAssignmentPanelComponent);
+    component = fixture.componentInstance;
   });
 
   afterEach(() => http.verify());
 
-  it('al abrirse carga las zonas del partido y muestra el estado vacío', () => {
-    open();
+  it('muestra el estado vacío cuando no hay zonas asignadas', () => {
+    render();
 
     expect(query('[data-testid="zones-list-empty"]')).not.toBeNull();
     expect(queryAll('[data-testid="zone-item"]').length).toBe(0);
   });
 
   it('lista las zonas existentes', () => {
-    open({ assignments: [existingZone], summary: { cells: [], unzonedEventCount: 0 } });
+    render([existingZone]);
 
     expect(queryAll('[data-testid="zone-item"]').length).toBe(1);
     expect(query('[data-testid="zone-item"]')?.textContent).toContain('10\' – 25\'');
   });
 
-  it('dibuja los 18 botones de la grilla 3x6', () => {
-    open();
+  it('indica que hay que tocar la cancha mientras no haya una zona elegida', () => {
+    render();
 
-    expect(queryAll('[data-testid="zone-pick"]').length).toBe(18);
+    expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Tocá una zona en la cancha');
   });
 
-  it('no envía nada y avisa si no se eligió una celda', () => {
-    open();
+  it('muestra la zona elegida en la cancha', () => {
+    render();
+    selectCell(2, 3);
+
+    expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Fila 2');
+  });
+
+  it('no envía nada y avisa si no se eligió una zona', () => {
+    render();
     const warning = spyOn(toast, 'warning');
 
     query('[data-testid="zone-save"]')?.click();
@@ -79,8 +87,8 @@ describe('ZoneAssignmentEditorComponent', () => {
   });
 
   it('crea la zona con el payload del formulario y recarga la lista', () => {
-    open();
-    pickCell();
+    render();
+    selectCell(2, 3);
 
     query('[data-testid="zone-save"]')?.click();
 
@@ -96,12 +104,12 @@ describe('ZoneAssignmentEditorComponent', () => {
     fixture.detectChanges();
 
     expect(queryAll('[data-testid="zone-item"]').length).toBe(1);
-    expect(query('.cell-pick.is-selected')).toBeNull();
+    expect(component.selectedCell()).toBeNull();
   });
 
-  it('ante un 409 muestra el mensaje del backend y conserva el formulario', () => {
-    open();
-    pickCell();
+  it('ante un 409 muestra el mensaje del backend y conserva la zona elegida', () => {
+    render();
+    selectCell(2, 3);
     const error = spyOn(toast, 'error');
 
     query('[data-testid="zone-save"]')?.click();
@@ -110,14 +118,16 @@ describe('ZoneAssignmentEditorComponent', () => {
     fixture.detectChanges();
 
     expect(error).toHaveBeenCalledWith('La zona se solapa con otra zona asignada en el mismo período');
-    expect(query('.cell-pick.is-selected')).not.toBeNull();
+    expect(component.selectedCell()).toEqual({ row: 2, col: 3 });
   });
 
-  it('al editar envía un PUT sobre la zona elegida', () => {
-    open({ assignments: [existingZone], summary: { cells: [], unzonedEventCount: 0 } });
+  it('al editar carga la zona en el formulario y envía un PUT', () => {
+    render([existingZone]);
 
     query<HTMLButtonElement>('button[aria-label="Editar zona"]')?.click();
     fixture.detectChanges();
+    expect(component.selectedCell()).toEqual({ row: 2, col: 3 });
+
     query('[data-testid="zone-save"]')?.click();
 
     const put = http.expectOne(r => r.url.endsWith('/matches/match-1/zones/zone-1'));
@@ -128,7 +138,7 @@ describe('ZoneAssignmentEditorComponent', () => {
   });
 
   it('eliminar pide confirmación antes de llamar al backend', () => {
-    open({ assignments: [existingZone], summary: { cells: [], unzonedEventCount: 0 } });
+    render([existingZone]);
 
     query<HTMLButtonElement>('button[aria-label="Eliminar zona"]')?.click();
     fixture.detectChanges();

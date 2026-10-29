@@ -1,0 +1,49 @@
+<section class="layout-container page zones-page">
+
+  <!-- HUD (mismo patrón que Estadísticas) -->
+  <header class="hud-container">
+    <div class="hud-left">
+      <button type="button" class="hud-back" (click)="goBack()" aria-label="Volver al análisis" title="Volver al análisis">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+
+      <div class="hud-content">
+        <div class="badge-tech"><span>Análisis • Zonas de cancha</span></div>
+        <h1 class="hud-title">
+          <span class="club-name">{{ ownClubName() }}</span>
+          @if (score(); as s) {
+            <span class="match-score-pill">{{ s.home }} – {{ s.away }}</span>
+          }
+          <span class="club-name">{{ opponent() }}</span>
+        </h1>
+        <p class="hud-subtitle">Asigná una zona de la cancha a un tramo del partido; los eventos del tramo quedan vinculados.</p>
+      </div>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="state-box">
+      <div class="spinner"></div>
+      <p>Cargando zonas del partido...</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="state-box state-box--error" role="alert">
+      <i class="bi bi-exclamation-triangle"></i>
+      <p>{{ errorMessage() }}</p>
+      <button type="button" class="btn-outline" (click)="goBack()">Volver al análisis</button>
+    </div>
+  } @else {
+    <div class="zones-layout">
+      <div class="field-card">
+        <h2 class="section-title">Eventos en la cancha</h2>
+        <app-rugby-field
+          [cells]="zonesStore.summary().cells"
+          [unzonedEventCount]="zonesStore.summary().unzonedEventCount"
+          [selectedCell]="selectedCell()"
+          (cellSelected)="onCellSelected($event)" />
+      </div>
+
+      <app-zone-assignment-panel class="zones-side" [matchId]="matchId()" [(selectedCell)]="selectedCell" />
+    </div>
+  }
+</section>

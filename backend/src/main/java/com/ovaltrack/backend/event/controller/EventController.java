@@ -20,7 +20,11 @@ import com.ovaltrack.backend.event.business.EventService;
 import com.ovaltrack.backend.event.domain.dto.event.EventCreationDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventResponseDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventUpdateDTO;
+<<<<<<< HEAD
 import com.ovaltrack.backend.common.dto.response.MessageResponse;
+=======
+import com.ovaltrack.backend.zone.business.PostMatchZoneEnricher;
+>>>>>>> 7a22bc3 (feat(zonas): vincula eventos a su zona y pagina de zonas con cancha de rugby)
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -36,6 +40,7 @@ import lombok.RequiredArgsConstructor;
 public class EventController {
 
     private final EventService eventService;
+    private final PostMatchZoneEnricher postMatchZoneEnricher;
 
     @Operation(
         summary = "List events for a club",
@@ -88,7 +93,7 @@ public class EventController {
     @GetMapping("/match/post-match")
     @PreAuthorize("hasAnyRole('ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST')")
     public ResponseEntity<Object> findPostMatchEvents(@RequestParam UUID matchId, Authentication authentication) {
-        return ResponseEntity.ok(eventService.findPostMatchEvents(matchId, authentication));
+        return ResponseEntity.ok(postMatchZoneEnricher.enrich(matchId, eventService.findPostMatchEvents(matchId, authentication)));
     }
 
     @Operation(

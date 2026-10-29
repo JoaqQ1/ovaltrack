@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RugbyFieldComponent } from './rugby-field.component';
-import { ZoneCellSummary } from '../../../types/zone.types';
+import { ZoneCellRef, ZoneCellSummary } from '../../../types/zone.types';
 
 describe('RugbyFieldComponent', () => {
   let fixture: ComponentFixture<RugbyFieldComponent>;
@@ -64,5 +64,66 @@ describe('RugbyFieldComponent', () => {
     render([], 0);
 
     expect(fixture.nativeElement.querySelector('[data-testid="zones-empty"]')).not.toBeNull();
+  });
+
+  describe('selección de zona', () => {
+    it('emite la celda tocada', () => {
+      render([]);
+      const emitted: ZoneCellRef[] = [];
+      fixture.componentInstance.cellSelected.subscribe(cell => emitted.push(cell));
+
+      cellAt(2, 3)?.dispatchEvent(new Event('click'));
+
+      expect(emitted).toEqual([{ row: 2, col: 3 }]);
+    });
+
+    it('emite la celda con Enter y con Espacio desde el teclado', () => {
+      render([]);
+      const emitted: ZoneCellRef[] = [];
+      fixture.componentInstance.cellSelected.subscribe(cell => emitted.push(cell));
+
+      cellAt(1, 1)?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      cellAt(3, 6)?.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+
+      expect(emitted).toEqual([{ row: 1, col: 1 }, { row: 3, col: 6 }]);
+    });
+
+    it('marca únicamente la celda seleccionada', () => {
+      fixture.componentRef.setInput('selectedCell', { row: 2, col: 3 });
+      render([]);
+
+      expect(cellAt(2, 3)?.classList).toContain('is-selected');
+      expect(cellAt(1, 1)?.classList).not.toContain('is-selected');
+      expect(cellAt(2, 3)?.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('no emite si el gráfico es de solo lectura', () => {
+      fixture.componentRef.setInput('selectable', false);
+      render([]);
+      const emitted: ZoneCellRef[] = [];
+      fixture.componentInstance.cellSelected.subscribe(cell => emitted.push(cell));
+
+      cellAt(2, 3)?.dispatchEvent(new Event('click'));
+
+      expect(emitted).toEqual([]);
+    });
+  });
+
+  describe('proporciones reglamentarias', () => {
+    it('las columnas suman 120 m y respetan 10 / 22 / 28 / 28 / 22 / 10', () => {
+      render([]);
+      const columns = fixture.componentInstance.columns;
+
+      expect(columns.map(c => c.meters)).toEqual([10, 22, 28, 28, 22, 10]);
+      expect(columns.reduce((sum, c) => sum + c.meters, 0)).toBe(120);
+      expect(fixture.componentInstance.width).toBe(1200);
+      expect(fixture.componentInstance.height).toBe(700);
+    });
+
+    it('la línea de mitad de cancha queda en el centro', () => {
+      render([]);
+
+      expect(fixture.componentInstance.halfway).toBe(fixture.componentInstance.width / 2);
+    });
   });
 });

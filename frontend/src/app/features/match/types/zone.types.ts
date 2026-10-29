@@ -5,6 +5,12 @@ export const ZONE_GRID_ROWS = 3;
 export const ZONE_GRID_COLS = 6;
 export const ZONE_HALF_MINUTES = 40;
 
+/** Celda de la grilla indexada desde 1 (fila = ancho de la cancha, columna = largo). */
+export interface ZoneCellRef {
+  row: number;
+  col: number;
+}
+
 export interface ZoneAssignmentRequest {
   row: number;
   col: number;

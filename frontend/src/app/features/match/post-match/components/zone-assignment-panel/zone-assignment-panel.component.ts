@@ -1,63 +1,43 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, DestroyRef, Input, inject, model } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { periodBounds, validateZoneForm } from '../../utils/zone-form.utils';
-import { ZONE_GRID_COLS, ZONE_GRID_ROWS, ZoneAssignmentResponse, ZonePeriod } from '../../../types/zone.types';
+import { ZONE_GRID_COLS, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 
+/** Lista de zonas del partido y formulario para crearlas/editarlas. La celda se elige en la cancha. */
 @Component({
-  selector: 'app-zone-assignment-editor',
+  selector: 'app-zone-assignment-panel',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './zone-assignment-editor.component.html',
-  styleUrl: './zone-assignment-editor.component.css'
+  templateUrl: './zone-assignment-panel.component.html',
+  styleUrl: './zone-assignment-panel.component.css'
 })
-export class ZoneAssignmentEditorComponent implements OnChanges {
+export class ZoneAssignmentPanelComponent {
   readonly store = inject(MatchZonesStore);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
-  @Input() isOpen = false;
   @Input() matchId = '';
-  @Output() close = new EventEmitter<void>();
 
-  readonly rows = Array.from({ length: ZONE_GRID_ROWS }, (_, i) => i + 1);
-  readonly cols = Array.from({ length: ZONE_GRID_COLS }, (_, i) => i + 1);
+  /** Celda elegida en la cancha (enlace bidireccional con la página). */
+  readonly selectedCell = model<ZoneCellRef | null>(null);
+
   readonly columnLabels = ['Ingoal', '22', 'Mitad', 'Mitad', '22', 'Ingoal'];
 
   // Estado del formulario
   period: ZonePeriod = 1;
   startMinute: number | null = 0;
   endMinute: number | null = 40;
-  row: number | null = null;
-  col: number | null = null;
   editingId: string | null = null;
   pendingDeleteId: string | null = null;
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['isOpen'] && this.isOpen && this.matchId) {
-      this.resetForm();
-      this.store.load(this.matchId)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({ error: err => this.toastService.error(this.messageFrom(err, 'No se pudieron cargar las zonas')) });
-    }
-  }
 
   onPeriodChange(): void {
     const bounds = periodBounds(this.period);
     this.startMinute = bounds.start;
     this.endMinute = bounds.end;
-  }
-
-  selectCell(row: number, col: number): void {
-    this.row = row;
-    this.col = col;
-  }
-
-  isSelected(row: number, col: number): boolean {
-    return this.row === row && this.col === col;
   }
 
   startEdit(zone: ZoneAssignmentResponse): void {
@@ -66,8 +46,7 @@ export class ZoneAssignmentEditorComponent implements OnChanges {
     this.period = zone.period;
     this.startMinute = zone.startMinute;
     this.endMinute = zone.endMinute;
-    this.row = zone.row;
-    this.col = zone.col;
+    this.selectedCell.set({ row: zone.row, col: zone.col });
   }
 
   cancelEdit(): void {
@@ -75,12 +54,13 @@ export class ZoneAssignmentEditorComponent implements OnChanges {
   }
 
   save(): void {
+    const cell = this.selectedCell();
     const error = validateZoneForm({
       period: this.period,
       startMinute: this.startMinute,
       endMinute: this.endMinute,
-      row: this.row,
-      col: this.col
+      row: cell?.row ?? null,
+      col: cell?.col ?? null
     });
     if (error) {
       this.toastService.warning(error);
@@ -88,8 +68,8 @@ export class ZoneAssignmentEditorComponent implements OnChanges {
     }
 
     const request = {
-      row: this.row as number,
-      col: this.col as number,
+      row: cell!.row,
+      col: cell!.col,
       period: this.period,
       startMinute: this.startMinute as number,
       endMinute: this.endMinute as number
@@ -135,13 +115,13 @@ export class ZoneAssignmentEditorComponent implements OnChanges {
       });
   }
 
-  onClose(): void {
-    if (this.store.isSaving()) return;
-    this.close.emit();
-  }
-
   periodLabel(period: number): string {
     return period === 1 ? '1T' : '2T';
+  }
+
+  cellLabel(cell: ZoneCellRef): string {
+    const column = this.columnLabels[Math.min(Math.max(cell.col, 1), ZONE_GRID_COLS) - 1];
+    return `Fila ${cell.row} · ${column} (col. ${cell.col})`;
   }
 
   private resetForm(): void {
@@ -149,8 +129,7 @@ export class ZoneAssignmentEditorComponent implements OnChanges {
     this.pendingDeleteId = null;
     this.period = 1;
     this.onPeriodChange();
-    this.row = null;
-    this.col = null;
+    this.selectedCell.set(null);
   }
 
   private messageFrom(err: unknown, fallback: string): string {
