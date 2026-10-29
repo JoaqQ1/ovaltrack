@@ -121,15 +121,6 @@
   color: var(--text-secondary, #3b4e33);
 }
 
-.jersey {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-alt, #eef1e7);
-  color: var(--text-primary, #111d0e);
-}
-
 .meta-sep {
   color: var(--text-muted, #7a8c74);
 }

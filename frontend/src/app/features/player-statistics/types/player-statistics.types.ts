@@ -35,8 +35,6 @@ export type PlayerRoleFilter = 'all' | 'starter' | 'substitute';
 export interface PlayerProfile {
   fullName: string;
   initials: string;
-  jerseyNumber: number;
-  position: string;
   clubName: string;
   divisionName: string;
 }

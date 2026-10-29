@@ -4,7 +4,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of, tap } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { PlayerStatisticsService } from './services/player-statistics.service';
-import { EVENT_CODES, otherStats, sumPlayerStatistics, toHistoryRow, valueByCode } from './utils/player-statistics.utils';
+import { UserContextService } from 'src/app/core/services/user-context.service';
+import { EVENT_CODES, otherStats, seasonsOf, sumPlayerStatistics, toHistoryRow, valueByCode } from './utils/player-statistics.utils';
 import { PlayerEventTypeValue, PlayerStatColumn, PlayerStatistic } from '../match/statistics/types/statistic.types';
 import {
   KickingStat,
@@ -25,6 +26,16 @@ const OTHER_STATS_EXCLUDED_CODES: string[] = [
   'SUBSTITUTION',
   'INJURY',
 ];
+
+/** Iniciales para el avatar: primera letra del nombre y del apellido. */
+function initialsOf(fullName: string): string {
+  return fullName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0].toUpperCase())
+    .join('');
+}
 
 const RESULT_LABELS: Record<MatchResult, string> = {
   win: 'G',
@@ -48,6 +59,7 @@ const ROLE_FILTER_LABELS: Record<PlayerRoleFilter, string> = {
 export class PlayerStatisticsComponent {
   private readonly playerStatisticsService = inject(PlayerStatisticsService);
   private readonly toastService = inject(ToastService);
+  private readonly userContext = inject(UserContextService);
 
   readonly isLoading = signal<boolean>(true);
 
@@ -71,19 +83,25 @@ export class PlayerStatisticsComponent {
   readonly resultLabels = RESULT_LABELS;
   readonly roleFilterLabels = ROLE_FILTER_LABELS;
   readonly roleFilters: readonly PlayerRoleFilter[] = ['all', 'starter', 'substitute'];
-  readonly seasons: readonly string[] = ['2026', '2025'];
+  /** Temporadas con partidos jugados, de la más reciente a la más antigua. */
+  readonly seasons = computed<string[]>(() => seasonsOf(this.matchStatistics()));
 
-  readonly profile = signal<PlayerProfile>({
-    fullName: 'Tomás Herrera',
-    initials: 'TH',
-    jerseyNumber: 10,
-    position: 'Apertura',
-    clubName: 'Club Atlético San Martín',
-    divisionName: 'M19',
-  });
+  /** Temporada elegida por el usuario; hasta que elija, la más reciente. */
+  private readonly chosenSeason = signal<string | null>(null);
+  readonly selectedSeason = computed<string>(() => this.chosenSeason() ?? this.seasons()[0] ?? '');
 
-  readonly selectedSeason = signal('2026');
   readonly roleFilter = signal<PlayerRoleFilter>('all');
+
+  readonly profile = computed<PlayerProfile>(() => {
+    const fullName = this.userContext.fullName();
+    return {
+      fullName,
+      initials: initialsOf(fullName),
+      clubName: this.userContext.currentClub()?.name ?? '',
+      // La división del último partido jugado; sin partidos, la división activa.
+      divisionName: this.matchStatistics()[0]?.match.divisionName ?? this.userContext.activeDivisions()[0]?.name ?? '',
+    };
+  });
 
   /** Partidos de la temporada elegida (el año de la fecha del partido). */
   readonly seasonStatistics = computed<PlayerMatchStatistic[]>(() =>
@@ -164,7 +182,7 @@ export class PlayerStatisticsComponent {
   }
 
   setSeason(season: string): void {
-    this.selectedSeason.set(season);
+    this.chosenSeason.set(season);
   }
 
   private valueOf(code: string): PlayerEventTypeValue {
