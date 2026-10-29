@@ -1,5 +1,5 @@
 import { PlayerEventTypeValue, PlayerStatColumn, PlayerStatistic } from "../../match/statistics/types/statistic.types";
-import { MatchResult, PlayerMatchDTO, PlayerMatchHistory, PlayerMatchStatistic } from "../types/player-statistics.types";
+import { MatchResult, PlayerCountStat, PlayerMatchDTO, PlayerMatchHistory, PlayerMatchStatistic } from "../types/player-statistics.types";
 
 export const EVENT_CODES = {
     TRY: 'TRY',
@@ -93,4 +93,12 @@ function sumValues(
 export function seasonsOf(matchStatistics: PlayerMatchStatistic[]): string[] {
     const temporadas = new Set(matchStatistics.map(m => m.match.date.slice(0, 4)));
     return Array.from(temporadas).sort((a, b) => b.localeCompare(a));
+}
+
+/** Cantidad de cada tipo de evento del jugador, salvo los de `excludedCodes`, en orden de catálogo. */
+export function otherStats(total: PlayerStatistic, columns: PlayerStatColumn[], excludedCodes: string[]): PlayerCountStat[] {
+    const excluded = new Set(excludedCodes);
+    return columns
+        .filter(column => !excluded.has(column.code))
+        .map(column => ({ label: column.label, value: total.values[column.eventTypeId]?.count ?? 0 }));
 }
