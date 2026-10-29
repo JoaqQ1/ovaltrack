@@ -29,6 +29,15 @@ export class PlayerStatisticsService {
     return this.http.get<PlayerMatchDTO[]>(`${this.apiUrl}/me`);
   }
 
+  /** Estadísticas de todos los partidos jugados, en el mismo orden que `getMyMatches`. */
+  loadAllMatchStatistics(): Observable<PlayerMatchStatistic[]> {
+    return this.getMyMatches().pipe(
+      switchMap(matches => matches.length === 0
+        ? of([])
+        : forkJoin(matches.map(match => this.loadMatchStatistic(match))))
+    );
+  }
+
   /**
    * Estadísticas del usuario autenticado en un partido, con los mismos calculadores del post-partido
    * (vista `full`). Sin período: partido completo.
