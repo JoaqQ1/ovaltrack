@@ -4,7 +4,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of, tap } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { PlayerStatisticsService } from './services/player-statistics.service';
-import { toHistoryRow } from './utils/player-statistics.utils';
+import { EVENT_CODES, otherStats, sumPlayerStatistics, toHistoryRow, valueByCode } from './utils/player-statistics.utils';
+import { PlayerEventTypeValue, PlayerStatColumn, PlayerStatistic } from '../match/statistics/types/statistic.types';
 import {
   KickingStat,
   MatchResult,
@@ -15,6 +16,15 @@ import {
   PlayerProfile,
   PlayerRoleFilter,
 } from './types/player-statistics.types';
+
+/** Tipos que no van en "Juego con la pelota": ya se muestran en puntos, pateo o disciplina, o no son juego. */
+const OTHER_STATS_EXCLUDED_CODES: string[] = [
+  ...Object.values(EVENT_CODES),
+  'PENALTY_TRY',
+  'DROP_GOAL',
+  'SUBSTITUTION',
+  'INJURY',
+];
 
 const RESULT_LABELS: Record<MatchResult, string> = {
   win: 'G',
@@ -82,23 +92,29 @@ export class PlayerStatisticsComponent {
 
   readonly history = computed<PlayerMatchHistory[]>(() => this.seasonStatistics().map(toHistoryRow));
 
-  readonly kicking = signal<KickingStat[]>([
-    { label: 'Conversiones', made: 18, attempts: 24 },
-    { label: 'Penales a palos', made: 9, attempts: 13 },
-  ]);
+  /** Totales de la temporada: suma de las estadísticas de cada partido. */
+  readonly total = computed<PlayerStatistic>(() => sumPlayerStatistics(this.seasonStatistics()));
 
-  readonly playStats = signal<PlayerCountStat[]>([
-    { label: 'Pases', value: 212 },
-    { label: 'Offloads', value: 19 },
-    { label: 'Pases malos', value: 11 },
-    { label: 'Patadas a touch', value: 27 },
-    { label: 'Salidas', value: 14 },
-  ]);
+  /** Tipos de evento del catálogo: son los mismos en todos los partidos. */
+  readonly columns = computed<PlayerStatColumn[]>(() => this.seasonStatistics()[0]?.columns ?? []);
 
-  readonly disciplineStats = signal<PlayerCountStat[]>([
-    { label: 'Penales cometidos', value: 8 },
-    { label: 'Amarillas', value: 1, tone: 'warning' },
-    { label: 'Rojas', value: 0, tone: 'error' },
+  readonly kicking = computed<KickingStat[]>(() => {
+    const conversions = this.valueOf(EVENT_CODES.CONVERSION);
+    const penaltyKicks = this.valueOf(EVENT_CODES.PENALTY_KICK);
+    return [
+      { label: 'Conversiones', made: conversions.made ?? 0, attempts: conversions.count },
+      { label: 'Penales a palos', made: penaltyKicks.made ?? 0, attempts: penaltyKicks.count },
+    ];
+  });
+
+  readonly playStats = computed<PlayerCountStat[]>(() =>
+    otherStats(this.total(), this.columns(), OTHER_STATS_EXCLUDED_CODES)
+  );
+
+  readonly disciplineStats = computed<PlayerCountStat[]>(() => [
+    { label: 'Penales cometidos', value: this.valueOf(EVENT_CODES.PENALTY_CONCEDED).count },
+    { label: 'Amarillas', value: this.valueOf(EVENT_CODES.YELLOW_CARD).count, tone: 'warning' },
+    { label: 'Rojas', value: this.valueOf(EVENT_CODES.RED_CARD).count, tone: 'error' },
   ]);
 
   readonly kpis = computed<PlayerKpi[]>(() => {
@@ -149,6 +165,10 @@ export class PlayerStatisticsComponent {
 
   setSeason(season: string): void {
     this.selectedSeason.set(season);
+  }
+
+  private valueOf(code: string): PlayerEventTypeValue {
+    return valueByCode(this.total(), this.columns(), code);
   }
 
   percentage(made: number, attempts: number): number {
