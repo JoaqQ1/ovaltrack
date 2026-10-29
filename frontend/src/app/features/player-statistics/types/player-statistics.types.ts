@@ -1,6 +1,23 @@
 /** Resultado de un partido desde la perspectiva del club del jugador. */
 export type MatchResult = 'win' | 'loss' | 'draw';
 
+/** Rol del jugador en el plantel del partido. */
+export type MatchPlayerRole = 'TITULAR' | 'SUPLENTE';
+
+/** Respuesta de `GET /matches/me`: partido finalizado en el que el jugador estuvo en el plantel. */
+export interface PlayerMatchDTO {
+  matchId: string;
+  date: string;
+  opponentName: string;
+  divisionName: string;
+  /** El club siempre es local: `homeScore` es el marcador propio. */
+  homeScore: number;
+  awayScore: number;
+  role: MatchPlayerRole;
+  /** Número de slot en la planilla (titulares 1-15, suplentes 16-23). */
+  slotNumber: number | null;
+}
+
 /** Filtro del historial según el rol del jugador en el partido. */
 export type PlayerRoleFilter = 'all' | 'starter' | 'substitute';
 
