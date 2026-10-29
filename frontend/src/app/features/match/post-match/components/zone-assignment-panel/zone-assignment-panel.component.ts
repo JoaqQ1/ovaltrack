@@ -1,13 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, Input, inject, model } from '@angular/core';
+import { Component, DestroyRef, Input, OnInit, inject, model } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { MatchZonesStore } from '../../store/match-zones.store';
-import { periodBounds, validateZoneForm } from '../../utils/zone-form.utils';
-import { ZONE_GRID_COLS, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
+import { validateZoneForm } from '../../utils/zone-form.utils';
+import { ZONE_COLUMN_NAMES, ZONE_ROW_NAMES, describeZone, zoneLabel } from '../../utils/zone-grid';
+import { describeSegment, findOverlap, periodRange, suggestRange } from '../../utils/zone-stats';
+import { ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 
-/** Lista de zonas del partido y formulario para crearlas/editarlas. La celda se elige en la cancha. */
+type RangeField = 'start' | 'end';
+
+/**
+ * Formulario de tramos (rango de tiempo + zona) y su lista. La zona se elige tocando la cancha.
+ * Vocabulario: "tramo" = rango de tiempo con una zona; "zona" = celda de la cancha.
+ */
 @Component({
   selector: 'app-zone-assignment-panel',
   standalone: true,
@@ -15,33 +22,77 @@ import { ZONE_GRID_COLS, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from 
   templateUrl: './zone-assignment-panel.component.html',
   styleUrl: './zone-assignment-panel.component.css'
 })
-export class ZoneAssignmentPanelComponent {
+export class ZoneAssignmentPanelComponent implements OnInit {
   readonly store = inject(MatchZonesStore);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
   @Input() matchId = '';
 
-  /** Celda elegida en la cancha (enlace bidireccional con la página). */
+  /** Zona elegida en la cancha (enlace bidireccional con la página). */
   readonly selectedCell = model<ZoneCellRef | null>(null);
 
-  readonly columnLabels = ['Ingoal', '22', 'Mitad', 'Mitad', '22', 'Ingoal'];
+  readonly periods: { value: ZonePeriod; label: string; range: string }[] = [
+    { value: 1, label: '1T', range: `${periodRange(1).start}–${periodRange(1).end}′` },
+    { value: 2, label: '2T', range: `${periodRange(2).start}–${periodRange(2).end}′` }
+  ];
 
-  // Estado del formulario
+  // Estado del formulario: sin rango por defecto, nada se guarda sin que el usuario lo decida.
   period: ZonePeriod = 1;
-  startMinute: number | null = 0;
-  endMinute: number | null = 40;
+  startMinute: number | null = null;
+  endMinute: number | null = null;
   editingId: string | null = null;
   pendingDeleteId: string | null = null;
+  serverError: string | null = null;
+  listError: string | null = null;
 
-  onPeriodChange(): void {
-    const bounds = periodBounds(this.period);
-    this.startMinute = bounds.start;
-    this.endMinute = bounds.end;
+  ngOnInit(): void {
+    this.applySuggestion();
+  }
+
+  setPeriod(period: ZonePeriod): void {
+    this.period = period;
+    this.serverError = null;
+    this.applySuggestion();
+  }
+
+  onRangeChange(): void {
+    this.serverError = null;
+  }
+
+  /** Botones − y + junto a cada minuto. */
+  adjust(field: RangeField, delta: number): void {
+    const bounds = periodRange(this.period);
+    const current = field === 'start' ? this.startMinute : this.endMinute;
+    const base = current ?? (field === 'start' ? bounds.start : (this.startMinute ?? bounds.start));
+    const next = Math.min(Math.max(base + delta, bounds.start), bounds.end);
+
+    if (field === 'start') this.startMinute = next;
+    else this.endMinute = next;
+    this.serverError = null;
+  }
+
+  /** Motivo por el que no se puede guardar todavía (null = listo). Se muestra junto al botón. */
+  get blockReason(): string | null {
+    const cell = this.selectedCell();
+    if (!cell) return 'Falta elegir la zona: tocala en la cancha.';
+
+    const formError = validateZoneForm({
+      period: this.period,
+      startMinute: this.startMinute,
+      endMinute: this.endMinute,
+      row: cell.row,
+      col: cell.col
+    });
+    if (formError) return formError;
+
+    const clash = findOverlap(this.currentRange(), this.store.assignments(), this.editingId);
+    return clash ? `Choca con el tramo ${describeSegment(clash)}.` : null;
   }
 
   startEdit(zone: ZoneAssignmentResponse): void {
     this.pendingDeleteId = null;
+    this.serverError = null;
     this.editingId = zone.id;
     this.period = zone.period;
     this.startMinute = zone.startMinute;
@@ -55,40 +106,25 @@ export class ZoneAssignmentPanelComponent {
 
   save(): void {
     const cell = this.selectedCell();
-    const error = validateZoneForm({
-      period: this.period,
-      startMinute: this.startMinute,
-      endMinute: this.endMinute,
-      row: cell?.row ?? null,
-      col: cell?.col ?? null
-    });
-    if (error) {
-      this.toastService.warning(error);
-      return;
-    }
+    if (!cell || this.blockReason) return;
 
-    const request = {
-      row: cell!.row,
-      col: cell!.col,
-      period: this.period,
-      startMinute: this.startMinute as number,
-      endMinute: this.endMinute as number
-    };
+    const request = { row: cell.row, col: cell.col, ...this.currentRange() };
     const wasEditing = this.editingId !== null;
 
     this.store.save(this.matchId, request, this.editingId ?? undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.toastService.success(wasEditing ? 'Zona actualizada' : 'Zona asignada');
-          this.resetForm();
+          this.toastService.success(wasEditing ? 'Tramo actualizado' : 'Tramo guardado');
+          this.resetForm(request.endMinute);
         },
-        // El formulario se conserva para que el usuario corrija sin volver a cargar los datos.
-        error: err => this.toastService.error(this.messageFrom(err, 'No se pudo guardar la zona'))
+        // El formulario se conserva y el error queda visible junto al botón.
+        error: err => this.serverError = this.messageFrom(err, 'No se pudo guardar el tramo')
       });
   }
 
   askDelete(zoneId: string): void {
+    this.listError = null;
     this.pendingDeleteId = zoneId;
   }
 
@@ -106,30 +142,53 @@ export class ZoneAssignmentPanelComponent {
         next: () => {
           this.pendingDeleteId = null;
           if (this.editingId === zoneId) this.resetForm();
-          this.toastService.success('Zona eliminada');
+          this.toastService.success('Tramo eliminado');
         },
         error: err => {
           this.pendingDeleteId = null;
-          this.toastService.error(this.messageFrom(err, 'No se pudo eliminar la zona'));
+          this.listError = this.messageFrom(err, 'No se pudo eliminar el tramo');
         }
       });
   }
 
-  periodLabel(period: number): string {
-    return period === 1 ? '1T' : '2T';
+  rowName(row: number): string {
+    return ZONE_ROW_NAMES[row - 1];
   }
 
-  cellLabel(cell: ZoneCellRef): string {
-    const column = this.columnLabels[Math.min(Math.max(cell.col, 1), ZONE_GRID_COLS) - 1];
-    return `Fila ${cell.row} · ${column} (col. ${cell.col})`;
+  columnName(col: number): string {
+    return ZONE_COLUMN_NAMES[col - 1];
   }
 
-  private resetForm(): void {
+  label(cell: ZoneCellRef): string {
+    return zoneLabel(cell);
+  }
+
+  describe(cell: ZoneCellRef): string {
+    return describeZone(cell);
+  }
+
+  segmentName(zone: ZoneAssignmentResponse): string {
+    return `${zone.period}T ${zone.startMinute}′–${zone.endMinute}′, ${zoneLabel(zone)}`;
+  }
+
+  private currentRange(): { period: ZonePeriod; startMinute: number; endMinute: number } {
+    return { period: this.period, startMinute: this.startMinute as number, endMinute: this.endMinute as number };
+  }
+
+  /** Propone los próximos 5 minutos libres del tiempo (o continúa desde `afterMinute`); null si está cubierto. */
+  private applySuggestion(afterMinute?: number): void {
+    const range = suggestRange(this.store.assignments(), this.period, afterMinute);
+    this.startMinute = range?.start ?? null;
+    this.endMinute = range?.end ?? null;
+  }
+
+  /** Tras guardar o cancelar: la zona queda sin elegir a propósito y el rango continúa donde terminó el anterior. */
+  private resetForm(afterMinute?: number): void {
     this.editingId = null;
     this.pendingDeleteId = null;
-    this.period = 1;
-    this.onPeriodChange();
+    this.serverError = null;
     this.selectedCell.set(null);
+    this.applySuggestion(afterMinute);
   }
 
   private messageFrom(err: unknown, fallback: string): string {

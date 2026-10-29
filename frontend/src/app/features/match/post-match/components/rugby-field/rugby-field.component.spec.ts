@@ -11,9 +11,16 @@ describe('RugbyFieldComponent', () => {
   const cellAt = (row: number, col: number): HTMLElement | undefined =>
     cells().find(c => c.dataset['row'] === String(row) && c.dataset['col'] === String(col));
 
+  const reading = (): string => fixture.nativeElement.querySelector('[data-testid="zone-reading"]').textContent.trim();
+
   const render = (summary: ZoneCellSummary[], unzoned = 0): void => {
     fixture.componentRef.setInput('cells', summary);
     fixture.componentRef.setInput('unzonedEventCount', unzoned);
+    fixture.detectChanges();
+  };
+
+  const key = (target: HTMLElement | undefined, name: string): void => {
+    target?.dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true }));
     fixture.detectChanges();
   };
 
@@ -22,51 +29,121 @@ describe('RugbyFieldComponent', () => {
     fixture = TestBed.createComponent(RugbyFieldComponent);
   });
 
-  it('dibuja siempre la grilla completa de 3 filas x 6 columnas', () => {
-    render([]);
+  describe('estructura', () => {
+    it('dibuja la grilla completa de 3 filas x 6 columnas como role=grid', () => {
+      render([]);
 
-    expect(cells().length).toBe(18);
+      expect(cells().length).toBe(18);
+      expect(fixture.nativeElement.querySelector('[role="grid"]')).not.toBeNull();
+      expect(fixture.nativeElement.querySelectorAll('[role="row"]').length).toBe(3);
+    });
+
+    it('etiqueta cada celda con letra de fila y número de columna (I1 … D6)', () => {
+      render([]);
+
+      expect(cellAt(1, 1)?.querySelector('[data-testid="zone-label"]')?.textContent).toBe('I1');
+      expect(cellAt(2, 3)?.querySelector('[data-testid="zone-label"]')?.textContent).toBe('C3');
+      expect(cellAt(3, 6)?.querySelector('[data-testid="zone-label"]')?.textContent).toBe('D6');
+    });
+
+    it('muestra el sentido de ataque con el nombre del club', () => {
+      fixture.componentRef.setInput('ownClubName', 'Puerto Madryn RC');
+      render([]);
+
+      expect(fixture.nativeElement.querySelector('[data-testid="attack-dir"]').textContent).toContain('Puerto Madryn RC ataca');
+    });
+
+    it('las columnas y filas siguen las proporciones reglamentarias', () => {
+      render([]);
+      const component = fixture.componentInstance;
+
+      expect(component.columnTemplate).toBe('10fr 22fr 28fr 28fr 22fr 10fr');
+      expect(component.rowMeters).toEqual([15, 40, 15]);
+      expect(component.width / component.height).toBeCloseTo(120 / 70, 5);
+    });
+
+    it('las líneas de 15 m del dibujo coinciden con los bordes de fila', () => {
+      render([]);
+      const component = fixture.componentInstance;
+      const rowBorderTop = (component.rowMeters[0] / 70) * component.height;
+      const rowBorderBottom = ((component.rowMeters[0] + component.rowMeters[1]) / 70) * component.height;
+
+      expect(component.line15Top).toBeCloseTo(rowBorderTop, 5);
+      expect(component.line15Bottom).toBeCloseTo(rowBorderBottom, 5);
+    });
+
+    it('la línea de mitad de cancha queda en el centro', () => {
+      render([]);
+
+      expect(fixture.componentInstance.halfway).toBe(fixture.componentInstance.width / 2);
+    });
   });
 
-  it('muestra el conteo de eventos en la celda correspondiente', () => {
-    render([{ row: 2, col: 3, eventCount: 4 }]);
+  describe('conteos y avisos', () => {
+    it('muestra el conteo de eventos en la celda correspondiente', () => {
+      render([{ row: 2, col: 3, eventCount: 4 }]);
 
-    expect(cellAt(2, 3)?.textContent).toContain('4');
+      expect(cellAt(2, 3)?.querySelector('[data-testid="zone-count"]')?.textContent).toContain('4');
+    });
+
+    it('no muestra conteo en las celdas sin eventos', () => {
+      render([{ row: 2, col: 3, eventCount: 4 }]);
+
+      expect(cellAt(1, 1)?.querySelector('[data-testid="zone-count"]')).toBeNull();
+    });
+
+    it('marca como activas únicamente las celdas con eventos', () => {
+      render([{ row: 2, col: 3, eventCount: 4 }]);
+
+      expect(cellAt(2, 3)?.classList).toContain('has-events');
+      expect(cellAt(3, 6)?.classList).not.toContain('has-events');
+    });
+
+    it('informa los eventos sin zona cuando existen y lo oculta si no', () => {
+      render([{ row: 1, col: 1, eventCount: 2 }], 3);
+      expect(fixture.nativeElement.querySelector('[data-testid="unzoned-notice"]')?.textContent).toContain('3');
+
+      render([{ row: 1, col: 1, eventCount: 2 }], 0);
+      expect(fixture.nativeElement.querySelector('[data-testid="unzoned-notice"]')).toBeNull();
+    });
+
+    it('muestra un estado vacío cuando no hay eventos en ninguna zona', () => {
+      render([], 0);
+
+      expect(fixture.nativeElement.querySelector('[data-testid="zones-empty"]')).not.toBeNull();
+    });
   });
 
-  it('no muestra conteo en las celdas sin eventos', () => {
-    render([{ row: 2, col: 3, eventCount: 4 }]);
+  describe('lectura de la zona apuntada', () => {
+    it('sugiere cómo interactuar cuando no hay zona apuntada, según el modo', () => {
+      render([]);
+      expect(reading()).toContain('Pasá el cursor o tocá una zona');
 
-    expect(cellAt(1, 1)?.querySelector('[data-testid="zone-count"]')).toBeNull();
+      fixture.componentRef.setInput('mode', 'view');
+      fixture.detectChanges();
+      expect(reading()).toContain('ver sus eventos');
+    });
+
+    it('al pasar el cursor describe la zona y sus eventos', () => {
+      render([{ row: 3, col: 5, eventCount: 5 }]);
+
+      cellAt(3, 5)?.dispatchEvent(new Event('mouseenter'));
+      fixture.detectChanges();
+
+      expect(reading()).toBe('D5 · Derecha (55–70 m) · 22 rival (78–100 m) · 5 eventos');
+    });
+
+    it('al salir el cursor vuelve a la sugerencia', () => {
+      render([]);
+      cellAt(1, 2)?.dispatchEvent(new Event('mouseenter'));
+      cellAt(1, 2)?.dispatchEvent(new Event('mouseleave'));
+      fixture.detectChanges();
+
+      expect(reading()).toContain('Pasá el cursor');
+    });
   });
 
-  it('marca como activas únicamente las celdas con eventos', () => {
-    render([{ row: 2, col: 3, eventCount: 4 }]);
-
-    expect(cellAt(2, 3)?.classList).toContain('has-events');
-    expect(cellAt(3, 6)?.classList).not.toContain('has-events');
-  });
-
-  it('informa los eventos sin zona cuando existen', () => {
-    render([], 3);
-
-    const notice = fixture.nativeElement.querySelector('[data-testid="unzoned-notice"]');
-    expect(notice?.textContent).toContain('3');
-  });
-
-  it('oculta el aviso de sin zona cuando todos los eventos tienen zona', () => {
-    render([{ row: 1, col: 1, eventCount: 2 }], 0);
-
-    expect(fixture.nativeElement.querySelector('[data-testid="unzoned-notice"]')).toBeNull();
-  });
-
-  it('muestra un estado vacío cuando no hay ninguna zona asignada', () => {
-    render([], 0);
-
-    expect(fixture.nativeElement.querySelector('[data-testid="zones-empty"]')).not.toBeNull();
-  });
-
-  describe('selección de zona', () => {
+  describe('selección', () => {
     it('emite la celda tocada', () => {
       render([]);
       const emitted: ZoneCellRef[] = [];
@@ -77,24 +154,24 @@ describe('RugbyFieldComponent', () => {
       expect(emitted).toEqual([{ row: 2, col: 3 }]);
     });
 
-    it('emite la celda con Enter y con Espacio desde el teclado', () => {
+    it('emite la celda con Enter y con Espacio', () => {
       render([]);
       const emitted: ZoneCellRef[] = [];
       fixture.componentInstance.cellSelected.subscribe(cell => emitted.push(cell));
 
-      cellAt(1, 1)?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-      cellAt(3, 6)?.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+      key(cellAt(1, 1), 'Enter');
+      key(cellAt(3, 6), ' ');
 
       expect(emitted).toEqual([{ row: 1, col: 1 }, { row: 3, col: 6 }]);
     });
 
-    it('marca únicamente la celda seleccionada', () => {
+    it('marca únicamente la celda seleccionada con aria-selected', () => {
       fixture.componentRef.setInput('selectedCell', { row: 2, col: 3 });
       render([]);
 
       expect(cellAt(2, 3)?.classList).toContain('is-selected');
-      expect(cellAt(1, 1)?.classList).not.toContain('is-selected');
-      expect(cellAt(2, 3)?.getAttribute('aria-pressed')).toBe('true');
+      expect(cellAt(2, 3)?.getAttribute('aria-selected')).toBe('true');
+      expect(cellAt(1, 1)?.getAttribute('aria-selected')).toBe('false');
     });
 
     it('no emite si el gráfico es de solo lectura', () => {
@@ -104,26 +181,59 @@ describe('RugbyFieldComponent', () => {
       fixture.componentInstance.cellSelected.subscribe(cell => emitted.push(cell));
 
       cellAt(2, 3)?.dispatchEvent(new Event('click'));
+      key(cellAt(2, 3), 'Enter');
 
       expect(emitted).toEqual([]);
     });
   });
 
-  describe('proporciones reglamentarias', () => {
-    it('las columnas suman 120 m y respetan 10 / 22 / 28 / 28 / 22 / 10', () => {
+  describe('teclado (tabindex móvil)', () => {
+    it('solo una celda es parada de Tab', () => {
       render([]);
-      const columns = fixture.componentInstance.columns;
 
-      expect(columns.map(c => c.meters)).toEqual([10, 22, 28, 28, 22, 10]);
-      expect(columns.reduce((sum, c) => sum + c.meters, 0)).toBe(120);
-      expect(fixture.componentInstance.width).toBe(1200);
-      expect(fixture.componentInstance.height).toBe(700);
+      expect(cells().filter(c => c.getAttribute('tabindex') === '0').length).toBe(1);
+      expect(cellAt(1, 1)?.getAttribute('tabindex')).toBe('0');
     });
 
-    it('la línea de mitad de cancha queda en el centro', () => {
+    it('con una zona elegida esa celda es la parada de Tab', () => {
+      fixture.componentRef.setInput('selectedCell', { row: 2, col: 4 });
       render([]);
 
-      expect(fixture.componentInstance.halfway).toBe(fixture.componentInstance.width / 2);
+      expect(cellAt(2, 4)?.getAttribute('tabindex')).toBe('0');
+      expect(cellAt(1, 1)?.getAttribute('tabindex')).toBe('-1');
+    });
+
+    it('las flechas mueven el foco y la parada de Tab', () => {
+      render([]);
+
+      key(cellAt(1, 1), 'ArrowRight');
+      expect(cellAt(1, 2)?.getAttribute('tabindex')).toBe('0');
+
+      key(cellAt(1, 2), 'ArrowDown');
+      expect(cellAt(2, 2)?.getAttribute('tabindex')).toBe('0');
+      expect(cellAt(1, 1)?.getAttribute('tabindex')).toBe('-1');
+    });
+
+    it('las flechas no salen de la grilla', () => {
+      render([]);
+
+      key(cellAt(1, 1), 'ArrowLeft');
+      key(cellAt(1, 1), 'ArrowUp');
+      expect(cellAt(1, 1)?.getAttribute('tabindex')).toBe('0');
+
+      key(cellAt(3, 6), 'ArrowRight');
+      key(cellAt(3, 6), 'ArrowDown');
+      expect(cellAt(3, 6)?.getAttribute('tabindex')).toBe('0');
+    });
+
+    it('Home y End van a los extremos de la fila', () => {
+      render([]);
+
+      key(cellAt(2, 3), 'End');
+      expect(cellAt(2, 6)?.getAttribute('tabindex')).toBe('0');
+
+      key(cellAt(2, 6), 'Home');
+      expect(cellAt(2, 1)?.getAttribute('tabindex')).toBe('0');
     });
   });
 });

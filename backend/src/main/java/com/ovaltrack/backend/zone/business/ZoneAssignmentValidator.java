@@ -55,12 +55,14 @@ public class ZoneAssignmentValidator {
     }
 
     private void validateNoOverlap(ZoneAssignmentCreationDTO request, List<ZoneAssignment> others, UUID ignoredId) {
-        boolean overlaps = others.stream()
+        others.stream()
                 .filter(other -> ignoredId == null || !ignoredId.equals(other.getId()))
                 .filter(other -> other.getPeriod().equals(request.period()))
-                .anyMatch(other -> request.startMinute() < other.getEndMinute() && other.getStartMinute() < request.endMinute());
-        if (overlaps) {
-            throw new BusinessException("La zona se solapa con otra zona asignada en el mismo período");
-        }
+                .filter(other -> request.startMinute() < other.getEndMinute() && other.getStartMinute() < request.endMinute())
+                .findFirst()
+                .ifPresent(other -> {
+                    throw new BusinessException("El tramo se solapa con el tramo %dT %d'–%d' ya asignado"
+                            .formatted(other.getPeriod(), other.getStartMinute(), other.getEndMinute()));
+                });
     }
 }

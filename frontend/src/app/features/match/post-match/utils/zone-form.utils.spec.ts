@@ -1,14 +1,7 @@
-import { periodBounds, validateZoneForm, ZoneFormValues } from './zone-form.utils';
+import { validateZoneForm, ZoneFormValues } from './zone-form.utils';
 
 describe('zone-form.utils', () => {
   const valid: ZoneFormValues = { period: 1, startMinute: 10, endMinute: 25, row: 2, col: 3 };
-
-  describe('periodBounds', () => {
-    it('devuelve 0–40 para el 1T y 40–80 para el 2T', () => {
-      expect(periodBounds(1)).toEqual({ start: 0, end: 40 });
-      expect(periodBounds(2)).toEqual({ start: 40, end: 80 });
-    });
-  });
 
   describe('validateZoneForm', () => {
     it('acepta un formulario válido del 1T y del 2T', () => {

@@ -1,35 +1,133 @@
 <section class="zone-panel">
-  <!-- Zonas asignadas -->
+
+  <!-- Formulario primero: es la tarea principal -->
   <div class="panel-card">
-    <h2 class="section-title">Zonas asignadas</h2>
+    <h2 class="section-title">{{ editingId ? 'Editar tramo' : 'Nuevo tramo' }}</h2>
+    <p class="steps-hint">1. Tocá una zona en la cancha · 2. Definí el rango · 3. Guardá</p>
+
+    <!-- Paso 1: zona -->
+    <div class="step">
+      <span class="step-number" aria-hidden="true">1</span>
+      <div class="step-body">
+        <span class="field-label">Zona</span>
+        <div class="selected-cell" data-testid="selected-cell" [class.is-empty]="!selectedCell()">
+          <i class="bi bi-geo-alt"></i>
+          <span *ngIf="selectedCell() as cell; else pickHint">
+            <strong>{{ label(cell) }}</strong> · {{ rowName(cell.row) }} · {{ columnName(cell.col) }}
+          </span>
+          <ng-template #pickHint><span>Tocá una zona en la cancha</span></ng-template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Paso 2: tiempo y rango -->
+    <div class="step">
+      <span class="step-number" aria-hidden="true">2</span>
+      <div class="step-body">
+        <span class="field-label" id="zone-period-label">Tiempo</span>
+        <div class="segmented" role="group" aria-labelledby="zone-period-label">
+          <button *ngFor="let p of periods" type="button" class="segment"
+                  [class.is-active]="period === p.value" [attr.aria-pressed]="period === p.value"
+                  [disabled]="store.isSaving()" (click)="setPeriod(p.value)">
+            <strong>{{ p.label }}</strong>
+            <small>{{ p.range }}</small>
+          </button>
+        </div>
+
+        <div class="range-row">
+          <div class="range-field">
+            <label class="field-label" for="zone-start">Desde (min)</label>
+            <div class="stepper">
+              <button type="button" class="step-btn" aria-label="Restar un minuto a Desde"
+                      [disabled]="store.isSaving()" (click)="adjust('start', -1)">−</button>
+              <input id="zone-start" type="number" class="form-control" step="1" inputmode="numeric"
+                     [(ngModel)]="startMinute" (ngModelChange)="onRangeChange()" [disabled]="store.isSaving()" />
+              <button type="button" class="step-btn" aria-label="Sumar un minuto a Desde"
+                      [disabled]="store.isSaving()" (click)="adjust('start', 1)">+</button>
+            </div>
+          </div>
+          <div class="range-field">
+            <label class="field-label" for="zone-end">Hasta (min)</label>
+            <div class="stepper">
+              <button type="button" class="step-btn" aria-label="Restar un minuto a Hasta"
+                      [disabled]="store.isSaving()" (click)="adjust('end', -1)">−</button>
+              <input id="zone-end" type="number" class="form-control" step="1" inputmode="numeric"
+                     [(ngModel)]="endMinute" (ngModelChange)="onRangeChange()" [disabled]="store.isSaving()" />
+              <button type="button" class="step-btn" aria-label="Sumar un minuto a Hasta"
+                      [disabled]="store.isSaving()" (click)="adjust('end', 1)">+</button>
+            </div>
+          </div>
+        </div>
+
+        <p class="range-note">
+          El minuto de inicio cuenta y el de fin no: 10–25 y 25–40 no se pisan. En el 2T los minutos siguen de 40 a 80.
+          Los eventos después del 40′ (1T) o del 80′ (2T), por tiempo añadido, quedan sin zona.
+        </p>
+      </div>
+    </div>
+
+    <!-- Paso 3: guardar -->
+    <div class="step">
+      <span class="step-number" aria-hidden="true">3</span>
+      <div class="step-body">
+        <p *ngIf="serverError" class="inline-error" role="alert" data-testid="server-error">
+          <i class="bi bi-exclamation-triangle-fill"></i> {{ serverError }}
+        </p>
+
+        <p *ngIf="blockReason as reason" id="zone-save-hint" class="save-hint" data-testid="save-hint">{{ reason }}</p>
+
+        <div class="panel-actions">
+          <button type="button" class="btn btn-outline" *ngIf="editingId" (click)="cancelEdit()"
+                  [disabled]="store.isSaving()">Cancelar edición</button>
+          <button type="button" class="btn btn-invite d-flex align-items-center justify-content-center gap-2"
+                  data-testid="zone-save" aria-describedby="zone-save-hint"
+                  (click)="save()" [disabled]="store.isSaving() || !!blockReason">
+            <span *ngIf="store.isSaving()" class="spinner-border spinner-border-sm"></span>
+            <span>{{ store.isSaving() ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Guardar tramo') }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tramos asignados (con scroll propio para no empujar el formulario) -->
+  <div class="panel-card">
+    <div class="list-head">
+      <h2 class="section-title">Tramos asignados</h2>
+      <span class="count-pill">{{ store.assignments().length }} {{ store.assignments().length === 1 ? 'tramo' : 'tramos' }}</span>
+    </div>
+
+    <p *ngIf="listError" class="inline-error" role="alert" data-testid="list-error">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ listError }}
+    </p>
 
     <p *ngIf="store.assignments().length === 0" class="empty-state" data-testid="zones-list-empty">
-      Todavía no asignaste zonas. Los eventos quedan "sin zona" hasta que definas un tramo.
+      Todavía no asignaste tramos. Los eventos quedan "sin zona" hasta que definas uno.
     </p>
 
     <ul class="zone-list" *ngIf="store.assignments().length > 0">
       <li *ngFor="let zone of store.assignments()"
           class="zone-item" data-testid="zone-item"
           [class.is-editing]="zone.id === editingId">
-        <div class="zone-item-main">
-          <span class="zone-badge">{{ periodLabel(zone.period) }}</span>
-          <span class="zone-range">{{ zone.startMinute }}' – {{ zone.endMinute }}'</span>
-          <span class="zone-cell-label">{{ cellLabel(zone) }}</span>
-        </div>
+        <button type="button" class="zone-item-main" data-testid="zone-edit"
+                [attr.aria-label]="'Editar tramo ' + segmentName(zone)"
+                [disabled]="store.isSaving()" (click)="startEdit(zone)">
+          <span class="zone-badge">{{ label(zone) }}</span>
+          <span class="zone-text">
+            <span class="zone-name">{{ rowName(zone.row) }} · {{ columnName(zone.col) }}</span>
+            <span class="zone-range">{{ zone.period }}T · {{ zone.startMinute }}′–{{ zone.endMinute }}′</span>
+          </span>
+        </button>
 
         <div class="zone-item-actions" *ngIf="pendingDeleteId !== zone.id">
-          <button type="button" class="btn-icon" title="Editar zona" aria-label="Editar zona"
-                  (click)="startEdit(zone)" [disabled]="store.isSaving()">
-            <i class="bi bi-pencil"></i>
-          </button>
-          <button type="button" class="btn-icon btn-icon-danger" title="Eliminar zona" aria-label="Eliminar zona"
+          <button type="button" class="btn-icon btn-icon-danger" aria-label="Eliminar tramo" title="Eliminar tramo"
                   (click)="askDelete(zone.id)" [disabled]="store.isSaving()">
             <i class="bi bi-trash"></i>
           </button>
         </div>
 
-        <div class="zone-item-actions" *ngIf="pendingDeleteId === zone.id" data-testid="zone-delete-confirm">
-          <span class="confirm-text">¿Eliminar?</span>
+        <div class="zone-item-actions confirm" *ngIf="pendingDeleteId === zone.id" data-testid="zone-delete-confirm">
+          <span class="confirm-text">¿Eliminar? Sus eventos pasan a "Sin zona".</span>
           <button type="button" class="btn btn-outline btn-sm-touch" (click)="cancelDelete()"
                   [disabled]="store.isSaving()">No</button>
           <button type="button" class="btn btn-delete btn-sm-touch" (click)="confirmDelete()"
@@ -37,47 +135,5 @@
         </div>
       </li>
     </ul>
-  </div>
-
-  <!-- Formulario -->
-  <div class="panel-card">
-    <h2 class="section-title">{{ editingId ? 'Editar zona' : 'Nueva zona' }}</h2>
-
-    <div class="selected-cell" data-testid="selected-cell" [class.is-empty]="!selectedCell()">
-      <i class="bi bi-geo-alt"></i>
-      <span *ngIf="selectedCell() as cell; else pickHint">Zona elegida: <strong>{{ cellLabel(cell) }}</strong></span>
-      <ng-template #pickHint><span>Tocá una zona en la cancha</span></ng-template>
-    </div>
-
-    <div class="row g-3">
-      <div class="col-12">
-        <label class="form-label-custom fw-bold" for="zone-period">Tiempo</label>
-        <select id="zone-period" class="form-select" [(ngModel)]="period" (ngModelChange)="onPeriodChange()"
-                [disabled]="store.isSaving()">
-          <option [ngValue]="1">1° Tiempo</option>
-          <option [ngValue]="2">2° Tiempo</option>
-        </select>
-      </div>
-      <div class="col-6">
-        <label class="form-label-custom fw-bold" for="zone-start">Desde (min)</label>
-        <input id="zone-start" type="number" class="form-control" min="0" max="80" step="1"
-               [(ngModel)]="startMinute" [disabled]="store.isSaving()" />
-      </div>
-      <div class="col-6">
-        <label class="form-label-custom fw-bold" for="zone-end">Hasta (min)</label>
-        <input id="zone-end" type="number" class="form-control" min="0" max="80" step="1"
-               [(ngModel)]="endMinute" [disabled]="store.isSaving()" />
-      </div>
-    </div>
-
-    <div class="panel-actions">
-      <button type="button" class="btn btn-outline" *ngIf="editingId" (click)="cancelEdit()"
-              [disabled]="store.isSaving()">Cancelar edición</button>
-      <button type="button" class="btn btn-invite d-flex align-items-center justify-content-center gap-2"
-              data-testid="zone-save" (click)="save()" [disabled]="store.isSaving()">
-        <span *ngIf="store.isSaving()" class="spinner-border spinner-border-sm"></span>
-        <span>{{ store.isSaving() ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Guardar zona') }}</span>
-      </button>
-    </div>
   </div>
 </section>

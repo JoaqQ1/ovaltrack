@@ -1,4 +1,5 @@
-import { ZONE_GRID_COLS, ZONE_GRID_ROWS, ZONE_HALF_MINUTES, ZonePeriod } from '../../types/zone.types';
+import { ZONE_GRID_COLS, ZONE_GRID_ROWS, ZonePeriod } from '../../types/zone.types';
+import { periodRange } from './zone-stats';
 
 export interface ZoneFormValues {
   period: ZonePeriod;
@@ -6,11 +7,6 @@ export interface ZoneFormValues {
   endMinute: number | null;
   row: number | null;
   col: number | null;
-}
-
-/** Rango de minutos de partido que cubre cada tiempo (1T: 0–40, 2T: 40–80). */
-export function periodBounds(period: ZonePeriod): { start: number; end: number } {
-  return { start: (period - 1) * ZONE_HALF_MINUTES, end: period * ZONE_HALF_MINUTES };
 }
 
 /**
@@ -33,7 +29,7 @@ export function validateZoneForm(values: ZoneFormValues): string | null {
     return 'El minuto de inicio debe ser menor al minuto de fin';
   }
 
-  const bounds = periodBounds(period);
+  const bounds = periodRange(period);
   if (startMinute < bounds.start || endMinute > bounds.end) {
     return `El ${period}° tiempo va del minuto ${bounds.start} al ${bounds.end}`;
   }

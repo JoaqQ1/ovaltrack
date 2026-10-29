@@ -2,6 +2,7 @@ package com.ovaltrack.backend.zone.business;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.UUID;
@@ -129,6 +130,17 @@ class ZoneAssignmentValidatorTest {
 
             assertThrows(BusinessException.class,
                     () -> validator.validate(request(1, 1, 1, 20, 30), others, null));
+        }
+
+        @Test
+        @DisplayName("El mensaje del solape nombra el tramo en conflicto")
+        void shouldNameTheConflictingSegmentInTheMessage() {
+            List<ZoneAssignment> others = List.of(existing(UUID.randomUUID(), 1, 10, 25));
+
+            BusinessException error = assertThrows(BusinessException.class,
+                    () -> validator.validate(request(1, 1, 1, 20, 30), others, null));
+
+            assertTrue(error.getMessage().contains("1T 10'–25'"), error.getMessage());
         }
 
         @Test

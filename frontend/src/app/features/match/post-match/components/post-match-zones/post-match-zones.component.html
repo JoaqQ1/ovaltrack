@@ -16,7 +16,7 @@
           }
           <span class="club-name">{{ opponent() }}</span>
         </h1>
-        <p class="hud-subtitle">Asigná una zona de la cancha a un tramo del partido; los eventos del tramo quedan vinculados.</p>
+        <p class="hud-subtitle">Marcá en qué zona de la cancha se jugó cada tramo del partido. Los eventos de ese tramo quedan vinculados a la zona.</p>
       </div>
     </div>
   </header>
@@ -40,6 +40,7 @@
           [cells]="zonesStore.summary().cells"
           [unzonedEventCount]="zonesStore.summary().unzonedEventCount"
           [selectedCell]="selectedCell()"
+          [ownClubName]="ownClubName()"
           (cellSelected)="onCellSelected($event)" />
       </div>
 
