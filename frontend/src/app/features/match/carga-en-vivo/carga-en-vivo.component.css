@@ -1033,6 +1033,10 @@
 	background: var(--bg-away);
 }
 
+.capture__header--neutral {
+	background: var(--bg-neutral);
+}
+
 .capture__title {
 	flex: 1;
 	margin: 0;

@@ -218,7 +218,11 @@
     @if (capture; as c) {
     <div class="capture-backdrop">
         <div class="capture" role="dialog" aria-modal="true" [attr.aria-label]="c.event.name">
-            <header class="capture__header" [class.capture__header--away]="c.team === 'OPPONENT'">
+            <header
+                class="capture__header"
+                [class.capture__header--own]="!c.canChooseTeam && c.team === 'OWN'"
+                [class.capture__header--away]="!c.canChooseTeam && c.team === 'OPPONENT'"
+                [class.capture__header--neutral]="c.canChooseTeam">
                 @if (c.stepIndex > 0) {
                 <button type="button" class="capture__icon-btn" aria-label="Paso anterior" (click)="captureBack()">
                     <i class="ti ti-arrow-left" aria-hidden="true"></i>
