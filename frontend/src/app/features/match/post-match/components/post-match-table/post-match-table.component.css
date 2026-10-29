@@ -432,3 +432,123 @@
   gap: 12px;
   margin-top: 24px;
 }
+
+/* ===== Columna de Notas ===== */
+.col-note {
+  /* Asegura que la columna tenga un ancho definido en tu grid (ej. flex: 1 o width específico) */
+  min-width: 150px; 
+  display: flex;
+  align-items: center;
+}
+
+/* Botón de añadir (cuando no hay nota) */
+.btn-add-note {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-add-note:hover {
+  color: #1d3b20;
+  background-color: rgba(29, 59, 32, 0.08);
+}
+
+/* Contenedor del adelanto de la nota */
+.note-preview-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  max-width: 100%;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.note-preview-wrapper:hover {
+  background-color: rgba(29, 59, 32, 0.08);
+}
+
+.note-icon-filled {
+  color: #1d3b20; /* Color primario */
+  flex-shrink: 0;
+  font-size: 0.9rem;
+}
+
+/* Texto truncado con ellipsis (...) */
+.note-text-preview {
+  color: #475569;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
+}
+
+/* 1. Definición exacta de las columnas de la tabla */
+.table-grid-header,
+.table-grid-row {
+  display: grid;
+  /* 
+     Distribución:
+     Período | Juego | Video | Jugada | Jugador | Nota (toma el resto) | Acción
+  */
+  grid-template-columns: 60px 70px 70px 200px 220px 1fr 80px;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+/* 2. Configuración estricta de la columna Nota para que funcione el truncado (...) */
+.col-note {
+  /* min-width: 0 es CRÍTICO en CSS Grid para que el text-overflow no desborde la columna */
+  min-width: 0; 
+  display: flex;
+  align-items: center;
+}
+
+.note-preview-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+  /* Evita que el contenedor crezca más del 100% de la celda */
+  max-width: 100%; 
+  overflow: hidden; 
+}
+
+.note-preview-wrapper:hover {
+  background-color: rgba(29, 59, 32, 0.08);
+}
+
+.note-icon-filled {
+  color: #1d3b20;
+  flex-shrink: 0; /* Evita que el ícono se aplaste si el texto es muy largo */
+  font-size: 0.9rem;
+}
+
+.note-text-preview {
+  color: #475569;
+  font-size: 0.85rem;
+  font-style: italic;
+  /* Truncado de texto */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 3. Alinear los botones de acción para que queden fijos a la derecha */
+.col-action {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
