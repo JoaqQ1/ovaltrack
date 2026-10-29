@@ -183,6 +183,16 @@
 	padding: 6px 14px;
 }
 
+.live-capture__clock-capture-header {
+	display: flex;
+	align-items: center;
+	gap: var(--ot-stack-compact);
+	background: var(--surface-alt);
+	border: 1px solid var(--border);
+	border-radius: var(--ot-radius-default);
+	padding: 6px 14px;
+}
+
 .live-capture__clock-time {
 	font-family: var(--font-space-grotesk);
 	font-weight: 700;

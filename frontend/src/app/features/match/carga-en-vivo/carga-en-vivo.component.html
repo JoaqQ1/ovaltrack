@@ -109,8 +109,8 @@
             <div class="event-catalog__category">
                 <p
                     class="event-catalog__label"
-                    [class.event-catalog__label--disabled]="!isStarted"
-                    >{{ category.name }}</p>
+                    [class.event-catalog__label--disabled]="!isStarted">{{
+                    category.name }}</p>
 
                 <div class="event-catalog__grid">
                     @for (event of category.events; track event.id) {
@@ -243,6 +243,19 @@
                 </button>
                 }
                 <h2 class="capture__title">{{ c.event.name }}</h2>
+                <div class="live-capture__clock">
+                    <span class="live-capture__clock-time">{{ gameClock
+                        }}</span>
+                    <button
+                        type="button"
+                        class="icon-btn"
+                        (click)="toggleClock()"
+                        [attr.aria-label]="pausaLabel"
+                        [attr.aria-pressed]="clockPaused"
+                        [disabled]="!isStarted || isHalftime">
+                        <i [class]="pausaIcon" aria-hidden="true"></i>
+                    </button>
+                </div>
                 @if (c.steps.length > 1) {
                 <span class="capture__step">{{ c.stepIndex + 1 }}/{{
                     c.steps.length }}</span>
