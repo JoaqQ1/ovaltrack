@@ -46,6 +46,8 @@ interface CaptureSession {
   team: CaptureTeam;
   /** Con actor CHOOSE o posesión NEUTRAL el analista elige entre Propio y Rival. */
   canChooseTeam: boolean;
+  /** Indica si el analista ya confirmó el equipo del evento. */
+  teamSelected: boolean;
   /** Posesión vigente al abrir el modal. */
   possession: Possession;
   playerNumber: number | null;
@@ -512,9 +514,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       this.router?.navigate(['/post-match/', this.matchId]);
     } catch (error) {
       this.synchronized = false;
-      this.errorMessage = (error instanceof HttpErrorResponse ? this.readBackendError(error) : null)
-        ?? 'Ocurrió un error al finalizar el partido.';
-      this.toastService.error(this.errorMessage);
+      this.toastService.error((error instanceof HttpErrorResponse ? this.readBackendError(error) : null)
+        ?? 'Ocurrió un error al finalizar el partido.');
     }
   }
 
@@ -1035,6 +1036,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       stepIndex: 0,
       team,
       canChooseTeam: resolved === null,
+      teamSelected: resolved !== null,
       possession,
       playerNumber: null,
       values: { ...preset },
@@ -1072,6 +1074,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       return;
     }
     this.capture.team = team;
+    this.capture.teamSelected = true;
     this.capture.playerNumber = null;
 
     const playerStepIndex = this.capture.steps.findIndex(step => step.kind === 'player');
@@ -1086,6 +1089,14 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     } else if (team === 'OWN' && playerStepIndex < 0) {
       this.capture.steps.unshift({ kind: 'player' });
     }
+  }
+
+  captureHeaderPossession(capture: CaptureSession): Possession {
+    if (!capture.teamSelected) {
+      return 'NEUTRAL';
+    }
+
+    return capture.team;
   }
 
   /** `null` = «Sin jugador». */
