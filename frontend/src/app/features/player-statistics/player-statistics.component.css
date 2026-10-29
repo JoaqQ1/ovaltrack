@@ -13,6 +13,39 @@
   gap: 20px;
 }
 
+/* Skeleton de carga: misma grilla que el contenido, con los bloques `.sk` globales */
+.stats-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sk-profile-avatar {
+  width: 72px;
+  height: 72px;
+}
+
+.sk-kpi-value {
+  height: 28px;
+  width: 50%;
+}
+
+.sk-chart {
+  height: 180px;
+  border-radius: var(--radius-md);
+}
+
+.sk-progress {
+  height: 8px;
+  border-radius: var(--radius-pill);
+}
+
+.sk-table-row {
+  height: 32px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-sm);
+}
+
 .hud {
   margin: 4px 0 0;
 }

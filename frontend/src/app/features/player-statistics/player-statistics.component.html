@@ -24,6 +24,53 @@
     </div>
   </header>
 
+  @if (isLoading()) {
+  <!-- Skeleton de Carga -->
+  <div class="stats-skeleton" aria-busy="true" aria-label="Cargando estadísticas">
+    <section class="form-card profile-card">
+      <div class="sk sk-avatar sk-profile-avatar"></div>
+      <div class="profile-info">
+        <div class="sk sk-line"></div>
+        <div class="sk sk-line s"></div>
+      </div>
+    </section>
+
+    <section class="kpi-grid">
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+      <article class="form-card kpi-card">
+        <div class="sk sk-line s"></div>
+        <div class="sk sk-kpi-value"></div>
+        <div class="sk sk-line"></div>
+      </article>
+      }
+    </section>
+
+    <div class="stats-row">
+      <section class="form-card chart-card">
+        <div class="form-card-body">
+          <div class="sk sk-chart"></div>
+        </div>
+      </section>
+      <section class="form-card side-card">
+        <div class="form-card-body side-body">
+          @for (i of [1, 2, 3]; track i) {
+          <div class="sk sk-line"></div>
+          <div class="sk sk-progress"></div>
+          }
+        </div>
+      </section>
+    </div>
+
+    <section class="form-card history-card">
+      <div class="form-card-body">
+        @for (i of [1, 2, 3, 4]; track i) {
+        <div class="sk sk-table-row"></div>
+        }
+      </div>
+    </section>
+  </div>
+  } @else {
+
   <!-- Perfil del Jugador -->
   <section class="form-card profile-card">
     <div class="profile-avatar" aria-hidden="true">{{ profile().initials }}</div>
@@ -151,7 +198,6 @@
             <th>Rival</th>
             <th>Resultado</th>
             <th>Rol</th>
-            <th class="num">Min</th>
             <th class="num">Pts</th>
             <th class="num">Tries</th>
             <th class="num">Conv</th>
@@ -171,7 +217,6 @@
             <td>
               <span class="role-tag" [class.is-starter]="match.isStarter">{{ match.isStarter ? 'Titular' : 'Suplente' }}</span>
             </td>
-            <td class="num mono">{{ match.minutesPlayed }}'</td>
             <td class="num mono strong">{{ match.totalPoints }}</td>
             <td class="num mono">{{ match.tries }}</td>
             <td class="num mono">{{ match.conversionsMade }}/{{ match.conversionAttempts }}</td>
@@ -190,11 +235,12 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="10" class="empty-row">No hay partidos para este filtro.</td>
+            <td colspan="9" class="empty-row">No hay partidos para este filtro.</td>
           </tr>
           }
         </tbody>
       </table>
     </div>
   </section>
+  }
 </div>

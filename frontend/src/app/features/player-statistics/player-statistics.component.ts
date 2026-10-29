@@ -1,26 +1,20 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, finalize, of, tap } from 'rxjs';
+import { ToastService } from 'src/app/core/services/toast.service';
+import { PlayerStatisticsService } from './services/player-statistics.service';
+import { toHistoryRow } from './utils/player-statistics.utils';
 import {
   KickingStat,
   MatchResult,
   PlayerCountStat,
   PlayerKpi,
   PlayerMatchHistory,
+  PlayerMatchStatistic,
   PlayerProfile,
   PlayerRoleFilter,
 } from './types/player-statistics.types';
-
-/** Mockup: datos de ejemplo hasta conectar el endpoint de estadísticas del jugador. */
-const MOCK_HISTORY: PlayerMatchHistory[] = [
-  { matchId: 'm1', date: '2026-03-15', opponent: 'Los Tilos', result: 'win', ownScore: 27, opponentScore: 12, isStarter: true, minutesPlayed: 80, totalPoints: 12, tries: 1, conversionsMade: 2, conversionAttempts: 3, penaltyKicksMade: 1, penaltyKickAttempts: 1, yellowCards: 0, redCards: 0 },
-  { matchId: 'm2', date: '2026-03-22', opponent: 'Pucará', result: 'loss', ownScore: 14, opponentScore: 21, isStarter: true, minutesPlayed: 80, totalPoints: 4, tries: 0, conversionsMade: 2, conversionAttempts: 2, penaltyKicksMade: 0, penaltyKickAttempts: 1, yellowCards: 0, redCards: 0 },
-  { matchId: 'm3', date: '2026-03-29', opponent: 'CASI', result: 'win', ownScore: 31, opponentScore: 17, isStarter: true, minutesPlayed: 72, totalPoints: 11, tries: 1, conversionsMade: 3, conversionAttempts: 4, penaltyKicksMade: 0, penaltyKickAttempts: 0, yellowCards: 0, redCards: 0 },
-  { matchId: 'm4', date: '2026-04-05', opponent: 'Regatas', result: 'draw', ownScore: 18, opponentScore: 18, isStarter: false, minutesPlayed: 30, totalPoints: 3, tries: 0, conversionsMade: 0, conversionAttempts: 0, penaltyKicksMade: 1, penaltyKickAttempts: 2, yellowCards: 0, redCards: 0 },
-  { matchId: 'm5', date: '2026-04-12', opponent: 'Hindú', result: 'loss', ownScore: 10, opponentScore: 24, isStarter: true, minutesPlayed: 80, totalPoints: 5, tries: 1, conversionsMade: 0, conversionAttempts: 1, penaltyKicksMade: 0, penaltyKickAttempts: 1, yellowCards: 1, redCards: 0 },
-  { matchId: 'm6', date: '2026-04-19', opponent: 'Newman', result: 'win', ownScore: 22, opponentScore: 15, isStarter: true, minutesPlayed: 80, totalPoints: 10, tries: 0, conversionsMade: 2, conversionAttempts: 2, penaltyKicksMade: 2, penaltyKickAttempts: 3, yellowCards: 0, redCards: 0 },
-  { matchId: 'm7', date: '2026-04-26', opponent: 'Belgrano', result: 'win', ownScore: 35, opponentScore: 7, isStarter: true, minutesPlayed: 65, totalPoints: 9, tries: 1, conversionsMade: 2, conversionAttempts: 4, penaltyKicksMade: 0, penaltyKickAttempts: 0, yellowCards: 0, redCards: 0 },
-  { matchId: 'm8', date: '2026-05-03', opponent: 'SIC', result: 'loss', ownScore: 12, opponentScore: 19, isStarter: false, minutesPlayed: 25, totalPoints: 2, tries: 0, conversionsMade: 1, conversionAttempts: 1, penaltyKicksMade: 0, penaltyKickAttempts: 0, yellowCards: 0, redCards: 0 },
-];
 
 const RESULT_LABELS: Record<MatchResult, string> = {
   win: 'G',
@@ -42,6 +36,28 @@ const ROLE_FILTER_LABELS: Record<PlayerRoleFilter, string> = {
   styleUrl: './player-statistics.component.css'
 })
 export class PlayerStatisticsComponent {
+  private readonly playerStatisticsService = inject(PlayerStatisticsService);
+  private readonly toastService = inject(ToastService);
+
+  readonly isLoading = signal<boolean>(true);
+
+  /** Estadísticas de todos los partidos jugados; ante un error queda vacío y se avisa con un toast. */
+  readonly matchStatistics = toSignal(
+    this.playerStatisticsService.loadAllMatchStatistics().pipe(
+      tap(statistics => {
+        if (statistics.length === 0) {
+          this.toastService.warning('Todavía no jugaste partidos finalizados.', 'Sin partidos');
+        }
+      }),
+      catchError(() => {
+        this.toastService.error('No se pudieron cargar tus estadísticas.');
+        return of([]);
+      }),
+      finalize(() => this.isLoading.set(false))
+    ),
+    { initialValue: [] as PlayerMatchStatistic[] }
+  );
+
   readonly resultLabels = RESULT_LABELS;
   readonly roleFilterLabels = ROLE_FILTER_LABELS;
   readonly roleFilters: readonly PlayerRoleFilter[] = ['all', 'starter', 'substitute'];
@@ -56,9 +72,15 @@ export class PlayerStatisticsComponent {
     divisionName: 'M19',
   });
 
-  readonly history = signal<PlayerMatchHistory[]>(MOCK_HISTORY);
   readonly selectedSeason = signal('2026');
   readonly roleFilter = signal<PlayerRoleFilter>('all');
+
+  /** Partidos de la temporada elegida (el año de la fecha del partido). */
+  readonly seasonStatistics = computed<PlayerMatchStatistic[]>(() =>
+    this.matchStatistics().filter(statistic => statistic.match.date.startsWith(this.selectedSeason()))
+  );
+
+  readonly history = computed<PlayerMatchHistory[]>(() => this.seasonStatistics().map(toHistoryRow));
 
   readonly kicking = signal<KickingStat[]>([
     { label: 'Conversiones', made: 18, attempts: 24 },
@@ -82,7 +104,6 @@ export class PlayerStatisticsComponent {
   readonly kpis = computed<PlayerKpi[]>(() => {
     const matches = this.history();
     const starters = matches.filter(m => m.isStarter).length;
-    const minutes = matches.reduce((sum, m) => sum + m.minutesPlayed, 0);
     const points = matches.reduce((sum, m) => sum + m.totalPoints, 0);
     const tries = matches.reduce((sum, m) => sum + m.tries, 0);
     const count = (result: MatchResult) => matches.filter(m => m.result === result).length;
@@ -91,7 +112,6 @@ export class PlayerStatisticsComponent {
 
     return [
       { label: 'Partidos', value: `${matches.length}`, detail: `${starters} titular · ${matches.length - starters} suplente` },
-      { label: 'Minutos', value: `${minutes}`, detail: `${this.average(minutes, matches.length)} min por partido` },
       { label: 'Puntos', value: `${points}`, detail: `${this.average(points, matches.length)} por partido` },
       { label: 'Tries', value: `${tries}`, detail: 'Apoyados en la temporada' },
       { label: 'Récord con el club', value: `${count('win')}-${count('loss')}-${count('draw')}`, detail: 'G · P · E jugando vos' },
