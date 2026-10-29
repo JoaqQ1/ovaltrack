@@ -7,6 +7,8 @@ export const EVENT_CODES = {
     PENALTY_KICK: 'PENALTY_KICK',
     YELLOW_CARD: 'YELLOW_CARD',
     RED_CARD: 'RED_CARD',
+    PENALTY_CONCEDED: 'PENALTY_CONCEDED',
+
 } as const;
 export function toResult(match: PlayerMatchDTO): MatchResult {
     const { homeScore: home, awayScore: visitor } = match;
@@ -87,4 +89,8 @@ function sumValues(
         };
     }
     return result;
+}
+export function seasonsOf(matchStatistics: PlayerMatchStatistic[]): string[] {
+    const temporadas = new Set(matchStatistics.map(m => m.match.date.slice(0, 4)));
+    return Array.from(temporadas).sort((a, b) => b.localeCompare(a));
 }
