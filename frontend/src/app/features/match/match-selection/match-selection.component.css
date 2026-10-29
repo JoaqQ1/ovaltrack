@@ -438,6 +438,248 @@
   }
 }
 
+
+/* ===== Variables de FullCalendar con la paleta verde de la app ===== */
+.calendar-wrapper ::ng-deep .fc {
+  --fc-button-bg-color: #1d3b20;
+  --fc-button-border-color: #1d3b20;
+  --fc-button-hover-bg-color: #2d5a32;
+  --fc-button-hover-border-color: #2d5a32;
+  --fc-button-active-bg-color: #14291a;
+  --fc-button-active-border-color: #14291a;
+  --fc-today-bg-color: rgba(29, 59, 32, 0.08); /* reemplaza el amarillo */
+  --fc-border-color: #dfe6df;
+}
+
+/* ===== Links (números de día y encabezados) en verde, sin subrayado ===== */
+.calendar-wrapper ::ng-deep .fc a,
+.calendar-wrapper ::ng-deep .fc .fc-col-header-cell-cushion,
+.calendar-wrapper ::ng-deep .fc .fc-daygrid-day-number {
+  color: #1d3b20;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.calendar-wrapper ::ng-deep .fc a:hover {
+  color: #2d5a32;
+}
+
+/* Días del mes anterior/siguiente más apagados */
+.calendar-wrapper ::ng-deep .fc .fc-day-other .fc-daygrid-day-number {
+  color: #1d3b20;
+  opacity: 0.35;
+}
+
+/* ===== Título del mes en MAYÚSCULAS ===== */
+.calendar-wrapper ::ng-deep .fc .fc-toolbar-title {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 1.4rem;
+  font-weight: 1000;
+  color: #1d3b20;
+}
+
+/* ===== Botones anterior / siguiente: circulares ===== */
+.calendar-wrapper ::ng-deep .fc .fc-prev-button,
+.calendar-wrapper ::ng-deep .fc .fc-next-button {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50% !important;
+  margin-right: 6px;
+  box-shadow: none !important;
+}
+
+/* ===== Botón "Hoy" ===== */
+.calendar-wrapper ::ng-deep .fc .fc-today-button {
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-weight: 600;
+  text-transform: capitalize;
+  box-shadow: none !important;
+}
+
+/* ===== Selector Mes / Año estilo píldora ===== */
+.calendar-wrapper ::ng-deep .fc .fc-dayGridMonth-button,
+.calendar-wrapper ::ng-deep .fc .fc-multiMonthYear-button {
+  background: #fff;
+  color: #1d3b20;
+  border-color: #1d3b20;
+  font-weight: 600;
+  padding: 8px 18px;
+  box-shadow: none !important;
+}
+
+.calendar-wrapper ::ng-deep .fc .fc-dayGridMonth-button {
+  border-radius: 20px 0 0 20px;
+}
+
+.calendar-wrapper ::ng-deep .fc .fc-multiMonthYear-button {
+  border-radius: 0 20px 20px 0;
+}
+.calendar-wrapper ::ng-deep .fc .fc-dayGridMonth-button {
+  border-radius: 20px 0 0 20px;
+}
+
+.calendar-wrapper ::ng-deep .fc .fc-dayGridWeek-button {
+  border-radius: 0 20px 20px 0;
+}
+
+.calendar-wrapper ::ng-deep .fc .fc-button-primary.fc-button-active {
+  background: #1d3b20;
+  color: #fff;
+}
+
+/* ===== Modal Match Card ===== */
+.modal-match-card {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 400px;
+  max-width: 100%;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+.card-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 12px 24px;
+}
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #eef5ef;
+  color: #1a3c20;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #d3e2d5;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #1a3c20;
+  border-radius: 50%;
+}
+
+.btn-delete-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.btn-delete-icon:hover svg {
+  stroke: #ff4d4f;
+}
+
+.card-main-info {
+  padding: 0 24px 20px 24px;
+}
+
+.opponent-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #0f2914;
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+}
+
+.vs-badge {
+  background-color: #eef5ef;
+  color: #1a3c20;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #d3e2d5;
+}
+
+.match-date-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #3b4e33;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.card-actions-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid #e9ecea;
+}
+
+.btn-text-action {
+  background: none;
+  border: none;
+  color: #1a3c20;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-text-action:hover {
+  text-decoration: underline;
+}
+
+.btn-primary-action {
+  background-color: #1d3b20;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.btn-primary-action:hover {
+  background-color: #2d5a32;
+}
+
+
+/* Overlay oscuro de fondo */
+.calendar-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(33, 37, 41, 0.6); /* Color oscuro transparente */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050; /* Por encima de todo */
+  padding: 16px;
+}
+
+/* Contenedor invisible para centrar la tarjeta */
+.calendar-modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ==========================================================================
    Modo Oscuro (Dark Rugby Tech)
    ========================================================================== */
@@ -565,4 +807,269 @@
 
 :host-context([data-theme="dark"]) .modal-actions {
   border-top-color: #1f2e47;
+}
+
+.calendar-modal-content .match-card-header {
+  padding: 24px 32px 0;
+}
+
+.calendar-modal-content .status-pill {
+  font-size: 15px;
+  padding: 8px 18px;
+}
+
+.calendar-modal-content .status-dot {
+  width: 10px;
+  height: 10px;
+}
+
+.calendar-modal-content .btn-delete-match {
+  width: 44px;
+  height: 44px;
+  font-size: 1.5rem;
+}
+
+.calendar-modal-content .match-card-body {
+  padding: 24px 32px 32px;
+}
+
+.calendar-modal-content .vs-label {
+  font-size: 16px;
+  padding: 6px 14px;
+  border-radius: 8px;
+}
+
+.calendar-modal-content .match-opponent-name {
+  font-size: 34px; /* Aumentado desde 19px */
+}
+
+.calendar-modal-content .match-date-badge {
+  font-size: 20px; /* Aumentado desde 13px */
+  gap: 10px;
+}
+
+.calendar-modal-content .match-date-badge i {
+  font-size: 1.5rem;
+}
+
+.calendar-modal-content .match-score-badge {
+  font-size: 28px; /* Aumentado desde 14px */
+  padding: 8px 18px;
+  border-radius: 12px;
+}
+
+.calendar-modal-content .match-card-action {
+  padding: 24px 32px;
+}
+
+.calendar-modal-content .btn-invite {
+  font-size: 18px;
+  padding: 16px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+/* ===== Wrapper ===== */
+.calendar-wrapper {
+  position: relative;
+}
+
+/* ===== Título clickeable ===== */
+.calendar-wrapper ::ng-deep .fc .fc-toolbar-title {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+.calendar-wrapper ::ng-deep .fc .fc-toolbar-title::after {
+  content: ' ▾';
+  font-size: 0.7em;
+  opacity: 0.6;
+}
+.calendar-wrapper ::ng-deep .fc .fc-toolbar-title:hover {
+  color: #2d5a32;
+}
+
+/* ===== Selector de mes / año ===== */
+.picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+}
+
+.month-picker {
+  position: absolute;
+  top: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 11;
+  width: 280px;
+  background: #ffffff;
+  border: 2px solid rgba(32, 75, 34, 0.26);
+  border-radius: 16px;
+  box-shadow: 0 16px 36px rgba(15, 35, 15, 0.18);
+  padding: 14px;
+  animation: modalFadeIn 0.15s ease-out;
+}
+
+.month-picker-year {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-weight: 800;
+  font-size: 18px;
+  color: #1d3b20;
+}
+
+.month-picker-year button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #1d3b20;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.month-picker-year button:hover { background: #2d5a32; }
+
+.month-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.month-picker-item {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(32, 75, 34, 0.2);
+  background: #f8faf6;
+  color: #1d3b20;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.month-picker-item:hover {
+  background: #edf5e9;
+  border-color: #1d3b20;
+}
+.month-picker-item.active {
+  background: #1d3b20;
+  color: #fff;
+  border-color: #1d3b20;
+}
+
+/* ===== Vista anual estilo Google Calendar ===== */
+.calendar-wrapper ::ng-deep .fc-multimonth {
+  --fc-border-color: transparent;   /* saca todas las líneas */
+  --fc-today-bg-color: transparent;
+}
+
+.calendar-wrapper ::ng-deep .fc .fc-multimonth-month {
+  padding: 14px 18px;
+}
+
+/* Nombre del mes en MAYÚSCULAS, alineado a la izquierda */
+.calendar-wrapper ::ng-deep .fc .fc-multimonth-title {
+  text-transform: uppercase;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #1d3b20;
+  padding: 0 0 6px 6px;
+}
+
+/* Letras D L M X J V S tenues */
+.calendar-wrapper ::ng-deep .fc .fc-multimonth .fc-col-header-cell-cushion {
+  color: #6b7565 !important;
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 4px 0;
+}
+
+/* Números centrados y chicos */
+.calendar-wrapper ::ng-deep .fc .fc-multimonth .fc-daygrid-day-top {
+  justify-content: center;
+  padding-top: 2px;
+}
+.calendar-wrapper ::ng-deep .fc .fc-multimonth .fc-daygrid-day-number {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px;
+}
+.calendar-wrapper ::ng-deep .fc .fc-multimonth .fc-daygrid-day-frame {
+  min-height: 42px;
+}
+
+/* Día actual: círculo verde */
+.calendar-wrapper ::ng-deep .fc .fc-multimonth .fc-day-today {
+  background: transparent !important;
+}
+.calendar-wrapper ::ng-deep .fc .fc-multimonth .fc-day-today .fc-daygrid-day-number {
+  background: #1d3b20;
+  color: #ffffff !important;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* ===== Vista anual: sin puntitos ===== */
+.calendar-wrapper ::ng-deep .fc .fc-multimonth .fc-daygrid-event-harness,
+.calendar-wrapper ::ng-deep .fc .fc-multimonth .fc-daygrid-event {
+  display: none !important;
+}
+
+/* ===== Base común para el recuadro del día en la vista anual ===== */
+.calendar-wrapper ::ng-deep .day-with-match {
+  cursor: pointer;
+}
+
+.calendar-wrapper ::ng-deep .day-with-match .fc-daygrid-day-frame {
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.calendar-wrapper ::ng-deep .day-with-match .fc-daygrid-day-frame:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Color del número: Oscuro para que resalte sobre los fondos pastel */
+.calendar-wrapper ::ng-deep .day-with-match .fc-daygrid-day-number {
+  color: #1d3b20 !important;
+  font-weight: 800;
+}
+
+/* Si el día con partido es hoy, limpiamos el círculo verde oscuro para que no tape el recuadro */
+.calendar-wrapper ::ng-deep .day-with-match.fc-day-today .fc-daygrid-day-number {
+  background: transparent !important;
+}
+
+/* ===== Colores dinámicos (Vista Anual) ===== */
+.calendar-wrapper ::ng-deep .day-status-won .fc-daygrid-day-frame {
+  background-color: #d6f2c4 !important; border-color: #8ebd71 !important; /* Verde */
+}
+.calendar-wrapper ::ng-deep .day-status-lost .fc-daygrid-day-frame {
+  background-color: #fce8e8 !important; border-color: #f4a9a9 !important; /* Rojo */
+}
+.calendar-wrapper ::ng-deep .day-status-tied .fc-daygrid-day-frame {
+  background-color: #e0f2fe !important; border-color: #7dd3fc !important; /* Azul */
+}
+.calendar-wrapper ::ng-deep .day-status-live .fc-daygrid-day-frame {
+  background-color: #fef08a !important; border-color: #fde047 !important; /* Amarillo */
+}
+.calendar-wrapper ::ng-deep .day-status-upcoming .fc-daygrid-day-frame {
+  background-color: #e2e8f0 !important; border-color: #94a3b8 !important; /* Gris oscuro bien visible */
+}
+
+/* Hover de las tarjetas compactas del nuevo modal */
+.compact-match-card:hover {
+  filter: brightness(1.15);
 }

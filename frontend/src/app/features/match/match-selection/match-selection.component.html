@@ -69,95 +69,50 @@
     </div>
   </div>
 
-  <!-- Grilla de Tarjetas de Partidos -->
-  <div class="match-grid">
-    @for (match of visibleMatches; track match.id) {
-    <article class="match-card-shell" [class.is-cancelled]="match.status === 'cancelled'">
-      <header class="match-card-header">
-        <span class="status-pill status-{{ match.status }}">
-          <span [class]="isLive(match) ? 'status-dot-pulse' : 'status-dot'"></span>
-          {{ statusLabel(match.status) }}
-        </span>
+  <div class="calendar-wrapper" (click)="onCalendarClick($event)" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+    <full-calendar #calendar [options]="calendarOptions"></full-calendar>
 
-        @if (match.status !== 'cancelled') {
-          <button
-            type="button"
-            class="btn-delete-match"
-            [attr.aria-label]="'Eliminar partido contra ' + match.opponent"
-            [disabled]="eliminatingMatchId === match.id"
-            (click)="confirmDeleteMatch(match); $event.stopPropagation()"
-            title="Eliminar partido">
-            <i class="bi bi-trash" aria-hidden="true"></i>
-          </button>
-        }
-      </header>
+    @if (isPickerOpen) {
+      <div class="picker-backdrop" (click)="isPickerOpen = false"></div>
+      <div class="month-picker">
 
-      <div class="match-card-body">
-        <div class="match-opponent-row">
-          <span class="vs-label">VS</span>
-          <h2 class="match-opponent-name">
-            <button
-              type="button"
-              class="match-card-link"
-              [disabled]="match.status === 'cancelled'"
-              (click)="onSelectMatch(match)">
-              {{ match.opponent }}
-            </button>
-          </h2>
-        </div>
-
-        <div class="match-meta-row">
-          <div class="match-date-badge">
-            <i class="bi bi-calendar-fill" aria-hidden="true"></i>
-            <time [attr.datetime]="match.date">{{ formatMatchDate(match.date) }}</time>
+        @if (isYearView) {
+          <!-- Vista AÑO: solo se elige el año -->
+          <div class="month-picker-year">
+            <button type="button" (click)="changePickerYear(-1)">‹</button>
+            <span>{{ pickerYears[0] }} – {{ pickerYears[11] }}</span>
+            <button type="button" (click)="changePickerYear(1)">›</button>
           </div>
-
-          @if (match.status !== 'not_started') {
-          <div class="match-score-badge">
-            <span>{{ match.homeScore}} – {{ match.awayScore }}</span>
+          <div class="month-picker-grid">
+            @for (y of pickerYears; track y) {
+              <button type="button" class="month-picker-item"
+                      [class.active]="y === currentYear"
+                      (click)="selectYear(y)">
+                {{ y }}
+              </button>
+            }
           </div>
-          }
-        </div>
-      </div>
-
-      @if (match.status !== 'cancelled') {
-      <footer class="match-card-action">
-        @if ( match.status === 'empty_roster' || match.status === 'not_started') {
-        <div class="match-actions-group">
-          <button type="button" class="action-link" (click)="onSelectMatch(match)">
-            Definir alineación
-          </button>
-          <button type="button" class="btn btn-invite" (click)="startMatch(match.id)">
-            Empezar partido
-          </button>
-        </div>
-        } @else if (match.status === 'finished' || match.status === 'halftime') {
-          <button type="button" class="btn btn-invite" (click)="onSelectMatch(match)">
-            Ver estadisticas
-          </button>
         } @else {
-          <button type="button" class="action-link" (click)="onSelectMatch(match)">
-            Capturar en vivo
-          </button>
+          <!-- Vista MES: año con flechas + meses -->
+          <div class="month-picker-year">
+            <button type="button" (click)="changePickerYear(-1)">‹</button>
+            <span>{{ pickerYear }}</span>
+            <button type="button" (click)="changePickerYear(1)">›</button>
+          </div>
+          <div class="month-picker-grid">
+            @for (m of monthsShort; track m; let i = $index) {
+              <button type="button" class="month-picker-item"
+                      [class.active]="pickerYear === currentYear && i === currentMonthIdx"
+                      (click)="selectMonth(i)">
+                {{ m }}
+              </button>
+            }
+          </div>
         }
-      </footer>
-      }
-    </article>
-    } @empty {
-    <div class="empty-state">
-      <div class="empty-icon">
-        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
+
       </div>
-      <h2 class="empty-title">No hay partidos registrados</h2>
-      <p class="empty-copy">
-        {{ activeFilter !== 'all' ? ('No se encontraron partidos en estado "' + statusLabels[activeFilter] + '".') : 'Aún no tienes partidos creados. Haz clic en "+ Crear partido" para programar el próximo encuentro.' }}
-      </p>
-    </div>
     }
+
   </div>
   
   <!-- Modal de Creación de Partido -->
@@ -221,4 +176,127 @@
     (cancel)="cancelarEliminacion()">
   </app-modal>
   }
+
+  <!-- Overlay para el detalle del partido desde el calendario -->
+  <div class="calendar-modal-overlay" *ngIf="isMatchModalOpen" (click)="closeMatchModal()">
+    
+    <!-- Contenedor centrado (evita que el clic cierre el modal si tocás la tarjeta) -->
+    <div class="calendar-modal-content" (click)="$event.stopPropagation()">
+      
+      @if (selectedMatchForModal) {
+        <article class="match-card-shell" [class.is-cancelled]="selectedMatchForModal.status === 'cancelled'" style="margin: 0; min-width: 360px; max-width: 100%;">
+          
+          <header class="match-card-header">
+            <span class="status-pill status-{{ selectedMatchForModal.status }}">
+              <span [class]="isLive(selectedMatchForModal) ? 'status-dot-pulse' : 'status-dot'"></span>
+              {{ statusLabel(selectedMatchForModal.status) }}
+            </span>
+
+            <div style="display: flex; gap: 8px;">
+              @if (selectedMatchForModal.status !== 'cancelled') {
+                <button type="button" class="btn-delete-match" (click)="confirmDeleteMatch(selectedMatchForModal); closeMatchModal(); $event.stopPropagation()">
+                  <i class="bi bi-trash" aria-hidden="true"></i>
+                </button>
+              }
+              <!-- Botón extra para cerrar el modal -->
+              <button type="button" class="btn-delete-match" (click)="closeMatchModal()" title="Cerrar">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+              </button>
+            </div>
+          </header>
+
+          <div class="match-card-body">
+            <div class="match-opponent-row">
+              <span class="vs-label">VS</span>
+              <h2 class="match-opponent-name">
+                <button type="button" class="match-card-link" [disabled]="selectedMatchForModal.status === 'cancelled'" (click)="onSelectMatch(selectedMatchForModal); closeMatchModal()">
+                  {{ selectedMatchForModal.opponent }}
+                </button>
+              </h2>
+            </div>
+
+            <div class="match-meta-row">
+              <div class="match-date-badge">
+                <i class="bi bi-calendar-fill" aria-hidden="true"></i>
+                <time [attr.datetime]="selectedMatchForModal.date">{{ formatMatchDate(selectedMatchForModal.date) }}</time>
+              </div>
+
+              @if (selectedMatchForModal.status !== 'not_started') {
+              <div class="match-score-badge">
+                <span>{{ selectedMatchForModal.homeScore}} – {{ selectedMatchForModal.awayScore }}</span>
+              </div>
+              }
+            </div>
+          </div>
+
+          @if (selectedMatchForModal.status !== 'cancelled') {
+          <footer class="match-card-action">
+            @if ( selectedMatchForModal.status === 'empty_roster' || selectedMatchForModal.status === 'not_started') {
+            <div class="match-actions-group">
+              <button type="button" class="action-link" (click)="onSelectMatch(selectedMatchForModal); closeMatchModal()">
+                Definir alineación
+              </button>
+              <button type="button" class="btn btn-invite" (click)="startMatch(selectedMatchForModal.id); closeMatchModal()">
+                Empezar partido
+              </button>
+            </div>
+            } @else if (selectedMatchForModal.status === 'finished' || selectedMatchForModal.status === 'halftime') {
+              <button type="button" class="btn btn-invite" (click)="onSelectMatch(selectedMatchForModal); closeMatchModal()">
+                Ver estadisticas
+              </button>
+            } @else {
+              <button type="button" class="action-link" (click)="onSelectMatch(selectedMatchForModal); closeMatchModal()">
+                Capturar en vivo
+              </button>
+            }
+          </footer>
+          }
+        </article>
+      }
+    </div>
+  </div>
+
+  <!-- MODAL DE DÍA (Para la Vista Anual) -->
+  <div class="calendar-modal-overlay" *ngIf="isDayModalOpen" (click)="closeDayModal()" style="z-index: 1060;">
+    <div class="calendar-modal-content" (click)="$event.stopPropagation()" style="background: white; border-radius: 12px; padding: 20px; width: 340px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+      
+      <!-- Encabezado del modal -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0; color: #1d3b20; font-family: var(--font-head); font-weight: 800; font-size: 1.2rem;">
+          Partidos del Día
+        </h3>
+        <button type="button" class="btn-delete-match" (click)="closeDayModal()" title="Cerrar" style="width: 32px; height: 32px;">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </div>
+      
+      <!-- Tarjetas Compactas de los partidos -->
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        @for (match of matchesForDayModal; track match.id) {
+          <div class="compact-match-card" (click)="openMatchDetailsFromDayModal(match)" 
+               [style.backgroundColor]="getMatchColor(match)"
+               style="border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: filter 0.15s ease;">
+            
+            <div style="color: rgba(255, 255, 255, 0.85); font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              {{ getMatchTime(match.date) }} hs
+            </div>
+            
+            <div style="color: #ffffff; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; line-height: 1.2;">
+              {{ match.opponent }}
+            </div>
+            
+            @if (match.status !== 'not_started' && match.status !== 'empty_roster') {
+              <div style="color: #ffffff; font-weight: 800; font-size: 0.95rem;">
+                {{ match.homeScore }} - {{ match.awayScore }}
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
 </div>
