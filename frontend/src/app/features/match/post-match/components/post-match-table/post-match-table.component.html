@@ -66,13 +66,13 @@
 
           <div class="col-note" (click)="$event.stopPropagation()">
             <!-- Si no hay nota: Botón minimalista de agregar -->
-            <button type="button" 
+            <div
                     *ngIf="!ev.note"
                     class="btn-row-action btn-add-note" 
                     title="Agregar nota"
                     (click)="openNoteModal(ev)">
               <i class="bi bi-chat-text"></i> Añadir
-            </button>
+            </div>
 
             <!-- Si hay nota: Adelanto truncado con ícono -->
             <div *ngIf="ev.note" 
