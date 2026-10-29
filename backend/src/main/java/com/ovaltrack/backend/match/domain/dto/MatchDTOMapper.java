@@ -2,6 +2,7 @@ package com.ovaltrack.backend.match.domain.dto;
 
 import com.ovaltrack.backend.match.domain.Match;
 import com.ovaltrack.backend.match.domain.MatchPlayer;
+import com.ovaltrack.backend.match.domain.MatchPlayerRole;
 
 public final class MatchDTOMapper {
 
@@ -40,7 +41,13 @@ public final class MatchDTOMapper {
             mp.getMatch().getDivision().getName(),
             mp.getMatch().getHomeScore(),
             mp.getMatch().getAwayScore(),
-            mp.getRole()
+            mp.getRole(),
+            toSlotNumber(mp)
         );
+    }
+
+    private static Integer toSlotNumber(MatchPlayer mp) {
+        if (mp.getSlotOrder() == null) return null;
+        return mp.getRole() == MatchPlayerRole.TITULAR ? mp.getSlotOrder() + 1 : mp.getSlotOrder() + 16;
     }
 }

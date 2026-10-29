@@ -12,6 +12,8 @@ public record PlayerMatchResponseDTO(
     String divisionName,
     Integer homeScore,
     Integer awayScore,
-    MatchPlayerRole role
+    MatchPlayerRole role,
+    /** Número de slot en la planilla (titulares 1-15, suplentes 16-23). Null en planteles sin orden. */
+    Integer slotNumber
 ) {
 }
