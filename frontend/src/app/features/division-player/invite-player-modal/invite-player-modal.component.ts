@@ -6,6 +6,7 @@ import { Division } from '../../division/types/division.types';
 import { InvitationService } from '../../invitation/service/invitation.service';
 import { BackendResponse, STATUS_CODE } from 'src/app/shared/types/shared-types';
 import { ToastService } from 'src/app/core/services/toast.service';
+import { finalize } from 'rxjs';
 
 
 @Component({
@@ -41,6 +42,8 @@ export class InvitePlayerModalComponent implements OnInit {
 
   readonly query = signal('');
   readonly selectedId = signal<string | null>(null);
+  /** true mientras se espera la respuesta del envío de la invitación. */
+  readonly isSending = signal(false);
 
   constructor(
     private personService: PersonService,
@@ -81,7 +84,7 @@ export class InvitePlayerModalComponent implements OnInit {
   }
 
   get canSend(): boolean {
-    return !!this.selectedId() && !this.sending;
+    return !!this.selectedId() && !this.sending && !this.isSending();
   }
 
   onSearch(event: Event): void {
@@ -103,28 +106,36 @@ export class InvitePlayerModalComponent implements OnInit {
 
   send(): void {
     const player = this.resultsPage.content.find((p) => p.id === this.selectedId());
+    if (!player || !this.canSend) return;
+
     const payload = {
       divisionId: this.division?.id,
       personId: player.id
     }
-    this.invitationService.sendInvitation(payload).subscribe({
+    this.isSending.set(true);
+    this.invitationService.sendInvitation(payload).pipe(
+      finalize(() => this.isSending.set(false))
+    ).subscribe({
       next: (response: BackendResponse) => {
-        if (response.status !== STATUS_CODE.OK)
-          this.toastService.error(response.message,'Error');
-        this.toastService.success(response.message, 'Invitacion enviada con exito', 2000);
-        this.close();
+        if (response.status !== STATUS_CODE.OK) {
+          this.toastService.error(response.message, 'Error');
+        } else {
+          this.toastService.success(response.message, 'Invitacion enviada con exito', 2000);
+          this.invited.emit(player);
+        }
+        this.closed.emit();
       },
       error: (error) => {
-        console.log(error)
-        this.toastService.error(error.error.message,'Error',3000);
-        this.close();
+        this.toastService.error(error.error?.message ?? 'No se pudo enviar la invitación', 'Error', 3000);
+        this.closed.emit();
       }
     });
-    if (player && !this.sending) this.invited.emit(player);
   }
 
   @HostListener('document:keydown.escape')
   close(): void {
+    // No se permite cerrar el modal mientras la invitación está en curso.
+    if (this.isSending()) return;
     this.closed.emit();
   }
 

@@ -11,6 +11,8 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
+import com.ovaltrack.backend.common.config.exceptions.BusinessException;
+
 @Configuration
 @PropertySource("classpath:email.properties")
 public class EmailConfig {
@@ -20,25 +22,34 @@ public class EmailConfig {
     @Value("${email.password}")
     private String password;
 
-    private Properties getMailProperties(){
+    private Properties getMailProperties() {
         Properties properties = new Properties();
         properties.put("mail.smtp.auth", "true");
         properties.put("mail.smtp.starttls.enable", "true");
         properties.put("mail.smtp.host", "smtp.gmail.com");
         properties.put("mail.smtp.port", "587");
-        return  properties;
+        return properties;
     }
 
-    @Bean 
-    JavaMailSender javaMailSender(){
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl(); 
+    @Bean
+    JavaMailSender javaMailSender() {
+
+        if (email == null || email.isBlank())
+            throw new BusinessException("Debe ingresar un email en las variables email.username del email.properties");
+        if (password == null || password.isBlank())
+            throw new BusinessException(
+                    "Debe ingresar un password en las variables email.password del email.properties");
+
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setJavaMailProperties(getMailProperties());
         mailSender.setUsername(email);
         mailSender.setPassword(password);
+        
         return mailSender;
     }
-    @Bean 
-    ResourceLoader resourceLoader(){
-        return  new DefaultResourceLoader();
+
+    @Bean
+    ResourceLoader resourceLoader() {
+        return new DefaultResourceLoader();
     }
-}   
+}

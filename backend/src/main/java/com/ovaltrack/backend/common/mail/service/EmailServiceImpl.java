@@ -1,6 +1,9 @@
 package com.ovaltrack.backend.common.mail.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailAuthenticationException;
+import org.springframework.mail.MailException;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -9,7 +12,7 @@ import org.thymeleaf.context.Context;
 
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.common.mail.dto.EmailDTO;
-import com.ovaltrack.backend.invitations.domain.Invitation;
+import com.ovaltrack.backend.person.domain.Person;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -43,42 +46,65 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(contentHTML, true);
             javaMailSender.send(message);
 
-        } catch (Exception e) {
-            throw new BusinessException("Error al enviar el correo" + e.getMessage());
+        } catch (MailAuthenticationException e) {
+            throw new BusinessException(
+                    "Error de Autentificacion, credenciales del email.properties invalidas: " + e.getMessage());
+        } catch (MailSendException e) {
+            throw new BusinessException("Error al enviar el email: " + e.getMessage());
+        } catch (MailException e) {
+            throw new BusinessException("Error al enviar el correo: " + e.getMessage());
         }
     }
 
     @Override
-    public void sendInvitation(Invitation invitation, String token) throws MessagingException {
+    public void sendInvitation(Person person, String token) throws MessagingException {
         try {
+            if (token == null)
+                throw new BusinessException("El token vino nulo");
+            if (person == null ||
+                    person.getContactEmail() == null)
+                throw new BusinessException("La persona vino nula");
+
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF8");
-            helper.setTo(invitation.getPerson().getContactEmail());
+            helper.setTo(person.getContactEmail());
             helper.setSubject("Unite a Ovaltrack!");
-            Context context = setVariables(invitation, token);
+            Context context = setVariables(person, token);
 
             String contentHTML = templateEngine.process("email", context);
 
             helper.setText(contentHTML, true);
             javaMailSender.send(message);
 
+        } catch (MailAuthenticationException e) {
+            throw new BusinessException(
+                    "Error de Autentificacion, credenciales del email.properties invalidas: " + e.getMessage());
+        } catch (MailSendException e) {
+            throw new BusinessException("Error al enviar el email: " + e.getMessage());
+        } catch (MailException e) {
+            throw new BusinessException("Error al enviar el correo: " + e.getMessage());
         } catch (Exception e) {
             throw new BusinessException("Error al enviar el correo" + e.getMessage());
         }
     }
 
-    private Context setVariables(Invitation invitation, String token) {
-        String userName = invitation.getPerson().getFirstName() + " " + invitation.getPerson().getLastName();
+    private Context setVariables(Person person, String token) {
+        if (person == null)
+            throw new IllegalArgumentException("Persona vino nula");
+        if (token == null || token.isBlank())
+            throw new IllegalArgumentException("El token vino nula o vacia");
+        
+        String userName = person.getFirstName() + " " + person.getLastName();
         Context context = new Context();
         context.setVariable("userName", userName);
-        context.setVariable("clubName", invitation.getClub().getName());
-        context.setVariable("userEmail", invitation.getPerson().getContactEmail());
+        context.setVariable("clubName", person.getClub().getName());
+        context.setVariable("userEmail", person.getContactEmail());
         context.setVariable("urlInvitation", getUrlInvitationWithToken(token));
         return context;
     }
 
-    private String getUrlInvitationWithToken(String token){
-        return String.format("%s?%s=%s", this.url,"token",token);
+    private String getUrlInvitationWithToken(String token) {
+        return String.format("%s?%s=%s", this.url, "token", token);
     }
 
 }

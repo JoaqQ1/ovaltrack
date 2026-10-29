@@ -31,26 +31,34 @@ public class TokenService {
     private static final Logger logger = LoggerFactory.getLogger(TokenService.class);
     private TokenRepository repository;
 
-    public IssuedToken create(String email, Duration timeToLive) {
+    public IssuedToken create(String email, Duration timeToLive, String rawValue) {
+        if (email == null || email.isBlank()) {
+            throw new BusinessException("El email no puede ser nulo");
+        }
+        if (timeToLive == null) {
+            throw new BusinessException("La tiempo de vida del token no puede ser nulo");
+        }
         logger.info("Iniciando creación de token para el email: {} con tiempo de vida: {}", email, timeToLive);
-        
-        String rawValue = generateRawValue();
+        if (rawValue == null || rawValue.isBlank()) {
+            rawValue = generateRawValue();
+        }
         Token token = new Token();
         token.setHash(hash(rawValue));
         token.setEmail(email);
         token.setExpiresAt(LocalDateTime.now().plus(timeToLive));
         token.setUsed(false);
-        
+
         Token savedToken = this.save(token);
         logger.info("Token creado y guardado exitosamente para el email: {}", email);
-        
+
         return new IssuedToken(savedToken, rawValue);
     }
 
     /**
-     * - 32 bytes aleatorios en Base64 URL: 43 caracteres alfanuméricos (más '-' y '_').
+     * - 32 bytes aleatorios en Base64 URL: 43 caracteres alfanuméricos (más '-' y
+     * '_').
      */
-    private String generateRawValue() {
+    public String generateRawValue() {
         byte[] bytes = new byte[32];
         RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
@@ -85,27 +93,29 @@ public class TokenService {
         logger.info("Buscando token vigente a partir del valor en crudo");
         String hashedToken = hash(rawValue);
         Token token = repository.findByHash(hashedToken);
-        
+
         if (token == null) {
             logger.warn("No se encontró ningún token asociado al hash provisto");
         } else {
             logger.info("Token encontrado exitosamente para el email: {}", token.getEmail());
         }
-        
+
         return token;
     }
 
     @Transactional
     public void consume(String rawValue) {
+        if (rawValue == null || rawValue.isBlank())
+            throw new BusinessException("El valor del token vino nulo o vacio");
         logger.info("Intentando consumir (marcar como usado) el token");
         String hashedToken = hash(rawValue);
-        
+
         int updatedRows = repository.markAsUsed(hashedToken, LocalDateTime.now());
         if (updatedRows == 0) {
             logger.warn("Fallo al consumir el token: El enlace ya fue utilizado o venció");
             throw new BusinessException("Este enlace ya fue utilizado o venció.");
         }
-        
+
         logger.info("Token consumido exitosamente");
     }
 }

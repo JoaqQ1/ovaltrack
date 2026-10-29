@@ -5,7 +5,14 @@
     aria-modal="true"
     aria-labelledby="invite-modal-title"
     (click)="$event.stopPropagation()"
+    [attr.aria-busy]="isSending()"
   >
+    @if (isSending()) {
+      <div class="sending-overlay" role="status" aria-live="polite">
+        <span class="sending-spinner" aria-hidden="true"></span>
+        <p class="sending-text">Enviando invitación…</p>
+      </div>
+    }
     <header class="form-card-header">
       <div>
         <h2 id="invite-modal-title" class="form-card-title">Invitar jugador</h2>
@@ -141,7 +148,7 @@
           <path d="M21 3L10 14" />
           <path d="M21 3l-7 18-4-7-7-4 18-7z" />
         </svg>
-        {{ sending ? "Enviando…" : "Enviar solicitud" }}
+        {{ sending || isSending() ? "Enviando…" : "Enviar solicitud" }}
       </button>
     </footer>
   </div>

@@ -3,14 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable, catchError, from, map, switchMap, throwError } from 'rxjs';
 import { Division, DivisionCreationRequest, DivisionUpdateRequest } from '../features/division/types/division.types';
-import { LiveCaptureCacheService } from '../features/match/services/live-capture-cache.service';
+import { LocalDatabaseService } from '../features/local-database/services/local-database.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DivisionService {
   private readonly http = inject(HttpClient);
-  private readonly cache = inject(LiveCaptureCacheService);
+  private readonly cache = inject(LocalDatabaseService);
   
   private readonly apiUrl = `${environment.apiUrl}/division`; 
 

@@ -206,7 +206,7 @@ INSERT INTO matches (id, date, division_id, opponent_id, status, current_period,
 
 INSERT INTO event_types
 (id, code, name, group_name, category, is_scoring, points,
- requires_player, is_active, show_in_palette, follow_up_event_type_id, actor, possession_after, follow_up_choices, template_event_fields, created_at)
+ requires_player, is_active, show_in_palette, follow_up_event_type_id, actor, possession_after, follow_up_choices, template_event_fields, stat_view, created_at)
 VALUES
 (
     '550e8400-e29b-41d4-a716-446655440101',
@@ -246,6 +246,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -307,6 +308,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -351,6 +353,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -412,6 +415,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -453,6 +457,7 @@ VALUES
         "max": 80
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -491,6 +496,7 @@ VALUES
         "max": 6
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -538,6 +544,7 @@ VALUES
         "required": false
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -578,6 +585,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -606,9 +614,32 @@ VALUES
         "max": 100
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
+<<<<<<< HEAD
+=======
+    '550e8400-e29b-41d4-a716-446655440127',
+    'ENTRY_22',
+    'Ingreso a 22m rival',
+    'Ataque',
+    'ATTACK',
+    false,
+    0,
+    false,
+    true,
+    true,
+    NULL,
+    'ATTACKING',
+    'KEEP',
+    $$[]$$::jsonb,
+    $$[]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
+    CURRENT_TIMESTAMP
+),
+(
+>>>>>>> 41f5ce5afab7118d4728299684ff96d762eedd9b
     '550e8400-e29b-41d4-a716-446655440110',
     'KICK_IN_PLAY',
     'Patada en juego',
@@ -690,6 +721,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -738,6 +770,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -802,6 +835,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -894,6 +928,7 @@ VALUES
         "required": false
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -958,6 +993,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1010,6 +1046,7 @@ VALUES
         "max": 30
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1038,6 +1075,7 @@ VALUES
         "falseLabel": "Negativo"
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1064,6 +1102,7 @@ VALUES
         "required": false
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1108,6 +1147,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1176,6 +1216,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1219,6 +1260,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$[]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1319,6 +1361,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1373,6 +1416,7 @@ VALUES
         "max": 20
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1413,6 +1457,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1461,6 +1506,7 @@ VALUES
         ]
       }
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 ),
 (
@@ -1482,6 +1528,7 @@ VALUES
       {"key":"playerOutNumber","label":"Jugador que sale","type":"number","phase":"live","required":true,"min":1,"max":15},
       {"key":"playerInNumber","label":"Jugador que entra","type":"number","phase":"live","required":true,"min":16,"max":23}
     ]$$::jsonb,
+    $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 );
 
@@ -1684,7 +1731,10 @@ INSERT INTO events (id, match_id, event_type_id, player_id, period, match_time, 
     ('4aa4b444-6f77-48a5-a1d4-ff02a2662e98', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440101', NULL, 2, 4048, 4534, '2026-10-17 20:24:21.867', 'OWN', '{"zone": "left"}'::jsonb, 'live-capture', true, 'fb1e5c6d-efb1-470c-8d5c-d72de3b5ac84', '2026-10-17 20:24:21.899', '2026-10-17 20:24:21.898'),
     ('e4bab5fc-12dd-4272-8e61-c1a1e2790e8a', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440102', '11111111-1111-1111-1111-000000000115', 2, 4084, 4570, '2026-10-17 20:24:58.330', 'OWN', '{"playerNumber": 15, "wasSuccessful": false}'::jsonb, 'live-capture', true, '5d4854e7-8a6a-496e-8239-8bd6652545d0', '2026-10-17 20:24:58.382', '2026-10-17 20:24:58.380'),
     ('ec9c3932-e96c-4b53-a4b0-676e47943d31', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440113', NULL, 2, 4136, 4622, '2026-10-17 20:25:50.257', 'OPPONENT', '{"outcome": "regained_attack"}'::jsonb, 'live-capture', true, '810d763a-fc25-47f9-b036-6a912c4838a9', '2026-10-17 20:25:50.290', '2026-10-17 20:25:50.289'),
+<<<<<<< HEAD
     ('c597bfe0-c39c-4535-84ac-1038d102b1b6', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440117', NULL, 2, 4141, 4626, '2026-10-17 20:25:54.698', 'OWN', '{"stealType": "knock_on"}'::jsonb, 'live-capture', true, 'e9cd1a54-b44b-4311-9ac5-a9c250ef1869', '2026-10-17 20:25:54.737', '2026-10-17 20:25:54.736'),
+=======
+>>>>>>> 41f5ce5afab7118d4728299684ff96d762eedd9b
     ('dab1a9c1-b860-4912-8549-935f433f6952', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440128', '11111111-1111-1111-1111-000000000115', 2, 4264, 4749, '2026-10-17 20:27:57.783', 'OWN', '{"kind": "penalty_touch", "playerNumber": 15}'::jsonb, 'live-capture', true, '372f2f0c-f024-40a3-ba9e-7446dda00562', '2026-10-17 20:27:57.830', '2026-10-17 20:27:57.829'),
     ('72a29692-28b0-4586-8d23-b8a9e6eb51aa', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440110', NULL, 2, 4293, 4779, '2026-10-17 20:28:27.450', 'OPPONENT', '{"outcome": "out_in_full"}'::jsonb, 'live-capture', true, 'f5cf72b5-df43-471a-a883-de2b81ac2a1f', '2026-10-17 20:28:27.489', '2026-10-17 20:28:27.488'),
     ('e68fa5ca-84fb-4279-983b-a736abc75531', '24a0cbdc-4667-4099-b16f-abc64f388345', '550e8400-e29b-41d4-a716-446655440112', NULL, 2, 4317, 4803, '2026-10-17 20:28:51.340', 'OWN', '{"lineResult": "won_clean"}'::jsonb, 'live-capture', true, 'c26c94fb-4363-4847-8f8a-871bf39b5766', '2026-10-17 20:28:51.381', '2026-10-17 20:28:51.380'),

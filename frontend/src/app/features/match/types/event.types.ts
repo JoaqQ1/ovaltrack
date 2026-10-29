@@ -17,6 +17,7 @@ export interface BackendEventResponse {
   createdAt: string;
   synchronizedAt: string | null;
   active: boolean;
+  note?: string | null;
 }
 
 export interface BackendEventCreationRequest {
@@ -32,6 +33,7 @@ export interface BackendEventCreationRequest {
   origin?: string | null;
   attributes?: Record<string, unknown>;
   synchronizedAt?: string | null;
+  note?: string | null;
 }
 
 export interface BackendEventUpdateRequest {
@@ -44,11 +46,17 @@ export interface BackendEventUpdateRequest {
   origin?: string | null;
   attributes?: Record<string, unknown> | null;
   synchronizedAt?: string | null;
+  note?: string | null;
 }
 
 export interface LocalMatchEvent extends BackendEventResponse {
   backendEventId?: UUID | null;
   localSequence: number;
+  /** Intentos de sincronización fallidos. Solo local, no se envía al backend. */
+  syncAttempts?: number;
+  /** Momento en que el servidor rechazó el evento; a partir de ahí no se reintenta automáticamente. */
+  syncFailedAt?: string | null;
+  syncErrorMessage?: string | null;
 }
 
 export interface MatchTimelineEventResponse {
@@ -65,4 +73,5 @@ export interface MatchTimelineEventResponse {
   teamPossession: Possession;
   origin?: string | null;
   attributes?: Record<string, unknown> | null;
+  note?: string | null;
 }

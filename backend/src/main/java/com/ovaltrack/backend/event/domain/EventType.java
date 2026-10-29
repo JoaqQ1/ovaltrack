@@ -48,6 +48,16 @@ public class EventType {
     
     private UUID followUpEventTypeId; // UUID plano, sin @ManyToOne
 
+    /** Indica sobre que vistas puede aparecer la estadistica del evento
+     * <p>Valores:
+     * <p>'basic' indica que su estadistica puede aparecer en el modal de estadisticas
+     * <p>'intermediate' indica que su estadistica puede aparecer en la pantalla de entretiempo
+     * <p>Todos los eventos aparecen en la pantalla post-partido
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private List<String> statView;
+
     /** Qué equipo ejecuta el evento (relativo a quién tiene la pelota). */
     @Enumerated(EnumType.STRING)
     @Builder.Default
