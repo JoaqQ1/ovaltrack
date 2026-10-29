@@ -50,10 +50,8 @@ import com.ovaltrack.backend.match.domain.event.MatchPeriodClosedEvent;
 import com.ovaltrack.backend.match.repository.MatchPlayerRepository;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 import com.ovaltrack.backend.match.repository.OpponentRepository;
-import com.ovaltrack.backend.user.business.UserContextService;
 import com.ovaltrack.backend.user.business.UserService;
 import com.ovaltrack.backend.user.domain.User;
-import com.ovaltrack.backend.user.domain.dto.UserContextDTO;
 
 import lombok.RequiredArgsConstructor;
 
