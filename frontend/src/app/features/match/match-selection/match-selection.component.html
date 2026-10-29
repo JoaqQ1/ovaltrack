@@ -69,8 +69,50 @@
     </div>
   </div>
 
-  <div class="calendar-wrapper" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-    <full-calendar [options]="calendarOptions"></full-calendar>
+  <div class="calendar-wrapper" (click)="onCalendarClick($event)" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+    <full-calendar #calendar [options]="calendarOptions"></full-calendar>
+
+    @if (isPickerOpen) {
+      <div class="picker-backdrop" (click)="isPickerOpen = false"></div>
+      <div class="month-picker">
+
+        @if (isYearView) {
+          <!-- Vista AÑO: solo se elige el año -->
+          <div class="month-picker-year">
+            <button type="button" (click)="changePickerYear(-1)">‹</button>
+            <span>{{ pickerYears[0] }} – {{ pickerYears[11] }}</span>
+            <button type="button" (click)="changePickerYear(1)">›</button>
+          </div>
+          <div class="month-picker-grid">
+            @for (y of pickerYears; track y) {
+              <button type="button" class="month-picker-item"
+                      [class.active]="y === currentYear"
+                      (click)="selectYear(y)">
+                {{ y }}
+              </button>
+            }
+          </div>
+        } @else {
+          <!-- Vista MES: año con flechas + meses -->
+          <div class="month-picker-year">
+            <button type="button" (click)="changePickerYear(-1)">‹</button>
+            <span>{{ pickerYear }}</span>
+            <button type="button" (click)="changePickerYear(1)">›</button>
+          </div>
+          <div class="month-picker-grid">
+            @for (m of monthsShort; track m; let i = $index) {
+              <button type="button" class="month-picker-item"
+                      [class.active]="pickerYear === currentYear && i === currentMonthIdx"
+                      (click)="selectMonth(i)">
+                {{ m }}
+              </button>
+            }
+          </div>
+        }
+
+      </div>
+    }
+
   </div>
   
   <!-- Modal de Creación de Partido -->
@@ -211,6 +253,50 @@
           }
         </article>
       }
+    </div>
+  </div>
+
+  <!-- MODAL DE DÍA (Para la Vista Anual) -->
+  <div class="calendar-modal-overlay" *ngIf="isDayModalOpen" (click)="closeDayModal()" style="z-index: 1060;">
+    <div class="calendar-modal-content" (click)="$event.stopPropagation()" style="background: white; border-radius: 12px; padding: 20px; width: 340px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+      
+      <!-- Encabezado del modal -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0; color: #1d3b20; font-family: var(--font-head); font-weight: 800; font-size: 1.2rem;">
+          Partidos del Día
+        </h3>
+        <button type="button" class="btn-delete-match" (click)="closeDayModal()" title="Cerrar" style="width: 32px; height: 32px;">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </div>
+      
+      <!-- Tarjetas Compactas de los partidos -->
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        @for (match of matchesForDayModal; track match.id) {
+          <div class="compact-match-card" (click)="openMatchDetailsFromDayModal(match)" 
+               [style.backgroundColor]="getMatchColor(match)"
+               style="border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: filter 0.15s ease;">
+            
+            <div style="color: rgba(255, 255, 255, 0.85); font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              {{ getMatchTime(match.date) }} hs
+            </div>
+            
+            <div style="color: #ffffff; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; line-height: 1.2;">
+              {{ match.opponent }}
+            </div>
+            
+            @if (match.status !== 'not_started' && match.status !== 'empty_roster') {
+              <div style="color: #ffffff; font-weight: 800; font-size: 0.95rem;">
+                {{ match.homeScore }} - {{ match.awayScore }}
+              </div>
+            }
+          </div>
+        }
+      </div>
     </div>
   </div>
 </div>

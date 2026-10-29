@@ -39,6 +39,7 @@ export class MatchHistoryComponent implements OnInit {
   isCalendarView = false;
   matchesForDayModal: Match[] = [];
   isDayModalOpen = false;
+  isYearView = false;
 
   filterOponent: string = '';
   filterResult: 'ALL' | 'WON' | 'LOST' | 'TIED' = 'ALL';
@@ -94,46 +95,44 @@ export class MatchHistoryComponent implements OnInit {
   eventTextColor: '#ffffff',
   eventDisplay: 'block',
   eventContent: function (arg) {
-    if (arg.view.type === 'multiMonthYear') {
-      return { html: '<span></span>' };
-    }
-    
-    // 1. Extraemos la hora y minutos
-    const date = arg.event.start;
-    let timeString = '';
-    
-    if (date) {
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      timeString = `${hours}:${minutes} hs`;
-    }
+      if (arg.view.type === 'multiMonthYear') {
+        return { html: '<span></span>' };
+      }
+        
+      const date = arg.event.start;
+      let timeString = '';
+      
+      if (date) {
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        timeString = `${hours}:${minutes} hs`;
+      }
 
-    // 2. Extraemos el partido para sacar el resultado
-    const match = arg.event.extendedProps['match'];
-    const scoreString = (match && match.homeScore !== undefined && match.awayScore !== undefined)
-      ? `${match.homeScore} - ${match.awayScore}`
-      : '';
+      const match = arg.event.extendedProps['match'];
+      const scoreString = (match && match.homeScore !== undefined && match.awayScore !== undefined)
+        ? `${match.homeScore} - ${match.awayScore}`
+        : '';
 
-    // 3. Armamos el layout idéntico a la imagen
-    return {
-      html: `
-        <div style="padding: 6px 8px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; text-align: left; width: 100%; box-sizing: border-box;">
-          <span style="font-size: 0.75rem; font-weight: 500; color: #a3cda6; display: flex; align-items: center; gap: 4px; line-height: 1;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            ${timeString}
-          </span>
-          <strong style="font-size: 0.85rem; font-weight: 700; color: #ffffff; white-space: normal; line-height: 1.2;">
-            ${arg.event.title}
-          </strong>
-          ${scoreString ? `<span style="font-size: 0.9rem; font-weight: 700; color: #ffffff; line-height: 1;">${scoreString}</span>` : ''}
-        </div>
-      `
-    };
-  }
-    };
+      return {
+        html: `
+          <div style="padding: 6px 8px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; text-align: left; width: 100%; box-sizing: border-box;">
+            <!-- Cambiamos el color de la hora a blanco semi-transparente para que combine con fondos rojos/azules/verdes -->
+            <span style="font-size: 0.75rem; font-weight: 500; color: rgba(255, 255, 255, 0.85); display: flex; align-items: center; gap: 4px; line-height: 1;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              ${timeString}
+            </span>
+            <strong style="font-size: 0.85rem; font-weight: 700; color: #ffffff; white-space: normal; line-height: 1.2;">
+              ${arg.event.title}
+            </strong>
+            ${scoreString ? `<span style="font-size: 0.9rem; font-weight: 700; color: #ffffff; line-height: 1;">${scoreString}</span>` : ''}
+          </div>
+        `
+      };
+    }
+  };
 
   ngOnInit(): void {
     this.loadUserDivisions();
@@ -286,12 +285,14 @@ export class MatchHistoryComponent implements OnInit {
           isoDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
       }
       
-      const divisionName = this.userDivisions.find(d => d.id === this.selectedDivisionId)?.name || 'División';
+      const bgColor = this.getMatchColor(partido); // Obtenemos el color según el estado/resultado
 
       return {
         id: partido.id,
         title: `${partido.opponent || 'Rival'}`,
         start: isoDate,
+        backgroundColor: bgColor, // <--- Aplicamos el fondo dinámico
+        borderColor: bgColor,     // <--- Aplicamos el borde dinámico
         extendedProps: { match: partido }
       };
     });
@@ -301,7 +302,6 @@ export class MatchHistoryComponent implements OnInit {
       events: eventos
     };
   }
-
   handleEventClick(clickInfo: any) {
     const match = clickInfo.event.extendedProps['match'];
     this.selectedMatchForModal = match;
@@ -337,17 +337,17 @@ export class MatchHistoryComponent implements OnInit {
     return (Number(this.selectedMonth.slice(5, 7)) || 1) - 1;
   }
 
-  // Detecta el click sobre el título del calendario (OCTUBRE 2026)
   onCalendarClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     if (target.closest('.fc-toolbar-title')) {
+      this.isYearView = this.calendarComponent.getApi().view.type === 'multiMonthYear';
       this.pickerYear = this.currentYear;
       this.isPickerOpen = !this.isPickerOpen;
     }
   }
 
   changePickerYear(delta: number): void {
-    this.pickerYear += delta;
+    this.pickerYear += this.isYearView ? delta * 12 : delta;
   }
 
   selectMonth(monthIdx: number): void {
@@ -355,16 +355,30 @@ export class MatchHistoryComponent implements OnInit {
     this.isPickerOpen = false;
   }
 
+  selectYear(year: number): void {
+    const api = this.calendarComponent.getApi();
+    api.gotoDate(new Date(year, 0, 1));
+    this.isPickerOpen = false;
+  }
+
   // Colorea el recuadro entero del día si tiene partido (sólo en vista anual)
   getDayClassNames(arg: any) {
     if (arg.view.type === 'multiMonthYear') {
-      const dayHasMatch = this.visibleMatches.some(m => {
+      const matchesOnDay = this.visibleMatches.filter(m => {
         const md = this.parseDateForSort(m.date);
         return md.getFullYear() === arg.date.getFullYear() &&
                md.getMonth() === arg.date.getMonth() &&
                md.getDate() === arg.date.getDate();
       });
-      return dayHasMatch ? ['day-with-match'] : [];
+      
+      if (matchesOnDay.length > 0) {
+        let category = 'WON'; 
+        if (matchesOnDay.some(m => this.getMatchCategory(m) === 'LIVE')) category = 'LIVE';
+        else if (matchesOnDay.some(m => this.getMatchCategory(m) === 'UPCOMING')) category = 'UPCOMING';
+        else category = this.getMatchCategory(matchesOnDay[0]);
+        
+        return ['day-with-match', `day-status-${category.toLowerCase()}`];
+      }
     }
     return [];
   }
@@ -407,9 +421,41 @@ export class MatchHistoryComponent implements OnInit {
     }
     return '00:00';
   }
+
   openMatchDetailsFromDayModal(match: Match) {
     this.closeDayModal();
     this.selectedMatchForModal = match;
     this.isMatchModalOpen = true;
   }
+
+  get pickerYears(): number[] {
+    // 12 años alrededor del año actual del picker
+    const start = this.pickerYear - 5;
+    return Array.from({ length: 12 }, (_, i) => start + i);
+  }
+
+  getMatchCategory(match: Match): 'LIVE' | 'UPCOMING' | 'WON' | 'LOST' | 'TIED' | 'CANCELLED' {
+    if (match.status === 'cancelled') return 'CANCELLED';
+    if (match.status === 'in_progress' || match.status === 'halftime') return 'LIVE';
+    if (match.status === 'not_started' || match.status === 'empty_roster') return 'UPCOMING';
+    
+    const home = match.homeScore || 0;
+    const away = match.awayScore || 0;
+    if (home > away) return 'WON';
+    if (home < away) return 'LOST';
+    return 'TIED';
+  }
+
+  getMatchColor(match: Match): string {
+    switch (this.getMatchCategory(match)) {
+      case 'LIVE': return '#ca8a04';
+      case 'UPCOMING': return '#475569';
+      case 'WON': return '#1d3b20';
+      case 'LOST': return '#b42318';
+      case 'TIED': return '#0369a1';
+      case 'CANCELLED': return '#94a3b8';
+      default: return '#1d3b20';
+    }
+  }
+
 }

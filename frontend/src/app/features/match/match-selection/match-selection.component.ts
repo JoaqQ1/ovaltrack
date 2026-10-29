@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -24,6 +24,8 @@ import { FullCalendarModule } from '@fullcalendar/angular';
 import { CalendarOptions } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import multiMonthPlugin from '@fullcalendar/multimonth';
+import { FullCalendarComponent } from '@fullcalendar/angular';
 
 /**
  * Pantalla de selección y alta de partidos.
@@ -80,56 +82,94 @@ export class MatchSelectComponent implements OnInit {
   isMatchModalOpen = false;
 
   // 1. Agregá esta variable en tu clase:
-  isCalendarView = false;
+  isPickerOpen = false;
+  isDayModalOpen = false;
+  isYearView = false;
+  pickerYear = new Date().getFullYear();
+  readonly monthsShort = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  selectedMonth: string = '';
+  @ViewChild('calendar') calendarComponent!: FullCalendarComponent;
+  matchesForDayModal: Match[] = [];
 
-  // 2. Modificá tus calendarOptions para que se vean mejor:
+
+
   calendarOptions: CalendarOptions = {
     initialView: 'dayGridMonth',
-    plugins: [dayGridPlugin, interactionPlugin],
+    plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin], // Agregado multiMonthPlugin
     locale: 'es',
-    buttonText: {
-      today: 'Hoy',
-      month: 'Mes',
-      week: 'Semana',
-    },
+    height: 'auto',
+    buttonText: { today: 'Hoy', month: 'Mes', year: 'Año' },
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: ''
+      right: 'dayGridMonth,multiMonthYear', // Botón anual
+    },
+    views: {
+      dayGridMonth: {
+        titleFormat: (arg) => {
+          const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+          const d = arg.date.marker;
+          return `${meses[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+        },
+      },
+      multiMonthYear: {
+        titleFormat: { year: 'numeric' },
+        multiMonthTitleFormat: { month: 'long' },
+        multiMonthMaxColumns: 4,
+        multiMonthMinWidth: 220,
+        dayHeaderFormat: { weekday: 'narrow' },
+        showNonCurrentDates: false,
+        fixedWeekCount: false,
+        dayMaxEvents: false,
+      },
+    },
+    datesSet: (arg) => {
+      const d = arg.view.currentStart;
+      this.selectedMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     },
     events: [],
+    
+    // Conectores de clics y estilos
     eventClick: this.handleEventClick.bind(this),
-    // -- NUEVO ESTILO DE EVENTOS --
-    eventBackgroundColor: '#1d3b20', // El verde de tus botones
+    dateClick: this.handleDateClick.bind(this),
+    dayCellClassNames: this.getDayClassNames.bind(this),
+    
+    eventBackgroundColor: '#1d3b20',
     eventBorderColor: '#1d3b20',
     eventTextColor: '#ffffff',
     eventDisplay: 'block',
-    eventContent: function(arg) {
-      // 1. Extraemos la hora y minutos del objeto Date del evento
+    eventContent: function (arg) {
+      if (arg.view.type === 'multiMonthYear') {
+        return { html: '<span></span>' }; // Oculta info en vista anual (solo usa el fondo verde)
+      }
+      
       const date = arg.event.start;
       let timeString = '';
-      
       if (date) {
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
         timeString = `${hours}:${minutes} hs`;
       }
 
-      // 2. Armamos un mini-layout HTML. 
-      // Usamos text-align: left, un color un poco más transparente para la hora, y negrita para el rival.
+      const match = arg.event.extendedProps['match'];
+      const scoreString = (match && match.homeScore !== undefined && match.awayScore !== undefined)
+        ? `${match.homeScore} - ${match.awayScore}`
+        : '';
+
       return {
         html: `
-          <div style="padding: 4px 6px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; text-align: left;">
-            <span style="font-size: 0.75em; font-weight: 600; color: #a3cda6; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <div style="padding: 6px 8px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; text-align: left; width: 100%; box-sizing: border-box;">
+            <span style="font-size: 0.75rem; font-weight: 500; color: #a3cda6; display: flex; align-items: center; gap: 4px; line-height: 1;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
               ${timeString}
             </span>
-            <strong style="font-size: 0.85em; white-space: normal; line-height: 1.2;">
+            <strong style="font-size: 0.85rem; font-weight: 700; color: #ffffff; white-space: normal; line-height: 1.2;">
               ${arg.event.title}
             </strong>
+            ${scoreString ? `<span style="font-size: 0.9rem; font-weight: 700; color: #ffffff; line-height: 1;">${scoreString}</span>` : ''}
           </div>
         `
       };
@@ -262,12 +302,6 @@ export class MatchSelectComponent implements OnInit {
 
   isLive(match: Match): boolean {
     return match.status === 'in_progress' || match.status === 'halftime';
-  }
-
-  get emptyMessage(): string {
-    return this.activeFilter !== 'all'
-      ? `No se encontraron partidos en estado "${this.statusLabels[this.activeFilter]}".`
-      : 'Aún no tienes partidos creados. Haz clic en "+ Crear partido" para programar el próximo encuentro.';
   }
 
   private readBackendError(error: HttpErrorResponse): string | null {
@@ -458,26 +492,24 @@ export class MatchSelectComponent implements OnInit {
   actualizarEventosCalendario(partidosFiltrados: Match[]) {
     const eventos = partidosFiltrados.map(partido => {
       let isoDate = partido.date;
-
       if (Array.isArray(partido.date)) {
           const [year, month, day, hours = 0, minutes = 0] = partido.date;
           isoDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
       }
       
-      const divisionName = this.userDivisions.find(d => d.id === this.selectedDivisionId)?.name || 'División';
+      const bgColor = this.getMatchColor(partido);
 
       return {
         id: partido.id,
         title: `${partido.opponent || 'Rival'}`,
         start: isoDate,
+        backgroundColor: bgColor, // <--- Aplica el color dinámico
+        borderColor: bgColor,
         extendedProps: { match: partido }
       };
     });
   
-    this.calendarOptions = {
-      ...this.calendarOptions,
-      events: eventos
-    };
+    this.calendarOptions = { ...this.calendarOptions, events: eventos };
   }
 
   handleEventClick(clickInfo: any) {
@@ -491,4 +523,158 @@ export class MatchSelectComponent implements OnInit {
     this.selectedMatchForModal = null;
   }
 
+  changePickerYear(delta: number): void {
+    this.pickerYear += this.isYearView ? delta * 12 : delta;
+  }
+
+  get pickerYears(): number[] {
+    // 12 años alrededor del año actual del picker
+    const start = this.pickerYear - 5;
+    return Array.from({ length: 12 }, (_, i) => start + i);
+  }
+
+  get currentYear(): number {
+  return Number(this.selectedMonth.slice(0, 4)) || new Date().getFullYear();
+  }
+
+  selectYear(year: number): void {
+    const api = this.calendarComponent.getApi();
+    api.gotoDate(new Date(year, 0, 1));
+    this.isPickerOpen = false;
+  }
+
+  get currentMonthIdx(): number {
+    return (Number(this.selectedMonth.slice(5, 7)) || 1) - 1;
+  }
+
+  selectMonth(monthIdx: number): void {
+    this.calendarComponent.getApi().gotoDate(new Date(this.pickerYear, monthIdx, 1));
+    this.isPickerOpen = false;
+  }
+
+  onCalendarClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (target.closest('.fc-toolbar-title')) {
+      this.isYearView = this.calendarComponent.getApi().view.type === 'multiMonthYear';
+      this.pickerYear = this.currentYear;
+      this.isPickerOpen = !this.isPickerOpen;
+    }
+  }
+
+  private parseDateForSort(dateInput: any): Date {
+    if (!dateInput) return new Date(0);
+    if (Array.isArray(dateInput)) {
+      return new Date(dateInput[0], dateInput[1] - 1, dateInput[2]);
+    } else if (typeof dateInput === 'string') {
+      const datePart = dateInput.split('T')[0];
+      const [year, month, day] = datePart.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+    return new Date(0);
+  }
+
+  getDayClassNames(arg: any) {
+    if (arg.view.type === 'multiMonthYear') {
+      const matchesOnDay = this.visibleMatches.filter(m => {
+        const md = this.parseDateForSort(m.date);
+        return md.getFullYear() === arg.date.getFullYear() &&
+               md.getMonth() === arg.date.getMonth() &&
+               md.getDate() === arg.date.getDate();
+      });
+      
+      if (matchesOnDay.length > 0) {
+        let category = 'WON'; 
+        // Prioridad de visualización si hay varios partidos el mismo día
+        if (matchesOnDay.some(m => this.getMatchCategory(m) === 'LIVE')) category = 'LIVE';
+        else if (matchesOnDay.some(m => this.getMatchCategory(m) === 'UPCOMING')) category = 'UPCOMING';
+        else category = this.getMatchCategory(matchesOnDay[0]);
+        
+        return ['day-with-match', `day-status-${category.toLowerCase()}`];
+      }
+    }
+    return [];
+  }
+
+  handleDateClick(arg: any) {
+    if (arg.view.type === 'multiMonthYear') {
+      // Lógica existente para la vista anual...
+      const clickedDate = arg.date;
+      const matchesOnDay = this.visibleMatches.filter(m => {
+        const md = this.parseDateForSort(m.date);
+        return md.getFullYear() === clickedDate.getFullYear() &&
+               md.getMonth() === clickedDate.getMonth() &&
+               md.getDate() === clickedDate.getDate();
+      });
+      
+      if (matchesOnDay.length > 0) {
+        this.matchesForDayModal = matchesOnDay;
+        this.isDayModalOpen = true;
+      }
+    } else if (arg.view.type === 'dayGridMonth') {
+      // NUEVO: Lógica para la vista mensual (Crear partido directo)
+      
+      this.openCreateModal(); // Abrimos el modal
+      
+      // Extraemos el año, mes y día del clic
+      const clickedDate = arg.date;
+      const year = clickedDate.getFullYear();
+      const month = String(clickedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(clickedDate.getDate()).padStart(2, '0');
+      
+      // Autocompletamos la fecha y le damos un horario por defecto (ej. 15:30 hs)
+      this.draft.date = `${year}-${month}-${day}T16:00`;
+    }
+  }
+
+  closeDayModal() {
+    this.isDayModalOpen = false;
+    this.matchesForDayModal = [];
+  }
+
+  getMatchTime(dateInput: any): string {
+    if (Array.isArray(dateInput)) {
+      const h = dateInput[3] !== undefined ? String(dateInput[3]).padStart(2, '0') : '00';
+      const m = dateInput[4] !== undefined ? String(dateInput[4]).padStart(2, '0') : '00';
+      return `${h}:${m}`;
+    } else if (typeof dateInput === 'string') {
+      const timePart = dateInput.split('T')[1];
+      if (timePart) {
+        const [h, m] = timePart.split(':');
+        return `${h}:${m}`;
+      }
+    }
+    return '00:00';
+  }
+
+  openMatchDetailsFromDayModal(match: Match) {
+    this.closeDayModal();
+    this.selectedMatchForModal = match;
+    this.isMatchModalOpen = true;
+  }
+
+  // Determina la categoría del partido
+  getMatchCategory(match: Match): 'LIVE' | 'UPCOMING' | 'WON' | 'LOST' | 'TIED' | 'CANCELLED' {
+    if (match.status === 'cancelled') return 'CANCELLED';
+    if (match.status === 'in_progress' || match.status === 'halftime') return 'LIVE';
+    if (match.status === 'not_started' || match.status === 'empty_roster') return 'UPCOMING';
+    
+    const home = match.homeScore || 0;
+    const away = match.awayScore || 0;
+    if (home > away) return 'WON';
+    if (home < away) return 'LOST';
+    return 'TIED';
+  }
+
+  // Devuelve el color oscuro para las tarjetas (Vista mensual y modal)
+  getMatchColor(match: Match): string {
+    switch (this.getMatchCategory(match)) {
+      case 'LIVE': return '#ca8a04';     // Ámbar
+      case 'UPCOMING': return '#475569'; // Gris azulado
+      case 'WON': return '#1d3b20';      // Verde oscuro
+      case 'LOST': return '#b42318';     // Rojo oscuro
+      case 'TIED': return '#0369a1';     // Azul oscuro
+      case 'CANCELLED': return '#94a3b8';// Gris claro
+      default: return '#1d3b20';
+    }
+  }
 }
