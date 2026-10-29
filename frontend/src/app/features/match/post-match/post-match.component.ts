@@ -17,6 +17,8 @@ import { PostMatchTimelineComponent } from './components/post-match-timeline/pos
 import { PostMatchTableComponent } from './components/post-match-table/post-match-table.component';
 import { PostMatchPanelComponent } from './components/post-match-panel/post-match-panel.component';
 import { PostMatchCreateModalComponent } from './components/post-match-create-modal/post-match-create-modal.component';
+import { ZoneAssignmentEditorComponent } from './components/zone-assignment-editor/zone-assignment-editor.component';
+import { MatchZonesStore } from './store/match-zones.store';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 
 @Component({
@@ -29,7 +31,8 @@ import { LocalDatabaseService } from '../../local-database/services/local-databa
     PostMatchTimelineComponent,
     PostMatchTableComponent,
     PostMatchPanelComponent,
-    PostMatchCreateModalComponent
+    PostMatchCreateModalComponent,
+    ZoneAssignmentEditorComponent
   ],
   templateUrl: './post-match.component.html',
   styleUrl: './post-match.component.css'
@@ -48,6 +51,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   private readonly layoutService = inject(LayoutService);
   readonly userContext = inject(UserContextService);
   readonly store = inject(MatchReviewStore);
+  private readonly zonesStore = inject(MatchZonesStore);
 
   readonly userClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
 
@@ -61,6 +65,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   readonly isLoading = signal<boolean>(true);
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
   readonly showCreateModal = signal<boolean>(false);
+  readonly showZonesModal = signal<boolean>(false);
 
   goToStatistics(): void {
     this.router.navigate(['/post-match', this.matchId, 'statistics']);
@@ -72,6 +77,14 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   closeCreateModal(): void {
     this.showCreateModal.set(false);
+  }
+
+  openZonesModal(): void {
+    this.showZonesModal.set(true);
+  }
+
+  closeZonesModal(): void {
+    this.showZonesModal.set(false);
   }
 
   onEditRequested(): void {
@@ -145,6 +158,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     this.matchId = this.route.snapshot.paramMap.get('id') || '';
     if (this.matchId) {
       this.store.resetSession();
+      this.zonesStore.reset();
       this.store.setMatchId(this.matchId);
       this.loadMatchDetails();
       this.loadRoster();
@@ -155,6 +169,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.layoutService.setWide(null);
     this.store.resetSession();
+    this.zonesStore.reset();
   }
 
   loadRoster(): void {

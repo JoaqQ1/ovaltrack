@@ -20,6 +20,7 @@ export class PostMatchHeaderComponent {
   @Output() back = new EventEmitter<void>();
   @Output() addEvent = new EventEmitter<void>();
   @Output() viewStats = new EventEmitter<void>();
+  @Output() openZones = new EventEmitter<void>();
 
   onBack(): void {
     this.back.emit();
@@ -31,6 +32,10 @@ export class PostMatchHeaderComponent {
 
   onViewStats(): void {
     this.viewStats.emit();
+  }
+
+  onOpenZones(): void {
+    this.openZones.emit();
   }
 
 }

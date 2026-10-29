@@ -11,6 +11,7 @@
       (back)="comeBack()"
       (addEvent)="openCreateModal()"
       (viewStats)="goToStatistics()"
+      (openZones)="openZonesModal()"
     />
   </div>
 
@@ -58,4 +59,7 @@
 
   <!-- Modal de Alta de Eventos Post-Partido (HU-8.4) -->
   <app-post-match-create-modal [isOpen]="showCreateModal()" [matchId]="matchId" (close)="closeCreateModal()" />
+
+  <!-- Editor de zonas de cancha por período -->
+  <app-zone-assignment-editor [isOpen]="showZonesModal()" [matchId]="matchId" (close)="closeZonesModal()" />
 </div>

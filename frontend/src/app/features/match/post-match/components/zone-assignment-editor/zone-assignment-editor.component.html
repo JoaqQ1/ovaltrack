@@ -1,0 +1,116 @@
+<div class="custom-modal-backdrop" *ngIf="isOpen">
+  <div class="custom-modal-dialog">
+    <div class="form-card w-100">
+      <!-- Header -->
+      <div class="form-card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <div class="header-icon-box">
+            <i class="bi bi-grid-3x3-gap-fill text-success"></i>
+          </div>
+          <div>
+            <h5 class="form-card-title mb-0">Zonas de cancha</h5>
+            <small class="text-muted">Asigná una zona a un tramo del partido; los eventos del tramo quedan vinculados</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close" aria-label="Cerrar" (click)="onClose()" [disabled]="store.isSaving()"></button>
+      </div>
+
+      <div class="form-card-body p-4">
+        <!-- Zonas asignadas -->
+        <h6 class="section-title">Zonas asignadas</h6>
+
+        <div *ngIf="store.isLoading()" class="text-muted small mb-3">Cargando zonas...</div>
+
+        <p *ngIf="!store.isLoading() && store.assignments().length === 0"
+           class="empty-state" data-testid="zones-list-empty">
+          Todavía no asignaste zonas. Los eventos quedan "sin zona" hasta que definas un tramo.
+        </p>
+
+        <ul class="zone-list" *ngIf="store.assignments().length > 0">
+          <li *ngFor="let zone of store.assignments()"
+              class="zone-item" data-testid="zone-item"
+              [class.is-editing]="zone.id === editingId">
+            <div class="zone-item-main">
+              <span class="zone-badge">{{ periodLabel(zone.period) }}</span>
+              <span class="zone-range">{{ zone.startMinute }}' – {{ zone.endMinute }}'</span>
+              <span class="zone-cell-label">Fila {{ zone.row }} · {{ columnLabels[zone.col - 1] }} (col. {{ zone.col }})</span>
+            </div>
+
+            <div class="zone-item-actions" *ngIf="pendingDeleteId !== zone.id">
+              <button type="button" class="btn-icon" title="Editar zona" aria-label="Editar zona"
+                      (click)="startEdit(zone)" [disabled]="store.isSaving()">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button type="button" class="btn-icon btn-icon-danger" title="Eliminar zona" aria-label="Eliminar zona"
+                      (click)="askDelete(zone.id)" [disabled]="store.isSaving()">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+
+            <div class="zone-item-actions" *ngIf="pendingDeleteId === zone.id" data-testid="zone-delete-confirm">
+              <span class="confirm-text">¿Eliminar?</span>
+              <button type="button" class="btn btn-outline btn-sm-touch" (click)="cancelDelete()"
+                      [disabled]="store.isSaving()">No</button>
+              <button type="button" class="btn btn-delete btn-sm-touch" (click)="confirmDelete()"
+                      [disabled]="store.isSaving()" data-testid="zone-delete-yes">Sí</button>
+            </div>
+          </li>
+        </ul>
+
+        <!-- Formulario -->
+        <h6 class="section-title mt-4">{{ editingId ? 'Editar zona' : 'Nueva zona' }}</h6>
+
+        <div class="row g-3">
+          <div class="col-4">
+            <label class="form-label-custom fw-bold" for="zone-period">Tiempo</label>
+            <select id="zone-period" class="form-select" [(ngModel)]="period" (ngModelChange)="onPeriodChange()"
+                    [disabled]="store.isSaving()">
+              <option [ngValue]="1">1° Tiempo</option>
+              <option [ngValue]="2">2° Tiempo</option>
+            </select>
+          </div>
+          <div class="col-4">
+            <label class="form-label-custom fw-bold" for="zone-start">Desde (min)</label>
+            <input id="zone-start" type="number" class="form-control" min="0" max="80" step="1"
+                   [(ngModel)]="startMinute" [disabled]="store.isSaving()" />
+          </div>
+          <div class="col-4">
+            <label class="form-label-custom fw-bold" for="zone-end">Hasta (min)</label>
+            <input id="zone-end" type="number" class="form-control" min="0" max="80" step="1"
+                   [(ngModel)]="endMinute" [disabled]="store.isSaving()" />
+          </div>
+        </div>
+
+        <!-- Selector de celda 3x6 -->
+        <label class="form-label-custom fw-bold mt-3 d-block">Zona de la cancha</label>
+        <div class="cell-picker" role="group" aria-label="Seleccionar celda de la cancha">
+          <div class="cell-picker-head">
+            <span></span>
+            <span *ngFor="let label of columnLabels" class="cell-picker-col">{{ label }}</span>
+          </div>
+          <div class="cell-picker-row" *ngFor="let r of rows">
+            <span class="cell-picker-rowlabel">F{{ r }}</span>
+            <button *ngFor="let c of cols" type="button" class="cell-pick" data-testid="zone-pick"
+                    [class.is-selected]="isSelected(r, c)"
+                    [attr.aria-pressed]="isSelected(r, c)"
+                    [attr.aria-label]="'Fila ' + r + ', columna ' + c"
+                    [disabled]="store.isSaving()"
+                    (click)="selectCell(r, c)"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer-actions">
+        <button type="button" class="btn btn-outline" (click)="onClose()" [disabled]="store.isSaving()">Cerrar</button>
+        <button type="button" class="btn btn-outline" *ngIf="editingId" (click)="cancelEdit()"
+                [disabled]="store.isSaving()">Cancelar edición</button>
+        <button type="button" class="btn btn-invite d-flex align-items-center justify-content-center gap-2"
+                data-testid="zone-save" (click)="save()" [disabled]="store.isSaving()">
+          <span *ngIf="store.isSaving()" class="spinner-border spinner-border-sm"></span>
+          <span>{{ store.isSaving() ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Guardar zona') }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
