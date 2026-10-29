@@ -441,22 +441,6 @@
   align-items: center;
 }
 
-/* Botón de añadir (cuando no hay nota) */
-.btn-add-note {
-  color: #94a3b8;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.btn-add-note:hover {
-  color: #1d3b20;
-  background-color: rgba(29, 59, 32, 0.08);
-}
 
 /* Contenedor del adelanto de la nota */
 .note-preview-wrapper {
@@ -474,21 +458,9 @@
   background-color: rgba(29, 59, 32, 0.08);
 }
 
-.note-icon-filled {
-  color: #1d3b20; /* Color primario */
-  flex-shrink: 0;
-  font-size: 0.9rem;
-}
 
 /* Texto truncado con ellipsis (...) */
-.note-text-preview {
-  color: #475569;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-style: italic;
-}
+
 
 /* 1. Definición exacta de las columnas de la tabla */
 .table-grid-header,
