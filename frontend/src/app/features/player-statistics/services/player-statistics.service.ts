@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, forkJoin, from, map, of, shareReplay, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, forkJoin, from, map, of, shareReplay, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { PlayerMatchDTO, PlayerMatchStatistic } from '../types/player-statistics.types';
+import { PlayerMatchDTO, PlayerMatchSource, PlayerMatchStatistic } from '../types/player-statistics.types';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 import { EventTypeService } from '../../match/services/event-type.service';
@@ -38,14 +38,36 @@ export class PlayerStatisticsService {
     );
   }
 
+  /** Un partido jugado por el usuario autenticado; `null` si no estuvo en ese plantel. */
+  getMyMatch(matchId: string): Observable<PlayerMatchDTO | null> {
+    return this.getMyMatches().pipe(
+      map(matches => matches.find(match => match.matchId === matchId) ?? null)
+    );
+  }
+
+  /** Eventos y catálogo de un partido: se cargan una vez y el cálculo por período se hace en memoria. */
+  loadMatchSource(matchId: string): Observable<PlayerMatchSource> {
+    return forkJoin({
+      events: this.loadEvents(matchId),
+      eventTypes: this.eventTypes$,
+    });
+  }
+
   /**
    * Estadísticas del usuario autenticado en un partido, con los mismos calculadores del post-partido
    * (vista `full`). Sin período: partido completo.
    */
   loadMatchStatistic(match: PlayerMatchDTO, period?: number): Observable<PlayerMatchStatistic> {
+    return this.loadMatchSource(match.matchId).pipe(
+      map(source => this.computeMatchStatistic(match, source, period))
+    );
+  }
+
+  /** Calcula las estadísticas del usuario autenticado sobre datos ya cargados, sin consultas. */
+  computeMatchStatistic(match: PlayerMatchDTO, source: PlayerMatchSource, period?: number): PlayerMatchStatistic {
     const personId = this.userContext.personId();
     if (!personId) {
-      return throwError(() => new Error('El usuario autenticado no tiene una persona asociada'));
+      throw new Error('El usuario autenticado no tiene una persona asociada');
     }
 
     const me: RosterPlayerInfo = {
@@ -56,17 +78,10 @@ export class PlayerStatisticsService {
       isStarter: match.role === 'TITULAR',
     };
 
-    return forkJoin({
-      events: this.loadEvents(match.matchId),
-      eventTypes: this.eventTypes$,
-    }).pipe(
-      map(({ events, eventTypes }) => {
-        const { columns, players } = this.statisticService.computePlayerStatistics(
-          events, [me], eventTypes, 'full', period
-        );
-        return { match, columns, stat: players[0] };
-      })
+    const { columns, players } = this.statisticService.computePlayerStatistics(
+      source.events, [me], source.eventTypes, 'full', period
     );
+    return { match, columns, stat: players[0] };
   }
 
   /** Trae los eventos del backend a la caché local; si falla, usa lo que ya haya en IndexedDB. */

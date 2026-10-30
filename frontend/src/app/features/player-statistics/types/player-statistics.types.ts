@@ -1,4 +1,6 @@
 import { PlayerStatColumn, PlayerStatistic } from '../../match/statistics/types/statistic.types';
+import { LocalMatchEvent } from '../../match/types/event.types';
+import { LiveCaptureEventType } from '../../match/types/event-type.types';
 
 /** Resultado de un partido desde la perspectiva del club del jugador. */
 export type MatchResult = 'win' | 'loss' | 'draw';
@@ -20,12 +22,32 @@ export interface PlayerMatchDTO {
   slotNumber: number | null;
 }
 
+/** Datos base de un partido para calcular estadísticas: se cargan una vez por partido. */
+export interface PlayerMatchSource {
+  events: LocalMatchEvent[];
+  eventTypes: LiveCaptureEventType[];
+}
+
 /** Estadísticas del jugador autenticado en un partido, calculadas desde los eventos. */
 export interface PlayerMatchStatistic {
   match: PlayerMatchDTO;
   /** Tipos de evento que requieren jugador, con su `code` y `groupName` del catálogo. */
   columns: PlayerStatColumn[];
   stat: PlayerStatistic;
+}
+
+/** Dato individual dentro de una tarjeta del detalle de un partido. */
+export interface PlayerStatTile {
+  label: string;
+  value: string;
+  /** Sin eventos registrados: se muestra atenuado. */
+  empty: boolean;
+}
+
+/** Tarjeta del detalle de un partido: una por `groupName` del catálogo. */
+export interface PlayerStatGroup {
+  title: string;
+  tiles: PlayerStatTile[];
 }
 
 /** Filtro del historial según el rol del jugador en el partido. */
