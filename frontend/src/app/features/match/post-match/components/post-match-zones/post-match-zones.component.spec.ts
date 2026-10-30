@@ -125,6 +125,83 @@ describe('PostMatchZonesComponent', () => {
     });
   });
 
+  describe('atajos de teclado', () => {
+    const press = (key: string, init: KeyboardEventInit = {}, target: EventTarget = document): void => {
+      target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, ...init }));
+      fixture.detectChanges();
+    };
+
+    it('F2-H9. una letra elige la celda de la grilla que le corresponde', () => {
+      createLoaded();
+
+      press('d');
+
+      expect(component.selectedCell()).toEqual({ row: 2, col: 3 });
+    });
+
+    it('las mayúsculas funcionan igual y en "Ver eventos" eligen la celda a inspeccionar', () => {
+      createLoaded();
+      component.setMode('view');
+
+      press('N');
+
+      expect(component.viewCell()).toEqual({ row: 3, col: 6 });
+    });
+
+    it('F2-S4. con el foco en un campo de escritura las letras no hacen nada', () => {
+      createLoaded();
+
+      press('q', {}, query('#zone-start') as HTMLElement);
+
+      expect(component.selectedCell()).toBeNull();
+    });
+
+    it('con Ctrl/Cmd/Alt las letras no son atajos (no pisan los del navegador)', () => {
+      createLoaded();
+
+      press('a', { ctrlKey: true });
+      press('a', { metaKey: true });
+      press('a', { altKey: true });
+
+      expect(component.selectedCell()).toBeNull();
+    });
+
+    it('Ctrl/Cmd + Enter guarda el tramo, incluso escribiendo un minuto', () => {
+      createLoaded([], []);
+      press('d');
+
+      press('Enter', { ctrlKey: true }, query('#zone-start') as HTMLElement);
+
+      const post = http.expectOne(zonesUrl);
+      expect(post.request.method).toBe('POST');
+      expect(post.request.body).toEqual({ row: 2, col: 3, period: 1, startMinute: 0, endMinute: 5 });
+      post.flush({ ...zone, startMinute: 0, endMinute: 5 });
+      http.expectOne(zonesUrl).flush({ assignments: [], summary: { cells: [], unzonedEventCount: 0 } });
+      http.expectOne(eventsUrl).flush([]);
+    });
+
+    it('Ctrl + Enter sin zona elegida no guarda nada', () => {
+      createLoaded([], []);
+
+      press('Enter', { ctrlKey: true });
+
+      http.expectNone(r => r.method === 'POST');
+    });
+
+    it('el ícono "?" despliega la ayuda con las teclas de cada fila', () => {
+      createLoaded();
+      expect(query('[data-testid="shortcuts-help"]')).toBeNull();
+
+      query<HTMLButtonElement>('[data-testid="shortcuts-toggle"]')?.click();
+      fixture.detectChanges();
+
+      const help = query('[data-testid="shortcuts-help"]')?.textContent ?? '';
+      expect(help).toContain('Q W E R T Y');
+      expect(help).toContain('Enter');
+      expect(query('[data-testid="shortcuts-toggle"]')?.getAttribute('aria-expanded')).toBe('true');
+    });
+  });
+
   describe('estados de carga y vacío', () => {
     it('mientras carga muestra un esqueleto con aviso accesible, no un spinner suelto', () => {
       create();

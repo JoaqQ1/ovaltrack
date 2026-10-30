@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -9,6 +9,7 @@ import { MatchService } from '../../../services/match.service';
 import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { describeZone, zoneLabel } from '../../utils/zone-grid';
+import { ZONE_SHORTCUT_HELP, isSaveShortcut, isTypingTarget, shortcutCell } from '../../utils/zone-shortcuts';
 import {
   NO_ZONE_EVENT_FILTERS, ZoneEventFilters, ZonePeriodFilter, countByCell, coverageMinutes, eventsInCell, filterEvents, unzonedEvents
 } from '../../utils/zone-stats';
@@ -57,6 +58,9 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   readonly periodOptions: { value: ZonePeriodFilter; label: string }[] = [
     { value: 'ALL', label: 'Todo' }, { value: 1, label: '1T' }, { value: 2, label: '2T' }
   ];
+
+  readonly shortcutsOpen = signal<boolean>(false);
+  readonly shortcutHelp = ZONE_SHORTCUT_HELP;
 
   readonly heatOn = signal<boolean>(true);
   readonly typeFilter = signal<string>('ALL');
@@ -142,6 +146,32 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.layoutService.setWide(null);
     this.zonesStore.reset();
+  }
+
+  toggleShortcuts(): void {
+    this.shortcutsOpen.update(open => !open);
+  }
+
+  /**
+   * Atajos de la página: las letras eligen la celda de la grilla (solo fuera de un campo de escritura) y
+   * Ctrl/Cmd + Enter guarda el tramo, también escribiendo un minuto.
+   */
+  @HostListener('document:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if (this.isLoading() || this.errorMessage()) return;
+
+    if (isSaveShortcut(event)) {
+      if (this.mode() === 'assign') {
+        event.preventDefault();
+        this.panel()?.save();
+      }
+      return;
+    }
+
+    if (event.ctrlKey || event.metaKey || event.altKey || isTypingTarget(event.target)) return;
+
+    const cell = shortcutCell(event.key);
+    if (cell) this.onCellSelected(cell);
   }
 
   goBack(): void {
