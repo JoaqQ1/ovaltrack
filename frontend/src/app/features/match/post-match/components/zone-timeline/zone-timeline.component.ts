@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
 import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZonePeriod } from '../../../types/zone.types';
 import { zoneLabel } from '../../utils/zone-grid';
+import { Territory, territoryOfColumn } from '../../utils/zone-territory';
 import { EventMark, MarkEvent, buildEventMarks } from '../../utils/zone-event-marks';
 import { findGaps } from '../../utils/zone-stats';
 
@@ -18,6 +19,7 @@ interface TimelineBar {
 
 interface SegmentBar extends TimelineBar {
   assignment: ZoneAssignmentResponse;
+  territory: Territory;
   label: string;
   aria: string;
 }
@@ -68,6 +70,7 @@ export class ZoneTimelineComponent {
   readonly segments = computed<SegmentBar[]>(() =>
     this.assignments().map(assignment => ({
       assignment,
+      territory: territoryOfColumn(assignment.col),
       left: toPercent(assignment.startMinute),
       width: toPercent(assignment.endMinute - assignment.startMinute),
       label: zoneLabel(assignment),

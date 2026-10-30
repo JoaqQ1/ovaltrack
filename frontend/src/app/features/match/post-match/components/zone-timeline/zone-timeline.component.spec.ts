@@ -155,4 +155,21 @@ describe('ZoneTimelineComponent', () => {
       expect(marks().length).toBe(0);
     });
   });
+
+  describe('territorio', () => {
+    it('cada barra toma el lado y la intensidad de la columna de su celda', () => {
+      render([zone('own', 1, 0, 10, 2, 1), zone('mid', 1, 10, 20, 2, 3), zone('rival', 1, 20, 40, 2, 6)]);
+
+      const bars = segments();
+
+      expect(bars.map(bar => bar.classList.contains('terr-rival'))).toEqual([false, false, true]);
+      expect(bars.map(bar => bar.style.getPropertyValue('--terr-w'))).toEqual(['1', '0.2', '1']);
+    });
+
+    it('muestra la leyenda "Campo propio ← → Campo rival"', () => {
+      render([]);
+
+      expect(fixture.nativeElement.querySelector('[data-testid="territory-legend"]')?.textContent).toContain('Campo rival');
+    });
+  });
 });

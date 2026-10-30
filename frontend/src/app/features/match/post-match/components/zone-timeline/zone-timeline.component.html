@@ -26,6 +26,7 @@
     </button>
 
     <button *ngFor="let bar of segments()" type="button" class="segment" data-testid="timeline-segment"
+            [class.terr-rival]="bar.territory.side === 'rival'" [style.--terr-w]="bar.territory.weight"
             [class.is-conflict]="bar.assignment.id === conflictId()"
             [style.left.%]="bar.left" [style.width.%]="bar.width"
             [disabled]="readOnly()" [attr.aria-label]="bar.aria" [title]="bar.aria"
@@ -42,7 +43,9 @@
 
   <div class="legend">
     <span class="legend-item"><span class="legend-glyph" aria-hidden="true">▲</span> Try <span class="legend-glyph" aria-hidden="true">●</span> Patada <span class="legend-glyph" aria-hidden="true">■</span> Tarjeta</span>
-    <span class="legend-item"><i class="swatch swatch-segment"></i> Tramo con zona</span>
+    <span class="legend-item" data-testid="territory-legend">
+      Campo propio <i class="swatch swatch-territory" aria-hidden="true"></i> Campo rival
+    </span>
     <span class="legend-item"><i class="swatch swatch-gap"></i> Sin zona{{ readOnly() ? '' : ' (tocá para completar)' }}</span>
   </div>
 </div>

@@ -62,20 +62,21 @@
   transition: filter 0.12s ease;
 }
 
+/*
+ * Territorio por columna: escala divergente azul (campo propio) → neutro → naranja (campo rival), pensada para
+ * daltonismo (no rojo/verde). La etiqueta I1…D6 sigue dentro de la barra; la fila no se codifica en color.
+ */
 .segment {
-  background: #d6eac0;
-  border: 1.5px solid var(--btn-primary-bg, #204b22);
+  --terr-hue: var(--blue-mid, #2b6ca3);
+  --terr-w: 0.2;
+  background: color-mix(in srgb, var(--terr-hue) calc(var(--terr-w) * 45%), var(--surface, #ffffff));
+  border: 1.5px solid color-mix(in srgb, var(--terr-hue) calc(45% + var(--terr-w) * 40%), var(--text-primary, #111d0e));
   border-radius: 6px;
-  color: #244c09;
+  color: var(--text-primary, #111d0e);
   z-index: 1;
 }
 
-.segment.is-conflict {
-  background: var(--error-tint, rgba(240, 68, 56, 0.14));
-  border-color: var(--error, #b42318);
-  color: var(--error, #b42318);
-  z-index: 2;
-}
+.segment.terr-rival { --terr-hue: var(--zone-heat-high, #d9480f); }
 
 .segment-label { font-family: var(--font-mono, monospace); font-size: 12px; font-weight: 700; }
 
@@ -121,5 +122,12 @@
 .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: flex-end; margin-top: 6px; font-size: 12px; color: var(--text-secondary, #3b4e33); }
 .legend-item { display: inline-flex; align-items: center; gap: 6px; }
 .swatch { display: inline-block; width: 18px; height: 12px; border-radius: 3px; }
-.swatch-segment { background: #d6eac0; border: 1.5px solid var(--btn-primary-bg, #204b22); }
+.swatch-territory {
+  width: 56px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--blue-mid, #2b6ca3) 45%, var(--surface, #ffffff)),
+    var(--surface-alt, #eef1e7),
+    color-mix(in srgb, var(--zone-heat-high, #d9480f) 45%, var(--surface, #ffffff)));
+  border: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
+}
 .swatch-gap { background: repeating-linear-gradient(135deg, rgba(245, 158, 11, 0.4) 0 3px, rgba(255, 255, 255, 0.8) 3px 6px); border: 1px solid rgba(245, 158, 11, 0.6); }
