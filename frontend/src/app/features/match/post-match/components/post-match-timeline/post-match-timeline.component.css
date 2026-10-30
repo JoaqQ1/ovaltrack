@@ -159,10 +159,91 @@
   cursor: pointer;
 }
 
-@media (max-width: 768px) {
-  .search-wrapper,
-  .search-wrap {
-    flex: 1 1 100%;
+/* Botón de ícono del buscador: solo en pantallas angostas */
+.search-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 10px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border-strong, rgba(27, 33, 22, 0.22));
+  color: var(--text-primary, #111d0e);
+  cursor: pointer;
+}
+
+.search-toggle.has-term {
+  border-color: var(--btn-primary-bg, #204b22);
+  color: var(--btn-primary-bg, #204b22);
+}
+
+/* Pantallas angostas: filtros en una fila con scroll, buscador colapsado y acción fija a la derecha */
+@media (max-width: 1120px) {
+  .filter-bar {
+    flex-wrap: nowrap;
+  }
+
+  .filter-left-group {
+    flex: 1 1 0;
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  }
+
+  .filter-left-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-left-group > * {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  .filter-right-group {
+    gap: 8px;
+  }
+
+  .filter-right-group .filter-divider {
+    display: none;
+  }
+
+  .search-toggle {
+    display: inline-flex;
+  }
+
+  .search-wrapper {
+    display: none;
+    min-width: 0;
+  }
+
+  .btn-add-event {
+    width: 44px;
+    padding: 0;
+  }
+
+  .btn-add-event-text {
+    display: none;
+  }
+
+  /* Buscador abierto: ocupa la barra y los filtros se ocultan hasta cerrarlo */
+  .filter-bar.search-open .filter-left-group,
+  .filter-bar.search-open .search-toggle {
+    display: none;
+  }
+
+  .filter-bar.search-open .filter-right-group {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .filter-bar.search-open .search-wrapper {
+    display: block;
+    flex: 1 1 0;
   }
 }
 
