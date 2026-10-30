@@ -26,6 +26,8 @@
       <button type="button" class="btn-outline" (click)="goBack()">Volver al análisis</button>
     </div>
   } @else {
+    <app-zone-kpi-strip [totalEvents]="totalEvents()" [unzonedEvents]="totalUnzoned()" [coveragePercent]="coveragePercent()" />
+
     <div class="zones-layout">
       <div class="zones-main">
         <div class="field-card">

@@ -10,12 +10,13 @@ import { PostMatchShellStore } from '../../store/post-match-shell.store';
 import { describeZone, zoneLabel } from '../../utils/zone-grid';
 import { ZONE_SHORTCUT_HELP, isSaveShortcut, isTypingTarget, shortcutCell } from '../../utils/zone-shortcuts';
 import {
-  NO_ZONE_EVENT_FILTERS, ZoneEventFilters, ZonePeriodFilter, countByCell, coverageMinutes, eventsInCell, filterEvents, unzonedEvents
+  NO_ZONE_EVENT_FILTERS, ZoneEventFilters, ZonePeriodFilter, countByCell, coverageMinutes, eventsInCell, filterEvents, unzonedEvents, zoneCoveragePercent
 } from '../../utils/zone-stats';
 import { Possession } from '../../../types/live-capture.types';
 import { RugbyFieldComponent, RugbyFieldMode } from '../rugby-field/rugby-field.component';
 import { ZoneAssignmentPanelComponent } from '../zone-assignment-panel/zone-assignment-panel.component';
 import { ZoneEventsListComponent } from '../zone-events-list/zone-events-list.component';
+import { ZoneKpiStripComponent } from '../zone-kpi-strip/zone-kpi-strip.component';
 import { ZoneGapSelection, ZoneTimelineComponent } from '../zone-timeline/zone-timeline.component';
 
 /**
@@ -25,7 +26,7 @@ import { ZoneGapSelection, ZoneTimelineComponent } from '../zone-timeline/zone-t
 @Component({
   selector: 'app-post-match-zones',
   standalone: true,
-  imports: [CommonModule, RugbyFieldComponent, ZoneAssignmentPanelComponent, ZoneTimelineComponent, ZoneEventsListComponent],
+  imports: [CommonModule, RugbyFieldComponent, ZoneAssignmentPanelComponent, ZoneTimelineComponent, ZoneEventsListComponent, ZoneKpiStripComponent],
   templateUrl: './post-match-zones.component.html',
   styleUrl: './post-match-zones.component.css'
 })
@@ -88,6 +89,11 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   readonly coverageFirstHalf = computed(() => coverageMinutes(this.zonesStore.assignments(), 1));
   readonly coverageSecondHalf = computed(() => coverageMinutes(this.zonesStore.assignments(), 2));
   readonly halfMinutes = ZONE_HALF_MINUTES;
+
+  // Indicadores del partido completo: no dependen de los filtros de la pantalla.
+  readonly totalEvents = computed(() => this.zonesStore.events().length);
+  readonly totalUnzoned = computed(() => unzonedEvents(this.zonesStore.events(), 'ALL').length);
+  readonly coveragePercent = computed(() => zoneCoveragePercent(this.zonesStore.assignments()));
   readonly fieldSelectedCell = computed(() => this.mode() === 'assign' ? this.selectedCell() : this.viewCell());
 
   /** Tramos que se destacan en la timeline: los de la celda bajo el cursor o, en "Ver eventos", los de la celda elegida. */

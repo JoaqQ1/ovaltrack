@@ -1,0 +1,24 @@
+<div class="kpi-strip-card" role="region" aria-label="Resumen de zonas" data-testid="zone-kpi-strip">
+  <div class="kpi-strip-item">
+    <span class="strip-value" data-testid="kpi-total">{{ totalEvents() }}</span>
+    <span class="strip-label">eventos</span>
+  </div>
+
+  <div class="strip-accent-bar" [class.is-warning]="unzonedEvents() > 0"></div>
+
+  <div class="kpi-strip-item">
+    <span class="strip-value" data-testid="kpi-unzoned" [class.text-amber]="unzonedEvents() > 0">{{ unzonedEvents() }}</span>
+    <span class="strip-label">sin zona</span>
+  </div>
+
+  <div class="strip-divider"></div>
+
+  <div class="kpi-strip-item kpi-progress-item">
+    <span class="strip-value" data-testid="kpi-coverage">{{ coveragePercent() }}%</span>
+    <span class="strip-label">del tiempo con zona</span>
+    <div class="strip-progress-track" role="progressbar" aria-label="Porcentaje del tiempo con zona"
+         [attr.aria-valuenow]="coveragePercent()" aria-valuemin="0" aria-valuemax="100">
+      <div class="strip-progress-fill" [style.width.%]="coveragePercent()"></div>
+    </div>
+  </div>
+</div>

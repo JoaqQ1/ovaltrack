@@ -152,6 +152,12 @@ export function coverageMinutes(assignments: RangeLike[], period: ZonePeriod): n
   return Math.min(ZONE_HALF_MINUTES, covered);
 }
 
+/** Porcentaje (0–100, redondeado) de los 80 minutos del partido que ya tienen un tramo asignado. */
+export function zoneCoveragePercent(assignments: RangeLike[]): number {
+  const covered = coverageMinutes(assignments, 1) + coverageMinutes(assignments, 2);
+  return Math.round((covered / (ZONE_HALF_MINUTES * 2)) * 100);
+}
+
 /**
  * Próximo hueco sin zona tras el minuto `afterMinute` (el primero cuyo inicio lo supera; da la vuelta al principio
  * si no hay ninguno). Null cuando el partido está completo. Recorre 1T y luego 2T, con minutos acumulados.

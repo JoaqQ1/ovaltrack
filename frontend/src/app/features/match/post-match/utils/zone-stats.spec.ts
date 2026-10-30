@@ -1,6 +1,6 @@
 import {
   ZoneEvent, NO_ZONE_EVENT_FILTERS, coverageMinutes, effectiveMatchTime, filterEvents, nextGap, countByCell, describeSegment, eventsInCell, eventsInRange, eventsReleasedByEdit,
-  findGaps, findOverlap, periodRange, sortChronologically, suggestRange, unzonedEvents
+  findGaps, findOverlap, periodRange, sortChronologically, suggestRange, unzonedEvents, zoneCoveragePercent
 } from './zone-stats';
 import { ZoneAssignmentResponse } from '../../types/zone.types';
 
@@ -286,6 +286,18 @@ describe('zone-stats', () => {
 
     it('con el partido completo devuelve null', () => {
       expect(nextGap([zone('a', 1, 0, 40), zone('b', 2, 40, 80)], null)).toBeNull();
+    });
+  });
+
+  describe('zoneCoveragePercent', () => {
+    it('sin tramos es 0 y con el partido completo es 100', () => {
+      expect(zoneCoveragePercent([])).toBe(0);
+      expect(zoneCoveragePercent([zone('a', 1, 0, 40), zone('b', 2, 40, 80)])).toBe(100);
+    });
+
+    it('suma los minutos de ambos tiempos sobre los 80 y redondea', () => {
+      expect(zoneCoveragePercent([zone('a', 1, 0, 20), zone('b', 2, 40, 60)])).toBe(50);
+      expect(zoneCoveragePercent([zone('a', 1, 0, 1)])).toBe(1);
     });
   });
 });
