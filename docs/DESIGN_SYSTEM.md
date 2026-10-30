@@ -395,21 +395,20 @@ La pantalla de post-partido está estructurada como una estación de trabajo de 
 
 ### 8.1 Grilla CSS Grid y Viewport Lock
 - **Desktop ($\ge 1121\text{px}$):**
-  - Contenedor `.pm` con `height: calc(100dvh - var(--navbar-h, 64px) - var(--layout-pad-y, 24px) - 16px);`.
-  - Grid Template:
+  - El shell (`PostMatchShellComponent`) bloquea el viewport solo en Eventos (`data.lockViewport`): `.pm-shell--locked` con `height: calc(100dvh - var(--navbar-h, 64px) - 26px);` y columna flex (encabezado de alto automático + vista con `flex: 1`). Así Eventos ocupa el alto restante sin depender de la altura del encabezado.
+  - La vista Eventos (`.pm`) ocupa el 100% de ese espacio con:
     ```css
     grid-template-areas:
-      "hud hud"
       "kpi kpi"
       "timeline inspector"
       "table inspector";
     grid-template-columns: minmax(0, 1fr) 320px;
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
     ```
   - La tabla aloja un `cdk-virtual-scroll-viewport` vertical que aprovecha todo el espacio remanente del viewport.
 - **Tablet y Mobile ($< 1121\text{px}$):**
-  - Flujo vertical a 1 columna: `hud`, `kpi`, `timeline`, `table`.
-  - La tarjeta de tabla adopta altura fija de `470px` y `padding-bottom: 96px !important` para dar despeje al inspector flotante.
+  - Flujo vertical a 1 columna: `kpi`, `timeline`, `table` (el encabezado común va arriba, fuera de la grilla).
+  - La tarjeta de tabla adopta altura fija de `470px` y `padding-bottom` extra para dar despeje al inspector flotante.
 
 ### 8.2 Componentes de la Estación de Trabajo
 1. **Encabezado común (`PostMatchHeaderComponent` dentro de `PostMatchShellComponent`):**
