@@ -75,22 +75,22 @@ describe('PostMatchZonesComponent', () => {
   afterEach(() => http.verify());
 
   describe('carga', () => {
-    it('carga tramos y eventos y muestra cancha, línea de tiempo y panel', () => {
+    it('carga tramos y eventos y muestra KPI, cancha, grilla de territorio y panel', () => {
       createLoaded();
 
       expect(query('app-rugby-field')).not.toBeNull();
-      expect(query('app-zone-timeline')).not.toBeNull();
+      expect(query('app-zone-kpi-strip')).not.toBeNull();
+      expect(query('app-zone-territory-grid')).not.toBeNull();
       expect(query('app-zone-assignment-panel')).not.toBeNull();
     });
 
-    it('la línea de tiempo vive en la misma tarjeta que la cancha, debajo de las etiquetas de columna', () => {
+    it('la grilla de territorio va encima de la cancha', () => {
       createLoaded();
 
-      const timeline = query('app-rugby-field app-zone-timeline') as Element;
-      const columnAxis = query('app-rugby-field .col-axis-wrap') as Element;
+      const grid = query('app-zone-territory-grid') as Element;
+      const field = query('app-rugby-field') as Element;
 
-      expect(timeline).not.toBeNull();
-      expect(columnAxis.compareDocumentPosition(timeline) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(grid.compareDocumentPosition(field) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
     it('muestra el error del backend y permite volver', () => {
@@ -233,10 +233,10 @@ describe('PostMatchZonesComponent', () => {
     });
   });
 
-  describe('vínculo entre cancha, timeline y lista', () => {
-    const segmentBars = (): HTMLElement[] => queryAll('[data-testid="timeline-segment"]');
+  describe('vínculo entre cancha, grilla y lista', () => {
+    const segmentBars = (): HTMLElement[] => queryAll('[data-testid="territory-block"]');
 
-    it('hover en una celda resalta sus tramos en la timeline y atenúa el resto', () => {
+    it('hover en una celda resalta sus tramos en la grilla y atenúa el resto', () => {
       createLoaded([zone, { ...zone, id: 'z2', startMinute: 25, endMinute: 40, row: 1, col: 5 }]);
 
       cell(2, 3).dispatchEvent(new Event('mouseenter'));
@@ -270,7 +270,7 @@ describe('PostMatchZonesComponent', () => {
       expect(cell(2, 3).classList).toContain('is-linked');
     });
 
-    it('en "Ver eventos", elegir una celda resalta sus tramos en la timeline', () => {
+    it('en "Ver eventos", elegir una celda resalta sus tramos en la grilla', () => {
       createLoaded([zone, { ...zone, id: 'z2', startMinute: 25, endMinute: 40, row: 1, col: 5 }]);
       component.setMode('view');
       fixture.detectChanges();
@@ -368,10 +368,28 @@ describe('PostMatchZonesComponent', () => {
       expect(query('[data-testid="coverage-2t"]')?.textContent?.replace(/\s+/g, ' ')).toContain('2T 0/40 min');
     });
 
-    it('la timeline dibuja como vista previa el rango cargado en el formulario', () => {
+    it('F2-H7. la franja de KPI muestra eventos, sin zona y porcentaje del tiempo con zona', () => {
       createLoaded();
 
-      expect(query('[data-testid="range-preview"]')).not.toBeNull();
+      expect(query('[data-testid="kpi-total"]')?.textContent?.trim()).toBe('4');
+      expect(query('[data-testid="kpi-unzoned"]')?.textContent?.trim()).toBe('2');
+      expect(query('[data-testid="kpi-coverage"]')?.textContent?.trim()).toBe('19%');
+    });
+
+    it('los KPI no dependen de los filtros', () => {
+      createLoaded();
+
+      component.setPeriodFilter(2);
+      fixture.detectChanges();
+
+      expect(query('[data-testid="kpi-total"]')?.textContent?.trim()).toBe('4');
+      expect(query('[data-testid="kpi-unzoned"]')?.textContent?.trim()).toBe('2');
+    });
+
+    it('la grilla dibuja como vista previa el rango cargado en el formulario', () => {
+      createLoaded();
+
+      expect(query('[data-testid="territory-preview"]')).not.toBeNull();
     });
 
     it('en "Ver eventos" no hay vista previa del formulario', () => {
@@ -379,7 +397,7 @@ describe('PostMatchZonesComponent', () => {
       component.setMode('view');
       fixture.detectChanges();
 
-      expect(query('[data-testid="range-preview"]')).toBeNull();
+      expect(query('[data-testid="territory-preview"]')).toBeNull();
     });
 
     it('la cancha cuenta los eventos de cada celda', () => {
@@ -470,25 +488,84 @@ describe('PostMatchZonesComponent', () => {
     });
   });
 
-  describe('línea de tiempo', () => {
-    it('tocar un hueco precarga el formulario con ese rango', () => {
+  describe('grilla de territorio', () => {
+    const panelOf = (): ZoneAssignmentPanelComponent =>
+      fixture.debugElement.query(By.directive(ZoneAssignmentPanelComponent)).componentInstance as ZoneAssignmentPanelComponent;
+
+    /** Clic en la pista de la grilla, en el minuto y la franja (columna de la cancha) indicados. */
+    function clickTrack(minute: number, col: number): void {
+      const rect = (query('[data-testid="territory-tracks"]') as HTMLElement).getBoundingClientRect();
+      const rowIndex = 6 - col;
+      (query('[data-testid="territory-tracks"]') as HTMLElement).dispatchEvent(new MouseEvent('click', {
+        bubbles: true,
+        clientX: rect.left + ((minute + 0.5) / 80) * rect.width,
+        clientY: rect.top + ((rowIndex + 0.5) / 6) * rect.height
+      }));
+      fixture.detectChanges();
+    }
+
+    it('F2-H1. clic en una fila dentro de un hueco precarga franja y rango, con lateral Centro', () => {
       createLoaded();
 
-      const firstGap = query<HTMLButtonElement>('[data-testid="timeline-gap"]');
-      firstGap?.click();
-      fixture.detectChanges();
+      clickTrack(3, 6);
 
-      const panel = fixture.debugElement.query(By.directive(ZoneAssignmentPanelComponent)).componentInstance as ZoneAssignmentPanelComponent;
-      expect([panel.period, panel.startMinute, panel.endMinute]).toEqual([1, 0, 10]);
+      expect([panelOf().period, panelOf().startMinute, panelOf().endMinute]).toEqual([1, 0, 10]);
+      expect(component.selectedCell()).toEqual({ row: 2, col: 6 });
     });
 
-    it('tocar un tramo lo carga para editar', () => {
+    it('un clic en otra franja conserva el lateral ya elegido', () => {
+      createLoaded();
+      component.selectedCell.set({ row: 3, col: 3 });
+
+      clickTrack(30, 5);
+
+      expect(component.selectedCell()).toEqual({ row: 3, col: 5 });
+      expect([panelOf().startMinute, panelOf().endMinute]).toEqual([25, 40]);
+    });
+
+    it('F2-S1. clic en una fila sobre un tramo ya zonificado no hace nada', () => {
+      createLoaded();
+      component.selectedCell.set({ row: 1, col: 2 });
+      panelOf().prefill({ period: 2, startMinute: 60, endMinute: 70 });
+
+      clickTrack(12, 3);
+
+      expect([panelOf().startMinute, panelOf().endMinute]).toEqual([60, 70]);
+      expect(component.selectedCell()).toEqual({ row: 1, col: 2 });
+    });
+
+    it('F2-H2. tocar un bloque lo carga para editar y le pone el anillo', () => {
       createLoaded();
 
-      query<HTMLButtonElement>('[data-testid="timeline-segment"]')?.click();
+      query<HTMLButtonElement>('[data-testid="territory-block"]')?.click();
       fixture.detectChanges();
 
       expect(query('app-zone-assignment-panel .section-title')?.textContent).toContain('Editar tramo');
+      expect(query('[data-testid="territory-block"]')?.classList).toContain('is-selected');
+    });
+
+    it('F2-H6. el filtro de tiempo atenúa la otra mitad de la grilla', () => {
+      createLoaded();
+      expect(query('[data-testid="territory-veil"]')).toBeNull();
+
+      component.setPeriodFilter(1);
+      fixture.detectChanges();
+
+      expect(query('[data-testid="territory-veil"]')?.classList).toContain('veil-second');
+    });
+
+    it('F2-H9. sin tramos la grilla entera es un hueco y muestra cómo empezar', () => {
+      createLoaded([], []);
+
+      expect(queryAll('[data-testid="territory-gap"]').length).toBe(2);
+      expect(query('[data-testid="territory-empty"]')).not.toBeNull();
+    });
+
+    it('cada fila muestra los eventos de su franja, con el in-goal rival arriba', () => {
+      createLoaded();
+
+      const counts = queryAll('[data-testid="territory-row-count"]').map(el => el.textContent?.trim());
+      expect(counts).toEqual(['0', '0', '0', '2', '0', '0']);
     });
   });
 });

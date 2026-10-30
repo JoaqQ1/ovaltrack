@@ -118,6 +118,15 @@
             </div>
           }
 
+          <app-zone-territory-grid
+            [assignments]="zonesStore.assignments()" [events]="filteredEvents()" [periodFilter]="periodFilter()"
+            [readOnly]="mode() === 'view'" [selectedId]="zonesStore.editingId()"
+            [selectedCol]="mode() === 'assign' ? (selectedCell()?.col ?? null) : null"
+            [conflictId]="mode() === 'assign' ? zonesStore.conflictId() : null"
+            [highlightCell]="highlightedCell()" [previewRange]="mode() === 'assign' ? zonesStore.formRange() : null"
+            (segmentHover)="zonesStore.hoverSegmentId.set($event)"
+            (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)" />
+
           <app-rugby-field
             [cells]="cellCounts()"
             [unzonedEventCount]="0"
@@ -130,14 +139,7 @@
             [startHint]="showStartHint()"
             [linkedCell]="linkedCell()"
             (cellSelected)="onCellSelected($event)"
-            (cellHover)="zonesStore.hoverCell.set($event)">
-            <h2 class="section-title timeline-title">Tramos del partido</h2>
-            <app-zone-timeline [assignments]="zonesStore.assignments()" [events]="zonesStore.events()" [readOnly]="mode() === 'view'"
-                               [conflictId]="mode() === 'assign' ? zonesStore.conflictId() : null"
-                               [highlightCell]="highlightedCell()" [previewRange]="mode() === 'assign' ? zonesStore.formRange() : null" (segmentHover)="zonesStore.hoverSegmentId.set($event)"
-                               (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)"
-                               (markSelected)="onMarkSelected($event)" (segmentResized)="onSegmentResized($event)" />
-          </app-rugby-field>
+            (cellHover)="zonesStore.hoverCell.set($event)" />
         </div>
       </div>
 

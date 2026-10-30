@@ -25,6 +25,8 @@ export class MatchZonesStore {
   readonly isSaving = signal<boolean>(false);
   /** Tramo que choca con el rango en edición; lo resaltan la lista y la timeline (estado de UI compartido). */
   readonly conflictId = signal<string | null>(null);
+  /** Tramo que se está editando en el formulario (null al crear uno nuevo); la grilla le dibuja un anillo. */
+  readonly editingId = signal<string | null>(null);
   /** Celda y tramo bajo el cursor o el foco: vinculan cancha, timeline y lista (estado de UI compartido). */
   /** Rango válido que está cargado en el formulario; la timeline lo dibuja como vista previa. */
   readonly formRange = signal<{ period: ZonePeriod; startMinute: number; endMinute: number } | null>(null);
@@ -81,6 +83,7 @@ export class MatchZonesStore {
     this.pulseTimer = null;
     this.pulseCell.set(null);
     this.conflictId.set(null);
+    this.editingId.set(null);
     this.formRange.set(null);
     this.hoverCell.set(null);
     this.hoverSegmentId.set(null);

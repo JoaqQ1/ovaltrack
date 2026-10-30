@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { LayoutService } from 'src/app/core/services/layout.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
-import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
+import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef } from '../../../types/zone.types';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { PostMatchShellStore } from '../../store/post-match-shell.store';
 import { describeZone, zoneLabel } from '../../utils/zone-grid';
@@ -17,7 +17,10 @@ import { RugbyFieldComponent, RugbyFieldMode } from '../rugby-field/rugby-field.
 import { ZoneAssignmentPanelComponent } from '../zone-assignment-panel/zone-assignment-panel.component';
 import { ZoneEventsListComponent } from '../zone-events-list/zone-events-list.component';
 import { ZoneKpiStripComponent } from '../zone-kpi-strip/zone-kpi-strip.component';
-import { ZoneGapSelection, ZoneTimelineComponent } from '../zone-timeline/zone-timeline.component';
+import { TerritoryGapSelection, ZoneTerritoryGridComponent } from '../zone-territory-grid/zone-territory-grid.component';
+
+/** Lateral que se propone al tocar una fila de la grilla: el centro de la cancha. */
+const DEFAULT_LATERAL_ROW = 2;
 
 /**
  * Pantalla de zonas: arma el layout, carga los datos y conecta cancha, línea de tiempo, formulario y eventos.
@@ -26,7 +29,7 @@ import { ZoneGapSelection, ZoneTimelineComponent } from '../zone-timeline/zone-t
 @Component({
   selector: 'app-post-match-zones',
   standalone: true,
-  imports: [CommonModule, RugbyFieldComponent, ZoneAssignmentPanelComponent, ZoneTimelineComponent, ZoneEventsListComponent, ZoneKpiStripComponent],
+  imports: [CommonModule, RugbyFieldComponent, ZoneAssignmentPanelComponent, ZoneTerritoryGridComponent, ZoneEventsListComponent, ZoneKpiStripComponent],
   templateUrl: './post-match-zones.component.html',
   styleUrl: './post-match-zones.component.css'
 })
@@ -80,7 +83,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     possession: this.possessionFilter()
   }));
 
-  private readonly filteredEvents = computed(() => filterEvents(this.zonesStore.events(), this.activeFilters()));
+  readonly filteredEvents = computed(() => filterEvents(this.zonesStore.events(), this.activeFilters()));
 
   // Todo se deriva de los eventos que ya traen su zona: una sola fuente de verdad.
   readonly cellCounts = computed(() => countByCell(this.filteredEvents(), this.periodFilter()));
@@ -95,7 +98,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   readonly coveragePercent = computed(() => zoneCoveragePercent(this.zonesStore.assignments()));
   readonly fieldSelectedCell = computed(() => this.mode() === 'assign' ? this.selectedCell() : this.viewCell());
 
-  /** Tramos que se destacan en la timeline: los de la celda bajo el cursor o, en "Ver eventos", los de la celda elegida. */
+  /** Tramos que se destacan en la grilla: los de la celda bajo el cursor o, en "Ver eventos", los de la celda elegida. */
   readonly highlightedCell = computed(() => this.zonesStore.hoverCell() ?? (this.mode() === 'view' ? this.viewCell() : null));
 
   /** Celda del tramo bajo el cursor en la timeline o la lista. */
@@ -222,19 +225,10 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     this.panel()?.startEdit(assignment);
   }
 
-  /** Tocar un hueco precarga el formulario con ese rango. */
-  onGapSelected(gap: ZoneGapSelection): void {
+  /** Tocar una fila dentro de un hueco precarga el rango y la franja; el lateral queda en Centro si no había uno. */
+  onGapSelected(gap: TerritoryGapSelection): void {
+    this.selectedCell.update(cell => ({ row: cell?.row ?? DEFAULT_LATERAL_ROW, col: gap.col }));
     this.panel()?.prefill(gap);
-  }
-
-  /** Estirar o achicar un tramo carga el nuevo rango en el formulario, sin guardarlo. */
-  onSegmentResized(change: { assignment: ZoneAssignmentResponse; startMinute: number; endMinute: number }): void {
-    this.panel()?.applyResize(change.assignment, change.startMinute, change.endMinute);
-  }
-
-  /** Tocar una marca de evento propone su minuto como inicio o fin del rango. */
-  onMarkSelected(mark: { period: ZonePeriod; minute: number }): void {
-    this.panel()?.pickMinute(mark.period, mark.minute);
   }
 
   private load(matchId: string): void {

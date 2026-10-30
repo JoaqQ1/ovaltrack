@@ -101,7 +101,7 @@ kbd {
   color: var(--text-primary, #111d0e);
 }
 
-.timeline-title { margin: 0 0 6px; font-size: .9rem; }
+app-zone-territory-grid { margin-bottom: 16px; }
 
 /* ---------- Esqueleto de carga ---------- */
 .skeleton {

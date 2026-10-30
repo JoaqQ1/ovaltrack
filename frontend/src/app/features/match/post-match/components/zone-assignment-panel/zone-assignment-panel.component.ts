@@ -57,6 +57,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.applySuggestion();
     this.destroyRef.onDestroy(() => {
       this.store.conflictId.set(null);
+      this.store.editingId.set(null);
       this.store.formRange.set(null);
       this.store.hoverSegmentId.set(null);
     });
@@ -303,13 +304,14 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
   /**
    * Publica en el store lo que otras vistas necesitan del formulario: el tramo que se pisa con el rango actual
-   * (null si no hay choque) y el rango cargado, que la timeline dibuja como vista previa.
+   * (null si no hay choque), el tramo en edición y el rango cargado, que la grilla dibuja como vista previa.
    */
   private syncSharedState(): void {
     const usable = !this.readOnly && this.rangeIsUsable();
     const range = usable ? this.currentRange() : null;
     const clash = range ? findOverlap(range, this.store.assignments(), this.editingId) : null;
     this.store.conflictId.set(clash?.id ?? null);
+    this.store.editingId.set(this.editingId);
     this.store.formRange.set(range);
   }
 
