@@ -65,6 +65,10 @@ Los tokens oficiales del sistema corresponden a la identidad visual **Sport Pro 
   --error-tint: rgba(240, 68, 56, 0.14);
   --error-border: rgba(180, 35, 24, 0.35);
 
+  /* Calor de la cancha de zonas (post-partido): escala secuencial ámbar → naranja */
+  --zone-heat-low: #fdb022;
+  --zone-heat-high: #d9480f;
+
   /* Geometría y Sombras */
   --radius-sm: 6px;
   --radius-md: 10px;

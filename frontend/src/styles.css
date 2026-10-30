@@ -41,6 +41,9 @@
   --warning: #8a5700;
   --warning-tint: rgba(253, 176, 34, 0.20);
   --warning-border: rgba(154, 104, 0, 0.4);
+  /* Calor de la cancha de zonas: escala secuencial ámbar → naranja (nunca blanco, no se confunde con selección/hover) */
+  --zone-heat-low: #fdb022;
+  --zone-heat-high: #d9480f;
   --error: #b42318;
   --error-tint: rgba(240, 68, 56, 0.14);
   --error-border: rgba(180, 35, 24, 0.35);
