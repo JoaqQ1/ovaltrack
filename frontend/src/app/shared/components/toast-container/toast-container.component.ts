@@ -15,8 +15,8 @@ export class ToastContainerComponent {
   readonly toasts = this.toastService.toasts;
 
   /** Cierra el toast antes de correr la acción, así un toast nuevo (ej. un error) no se pisa. */
-  runAction(toast: Toast): void {
+  runAction(toast: Toast, kind: 'action' | 'secondaryAction' = 'action'): void {
     this.toastService.dismiss(toast.id);
-    toast.action?.handler();
+    toast[kind]?.handler();
   }
 }

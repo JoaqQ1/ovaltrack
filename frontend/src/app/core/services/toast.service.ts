@@ -15,6 +15,8 @@ export interface Toast {
   message: string;
   durationMs?: number;
   action?: ToastAction;
+  /** Segunda acción opcional (ej. "Mostrar evento" + "Limpiar filtros"); se pinta como outline. */
+  secondaryAction?: ToastAction;
 }
 
 @Injectable({
@@ -24,7 +26,7 @@ export class ToastService {
   readonly toasts = signal<Toast[]>([]);
   private activeTimer: ReturnType<typeof setTimeout> | null = null;
 
-  show(type: ToastType, message: string, title?: string, durationMs?: number, action?: ToastAction): string {
+  show(type: ToastType, message: string, title?: string, durationMs?: number, action?: ToastAction, secondaryAction?: ToastAction): string {
     if (this.activeTimer) {
       clearTimeout(this.activeTimer);
       this.activeTimer = null;
@@ -39,7 +41,8 @@ export class ToastService {
       title,
       message,
       durationMs: effectiveDuration,
-      action
+      action,
+      secondaryAction
     };
 
     // Opción A: Siempre un único toast a la vez (reemplazo inmediato)
@@ -67,8 +70,8 @@ export class ToastService {
     return this.show('warning', message, title, durationMs, action);
   }
 
-  info(message: string, title = 'Información', durationMs = 4000, action?: ToastAction): string {
-    return this.show('info', message, title, durationMs, action);
+  info(message: string, title = 'Información', durationMs = 4000, action?: ToastAction, secondaryAction?: ToastAction): string {
+    return this.show('info', message, title, durationMs, action, secondaryAction);
   }
 
   dismiss(id: string): void {

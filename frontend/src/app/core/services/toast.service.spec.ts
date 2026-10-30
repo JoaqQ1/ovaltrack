@@ -28,6 +28,16 @@ describe('ToastService', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
+  it('info acepta una segunda acción opcional', () => {
+    const action = { label: 'Mostrar evento', handler: () => undefined };
+    const secondary = { label: 'Limpiar filtros', handler: () => undefined };
+
+    service.info('Oculto por filtros', 'Aviso', 8000, action, secondary);
+
+    expect(service.toasts()[0].action).toBe(action);
+    expect(service.toasts()[0].secondaryAction).toBe(secondary);
+  });
+
   it('todas las variantes aceptan la acción', () => {
     const action = { label: 'Reintentar', handler: () => undefined };
 
