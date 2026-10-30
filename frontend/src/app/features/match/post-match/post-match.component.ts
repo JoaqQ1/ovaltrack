@@ -1,9 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
-import { MatchService } from '../services/match.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
 import { RosterService } from '../services/roster.service';
@@ -11,6 +10,7 @@ import { LiveCaptureService } from '../services/live-capture.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { MatchReviewStore } from './store/match-review.store';
+import { PostMatchShellStore } from './store/post-match-shell.store';
 import { PostMatchHeaderComponent } from './components/post-match-header/post-match-header.component';
 import { PostMatchKpiStripComponent } from './components/post-match-kpi-strip/post-match-kpi-strip.component';
 import { PostMatchTimelineComponent } from './components/post-match-timeline/post-match-timeline.component';
@@ -36,9 +36,8 @@ import { LocalDatabaseService } from '../../local-database/services/local-databa
 })
 export class PostMatchComponent implements OnInit, OnDestroy {
 
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly matchService = inject(MatchService);
+  private readonly shell = inject(PostMatchShellStore);
   private readonly eventService = inject(EventService);
   private readonly eventTypeService = inject(EventTypeService);
   private readonly rosterService = inject(RosterService);
@@ -56,7 +55,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   matchId = '';
 
   // Estado del contenedor
-  readonly opponent = signal<string>('Cargando...');
+  readonly opponent = computed(() => this.shell.match()?.opponent || 'Visitante');
   readonly errorMessage = signal<string>('');
   readonly isLoading = signal<boolean>(true);
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
@@ -146,11 +145,11 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.layoutService.setWide(true);
-    this.matchId = this.route.snapshot.paramMap.get('id') || '';
+    this.matchId = this.shell.matchId();
     if (this.matchId) {
       this.store.resetSession();
       this.store.setMatchId(this.matchId);
-      this.loadMatchDetails();
+      this.applyMatchDetails();
       this.loadRoster();
       this.loadEventTypesAndEvents();
     }
@@ -194,6 +193,9 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   private applyMatchDetails(match: { opponent?: { name: string } | null; startedAt?: string | null; homeScore?: number; awayScore?: number }): void {
     this.opponent.set(match.opponent?.name || 'Visitante');
+  private applyMatchDetails(): void {
+    const match = this.shell.match();
+    if (!match) return;
     if (match.startedAt) {
       this.store.matchStartTime.set(match.startedAt);
     }

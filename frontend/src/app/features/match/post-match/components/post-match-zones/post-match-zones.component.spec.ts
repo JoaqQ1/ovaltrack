@@ -2,12 +2,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { PostMatchZonesComponent } from './post-match-zones.component';
-import { MatchService } from '../../../services/match.service';
 import { EventTypeService } from '../../../services/event-type.service';
 import { MatchZonesStore } from '../../store/match-zones.store';
+import { PostMatchShellStore } from '../../store/post-match-shell.store';
 import { Match } from '../../../types/match.types';
 import { MatchTimelineEventResponse } from '../../../types/event.types';
 import { ZoneAssignmentResponse } from '../../../types/zone.types';
@@ -40,8 +41,8 @@ describe('PostMatchZonesComponent', () => {
     queryAll('[data-testid="zone-cell"]').find(c => c.dataset['row'] === String(row) && c.dataset['col'] === String(col)) as HTMLElement;
 
   function create(id: string | null = 'match-1'): void {
-    TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { parent: { snapshot: { paramMap: convertToParamMap(id ? { id } : {}) } } },
+    TestBed.overrideProvider(PostMatchShellStore, {
+      useValue: { matchId: signal(id ?? ''), match: signal(match) },
     });
     fixture = TestBed.createComponent(PostMatchZonesComponent);
     component = fixture.componentInstance;
@@ -61,8 +62,7 @@ describe('PostMatchZonesComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: ActivatedRoute, useValue: { parent: { snapshot: { paramMap: convertToParamMap({ id: 'match-1' }) } } } },
-        { provide: MatchService, useValue: { getMatchById: () => of(match) } },
+        { provide: PostMatchShellStore, useValue: { matchId: signal('match-1'), match: signal(match) } },
         { provide: EventTypeService, useValue: { getAll: () => of([]) } },
       ],
     }).compileComponents();

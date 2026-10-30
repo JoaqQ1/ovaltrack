@@ -1,13 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, HostListener, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { Router } from '@angular/router';
 import { LayoutService } from 'src/app/core/services/layout.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
-import { MatchService } from '../../../services/match.service';
 import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 import { MatchZonesStore } from '../../store/match-zones.store';
+import { PostMatchShellStore } from '../../store/post-match-shell.store';
 import { describeZone, zoneLabel } from '../../utils/zone-grid';
 import { ZONE_SHORTCUT_HELP, isSaveShortcut, isTypingTarget, shortcutCell } from '../../utils/zone-shortcuts';
 import {
@@ -31,10 +30,9 @@ import { ZoneGapSelection, ZoneTimelineComponent } from '../zone-timeline/zone-t
   styleUrl: './post-match-zones.component.css'
 })
 export class PostMatchZonesComponent implements OnInit, OnDestroy {
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly layoutService = inject(LayoutService);
-  private readonly matchService = inject(MatchService);
+  private readonly shell = inject(PostMatchShellStore);
   private readonly userContext = inject(UserContextService);
   private readonly destroyRef = inject(DestroyRef);
   readonly zonesStore = inject(MatchZonesStore);
@@ -44,8 +42,11 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   readonly matchId = signal<string>('');
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string>('');
-  readonly opponent = signal<string>('Rival');
-  readonly score = signal<{ home: number; away: number } | null>(null);
+  readonly opponent = computed(() => this.shell.match()?.opponent || 'Rival');
+  readonly score = computed(() => {
+    const match = this.shell.match();
+    return match ? { home: match.homeScore ?? 0, away: match.awayScore ?? 0 } : null;
+  });
   readonly ownClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
 
   // Estados separados: la zona del formulario y la zona que se está inspeccionando no se pisan.
@@ -133,7 +134,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     this.layoutService.setWide(true);
     this.zonesStore.reset();
 
-    const id = this.route.parent?.snapshot.paramMap.get('id') || '';
+    const id = this.shell.matchId();
     this.matchId.set(id);
     if (!id) {
       this.errorMessage.set('No se indicó el partido.');
@@ -239,14 +240,10 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    forkJoin({ match: this.matchService.getMatchById(matchId), data: this.zonesStore.load(matchId) })
+    this.zonesStore.load(matchId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ match }) => {
-          this.opponent.set(match.opponent || 'Rival');
-          this.score.set({ home: match.homeScore ?? 0, away: match.awayScore ?? 0 });
-          this.isLoading.set(false);
-        },
+        next: () => this.isLoading.set(false),
         error: err => {
           const message = err?.error?.message;
           this.errorMessage.set(typeof message === 'string' && message ? message : 'No se pudieron cargar las zonas del partido.');
