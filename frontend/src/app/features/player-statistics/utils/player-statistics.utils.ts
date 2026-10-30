@@ -1,5 +1,6 @@
 import { PlayerEventTypeValue, PlayerStatColumn, PlayerStatistic } from "../../match/statistics/types/statistic.types";
-import { MatchResult, PlayerCountStat, PlayerMatchDTO, PlayerMatchHistory, PlayerMatchStatistic } from "../types/player-statistics.types";
+import { formatPlayerValue } from "../../match/statistics/presentation/stat-presentation";
+import { MatchResult, PlayerCountStat, PlayerMatchDTO, PlayerMatchHistory, PlayerMatchStatistic, PlayerStatGroup } from "../types/player-statistics.types";
 
 export const EVENT_CODES = {
     TRY: 'TRY',
@@ -93,6 +94,34 @@ function sumValues(
 export function seasonsOf(matchStatistics: PlayerMatchStatistic[]): string[] {
     const temporadas = new Set(matchStatistics.map(m => m.match.date.slice(0, 4)));
     return Array.from(temporadas).sort((a, b) => b.localeCompare(a));
+}
+
+/** Tarjetas del detalle de un partido: primero los puntos y después una por `groupName`, en orden de catálogo. */
+export function toStatGroups(matchStatistic: PlayerMatchStatistic): PlayerStatGroup[] {
+    const { columns, stat } = matchStatistic;
+    const groups: PlayerStatGroup[] = [{
+        title: 'Puntos',
+        tiles: [{
+            label: 'Puntos conseguidos',
+            value: stat.totalPoints > 0 ? `${stat.totalPoints}` : '—',
+            empty: stat.totalPoints === 0,
+        }],
+    }];
+
+    for (const column of columns) {
+        let group = groups.find(candidate => candidate.title === column.groupName);
+        if (!group) {
+            group = { title: column.groupName, tiles: [] };
+            groups.push(group);
+        }
+        const value = stat.values[column.eventTypeId];
+        group.tiles.push({
+            label: column.label,
+            value: formatPlayerValue(column, value),
+            empty: (value?.count ?? 0) === 0,
+        });
+    }
+    return groups;
 }
 
 /** Cantidad de cada tipo de evento del jugador, salvo los de `excludedCodes`, en orden de catálogo. */
