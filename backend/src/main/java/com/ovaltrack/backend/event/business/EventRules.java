@@ -30,6 +30,6 @@ public final class EventRules {
     }
 
     public static void validateAttributes(EventType type, Map<String, Object> attrs) {
-        EventAttributeValidator.validate(type, attrs);
+        EventAttributeValidator.validate(type, attrs, null);
     }
 }

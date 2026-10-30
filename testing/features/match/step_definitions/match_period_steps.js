@@ -73,7 +73,7 @@ Given('que el partido contra {string} se encuentra en estado de entretiempo', as
   let match = null;
   if (listRes.ok) {
     const matches = await listRes.json();
-    match = matches.find(m => m.opponent === rival);
+    match = matches.find(m => m.opponent.name === rival);
   }
 
   // 2. Si no existe, crearlo
@@ -232,7 +232,7 @@ Given('que el partido contra {string} se encuentra en el segundo tiempo', async 
   let match = null;
   if (listRes.ok) {
     const matches = await listRes.json();
-    match = matches.find(m => m.opponent === rival);
+    match = matches.find(m => m.opponent.name === rival);
   }
 
   if (!match) {

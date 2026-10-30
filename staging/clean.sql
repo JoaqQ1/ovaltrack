@@ -692,7 +692,8 @@ VALUES
             "possession": "KEEP",
             "followUps": [
               {
-                "code": "PENALTY_CONCEDED"
+                "code": "PENALTY_CONCEDED",
+                "team": "OTHER"
               }
             ]
           },
@@ -702,7 +703,8 @@ VALUES
             "possession": "OTHER",
             "followUps": [
               {
-                "code": "PENALTY_CONCEDED"
+                "code": "PENALTY_CONCEDED",
+                "team": "SAME"
               }
             ]
           }

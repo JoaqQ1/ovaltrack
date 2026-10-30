@@ -143,7 +143,7 @@ export class HalftimeSummaryComponent implements OnInit {
     try {
       const match = await firstValueFrom(this.matchService.getMatchById(matchId));
       if (match?.opponent) {
-        this.opponent.set(match.opponent);
+        this.opponent.set(match.opponent.name);
         return;
       }
     } catch {
@@ -152,7 +152,7 @@ export class HalftimeSummaryComponent implements OnInit {
 
     const localMatch = await this.cacheService.getMatch(matchId);
     if (localMatch?.opponent) {
-      this.opponent.set(localMatch.opponent);
+      this.opponent.set(localMatch.opponent.name);
     }
   }
 

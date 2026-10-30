@@ -136,7 +136,7 @@ Given('que existe un partido finalizado para la división {string} contra {strin
   assert.ok(divisionId, `No se encontró la división con nombre "${divisionNombre}"`);
 
   let res = await fetch(`${BACKEND_URL}/matches/division?divisionId=${divisionId}`, { headers: { 'Authorization': `Bearer ${this.token}` } });
-  let match = (await res.json()).find(m => m.opponent === rival);
+  let match = (await res.json()).find(m => m.opponent.name === rival);
   
   if (!match) {
     const createRes = await fetch(`${BACKEND_URL}/matches`, {
@@ -235,7 +235,7 @@ Given('que existe un partido finalizado del club ajeno contra {string}', async f
   const ownerToken = await getUserToken('jugador.uno@test.com', 'PassSegura123!');
   const divisionId = await findDivisionIdByName('Primera', ownerToken);
   let res = await fetch(`${BACKEND_URL}/matches/division?divisionId=${divisionId}`, { headers: { 'Authorization': `Bearer ${ownerToken}` } });
-  let match = (await res.json()).find(m => m.opponent === rival);
+  let match = (await res.json()).find(m => m.opponent.name === rival);
   
   if (!match) {
     const createRes = await fetch(`${BACKEND_URL}/matches`, {

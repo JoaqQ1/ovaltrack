@@ -83,7 +83,7 @@
           <button
             type="button"
             class="btn-delete-match"
-            [attr.aria-label]="'Eliminar partido contra ' + match.opponent"
+            [attr.aria-label]="'Eliminar partido contra ' + match.opponent.name"
             [disabled]="eliminatingMatchId === match.id"
             (click)="confirmDeleteMatch(match); $event.stopPropagation()"
             title="Eliminar partido">
@@ -101,7 +101,7 @@
               class="match-card-link"
               [disabled]="match.status === 'cancelled'"
               (click)="onSelectMatch(match)">
-              {{ match.opponent }}
+              {{ match.opponent.name }}
             </button>
           </h2>
         </div>
@@ -214,7 +214,7 @@
   @if (mostrarModalConfirmacion && matchToRemove) {
   <app-modal
     title="Eliminar partido"
-    [message]="'¿Está seguro de que quiere eliminar el partido contra ' + matchToRemove.opponent + '?'"
+    [message]="'¿Está seguro de que quiere eliminar el partido contra ' + matchToRemove.opponent.name + '?'"
     description="El partido pasará a estado cancelado y dejará de estar activo en la programación."
     [isProcessing]="!!eliminatingMatchId"
     (confirm)="ejecutarEliminacion()"

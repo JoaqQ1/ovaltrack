@@ -35,7 +35,7 @@ export class MatchHistoryComponent implements OnInit {
 
   get oponentsAvailables(): string[] {
     const finalizados = this.matches.filter(m => m.status === 'finished');
-    return [...new Set(finalizados.map(m => m.opponent))].sort();
+    return [...new Set(finalizados.map(m => m.opponent.name))].sort();
   }
 
   get visibleMatches(): Match[] {
@@ -46,7 +46,7 @@ export class MatchHistoryComponent implements OnInit {
     if (this.filterOponent.trim() !== '') {
       const termino = this.filterOponent.toLowerCase().trim();
       filtered = filtered.filter(match => 
-        match.opponent.toLowerCase().includes(termino)
+        match.opponent.name.toLowerCase().includes(termino)
       );
     }
 

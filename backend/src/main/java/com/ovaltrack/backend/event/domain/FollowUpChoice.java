@@ -9,5 +9,5 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * {@code preset} pre-llena campos en vivo del evento elegido y evita pedirlos de nuevo.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record FollowUpChoice(String code, String label, Map<String, Object> preset) {
+public record FollowUpChoice(String code, String label, Map<String, Object> preset, Team team) {
 }

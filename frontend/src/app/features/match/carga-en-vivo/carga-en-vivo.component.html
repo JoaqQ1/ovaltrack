@@ -222,8 +222,10 @@
                 </div>
             </div>
             <footer class="capture__footer">
+                @if (!chooser.mandatory) {
                 <button type="button" class="capture__skip"
                     (click)="closeChooser()">Nada más</button>
+                }
             </footer>
         </div>
     </div>
@@ -359,6 +361,8 @@
                     <div class="capture__choices">
                         @for (option of field.options; track option.value) {
                         <button type="button" class="capture__choice"
+                            [class.capture__choice--favorable]="optionPossessionEffect(option.possession) === 'favorable'"
+                            [class.capture__choice--unfavorable]="optionPossessionEffect(option.possession) === 'unfavorable'"
                             [class.is-selected]="c.values[field.key] === option.value"
                             (click)="chooseOption(field, option.value)">
                             {{ option.label }}

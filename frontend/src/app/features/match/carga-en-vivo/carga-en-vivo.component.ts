@@ -9,7 +9,7 @@ import {
   LiveCapturePersistedState,
   Possession,
 } from '../types/live-capture.types';
-import { FollowUpChoice, LiveCaptureEventType, TemplateField } from '../types/event-type.types';
+import { FollowUpChoice, LiveCaptureEventType, PossessionAfter, TemplateField } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
 import { AvailablePlayer } from '../types/roster.types';
 import {
@@ -57,7 +57,14 @@ interface CaptureSession {
 /** Botonera para elegir el evento siguiente (p. ej. cómo se juega un penal). */
 interface FollowUpChooser {
   title: string;
-  choices: { type: LiveCaptureEventType; label: string; preset?: Record<string, unknown> }[];
+  originTeam: CaptureTeam | null;
+  mandatory: boolean;
+  choices: {
+    type: LiveCaptureEventType;
+    label: string;
+    preset?: Record<string, unknown>;
+    team?: FollowUpChoice['team'];
+  }[];
 }
 
 /** Botón de jugador en la cuadrícula del modal. */
@@ -1021,6 +1028,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     }
     liveFields(event)
       .filter(field => !(field.key in preset))
+      .filter(field => resolved !== 'OPPONENT' || !this.isPlayerField(field))
       .forEach(field => steps.push({ kind: 'field', field }));
 
     const team: CaptureTeam = resolved ?? 'OWN';
@@ -1057,6 +1065,12 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     return this.capture?.event.code === 'SUBSTITUTION'
       && this.capture.team === 'OWN'
       && (field.key === 'playerOutNumber' || field.key === 'playerInNumber');
+  }
+
+  private isPlayerField(field: TemplateField): boolean {
+    return field.key === 'playerOutNumber'
+      || field.key === 'playerInNumber'
+      || field.key === 'playerNumber';
   }
 
   substitutionPlayers(field: TemplateField): SlotView[] {
@@ -1114,6 +1128,22 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     }
     this.capture.values[field.key] = value;
     this.advanceCapture();
+  }
+
+  optionPossessionEffect(
+    possession: PossessionAfter | null | undefined,
+  ): 'favorable' | 'unfavorable' | null {
+    if (!this.capture || possession == null || this.currentPossession === 'NEUTRAL') {
+      return null;
+    }
+
+    const resultingPossession = possession === 'KEEP'
+      ? this.currentPossession
+      : possession === 'ACTOR'
+        ? this.capture.team
+        : opposite(this.capture.team);
+
+    return resultingPossession === this.currentPossession ? 'favorable' : 'unfavorable';
   }
 
   sliderValue(field: TemplateField): number {
@@ -1217,7 +1247,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     if (followUp) {
       onSuccess = () => this.openCapture(followUp, this.createHistoryId(), possession, team);
     } else if (choices.length > 0) {
-      onSuccess = () => this.openChooser(event, choices);
+      onSuccess = () => this.openChooser(event, choices, team);
     }
 
     this.commitEvent(
@@ -1232,36 +1262,57 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   // ───────────────────────── Evento siguiente a elección ─────────────────────────
 
-  private openChooser(event: LiveCaptureEventType, choices: FollowUpChoice[]): void {
+  private openChooser(event: LiveCaptureEventType, choices: FollowUpChoice[], originTeam: CaptureTeam | null): void {
     const resolved = choices.flatMap(choice => {
       const type = this.eventTypes.find(candidate => candidate.code === choice.code);
-      return type ? [{ type, label: choice.label ?? type.name, preset: choice.preset }] : [];
+      return type
+        ? [{ type, label: choice.label ?? type.name, preset: choice.preset, team: choice.team }]
+        : [];
     });
 
     if (resolved.length === 1) {
-      const [choice] = resolved;
-      this.openCapture(
-        choice.type,
-        this.createHistoryId(),
-        this.currentPossession,
-        null,
-        choice.preset ?? {},
-      );
+      this.launchFollowUp(resolved[0], originTeam);
       return;
     }
 
     if (resolved.length > 1) {
-      this.followUpChooser = { title: event.name, choices: resolved };
+      this.followUpChooser = {
+        title: event.name,
+        originTeam,
+        mandatory: event.code === 'PENALTY_CONCEDED',
+        choices: resolved,
+      };
     }
   }
 
-  /** El equipo del evento elegido se resuelve con la posesión ya actualizada por el anterior. */
+  private launchFollowUp(
+    choice: FollowUpChooser['choices'][number],
+    originTeam: CaptureTeam | null,
+  ): void {
+    const lockedTeam = originTeam === null || choice.team === undefined
+      ? null
+      : choice.team === 'SAME'
+        ? originTeam
+        : opposite(originTeam);
+    this.openCapture(
+      choice.type,
+      this.createHistoryId(),
+      this.currentPossession,
+      lockedTeam,
+      choice.preset ?? {},
+    );
+  }
+
   pickFollowUp(choice: FollowUpChooser['choices'][number]): void {
+    const originTeam = this.followUpChooser?.originTeam ?? null;
     this.followUpChooser = null;
-    this.openCapture(choice.type, this.createHistoryId(), this.currentPossession, null, choice.preset ?? {});
+    this.launchFollowUp(choice, originTeam);
   }
 
   closeChooser(): void {
+    if (this.followUpChooser?.mandatory) {
+      return;
+    }
     this.followUpChooser = null;
   }
 }

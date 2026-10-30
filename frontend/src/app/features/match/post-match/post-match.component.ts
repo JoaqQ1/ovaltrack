@@ -188,8 +188,8 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     });
   }
 
-  private applyMatchDetails(match: { opponent?: string | null; startedAt?: string | null; homeScore?: number; awayScore?: number }): void {
-    this.opponent.set(match.opponent || 'Visitante');
+  private applyMatchDetails(match: { opponent?: { name: string } | null; startedAt?: string | null; homeScore?: number; awayScore?: number }): void {
+    this.opponent.set(match.opponent?.name || 'Visitante');
     if (match.startedAt) {
       this.store.matchStartTime.set(match.startedAt);
     }

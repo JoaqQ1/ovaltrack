@@ -76,7 +76,7 @@ export class SelectionRosterComponent implements OnInit {
     );
   });
 
-  readonly opponentName = computed(() => this.match()?.opponent || 'Rival');
+  readonly opponentName = computed(() => this.match()?.opponent.name || 'Rival');
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') || '';

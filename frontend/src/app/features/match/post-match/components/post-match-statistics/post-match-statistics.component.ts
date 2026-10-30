@@ -231,12 +231,12 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
     try {
       const match = await firstValueFrom(this.matchService.getMatchById(matchId));
       if (match?.opponent) {
-        this.opponent.set(match.opponent);
+        this.opponent.set(match.opponent.name);
         return;
       }
     } catch { /* fallback a caché */ }
     const local = await this.cacheService.getMatch(matchId);
-    if (local?.opponent) this.opponent.set(local.opponent);
+    if (local?.opponent) this.opponent.set(local.opponent.name);
   }
 
   /**

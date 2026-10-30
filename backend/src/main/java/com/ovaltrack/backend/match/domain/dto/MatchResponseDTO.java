@@ -10,7 +10,7 @@ public record MatchResponseDTO(
     UUID id,
     LocalDateTime date,
     UUID divisionId,
-    String opponent,
+    OpponentDTO opponent,
     MatchStatus status,
     Integer currentPeriod,
     Integer clockElapsedSeconds,
