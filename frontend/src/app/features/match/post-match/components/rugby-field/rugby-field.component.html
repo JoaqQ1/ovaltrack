@@ -1,4 +1,4 @@
-<figure class="rugby-field">
+<figure class="rugby-field" [class.no-heat]="!showHeat()">
   <!-- Sentido de ataque y línea de lectura de la zona apuntada -->
   <div class="field-head">
     <span class="attack-dir" data-testid="attack-dir">
@@ -103,6 +103,12 @@
   <div class="field-slot"><ng-content /></div>
 
   <figcaption class="field-notes">
+    <div *ngIf="showHeat()" class="heat-legend" data-testid="heat-legend" aria-label="Escala de calor: cantidad de eventos por zona">
+      <span class="heat-legend-title">Eventos por zona</span>
+      <span *ngFor="let step of heatSteps" class="heat-legend-step">
+        <i class="heat-swatch" [class.is-empty]="step.level === 0" [style.--heat]="heatMix(step.level)" aria-hidden="true"></i>{{ step.label }}
+      </span>
+    </div>
     <p class="relative-note">
       Vista relativa a tu equipo: siempre atacás hacia la derecha. En el 2T marcá como si no hubiera cambio de lado.
       Izquierda y derecha se leen mirando hacia el ataque.

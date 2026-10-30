@@ -9,7 +9,10 @@ import { MatchService } from '../../../services/match.service';
 import { ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { describeZone, zoneLabel } from '../../utils/zone-grid';
-import { ZonePeriodFilter, countByCell, coveragePercent, eventsInCell, unzonedEvents } from '../../utils/zone-stats';
+import {
+  NO_ZONE_EVENT_FILTERS, ZoneEventFilters, ZonePeriodFilter, countByCell, coveragePercent, eventsInCell, filterEvents, unzonedEvents
+} from '../../utils/zone-stats';
+import { Possession } from '../../../types/live-capture.types';
 import { RugbyFieldComponent, RugbyFieldMode } from '../rugby-field/rugby-field.component';
 import { ZoneAssignmentPanelComponent } from '../zone-assignment-panel/zone-assignment-panel.component';
 import { ZoneEventsListComponent } from '../zone-events-list/zone-events-list.component';
@@ -55,9 +58,32 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     { value: 'ALL', label: 'Todo' }, { value: 1, label: '1T' }, { value: 2, label: '2T' }
   ];
 
+  readonly heatOn = signal<boolean>(true);
+  readonly typeFilter = signal<string>('ALL');
+  readonly possessionFilter = signal<Possession | 'ALL'>('ALL');
+
+  readonly possessionOptions: { value: Possession | 'ALL'; label: string }[] = [
+    { value: 'ALL', label: 'Todas' }, { value: 'OWN', label: 'Propia' },
+    { value: 'OPPONENT', label: 'Rival' }, { value: 'NEUTRAL', label: 'Neutral' }
+  ];
+
+  /** Tipos de evento presentes en el partido, para el filtro de "Ver eventos". */
+  readonly eventTypeOptions = computed(() => {
+    const byId = new Map(this.zonesStore.events().map(event => [event.eventTypeId, event.eventTypeName]));
+    return [...byId.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  });
+
+  /** Los filtros de tipo y posesión solo rigen en "Ver eventos"; al asignar zonas se ven todos los eventos. */
+  private readonly activeFilters = computed<ZoneEventFilters>(() =>
+    this.mode() === 'view'
+      ? { eventTypeId: this.typeFilter(), possession: this.possessionFilter() }
+      : NO_ZONE_EVENT_FILTERS);
+
+  private readonly filteredEvents = computed(() => filterEvents(this.zonesStore.events(), this.activeFilters()));
+
   // Todo se deriva de los eventos que ya traen su zona: una sola fuente de verdad.
-  readonly cellCounts = computed(() => countByCell(this.zonesStore.events(), this.periodFilter()));
-  readonly unzonedCount = computed(() => unzonedEvents(this.zonesStore.events(), this.periodFilter()).length);
+  readonly cellCounts = computed(() => countByCell(this.filteredEvents(), this.periodFilter()));
+  readonly unzonedCount = computed(() => unzonedEvents(this.filteredEvents(), this.periodFilter()).length);
   readonly coverage = computed(() => coveragePercent(this.zonesStore.assignments(), this.periodFilter()));
   readonly fieldSelectedCell = computed(() => this.mode() === 'assign' ? this.selectedCell() : this.viewCell());
 
@@ -72,7 +98,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   });
 
   readonly listedEvents = computed(() => {
-    const events = this.zonesStore.events();
+    const events = this.filteredEvents();
     const filter = this.periodFilter();
     if (this.showUnzoned()) return unzonedEvents(events, filter);
     const cell = this.viewCell();
@@ -119,6 +145,18 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   setMode(mode: RugbyFieldMode): void {
     this.mode.set(mode);
     if (mode === 'assign') this.showUnzoned.set(false);
+  }
+
+  setHeat(on: boolean): void {
+    this.heatOn.set(on);
+  }
+
+  onTypeFilterChange(event: Event): void {
+    this.typeFilter.set((event.target as HTMLSelectElement).value);
+  }
+
+  setPossessionFilter(value: Possession | 'ALL'): void {
+    this.possessionFilter.set(value);
   }
 
   setPeriodFilter(filter: ZonePeriodFilter): void {

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, computed, inject, input, output, signal } from '@angular/core';
 import { ZONE_GRID_COLS, ZONE_GRID_ROWS, ZoneCellRef, ZoneCellSummary } from '../../../types/zone.types';
+import { HEAT_STEPS, heatLevel, heatMix } from '../../utils/zone-heat';
 import {
   ZONE_COLUMN_METERS, ZONE_COLUMN_NAMES, ZONE_FIELD_LENGTH_M, ZONE_FIELD_WIDTH_M, ZONE_ROW_METERS,
   ZONE_ROW_LETTERS, ZONE_ROW_SHORT_NAMES, columnRangeLabel, describeZone, formatEventCount, rowRangeLabel, zoneLabel
@@ -12,7 +13,9 @@ interface FieldCell extends ZoneCellRef {
   label: string;
   count: number;
   countLabel: string;
+  /** Posición 0–1 en la escala ámbar → naranja (0 sin relleno). */
   heat: number;
+  heatLevel: number;
 }
 
 const PX_PER_METER = 10;
@@ -38,6 +41,8 @@ export class RugbyFieldComponent {
   /** 'assign' elige la zona de un tramo; 'view' solo lee (no modifica nada). */
   readonly mode = input<RugbyFieldMode>('assign');
   readonly selectable = input<boolean>(true);
+  /** Interruptor "Calor" / "Solo números": sin calor las celdas quedan limpias y solo se ve el conteo. */
+  readonly showHeat = input<boolean>(true);
 
   /** Celda que corresponde al tramo bajo el cursor en la timeline o la lista (se resalta como el hover). */
   readonly linkedCell = input<ZoneCellRef | null>(null);
@@ -85,13 +90,16 @@ export class RugbyFieldComponent {
   private readonly activeCell = signal<ZoneCellRef | null>(null);
   private readonly focusCell = signal<ZoneCellRef | null>(null);
 
+  readonly heatSteps = HEAT_STEPS;
+  readonly heatMix = heatMix;
+
   readonly fieldRows = computed<FieldCell[][]>(() => {
     const counts = new Map(this.cells().map(c => [`${c.row}-${c.col}`, c.eventCount]));
-    const maxCount = Math.max(1, ...counts.values());
 
     return this.rows.map(row => this.cols.map(col => {
       const count = counts.get(`${row}-${col}`) ?? 0;
-      return { row, col, label: zoneLabel({ row, col }), count, countLabel: formatEventCount(count), heat: count > 0 ? count / maxCount : 0 };
+      const level = heatLevel(count);
+      return { row, col, label: zoneLabel({ row, col }), count, countLabel: formatEventCount(count), heat: heatMix(level), heatLevel: level };
     }));
   });
 

@@ -1,5 +1,5 @@
 import {
-  ZoneEvent, effectiveMatchTime, countByCell, coveragePercent, describeSegment, eventsInCell, eventsInRange, eventsReleasedByEdit,
+  ZoneEvent, NO_ZONE_EVENT_FILTERS, effectiveMatchTime, filterEvents, countByCell, coveragePercent, describeSegment, eventsInCell, eventsInRange, eventsReleasedByEdit,
   findGaps, findOverlap, periodRange, sortChronologically, suggestRange, unzonedEvents
 } from './zone-stats';
 import { ZoneAssignmentResponse } from '../../types/zone.types';
@@ -217,6 +217,28 @@ describe('zone-stats', () => {
           events
         )).toEqual([]);
       });
+    });
+  });
+
+  describe('filterEvents', () => {
+    const rows = [
+      { id: 'a', eventTypeId: 't1', teamPossession: 'OWN' as const },
+      { id: 'b', eventTypeId: 't1', teamPossession: 'OPPONENT' as const },
+      { id: 'c', eventTypeId: 't2', teamPossession: 'OWN' as const }
+    ];
+
+    it('sin filtros devuelve todo', () => {
+      expect(filterEvents(rows, NO_ZONE_EVENT_FILTERS).map(r => r.id)).toEqual(['a', 'b', 'c']);
+    });
+
+    it('filtra por tipo, por posesión y por ambos a la vez', () => {
+      expect(filterEvents(rows, { eventTypeId: 't1', possession: 'ALL' }).map(r => r.id)).toEqual(['a', 'b']);
+      expect(filterEvents(rows, { eventTypeId: 'ALL', possession: 'OWN' }).map(r => r.id)).toEqual(['a', 'c']);
+      expect(filterEvents(rows, { eventTypeId: 't1', possession: 'OWN' }).map(r => r.id)).toEqual(['a']);
+    });
+
+    it('un filtro sin coincidencias devuelve una lista vacía', () => {
+      expect(filterEvents(rows, { eventTypeId: 'zzz', possession: 'ALL' })).toEqual([]);
     });
   });
 

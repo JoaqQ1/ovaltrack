@@ -1,4 +1,5 @@
 import { MatchTimelineEventResponse } from '../../types/event.types';
+import { Possession } from '../../types/live-capture.types';
 import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZoneCellSummary, ZonePeriod } from '../../types/zone.types';
 import { zoneLabel } from './zone-grid';
 
@@ -124,6 +125,23 @@ export function eventsInRange<T extends ZoneEvent>(range: RangeLike, events: T[]
 export function eventsReleasedByEdit<T extends ZoneEvent>(previous: RangeLike, next: RangeLike, events: T[]): T[] {
   const stillLinked = new Set(eventsInRange(next, events).map(event => event.id));
   return eventsInRange(previous, events).filter(event => !stillLinked.has(event.id));
+}
+
+/** Filtros de "Ver eventos": tipo de evento y posesión. 'ALL' no filtra. */
+export interface ZoneEventFilters {
+  eventTypeId: string | 'ALL';
+  possession: Possession | 'ALL';
+}
+
+export const NO_ZONE_EVENT_FILTERS: ZoneEventFilters = { eventTypeId: 'ALL', possession: 'ALL' };
+
+type FilterableEvent = Pick<MatchTimelineEventResponse, 'eventTypeId' | 'teamPossession'>;
+
+export function filterEvents<T extends FilterableEvent>(events: T[], filters: ZoneEventFilters): T[] {
+  return events.filter(event =>
+    (filters.eventTypeId === 'ALL' || event.eventTypeId === filters.eventTypeId) &&
+    (filters.possession === 'ALL' || event.teamPossession === filters.possession)
+  );
 }
 
 /** Porcentaje (0–100) de los minutos del filtro que tienen un tramo asignado. */

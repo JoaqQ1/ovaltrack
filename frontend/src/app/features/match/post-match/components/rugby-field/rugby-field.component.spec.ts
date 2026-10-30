@@ -150,6 +150,33 @@ describe('RugbyFieldComponent', () => {
     });
   });
 
+  describe('escala de calor', () => {
+    const legend = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="heat-legend"]');
+
+    it('muestra la leyenda con los cortes 0 · 1–5 · 6–15 · 16–30 · 30+', () => {
+      render([]);
+
+      expect(legend()?.textContent?.replace(/\s+/g, ' ')).toContain('0 1–5 6–15 16–30 30+');
+    });
+
+    it('con "Solo números" no hay leyenda y la cancha queda sin relleno de calor', () => {
+      render([{ row: 2, col: 3, eventCount: 4 }]);
+      fixture.componentRef.setInput('showHeat', false);
+      fixture.detectChanges();
+
+      expect(legend()).toBeNull();
+      expect(fixture.nativeElement.querySelector('.rugby-field').classList).toContain('no-heat');
+      expect(cellAt(2, 3)?.querySelector('[data-testid="zone-count"]')?.textContent).toContain('4');
+    });
+
+    it('la posición en la escala depende del nivel, no del máximo del partido', () => {
+      render([{ row: 1, col: 1, eventCount: 3 }, { row: 2, col: 2, eventCount: 118 }]);
+
+      expect(cellAt(1, 1)?.style.getPropertyValue('--heat')).toBe('0');
+      expect(cellAt(2, 2)?.style.getPropertyValue('--heat')).toBe('1');
+    });
+  });
+
   describe('vínculo con la timeline', () => {
     it('avisa la celda bajo el cursor y cuándo se va', () => {
       render([]);

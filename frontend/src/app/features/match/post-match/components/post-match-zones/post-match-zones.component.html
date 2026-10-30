@@ -54,6 +54,13 @@
                       (click)="setPeriodFilter(option.value)">{{ option.label }}</button>
             </div>
 
+            <div class="segmented" role="group" aria-label="Color de la cancha">
+              <button type="button" class="segment" data-testid="heat-on"
+                      [class.is-active]="heatOn()" [attr.aria-pressed]="heatOn()" (click)="setHeat(true)">Calor</button>
+              <button type="button" class="segment" data-testid="heat-off"
+                      [class.is-active]="!heatOn()" [attr.aria-pressed]="!heatOn()" (click)="setHeat(false)">Solo números</button>
+            </div>
+
             <button type="button" class="chip chip-warn" data-testid="unzoned-chip"
                     [class.is-on]="showUnzoned()" (click)="showUnzonedEvents()"
                     [disabled]="unzonedCount() === 0">
@@ -62,12 +69,34 @@
             <span class="chip chip-info" data-testid="coverage-chip"><strong>{{ coverage() }}%</strong> del tiempo con zona</span>
           </div>
 
+          @if (mode() === 'view') {
+            <div class="toolbar toolbar-filters" data-testid="event-filters">
+              <label class="filter-field">
+                <span class="filter-label">Tipo de evento</span>
+                <select class="form-control" data-testid="type-filter" [value]="typeFilter()" (change)="onTypeFilterChange($event)">
+                  <option value="ALL">Todos</option>
+                  @for (type of eventTypeOptions(); track type.id) {
+                    <option [value]="type.id">{{ type.name }}</option>
+                  }
+                </select>
+              </label>
+              <div class="segmented" role="group" aria-label="Posesión">
+                @for (option of possessionOptions; track option.value) {
+                  <button type="button" class="segment" data-testid="possession-filter"
+                          [class.is-active]="possessionFilter() === option.value" [attr.aria-pressed]="possessionFilter() === option.value"
+                          (click)="setPossessionFilter(option.value)">{{ option.label }}</button>
+                }
+              </div>
+            </div>
+          }
+
           <app-rugby-field
             [cells]="cellCounts()"
             [unzonedEventCount]="0"
             [selectedCell]="fieldSelectedCell()"
             [ownClubName]="ownClubName()"
             [mode]="mode()"
+            [showHeat]="heatOn()"
             [linkedCell]="linkedCell()"
             (cellSelected)="onCellSelected($event)"
             (cellHover)="zonesStore.hoverCell.set($event)">

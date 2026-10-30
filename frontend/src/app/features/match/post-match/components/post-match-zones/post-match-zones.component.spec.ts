@@ -174,6 +174,78 @@ describe('PostMatchZonesComponent', () => {
     });
   });
 
+  describe('calor y filtros de "Ver eventos"', () => {
+    const typed = (id: string, typeId: string, possession: 'OWN' | 'OPPONENT', minute: number): MatchTimelineEventResponse => ({
+      ...ev(id, 1, minute, { row: 2, col: 3 }), eventTypeId: typeId, eventTypeName: typeId === 'try' ? 'Try' : 'Tackle', teamPossession: possession
+    });
+    const mixed = [typed('a', 'try', 'OWN', 11), typed('b', 'tackle', 'OWN', 12), typed('c', 'tackle', 'OPPONENT', 13)];
+    const count = (): string => cell(2, 3).querySelector('[data-testid="zone-count"]')?.textContent?.trim() ?? '';
+
+    it('el interruptor "Solo números" apaga el calor y su leyenda', () => {
+      createLoaded([zone], mixed);
+
+      query<HTMLButtonElement>('[data-testid="heat-off"]')?.click();
+      fixture.detectChanges();
+
+      expect(query('[data-testid="heat-legend"]')).toBeNull();
+      expect(query('.rugby-field')?.classList).toContain('no-heat');
+    });
+
+    it('los filtros solo aparecen en "Ver eventos"', () => {
+      createLoaded([zone], mixed);
+      expect(query('[data-testid="event-filters"]')).toBeNull();
+
+      component.setMode('view');
+      fixture.detectChanges();
+
+      expect(query('[data-testid="event-filters"]')).not.toBeNull();
+    });
+
+    it('el filtro de posesión recalcula el calor de la cancha', () => {
+      createLoaded([zone], mixed);
+      component.setMode('view');
+      fixture.detectChanges();
+      expect(count()).toBe('3');
+
+      component.setPossessionFilter('OPPONENT');
+      fixture.detectChanges();
+
+      expect(count()).toBe('1');
+    });
+
+    it('el filtro de tipo recalcula el calor y se combina con la posesión', () => {
+      createLoaded([zone], mixed);
+      component.setMode('view');
+      fixture.detectChanges();
+
+      component.typeFilter.set('tackle');
+      fixture.detectChanges();
+      expect(count()).toBe('2');
+
+      component.setPossessionFilter('OWN');
+      fixture.detectChanges();
+      expect(count()).toBe('1');
+    });
+
+    it('al volver a "Asignar zona" los filtros dejan de aplicar', () => {
+      createLoaded([zone], mixed);
+      component.setMode('view');
+      component.setPossessionFilter('OPPONENT');
+      fixture.detectChanges();
+
+      component.setMode('assign');
+      fixture.detectChanges();
+
+      expect(count()).toBe('3');
+    });
+
+    it('lista los tipos presentes en el partido para el filtro', () => {
+      createLoaded([zone], mixed);
+
+      expect(component.eventTypeOptions().map(option => option.name)).toEqual(['Tackle', 'Try']);
+    });
+  });
+
   describe('indicadores y conteos derivados de los eventos', () => {
     it('muestra los eventos sin zona y la cobertura', () => {
       createLoaded();
