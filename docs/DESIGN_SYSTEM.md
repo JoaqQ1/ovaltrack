@@ -422,7 +422,7 @@ La pantalla de post-partido está estructurada como una estación de trabajo de 
 2. **Tira Condensada de KPIs (`PostMatchKpiStripComponent`):**
    - Altura de 44px con 3 secciones: total de eventos, conteo de jugadas sin jugador con botón `"Ver pendientes ›"` y porcentaje de carga con barra de progreso verde.
 3. **Timeline Táctico Compacto (`PostMatchTimelineComponent`):**
-   - Su barra de herramientas aloja los filtros, el buscador (44px) y la acción primaria `+ Agregar evento` (`.btn-primary-rugby`, 44px) a la derecha, separada por un divisor `--border-strong`. Atajo `N` (`aria-keyshortcuts`). Por debajo de 1121px los filtros scrollean en una fila con degradado, el buscador es un botón de ícono de 44×44 que se expande y la acción pasa a botón «+» de 44×44 con `aria-label`.
+   - Su barra de herramientas aloja los filtros, el buscador y la acción primaria `+ Agregar evento` (`.btn-primary-rugby`), ambos de 36px con mouse y 44px en pantallas táctiles (`--toolbar-ctl-h`) a la derecha, separada por un divisor `--border-strong`. Atajo `N` (`aria-keyshortcuts`). Por debajo de 1121px los filtros scrollean en una fila con degradado, el buscador es un botón de ícono que se expande y la acción pasa a botón «+» con `aria-label` (mismo `--toolbar-ctl-h`).
    - El modal de alta abre con el período del filtro activo (o del evento seleccionado) y sugiere su tiempo, con una etiqueta de origen por campo. Si los filtros ocultan el evento creado, un toast ofrece «Mostrar evento» o «Limpiar filtros».
    - Altura de carril `--lane-h: 32px;` y marcadores de jugada de `20px`.
    - Container Queries (`@container (max-width: 650px)`) para abreviar nombres largos (*Infracción*, *Penal palos*, *Tackle ✓*, etc.).

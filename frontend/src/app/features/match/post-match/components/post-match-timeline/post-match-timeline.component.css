@@ -129,6 +129,8 @@
 }
 
 .filter-right-group {
+  /* Alto de los controles de la derecha: cercano al de las píldoras; 44px táctil en pantallas touch */
+  --toolbar-ctl-h: 36px;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -136,7 +138,7 @@
 }
 
 .filter-right-group .filter-divider {
-  height: 32px;
+  height: 24px;
   background: var(--border-strong, rgba(27, 33, 22, 0.22));
 }
 
@@ -151,12 +153,19 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 44px;
-  min-width: 44px;
-  padding: 0 20px;
+  height: var(--toolbar-ctl-h);
+  min-width: var(--toolbar-ctl-h);
+  padding: 0 16px;
+  font-size: 0.85rem;
   border-radius: 10px;
   white-space: nowrap;
   cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .filter-right-group {
+    --toolbar-ctl-h: 44px;
+  }
 }
 
 /* Botón de ícono del buscador: solo en pantallas angostas */
@@ -164,8 +173,8 @@
   display: none;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: var(--toolbar-ctl-h);
+  height: var(--toolbar-ctl-h);
   flex: none;
   border-radius: 10px;
   background: var(--surface, #ffffff);
@@ -222,7 +231,7 @@
   }
 
   .btn-add-event {
-    width: 44px;
+    width: var(--toolbar-ctl-h);
     padding: 0;
   }
 
@@ -263,7 +272,7 @@
 
 .search-input {
   width: 100%;
-  height: 44px;
+  height: var(--toolbar-ctl-h);
   padding: 0.25rem 2rem 0.25rem 2.2rem;
   font-size: 0.8rem;
   background: var(--surface, #ffffff);
