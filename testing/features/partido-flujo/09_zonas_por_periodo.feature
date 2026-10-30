@@ -10,6 +10,7 @@ Característica: Zonas de la cancha por período de tiempo en post-partido
   # - Los minutos son de partido acumulado: el 1T va de 0 a 40 y el 2T de 40 a 80.
   # - Un rango es [inicio, fin): 10-25 y 25-40 son contiguos y no se solapan.
   # - La zona de un evento se deriva de su minuto; un evento fuera de todo rango queda "sin zona".
+  # - El tiempo añadido cuenta como el minuto 40 (1T) y el minuto 80 (2T).
   # - Solo se pueden editar zonas de partidos FINISHED.
 
   # --- HAPPY PATHS ---
@@ -51,6 +52,20 @@ Característica: Zonas de la cancha por período de tiempo en post-partido
     Cuando el entrenador asigna la zona fila 3 columna 6 al periodo 1 entre el minuto 25 y el minuto 40
     Y el entrenador agrega post-partido el evento "Tackle completado" para el equipo propio en el minuto 25 del periodo 1
     Entonces el evento "Tackle completado" del minuto 25 del periodo 1 pertenece a la zona fila 3 columna 6
+
+  Escenario: El minuto 40 del primer tiempo pertenece al tramo que termina en 40
+    Dado que el entrenador con email "jugador.uno@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Y que existe un partido finalizado para la división "Primera" contra "Zonas RC 40"
+    Y que el partido tiene asignada la zona fila 2 columna 4 en el periodo 1 entre el minuto 31 y el minuto 40
+    Cuando el entrenador agrega post-partido el evento "Tackle completado" para el equipo propio en el minuto 40 del periodo 1
+    Entonces el evento "Tackle completado" del minuto 40 del periodo 1 pertenece a la zona fila 2 columna 4
+
+  Escenario: El minuto 80 del segundo tiempo pertenece al tramo que termina en 80
+    Dado que el entrenador con email "jugador.uno@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Y que existe un partido finalizado para la división "Primera" contra "Zonas RC 41"
+    Y que el partido tiene asignada la zona fila 3 columna 5 en el periodo 2 entre el minuto 68 y el minuto 80
+    Cuando el entrenador agrega post-partido el evento "Tackle completado" para el equipo propio en el minuto 80 del periodo 2
+    Entonces el evento "Tackle completado" del minuto 80 del periodo 2 pertenece a la zona fila 3 columna 5
 
   Escenario: Zonas en ambos tiempos del partido
     Dado que el entrenador con email "jugador.uno@test.com" y contraseña "PassSegura123!" ha iniciado sesión

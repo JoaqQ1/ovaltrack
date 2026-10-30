@@ -77,4 +77,16 @@ class ZoneSummaryCalculatorTest {
 
         assertEquals(List.of(new ZoneCellCountDTO(1, 6, 1), new ZoneCellCountDTO(3, 1, 1)), summary.cells());
     }
+
+    @Test
+    @DisplayName("El tiempo añadido cuenta en la celda del último tramo y no como sin zona")
+    void shouldCountAddedTimeInTheLastSegmentOfThePeriod() {
+        List<Event> events = List.of(event(1, 35), event(1, 43), event(2, 84));
+        List<ZoneAssignment> zones = List.of(assignment(1, 31, 40, 2, 4), assignment(2, 68, 80, 3, 5));
+
+        ZoneSummaryDTO summary = calculator.calculate(events, zones);
+
+        assertEquals(List.of(new ZoneCellCountDTO(2, 4, 2), new ZoneCellCountDTO(3, 5, 1)), summary.cells());
+        assertEquals(0, summary.unzonedEventCount());
+    }
 }

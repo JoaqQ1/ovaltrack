@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.ovaltrack.backend.zone.domain.ZoneAssignment;
@@ -93,5 +94,87 @@ class EventZoneResolverTest {
         List<ZoneAssignment> zones = List.of(assignment(1, 0, 40, 1, 1));
 
         assertTrue(resolver.resolve(1, null, zones).isEmpty());
+    }
+
+    @Nested
+    @DisplayName("Tiempo añadido: cuenta como el minuto 40 (1T) y el minuto 80 (2T)")
+    class AddedTime {
+
+        @Test
+        @DisplayName("H1. Un evento del 1T en el minuto 43 pertenece al tramo que termina en 40")
+        void shouldCountFirstHalfAddedTimeInTheLastSegment() {
+            List<ZoneAssignment> zones = List.of(assignment(1, 31, 40, 2, 4));
+
+            assertEquals(Optional.of(new ZoneCell(2, 4)), resolver.resolve(1, 43 * 60, zones));
+        }
+
+        @Test
+        @DisplayName("H2. Un evento del 1T en el minuto 40 exacto pertenece al tramo que termina en 40")
+        void shouldCountMinuteFortyInTheSegmentEndingAtForty() {
+            List<ZoneAssignment> zones = List.of(assignment(1, 31, 40, 2, 4));
+
+            assertEquals(Optional.of(new ZoneCell(2, 4)), resolver.resolve(1, 40 * 60, zones));
+        }
+
+        @Test
+        @DisplayName("H3. Un evento del 2T en el minuto 84 pertenece al tramo que termina en 80")
+        void shouldCountSecondHalfAddedTimeInTheLastSegment() {
+            List<ZoneAssignment> zones = List.of(assignment(2, 68, 80, 3, 5));
+
+            assertEquals(Optional.of(new ZoneCell(3, 5)), resolver.resolve(2, 84 * 60, zones));
+        }
+
+        @Test
+        @DisplayName("H4. Un evento del 1T en el minuto 39 sigue en el tramo que lo contiene")
+        void shouldNotChangeEventsInsideRegularTime() {
+            List<ZoneAssignment> zones = List.of(
+                    assignment(1, 31, 40, 2, 4),
+                    assignment(1, 0, 31, 1, 1));
+
+            assertEquals(Optional.of(new ZoneCell(2, 4)), resolver.resolve(1, 39 * 60, zones));
+        }
+
+        @Test
+        @DisplayName("H5. Un evento del 2T en el minuto 40 exacto pertenece al tramo del 2T que empieza en 40")
+        void shouldLetThePeriodDecideAtMinuteForty() {
+            List<ZoneAssignment> zones = List.of(
+                    assignment(1, 31, 40, 2, 4),
+                    assignment(2, 40, 55, 3, 6));
+
+            assertEquals(Optional.of(new ZoneCell(3, 6)), resolver.resolve(2, 40 * 60, zones));
+        }
+
+        @Test
+        @DisplayName("S1. Si el último tramo no llega a 40, el tiempo añadido queda sin zona")
+        void shouldLeaveAddedTimeUnzonedWhenLastSegmentDoesNotReachTheEnd() {
+            List<ZoneAssignment> zones = List.of(assignment(1, 31, 38, 2, 4));
+
+            assertTrue(resolver.resolve(1, 43 * 60, zones).isEmpty());
+        }
+
+        @Test
+        @DisplayName("S2. Sin tramos en el período, el tiempo añadido queda sin zona")
+        void shouldLeaveAddedTimeUnzonedWhenThePeriodHasNoSegments() {
+            List<ZoneAssignment> zones = List.of(assignment(2, 40, 80, 1, 1));
+
+            assertTrue(resolver.resolve(1, 43 * 60, zones).isEmpty());
+        }
+
+        @Test
+        @DisplayName("S3. Un minuto negativo o un período inválido queda sin zona sin lanzar excepción")
+        void shouldReturnEmptyForOutOfRangeValues() {
+            List<ZoneAssignment> zones = List.of(assignment(1, 0, 40, 1, 1), assignment(2, 40, 80, 1, 1));
+
+            assertTrue(resolver.resolve(1, -60, zones).isEmpty());
+            assertTrue(resolver.resolve(3, 43 * 60, zones).isEmpty());
+        }
+
+        @Test
+        @DisplayName("S5. Un evento del 1T en el minuto 43 nunca cae en un tramo del 2T")
+        void shouldNeverSpillFirstHalfAddedTimeIntoTheSecondHalf() {
+            List<ZoneAssignment> zones = List.of(assignment(2, 40, 80, 3, 6));
+
+            assertTrue(resolver.resolve(1, 43 * 60, zones).isEmpty());
+        }
     }
 }

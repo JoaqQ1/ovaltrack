@@ -67,4 +67,18 @@ class PostMatchZoneEnricherTest {
         assertEquals(original.id(), enriched.id());
         assertEquals(original.matchTime(), enriched.matchTime());
     }
+
+    @Test
+    @DisplayName("Los eventos de tiempo añadido se vinculan a la zona del último tramo del período")
+    void shouldLinkAddedTimeEventsToTheLastSegment() {
+        UUID matchId = UUID.randomUUID();
+        when(zoneAssignmentRepository.findByMatchIdOrderByPeriodAscStartMinuteAsc(matchId))
+                .thenReturn(List.of(assignment(1, 31, 40, 2, 4)));
+        PostMatchZoneEnricher enricher = new PostMatchZoneEnricher(zoneAssignmentRepository, new EventZoneResolver());
+
+        MatchTimelineEventResponseDTO enriched = enricher.enrich(matchId, List.of(event(1, 43))).get(0);
+
+        assertEquals(new ZoneCell(2, 4), enriched.zone());
+        assertEquals(43 * 60, enriched.matchTime());
+    }
 }
