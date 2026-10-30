@@ -150,6 +150,27 @@ describe('RugbyFieldComponent', () => {
     });
   });
 
+  describe('identidad de la cancha', () => {
+    it('rotula los in-goals con PROPIO y el nombre corto del rival', () => {
+      render([]);
+      fixture.componentRef.setInput('opponentName', 'Trelew Rugby Club');
+      fixture.detectChanges();
+
+      const own = fixture.nativeElement.querySelector('[data-testid="ingoal-own"]');
+      const rival = fixture.nativeElement.querySelector('[data-testid="ingoal-rival"]');
+
+      expect(own?.textContent?.trim()).toBe('Propio');
+      expect(rival?.textContent?.trim()).toBe('Trelew');
+      expect(own?.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('dibuja los chevrones del sentido de ataque', () => {
+      render([]);
+
+      expect(fixture.nativeElement.querySelectorAll('.chevrons path').length).toBe(3);
+    });
+  });
+
   describe('escala de calor', () => {
     const legend = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="heat-legend"]');
 

@@ -4,7 +4,7 @@ import { ZONE_GRID_COLS, ZONE_GRID_ROWS, ZoneCellRef, ZoneCellSummary } from '..
 import { HEAT_STEPS, heatLevel, heatMix } from '../../utils/zone-heat';
 import {
   ZONE_COLUMN_METERS, ZONE_COLUMN_NAMES, ZONE_FIELD_LENGTH_M, ZONE_FIELD_WIDTH_M, ZONE_ROW_METERS,
-  ZONE_ROW_LETTERS, ZONE_ROW_SHORT_NAMES, columnRangeLabel, describeZone, formatEventCount, rowRangeLabel, zoneLabel
+  ZONE_ROW_LETTERS, ZONE_ROW_SHORT_NAMES, columnRangeLabel, describeZone, formatEventCount, rowRangeLabel, shortTeamName, zoneLabel
 } from '../../utils/zone-grid';
 
 export type RugbyFieldMode = 'assign' | 'view';
@@ -38,6 +38,7 @@ export class RugbyFieldComponent {
   readonly unzonedEventCount = input<number>(0);
   readonly selectedCell = input<ZoneCellRef | null>(null);
   readonly ownClubName = input<string>('Mi club');
+  readonly opponentName = input<string>('Rival');
   /** 'assign' elige la zona de un tramo; 'view' solo lee (no modifica nada). */
   readonly mode = input<RugbyFieldMode>('assign');
   readonly selectable = input<boolean>(true);
@@ -58,6 +59,8 @@ export class RugbyFieldComponent {
   readonly rowMeters = ZONE_ROW_METERS;
   readonly rows = Array.from({ length: ZONE_GRID_ROWS }, (_, i) => i + 1);
   readonly cols = Array.from({ length: ZONE_GRID_COLS }, (_, i) => i + 1);
+  /** Chevrones tenues del centro, en el sentido del ataque (hacia la derecha). */
+  readonly chevronXs = [this.width / 2 - 70, this.width / 2, this.width / 2 + 70];
   readonly stripes = Array.from({ length: ZONE_FIELD_LENGTH_M / 10 }, (_, i) => i);
 
   /** Posición X (px del viewBox) de las líneas de la cancha. */
@@ -102,6 +105,8 @@ export class RugbyFieldComponent {
       return { row, col, label: zoneLabel({ row, col }), count, countLabel: formatEventCount(count), heat: heatMix(level), heatLevel: level };
     }));
   });
+
+  readonly rivalShortName = computed(() => shortTeamName(this.opponentName()) || 'Rival');
 
   readonly isEmpty = computed(() => this.cells().length === 0);
 

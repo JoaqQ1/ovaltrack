@@ -1,6 +1,6 @@
 import {
   ZONE_COLUMN_METERS, ZONE_FIELD_LENGTH_M, ZONE_FIELD_WIDTH_M, ZONE_ROW_METERS,
-  allZoneCells, columnRangeLabel, describeZone, formatEventCount, rowRangeLabel, zoneLabel
+  allZoneCells, columnRangeLabel, describeZone, formatEventCount, rowRangeLabel, shortTeamName, zoneLabel
 } from './zone-grid';
 
 describe('zone-grid', () => {
@@ -51,6 +51,26 @@ describe('zone-grid', () => {
       expect(formatEventCount(1000)).toBe('1k');
       expect(formatEventCount(1999)).toBe('1k');
       expect(formatEventCount(12500)).toBe('12k');
+    });
+  });
+
+  describe('shortTeamName', () => {
+    it('quita "Rugby Club" y "RC" del nombre', () => {
+      expect(shortTeamName('Trelew Rugby Club')).toBe('Trelew');
+      expect(shortTeamName('Trelew RC')).toBe('Trelew');
+      expect(shortTeamName('Club Atlético Madryn')).toBe('Atlético Madr…');
+    });
+
+    it('acota los nombres largos a 14 caracteres con una elipsis', () => {
+      const short = shortTeamName('Asociación Deportiva Universitaria');
+
+      expect(short.length).toBe(14);
+      expect(short.endsWith('…')).toBeTrue();
+    });
+
+    it('si no queda nada tras limpiar, conserva el nombre original', () => {
+      expect(shortTeamName('Rugby Club')).toBe('Rugby Club');
+      expect(shortTeamName('  ')).toBe('');
     });
   });
 });

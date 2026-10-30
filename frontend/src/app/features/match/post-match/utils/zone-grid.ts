@@ -63,3 +63,13 @@ export function allZoneCells(): ZoneCellRef[] {
 export function formatEventCount(count: number): string {
   return count > 999 ? `${Math.floor(count / 1000)}k` : String(count);
 }
+
+const TEAM_NAME_NOISE = /\b(rugby\s*club|rugby|club|r\.?\s?c\.?)\b/gi;
+const SHORT_TEAM_NAME_MAX = 14;
+
+/** Nombre corto para el in-goal: sin "Rugby Club" / "RC" y acotado a 14 caracteres. */
+export function shortTeamName(name: string): string {
+  const trimmed = name.trim();
+  const core = trimmed.replace(TEAM_NAME_NOISE, ' ').replace(/\s+/g, ' ').trim() || trimmed;
+  return core.length > SHORT_TEAM_NAME_MAX ? `${core.slice(0, SHORT_TEAM_NAME_MAX - 1).trimEnd()}…` : core;
+}

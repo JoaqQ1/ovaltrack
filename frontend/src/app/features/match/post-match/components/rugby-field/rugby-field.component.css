@@ -102,7 +102,7 @@
 
 .grass { fill: var(--pitch-a); }
 .stripe { fill: transparent; }
-.stripe.odd { fill: var(--pitch-b); }
+.stripe.odd { fill: var(--pitch-b); opacity: 0.55; }
 .ingoal { fill: var(--pitch-ingoal); opacity: 0.9; }
 
 .lines line,
@@ -114,8 +114,44 @@
 }
 
 .lines .boundary { stroke-width: 5; }
+/* Jerarquía de líneas: gol y mitad gruesas, 22 intermedia, 10 m y 5 m finas, para que la grilla de celdas no compita */
+.lines .goal { stroke-width: 5; }
 .lines .halfway { stroke-width: 5; }
 .lines .dashed { stroke-width: 2; stroke-dasharray: 10 8; opacity: 0.85; }
+.lines .dashed.fine { stroke-width: 1.25; opacity: 0.6; }
+
+.chevrons path {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.16;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Texto vertical dentro de cada in-goal: PROPIO a la izquierda (se lee de abajo hacia arriba) y el rival a la derecha */
+.ingoal-label {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(10 / 120 * 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.ingoal-label--own { left: 0; transform: rotate(180deg); }
+.ingoal-label--rival { right: 0; }
 .lines .posts line { stroke-width: 4; }
 .lines .post-dot { stroke-width: 9; stroke-linecap: round; }
 
