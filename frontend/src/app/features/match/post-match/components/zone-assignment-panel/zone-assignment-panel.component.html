@@ -1,172 +1,118 @@
 <section class="zone-panel">
 
-  <!-- Formulario primero: es la tarea principal -->
   <div class="panel-card is-sheet" [class.is-open]="sheetOpen" *ngIf="!readOnly">
     <!-- Solo móvil: resumen compacto de la hoja inferior (zona, rango y "Rango" para expandir) -->
     <div class="sheet-summary" data-testid="sheet-summary">
-      <span *ngIf="selectedCell() as cell" class="zone-badge">{{ label(cell) }}</span>
+      <span *ngIf="franja as f" class="zone-badge">{{ f.label }}</span>
       <span class="summary-text">
-        <strong *ngIf="selectedCell() as cell; else noCell">{{ rowName(cell.row) }} · {{ columnName(cell.col) }}</strong>
-        <ng-template #noCell><strong>Elegí una zona en la cancha</strong></ng-template>
+        <strong>{{ selectedCell() ? subtitle : 'Elegí una franja en la grilla o la cancha' }}</strong>
         <small data-testid="sheet-range">{{ rangeSummary }}</small>
       </span>
       <button type="button" class="btn btn-outline btn-range" data-testid="sheet-toggle"
               [attr.aria-expanded]="sheetOpen" (click)="toggleSheet()">{{ sheetOpen ? 'Cerrar' : 'Rango' }}</button>
     </div>
 
-    <h2 class="section-title">{{ editingId ? 'Editar tramo' : 'Nuevo tramo' }}</h2>
-    <p class="steps-hint">1. Tocá una zona en la cancha · 2. Definí el rango · 3. Guardá</p>
+    <h2 class="section-title" data-testid="panel-title">{{ editingId ? 'Editar tramo' : 'Nuevo tramo' }}</h2>
+    <p class="panel-subtitle" data-testid="panel-subtitle">{{ subtitle }}</p>
 
-    <!-- Paso 1: zona -->
-    <div class="step">
-      <span class="step-number" aria-hidden="true">1</span>
-      <div class="step-body">
-        <span class="field-label">Zona</span>
-        <div class="selected-cell" data-testid="selected-cell" [class.is-empty]="!selectedCell()">
-          <i class="bi bi-geo-alt"></i>
-          <span *ngIf="selectedCell() as cell; else pickHint">
-            <strong>{{ label(cell) }}</strong> · {{ rowName(cell.row) }} · {{ columnName(cell.col) }}
-          </span>
-          <ng-template #pickHint><span>Tocá una zona en la cancha</span></ng-template>
-        </div>
+    <!-- Franja: se elige tocando la grilla o la cancha -->
+    <div class="field">
+      <span class="field-label">Franja</span>
+      <div class="selected-cell" data-testid="selected-cell" [class.is-empty]="!selectedCell()">
+        <ng-container *ngIf="franja as f; else pickHint">
+          <span class="zone-badge">{{ f.label }}</span>
+          <span class="franja-text"><strong>{{ f.name }}</strong> <small>{{ f.range }}</small></span>
+        </ng-container>
+        <ng-template #pickHint><i class="bi bi-geo-alt"></i><span>Tocá una fila de la grilla o una zona de la cancha</span></ng-template>
       </div>
     </div>
 
-    <!-- Paso 2: tiempo y rango -->
-    <div class="step">
-      <span class="step-number" aria-hidden="true">2</span>
-      <div class="step-body">
-        <span class="field-label" id="zone-period-label">Tiempo</span>
-        <div class="segmented" role="group" aria-labelledby="zone-period-label">
-          <button *ngFor="let p of periods" type="button" class="segment"
-                  [class.is-active]="period === p.value" [attr.aria-pressed]="period === p.value"
-                  [disabled]="store.isSaving()" (click)="setPeriod(p.value)">
-            <strong>{{ p.label }}</strong>
-            <small>{{ p.range }}</small>
-          </button>
-        </div>
+    <!-- Lateral: izquierda, centro o derecha mirando al ataque -->
+    <div class="field">
+      <span class="field-label" id="zone-lateral-label">Lateral</span>
+      <div class="segmented" role="group" aria-labelledby="zone-lateral-label">
+        <button *ngFor="let lateral of laterals" type="button" class="segment" data-testid="lateral-option"
+                [class.is-active]="selectedCell()?.row === lateral.row" [attr.aria-pressed]="selectedCell()?.row === lateral.row"
+                [disabled]="!selectedCell() || store.isSaving()" (click)="setLateral(lateral.row)">{{ lateral.name }}</button>
+      </div>
+    </div>
 
-        <div class="range-row">
-          <div class="range-field">
-            <label class="field-label" for="zone-start">Desde (min)</label>
-            <div class="stepper">
-              <button type="button" class="step-btn" aria-label="Restar un minuto a Desde"
-                      [disabled]="store.isSaving()" (click)="adjust('start', -1)">−</button>
-              <input id="zone-start" type="number" class="form-control" step="1" inputmode="numeric"
-                     [(ngModel)]="startMinute" (ngModelChange)="onRangeChange()" [disabled]="store.isSaving()" />
-              <button type="button" class="step-btn" aria-label="Sumar un minuto a Desde"
-                      [disabled]="store.isSaving()" (click)="adjust('start', 1)">+</button>
-            </div>
-          </div>
-          <div class="range-field">
-            <label class="field-label" for="zone-end">Hasta (min)</label>
-            <div class="stepper">
-              <button type="button" class="step-btn" aria-label="Restar un minuto a Hasta"
-                      [disabled]="store.isSaving()" (click)="adjust('end', -1)">−</button>
-              <input id="zone-end" type="number" class="form-control" step="1" inputmode="numeric"
-                     [(ngModel)]="endMinute" (ngModelChange)="onRangeChange()" [disabled]="store.isSaving()" />
-              <button type="button" class="step-btn" aria-label="Sumar un minuto a Hasta"
-                      [disabled]="store.isSaving()" (click)="adjust('end', 1)">+</button>
-            </div>
+    <!-- Rango en minutos acumulados de partido (0–80); el tiempo se deduce -->
+    <div class="field">
+      <div class="range-row">
+        <div class="range-field">
+          <label class="field-label" for="zone-start">Desde (min)</label>
+          <div class="stepper">
+            <button type="button" class="step-btn" aria-label="Restar un minuto a Desde"
+                    [disabled]="store.isSaving()" (click)="adjust('start', -1)">−</button>
+            <input id="zone-start" type="number" class="form-control" step="1" inputmode="numeric"
+                   [(ngModel)]="startMinute" (ngModelChange)="onRangeChange()" [disabled]="store.isSaving()" />
+            <button type="button" class="step-btn" aria-label="Sumar un minuto a Desde"
+                    [disabled]="store.isSaving()" (click)="adjust('start', 1)">+</button>
           </div>
         </div>
-
-        <p *ngIf="linkedEventCount !== null" class="preview" data-testid="linked-preview">
-          Se vincularán <strong>{{ linkedEventCount }}</strong> {{ linkedEventCount === 1 ? 'evento' : 'eventos' }}
-        </p>
-        <p *ngIf="releasedEventCount > 0" class="preview preview-warn" data-testid="released-preview">
-          {{ releasedEventCount }} {{ releasedEventCount === 1 ? 'evento pasará' : 'eventos pasarán' }} a "Sin zona"
-        </p>
-
-        <div class="next-gap">
-          <button *ngIf="!matchComplete" type="button" class="btn btn-outline btn-gap" data-testid="next-gap"
-                  [disabled]="store.isSaving()" (click)="goToNextGap()">
-            <i class="bi bi-skip-forward"></i> Ir al próximo hueco
-          </button>
-          <p *ngIf="matchComplete" class="match-complete" data-testid="match-complete">
-            <i class="bi bi-check-circle-fill"></i> Partido completo
-          </p>
+        <div class="range-field">
+          <label class="field-label" for="zone-end">Hasta (min)</label>
+          <div class="stepper">
+            <button type="button" class="step-btn" aria-label="Restar un minuto a Hasta"
+                    [disabled]="store.isSaving()" (click)="adjust('end', -1)">−</button>
+            <input id="zone-end" type="number" class="form-control" step="1" inputmode="numeric"
+                   [(ngModel)]="endMinute" (ngModelChange)="onRangeChange()" [disabled]="store.isSaving()" />
+            <button type="button" class="step-btn" aria-label="Sumar un minuto a Hasta"
+                    [disabled]="store.isSaving()" (click)="adjust('end', 1)">+</button>
+          </div>
         </div>
-
-        <div class="range-help">
-          <p class="range-note">Inicio incluido, fin excluido.</p>
-          <button type="button" class="help-toggle" data-testid="range-help-toggle"
-                  aria-controls="zone-range-help" [attr.aria-expanded]="helpOpen"
-                  aria-label="Más ayuda sobre el rango" (click)="toggleHelp()">
-            <i class="bi bi-question-circle"></i>
-          </button>
-        </div>
-        <ul *ngIf="helpOpen" id="zone-range-help" class="help-list" data-testid="range-help">
-          <li>10–25 y 25–40 no se pisan: el minuto de inicio cuenta y el de fin no.</li>
-          <li>En el 2T los minutos siguen de 40 a 80.</li>
-          <li>El tiempo añadido cuenta como minuto 40 (1T) y 80 (2T).</li>
-        </ul>
       </div>
-    </div>
 
-    <!-- Paso 3: guardar. El "3" marca el botón; los avisos van debajo como ayuda -->
-    <div class="step step-action">
-      <span class="step-number" aria-hidden="true">3</span>
-      <div class="step-body">
-        <div class="panel-actions">
-          <button type="button" class="btn btn-outline" *ngIf="editingId" (click)="cancelEdit()"
-                  [disabled]="store.isSaving()">Cancelar edición</button>
-          <button type="button" class="btn btn-invite d-flex align-items-center justify-content-center gap-2"
-                  data-testid="zone-save" aria-describedby="zone-save-hint"
-                  (click)="save()" [disabled]="store.isSaving() || !!blockReason">
-            <span *ngIf="store.isSaving()" class="spinner-border spinner-border-sm"></span>
-            <span>{{ store.isSaving() ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Guardar tramo') }}</span>
-          </button>
-        </div>
+      <p *ngIf="linkedEventCount !== null" class="preview" data-testid="linked-preview">
+        {{ period }}T · se vincularán <strong>{{ linkedEventCount }}</strong> {{ linkedEventCount === 1 ? 'evento' : 'eventos' }}
+      </p>
+      <p *ngIf="releasedEventCount > 0" class="preview preview-warn" data-testid="released-preview">
+        {{ releasedEventCount }} {{ releasedEventCount === 1 ? 'evento pasará' : 'eventos pasarán' }} a "Sin zona"
+      </p>
 
-        <p *ngIf="blockReason as reason" id="zone-save-hint" class="save-hint" data-testid="save-hint">{{ reason }}</p>
+      <p *ngIf="rangeProblem as problem" class="inline-error" role="alert" data-testid="range-error">
+        <i class="bi bi-exclamation-triangle-fill"></i> {{ problem }}
+      </p>
 
-        <p *ngIf="serverError" class="inline-error" role="alert" data-testid="server-error">
-          <i class="bi bi-exclamation-triangle-fill"></i> {{ serverError }}
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tramos asignados (con scroll propio para no empujar el formulario) -->
-  <div class="panel-card">
-    <div class="list-head">
-      <h2 class="section-title">Tramos asignados</h2>
-      <span class="count-pill">{{ store.assignments().length }} {{ store.assignments().length === 1 ? 'tramo' : 'tramos' }}</span>
-    </div>
-
-    <p *ngIf="listError" class="inline-error" role="alert" data-testid="list-error">
-      <i class="bi bi-exclamation-triangle-fill"></i> {{ listError }}
-    </p>
-
-    <p *ngIf="store.assignments().length === 0" class="empty-state" data-testid="zones-list-empty">
-      Todavía no asignaste tramos. Los eventos quedan "sin zona" hasta que definas uno.
-    </p>
-
-    <ul class="zone-list" *ngIf="store.assignments().length > 0">
-      <li *ngFor="let zone of store.assignments()"
-          class="zone-item" data-testid="zone-item"
-          [class.is-editing]="zone.id === editingId"
-          [class.is-conflict]="!readOnly && zone.id === store.conflictId()"
-          (mouseenter)="store.hoverSegmentId.set(zone.id)" (mouseleave)="store.hoverSegmentId.set(null)"
-          (focusin)="store.hoverSegmentId.set(zone.id)" (focusout)="store.hoverSegmentId.set(null)">
-        <button type="button" class="zone-item-main" data-testid="zone-edit"
-                [attr.aria-label]="'Editar tramo ' + segmentName(zone)"
-                [disabled]="store.isSaving() || readOnly" (click)="startEdit(zone)">
-          <span class="zone-badge">{{ label(zone) }}</span>
-          <span class="zone-text">
-            <span class="zone-name">{{ rowName(zone.row) }} · {{ columnName(zone.col) }}</span>
-            <span class="zone-range">{{ zone.period }}T · {{ zone.startMinute }}′–{{ zone.endMinute }}′</span>
-          </span>
+      <div class="range-help">
+        <p class="range-note">Inicio incluido, fin excluido.</p>
+        <button type="button" class="help-toggle" data-testid="range-help-toggle"
+                aria-controls="zone-range-help" [attr.aria-expanded]="helpOpen"
+                aria-label="Más ayuda sobre el rango" (click)="toggleHelp()">
+          <i class="bi bi-question-circle"></i>
         </button>
+      </div>
+      <ul *ngIf="helpOpen" id="zone-range-help" class="help-list" data-testid="range-help">
+        <li>10–25 y 25–40 no se pisan: el minuto de inicio cuenta y el de fin no.</li>
+        <li>Los minutos son del partido: el 2T va de 40 a 80. El tiempo (1T o 2T) se deduce del rango.</li>
+        <li>Un tramo no puede cruzar el entretiempo: partilo en uno hasta el 40′ y otro desde el 40′.</li>
+        <li>El tiempo añadido cuenta como minuto 40 (1T) y 80 (2T).</li>
+      </ul>
+    </div>
 
-        <div class="zone-item-actions" *ngIf="!readOnly">
-          <button type="button" class="btn-icon btn-icon-danger" aria-label="Eliminar tramo" title="Eliminar tramo"
-                  data-testid="zone-delete" (click)="deleteZone(zone)" [disabled]="store.isSaving()">
-            <i class="bi bi-trash"></i>
-          </button>
-        </div>
-      </li>
-    </ul>
+    <!-- Acciones: "Guardar tramo" es el único primario; los avisos van debajo como ayuda -->
+    <div class="panel-footer">
+      <div class="panel-actions">
+        <button type="button" class="btn btn-outline btn-delete" *ngIf="editingId" data-testid="zone-delete"
+                [disabled]="store.isSaving()" (click)="deleteEditing()">
+          <i class="bi bi-trash"></i> Eliminar
+        </button>
+        <button type="button" class="btn btn-outline" data-testid="zone-cancel"
+                [disabled]="store.isSaving()" (click)="cancel()">Cancelar</button>
+        <button type="button" class="btn btn-invite d-flex align-items-center justify-content-center gap-2"
+                data-testid="zone-save" aria-describedby="zone-save-hint"
+                (click)="save()" [disabled]="store.isSaving() || !!blockReason">
+          <span *ngIf="store.isSaving()" class="spinner-border spinner-border-sm"></span>
+          <span>{{ store.isSaving() ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Guardar tramo') }}</span>
+        </button>
+      </div>
+
+      <p *ngIf="pickHelp as help" id="zone-save-hint" class="save-hint" data-testid="save-hint">{{ help }}</p>
+
+      <p *ngIf="serverError" class="inline-error" role="alert" data-testid="server-error">
+        <i class="bi bi-exclamation-triangle-fill"></i> {{ serverError }}
+      </p>
+    </div>
   </div>
 </section>

@@ -80,6 +80,18 @@ export function gapAtMinute(assignments: ZoneAssignmentResponse[], minute: numbe
   return allGaps(assignments).find(gap => minute >= gap.start && minute < gap.end) ?? null;
 }
 
+/**
+ * Rango sugerido para el próximo tramo, en minutos acumulados: empieza en el hueco que arranca en `afterMinute`
+ * (o en el primero libre) y dura como mucho `length` minutos. Null si el partido está completo.
+ */
+export function suggestNextRange(assignments: ZoneAssignmentResponse[], afterMinute?: number, length = 5): MinuteRange | null {
+  const gaps = allGaps(assignments);
+  if (gaps.length === 0) return null;
+
+  const gap = (afterMinute !== undefined ? gaps.find(g => g.start >= afterMinute) : undefined) ?? gaps[0];
+  return { start: gap.start, end: Math.min(gap.start + length, gap.end) };
+}
+
 export interface GapWithEvents extends PeriodGap {
   /** Eventos del partido que caen en el hueco (hoy quedan sin zona). */
   eventCount: number;

@@ -233,7 +233,7 @@ describe('PostMatchZonesComponent', () => {
     });
   });
 
-  describe('vínculo entre cancha, grilla y lista', () => {
+  describe('vínculo entre cancha y grilla', () => {
     const segmentBars = (): HTMLElement[] => queryAll('[data-testid="territory-block"]');
 
     it('hover en una celda resalta sus tramos en la grilla y atenúa el resto', () => {
@@ -259,15 +259,6 @@ describe('PostMatchZonesComponent', () => {
 
       expect(cell(2, 3).classList).toContain('is-linked');
       expect(cell(1, 1).classList).not.toContain('is-linked');
-    });
-
-    it('hover en una fila de la lista de tramos también resalta su celda', () => {
-      createLoaded();
-
-      query('[data-testid="zone-item"]')?.dispatchEvent(new Event('mouseenter'));
-      fixture.detectChanges();
-
-      expect(cell(2, 3).classList).toContain('is-linked');
     });
 
     it('en "Ver eventos", elegir una celda resalta sus tramos en la grilla', () => {
@@ -526,7 +517,7 @@ describe('PostMatchZonesComponent', () => {
     it('F2-S1. clic en una fila sobre un tramo ya zonificado no hace nada', () => {
       createLoaded();
       component.selectedCell.set({ row: 1, col: 2 });
-      panelOf().prefill({ period: 2, startMinute: 60, endMinute: 70 });
+      panelOf().prefill({ startMinute: 60, endMinute: 70 });
 
       clickTrack(12, 3);
 

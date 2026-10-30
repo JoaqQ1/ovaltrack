@@ -18,31 +18,9 @@
   color: var(--text-primary, #111d0e);
 }
 
-.steps-hint { margin: 0 0 14px; font-size: 12.5px; color: var(--text-secondary, #3b4e33); }
+.panel-subtitle { margin: 0 0 14px; font-size: 13px; font-weight: 600; color: var(--text-secondary, #3b4e33); }
 
-/* Pasos numerados */
-.step { display: flex; gap: 12px; margin-bottom: 16px; }
-.step:last-child { margin-bottom: 0; }
-
-.step-number {
-  flex: 0 0 24px;
-  height: 24px;
-  margin-top: 2px;
-  border-radius: 50%;
-  background: var(--btn-primary-bg, #204b22);
-  color: #ffffff;
-  font-family: var(--font-mono, monospace);
-  font-size: 12px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.step-body { flex: 1 1 auto; min-width: 0; }
-
-/* El círculo del paso 3 se centra con el botón de 44 px */
-.step-action .step-number { margin-top: 10px; }
+.field { margin-bottom: 14px; }
 
 .field-label {
   display: block;
@@ -66,30 +44,35 @@
   font-size: 13.5px;
 }
 
+.franja-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.franja-text small { font-family: var(--font-mono, monospace); font-size: 11.5px; color: var(--text-secondary, #3b4e33); }
+
 .selected-cell.is-empty {
   background: var(--surface-alt, #eef1e7);
   border: 1.5px dashed var(--border-sport-subtle, rgba(32, 75, 34, 0.30));
   color: var(--text-secondary, #3b4e33);
 }
 
-/* Botones 1T / 2T */
-.segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+/* Lateral: tres opciones */
+.segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 
 .segment {
-  min-height: 52px;
+  min-height: 44px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 0 6px;
   border-radius: 10px;
   background: #ffffff;
   border: 1.5px solid var(--border-strong, rgba(27, 33, 22, 0.22));
   color: var(--text-secondary, #3b4e33);
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.2;
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.segment small { font-family: var(--font-mono, monospace); font-size: 11px; }
+.segment:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .segment:hover:not(:disabled) { background: #f2f7ef; border-color: var(--btn-primary-bg, #204b22); }
 
@@ -144,10 +127,6 @@
 
 .preview { margin: 10px 0 0; font-size: 13px; color: var(--success, #2e7d32); font-weight: 600; }
 .preview-warn { margin-top: 6px; color: var(--warning, #8a5700); }
-.next-gap { margin-top: 10px; }
-.btn-gap { height: 44px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; }
-.match-complete { margin: 0; display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13.5px; font-weight: 700; color: var(--success, #2e7d32); }
-
 .range-help { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
 .range-note { margin: 0; font-size: 12px; line-height: 1.4; color: var(--text-secondary, #3b4e33); }
 
@@ -196,9 +175,19 @@
 }
 
 .save-hint { margin: 10px 0 0; font-size: 13px; font-weight: 600; color: var(--warning, #8a5700); }
-.step-body > .inline-error { margin: 10px 0 0; }
+.field > .inline-error { margin: 10px 0 0; }
+.panel-footer > .inline-error { margin: 10px 0 0; }
 
 .panel-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; }
+.panel-actions .btn-delete {
+  margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--error, #b42318);
+  border-color: var(--error-border, rgba(180, 35, 24, 0.35));
+}
+.panel-actions .btn-delete:hover:not(:disabled) { background: var(--error-tint, rgba(240, 68, 56, 0.14)); border-color: var(--error, #b42318); }
 .panel-actions .btn { height: 44px; padding: 0 20px; }
 .panel-actions .btn:disabled { cursor: not-allowed; }
 
@@ -210,76 +199,6 @@
   box-shadow: none;
   opacity: 0.45;
 }
-
-/* Lista de tramos */
-.list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-
-.count-pill {
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--surface-alt, #eef1e7);
-  border: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
-  font-family: var(--font-mono, monospace);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary, #3b4e33);
-}
-
-.empty-state {
-  padding: 14px 16px;
-  border: 1.5px dashed var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
-  border-radius: 10px;
-  background: var(--surface-alt, #eef1e7);
-  color: var(--text-secondary, #3b4e33);
-  font-size: 13.5px;
-  margin: 0;
-}
-
-.zone-list {
-  list-style: none;
-  margin: 0;
-  padding: 0 4px 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 320px;
-  overflow-y: auto;
-}
-
-.zone-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 56px;
-  background: var(--surface, #ffffff);
-  border: 1.5px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
-  border-radius: 10px;
-}
-
-.zone-item.is-conflict {
-  border-color: var(--error, #b42318);
-  background: var(--error-tint, rgba(240, 68, 56, 0.14));
-  box-shadow: 0 0 0 2px var(--error-border, rgba(180, 35, 24, 0.35));
-}
-
-.zone-item.is-editing { border-color: var(--btn-primary-bg, #204b22); background: #f2f7ef; }
-
-.zone-item-main {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  min-height: 56px;
-  padding: 6px 12px;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  border-radius: 10px;
-}
-
-.zone-item-main:hover:not(:disabled) { background: rgba(32, 75, 34, 0.05); }
 
 .zone-badge {
   flex: 0 0 auto;
@@ -295,38 +214,12 @@
   text-align: center;
 }
 
-.zone-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
-.zone-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary, #111d0e); }
-.zone-range { font-family: var(--font-mono, monospace); font-size: 12px; color: var(--text-secondary, #3b4e33); }
-
-.zone-item-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding-right: 6px; }
-
-.btn-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  border: 1.5px solid var(--btn-outline-border, rgba(32, 75, 34, 0.25));
-  background: #ffffff;
-  color: var(--btn-outline-fg, #204b22);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.btn-icon-danger { color: var(--error, #b42318); }
-
-.btn-icon-danger:hover:not(:disabled) {
-  background: var(--error-tint, rgba(240, 68, 56, 0.14));
-  border-color: var(--error-border, rgba(180, 35, 24, 0.35));
-}
-
 /* El resumen de la hoja solo existe en móvil */
 .sheet-summary { display: none; }
 
 /* Una columna (tablet y móvil): "Guardar tramo" queda fijo al pie mientras el formulario está a la vista */
 @media (max-width: 1121px) {
-  .step-action {
+  .panel-footer {
     position: sticky;
     bottom: 0;
     z-index: 5;
@@ -339,8 +232,6 @@
 
 /* Móvil: el formulario es una hoja inferior. Compacta muestra zona, rango y "Guardar tramo"; "Rango" la expande. */
 @media (max-width: 576px) {
-  .zone-item { flex-wrap: wrap; }
-
   .panel-card.is-sheet {
     position: fixed;
     left: 0;
@@ -362,12 +253,10 @@
 
   /* Compacta: solo el resumen y el botón de guardar */
   .panel-card.is-sheet:not(.is-open) .section-title,
-  .panel-card.is-sheet:not(.is-open) .steps-hint,
-  .panel-card.is-sheet:not(.is-open) .step:not(.step-action) { display: none; }
+  .panel-card.is-sheet:not(.is-open) .panel-subtitle,
+  .panel-card.is-sheet:not(.is-open) .field { display: none; }
 
-  .panel-card.is-sheet .step-action .step-number { display: none; }
-
-  .panel-card.is-sheet .step-action {
+  .panel-card.is-sheet .panel-footer {
     position: static;
     margin: 0;
     padding: 0;
@@ -375,6 +264,6 @@
     background: transparent;
   }
 
-  .panel-card.is-sheet .step-action .panel-actions { justify-content: stretch; }
-  .panel-card.is-sheet .step-action .panel-actions .btn { flex: 1 1 auto; }
+  .panel-card.is-sheet .panel-footer .panel-actions { justify-content: stretch; }
+  .panel-card.is-sheet .panel-footer .panel-actions .btn { flex: 1 1 auto; }
 }

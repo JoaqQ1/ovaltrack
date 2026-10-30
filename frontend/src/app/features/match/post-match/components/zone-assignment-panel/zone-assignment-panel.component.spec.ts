@@ -27,6 +27,7 @@ describe('ZoneAssignmentPanelComponent', () => {
   const queryAll = (selector: string): HTMLElement[] => Array.from(fixture.nativeElement.querySelectorAll(selector));
   const saveButton = (): HTMLButtonElement => query<HTMLButtonElement>('[data-testid="zone-save"]') as HTMLButtonElement;
   const hint = (): string => query('[data-testid="save-hint"]')?.textContent?.trim() ?? '';
+  const rangeError = (): string => query('[data-testid="range-error"]')?.textContent?.trim() ?? '';
 
   const ev = (id: string, period: 1 | 2, minute: number): MatchTimelineEventResponse => ({
     id, eventTypeId: 't', eventTypeName: 'Tackle', matchTime: minute * 60, period, teamPossession: 'OWN'
@@ -73,12 +74,19 @@ describe('ZoneAssignmentPanelComponent', () => {
   afterEach(() => http.verify());
 
   describe('formulario', () => {
-    it('empieza sin zona elegida con el botón deshabilitado y el motivo visible', () => {
+    it('F2-S4. sin franja elegida el botón está deshabilitado y la ayuda dice dónde elegirla', () => {
       render();
 
       expect(saveButton().disabled).toBeTrue();
-      expect(hint()).toContain('Falta elegir la zona');
-      expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Tocá una zona en la cancha');
+      expect(hint()).toBe('Elegí la franja en la grilla o en la cancha.');
+      expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Tocá una fila de la grilla');
+    });
+
+    it('no hay selector de tiempo: el 1T o 2T se deduce del rango', () => {
+      render();
+
+      expect(queryAll('[data-testid="lateral-option"]').map(b => b.textContent?.trim())).toEqual(['Izquierda', 'Centro', 'Derecha']);
+      expect(query('#zone-period-label')).toBeNull();
     });
 
     it('no propone el tiempo completo por defecto: sugiere 5 minutos', () => {
@@ -94,13 +102,16 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect([component.startMinute, component.endMinute]).toEqual([10, 15]);
     });
 
-    it('con el tiempo completamente cubierto no sugiere rango y lo explica', () => {
-      render([{ ...existingZone, startMinute: 0, endMinute: 40 }]);
+    it('con el partido completamente cubierto no sugiere rango y lo explica', () => {
+      render([
+        { ...existingZone, id: 'p1', startMinute: 0, endMinute: 40 },
+        { ...existingZone, id: 'p2', period: 2, startMinute: 40, endMinute: 80 }
+      ]);
       selectCell(2, 3);
 
       expect([component.startMinute, component.endMinute]).toEqual([null, null]);
       expect(saveButton().disabled).toBeTrue();
-      expect(hint()).toContain('minutos enteros');
+      expect(rangeError()).toContain('minutos enteros');
     });
 
     it('la ayuda del rango muestra una sola línea y el detalle se despliega con el ícono', () => {
@@ -114,6 +125,48 @@ describe('ZoneAssignmentPanelComponent', () => {
 
       expect(query('[data-testid="range-help"]')?.textContent).toContain('El tiempo añadido cuenta como minuto 40 (1T) y 80 (2T).');
       expect(query('[data-testid="range-help-toggle"]')?.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('el motivo que bloquea guardar va debajo del botón, como texto de ayuda', () => {
+      render();
+
+      const position = saveButton().compareDocumentPosition(query('[data-testid="save-hint"]') as Element);
+
+      expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('al elegir la franja y con un rango válido se habilita guardar y desaparece la ayuda', () => {
+      render();
+      selectCell(2, 3);
+
+      expect(saveButton().disabled).toBeFalse();
+      expect(query('[data-testid="save-hint"]')).toBeNull();
+      expect(query('[data-testid="selected-cell"]')?.textContent).toContain('C3');
+      expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Campo propio');
+      expect(query('[data-testid="panel-subtitle"]')?.textContent).toContain('Centro · Campo propio');
+    });
+
+    describe('lateral', () => {
+      const lateralButtons = (): HTMLButtonElement[] => queryAll('[data-testid="lateral-option"]') as HTMLButtonElement[];
+
+      it('sin franja los botones de lateral están deshabilitados', () => {
+        render();
+
+        expect(lateralButtons().every(b => b.disabled)).toBeTrue();
+      });
+
+      it('con franja marca el lateral elegido y permite cambiarlo sin perder la franja', () => {
+        render();
+        component.selectedCell.set({ row: 2, col: 5 });
+        fixture.detectChanges();
+        expect(lateralButtons()[1].classList).toContain('is-active');
+
+        lateralButtons()[2].click();
+        fixture.detectChanges();
+
+        expect(component.selectedCell()).toEqual({ row: 3, col: 5 });
+        expect(lateralButtons()[2].classList).toContain('is-active');
+      });
     });
 
     describe('hoja inferior en móvil', () => {
@@ -131,10 +184,13 @@ describe('ZoneAssignmentPanelComponent', () => {
         expect(query('[data-testid="sheet-range"]')?.textContent).toBe('1T · 0′ a 5′ · 2 eventos');
       });
 
-      it('sin zona ni rango válido pide elegirlos', () => {
-        render([{ ...existingZone, startMinute: 0, endMinute: 40 }]);
+      it('sin franja ni rango válido pide elegirlos', () => {
+        render([
+          { ...existingZone, id: 'p1', startMinute: 0, endMinute: 40 },
+          { ...existingZone, id: 'p2', period: 2, startMinute: 40, endMinute: 80 }
+        ]);
 
-        expect(summary()).toContain('Elegí una zona en la cancha');
+        expect(summary()).toContain('Elegí una franja en la grilla o la cancha');
         expect(query('[data-testid="sheet-range"]')?.textContent).toBe('Definí el rango');
       });
 
@@ -168,186 +224,143 @@ describe('ZoneAssignmentPanelComponent', () => {
       });
     });
 
-    describe('estirar un tramo desde la timeline', () => {
-      it('carga el tramo para editar con el borde movido, sin guardar nada', () => {
-        render([existingZone]);
+    describe('rango en minutos acumulados', () => {
+      it('los botones − y + ajustan el minuto sin salirse de 0–80', () => {
+        render();
+        component.startMinute = 0;
 
-        component.applyResize(existingZone, 10, 31);
-        fixture.detectChanges();
+        component.adjust('start', -1);
+        expect(component.startMinute).toBe(0);
 
-        expect(component.editingId).toBe('zone-1');
-        expect(component.selectedCell()).toEqual({ row: 2, col: 3 });
-        expect([component.startMinute, component.endMinute]).toEqual([10, 31]);
-        expect(store.formRange()).toEqual({ period: 1, startMinute: 10, endMinute: 31 });
-        http.expectNone(r => r.method === 'PUT');
+        component.adjust('start', 1);
+        expect(component.startMinute).toBe(1);
+
+        component.endMinute = 80;
+        component.adjust('end', 1);
+        expect(component.endMinute).toBe(80);
       });
 
-      it('tocar Guardar cambios envía el PUT con el rango nuevo', () => {
-        render([existingZone]);
-        component.applyResize(existingZone, 10, 31);
+      it('"Hasta" puede pasar del 40 al 41: el tope ya no es el del tiempo', () => {
+        render();
+        component.endMinute = 40;
+
+        component.adjust('end', 1);
+
+        expect(component.endMinute).toBe(41);
+      });
+
+      it('deduce el 2T desde el minuto 40 y envía ese tiempo', () => {
+        render();
+        selectCell(2, 3);
+        component.startMinute = 40;
+        component.endMinute = 45;
         fixture.detectChanges();
+
+        expect(component.period).toBe(2);
+        expect(query('[data-testid="linked-preview"]')?.textContent).toContain('2T');
 
         saveButton().click();
-
-        const put = http.expectOne(r => r.url.endsWith('/matches/match-1/zones/zone-1'));
-        expect(put.request.method).toBe('PUT');
-        expect(put.request.body).toEqual({ row: 2, col: 3, period: 1, startMinute: 10, endMinute: 31 });
-        put.flush(existingZone);
-        http.expectOne(zonesUrl).flush(emptyResponse);
-        http.expectOne(eventsUrl).flush([]);
+        const post = http.expectOne(zonesUrl);
+        expect(post.request.body).toEqual({ row: 2, col: 3, period: 2, startMinute: 40, endMinute: 45 });
+        post.flush({ ...existingZone, period: 2, startMinute: 40, endMinute: 45 });
+        flushReload();
       });
-    });
 
-    describe('Ir al próximo hueco', () => {
-      const nextGapButton = (): HTMLButtonElement | null => query<HTMLButtonElement>('[data-testid="next-gap"]');
-
-      it('precarga el formulario con el siguiente hueco sin zona y lo publica como vista previa', () => {
-        render([{ ...existingZone, startMinute: 0, endMinute: 10 }, { ...existingZone, id: 'zone-2', startMinute: 20, endMinute: 30 }]);
-        expect([component.startMinute, component.endMinute]).toEqual([10, 15]);
-
-        nextGapButton()?.click();
+      it('F2-S2. un rango que cruza el entretiempo bloquea guardar y sugiere partirlo', () => {
+        render();
+        selectCell(2, 3);
+        component.startMinute = 35;
+        component.endMinute = 45;
+        component.onRangeChange();
         fixture.detectChanges();
 
-        expect([component.period, component.startMinute, component.endMinute]).toEqual([1, 30, 40]);
-        expect(store.formRange()).toEqual({ period: 1, startMinute: 30, endMinute: 40 });
+        expect(saveButton().disabled).toBeTrue();
+        expect(rangeError()).toContain('entretiempo');
+        expect(rangeError()).toContain('Partilo');
+        expect(component.period).toBeNull();
+        expect(store.formRange()).toBeNull();
       });
 
-      it('cuando no quedan huecos muestra "Partido completo" con un check en vez del botón', () => {
-        render([
-          { ...existingZone, id: 'p1', period: 1, startMinute: 0, endMinute: 40 },
-          { ...existingZone, id: 'p2', period: 2, startMinute: 40, endMinute: 80 }
-        ]);
-
-        expect(nextGapButton()).toBeNull();
-        expect(query('[data-testid="match-complete"]')?.textContent).toContain('Partido completo');
-      });
-    });
-
-    describe('pickMinute (marcas de eventos)', () => {
-      it('con "Desde" ya precargado, un minuto posterior completa "Hasta"', () => {
+      it('un rango que termina justo en el 40 no cruza el entretiempo', () => {
         render();
-        component.startMinute = 10;
-        component.endMinute = 15;
+        selectCell(2, 3);
+        component.startMinute = 35;
+        component.endMinute = 40;
+        fixture.detectChanges();
 
-        component.pickMinute(1, 30);
-
-        expect([component.startMinute, component.endMinute]).toEqual([10, 30]);
+        expect(saveButton().disabled).toBeFalse();
+        expect(query('[data-testid="range-error"]')).toBeNull();
       });
 
-      it('un minuto anterior a "Desde" lo reemplaza y descarta un "Hasta" que quedaría invertido', () => {
+      it('F2-S3. un rango que choca con otro tramo bloquea guardar, nombra el tramo y lo marca como conflicto', () => {
+        render([existingZone]);
+        selectCell(1, 1);
+        component.startMinute = 20;
+        component.endMinute = 30;
+        component.onRangeChange();
+        fixture.detectChanges();
+
+        expect(saveButton().disabled).toBeTrue();
+        expect(rangeError()).toContain("1T 10'–25'");
+        expect(store.conflictId()).toBe('zone-1');
+
+        component.startMinute = 25;
+        component.onRangeChange();
+        expect(store.conflictId()).toBeNull();
+      });
+
+      it('un rango con inicio mayor que el fin bloquea guardar con su motivo', () => {
         render();
-        component.startMinute = 10;
-        component.endMinute = 15;
+        selectCell(1, 1);
+        component.startMinute = 20;
+        component.endMinute = 10;
+        fixture.detectChanges();
 
-        component.pickMinute(1, 5);
-        expect([component.startMinute, component.endMinute]).toEqual([5, 15]);
-
-        component.pickMinute(1, 20);
-        component.pickMinute(1, 2);
-        expect([component.startMinute, component.endMinute]).toEqual([2, 20]);
-      });
-
-      it('sin "Desde" lo completa primero', () => {
-        render([{ ...existingZone, startMinute: 0, endMinute: 40 }]);
-
-        component.pickMinute(1, 12);
-
-        expect([component.startMinute, component.endMinute]).toEqual([12, null]);
-      });
-
-      it('una marca de otro tiempo cambia de tiempo y arranca el rango en ese minuto', () => {
-        render();
-
-        component.pickMinute(2, 55);
-
-        expect([component.period, component.startMinute, component.endMinute]).toEqual([2, 55, null]);
-      });
-
-      it('en modo lectura no modifica el formulario', () => {
-        render();
-        component.readOnly = true;
-        const before = [component.period, component.startMinute, component.endMinute];
-
-        component.pickMinute(2, 55);
-
-        expect([component.period, component.startMinute, component.endMinute]).toEqual(before);
+        expect(saveButton().disabled).toBeTrue();
+        expect(rangeError()).toContain('menor');
       });
     });
 
-    it('el motivo que bloquea guardar va debajo del botón, como texto de ayuda', () => {
-      render();
+    describe('cancelar', () => {
+      it('descarta la franja y vuelve a sugerir el próximo hueco', () => {
+        render([{ ...existingZone, startMinute: 0, endMinute: 10 }]);
+        selectCell(2, 3);
+        component.startMinute = 30;
+        component.endMinute = 35;
 
-      const position = saveButton().compareDocumentPosition(query('[data-testid="save-hint"]') as Element);
+        query<HTMLButtonElement>('[data-testid="zone-cancel"]')?.click();
+        fixture.detectChanges();
 
-      expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    });
+        expect(component.selectedCell()).toBeNull();
+        expect([component.startMinute, component.endMinute]).toEqual([10, 15]);
+      });
 
-    it('al elegir la zona y con un rango válido se habilita guardar y desaparece el motivo', () => {
-      render();
-      selectCell(2, 3);
+      it('al editar sale de la edición sin guardar nada', () => {
+        render([existingZone]);
+        component.startEdit(existingZone);
+        fixture.detectChanges();
 
-      expect(saveButton().disabled).toBeFalse();
-      expect(query('[data-testid="save-hint"]')).toBeNull();
-      expect(query('[data-testid="selected-cell"]')?.textContent).toContain('C3');
-    });
+        query<HTMLButtonElement>('[data-testid="zone-cancel"]')?.click();
+        fixture.detectChanges();
 
-    it('cambiar de tiempo recalcula el rango sugerido', () => {
-      render();
-      queryAll('.segment')[1].click();
-      fixture.detectChanges();
-
-      expect(component.period).toBe(2);
-      expect([component.startMinute, component.endMinute]).toEqual([40, 45]);
-    });
-
-    it('los botones − y + ajustan el minuto sin salirse del tiempo', () => {
-      render();
-      component.startMinute = 0;
-
-      component.adjust('start', -1);
-      expect(component.startMinute).toBe(0);
-
-      component.adjust('start', 1);
-      expect(component.startMinute).toBe(1);
-
-      component.endMinute = 40;
-      component.adjust('end', 1);
-      expect(component.endMinute).toBe(40);
-    });
-
-    it('un rango que choca con otro tramo deshabilita guardar y nombra el tramo en conflicto', () => {
-      render([existingZone]);
-      selectCell(1, 1);
-      component.startMinute = 20;
-      component.endMinute = 30;
-      fixture.detectChanges();
-
-      expect(saveButton().disabled).toBeTrue();
-      expect(hint()).toContain("1T 10'–25'");
-    });
-
-    it('un rango con inicio mayor que el fin deshabilita guardar con su motivo', () => {
-      render();
-      selectCell(1, 1);
-      component.startMinute = 20;
-      component.endMinute = 10;
-      fixture.detectChanges();
-
-      expect(saveButton().disabled).toBeTrue();
-      expect(hint()).toContain('menor');
+        expect(component.editingId).toBeNull();
+        expect(store.editingId()).toBeNull();
+        expect(query('[data-testid="panel-title"]')?.textContent).toContain('Nuevo tramo');
+        http.expectNone(r => r.method !== 'GET');
+      });
     });
   });
 
   describe('vista previa de eventos', () => {
     const events = [ev('1', 1, 12), ev('2', 1, 20), ev('3', 1, 30), ev('4', 2, 50)];
 
-    it('informa cuántos eventos se vincularán con el rango del formulario', () => {
+    it('informa el tiempo y cuántos eventos se vincularán con el rango del formulario', () => {
       render([], events);
       component.startMinute = 10;
       component.endMinute = 25;
       fixture.detectChanges();
 
-      expect(query('[data-testid="linked-preview"]')?.textContent).toContain('Se vincularán 2 eventos');
+      expect(query('[data-testid="linked-preview"]')?.textContent?.replace(/\s+/g, ' ')).toContain('1T · se vincularán 2 eventos');
     });
 
     it('usa singular con un solo evento y avisa con cero', () => {
@@ -385,21 +398,26 @@ describe('ZoneAssignmentPanelComponent', () => {
       render([existingZone], events);
       component.startEdit(existingZone);
 
-      component.prefill({ period: 2, startMinute: 40, endMinute: 55 });
+      component.prefill({ startMinute: 40, endMinute: 55 });
 
       expect([component.period, component.startMinute, component.endMinute, component.editingId]).toEqual([2, 40, 55, null]);
     });
   });
 
   describe('modo lectura', () => {
-    it('oculta el formulario y las acciones de la lista', () => {
+    it('no ofrece formulario', () => {
       fixture.componentRef.setInput('readOnly', true);
       render([existingZone]);
 
       expect(query('[data-testid="zone-save"]')).toBeNull();
-      expect(query('button[aria-label="Eliminar tramo"]')).toBeNull();
-      expect((query('[data-testid="zone-edit"]') as HTMLButtonElement).disabled).toBeTrue();
-      expect(queryAll('[data-testid="zone-item"]').length).toBe(1);
+      expect(query('[data-testid="zone-delete"]')).toBeNull();
+    });
+
+    it('no publica un rango de vista previa', () => {
+      fixture.componentRef.setInput('readOnly', true);
+      render([existingZone]);
+
+      expect(store.formRange()).toBeNull();
     });
   });
 
@@ -420,7 +438,7 @@ describe('ZoneAssignmentPanelComponent', () => {
       fixture.detectChanges();
 
       expect(success).toHaveBeenCalledWith('Tramo guardado');
-      expect(queryAll('[data-testid="zone-item"]').length).toBe(1);
+      expect(store.assignments().length).toBe(1);
     });
 
     it('al guardar con éxito la cancha pulsa la celda guardada', () => {
@@ -433,7 +451,7 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect(store.pulseCell()).toEqual({ row: 2, col: 3 });
     });
 
-    it('tras guardar, la zona queda sin elegir y "Desde" continúa donde terminó el tramo', () => {
+    it('tras guardar, la franja queda sin elegir y "Desde" continúa donde terminó el tramo', () => {
       render();
       selectCell(2, 3);
       saveButton().click();
@@ -444,7 +462,23 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect([component.startMinute, component.endMinute]).toEqual([5, 10]);
     });
 
-    it('ante un 409 muestra el error inline, conserva el formulario y además avisa con un toast', () => {
+    it('F2-S6. mientras guarda el botón queda deshabilitado y un segundo clic no repite la petición', () => {
+      render();
+      selectCell(2, 3);
+
+      saveButton().click();
+      fixture.detectChanges();
+      expect(saveButton().disabled).toBeTrue();
+      expect(saveButton().textContent).toContain('Guardando');
+      saveButton().click();
+      component.save();
+
+      const post = http.expectOne(zonesUrl);
+      post.flush({ ...existingZone, startMinute: 0, endMinute: 5 });
+      flushReload([{ ...existingZone, startMinute: 0, endMinute: 5 }]);
+    });
+
+    it('F2-S5. ante un 409 muestra el error inline, conserva el formulario y además avisa con un toast', () => {
       render();
       selectCell(2, 3);
       const error = spyOn(toast, 'error');
@@ -456,27 +490,8 @@ describe('ZoneAssignmentPanelComponent', () => {
 
       expect(query('[data-testid="server-error"]')?.textContent).toContain('se solapa con el tramo 1T');
       expect(component.selectedCell()).toEqual({ row: 2, col: 3 });
+      expect([component.startMinute, component.endMinute]).toEqual([0, 5]);
       expect(error).toHaveBeenCalledOnceWith(message);
-    });
-
-    it('resalta en la lista el tramo que choca con el rango y lo libera al corregirlo', () => {
-      render([existingZone]);
-      selectCell(2, 3);
-      component.startMinute = 20;
-      component.endMinute = 30;
-
-      component.onRangeChange();
-      fixture.detectChanges();
-
-      expect(store.conflictId()).toBe('zone-1');
-      expect(query('[data-testid="zone-item"]')?.classList).toContain('is-conflict');
-
-      component.startMinute = 25;
-      component.onRangeChange();
-      fixture.detectChanges();
-
-      expect(store.conflictId()).toBeNull();
-      expect(query('[data-testid="zone-item"]')?.classList).not.toContain('is-conflict');
     });
 
     it('el error del servidor se limpia al modificar el rango', () => {
@@ -493,64 +508,92 @@ describe('ZoneAssignmentPanelComponent', () => {
     });
   });
 
-  describe('lista de tramos', () => {
-    it('muestra el estado vacío y el contador', () => {
-      render();
-
-      expect(query('[data-testid="zones-list-empty"]')).not.toBeNull();
-      expect(query('.count-pill')?.textContent).toContain('0 tramos');
-    });
-
-    it('lista cada tramo con su etiqueta de zona y su rango', () => {
+  describe('edición de un tramo', () => {
+    it('cargar un tramo muestra "Editar tramo", su franja y su rango, y publica el tramo en edición', () => {
       render([existingZone]);
 
-      const item = query('[data-testid="zone-item"]');
-      expect(item?.textContent).toContain('C3');
-      expect(item?.textContent).toContain('1T');
-      expect(query('.count-pill')?.textContent).toContain('1 tramo');
-    });
-
-    it('con un clic en el tramo lo carga para editar y envía un PUT', () => {
-      render([existingZone]);
-
-      query('[data-testid="zone-edit"]')?.click();
+      component.startEdit(existingZone);
       fixture.detectChanges();
+
+      expect(query('[data-testid="panel-title"]')?.textContent).toContain('Editar tramo');
       expect(component.selectedCell()).toEqual({ row: 2, col: 3 });
       expect([component.startMinute, component.endMinute]).toEqual([10, 25]);
+      expect(store.editingId()).toBe('zone-1');
+      expect(saveButton().textContent).toContain('Guardar cambios');
+    });
+
+    it('Guardar cambios envía un PUT con el rango nuevo', () => {
+      render([existingZone]);
+      component.startEdit(existingZone);
+      component.endMinute = 31;
+      component.onRangeChange();
+      fixture.detectChanges();
 
       saveButton().click();
 
       const put = http.expectOne(r => r.url.endsWith('/matches/match-1/zones/zone-1'));
       expect(put.request.method).toBe('PUT');
-      expect(put.request.body).toEqual({ row: 2, col: 3, period: 1, startMinute: 10, endMinute: 25 });
+      expect(put.request.body).toEqual({ row: 2, col: 3, period: 1, startMinute: 10, endMinute: 31 });
       put.flush(existingZone);
       http.expectOne(zonesUrl).flush(emptyResponse);
+      http.expectOne(eventsUrl).flush([]);
+    });
+
+    it('cambiar el lateral de un tramo en edición lo guarda en el PUT', () => {
+      render([existingZone]);
+      component.startEdit(existingZone);
+      component.setLateral(3);
+      fixture.detectChanges();
+
+      saveButton().click();
+
+      const put = http.expectOne(r => r.url.endsWith('/matches/match-1/zones/zone-1'));
+      expect(put.request.body).toEqual({ row: 3, col: 3, period: 1, startMinute: 10, endMinute: 25 });
+      put.flush(existingZone);
+      http.expectOne(zonesUrl).flush(emptyResponse);
+      http.expectOne(eventsUrl).flush([]);
     });
 
     describe('eliminar con "Deshacer"', () => {
       const deleteUrl = (r: { url: string }) => r.url.endsWith('/matches/match-1/zones/zone-1');
+      const deleteButton = (): HTMLButtonElement | null => query<HTMLButtonElement>('[data-testid="zone-delete"]');
 
       function deleteExistingZone(): void {
-        query<HTMLButtonElement>('[data-testid="zone-delete"]')?.click();
+        component.startEdit(existingZone);
+        fixture.detectChanges();
+        deleteButton()?.click();
         http.expectOne(deleteUrl).flush(null, { status: 204, statusText: 'No Content' });
         flushReload();
         fixture.detectChanges();
       }
 
-      it('quita el tramo de inmediato, sin confirmar, y avisa cuántos eventos quedan sin zona', () => {
+      it('"Eliminar" solo aparece al editar un tramo', () => {
+        render([existingZone]);
+        expect(deleteButton()).toBeNull();
+
+        component.startEdit(existingZone);
+        fixture.detectChanges();
+
+        expect(deleteButton()).not.toBeNull();
+      });
+
+      it('F2-H3. quita el tramo de inmediato, sin confirmar, y avisa cuántos eventos quedan sin zona', () => {
         render([existingZone], [ev('1', 1, 12), ev('2', 1, 20), ev('3', 1, 30)]);
+        component.startEdit(existingZone);
+        fixture.detectChanges();
         const success = spyOn(toast, 'success');
 
-        query<HTMLButtonElement>('[data-testid="zone-delete"]')?.click();
+        deleteButton()?.click();
         const del = http.expectOne(deleteUrl);
         expect(del.request.method).toBe('DELETE');
         del.flush(null, { status: 204, statusText: 'No Content' });
         flushReload();
 
-        expect(query('[data-testid="zone-delete-confirm"]')).toBeNull();
         expect(success).toHaveBeenCalledOnceWith(
           '2 eventos pasan a "Sin zona".', 'Tramo eliminado', 6000,
           jasmine.objectContaining({ label: 'Deshacer' }));
+        expect(component.editingId).toBeNull();
+        expect(component.selectedCell()).toBeNull();
       });
 
       it('"Deshacer" vuelve a crear el tramo con un POST con los mismos datos', () => {
@@ -558,8 +601,7 @@ describe('ZoneAssignmentPanelComponent', () => {
         const success = spyOn(toast, 'success');
         deleteExistingZone();
 
-        const action = success.calls.mostRecent().args[3];
-        action?.handler();
+        success.calls.mostRecent().args[3]?.handler();
 
         const post = http.expectOne(zonesUrl);
         expect(post.request.method).toBe('POST');
@@ -567,7 +609,7 @@ describe('ZoneAssignmentPanelComponent', () => {
         post.flush({ ...existingZone, id: 'zone-2' });
         flushReload([{ ...existingZone, id: 'zone-2' }]);
 
-        expect(success).toHaveBeenCalledWith('El tramo volvió a la lista.', 'Tramo restaurado');
+        expect(success).toHaveBeenCalledWith('El tramo volvió al partido.', 'Tramo restaurado');
       });
 
       it('si "Deshacer" falla porque el rango ya fue ocupado, avisa el motivo y no duplica el tramo', () => {
@@ -583,17 +625,22 @@ describe('ZoneAssignmentPanelComponent', () => {
         expect(error).toHaveBeenCalledOnceWith('El tramo se solapa con el tramo 1T 12′–20′ ya asignado', 'No se pudo deshacer');
         expect(store.assignments().length).toBe(0);
       });
-    });
 
-    it('si falla el borrado muestra el error en la lista', () => {
-      render([existingZone]);
+      it('F2-S5. si falla el borrado avisa con un toast y el formulario conserva lo cargado', () => {
+        render([existingZone]);
+        component.startEdit(existingZone);
+        fixture.detectChanges();
+        const error = spyOn(toast, 'error');
 
-      query<HTMLButtonElement>('[data-testid="zone-delete"]')?.click();
-      http.expectOne(r => r.url.endsWith('/matches/match-1/zones/zone-1'))
-        .flush({ message: 'Las zonas solo se pueden editar en partidos finalizados' }, { status: 409, statusText: 'Conflict' });
-      fixture.detectChanges();
+        deleteButton()?.click();
+        http.expectOne(deleteUrl)
+          .flush({ message: 'Las zonas solo se pueden editar en partidos finalizados' }, { status: 409, statusText: 'Conflict' });
+        fixture.detectChanges();
 
-      expect(query('[data-testid="list-error"]')?.textContent).toContain('partidos finalizados');
+        expect(error).toHaveBeenCalledOnceWith('Las zonas solo se pueden editar en partidos finalizados');
+        expect(component.editingId).toBe('zone-1');
+        expect(store.assignments().length).toBe(1);
+      });
     });
   });
 });

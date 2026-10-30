@@ -2,7 +2,7 @@ import { ZoneAssignmentResponse } from '../../types/zone.types';
 import { ZoneEvent } from './zone-stats';
 import {
   allGaps, blockLabel, blockLayout, countByFranja, gapAtMinute, gapsWithEventCount, isOutsidePeriodFilter, isShortBlock,
-  minuteAtOffset, minuteToPercent, territoryRows
+  minuteAtOffset, minuteToPercent, suggestNextRange, territoryRows
 } from './zone-track-layout';
 
 describe('zone-track-layout', () => {
@@ -122,6 +122,28 @@ describe('zone-track-layout', () => {
       const events = [ev('x', 1, 5, null), ev('y', 1, 30, null), ev('z', 1, 43, null), ev('w', 2, 70, null), ev('v', 1, 12, { row: 2, col: 3 })];
 
       expect(gapsWithEventCount(assignments, events).map(g => g.eventCount)).toEqual([1, 2, 1]);
+    });
+  });
+
+  describe('suggestNextRange', () => {
+    const assignments = [zone('a', 1, 0, 5), zone('b', 1, 10, 25)];
+
+    it('propone 5 minutos desde el primer hueco', () => {
+      expect(suggestNextRange(assignments)).toEqual({ start: 5, end: 10 });
+      expect(suggestNextRange([])).toEqual({ start: 0, end: 5 });
+    });
+
+    it('continúa en el hueco que arranca donde terminó el tramo anterior', () => {
+      expect(suggestNextRange(assignments, 25)).toEqual({ start: 25, end: 30 });
+    });
+
+    it('si no hay hueco después, vuelve al primero; un hueco corto limita la duración', () => {
+      expect(suggestNextRange([zone('a', 1, 0, 3), zone('b', 1, 8, 40), zone('c', 2, 40, 80)], 60)).toEqual({ start: 3, end: 8 });
+    });
+
+    it('pasa al 2T cuando el 1T está completo y devuelve null con el partido completo', () => {
+      expect(suggestNextRange([zone('a', 1, 0, 40)])).toEqual({ start: 40, end: 45 });
+      expect(suggestNextRange([zone('a', 1, 0, 40), zone('b', 2, 40, 80)])).toBeNull();
     });
   });
 

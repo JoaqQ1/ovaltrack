@@ -4,19 +4,30 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { MatchZonesStore } from '../../store/match-zones.store';
-import { validateZoneForm } from '../../utils/zone-form.utils';
-import { ZONE_COLUMN_NAMES, ZONE_ROW_NAMES, describeZone, zoneLabel } from '../../utils/zone-grid';
-import { describeSegment, eventsInRange, eventsReleasedByEdit, findOverlap, nextGap, periodRange, suggestRange } from '../../utils/zone-stats';
-import { ZoneAssignmentRequest, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
+import { HALFTIME_SPLIT_MESSAGE, deduceZonePeriod, rangeCrossesHalftime, validateZoneForm } from '../../utils/zone-form.utils';
+import { ZONE_COLUMN_NAMES, ZONE_ROW_NAMES, columnRangeLabel, zoneLabel } from '../../utils/zone-grid';
+import { describeSegment, eventsInRange, eventsReleasedByEdit, findOverlap } from '../../utils/zone-stats';
+import { TRACK_MINUTES, suggestNextRange } from '../../utils/zone-track-layout';
+import { ZONE_HALF_MINUTES, ZoneAssignmentRequest, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 
 type RangeField = 'start' | 'end';
+
+interface UsableRange {
+  period: ZonePeriod;
+  startMinute: number;
+  endMinute: number;
+}
+
+/** Ayuda que acompaña al botón deshabilitado mientras falta elegir la franja. */
+export const PICK_FRANJA_HELP = 'Elegí la franja en la grilla o en la cancha.';
 
 /** Cuánto tiempo queda disponible el "Deshacer" tras borrar un tramo. */
 const UNDO_WINDOW_MS = 6000;
 
 /**
- * Formulario de tramos (rango de tiempo + zona) y su lista. La zona se elige tocando la cancha.
- * Vocabulario: "tramo" = rango de tiempo con una zona; "zona" = celda de la cancha.
+ * Formulario de tramos (rango de tiempo + zona). La franja se elige tocando la grilla o la cancha; el lateral y los
+ * minutos, acá. El tiempo (1T/2T) no se elige: se deduce de los minutos acumulados (1T 0–40, 2T 40–80).
+ * Vocabulario: "tramo" = rango de tiempo con una zona; "zona" = celda de la cancha; "franja" = columna de la cancha.
  */
 @Component({
   selector: 'app-zone-assignment-panel',
@@ -31,27 +42,22 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   @Input() matchId = '';
-  /** En el modo "Ver eventos" el panel solo muestra los tramos: sin formulario ni acciones. */
+  /** En el modo "Ver eventos" el panel no ofrece formulario. */
   @Input() readOnly = false;
 
-  /** Zona elegida en la cancha (enlace bidireccional con la página). */
+  /** Zona elegida en la grilla o la cancha (enlace bidireccional con la página). */
   readonly selectedCell = model<ZoneCellRef | null>(null);
 
-  readonly periods: { value: ZonePeriod; label: string; range: string }[] = [
-    { value: 1, label: '1T', range: `${periodRange(1).start}–${periodRange(1).end}′` },
-    { value: 2, label: '2T', range: `${periodRange(2).start}–${periodRange(2).end}′` }
-  ];
+  readonly laterals = ZONE_ROW_NAMES.map((name, index) => ({ row: index + 1, name }));
 
-  // Estado del formulario: sin rango por defecto, nada se guarda sin que el usuario lo decida.
-  period: ZonePeriod = 1;
+  // Estado del formulario: nada se guarda sin que el usuario lo decida.
   startMinute: number | null = null;
   endMinute: number | null = null;
   editingId: string | null = null;
   helpOpen = false;
-  /** En móvil el formulario es una hoja inferior: compacta (zona, rango y Guardar) o expandida con todos los pasos. */
+  /** En móvil el formulario es una hoja inferior: compacta (zona, rango y Guardar) o expandida con todos los campos. */
   sheetOpen = false;
   serverError: string | null = null;
-  listError: string | null = null;
 
   ngOnInit(): void {
     this.applySuggestion();
@@ -63,60 +69,17 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     });
   }
 
-  /** Precarga el formulario con un rango (ej. al tocar un hueco de la línea de tiempo). */
-  prefill(range: { period: ZonePeriod; startMinute: number; endMinute: number }): void {
+  /** Precarga el formulario con un rango (ej. al tocar un hueco de la grilla). */
+  prefill(range: { startMinute: number; endMinute: number }): void {
     this.editingId = null;
     this.serverError = null;
-    this.period = range.period;
     this.startMinute = range.startMinute;
     this.endMinute = range.endMinute;
     this.syncSharedState();
   }
 
-  /** Carga el tramo para editar con el borde ya movido; no guarda: el usuario revisa y toca "Guardar cambios". */
-  applyResize(assignment: ZoneAssignmentResponse, startMinute: number, endMinute: number): void {
-    this.startEdit(assignment);
-    this.startMinute = startMinute;
-    this.endMinute = endMinute;
-    this.syncSharedState();
-  }
-
-  /**
-   * Completa el rango desde una marca de evento: si cambia de tiempo o el minuto no supera a "Desde", lo fija como
-   * "Desde"; en otro caso lo toma como "Hasta". Así "Desde" ya precargado no impide elegir un nuevo inicio.
-   */
-  pickMinute(period: ZonePeriod, minute: number): void {
-    if (this.readOnly) return;
-
-    if (period !== this.period) {
-      this.period = period;
-      this.startMinute = minute;
-      this.endMinute = null;
-    } else if (this.startMinute === null || minute <= this.startMinute) {
-      this.startMinute = minute;
-      if (this.endMinute !== null && this.endMinute <= minute) this.endMinute = null;
-    } else {
-      this.endMinute = minute;
-    }
-    this.serverError = null;
-    this.syncSharedState();
-  }
-
-  setPeriod(period: ZonePeriod): void {
-    this.period = period;
-    this.serverError = null;
-    this.applySuggestion();
-  }
-
   toggleSheet(): void {
     this.sheetOpen = !this.sheetOpen;
-  }
-
-  /** Resumen del rango para la hoja compacta, ej. "1T · 26′ a 31′ · 3 eventos". */
-  get rangeSummary(): string {
-    if (!this.rangeIsUsable()) return 'Definí el rango';
-    const events = this.linkedEventCount ?? 0;
-    return `${this.period}T · ${this.startMinute}′ a ${this.endMinute}′ · ${events} ${events === 1 ? 'evento' : 'eventos'}`;
   }
 
   toggleHelp(): void {
@@ -128,12 +91,11 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.syncSharedState();
   }
 
-  /** Botones − y + junto a cada minuto. */
+  /** Botones − y + junto a cada minuto: minutos acumulados de 0 a 80. */
   adjust(field: RangeField, delta: number): void {
-    const bounds = periodRange(this.period);
     const current = field === 'start' ? this.startMinute : this.endMinute;
-    const base = current ?? (field === 'start' ? bounds.start : (this.startMinute ?? bounds.start));
-    const next = Math.min(Math.max(base + delta, bounds.start), bounds.end);
+    const base = current ?? (field === 'start' ? 0 : (this.startMinute ?? 0));
+    const next = Math.min(Math.max(base + delta, 0), TRACK_MINUTES);
 
     if (field === 'start') this.startMinute = next;
     else this.endMinute = next;
@@ -141,71 +103,104 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.syncSharedState();
   }
 
-  /** Motivo por el que no se puede guardar todavía (null = listo). Se muestra junto al botón. */
-  get blockReason(): string | null {
+  /** Cambia el lateral de la zona elegida; sin franja elegida no hay nada que cambiar. */
+  setLateral(row: number): void {
+    this.selectedCell.update(cell => cell ? { row, col: cell.col } : cell);
+  }
+
+  /** Franja elegida, para mostrarla en el formulario (null si todavía no se eligió). */
+  get franja(): { label: string; name: string; range: string } | null {
     const cell = this.selectedCell();
-    if (!cell) return 'Falta elegir la zona: tocala en la cancha.';
+    return cell ? { label: zoneLabel(cell), name: ZONE_COLUMN_NAMES[cell.col - 1], range: columnRangeLabel(cell.col) || 'in-goal' } : null;
+  }
+
+  /** Subtítulo del formulario, ej. "Centro · Campo rival". */
+  get subtitle(): string {
+    const cell = this.selectedCell();
+    return cell ? `${ZONE_ROW_NAMES[cell.row - 1]} · ${ZONE_COLUMN_NAMES[cell.col - 1]}` : 'Elegí la franja en la grilla o en la cancha';
+  }
+
+  /** El tiempo (1T/2T) que se deduce del rango; null mientras el rango no sea utilizable. */
+  get period(): ZonePeriod | null {
+    return this.usableRange()?.period ?? null;
+  }
+
+  /** Ayuda mientras falta la franja (null cuando ya hay una). */
+  get pickHelp(): string | null {
+    return this.selectedCell() ? null : PICK_FRANJA_HELP;
+  }
+
+  /**
+   * Problema del rango, para mostrarlo junto a los minutos: cruce del entretiempo, minutos inválidos o choque con
+   * otro tramo. Null si el rango es válido. Las reglas replican las del backend, que sigue siendo la fuente de verdad.
+   */
+  get rangeProblem(): string | null {
+    const { startMinute, endMinute } = this;
+    if (startMinute !== null && endMinute !== null && Number.isInteger(startMinute) && Number.isInteger(endMinute)
+        && startMinute < endMinute && rangeCrossesHalftime(startMinute, endMinute)) {
+      return HALFTIME_SPLIT_MESSAGE;
+    }
 
     const formError = validateZoneForm({
-      period: this.period,
-      startMinute: this.startMinute,
-      endMinute: this.endMinute,
-      row: cell.row,
-      col: cell.col
+      period: (startMinute ?? 0) >= ZONE_HALF_MINUTES ? 2 : 1,
+      startMinute,
+      endMinute,
+      row: 1,
+      col: 1
     });
     if (formError) return formError;
 
-    const clash = findOverlap(this.currentRange(), this.store.assignments(), this.editingId);
+    const range = this.usableRange();
+    const clash = range ? findOverlap(range, this.store.assignments(), this.editingId) : null;
     return clash ? `Choca con el tramo ${describeSegment(clash)}.` : null;
   }
 
-  /** Con el partido completo no queda ningún hueco para ir a buscar. */
-  get matchComplete(): boolean {
-    return nextGap(this.store.assignments(), null) === null;
-  }
-
-  /** Precarga el formulario con el próximo hueco sin zona (todo su rango); la timeline lo muestra como vista previa. */
-  goToNextGap(): void {
-    const gap = nextGap(this.store.assignments(), this.startMinute);
-    if (gap) this.prefill({ period: gap.period, startMinute: gap.start, endMinute: gap.end });
+  /** Motivo por el que no se puede guardar todavía (null = listo). */
+  get blockReason(): string | null {
+    return this.pickHelp ?? this.rangeProblem;
   }
 
   /** Eventos que quedarían vinculados con el rango actual; null mientras el rango no sea válido. */
   get linkedEventCount(): number | null {
-    return this.rangeIsUsable() ? eventsInRange(this.currentRange(), this.store.events()).length : null;
+    const range = this.usableRange();
+    return range ? eventsInRange(range, this.store.events()).length : null;
   }
 
   /** Al editar: eventos que hoy tienen zona gracias a este tramo y la perderían con el nuevo rango. */
   get releasedEventCount(): number {
     const original = this.editingId ? this.store.assignments().find(a => a.id === this.editingId) : undefined;
-    if (!original || !this.rangeIsUsable()) return 0;
-    return eventsReleasedByEdit(original, this.currentRange(), this.store.events()).length;
+    const range = this.usableRange();
+    return original && range ? eventsReleasedByEdit(original, range, this.store.events()).length : 0;
   }
 
-  /** Eventos de un tramo: son los que pasan a "Sin zona" si se elimina. */
-  eventsOf(zone: ZoneAssignmentResponse): number {
-    return eventsInRange(zone, this.store.events()).length;
+  /** Resumen del rango para la hoja compacta, ej. "1T · 26′ a 31′ · 3 eventos". */
+  get rangeSummary(): string {
+    const range = this.usableRange();
+    if (!range) return 'Definí el rango';
+    const events = this.linkedEventCount ?? 0;
+    return `${range.period}T · ${range.startMinute}′ a ${range.endMinute}′ · ${events} ${events === 1 ? 'evento' : 'eventos'}`;
   }
 
   startEdit(zone: ZoneAssignmentResponse): void {
     this.serverError = null;
     this.editingId = zone.id;
-    this.period = zone.period;
     this.startMinute = zone.startMinute;
     this.endMinute = zone.endMinute;
     this.selectedCell.set({ row: zone.row, col: zone.col });
     this.syncSharedState();
   }
 
-  cancelEdit(): void {
+  /** Descarta lo cargado: vuelve a la sugerencia del próximo hueco y deja la franja sin elegir. */
+  cancel(): void {
     this.resetForm();
   }
 
   save(): void {
     const cell = this.selectedCell();
-    if (!cell || this.blockReason) return;
+    const range = this.usableRange();
+    if (!cell || !range || this.blockReason || this.store.isSaving()) return;
 
-    const request = { row: cell.row, col: cell.col, ...this.currentRange() };
+    const request: ZoneAssignmentRequest = { row: cell.row, col: cell.col, ...range };
     const wasEditing = this.editingId !== null;
 
     this.store.save(this.matchId, request, this.editingId ?? undefined)
@@ -225,10 +220,12 @@ export class ZoneAssignmentPanelComponent implements OnInit {
       });
   }
 
-  /** Quita el tramo de inmediato; "Deshacer" lo vuelve a crear con un POST con los mismos datos. */
-  deleteZone(zone: ZoneAssignmentResponse): void {
-    this.listError = null;
-    const released = this.eventsOf(zone);
+  /** Elimina el tramo en edición; "Deshacer" lo vuelve a crear con un POST con los mismos datos. */
+  deleteEditing(): void {
+    const zone = this.editingId ? this.store.assignments().find(a => a.id === this.editingId) : undefined;
+    if (!zone || this.store.isSaving()) return;
+
+    const released = eventsInRange(zone, this.store.events()).length;
     const restore: ZoneAssignmentRequest = {
       row: zone.row, col: zone.col, period: zone.period, startMinute: zone.startMinute, endMinute: zone.endMinute
     };
@@ -237,25 +234,25 @@ export class ZoneAssignmentPanelComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          if (this.editingId === zone.id) this.resetForm();
-          else this.syncSharedState();
+          this.resetForm();
           this.toastService.success(
             released > 0
               ? `${released} ${released === 1 ? 'evento pasa' : 'eventos pasan'} a "Sin zona".`
-              : 'Se quitó de la lista de tramos.',
+              : 'Se quitó el tramo del partido.',
             'Tramo eliminado',
             UNDO_WINDOW_MS,
             { label: 'Deshacer', handler: () => this.undoDelete(restore) }
           );
         },
-        error: err => this.listError = this.messageFrom(err, 'No se pudo eliminar el tramo')
+        // El formulario conserva lo cargado y la grilla no cambia.
+        error: err => this.toastService.error(this.messageFrom(err, 'No se pudo eliminar el tramo'))
       });
   }
 
   /** Corre desde el toast, que puede sobrevivir al panel: no se cancela si el usuario navega. */
   private undoDelete(restore: ZoneAssignmentRequest): void {
     this.store.save(this.matchId, restore).subscribe({
-      next: () => this.toastService.success('El tramo volvió a la lista.', 'Tramo restaurado'),
+      next: () => this.toastService.success('El tramo volvió al partido.', 'Tramo restaurado'),
       error: err => this.toastService.error(
         this.messageFrom(err, 'No se pudo restaurar el tramo.'),
         'No se pudo deshacer'
@@ -263,40 +260,17 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     });
   }
 
-  rowName(row: number): string {
-    return ZONE_ROW_NAMES[row - 1];
-  }
-
-  columnName(col: number): string {
-    return ZONE_COLUMN_NAMES[col - 1];
-  }
-
-  label(cell: ZoneCellRef): string {
-    return zoneLabel(cell);
-  }
-
-  describe(cell: ZoneCellRef): string {
-    return describeZone(cell);
-  }
-
-  segmentName(zone: ZoneAssignmentResponse): string {
-    return `${zone.period}T ${zone.startMinute}′–${zone.endMinute}′, ${zoneLabel(zone)}`;
-  }
-
-  private rangeIsUsable(): boolean {
+  /** El rango cargado si es utilizable: enteros, dentro de 0–80, sin cruzar el entretiempo; con su tiempo deducido. */
+  private usableRange(): UsableRange | null {
     const { startMinute, endMinute } = this;
-    if (startMinute === null || endMinute === null || !Number.isInteger(startMinute) || !Number.isInteger(endMinute)) return false;
-    const bounds = periodRange(this.period);
-    return startMinute < endMinute && startMinute >= bounds.start && endMinute <= bounds.end;
+    const period = deduceZonePeriod(startMinute, endMinute);
+    if (period === null || startMinute === null || endMinute === null) return null;
+    return startMinute >= 0 && endMinute <= TRACK_MINUTES ? { period, startMinute, endMinute } : null;
   }
 
-  private currentRange(): { period: ZonePeriod; startMinute: number; endMinute: number } {
-    return { period: this.period, startMinute: this.startMinute as number, endMinute: this.endMinute as number };
-  }
-
-  /** Propone los próximos 5 minutos libres del tiempo (o continúa desde `afterMinute`); null si está cubierto. */
+  /** Propone los próximos 5 minutos libres (o continúa desde `afterMinute`); sin rango si el partido está completo. */
   private applySuggestion(afterMinute?: number): void {
-    const range = suggestRange(this.store.assignments(), this.period, afterMinute);
+    const range = suggestNextRange(this.store.assignments(), afterMinute);
     this.startMinute = range?.start ?? null;
     this.endMinute = range?.end ?? null;
     this.syncSharedState();
@@ -307,15 +281,14 @@ export class ZoneAssignmentPanelComponent implements OnInit {
    * (null si no hay choque), el tramo en edición y el rango cargado, que la grilla dibuja como vista previa.
    */
   private syncSharedState(): void {
-    const usable = !this.readOnly && this.rangeIsUsable();
-    const range = usable ? this.currentRange() : null;
+    const range = this.readOnly ? null : this.usableRange();
     const clash = range ? findOverlap(range, this.store.assignments(), this.editingId) : null;
     this.store.conflictId.set(clash?.id ?? null);
     this.store.editingId.set(this.editingId);
     this.store.formRange.set(range);
   }
 
-  /** Tras guardar o cancelar: la zona queda sin elegir a propósito y el rango continúa donde terminó el anterior. */
+  /** Tras guardar, eliminar o cancelar: la franja queda sin elegir y el rango continúa donde terminó el anterior. */
   private resetForm(afterMinute?: number): void {
     this.sheetOpen = false;
     this.editingId = null;
