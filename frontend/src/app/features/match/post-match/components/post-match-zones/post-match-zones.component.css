@@ -80,6 +80,8 @@
   color: var(--text-primary, #111d0e);
 }
 
+.timeline-title { margin: 0 0 6px; font-size: .9rem; }
+
 /* ---------- Estados ---------- */
 .state-box {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;

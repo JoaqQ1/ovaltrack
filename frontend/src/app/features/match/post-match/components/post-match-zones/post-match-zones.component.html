@@ -67,13 +67,11 @@
             [selectedCell]="fieldSelectedCell()"
             [ownClubName]="ownClubName()"
             [mode]="mode()"
-            (cellSelected)="onCellSelected($event)" />
-        </div>
-
-        <div class="field-card">
-          <h2 class="section-title">Tramos del partido</h2>
-          <app-zone-timeline [assignments]="zonesStore.assignments()" [readOnly]="mode() === 'view'"
-                             (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)" />
+            (cellSelected)="onCellSelected($event)">
+            <h2 class="section-title timeline-title">Tramos del partido</h2>
+            <app-zone-timeline [assignments]="zonesStore.assignments()" [readOnly]="mode() === 'view'"
+                               (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)" />
+          </app-rugby-field>
         </div>
       </div>
 

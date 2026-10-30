@@ -1,5 +1,7 @@
 :host {
   display: block;
+  /* Contenedor de consulta: el alto de la cancha se limita también por el ancho disponible */
+  container-type: inline-size;
   /* Verdes del pasto derivados del verde de marca, sin introducir colores nuevos */
   --pitch-a: color-mix(in srgb, var(--btn-primary-bg, #204b22) 58%, #a8d5a2);
   --pitch-b: color-mix(in srgb, var(--btn-primary-bg, #204b22) 66%, #a8d5a2);
@@ -8,7 +10,18 @@
   --row-axis-w: 64px;
 }
 
-.rugby-field { margin: 0; }
+/*
+ * El alto manda y el ancho se deriva de la proporción 120:70. El alto es el menor entre el que deja el
+ * viewport (descontando navbar, HUD, toolbar y ejes) y el que entra a lo ancho sin deformar la cancha.
+ */
+.rugby-field {
+  --pitch-h: min(
+    clamp(320px, calc(100dvh - 380px), 640px),
+    calc((100cqw - var(--row-axis-w) - 8px) * 70 / 120)
+  );
+  --pitch-w: calc(var(--pitch-h) * 120 / 70);
+  margin: 0;
+}
 
 /* Cabecera: sentido de ataque y lectura */
 .field-head {
@@ -41,6 +54,9 @@
 .field-frame {
   display: flex;
   gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
 }
 
 .row-axis {
@@ -66,10 +82,9 @@
 
 .pitch {
   position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
-  aspect-ratio: 120 / 70;
-  min-height: 240px;
+  flex: 0 0 auto;
+  width: var(--pitch-w);
+  height: var(--pitch-h);
   border-radius: 14px;
   border: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
   box-shadow: var(--shadow-elevation, 0 16px 36px rgba(15, 35, 15, 0.12));
@@ -193,9 +208,19 @@
 }
 
 /* Eje de columnas */
-.col-axis-wrap {
-  margin: 8px 0 0 calc(var(--row-axis-w) + 8px);
+/* Debajo de la cancha: mismo ancho y alineación que ella (eje de filas + hueco a la izquierda) */
+.col-axis-wrap,
+.field-slot {
+  width: calc(var(--row-axis-w) + 8px + var(--pitch-w));
+  max-width: 100%;
+  margin-inline: auto;
+  padding-left: calc(var(--row-axis-w) + 8px);
+  box-sizing: border-box;
 }
+
+.col-axis-wrap { margin-top: 8px; }
+.field-slot { margin-top: 10px; }
+.field-slot:empty { display: none; }
 
 .col-axis {
   display: grid;

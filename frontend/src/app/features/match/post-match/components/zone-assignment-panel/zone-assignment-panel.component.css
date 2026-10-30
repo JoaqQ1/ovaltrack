@@ -285,6 +285,19 @@
 
 .btn-sm-touch { height: 44px; min-width: 56px; padding: 0 14px; }
 
+/* Una columna (tablet y móvil): "Guardar tramo" queda fijo al pie mientras el formulario está a la vista */
+@media (max-width: 1121px) {
+  .step-action {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin: 0 -8px -8px;
+    padding: 10px 8px 8px;
+    background: var(--surface, #ffffff);
+    border-top: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
+  }
+}
+
 @media (max-width: 576px) {
   .zone-item { flex-wrap: wrap; }
 }

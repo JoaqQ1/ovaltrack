@@ -85,6 +85,16 @@ describe('PostMatchZonesComponent', () => {
       expect(query('.match-score-pill')?.textContent).toContain('12 – 7');
     });
 
+    it('la línea de tiempo vive en la misma tarjeta que la cancha, debajo de las etiquetas de columna', () => {
+      createLoaded();
+
+      const timeline = query('app-rugby-field app-zone-timeline') as Element;
+      const columnAxis = query('app-rugby-field .col-axis-wrap') as Element;
+
+      expect(timeline).not.toBeNull();
+      expect(columnAxis.compareDocumentPosition(timeline) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
     it('muestra el error del backend y permite volver', () => {
       create();
       // forkJoin cancela las demás peticiones al primer error: solo se responde la de zonas.

@@ -6,7 +6,7 @@
 
 .track {
   position: relative;
-  height: 44px;
+  height: 52px;
   border-radius: 10px;
   background: var(--surface-alt, #eef1e7);
   border: 1.5px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
