@@ -136,13 +136,12 @@ describe('PostMatchZonesComponent', () => {
       expect(component.selectedCell()).toEqual({ row: 2, col: 3 });
     });
 
-    it('las mayúsculas funcionan igual y en "Ver eventos" eligen la celda a inspeccionar', () => {
+    it('las mayúsculas funcionan igual', () => {
       createLoaded();
-      component.setMode('view');
 
       press('N');
 
-      expect(component.viewCell()).toEqual({ row: 3, col: 6 });
+      expect(component.selectedCell()).toEqual({ row: 3, col: 6 });
     });
 
     it('F2-S4. con el foco en un campo de escritura las letras no hacen nada', () => {
@@ -260,111 +259,84 @@ describe('PostMatchZonesComponent', () => {
       expect(cell(2, 3).classList).toContain('is-linked');
       expect(cell(1, 1).classList).not.toContain('is-linked');
     });
-
-    it('en "Ver eventos", elegir una celda resalta sus tramos en la grilla', () => {
-      createLoaded([zone, { ...zone, id: 'z2', startMinute: 25, endMinute: 40, row: 1, col: 5 }]);
-      component.setMode('view');
-      fixture.detectChanges();
-
-      cell(1, 5).click();
-      fixture.detectChanges();
-
-      expect(segmentBars().map(bar => bar.classList.contains('is-linked'))).toEqual([false, true]);
-    });
   });
 
-  describe('calor y filtros de "Ver eventos"', () => {
-    const typed = (id: string, typeId: string, possession: 'OWN' | 'OPPONENT', minute: number): MatchTimelineEventResponse => ({
-      ...ev(id, 1, minute, { row: 2, col: 3 }), eventTypeId: typeId, eventTypeName: typeId === 'try' ? 'Try' : 'Tackle', teamPossession: possession
+  describe('filtros de la cancha', () => {
+    const typed = (id: string, possession: 'OWN' | 'OPPONENT', minute: number): MatchTimelineEventResponse => ({
+      ...ev(id, 1, minute, { row: 2, col: 3 }), teamPossession: possession
     });
-    const mixed = [typed('a', 'try', 'OWN', 11), typed('b', 'tackle', 'OWN', 12), typed('c', 'tackle', 'OPPONENT', 13)];
+    const mixed = [typed('a', 'OWN', 11), typed('b', 'OWN', 12), typed('c', 'OPPONENT', 13)];
     const count = (): string => cell(2, 3).querySelector('[data-testid="zone-count"]')?.textContent?.trim() ?? '';
+    const pill = (group: string, label: string): HTMLElement | undefined =>
+      queryAll(`[data-testid="${group}"]`).find(b => b.textContent?.trim() === label);
 
-    it('el interruptor "Solo números" apaga el calor y su leyenda', () => {
-      createLoaded([zone], mixed);
-
-      query<HTMLButtonElement>('[data-testid="heat-off"]')?.click();
-      fixture.detectChanges();
-
-      expect(query('[data-testid="heat-legend"]')).toBeNull();
-      expect(query('.rugby-field')?.classList).toContain('no-heat');
-    });
-
-    it('el filtro de tipo solo aparece en "Ver eventos"', () => {
-      createLoaded([zone], mixed);
-      expect(query('[data-testid="event-filters"]')).toBeNull();
-
-      component.setMode('view');
-      fixture.detectChanges();
-
-      expect(query('[data-testid="event-filters"]')).not.toBeNull();
-    });
-
-    it('F2-H6. el filtro de posesión recalcula el calor de la cancha también al asignar zonas', () => {
+    it('F2-H6. el filtro de posesión recalcula el calor de la cancha', () => {
       createLoaded([zone], mixed);
       expect(count()).toBe('3');
 
-      queryAll('[data-testid="possession-filter"]').find(b => b.textContent?.trim() === 'Rival')?.click();
+      pill('possession-filter', 'Rival')?.click();
       fixture.detectChanges();
-
       expect(count()).toBe('1');
+
+      pill('possession-filter', 'Propios')?.click();
+      fixture.detectChanges();
+      expect(count()).toBe('2');
     });
 
-    it('las píldoras de posesión son Todos, Propios y Rival', () => {
+    it('las píldoras de posesión son Todos, Propios y Rival; las de tiempo, Todo el partido, 1T y 2T', () => {
       createLoaded([zone], mixed);
 
       expect(queryAll('[data-testid="possession-filter"]').map(b => b.textContent?.trim())).toEqual(['Todos', 'Propios', 'Rival']);
+      expect(queryAll('[data-testid="period-filter"]').map(b => b.textContent?.trim())).toEqual(['Todo el partido', '1T', '2T']);
     });
 
-    it('el filtro de tipo recalcula el calor y se combina con la posesión', () => {
+    it('la píldora activa lleva aria-pressed', () => {
       createLoaded([zone], mixed);
-      component.setMode('view');
+
+      pill('period-filter', '2T')?.click();
       fixture.detectChanges();
 
-      component.typeFilter.set('tackle');
-      fixture.detectChanges();
-      expect(count()).toBe('2');
-
-      component.setPossessionFilter('OWN');
-      fixture.detectChanges();
-      expect(count()).toBe('1');
+      expect(pill('period-filter', '2T')?.getAttribute('aria-pressed')).toBe('true');
+      expect(pill('period-filter', 'Todo el partido')?.getAttribute('aria-pressed')).toBe('false');
     });
 
-    it('al volver a "Asignar zona" el filtro de tipo deja de aplicar y el de posesión sigue', () => {
+    it('la grilla de territorio cuenta los eventos con el mismo filtro de posesión', () => {
       createLoaded([zone], mixed);
-      component.setMode('view');
-      component.typeFilter.set('tackle');
-      component.setPossessionFilter('OPPONENT');
+
+      pill('possession-filter', 'Rival')?.click();
       fixture.detectChanges();
 
-      component.setMode('assign');
-      fixture.detectChanges();
-
-      expect(count()).toBe('1');
+      const counts = queryAll('[data-testid="territory-row-count"]').map(el => el.textContent?.trim());
+      expect(counts).toEqual(['0', '0', '0', '1', '0', '0']);
     });
 
-    it('lista los tipos presentes en el partido para el filtro', () => {
+    it('ya no hay selector de calor ni conmutador de modo', () => {
       createLoaded([zone], mixed);
 
-      expect(component.eventTypeOptions().map(option => option.name)).toEqual(['Tackle', 'Try']);
+      expect(query('[data-testid="heat-on"]')).toBeNull();
+      expect(query('[data-testid="heat-off"]')).toBeNull();
+      expect(query('[data-testid="mode-assign"]')).toBeNull();
+      expect(query('[data-testid="mode-view"]')).toBeNull();
+      expect(query('[data-testid="heat-legend"]')).not.toBeNull();
     });
   });
 
   describe('indicadores y conteos derivados de los eventos', () => {
-    it('muestra los eventos sin zona y la cobertura', () => {
-      createLoaded();
-
-      expect(query('[data-testid="unzoned-chip"]')?.textContent).toContain('Sin zona: 2 eventos');
-      expect(query('[data-testid="coverage-1t"]')?.textContent?.replace(/\s+/g, ' ')).toContain('1T 15/40 min');
-      expect(query('[data-testid="coverage-2t"]')?.textContent?.replace(/\s+/g, ' ')).toContain('2T 0/40 min');
-    });
-
     it('F2-H7. la franja de KPI muestra eventos, sin zona y porcentaje del tiempo con zona', () => {
       createLoaded();
 
       expect(query('[data-testid="kpi-total"]')?.textContent?.trim()).toBe('4');
       expect(query('[data-testid="kpi-unzoned"]')?.textContent?.trim()).toBe('2');
       expect(query('[data-testid="kpi-coverage"]')?.textContent?.trim()).toBe('19%');
+    });
+
+    it('F2-H8. con el partido completo el tiempo con zona es 100 %', () => {
+      createLoaded([
+        { ...zone, id: 'p1', startMinute: 0, endMinute: 40 },
+        { ...zone, id: 'p2', period: 2, startMinute: 40, endMinute: 80 }
+      ]);
+
+      expect(query('[data-testid="kpi-coverage"]')?.textContent?.trim()).toBe('100%');
     });
 
     it('los KPI no dependen de los filtros', () => {
@@ -377,18 +349,17 @@ describe('PostMatchZonesComponent', () => {
       expect(query('[data-testid="kpi-unzoned"]')?.textContent?.trim()).toBe('2');
     });
 
+    it('no quedan la cobertura 1T/2T ni el chip de sin zona (los reemplaza la franja de KPI)', () => {
+      createLoaded();
+
+      expect(query('[data-testid="coverage"]')).toBeNull();
+      expect(query('[data-testid="unzoned-chip"]')).toBeNull();
+    });
+
     it('la grilla dibuja como vista previa el rango cargado en el formulario', () => {
       createLoaded();
 
       expect(query('[data-testid="territory-preview"]')).not.toBeNull();
-    });
-
-    it('en "Ver eventos" no hay vista previa del formulario', () => {
-      createLoaded();
-      component.setMode('view');
-      fixture.detectChanges();
-
-      expect(query('[data-testid="territory-preview"]')).toBeNull();
     });
 
     it('la cancha cuenta los eventos de cada celda', () => {
@@ -397,85 +368,46 @@ describe('PostMatchZonesComponent', () => {
       expect(cell(2, 3).querySelector('[data-testid="zone-count"]')?.textContent).toContain('2');
     });
 
-    it('el filtro de tiempo recalcula conteos y sin zona; la cobertura muestra siempre ambos tiempos', () => {
+    it('el filtro de tiempo recalcula los conteos de la cancha', () => {
       createLoaded();
 
       component.setPeriodFilter(2);
       fixture.detectChanges();
 
-      expect(query('[data-testid="unzoned-chip"]')?.textContent).toContain('Sin zona: 1 evento');
-      expect(query('[data-testid="coverage-1t"]')?.textContent?.replace(/\s+/g, ' ')).toContain('1T 15/40 min');
       expect(cell(2, 3).querySelector('[data-testid="zone-count"]')).toBeNull();
-    });
-
-    it('con todos los eventos vinculados el chip de sin zona queda deshabilitado', () => {
-      createLoaded([zone], [ev('a', 1, 12, { row: 2, col: 3 })]);
-
-      expect((query('[data-testid="unzoned-chip"]') as HTMLButtonElement).disabled).toBeTrue();
     });
   });
 
-  describe('modos Asignar zona / Ver eventos', () => {
-    it('en modo asignar tocar una celda la elige para el formulario', () => {
+  describe('elegir la zona', () => {
+    it('F2-H5. tocar una celda de la cancha completa franja y lateral en el formulario', () => {
       createLoaded();
 
-      cell(1, 2).click();
+      cell(3, 5).click();
       fixture.detectChanges();
 
-      expect(component.selectedCell()).toEqual({ row: 1, col: 2 });
-      expect(component.viewCell()).toBeNull();
+      expect(component.selectedCell()).toEqual({ row: 3, col: 5 });
+      expect(query('[data-testid="panel-subtitle"]')?.textContent).toContain('Derecha · 22 rival');
+      expect(queryAll('[data-testid="lateral-option"]')[2].classList).toContain('is-active');
     });
 
-    it('en modo ver eventos tocar una celda lista sus eventos y no toca la zona del formulario', () => {
+    it('la franja elegida resalta su fila en la grilla', () => {
       createLoaded();
-      component.selectedCell.set({ row: 3, col: 6 });
-      component.setMode('view');
+
+      cell(1, 5).click();
       fixture.detectChanges();
 
-      cell(2, 3).click();
-      fixture.detectChanges();
-
-      expect(component.selectedCell()).toEqual({ row: 3, col: 6 });
-      expect(component.viewCell()).toEqual({ row: 2, col: 3 });
-      expect(queryAll('[data-testid="event-row"]').length).toBe(2);
+      const labels = queryAll('[data-testid="territory-row-label"]');
+      expect(labels.map(l => l.classList.contains('is-selected'))).toEqual([false, true, false, false, false, false]);
     });
 
-    it('en modo ver eventos no hay formulario para editar tramos', () => {
+    it('la ayuda "?" incluye la nota de vista relativa que antes estaba bajo la cancha', () => {
       createLoaded();
+      expect(query('[data-testid="relative-note"]')).toBeNull();
 
-      component.setMode('view');
+      query<HTMLButtonElement>('[data-testid="shortcuts-toggle"]')?.click();
       fixture.detectChanges();
 
-      expect(query('[data-testid="zone-save"]')).toBeNull();
-      expect(query('app-zone-events-list')).not.toBeNull();
-    });
-
-    it('sin celda elegida la lista pide tocar una zona', () => {
-      createLoaded();
-      component.setMode('view');
-      fixture.detectChanges();
-
-      expect(query('[data-testid="events-hint"]')).not.toBeNull();
-    });
-
-    it('el chip de sin zona pasa a modo ver y lista esos eventos', () => {
-      createLoaded();
-
-      query<HTMLButtonElement>('[data-testid="unzoned-chip"]')?.click();
-      fixture.detectChanges();
-
-      expect(component.mode()).toBe('view');
-      expect(queryAll('[data-testid="event-row"]').length).toBe(2);
-      expect(query('app-zone-events-list .section-title')?.textContent).toContain('Eventos sin zona');
-    });
-
-    it('volver al modo asignar deja de listar los eventos sin zona', () => {
-      createLoaded();
-      component.showUnzonedEvents();
-
-      component.setMode('assign');
-
-      expect(component.showUnzoned()).toBeFalse();
+      expect(query('[data-testid="relative-note"]')?.textContent).toContain('siempre atacás hacia la derecha');
     });
   });
 

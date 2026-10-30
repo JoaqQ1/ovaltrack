@@ -23,7 +23,7 @@
     </div>
 
     <div class="tracks" #tracks data-testid="territory-tracks"
-         [class.is-pointing]="hoverGap() !== null" [class.is-readonly]="readOnly()"
+         [class.is-pointing]="hoverGap() !== null"
          (click)="onTracksClick($event)" (mousemove)="onTracksMove($event)" (mouseleave)="onTracksLeave()">
 
       @for (gap of gaps(); track gap.period + '-' + gap.start) {
@@ -40,7 +40,7 @@
                     [class.is-linked]="isLinked(block.assignment)"
                     [class.is-dimmed]="!!highlightCell() && !isLinked(block.assignment)"
                     [style.left.%]="block.left" [style.width.%]="block.width"
-                    [disabled]="readOnly()" [attr.aria-label]="block.aria" [title]="block.aria"
+                    [attr.aria-label]="block.aria" [title]="block.aria"
                     (mouseenter)="segmentHover.emit(block.assignment.id)" (mouseleave)="segmentHover.emit(null)"
                     (focus)="segmentHover.emit(block.assignment.id)" (blur)="segmentHover.emit(null)"
                     (click)="selectSegment($event, block.assignment)">

@@ -6,8 +6,8 @@
       <div class="zones-main">
         <div class="field-card">
           <div class="skeleton sk-toolbar"></div>
-          <div class="skeleton sk-field"></div>
           <div class="skeleton sk-timeline"></div>
+          <div class="skeleton sk-field"></div>
         </div>
       </div>
       <div class="zones-side">
@@ -31,17 +31,8 @@
     <div class="zones-layout">
       <div class="zones-main">
         <div class="field-card">
-          <!-- Barra de control: modo, filtro de tiempo e indicadores -->
+          <!-- Barra de filtros: tiempo y posesión, más la ayuda -->
           <div class="toolbar">
-            <div class="segmented" role="group" aria-label="Modo">
-              <button type="button" class="segment" data-testid="mode-assign"
-                      [class.is-active]="mode() === 'assign'" [attr.aria-pressed]="mode() === 'assign'"
-                      (click)="setMode('assign')"><i class="bi bi-pencil-square"></i> Asignar zona</button>
-              <button type="button" class="segment" data-testid="mode-view"
-                      [class.is-active]="mode() === 'view'" [attr.aria-pressed]="mode() === 'view'"
-                      (click)="setMode('view')"><i class="bi bi-eye"></i> Ver eventos</button>
-            </div>
-
             <div class="filter-group" role="group" aria-label="Filtros de la cancha">
               @for (option of periodOptions; track option.value) {
                 <button type="button" class="filter-pill-btn" data-testid="period-filter"
@@ -56,24 +47,17 @@
               }
             </div>
 
-            <div class="segmented" role="group" aria-label="Color de la cancha">
-              <button type="button" class="segment" data-testid="heat-on"
-                      [class.is-active]="heatOn()" [attr.aria-pressed]="heatOn()" (click)="setHeat(true)">Calor</button>
-              <button type="button" class="segment" data-testid="heat-off"
-                      [class.is-active]="!heatOn()" [attr.aria-pressed]="!heatOn()" (click)="setHeat(false)">Solo números</button>
-            </div>
-
-            <button type="button" class="chip chip-warn" data-testid="unzoned-chip"
-                    [class.is-on]="showUnzoned()" (click)="showUnzonedEvents()"
-                    [disabled]="unzonedCount() === 0">
-              Sin zona: {{ unzonedCount() }} {{ unzonedCount() === 1 ? 'evento' : 'eventos' }}
-            </button>
             <div class="shortcuts">
               <button type="button" class="help-btn" data-testid="shortcuts-toggle"
-                      aria-controls="zone-shortcuts" [attr.aria-expanded]="shortcutsOpen()"
-                      aria-label="Atajos de teclado" title="Atajos de teclado" (click)="toggleShortcuts()">?</button>
-              @if (shortcutsOpen()) {
-                <div id="zone-shortcuts" class="shortcuts-pop" data-testid="shortcuts-help" role="region" aria-label="Atajos de teclado">
+                      aria-controls="zone-shortcuts" [attr.aria-expanded]="helpOpen()"
+                      aria-label="Ayuda" title="Ayuda" (click)="toggleHelp()">?</button>
+              @if (helpOpen()) {
+                <div id="zone-shortcuts" class="shortcuts-pop" data-testid="shortcuts-help" role="region" aria-label="Ayuda">
+                  <strong>Vista de la cancha</strong>
+                  <p data-testid="relative-note">
+                    Vista relativa a tu equipo: siempre atacás hacia la derecha. En el 2T marcá como si no hubiera cambio de lado.
+                    Izquierda y derecha se leen mirando hacia el ataque.
+                  </p>
                   <strong>Elegir zona con el teclado</strong>
                   <ul>
                     @for (row of shortcutHelp; track row.rowName) {
@@ -85,56 +69,22 @@
                 </div>
               }
             </div>
-
-            <div class="coverage" data-testid="coverage" role="group" aria-label="Minutos con zona por tiempo">
-              <div class="coverage-item" data-testid="coverage-1t">
-                <span class="coverage-text">1T <strong>{{ coverageFirstHalf() }}/{{ halfMinutes }}</strong> min</span>
-                <span class="coverage-bar" role="progressbar" aria-label="1T: minutos con zona"
-                      [attr.aria-valuenow]="coverageFirstHalf()" aria-valuemin="0" [attr.aria-valuemax]="halfMinutes">
-                  <span class="coverage-fill" [style.width.%]="coverageFirstHalf() / halfMinutes * 100"></span>
-                </span>
-              </div>
-              <div class="coverage-item" data-testid="coverage-2t">
-                <span class="coverage-text">2T <strong>{{ coverageSecondHalf() }}/{{ halfMinutes }}</strong> min</span>
-                <span class="coverage-bar" role="progressbar" aria-label="2T: minutos con zona"
-                      [attr.aria-valuenow]="coverageSecondHalf()" aria-valuemin="0" [attr.aria-valuemax]="halfMinutes">
-                  <span class="coverage-fill" [style.width.%]="coverageSecondHalf() / halfMinutes * 100"></span>
-                </span>
-              </div>
-            </div>
           </div>
-
-          @if (mode() === 'view') {
-            <div class="toolbar toolbar-filters" data-testid="event-filters">
-              <label class="filter-field">
-                <span class="filter-label">Tipo de evento</span>
-                <select class="form-control" data-testid="type-filter" [value]="typeFilter()" (change)="onTypeFilterChange($event)">
-                  <option value="ALL">Todos</option>
-                  @for (type of eventTypeOptions(); track type.id) {
-                    <option [value]="type.id">{{ type.name }}</option>
-                  }
-                </select>
-              </label>
-            </div>
-          }
 
           <app-zone-territory-grid
             [assignments]="zonesStore.assignments()" [events]="filteredEvents()" [periodFilter]="periodFilter()"
-            [readOnly]="mode() === 'view'" [selectedId]="zonesStore.editingId()"
-            [selectedCol]="mode() === 'assign' ? (selectedCell()?.col ?? null) : null"
-            [conflictId]="mode() === 'assign' ? zonesStore.conflictId() : null"
-            [highlightCell]="highlightedCell()" [previewRange]="mode() === 'assign' ? zonesStore.formRange() : null"
+            [selectedId]="zonesStore.editingId()" [selectedCol]="selectedCell()?.col ?? null"
+            [conflictId]="zonesStore.conflictId()"
+            [highlightCell]="highlightedCell()" [previewRange]="zonesStore.formRange()"
             (segmentHover)="zonesStore.hoverSegmentId.set($event)"
             (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)" />
 
           <app-rugby-field
             [cells]="cellCounts()"
             [unzonedEventCount]="0"
-            [selectedCell]="fieldSelectedCell()"
+            [selectedCell]="selectedCell()"
             [ownClubName]="ownClubName()"
             [opponentName]="opponent()"
-            [mode]="mode()"
-            [showHeat]="heatOn()"
             [pulseCell]="zonesStore.pulseCell()"
             [startHint]="showStartHint()"
             [linkedCell]="linkedCell()"
@@ -144,11 +94,7 @@
       </div>
 
       <div class="zones-side">
-        @if (mode() === 'view') {
-          <app-zone-events-list [title]="listTitle()" [subtitle]="listSubtitle()" [events]="listedEvents()"
-                                [hint]="listHint()" emptyText="No hay eventos en esta selección." />
-        }
-        <app-zone-assignment-panel [matchId]="matchId()" [readOnly]="mode() === 'view'" [(selectedCell)]="selectedCell" />
+        <app-zone-assignment-panel [matchId]="matchId()" [(selectedCell)]="selectedCell" />
       </div>
     </div>
   }

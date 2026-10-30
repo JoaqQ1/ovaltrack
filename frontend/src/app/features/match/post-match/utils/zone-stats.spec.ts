@@ -1,6 +1,6 @@
 import {
-  ZoneEvent, NO_ZONE_EVENT_FILTERS, coverageMinutes, effectiveMatchTime, filterEvents, nextGap, countByCell, describeSegment, eventsInCell, eventsInRange, eventsReleasedByEdit,
-  findGaps, findOverlap, periodRange, sortChronologically, suggestRange, unzonedEvents, zoneCoveragePercent
+  ZoneEvent, NO_ZONE_EVENT_FILTERS, coverageMinutes, effectiveMatchTime, filterEvents, countByCell, describeSegment, eventsInRange, eventsReleasedByEdit,
+  findGaps, findOverlap, periodRange, sortChronologically, unzonedEvents, zoneCoveragePercent
 } from './zone-stats';
 import { ZoneAssignmentResponse } from '../../types/zone.types';
 
@@ -52,36 +52,6 @@ describe('zone-stats', () => {
       const zones = [zone('b', 1, 25, 30), zone('a', 1, 5, 10)];
 
       expect(findGaps(zones, 1).length).toBe(3);
-    });
-  });
-
-  describe('suggestRange', () => {
-    it('propone 5 minutos desde el primer hueco', () => {
-      expect(suggestRange([zone('a', 1, 0, 10)], 1)).toEqual({ start: 10, end: 15 });
-    });
-
-    it('sin tramos propone los primeros 5 minutos del tiempo', () => {
-      expect(suggestRange([], 2)).toEqual({ start: 40, end: 45 });
-    });
-
-    it('no excede el tamaño del hueco', () => {
-      expect(suggestRange([zone('a', 1, 0, 10), zone('b', 1, 12, 40)], 1)).toEqual({ start: 10, end: 12 });
-    });
-
-    it('continúa desde el fin del tramo recién guardado', () => {
-      const zones = [zone('a', 1, 20, 25)];
-
-      expect(suggestRange(zones, 1, 25)).toEqual({ start: 25, end: 30 });
-    });
-
-    it('si no hay hueco posterior vuelve al primer hueco libre', () => {
-      const zones = [zone('a', 1, 10, 40)];
-
-      expect(suggestRange(zones, 1, 40)).toEqual({ start: 0, end: 5 });
-    });
-
-    it('devuelve null con el tiempo completamente cubierto', () => {
-      expect(suggestRange([zone('a', 1, 0, 40)], 1)).toBeNull();
     });
   });
 
@@ -138,11 +108,6 @@ describe('zone-stats', () => {
     it('devuelve los eventos sin zona ordenados y respetando el filtro', () => {
       expect(unzonedEvents(events, 'ALL').map(e => e.id)).toEqual(['c', 'e']);
       expect(unzonedEvents(events, 2).map(e => e.id)).toEqual(['e']);
-    });
-
-    it('devuelve los eventos de una celda', () => {
-      expect(eventsInCell(events, { row: 2, col: 3 }, 'ALL').map(e => e.id)).toEqual(['a', 'b']);
-      expect(eventsInCell(events, { row: 2, col: 3 }, 2)).toEqual([]);
     });
 
     it('sin eventos todo queda vacío', () => {
@@ -257,35 +222,6 @@ describe('zone-stats', () => {
 
     it('el tiempo completamente cubierto es 40', () => {
       expect(coverageMinutes([zone('a', 1, 0, 40)], 1)).toBe(40);
-    });
-  });
-
-  describe('nextGap', () => {
-    it('sin tramos el próximo hueco es todo el 1T', () => {
-      expect(nextGap([], null)).toEqual({ period: 1, start: 0, end: 40 });
-    });
-
-    it('devuelve el primer hueco que arranca después del minuto indicado', () => {
-      const zones = [zone('a', 1, 0, 10), zone('b', 1, 20, 30)];
-
-      expect(nextGap(zones, 0)).toEqual({ period: 1, start: 10, end: 20 });
-      expect(nextGap(zones, 10)).toEqual({ period: 1, start: 30, end: 40 });
-    });
-
-    it('pasa del 1T al 2T con minutos acumulados', () => {
-      const zones = [zone('a', 1, 0, 40), zone('b', 2, 40, 55)];
-
-      expect(nextGap(zones, 0)).toEqual({ period: 2, start: 55, end: 80 });
-    });
-
-    it('da la vuelta al principio cuando no queda ninguno después', () => {
-      const zones = [zone('a', 1, 10, 40), zone('b', 2, 40, 80)];
-
-      expect(nextGap(zones, 10)).toEqual({ period: 1, start: 0, end: 10 });
-    });
-
-    it('con el partido completo devuelve null', () => {
-      expect(nextGap([zone('a', 1, 0, 40), zone('b', 2, 40, 80)], null)).toBeNull();
     });
   });
 

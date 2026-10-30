@@ -66,8 +66,7 @@
   background: var(--btn-primary-bg, #204b22); color: var(--btn-primary-fg, #fff);
   transition: opacity .15s ease, box-shadow .15s ease;
 }
-.block:hover:not(:disabled) { background: var(--btn-primary-hover, #163618); }
-.block:disabled { cursor: default; }
+.block:hover { background: var(--btn-primary-hover, #163618); }
 .block:focus-visible { outline: 3px solid var(--navy, #16324f); outline-offset: 2px; }
 .block-label { font: 700 11px var(--font-mono, monospace); letter-spacing: .02em; white-space: nowrap; }
 .block.is-selected { box-shadow: 0 0 0 2px var(--surface, #fff), 0 0 0 4px var(--text-primary, #111d0e); z-index: 2; }

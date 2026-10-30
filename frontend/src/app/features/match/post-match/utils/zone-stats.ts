@@ -1,6 +1,6 @@
 import { MatchTimelineEventResponse } from '../../types/event.types';
 import { Possession } from '../../types/live-capture.types';
-import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZoneCellSummary, ZonePeriod } from '../../types/zone.types';
+import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellSummary, ZonePeriod } from '../../types/zone.types';
 import { zoneLabel } from './zone-grid';
 
 export interface MinuteRange {
@@ -31,18 +31,6 @@ export function findGaps(assignments: RangeLike[], period: ZonePeriod): MinuteRa
   }
   if (cursor < bounds.end) gaps.push({ start: cursor, end: bounds.end });
   return gaps;
-}
-
-/**
- * Rango sugerido para el próximo tramo: empieza en el hueco que arranca en `afterMinute` (o en el primero
- * libre) y dura como mucho `length` minutos. Devuelve null si el tiempo está completamente cubierto.
- */
-export function suggestRange(assignments: RangeLike[], period: ZonePeriod, afterMinute?: number, length = 5): MinuteRange | null {
-  const gaps = findGaps(assignments, period);
-  if (gaps.length === 0) return null;
-
-  const gap = (afterMinute !== undefined ? gaps.find(g => g.start >= afterMinute) : undefined) ?? gaps[0];
-  return { start: gap.start, end: Math.min(gap.start + length, gap.end) };
 }
 
 /** Primer tramo existente que se pisa con el rango pedido (misma regla [inicio, fin) que el backend). */
@@ -106,12 +94,6 @@ export function unzonedEvents<T extends ZoneEvent>(events: T[], filter: ZonePeri
   return sortChronologically(inPeriod(events, filter).filter(event => !event.zone));
 }
 
-export function eventsInCell<T extends ZoneEvent>(events: T[], cell: ZoneCellRef, filter: ZonePeriodFilter): T[] {
-  return sortChronologically(
-    inPeriod(events, filter).filter(event => event.zone?.row === cell.row && event.zone?.col === cell.col)
-  );
-}
-
 /** Eventos que caerían en un rango: mismo tiempo y minuto [inicio, fin), igual que el resolver del backend. */
 export function eventsInRange<T extends ZoneEvent>(range: RangeLike, events: T[]): T[] {
   return events.filter(event => {
@@ -127,7 +109,7 @@ export function eventsReleasedByEdit<T extends ZoneEvent>(previous: RangeLike, n
   return eventsInRange(previous, events).filter(event => !stillLinked.has(event.id));
 }
 
-/** Filtros de "Ver eventos": tipo de evento y posesión. 'ALL' no filtra. */
+/** Filtros de eventos: tipo y posesión. 'ALL' no filtra. */
 export interface ZoneEventFilters {
   eventTypeId: string | 'ALL';
   possession: Possession | 'ALL';
@@ -156,15 +138,4 @@ export function coverageMinutes(assignments: RangeLike[], period: ZonePeriod): n
 export function zoneCoveragePercent(assignments: RangeLike[]): number {
   const covered = coverageMinutes(assignments, 1) + coverageMinutes(assignments, 2);
   return Math.round((covered / (ZONE_HALF_MINUTES * 2)) * 100);
-}
-
-/**
- * Próximo hueco sin zona tras el minuto `afterMinute` (el primero cuyo inicio lo supera; da la vuelta al principio
- * si no hay ninguno). Null cuando el partido está completo. Recorre 1T y luego 2T, con minutos acumulados.
- */
-export function nextGap(assignments: RangeLike[], afterMinute: number | null): (MinuteRange & { period: ZonePeriod }) | null {
-  const gaps = ([1, 2] as ZonePeriod[]).flatMap(period =>
-    findGaps(assignments, period).map(gap => ({ period, start: gap.start, end: gap.end })));
-
-  return gaps.find(gap => gap.start > (afterMinute ?? -1)) ?? gaps[0] ?? null;
 }

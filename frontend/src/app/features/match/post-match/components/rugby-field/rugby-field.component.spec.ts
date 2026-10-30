@@ -122,13 +122,10 @@ describe('RugbyFieldComponent', () => {
   });
 
   describe('lectura de la zona apuntada', () => {
-    it('sugiere cómo interactuar cuando no hay zona apuntada, según el modo', () => {
+    it('sugiere cómo interactuar cuando no hay zona apuntada', () => {
       render([]);
-      expect(reading()).toContain('Pasá el cursor o tocá una zona');
 
-      fixture.componentRef.setInput('mode', 'view');
-      fixture.detectChanges();
-      expect(reading()).toContain('ver sus eventos');
+      expect(reading()).toContain('Pasá el cursor o tocá una zona');
     });
 
     it('al pasar el cursor describe la zona y sus eventos', () => {
@@ -175,10 +172,11 @@ describe('RugbyFieldComponent', () => {
       expect(grid.compareDocumentPosition(lines) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
-    it('dibuja los chevrones del sentido de ataque', () => {
+    it('no dibuja chevrones en el centro ni la nota de vista relativa (esa nota vive en la ayuda de la pantalla)', () => {
       render([]);
 
-      expect(fixture.nativeElement.querySelectorAll('.chevrons path').length).toBe(3);
+      expect(fixture.nativeElement.querySelector('.chevrons')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.relative-note')).toBeNull();
     });
   });
 
@@ -227,16 +225,6 @@ describe('RugbyFieldComponent', () => {
       expect(legend()?.textContent?.replace(/\s+/g, ' ')).toContain('0 1–5 6–15 16–30 30+');
     });
 
-    it('con "Solo números" no hay leyenda y la cancha queda sin relleno de calor', () => {
-      render([{ row: 2, col: 3, eventCount: 4 }]);
-      fixture.componentRef.setInput('showHeat', false);
-      fixture.detectChanges();
-
-      expect(legend()).toBeNull();
-      expect(fixture.nativeElement.querySelector('.rugby-field').classList).toContain('no-heat');
-      expect(cellAt(2, 3)?.querySelector('[data-testid="zone-count"]')?.textContent).toContain('4');
-    });
-
     it('la posición en la escala depende del nivel, no del máximo del partido', () => {
       render([{ row: 1, col: 1, eventCount: 3 }, { row: 2, col: 2, eventCount: 118 }]);
 
@@ -245,7 +233,7 @@ describe('RugbyFieldComponent', () => {
     });
   });
 
-  describe('vínculo con la timeline', () => {
+  describe('vínculo con la grilla de territorio', () => {
     it('avisa la celda bajo el cursor y cuándo se va', () => {
       render([]);
       const hovered: (ZoneCellRef | null)[] = [];

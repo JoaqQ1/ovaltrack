@@ -55,8 +55,6 @@ export class ZoneTerritoryGridComponent {
   readonly events = input<ZoneEvent[]>([]);
   /** El tiempo elegido en los filtros: la otra mitad de la grilla se atenúa y los conteos solo cuentan este tiempo. */
   readonly periodFilter = input<ZonePeriodFilter>('ALL');
-  /** En modo lectura los bloques y los huecos no responden. */
-  readonly readOnly = input<boolean>(false);
   /** Tramo que se está editando: su bloque lleva un anillo. */
   readonly selectedId = input<string | null>(null);
   /** Franja elegida en el formulario: su fila se resalta y el rango cargado se dibuja ahí. */
@@ -138,11 +136,10 @@ export class ZoneTerritoryGridComponent {
 
   selectSegment(event: Event, assignment: ZoneAssignmentResponse): void {
     event.stopPropagation();
-    if (!this.readOnly()) this.segmentSelected.emit(assignment);
+    this.segmentSelected.emit(assignment);
   }
 
   onTracksClick(event: MouseEvent): void {
-    if (this.readOnly()) return;
     const target = this.targetAt(event);
     if (target) {
       this.gapSelected.emit({ period: target.gap.period, startMinute: target.gap.start, endMinute: target.gap.end, col: target.col });
@@ -150,7 +147,7 @@ export class ZoneTerritoryGridComponent {
   }
 
   onTracksMove(event: MouseEvent): void {
-    const target = this.readOnly() ? null : this.targetAt(event);
+    const target = this.targetAt(event);
     const current = this.pointed();
     if (target?.col === current?.col && target?.gap.start === current?.gap.start && target?.gap.period === current?.gap.period) return;
     this.pointed.set(target);

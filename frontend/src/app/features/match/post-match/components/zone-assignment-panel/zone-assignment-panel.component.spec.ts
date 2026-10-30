@@ -466,23 +466,6 @@ describe('ZoneAssignmentPanelComponent', () => {
     });
   });
 
-  describe('modo lectura', () => {
-    it('no ofrece formulario', () => {
-      fixture.componentRef.setInput('readOnly', true);
-      render([existingZone]);
-
-      expect(query('[data-testid="zone-save"]')).toBeNull();
-      expect(query('[data-testid="zone-delete"]')).toBeNull();
-    });
-
-    it('no publica un rango de vista previa', () => {
-      fixture.componentRef.setInput('readOnly', true);
-      render([existingZone]);
-
-      expect(store.formRange()).toBeNull();
-    });
-  });
-
   describe('guardado', () => {
     it('crea el tramo con el payload del formulario, recarga y avisa con un toast', () => {
       render();

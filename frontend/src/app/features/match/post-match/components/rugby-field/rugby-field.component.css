@@ -128,16 +128,6 @@
 .lines .dashed { stroke-width: 2; stroke-dasharray: 10 8; opacity: 0.85; }
 .lines .dashed.fine { stroke-width: 1.25; opacity: 0.6; }
 
-.chevrons path {
-  fill: none;
-  stroke: #ffffff;
-  stroke-width: 6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0.16;
-  vector-effect: non-scaling-stroke;
-}
-
 /* Texto vertical dentro de cada in-goal: PROPIO a la izquierda (se lee de abajo hacia arriba) y el rival a la derecha */
 .ingoal-label {
   position: absolute;
@@ -203,9 +193,6 @@
     transparent
   );
 }
-
-/* "Solo números": se apaga el relleno de calor, el conteo sigue visible */
-.no-heat .field-cell.has-events { background: transparent; }
 
 .heat-legend {
   display: flex;
@@ -363,7 +350,6 @@
 /* Notas */
 .field-notes { margin-top: 12px; }
 
-.relative-note,
 .field-empty,
 .field-unzoned {
   margin: 0 0 6px;

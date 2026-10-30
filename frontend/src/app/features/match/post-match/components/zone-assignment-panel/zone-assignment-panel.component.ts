@@ -42,8 +42,6 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   @Input() matchId = '';
-  /** En el modo "Ver eventos" el panel no ofrece formulario. */
-  @Input() readOnly = false;
 
   /** Zona elegida en la grilla o la cancha (enlace bidireccional con la página). */
   readonly selectedCell = model<ZoneCellRef | null>(null);
@@ -296,7 +294,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
    * (null si no hay choque), el tramo en edición y el rango cargado, que la grilla dibuja como vista previa.
    */
   private syncSharedState(): void {
-    const range = this.readOnly ? null : this.usableRange();
+    const range = this.usableRange();
     const clash = range ? findOverlap(range, this.store.assignments(), this.editingId) : null;
     this.store.conflictId.set(clash?.id ?? null);
     this.store.editingId.set(this.editingId);

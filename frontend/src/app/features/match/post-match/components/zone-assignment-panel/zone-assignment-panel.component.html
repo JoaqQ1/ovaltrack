@@ -1,6 +1,6 @@
 <section class="zone-panel">
 
-  <div class="panel-card is-sheet" [class.is-open]="sheetOpen" *ngIf="!readOnly">
+  <div class="panel-card is-sheet" [class.is-open]="sheetOpen">
     <!-- Solo móvil: resumen compacto de la hoja inferior (zona, rango y "Rango" para expandir) -->
     <div class="sheet-summary" data-testid="sheet-summary">
       <span *ngIf="franja as f" class="zone-badge">{{ f.label }}</span>

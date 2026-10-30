@@ -8,8 +8,6 @@ import {
   ZONE_ROW_LETTERS, ZONE_ROW_SHORT_NAMES, columnRangeLabel, describeZone, formatEventCount, rowRangeLabel, shortTeamName, zoneLabel
 } from '../../utils/zone-grid';
 
-export type RugbyFieldMode = 'assign' | 'view';
-
 interface FieldCell extends ZoneCellRef {
   label: string;
   count: number;
@@ -40,11 +38,7 @@ export class RugbyFieldComponent {
   readonly selectedCell = input<ZoneCellRef | null>(null);
   readonly ownClubName = input<string>('Mi club');
   readonly opponentName = input<string>('Rival');
-  /** 'assign' elige la zona de un tramo; 'view' solo lee (no modifica nada). */
-  readonly mode = input<RugbyFieldMode>('assign');
   readonly selectable = input<boolean>(true);
-  /** Interruptor "Calor" / "Solo números": sin calor las celdas quedan limpias y solo se ve el conteo. */
-  readonly showHeat = input<boolean>(true);
   /** Celda recién guardada: hace un pulso breve. */
   readonly pulseCell = input<ZoneCellRef | null>(null);
   /** Partido sin tramos: se atenúa la cancha y se invita a empezar por el minuto 0. */
@@ -64,8 +58,6 @@ export class RugbyFieldComponent {
   readonly rowMeters = ZONE_ROW_METERS;
   readonly rows = Array.from({ length: ZONE_GRID_ROWS }, (_, i) => i + 1);
   readonly cols = Array.from({ length: ZONE_GRID_COLS }, (_, i) => i + 1);
-  /** Chevrones tenues del centro, en el sentido del ataque (hacia la derecha). */
-  readonly chevronXs = [this.width / 2 - 70, this.width / 2, this.width / 2 + 70];
   readonly stripes = Array.from({ length: ZONE_FIELD_LENGTH_M / 10 }, (_, i) => i);
 
   /** Posición X (px del viewBox) de las líneas de la cancha. */
@@ -117,16 +109,13 @@ export class RugbyFieldComponent {
 
   readonly reading = computed(() => {
     const cell = this.activeCell();
-    if (!cell) {
-      return this.mode() === 'assign' ? 'Pasá el cursor o tocá una zona' : 'Tocá una zona para ver sus eventos';
-    }
+    if (!cell) return 'Pasá el cursor o tocá una zona';
     const count = this.cells().find(c => c.row === cell.row && c.col === cell.col)?.eventCount ?? 0;
     const events = count === 1 ? '1 evento' : `${count} eventos`;
     return `${describeZone(cell)} · ${events}`;
   });
 
-  readonly gridLabel = computed(() =>
-    this.mode() === 'assign' ? 'Cancha: elegí la zona del tramo' : 'Cancha: tocá una zona para ver sus eventos');
+  readonly gridLabel = 'Cancha: elegí la franja y el lateral del tramo';
 
   isSelected(cell: ZoneCellRef): boolean {
     const selected = this.selectedCell();

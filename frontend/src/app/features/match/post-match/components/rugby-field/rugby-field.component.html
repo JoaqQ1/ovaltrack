@@ -1,4 +1,4 @@
-<figure class="rugby-field" [class.no-heat]="!showHeat()">
+<figure class="rugby-field">
   <!-- Sentido de ataque y línea de lectura de la zona apuntada -->
   <div class="field-head">
     <span class="attack-dir" data-testid="attack-dir">
@@ -28,11 +28,6 @@
         <rect *ngFor="let i of stripes" class="stripe" [class.odd]="i % 2 === 1" [attr.x]="i * 100" y="0" width="100" [attr.height]="height" />
         <rect class="ingoal" x="0" y="0" [attr.width]="goalLineLeft" [attr.height]="height" />
         <rect class="ingoal" [attr.x]="goalLineRight" y="0" [attr.width]="width - goalLineRight" [attr.height]="height" />
-
-        <!-- Flecha de ataque integrada: chevrones muy tenues en el centro, además de la etiqueta de arriba -->
-        <g class="chevrons">
-          <path *ngFor="let x of chevronXs" [attr.d]="'M ' + (x - 14) + ' ' + (height / 2 - 30) + ' L ' + (x + 14) + ' ' + (height / 2) + ' L ' + (x - 14) + ' ' + (height / 2 + 30)" />
-        </g>
       </svg>
 
       <!-- Estado vacío: la cancha se atenúa y se indica por dónde empezar -->
@@ -45,7 +40,7 @@
       <span class="ingoal-label ingoal-label--rival" data-testid="ingoal-rival" aria-hidden="true">{{ rivalShortName() }}</span>
 
       <!-- Grilla 3x6 accesible (role=grid, flechas, una sola parada de Tab) -->
-      <div class="pitch-grid" role="grid" [attr.aria-label]="gridLabel()" [attr.aria-readonly]="!selectable()">
+      <div class="pitch-grid" role="grid" [attr.aria-label]="gridLabel" [attr.aria-readonly]="!selectable()">
         <div class="pitch-row" role="row" *ngFor="let line of fieldRows(); let r = index; trackBy: trackRow"
              [style.flex-grow]="rowMeters[r]" [style.grid-template-columns]="columnTemplate">
           <div *ngFor="let cell of line; trackBy: trackCell"
@@ -121,16 +116,12 @@
   <div class="field-slot"><ng-content /></div>
 
   <figcaption class="field-notes">
-    <div *ngIf="showHeat()" class="heat-legend" data-testid="heat-legend" aria-label="Escala de calor: cantidad de eventos por zona">
+    <div class="heat-legend" data-testid="heat-legend" aria-label="Escala de calor: cantidad de eventos por zona">
       <span class="heat-legend-title">Eventos por zona</span>
       <span *ngFor="let step of heatSteps" class="heat-legend-step">
         <i class="heat-swatch" [class.is-empty]="step.level === 0" [style.--heat]="heatMix(step.level)" aria-hidden="true"></i>{{ step.label }}
       </span>
     </div>
-    <p class="relative-note">
-      Vista relativa a tu equipo: siempre atacás hacia la derecha. En el 2T marcá como si no hubiera cambio de lado.
-      Izquierda y derecha se leen mirando hacia el ataque.
-    </p>
     <p *ngIf="isEmpty()" class="field-empty" data-testid="zones-empty">
       Todavía no hay eventos vinculados a una zona. Asigná un tramo del partido a una zona para verlos acá.
     </p>
