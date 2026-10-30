@@ -42,6 +42,9 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   padding: 4px 12px;
+  /* Alto fijo de la barra (44px de control + padding): los controles de la derecha pueden ser más bajos sin achicarla */
+  min-height: 52px;
+  box-sizing: border-box;
   background: var(--surface-toolbar, #eaf3e6);
   border: none;
   border-bottom: 1px solid var(--border-sport, rgba(32, 75, 34, 0.28));
