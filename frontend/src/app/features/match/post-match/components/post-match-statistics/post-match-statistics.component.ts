@@ -156,7 +156,7 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     this.layoutService.setWide(true);
-    const id = this.route.snapshot.paramMap.get('id') || '';
+    const id = this.route.parent?.snapshot.paramMap.get('id') || '';
     this.matchId.set(id);
     if (!id) {
       this.errorMessage.set('No se indicó el partido.');

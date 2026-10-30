@@ -41,7 +41,7 @@ describe('PostMatchZonesComponent', () => {
 
   function create(id: string | null = 'match-1'): void {
     TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { snapshot: { paramMap: convertToParamMap(id ? { id } : {}) } },
+      useValue: { parent: { snapshot: { paramMap: convertToParamMap(id ? { id } : {}) } } },
     });
     fixture = TestBed.createComponent(PostMatchZonesComponent);
     component = fixture.componentInstance;
@@ -61,7 +61,7 @@ describe('PostMatchZonesComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'match-1' }) } } },
+        { provide: ActivatedRoute, useValue: { parent: { snapshot: { paramMap: convertToParamMap({ id: 'match-1' }) } } } },
         { provide: MatchService, useValue: { getMatchById: () => of(match) } },
         { provide: EventTypeService, useValue: { getAll: () => of([]) } },
       ],

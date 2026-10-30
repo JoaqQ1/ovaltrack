@@ -7,7 +7,6 @@ import { DivisionPlayerFormComponent } from './features/division-player/form/div
 import { DivisionCoachListComponent } from './features/division-coach/division-coach-list.component';
 import { hasRoleGuard } from './core/guards/has-role.guard';
 import { hasClubGuard } from './core/guards/has-club.guard';
-import { PostMatchComponent } from './features/match/post-match/post-match.component';
 import { DivisionPlayerListComponent } from './features/division-player/list/division-player-list.component';
 import { MatchHistoryComponent } from './features/match/match-selection/match-history.component';
 import { OpponentManagerComponent } from './features/match/opponents/opponent-manager.component';
@@ -175,14 +174,43 @@ export const routes: Routes = [
     },
     {
         path: 'post-match/:id',
-        canMatch: [authGuard],
-        canActivate: [hasRoleGuard, hasClubGuard],
-        data: {
-            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
-            preload: true,
-            layout: 'wide'
-        },
-        component: PostMatchComponent
+        loadComponent: () =>
+            import('./features/match/post-match/post-match-shell.component').then(
+                m => m.PostMatchShellComponent
+            ),
+        children: [
+            {
+                path: '',
+                canMatch: [authGuard],
+                canActivate: [hasRoleGuard, hasClubGuard],
+                data: {
+                    roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+                    preload: true,
+                    layout: 'wide'
+                },
+                loadComponent: () =>
+                    import('./features/match/post-match/post-match.component').then(
+                        m => m.PostMatchComponent
+                    )
+            },
+            {
+                path: 'zones',
+                canMatch: [authGuard],
+                canActivate: [hasRoleGuard, hasClubGuard],
+                data: {
+                    roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+                    layout: 'wide'
+                },
+                loadComponent: () => import('./features/match/post-match/components/post-match-zones/post-match-zones.component')
+                    .then(m => m.PostMatchZonesComponent),
+            },
+            {
+                path: 'statistics',
+                loadComponent: () => import('./features/match/post-match/components/post-match-statistics/post-match-statistics.component')
+                    .then(m => m.PostMatchStatisticsComponent),
+                data: { layout: 'wide' },
+            }
+        ]
     },
     {
         path: 'invitation',
