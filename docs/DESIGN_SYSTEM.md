@@ -396,6 +396,7 @@ La pantalla de post-partido está estructurada como una estación de trabajo de 
 ### 8.1 Grilla CSS Grid y Viewport Lock
 - **Desktop ($\ge 1121\text{px}$):**
   - El shell (`PostMatchShellComponent`) bloquea el viewport solo en Eventos (`data.lockViewport`): `.pm-shell--locked` con `height: calc(100dvh - var(--navbar-h, 64px) - 26px);` y columna flex (encabezado de alto automático + vista con `flex: 1`). Así Eventos ocupa el alto restante sin depender de la altura del encabezado.
+  - El padding superior (14px, 6px con alto ≤ 800px) y el gap (8px, 6px) de la shell son los mismos en las tres vistas, y `html:has(.pm-shell)` reserva el espacio de la barra de scroll (`scrollbar-gutter: stable`): así el encabezado queda en las mismas coordenadas aunque Zonas y Estadísticas scrolleen y Eventos no. Las vistas no agregan padding ni margen superior propio.
   - La vista Eventos (`.pm`) ocupa el 100% de ese espacio con:
     ```css
     grid-template-areas:

@@ -157,6 +157,11 @@ body {
   min-height: 100%;
 }
 
+/* Post-partido: Eventos no scrollea y Zonas/Estadísticas sí; se reserva la barra para que el encabezado no se corra */
+html:has(.pm-shell) {
+  scrollbar-gutter: stable;
+}
+
 [data-theme="dark"] body {
   background-color: #0b111e;
   background-image: 
