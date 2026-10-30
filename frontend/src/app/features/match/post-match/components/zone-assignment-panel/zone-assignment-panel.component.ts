@@ -7,9 +7,12 @@ import { MatchZonesStore } from '../../store/match-zones.store';
 import { validateZoneForm } from '../../utils/zone-form.utils';
 import { ZONE_COLUMN_NAMES, ZONE_ROW_NAMES, describeZone, zoneLabel } from '../../utils/zone-grid';
 import { describeSegment, eventsInRange, eventsReleasedByEdit, findOverlap, periodRange, suggestRange } from '../../utils/zone-stats';
-import { ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
+import { ZoneAssignmentRequest, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 
 type RangeField = 'start' | 'end';
+
+/** Cuánto tiempo queda disponible el "Deshacer" tras borrar un tramo. */
+const UNDO_WINDOW_MS = 6000;
 
 /**
  * Formulario de tramos (rango de tiempo + zona) y su lista. La zona se elige tocando la cancha.
@@ -44,7 +47,6 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   startMinute: number | null = null;
   endMinute: number | null = null;
   editingId: string | null = null;
-  pendingDeleteId: string | null = null;
   helpOpen = false;
   serverError: string | null = null;
   listError: string | null = null;
@@ -60,7 +62,6 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   /** Precarga el formulario con un rango (ej. al tocar un hueco de la línea de tiempo). */
   prefill(range: { period: ZonePeriod; startMinute: number; endMinute: number }): void {
     this.editingId = null;
-    this.pendingDeleteId = null;
     this.serverError = null;
     this.period = range.period;
     this.startMinute = range.startMinute;
@@ -153,7 +154,6 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   }
 
   startEdit(zone: ZoneAssignmentResponse): void {
-    this.pendingDeleteId = null;
     this.serverError = null;
     this.editingId = zone.id;
     this.period = zone.period;
@@ -190,33 +190,42 @@ export class ZoneAssignmentPanelComponent implements OnInit {
       });
   }
 
-  askDelete(zoneId: string): void {
+  /** Quita el tramo de inmediato; "Deshacer" lo vuelve a crear con un POST con los mismos datos. */
+  deleteZone(zone: ZoneAssignmentResponse): void {
     this.listError = null;
-    this.pendingDeleteId = zoneId;
-  }
+    const released = this.eventsOf(zone);
+    const restore: ZoneAssignmentRequest = {
+      row: zone.row, col: zone.col, period: zone.period, startMinute: zone.startMinute, endMinute: zone.endMinute
+    };
 
-  cancelDelete(): void {
-    this.pendingDeleteId = null;
-  }
-
-  confirmDelete(): void {
-    const zoneId = this.pendingDeleteId;
-    if (!zoneId) return;
-
-    this.store.remove(this.matchId, zoneId)
+    this.store.remove(this.matchId, zone.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.pendingDeleteId = null;
-          if (this.editingId === zoneId) this.resetForm();
+          if (this.editingId === zone.id) this.resetForm();
           else this.refreshConflict();
-          this.toastService.success('Tramo eliminado');
+          this.toastService.success(
+            released > 0
+              ? `${released} ${released === 1 ? 'evento pasa' : 'eventos pasan'} a "Sin zona".`
+              : 'Se quitó de la lista de tramos.',
+            'Tramo eliminado',
+            UNDO_WINDOW_MS,
+            { label: 'Deshacer', handler: () => this.undoDelete(restore) }
+          );
         },
-        error: err => {
-          this.pendingDeleteId = null;
-          this.listError = this.messageFrom(err, 'No se pudo eliminar el tramo');
-        }
+        error: err => this.listError = this.messageFrom(err, 'No se pudo eliminar el tramo')
       });
+  }
+
+  /** Corre desde el toast, que puede sobrevivir al panel: no se cancela si el usuario navega. */
+  private undoDelete(restore: ZoneAssignmentRequest): void {
+    this.store.save(this.matchId, restore).subscribe({
+      next: () => this.toastService.success('El tramo volvió a la lista.', 'Tramo restaurado'),
+      error: err => this.toastService.error(
+        this.messageFrom(err, 'No se pudo restaurar el tramo.'),
+        'No se pudo deshacer'
+      )
+    });
   }
 
   rowName(row: number): string {
@@ -269,7 +278,6 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   /** Tras guardar o cancelar: la zona queda sin elegir a propósito y el rango continúa donde terminó el anterior. */
   private resetForm(afterMinute?: number): void {
     this.editingId = null;
-    this.pendingDeleteId = null;
     this.serverError = null;
     this.selectedCell.set(null);
     this.applySuggestion(afterMinute);

@@ -138,19 +138,11 @@
           </span>
         </button>
 
-        <div class="zone-item-actions" *ngIf="!readOnly && pendingDeleteId !== zone.id">
+        <div class="zone-item-actions" *ngIf="!readOnly">
           <button type="button" class="btn-icon btn-icon-danger" aria-label="Eliminar tramo" title="Eliminar tramo"
-                  (click)="askDelete(zone.id)" [disabled]="store.isSaving()">
+                  data-testid="zone-delete" (click)="deleteZone(zone)" [disabled]="store.isSaving()">
             <i class="bi bi-trash"></i>
           </button>
-        </div>
-
-        <div class="zone-item-actions confirm" *ngIf="pendingDeleteId === zone.id" data-testid="zone-delete-confirm">
-          <span class="confirm-text" data-testid="delete-impact">¿Eliminar? {{ eventsOf(zone) }} {{ eventsOf(zone) === 1 ? 'evento pasa' : 'eventos pasan' }} a "Sin zona".</span>
-          <button type="button" class="btn btn-outline btn-sm-touch" (click)="cancelDelete()"
-                  [disabled]="store.isSaving()">No</button>
-          <button type="button" class="btn btn-delete btn-sm-touch" (click)="confirmDelete()"
-                  [disabled]="store.isSaving()" data-testid="zone-delete-yes">Sí</button>
         </div>
       </li>
     </ul>

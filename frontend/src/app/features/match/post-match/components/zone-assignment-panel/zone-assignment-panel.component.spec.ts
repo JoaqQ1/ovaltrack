@@ -410,29 +410,68 @@ describe('ZoneAssignmentPanelComponent', () => {
       http.expectOne(zonesUrl).flush(emptyResponse);
     });
 
-    it('eliminar pide confirmación inline antes de llamar al backend', () => {
-      render([existingZone], [ev('1', 1, 12), ev('2', 1, 20), ev('3', 1, 30)]);
+    describe('eliminar con "Deshacer"', () => {
+      const deleteUrl = (r: { url: string }) => r.url.endsWith('/matches/match-1/zones/zone-1');
 
-      query<HTMLButtonElement>('button[aria-label="Eliminar tramo"]')?.click();
-      fixture.detectChanges();
-      expect(query('[data-testid="zone-delete-confirm"]')?.textContent).toContain('Sin zona');
-      expect(query('[data-testid="delete-impact"]')?.textContent).toContain('2 eventos pasan');
-      http.expectNone(r => r.method === 'DELETE');
+      function deleteExistingZone(): void {
+        query<HTMLButtonElement>('[data-testid="zone-delete"]')?.click();
+        http.expectOne(deleteUrl).flush(null, { status: 204, statusText: 'No Content' });
+        flushReload();
+        fixture.detectChanges();
+      }
 
-      query('[data-testid="zone-delete-yes"]')?.click();
+      it('quita el tramo de inmediato, sin confirmar, y avisa cuántos eventos quedan sin zona', () => {
+        render([existingZone], [ev('1', 1, 12), ev('2', 1, 20), ev('3', 1, 30)]);
+        const success = spyOn(toast, 'success');
 
-      const del = http.expectOne(r => r.url.endsWith('/matches/match-1/zones/zone-1'));
-      expect(del.request.method).toBe('DELETE');
-      del.flush(null, { status: 204, statusText: 'No Content' });
-      flushReload();
+        query<HTMLButtonElement>('[data-testid="zone-delete"]')?.click();
+        const del = http.expectOne(deleteUrl);
+        expect(del.request.method).toBe('DELETE');
+        del.flush(null, { status: 204, statusText: 'No Content' });
+        flushReload();
+
+        expect(query('[data-testid="zone-delete-confirm"]')).toBeNull();
+        expect(success).toHaveBeenCalledOnceWith(
+          '2 eventos pasan a "Sin zona".', 'Tramo eliminado', 6000,
+          jasmine.objectContaining({ label: 'Deshacer' }));
+      });
+
+      it('"Deshacer" vuelve a crear el tramo con un POST con los mismos datos', () => {
+        render([existingZone]);
+        const success = spyOn(toast, 'success');
+        deleteExistingZone();
+
+        const action = success.calls.mostRecent().args[3];
+        action?.handler();
+
+        const post = http.expectOne(zonesUrl);
+        expect(post.request.method).toBe('POST');
+        expect(post.request.body).toEqual({ row: 2, col: 3, period: 1, startMinute: 10, endMinute: 25 });
+        post.flush({ ...existingZone, id: 'zone-2' });
+        flushReload([{ ...existingZone, id: 'zone-2' }]);
+
+        expect(success).toHaveBeenCalledWith('El tramo volvió a la lista.', 'Tramo restaurado');
+      });
+
+      it('si "Deshacer" falla porque el rango ya fue ocupado, avisa el motivo y no duplica el tramo', () => {
+        render([existingZone]);
+        const success = spyOn(toast, 'success');
+        const error = spyOn(toast, 'error');
+        deleteExistingZone();
+
+        success.calls.mostRecent().args[3]?.handler();
+        http.expectOne(zonesUrl)
+          .flush({ message: 'El tramo se solapa con el tramo 1T 12′–20′ ya asignado' }, { status: 409, statusText: 'Conflict' });
+
+        expect(error).toHaveBeenCalledOnceWith('El tramo se solapa con el tramo 1T 12′–20′ ya asignado', 'No se pudo deshacer');
+        expect(store.assignments().length).toBe(0);
+      });
     });
 
     it('si falla el borrado muestra el error en la lista', () => {
       render([existingZone]);
-      query<HTMLButtonElement>('button[aria-label="Eliminar tramo"]')?.click();
-      fixture.detectChanges();
 
-      query('[data-testid="zone-delete-yes"]')?.click();
+      query<HTMLButtonElement>('[data-testid="zone-delete"]')?.click();
       http.expectOne(r => r.url.endsWith('/matches/match-1/zones/zone-1'))
         .flush({ message: 'Las zonas solo se pueden editar en partidos finalizados' }, { status: 409, statusText: 'Conflict' });
       fixture.detectChanges();
