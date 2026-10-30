@@ -58,7 +58,7 @@
                     [disabled]="unzonedCount() === 0">
               Sin zona: {{ unzonedCount() }} {{ unzonedCount() === 1 ? 'evento' : 'eventos' }}
             </button>
-            <span class="chip chip-info" data-testid="coverage-chip">Cobertura <strong>{{ coverage() }}%</strong></span>
+            <span class="chip chip-info" data-testid="coverage-chip"><strong>{{ coverage() }}%</strong> del tiempo con zona</span>
           </div>
 
           <app-rugby-field

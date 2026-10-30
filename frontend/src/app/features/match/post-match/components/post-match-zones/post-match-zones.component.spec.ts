@@ -128,6 +128,7 @@ describe('PostMatchZonesComponent', () => {
 
       expect(query('[data-testid="unzoned-chip"]')?.textContent).toContain('Sin zona: 2 eventos');
       expect(query('[data-testid="coverage-chip"]')?.textContent).toContain('19%');
+      expect(query('[data-testid="coverage-chip"]')?.textContent).toContain('del tiempo con zona');
     });
 
     it('la cancha cuenta los eventos de cada celda', () => {
