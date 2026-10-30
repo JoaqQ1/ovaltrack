@@ -66,7 +66,22 @@
                     [disabled]="unzonedCount() === 0">
               Sin zona: {{ unzonedCount() }} {{ unzonedCount() === 1 ? 'evento' : 'eventos' }}
             </button>
-            <span class="chip chip-info" data-testid="coverage-chip"><strong>{{ coverage() }}%</strong> del tiempo con zona</span>
+            <div class="coverage" data-testid="coverage" role="group" aria-label="Minutos con zona por tiempo">
+              <div class="coverage-item" data-testid="coverage-1t">
+                <span class="coverage-text">1T <strong>{{ coverageFirstHalf() }}/{{ halfMinutes }}</strong> min</span>
+                <span class="coverage-bar" role="progressbar" aria-label="1T: minutos con zona"
+                      [attr.aria-valuenow]="coverageFirstHalf()" aria-valuemin="0" [attr.aria-valuemax]="halfMinutes">
+                  <span class="coverage-fill" [style.width.%]="coverageFirstHalf() / halfMinutes * 100"></span>
+                </span>
+              </div>
+              <div class="coverage-item" data-testid="coverage-2t">
+                <span class="coverage-text">2T <strong>{{ coverageSecondHalf() }}/{{ halfMinutes }}</strong> min</span>
+                <span class="coverage-bar" role="progressbar" aria-label="2T: minutos con zona"
+                      [attr.aria-valuenow]="coverageSecondHalf()" aria-valuemin="0" [attr.aria-valuemax]="halfMinutes">
+                  <span class="coverage-fill" [style.width.%]="coverageSecondHalf() / halfMinutes * 100"></span>
+                </span>
+              </div>
+            </div>
           </div>
 
           @if (mode() === 'view') {
@@ -103,7 +118,7 @@
             <h2 class="section-title timeline-title">Tramos del partido</h2>
             <app-zone-timeline [assignments]="zonesStore.assignments()" [events]="zonesStore.events()" [readOnly]="mode() === 'view'"
                                [conflictId]="mode() === 'assign' ? zonesStore.conflictId() : null"
-                               [highlightCell]="highlightedCell()" (segmentHover)="zonesStore.hoverSegmentId.set($event)"
+                               [highlightCell]="highlightedCell()" [previewRange]="mode() === 'assign' ? zonesStore.formRange() : null" (segmentHover)="zonesStore.hoverSegmentId.set($event)"
                                (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)"
                                (markSelected)="onMarkSelected($event)" />
           </app-rugby-field>

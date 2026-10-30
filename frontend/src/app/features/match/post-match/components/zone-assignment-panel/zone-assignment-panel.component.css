@@ -144,6 +144,10 @@
 
 .preview { margin: 10px 0 0; font-size: 13px; color: var(--success, #2e7d32); font-weight: 600; }
 .preview-warn { margin-top: 6px; color: var(--warning, #8a5700); }
+.next-gap { margin-top: 10px; }
+.btn-gap { height: 44px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; }
+.match-complete { margin: 0; display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13.5px; font-weight: 700; color: var(--success, #2e7d32); }
+
 .range-help { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
 .range-note { margin: 0; font-size: 12px; line-height: 1.4; color: var(--text-secondary, #3b4e33); }
 

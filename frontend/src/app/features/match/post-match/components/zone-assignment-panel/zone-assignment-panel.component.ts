@@ -6,7 +6,7 @@ import { ToastService } from 'src/app/core/services/toast.service';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { validateZoneForm } from '../../utils/zone-form.utils';
 import { ZONE_COLUMN_NAMES, ZONE_ROW_NAMES, describeZone, zoneLabel } from '../../utils/zone-grid';
-import { describeSegment, eventsInRange, eventsReleasedByEdit, findOverlap, periodRange, suggestRange } from '../../utils/zone-stats';
+import { describeSegment, eventsInRange, eventsReleasedByEdit, findOverlap, nextGap, periodRange, suggestRange } from '../../utils/zone-stats';
 import { ZoneAssignmentRequest, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 
 type RangeField = 'start' | 'end';
@@ -55,6 +55,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.applySuggestion();
     this.destroyRef.onDestroy(() => {
       this.store.conflictId.set(null);
+      this.store.formRange.set(null);
       this.store.hoverSegmentId.set(null);
     });
   }
@@ -66,7 +67,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.period = range.period;
     this.startMinute = range.startMinute;
     this.endMinute = range.endMinute;
-    this.refreshConflict();
+    this.syncSharedState();
   }
 
   /**
@@ -87,7 +88,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
       this.endMinute = minute;
     }
     this.serverError = null;
-    this.refreshConflict();
+    this.syncSharedState();
   }
 
   setPeriod(period: ZonePeriod): void {
@@ -102,7 +103,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
   onRangeChange(): void {
     this.serverError = null;
-    this.refreshConflict();
+    this.syncSharedState();
   }
 
   /** Botones − y + junto a cada minuto. */
@@ -115,7 +116,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     if (field === 'start') this.startMinute = next;
     else this.endMinute = next;
     this.serverError = null;
-    this.refreshConflict();
+    this.syncSharedState();
   }
 
   /** Motivo por el que no se puede guardar todavía (null = listo). Se muestra junto al botón. */
@@ -134,6 +135,17 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
     const clash = findOverlap(this.currentRange(), this.store.assignments(), this.editingId);
     return clash ? `Choca con el tramo ${describeSegment(clash)}.` : null;
+  }
+
+  /** Con el partido completo no queda ningún hueco para ir a buscar. */
+  get matchComplete(): boolean {
+    return nextGap(this.store.assignments(), null) === null;
+  }
+
+  /** Precarga el formulario con el próximo hueco sin zona (todo su rango); la timeline lo muestra como vista previa. */
+  goToNextGap(): void {
+    const gap = nextGap(this.store.assignments(), this.startMinute);
+    if (gap) this.prefill({ period: gap.period, startMinute: gap.start, endMinute: gap.end });
   }
 
   /** Eventos que quedarían vinculados con el rango actual; null mientras el rango no sea válido. */
@@ -160,7 +172,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.startMinute = zone.startMinute;
     this.endMinute = zone.endMinute;
     this.selectedCell.set({ row: zone.row, col: zone.col });
-    this.refreshConflict();
+    this.syncSharedState();
   }
 
   cancelEdit(): void {
@@ -185,7 +197,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
         error: err => {
           this.serverError = this.messageFrom(err, 'No se pudo guardar el tramo');
           this.toastService.error(this.serverError);
-          this.refreshConflict();
+          this.syncSharedState();
         }
       });
   }
@@ -203,7 +215,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
       .subscribe({
         next: () => {
           if (this.editingId === zone.id) this.resetForm();
-          else this.refreshConflict();
+          else this.syncSharedState();
           this.toastService.success(
             released > 0
               ? `${released} ${released === 1 ? 'evento pasa' : 'eventos pasan'} a "Sin zona".`
@@ -264,15 +276,19 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     const range = suggestRange(this.store.assignments(), this.period, afterMinute);
     this.startMinute = range?.start ?? null;
     this.endMinute = range?.end ?? null;
-    this.refreshConflict();
+    this.syncSharedState();
   }
 
-  /** Publica en el store el tramo que se pisa con el rango actual (null si no hay choque). */
-  private refreshConflict(): void {
-    const clash = !this.readOnly && this.rangeIsUsable()
-      ? findOverlap(this.currentRange(), this.store.assignments(), this.editingId)
-      : null;
+  /**
+   * Publica en el store lo que otras vistas necesitan del formulario: el tramo que se pisa con el rango actual
+   * (null si no hay choque) y el rango cargado, que la timeline dibuja como vista previa.
+   */
+  private syncSharedState(): void {
+    const usable = !this.readOnly && this.rangeIsUsable();
+    const range = usable ? this.currentRange() : null;
+    const clash = range ? findOverlap(range, this.store.assignments(), this.editingId) : null;
     this.store.conflictId.set(clash?.id ?? null);
+    this.store.formRange.set(range);
   }
 
   /** Tras guardar o cancelar: la zona queda sin elegir a propósito y el rango continúa donde terminó el anterior. */

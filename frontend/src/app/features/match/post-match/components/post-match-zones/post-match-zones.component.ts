@@ -6,11 +6,11 @@ import { forkJoin } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { MatchService } from '../../../services/match.service';
-import { ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
+import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { describeZone, zoneLabel } from '../../utils/zone-grid';
 import {
-  NO_ZONE_EVENT_FILTERS, ZoneEventFilters, ZonePeriodFilter, countByCell, coveragePercent, eventsInCell, filterEvents, unzonedEvents
+  NO_ZONE_EVENT_FILTERS, ZoneEventFilters, ZonePeriodFilter, countByCell, coverageMinutes, eventsInCell, filterEvents, unzonedEvents
 } from '../../utils/zone-stats';
 import { Possession } from '../../../types/live-capture.types';
 import { RugbyFieldComponent, RugbyFieldMode } from '../rugby-field/rugby-field.component';
@@ -84,7 +84,9 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   // Todo se deriva de los eventos que ya traen su zona: una sola fuente de verdad.
   readonly cellCounts = computed(() => countByCell(this.filteredEvents(), this.periodFilter()));
   readonly unzonedCount = computed(() => unzonedEvents(this.filteredEvents(), this.periodFilter()).length);
-  readonly coverage = computed(() => coveragePercent(this.zonesStore.assignments(), this.periodFilter()));
+  readonly coverageFirstHalf = computed(() => coverageMinutes(this.zonesStore.assignments(), 1));
+  readonly coverageSecondHalf = computed(() => coverageMinutes(this.zonesStore.assignments(), 2));
+  readonly halfMinutes = ZONE_HALF_MINUTES;
   readonly fieldSelectedCell = computed(() => this.mode() === 'assign' ? this.selectedCell() : this.viewCell());
 
   /** Tramos que se destacan en la timeline: los de la celda bajo el cursor o, en "Ver eventos", los de la celda elegida. */

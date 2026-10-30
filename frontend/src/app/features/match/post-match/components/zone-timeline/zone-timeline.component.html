@@ -37,6 +37,9 @@
       <span class="segment-label">{{ bar.label }}</span>
     </button>
 
+    <span *ngIf="preview() as range" class="range-preview" data-testid="range-preview"
+          [style.left.%]="range.left" [style.width.%]="range.width" [attr.title]="range.aria" aria-hidden="true"></span>
+
     <span class="half-mark" [style.left.%]="halfMark" aria-hidden="true"></span>
   </div>
 

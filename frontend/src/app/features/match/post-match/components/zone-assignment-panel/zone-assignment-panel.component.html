@@ -66,6 +66,16 @@
           {{ releasedEventCount }} {{ releasedEventCount === 1 ? 'evento pasará' : 'eventos pasarán' }} a "Sin zona"
         </p>
 
+        <div class="next-gap">
+          <button *ngIf="!matchComplete" type="button" class="btn btn-outline btn-gap" data-testid="next-gap"
+                  [disabled]="store.isSaving()" (click)="goToNextGap()">
+            <i class="bi bi-skip-forward"></i> Ir al próximo hueco
+          </button>
+          <p *ngIf="matchComplete" class="match-complete" data-testid="match-complete">
+            <i class="bi bi-check-circle-fill"></i> Partido completo
+          </p>
+        </div>
+
         <div class="range-help">
           <p class="range-note">Inicio incluido, fin excluido.</p>
           <button type="button" class="help-toggle" data-testid="range-help-toggle"

@@ -200,4 +200,23 @@ describe('ZoneTimelineComponent', () => {
       expect(hovered).toEqual(['a', null]);
     });
   });
+
+  describe('vista previa del rango', () => {
+    const preview = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="range-preview"]');
+
+    it('dibuja el rango del formulario en su posición y ancho', () => {
+      render([]);
+      fixture.componentRef.setInput('previewRange', { period: 1, startMinute: 20, endMinute: 30 });
+      fixture.detectChanges();
+
+      expect(preview()?.style.left).toBe('25%');
+      expect(preview()?.style.width).toBe('12.5%');
+    });
+
+    it('sin rango cargado no dibuja nada', () => {
+      render([]);
+
+      expect(preview()).toBeNull();
+    });
+  });
 });

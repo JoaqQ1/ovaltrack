@@ -62,6 +62,9 @@ export class ZoneTimelineComponent {
   /** Celda resaltada (hover o foco en la cancha, o celda elegida en "Ver eventos"): sus tramos se destacan y el resto se atenúa. */
   readonly highlightCell = input<ZoneCellRef | null>(null);
 
+  /** Rango cargado en el formulario: se dibuja sobre la pista para ver dónde cae (ej. el próximo hueco). */
+  readonly previewRange = input<{ period: ZonePeriod; startMinute: number; endMinute: number } | null>(null);
+
   readonly segmentSelected = output<ZoneAssignmentResponse>();
   /** Tramo bajo el cursor o el foco (null al salir): la cancha resalta su celda. */
   readonly segmentHover = output<string | null>();
@@ -93,6 +96,14 @@ export class ZoneTimelineComponent {
 
   readonly marks = computed<MarkView[]>(() =>
     buildEventMarks(this.events()).map(mark => ({ ...mark, left: toPercent(mark.minute), glyph: MARK_GLYPHS[mark.kind] })));
+
+  readonly preview = computed(() => {
+    const range = this.previewRange();
+    return range
+      ? { left: toPercent(range.startMinute), width: toPercent(range.endMinute - range.startMinute),
+          aria: `Rango en edición: ${range.period}T de ${range.startMinute}′ a ${range.endMinute}′` }
+      : null;
+  });
 
   readonly hasGaps = computed(() => this.gaps().length > 0);
 

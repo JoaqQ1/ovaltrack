@@ -116,6 +116,31 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect(query('[data-testid="range-help-toggle"]')?.getAttribute('aria-expanded')).toBe('true');
     });
 
+    describe('Ir al próximo hueco', () => {
+      const nextGapButton = (): HTMLButtonElement | null => query<HTMLButtonElement>('[data-testid="next-gap"]');
+
+      it('precarga el formulario con el siguiente hueco sin zona y lo publica como vista previa', () => {
+        render([{ ...existingZone, startMinute: 0, endMinute: 10 }, { ...existingZone, id: 'zone-2', startMinute: 20, endMinute: 30 }]);
+        expect([component.startMinute, component.endMinute]).toEqual([10, 15]);
+
+        nextGapButton()?.click();
+        fixture.detectChanges();
+
+        expect([component.period, component.startMinute, component.endMinute]).toEqual([1, 30, 40]);
+        expect(store.formRange()).toEqual({ period: 1, startMinute: 30, endMinute: 40 });
+      });
+
+      it('cuando no quedan huecos muestra "Partido completo" con un check en vez del botón', () => {
+        render([
+          { ...existingZone, id: 'p1', period: 1, startMinute: 0, endMinute: 40 },
+          { ...existingZone, id: 'p2', period: 2, startMinute: 40, endMinute: 80 }
+        ]);
+
+        expect(nextGapButton()).toBeNull();
+        expect(query('[data-testid="match-complete"]')?.textContent).toContain('Partido completo');
+      });
+    });
+
     describe('pickMinute (marcas de eventos)', () => {
       it('con "Desde" ya precargado, un minuto posterior completa "Hasta"', () => {
         render();

@@ -251,8 +251,22 @@ describe('PostMatchZonesComponent', () => {
       createLoaded();
 
       expect(query('[data-testid="unzoned-chip"]')?.textContent).toContain('Sin zona: 2 eventos');
-      expect(query('[data-testid="coverage-chip"]')?.textContent).toContain('19%');
-      expect(query('[data-testid="coverage-chip"]')?.textContent).toContain('del tiempo con zona');
+      expect(query('[data-testid="coverage-1t"]')?.textContent?.replace(/\s+/g, ' ')).toContain('1T 15/40 min');
+      expect(query('[data-testid="coverage-2t"]')?.textContent?.replace(/\s+/g, ' ')).toContain('2T 0/40 min');
+    });
+
+    it('la timeline dibuja como vista previa el rango cargado en el formulario', () => {
+      createLoaded();
+
+      expect(query('[data-testid="range-preview"]')).not.toBeNull();
+    });
+
+    it('en "Ver eventos" no hay vista previa del formulario', () => {
+      createLoaded();
+      component.setMode('view');
+      fixture.detectChanges();
+
+      expect(query('[data-testid="range-preview"]')).toBeNull();
     });
 
     it('la cancha cuenta los eventos de cada celda', () => {
@@ -261,14 +275,14 @@ describe('PostMatchZonesComponent', () => {
       expect(cell(2, 3).querySelector('[data-testid="zone-count"]')?.textContent).toContain('2');
     });
 
-    it('el filtro de tiempo recalcula conteos, sin zona y cobertura', () => {
+    it('el filtro de tiempo recalcula conteos y sin zona; la cobertura muestra siempre ambos tiempos', () => {
       createLoaded();
 
       component.setPeriodFilter(2);
       fixture.detectChanges();
 
       expect(query('[data-testid="unzoned-chip"]')?.textContent).toContain('Sin zona: 1 evento');
-      expect(query('[data-testid="coverage-chip"]')?.textContent).toContain('0%');
+      expect(query('[data-testid="coverage-1t"]')?.textContent?.replace(/\s+/g, ' ')).toContain('1T 15/40 min');
       expect(cell(2, 3).querySelector('[data-testid="zone-count"]')).toBeNull();
     });
 

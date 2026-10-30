@@ -144,11 +144,21 @@ export function filterEvents<T extends FilterableEvent>(events: T[], filters: Zo
   );
 }
 
-/** Porcentaje (0–100) de los minutos del filtro que tienen un tramo asignado. */
-export function coveragePercent(assignments: RangeLike[], filter: ZonePeriodFilter): number {
-  const total = filter === 'ALL' ? ZONE_HALF_MINUTES * 2 : ZONE_HALF_MINUTES;
+/** Minutos de un tiempo que ya tienen un tramo asignado (0–40). */
+export function coverageMinutes(assignments: RangeLike[], period: ZonePeriod): number {
   const covered = assignments
-    .filter(a => filter === 'ALL' || a.period === filter)
+    .filter(a => a.period === period)
     .reduce((sum, a) => sum + (a.endMinute - a.startMinute), 0);
-  return Math.min(100, Math.round((covered / total) * 100));
+  return Math.min(ZONE_HALF_MINUTES, covered);
+}
+
+/**
+ * Próximo hueco sin zona tras el minuto `afterMinute` (el primero cuyo inicio lo supera; da la vuelta al principio
+ * si no hay ninguno). Null cuando el partido está completo. Recorre 1T y luego 2T, con minutos acumulados.
+ */
+export function nextGap(assignments: RangeLike[], afterMinute: number | null): (MinuteRange & { period: ZonePeriod }) | null {
+  const gaps = ([1, 2] as ZonePeriod[]).flatMap(period =>
+    findGaps(assignments, period).map(gap => ({ period, start: gap.start, end: gap.end })));
+
+  return gaps.find(gap => gap.start > (afterMinute ?? -1)) ?? gaps[0] ?? null;
 }
