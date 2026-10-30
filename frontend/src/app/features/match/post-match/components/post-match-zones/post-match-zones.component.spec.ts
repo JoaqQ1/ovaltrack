@@ -299,7 +299,7 @@ describe('PostMatchZonesComponent', () => {
       expect(query('.rugby-field')?.classList).toContain('no-heat');
     });
 
-    it('los filtros solo aparecen en "Ver eventos"', () => {
+    it('el filtro de tipo solo aparece en "Ver eventos"', () => {
       createLoaded([zone], mixed);
       expect(query('[data-testid="event-filters"]')).toBeNull();
 
@@ -309,16 +309,20 @@ describe('PostMatchZonesComponent', () => {
       expect(query('[data-testid="event-filters"]')).not.toBeNull();
     });
 
-    it('el filtro de posesión recalcula el calor de la cancha', () => {
+    it('F2-H6. el filtro de posesión recalcula el calor de la cancha también al asignar zonas', () => {
       createLoaded([zone], mixed);
-      component.setMode('view');
-      fixture.detectChanges();
       expect(count()).toBe('3');
 
-      component.setPossessionFilter('OPPONENT');
+      queryAll('[data-testid="possession-filter"]').find(b => b.textContent?.trim() === 'Rival')?.click();
       fixture.detectChanges();
 
       expect(count()).toBe('1');
+    });
+
+    it('las píldoras de posesión son Todos, Propios y Rival', () => {
+      createLoaded([zone], mixed);
+
+      expect(queryAll('[data-testid="possession-filter"]').map(b => b.textContent?.trim())).toEqual(['Todos', 'Propios', 'Rival']);
     });
 
     it('el filtro de tipo recalcula el calor y se combina con la posesión', () => {
@@ -335,16 +339,17 @@ describe('PostMatchZonesComponent', () => {
       expect(count()).toBe('1');
     });
 
-    it('al volver a "Asignar zona" los filtros dejan de aplicar', () => {
+    it('al volver a "Asignar zona" el filtro de tipo deja de aplicar y el de posesión sigue', () => {
       createLoaded([zone], mixed);
       component.setMode('view');
+      component.typeFilter.set('tackle');
       component.setPossessionFilter('OPPONENT');
       fixture.detectChanges();
 
       component.setMode('assign');
       fixture.detectChanges();
 
-      expect(count()).toBe('3');
+      expect(count()).toBe('1');
     });
 
     it('lista los tipos presentes en el partido para el filtro', () => {

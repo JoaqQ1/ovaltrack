@@ -54,7 +54,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   readonly showUnzoned = signal<boolean>(false);
 
   readonly periodOptions: { value: ZonePeriodFilter; label: string }[] = [
-    { value: 'ALL', label: 'Todo' }, { value: 1, label: '1T' }, { value: 2, label: '2T' }
+    { value: 'ALL', label: 'Todo el partido' }, { value: 1, label: '1T' }, { value: 2, label: '2T' }
   ];
 
   readonly shortcutsOpen = signal<boolean>(false);
@@ -65,8 +65,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   readonly possessionFilter = signal<Possession | 'ALL'>('ALL');
 
   readonly possessionOptions: { value: Possession | 'ALL'; label: string }[] = [
-    { value: 'ALL', label: 'Todas' }, { value: 'OWN', label: 'Propia' },
-    { value: 'OPPONENT', label: 'Rival' }, { value: 'NEUTRAL', label: 'Neutral' }
+    { value: 'ALL', label: 'Todos' }, { value: 'OWN', label: 'Propios' }, { value: 'OPPONENT', label: 'Rival' }
   ];
 
   /** Tipos de evento presentes en el partido, para el filtro de "Ver eventos". */
@@ -75,11 +74,11 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     return [...byId.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
   });
 
-  /** Los filtros de tipo y posesión solo rigen en "Ver eventos"; al asignar zonas se ven todos los eventos. */
-  private readonly activeFilters = computed<ZoneEventFilters>(() =>
-    this.mode() === 'view'
-      ? { eventTypeId: this.typeFilter(), possession: this.possessionFilter() }
-      : NO_ZONE_EVENT_FILTERS);
+  /** La posesión rige siempre; el filtro de tipo solo en "Ver eventos" (al asignar zonas se ven todos los tipos). */
+  private readonly activeFilters = computed<ZoneEventFilters>(() => ({
+    eventTypeId: this.mode() === 'view' ? this.typeFilter() : NO_ZONE_EVENT_FILTERS.eventTypeId,
+    possession: this.possessionFilter()
+  }));
 
   private readonly filteredEvents = computed(() => filterEvents(this.zonesStore.events(), this.activeFilters()));
 

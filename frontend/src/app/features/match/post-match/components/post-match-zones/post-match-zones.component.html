@@ -42,10 +42,18 @@
                       (click)="setMode('view')"><i class="bi bi-eye"></i> Ver eventos</button>
             </div>
 
-            <div class="segmented" role="group" aria-label="Tiempo">
-              <button *ngFor="let option of periodOptions" type="button" class="segment" data-testid="period-filter"
-                      [class.is-active]="periodFilter() === option.value" [attr.aria-pressed]="periodFilter() === option.value"
-                      (click)="setPeriodFilter(option.value)">{{ option.label }}</button>
+            <div class="filter-group" role="group" aria-label="Filtros de la cancha">
+              @for (option of periodOptions; track option.value) {
+                <button type="button" class="filter-pill-btn" data-testid="period-filter"
+                        [class.active]="periodFilter() === option.value" [attr.aria-pressed]="periodFilter() === option.value"
+                        (click)="setPeriodFilter(option.value)">{{ option.label }}</button>
+              }
+              <span class="filter-divider" aria-hidden="true"></span>
+              @for (option of possessionOptions; track option.value) {
+                <button type="button" class="filter-pill-btn" data-testid="possession-filter"
+                        [class.active]="possessionFilter() === option.value" [attr.aria-pressed]="possessionFilter() === option.value"
+                        (click)="setPossessionFilter(option.value)">{{ option.label }}</button>
+              }
             </div>
 
             <div class="segmented" role="group" aria-label="Color de la cancha">
@@ -107,13 +115,6 @@
                   }
                 </select>
               </label>
-              <div class="segmented" role="group" aria-label="Posesión">
-                @for (option of possessionOptions; track option.value) {
-                  <button type="button" class="segment" data-testid="possession-filter"
-                          [class.is-active]="possessionFilter() === option.value" [attr.aria-pressed]="possessionFilter() === option.value"
-                          (click)="setPossessionFilter(option.value)">{{ option.label }}</button>
-                }
-              </div>
             </div>
           }
 
