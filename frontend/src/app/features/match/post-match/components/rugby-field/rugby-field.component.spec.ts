@@ -164,6 +164,17 @@ describe('RugbyFieldComponent', () => {
       expect(own?.getAttribute('aria-hidden')).toBe('true');
     });
 
+    it('las líneas de la cancha van en una capa propia después de la grilla, para quedar sobre el calor', () => {
+      render([]);
+
+      const grid = fixture.nativeElement.querySelector('.pitch-grid') as Element;
+      const lines = fixture.nativeElement.querySelector('.pitch-lines') as Element;
+
+      expect(lines.querySelector('.lines')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.pitch-bg .lines')).toBeNull();
+      expect(grid.compareDocumentPosition(lines) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
     it('dibuja los chevrones del sentido de ataque', () => {
       render([]);
 

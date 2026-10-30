@@ -7,18 +7,15 @@
   --pitch-b: color-mix(in srgb, var(--btn-primary-bg, #204b22) 66%, #a8d5a2);
   --pitch-ingoal: color-mix(in srgb, var(--btn-primary-bg, #204b22) 82%, #a8d5a2);
   --pitch-line: #ffffff;
-  --row-axis-w: 64px;
+  --row-axis-w: 56px;
 }
 
 /*
- * El alto manda y el ancho se deriva de la proporción 120:70. El alto es el menor entre el que deja el
- * viewport (descontando navbar, HUD, toolbar y ejes) y el que entra a lo ancho sin deformar la cancha.
+ * Cancha compacta: el alto manda y el ancho se deriva de la proporción 120:70. Tope de 300 px (la fila lateral
+ * más baja, de 15 m, queda en ~64 px) o el que entra a lo ancho sin deformar la cancha.
  */
 .rugby-field {
-  --pitch-h: min(
-    clamp(320px, calc(100dvh - 380px), 640px),
-    calc((100cqw - var(--row-axis-w) - 8px) * 70 / 120)
-  );
+  --pitch-h: min(300px, calc((100cqw - var(--row-axis-w) - 8px) * 70 / 120));
   --pitch-w: calc(var(--pitch-h) * 120 / 70);
   margin: 0;
 }
@@ -98,6 +95,17 @@
   width: 100%;
   height: 100%;
   display: block;
+}
+
+/* Líneas: capa propia sobre la grilla, así el calor translúcido no las tapa */
+.pitch-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .grass { fill: var(--pitch-a); }
@@ -221,7 +229,8 @@
   background: color-mix(in srgb, color-mix(in srgb, var(--zone-heat-high) calc(var(--heat, 0) * 100%), var(--zone-heat-low)) 62%, var(--pitch-a));
 }
 
-.heat-swatch.is-empty { background: var(--pitch-a); }
+/* "0" sin el verde del césped: la leyenda no sugiere que cero sea un color de calor */
+.heat-swatch.is-empty { background: var(--surface-alt, #eef1e7); }
 
 .field-cell.is-readonly { cursor: default; }
 
@@ -257,21 +266,22 @@
   inset: 0;
   margin: auto;
   width: max-content;
-  min-width: 34px;
-  height: 34px;
-  padding: 0 9px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   background: var(--surface, #ffffff);
-  border: 3px solid var(--btn-primary-bg, #204b22);
+  border: 2px solid var(--btn-primary-bg, #204b22);
   color: var(--btn-primary-bg, #204b22);
   font-family: var(--font-mono, monospace);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   pointer-events: none;
+  z-index: 2;
 }
 
 /* Microinteracciones (≤ 250 ms) */

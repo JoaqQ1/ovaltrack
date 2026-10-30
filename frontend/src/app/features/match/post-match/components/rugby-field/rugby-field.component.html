@@ -33,31 +33,6 @@
         <g class="chevrons">
           <path *ngFor="let x of chevronXs" [attr.d]="'M ' + (x - 14) + ' ' + (height / 2 - 30) + ' L ' + (x + 14) + ' ' + (height / 2) + ' L ' + (x - 14) + ' ' + (height / 2 + 30)" />
         </g>
-
-        <g class="lines">
-          <rect class="boundary" x="0" y="0" [attr.width]="width" [attr.height]="height" />
-          <line class="goal" [attr.x1]="goalLineLeft" y1="0" [attr.x2]="goalLineLeft" [attr.y2]="height" />
-          <line class="goal" [attr.x1]="goalLineRight" y1="0" [attr.x2]="goalLineRight" [attr.y2]="height" />
-          <line [attr.x1]="line22Left" y1="0" [attr.x2]="line22Left" [attr.y2]="height" />
-          <line [attr.x1]="line22Right" y1="0" [attr.x2]="line22Right" [attr.y2]="height" />
-          <line class="halfway" [attr.x1]="halfway" y1="0" [attr.x2]="halfway" [attr.y2]="height" />
-          <line class="dashed fine" [attr.x1]="line10Left" y1="0" [attr.x2]="line10Left" [attr.y2]="height" />
-          <line class="dashed fine" [attr.x1]="line10Right" y1="0" [attr.x2]="line10Right" [attr.y2]="height" />
-          <!-- 5 m y 15 m desde cada touch; las de 15 m coinciden con los bordes de fila -->
-          <line class="dashed fine" [attr.x1]="goalLineLeft" [attr.y1]="line5Top" [attr.x2]="goalLineRight" [attr.y2]="line5Top" />
-          <line class="dashed fine" [attr.x1]="goalLineLeft" [attr.y1]="line5Bottom" [attr.x2]="goalLineRight" [attr.y2]="line5Bottom" />
-          <line class="dashed" [attr.x1]="goalLineLeft" [attr.y1]="line15Top" [attr.x2]="goalLineRight" [attr.y2]="line15Top" />
-          <line class="dashed" [attr.x1]="goalLineLeft" [attr.y1]="line15Bottom" [attr.x2]="goalLineRight" [attr.y2]="line15Bottom" />
-          <!-- Palos (H): travesaño y dos postes, con punta redondeada que no se deforma -->
-          <g class="posts">
-            <line [attr.x1]="goalLineLeft" [attr.y1]="postTop" [attr.x2]="goalLineLeft" [attr.y2]="postBottom" />
-            <line [attr.x1]="goalLineRight" [attr.y1]="postTop" [attr.x2]="goalLineRight" [attr.y2]="postBottom" />
-            <line class="post-dot" [attr.x1]="goalLineLeft" [attr.y1]="postTop" [attr.x2]="goalLineLeft" [attr.y2]="postTop + 0.01" />
-            <line class="post-dot" [attr.x1]="goalLineLeft" [attr.y1]="postBottom" [attr.x2]="goalLineLeft" [attr.y2]="postBottom + 0.01" />
-            <line class="post-dot" [attr.x1]="goalLineRight" [attr.y1]="postTop" [attr.x2]="goalLineRight" [attr.y2]="postTop + 0.01" />
-            <line class="post-dot" [attr.x1]="goalLineRight" [attr.y1]="postBottom" [attr.x2]="goalLineRight" [attr.y2]="postBottom + 0.01" />
-          </g>
-        </g>
       </svg>
 
       <!-- Estado vacío: la cancha se atenúa y se indica por dónde empezar -->
@@ -99,6 +74,34 @@
           </div>
         </div>
       </div>
+
+      <!-- Líneas de la cancha por encima del calor: no interceptan clics -->
+      <svg class="pitch-lines" [attr.viewBox]="'0 0 ' + width + ' ' + height" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <g class="lines">
+          <rect class="boundary" x="0" y="0" [attr.width]="width" [attr.height]="height" />
+          <line class="goal" [attr.x1]="goalLineLeft" y1="0" [attr.x2]="goalLineLeft" [attr.y2]="height" />
+          <line class="goal" [attr.x1]="goalLineRight" y1="0" [attr.x2]="goalLineRight" [attr.y2]="height" />
+          <line [attr.x1]="line22Left" y1="0" [attr.x2]="line22Left" [attr.y2]="height" />
+          <line [attr.x1]="line22Right" y1="0" [attr.x2]="line22Right" [attr.y2]="height" />
+          <line class="halfway" [attr.x1]="halfway" y1="0" [attr.x2]="halfway" [attr.y2]="height" />
+          <line class="dashed fine" [attr.x1]="line10Left" y1="0" [attr.x2]="line10Left" [attr.y2]="height" />
+          <line class="dashed fine" [attr.x1]="line10Right" y1="0" [attr.x2]="line10Right" [attr.y2]="height" />
+          <!-- 5 m y 15 m desde cada touch; las de 15 m coinciden con los bordes de fila -->
+          <line class="dashed fine" [attr.x1]="goalLineLeft" [attr.y1]="line5Top" [attr.x2]="goalLineRight" [attr.y2]="line5Top" />
+          <line class="dashed fine" [attr.x1]="goalLineLeft" [attr.y1]="line5Bottom" [attr.x2]="goalLineRight" [attr.y2]="line5Bottom" />
+          <line class="dashed" [attr.x1]="goalLineLeft" [attr.y1]="line15Top" [attr.x2]="goalLineRight" [attr.y2]="line15Top" />
+          <line class="dashed" [attr.x1]="goalLineLeft" [attr.y1]="line15Bottom" [attr.x2]="goalLineRight" [attr.y2]="line15Bottom" />
+          <!-- Palos (H): travesaño y dos postes, con punta redondeada que no se deforma -->
+          <g class="posts">
+            <line [attr.x1]="goalLineLeft" [attr.y1]="postTop" [attr.x2]="goalLineLeft" [attr.y2]="postBottom" />
+            <line [attr.x1]="goalLineRight" [attr.y1]="postTop" [attr.x2]="goalLineRight" [attr.y2]="postBottom" />
+            <line class="post-dot" [attr.x1]="goalLineLeft" [attr.y1]="postTop" [attr.x2]="goalLineLeft" [attr.y2]="postTop + 0.01" />
+            <line class="post-dot" [attr.x1]="goalLineLeft" [attr.y1]="postBottom" [attr.x2]="goalLineLeft" [attr.y2]="postBottom + 0.01" />
+            <line class="post-dot" [attr.x1]="goalLineRight" [attr.y1]="postTop" [attr.x2]="goalLineRight" [attr.y2]="postTop + 0.01" />
+            <line class="post-dot" [attr.x1]="goalLineRight" [attr.y1]="postBottom" [attr.x2]="goalLineRight" [attr.y2]="postBottom + 0.01" />
+          </g>
+        </g>
+      </svg>
     </div>
   </div>
 
