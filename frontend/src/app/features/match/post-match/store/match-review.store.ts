@@ -24,6 +24,9 @@ import { countsAsScoring, scoringTeam } from '../../statistics/calculators/event
 
 export { RUGBY_HALF_TIME_MIN, RUGBY_FULL_TIME_MIN, EMPTY_TIME_PLACEHOLDER };
 
+/** Filtro de Eventos que puede dejar un evento fuera de la vista. */
+export type HidingFilter = 'period' | 'team' | 'unassigned' | 'search' | 'lane';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -337,6 +340,31 @@ export class MatchReviewStore {
     });
   }
 
+  /** Filtros activos que dejan fuera de la vista a un evento (vacío si se ve). */
+  hiddenByFilters(eventId: string): HidingFilter[] {
+    const ev = this.allViewModels().find(e => e.id === eventId);
+    if (!ev) return [];
+    const filters = this.filters();
+    return this.findHidingFilters(ev, filters, filters.searchTerm.trim().toLowerCase());
+  }
+
+  /** Limpia solo los filtros que ocultan al evento, lo selecciona y la tabla hace scroll hasta él. */
+  revealEvent(eventId: string): void {
+    const hiding = this.hiddenByFilters(eventId);
+    const ev = this.allViewModels().find(e => e.id === eventId);
+    if (ev && hiding.length > 0) {
+      this.filters.update(f => ({
+        ...f,
+        period: hiding.includes('period') ? 'ALL' : f.period,
+        team: hiding.includes('team') ? 'ALL' : f.team,
+        onlyUnassigned: hiding.includes('unassigned') ? false : f.onlyUnassigned,
+        searchTerm: hiding.includes('search') ? '' : f.searchTerm,
+        hiddenLaneIds: hiding.includes('lane') ? f.hiddenLaneIds.filter(id => id !== ev.eventTypeId) : f.hiddenLaneIds
+      }));
+    }
+    this.selectEvent(eventId);
+  }
+
   clearFilters(): void {
     this.filters.set({
       period: 'ALL',
@@ -518,15 +546,20 @@ export class MatchReviewStore {
   }
 
   private evaluateFilters(ev: ReviewEventViewModel, filters: ReviewFilters, term: string): boolean {
-    const matchesPeriod = filters.period === 'ALL' || ev.period === filters.period;
-    const matchesTeam = filters.team === 'ALL' || ev.teamPossession === filters.team;
-    const matchesUnassigned = !filters.onlyUnassigned || ev.isUnassigned;
+    return this.findHidingFilters(ev, filters, term).length === 0;
+  }
+
+  private findHidingFilters(ev: ReviewEventViewModel, filters: ReviewFilters, term: string): HidingFilter[] {
+    const hiding: HidingFilter[] = [];
+    if (filters.period !== 'ALL' && ev.period !== filters.period) hiding.push('period');
+    if (filters.team !== 'ALL' && ev.teamPossession !== filters.team) hiding.push('team');
+    if (filters.onlyUnassigned && !ev.isUnassigned) hiding.push('unassigned');
     const matchesSearch = term === '' ||
       ev.playerName.toLowerCase().includes(term) ||
       ev.eventTypeName.toLowerCase().includes(term);
-    const matchesLane = !filters.hiddenLaneIds.includes(ev.eventTypeId);
-
-    return matchesPeriod && matchesTeam && matchesUnassigned && matchesSearch && matchesLane;
+    if (!matchesSearch) hiding.push('search');
+    if (filters.hiddenLaneIds.includes(ev.eventTypeId)) hiding.push('lane');
+    return hiding;
   }
 
   private getEventPoints(ev: MatchTimelineEventResponse, typesMap?: Map<string, LiveCaptureEventType>): { home: number; away: number } {

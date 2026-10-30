@@ -7,7 +7,8 @@ import { EventTypeService } from '../services/event-type.service';
 import { RosterService } from '../services/roster.service';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { ToastService } from 'src/app/core/services/toast.service';
-import { MatchReviewStore } from './store/match-review.store';
+import { HidingFilter, MatchReviewStore } from './store/match-review.store';
+import { MatchTimelineEventResponse } from '../types/event.types';
 import { PostMatchShellStore } from './store/post-match-shell.store';
 import { PostMatchKpiStripComponent } from './components/post-match-kpi-strip/post-match-kpi-strip.component';
 import { PostMatchTimelineComponent } from './components/post-match-timeline/post-match-timeline.component';
@@ -15,6 +16,14 @@ import { PostMatchTableComponent } from './components/post-match-table/post-matc
 import { PostMatchPanelComponent } from './components/post-match-panel/post-match-panel.component';
 import { PostMatchCreateModalComponent } from './components/post-match-create-modal/post-match-create-modal.component';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
+
+const HIDING_FILTER_LABELS: Record<HidingFilter, string> = {
+  period: 'período',
+  team: 'equipo',
+  unassigned: 'solo sin jugador',
+  search: 'búsqueda',
+  lane: 'jugada oculta'
+};
 
 @Component({
   selector: 'app-post-match',
@@ -58,6 +67,21 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   closeCreateModal(): void {
     this.showCreateModal.set(false);
+  }
+
+  /** Si los filtros activos esconden el evento recién creado, avisa por qué y ofrece mostrarlo. */
+  onEventCreated(event: MatchTimelineEventResponse): void {
+    const hiding = this.store.hiddenByFilters(event.id);
+    if (hiding.length === 0) return;
+
+    const reasons = hiding.map(filter => HIDING_FILTER_LABELS[filter]).join(', ');
+    this.toastService.info(
+      `Se guardó, pero no se ve por los filtros activos (${reasons}).`,
+      'Evento agregado',
+      8000,
+      { label: 'Mostrar evento', handler: () => this.store.revealEvent(event.id) },
+      { label: 'Limpiar filtros', handler: () => this.store.clearFilters() }
+    );
   }
 
   onEditRequested(): void {

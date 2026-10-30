@@ -342,4 +342,35 @@ describe('MatchReviewStore (HU-8.4)', () => {
     expect(store.visibleEvents().map(event => event.id)).toEqual(['a']);
     expect(store.rawEvents().length).withContext('los eventos no se borran').toBe(3);
   });
+
+  describe('hiddenByFilters y revealEvent', () => {
+    const event: MatchTimelineEventResponse = {
+      id: 'ev-1', eventTypeId: 'type-1', eventTypeName: 'Tackle completado',
+      matchTime: 600, absoluteMatchTime: 600, period: 1, teamPossession: 'OWN', origin: 'post_capture'
+    };
+
+    beforeEach(() => store.setEvents([event]));
+
+    it('no informa filtros si el evento se ve', () => {
+      expect(store.hiddenByFilters('ev-1')).toEqual([]);
+    });
+
+    it('informa los filtros que ocultan el evento', () => {
+      store.setPeriod(2);
+      store.setSearchTerm('scrum');
+
+      expect(store.hiddenByFilters('ev-1')).toEqual(['period', 'search']);
+    });
+
+    it('revealEvent limpia solo los filtros que lo ocultan y lo selecciona', () => {
+      store.setPeriod(2);
+      store.setTeamFilter('OWN');
+
+      store.revealEvent('ev-1');
+
+      expect(store.filters().period).toBe('ALL');
+      expect(store.filters().team).withContext('un filtro que no lo oculta se conserva').toBe('OWN');
+      expect(store.selectedEventId()).toBe('ev-1');
+    });
+  });
 });

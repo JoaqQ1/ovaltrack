@@ -42,5 +42,5 @@
   </ng-container>
 
   <!-- Modal de Alta de Eventos Post-Partido (HU-8.4) -->
-  <app-post-match-create-modal [isOpen]="showCreateModal()" [matchId]="matchId" (close)="closeCreateModal()" />
+  <app-post-match-create-modal [isOpen]="showCreateModal()" [matchId]="matchId" (close)="closeCreateModal()" (created)="onEventCreated($event)" />
 </div>
