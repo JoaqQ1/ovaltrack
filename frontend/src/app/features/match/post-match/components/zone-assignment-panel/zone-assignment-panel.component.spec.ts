@@ -1,9 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { of } from 'rxjs';
+import { EventTypeService } from '../../../services/event-type.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { ZoneAssignmentPanelComponent } from './zone-assignment-panel.component';
 import { MatchZonesStore } from '../../store/match-zones.store';
+import { MatchTimelineEventResponse } from '../../../types/event.types';
 import { MatchZonesResponse, ZoneAssignmentResponse } from '../../../types/zone.types';
 
 describe('ZoneAssignmentPanelComponent', () => {
@@ -14,6 +17,7 @@ describe('ZoneAssignmentPanelComponent', () => {
   let toast: ToastService;
 
   const zonesUrl = (r: { url: string }) => r.url.endsWith('/matches/match-1/zones');
+  const eventsUrl = (r: { url: string }) => r.url.includes('/event/match/post-match');
   const emptyResponse: MatchZonesResponse = { assignments: [], summary: { cells: [], unzonedEventCount: 0 } };
   const existingZone: ZoneAssignmentResponse = {
     id: 'zone-1', matchId: 'match-1', period: 1, startMinute: 10, endMinute: 25, row: 2, col: 3
@@ -24,8 +28,21 @@ describe('ZoneAssignmentPanelComponent', () => {
   const saveButton = (): HTMLButtonElement => query<HTMLButtonElement>('[data-testid="zone-save"]') as HTMLButtonElement;
   const hint = (): string => query('[data-testid="save-hint"]')?.textContent?.trim() ?? '';
 
-  function render(assignments: ZoneAssignmentResponse[] = []): void {
-    store.assignments.set(assignments);
+  const ev = (id: string, period: 1 | 2, minute: number): MatchTimelineEventResponse => ({
+    id, eventTypeId: 't', eventTypeName: 'Tackle', matchTime: minute * 60, period, teamPossession: 'OWN'
+  });
+
+  /** Tras escribir, el store recarga tramos y eventos. */
+  function flushReload(assignments: ZoneAssignmentResponse[] = []): void {
+    http.expectOne(zonesUrl).flush({ assignments, summary: { cells: [], unzonedEventCount: 0 } });
+    http.expectOne(eventsUrl).flush([]);
+  }
+
+  /** Carga el store como lo hace la página (tramos + eventos) y renderiza el panel. */
+  function render(assignments: ZoneAssignmentResponse[] = [], events: MatchTimelineEventResponse[] = []): void {
+    store.load('match-1').subscribe();
+    http.expectOne(zonesUrl).flush({ assignments, summary: { cells: [], unzonedEventCount: 0 } });
+    http.expectOne(eventsUrl).flush(events);
     fixture.componentRef.setInput('matchId', 'match-1');
     fixture.detectChanges();
   }
@@ -38,7 +55,11 @@ describe('ZoneAssignmentPanelComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ZoneAssignmentPanelComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: EventTypeService, useValue: { getAll: () => of([]) } },
+      ],
     }).compileComponents();
 
     store = TestBed.inject(MatchZonesStore);
@@ -138,6 +159,71 @@ describe('ZoneAssignmentPanelComponent', () => {
     });
   });
 
+  describe('vista previa de eventos', () => {
+    const events = [ev('1', 1, 12), ev('2', 1, 20), ev('3', 1, 30), ev('4', 2, 50)];
+
+    it('informa cuántos eventos se vincularán con el rango del formulario', () => {
+      render([], events);
+      component.startMinute = 10;
+      component.endMinute = 25;
+      fixture.detectChanges();
+
+      expect(query('[data-testid="linked-preview"]')?.textContent).toContain('Se vincularán 2 eventos');
+    });
+
+    it('usa singular con un solo evento y avisa con cero', () => {
+      render([], events);
+      component.startMinute = 29;
+      component.endMinute = 31;
+      fixture.detectChanges();
+      expect(query('[data-testid="linked-preview"]')?.textContent).toContain('1 evento');
+
+      component.startMinute = 1;
+      component.endMinute = 3;
+      fixture.detectChanges();
+      expect(query('[data-testid="linked-preview"]')?.textContent).toContain('0 eventos');
+    });
+
+    it('no muestra la vista previa mientras el rango no sea válido', () => {
+      render([], events);
+      component.startMinute = 20;
+      component.endMinute = 10;
+      fixture.detectChanges();
+
+      expect(query('[data-testid="linked-preview"]')).toBeNull();
+    });
+
+    it('al reducir un tramo en edición avisa cuántos eventos pasan a Sin zona', () => {
+      render([existingZone], events);
+      component.startEdit(existingZone);
+      component.endMinute = 15;
+      fixture.detectChanges();
+
+      expect(query('[data-testid="released-preview"]')?.textContent).toContain('1 evento pasará');
+    });
+
+    it('prefill carga el rango de un hueco y sale del modo edición', () => {
+      render([existingZone], events);
+      component.startEdit(existingZone);
+
+      component.prefill({ period: 2, startMinute: 40, endMinute: 55 });
+
+      expect([component.period, component.startMinute, component.endMinute, component.editingId]).toEqual([2, 40, 55, null]);
+    });
+  });
+
+  describe('modo lectura', () => {
+    it('oculta el formulario y las acciones de la lista', () => {
+      fixture.componentRef.setInput('readOnly', true);
+      render([existingZone]);
+
+      expect(query('[data-testid="zone-save"]')).toBeNull();
+      expect(query('button[aria-label="Eliminar tramo"]')).toBeNull();
+      expect((query('[data-testid="zone-edit"]') as HTMLButtonElement).disabled).toBeTrue();
+      expect(queryAll('[data-testid="zone-item"]').length).toBe(1);
+    });
+  });
+
   describe('guardado', () => {
     it('crea el tramo con el payload del formulario, recarga y avisa con un toast', () => {
       render();
@@ -151,10 +237,7 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect(post.request.body).toEqual({ row: 2, col: 3, period: 1, startMinute: 0, endMinute: 5 });
       post.flush({ ...existingZone, startMinute: 0, endMinute: 5 });
 
-      http.expectOne(zonesUrl).flush({
-        assignments: [{ ...existingZone, startMinute: 0, endMinute: 5 }],
-        summary: { cells: [], unzonedEventCount: 0 },
-      });
+      flushReload([{ ...existingZone, startMinute: 0, endMinute: 5 }]);
       fixture.detectChanges();
 
       expect(success).toHaveBeenCalledWith('Tramo guardado');
@@ -166,10 +249,7 @@ describe('ZoneAssignmentPanelComponent', () => {
       selectCell(2, 3);
       saveButton().click();
       http.expectOne(zonesUrl).flush({ ...existingZone, startMinute: 0, endMinute: 5 });
-      http.expectOne(zonesUrl).flush({
-        assignments: [{ ...existingZone, startMinute: 0, endMinute: 5 }],
-        summary: { cells: [], unzonedEventCount: 0 },
-      });
+      flushReload([{ ...existingZone, startMinute: 0, endMinute: 5 }]);
 
       expect(component.selectedCell()).toBeNull();
       expect([component.startMinute, component.endMinute]).toEqual([5, 10]);
@@ -239,11 +319,12 @@ describe('ZoneAssignmentPanelComponent', () => {
     });
 
     it('eliminar pide confirmación inline antes de llamar al backend', () => {
-      render([existingZone]);
+      render([existingZone], [ev('1', 1, 12), ev('2', 1, 20), ev('3', 1, 30)]);
 
       query<HTMLButtonElement>('button[aria-label="Eliminar tramo"]')?.click();
       fixture.detectChanges();
       expect(query('[data-testid="zone-delete-confirm"]')?.textContent).toContain('Sin zona');
+      expect(query('[data-testid="delete-impact"]')?.textContent).toContain('2 eventos pasan');
       http.expectNone(r => r.method === 'DELETE');
 
       query('[data-testid="zone-delete-yes"]')?.click();
@@ -251,7 +332,7 @@ describe('ZoneAssignmentPanelComponent', () => {
       const del = http.expectOne(r => r.url.endsWith('/matches/match-1/zones/zone-1'));
       expect(del.request.method).toBe('DELETE');
       del.flush(null, { status: 204, statusText: 'No Content' });
-      http.expectOne(zonesUrl).flush(emptyResponse);
+      flushReload();
     });
 
     it('si falla el borrado muestra el error en la lista', () => {

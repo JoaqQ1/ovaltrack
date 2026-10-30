@@ -1,0 +1,33 @@
+<div class="timeline" role="group" aria-label="Tramos del partido de 0 a 80 minutos">
+  <div class="halves" aria-hidden="true">
+    <span class="half">1T · 0–40′</span>
+    <span class="half">2T · 40–80′</span>
+  </div>
+
+  <div class="track">
+    <button *ngFor="let gap of gaps()" type="button" class="gap" data-testid="timeline-gap"
+            [style.left.%]="gap.left" [style.width.%]="gap.width"
+            [disabled]="readOnly()" [attr.aria-label]="gap.aria" [title]="gap.aria"
+            (click)="selectGap(gap.selection)">
+      <span class="gap-label">Sin zona</span>
+    </button>
+
+    <button *ngFor="let bar of segments()" type="button" class="segment" data-testid="timeline-segment"
+            [style.left.%]="bar.left" [style.width.%]="bar.width"
+            [disabled]="readOnly()" [attr.aria-label]="bar.aria" [title]="bar.aria"
+            (click)="selectSegment(bar.assignment)">
+      <span class="segment-label">{{ bar.label }}</span>
+    </button>
+
+    <span class="half-mark" [style.left.%]="halfMark" aria-hidden="true"></span>
+  </div>
+
+  <div class="ticks" aria-hidden="true">
+    <span *ngFor="let tick of ticks" class="tick" [style.left.%]="tick.left">{{ tick.minute }}′</span>
+  </div>
+
+  <div class="legend">
+    <span class="legend-item"><i class="swatch swatch-segment"></i> Tramo con zona</span>
+    <span class="legend-item"><i class="swatch swatch-gap"></i> Sin zona{{ readOnly() ? '' : ' (tocá para completar)' }}</span>
+  </div>
+</div>

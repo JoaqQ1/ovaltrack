@@ -1,4 +1,5 @@
-import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZonePeriod } from '../../types/zone.types';
+import { MatchTimelineEventResponse } from '../../types/event.types';
+import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZoneCellSummary, ZonePeriod } from '../../types/zone.types';
 import { zoneLabel } from './zone-grid';
 
 export interface MinuteRange {
@@ -60,4 +61,68 @@ export function findOverlap<T extends RangeLike & { id: string }>(
 /** Descripción corta de un tramo para mensajes, ej. "1T 10'–25' (C3)". */
 export function describeSegment(a: ZoneAssignmentResponse): string {
   return `${a.period}T ${a.startMinute}'–${a.endMinute}' (${zoneLabel(a)})`;
+}
+
+// --- Eventos por zona (derivados de `event.zone`, que calcula el backend) ---
+
+export type ZonePeriodFilter = 'ALL' | ZonePeriod;
+
+export type ZoneEvent = Pick<MatchTimelineEventResponse, 'id' | 'period' | 'matchTime' | 'zone'>;
+
+const SECONDS_PER_MINUTE = 60;
+
+function inPeriod<T extends ZoneEvent>(events: T[], filter: ZonePeriodFilter): T[] {
+  return filter === 'ALL' ? events : events.filter(event => event.period === filter);
+}
+
+/** Orden cronológico: por tiempo y, dentro de él, por minuto de juego. */
+export function sortChronologically<T extends ZoneEvent>(events: T[]): T[] {
+  return [...events].sort((a, b) => a.period - b.period || a.matchTime - b.matchTime);
+}
+
+/** Cantidad de eventos por celda; solo informa las celdas con al menos un evento. */
+export function countByCell(events: ZoneEvent[], filter: ZonePeriodFilter): ZoneCellSummary[] {
+  const counts = new Map<string, ZoneCellSummary>();
+  for (const event of inPeriod(events, filter)) {
+    if (!event.zone) continue;
+    const key = `${event.zone.row}-${event.zone.col}`;
+    const entry = counts.get(key) ?? { row: event.zone.row, col: event.zone.col, eventCount: 0 };
+    entry.eventCount++;
+    counts.set(key, entry);
+  }
+  return [...counts.values()].sort((a, b) => a.row - b.row || a.col - b.col);
+}
+
+export function unzonedEvents<T extends ZoneEvent>(events: T[], filter: ZonePeriodFilter): T[] {
+  return sortChronologically(inPeriod(events, filter).filter(event => !event.zone));
+}
+
+export function eventsInCell<T extends ZoneEvent>(events: T[], cell: ZoneCellRef, filter: ZonePeriodFilter): T[] {
+  return sortChronologically(
+    inPeriod(events, filter).filter(event => event.zone?.row === cell.row && event.zone?.col === cell.col)
+  );
+}
+
+/** Eventos que caerían en un rango: mismo tiempo y minuto [inicio, fin), igual que el resolver del backend. */
+export function eventsInRange<T extends ZoneEvent>(range: RangeLike, events: T[]): T[] {
+  return events.filter(event =>
+    event.period === range.period &&
+    event.matchTime >= range.startMinute * SECONDS_PER_MINUTE &&
+    event.matchTime < range.endMinute * SECONDS_PER_MINUTE
+  );
+}
+
+/** Eventos que hoy tienen zona gracias al rango anterior y la perderían con el nuevo. */
+export function eventsReleasedByEdit<T extends ZoneEvent>(previous: RangeLike, next: RangeLike, events: T[]): T[] {
+  const stillLinked = new Set(eventsInRange(next, events).map(event => event.id));
+  return eventsInRange(previous, events).filter(event => !stillLinked.has(event.id));
+}
+
+/** Porcentaje (0–100) de los minutos del filtro que tienen un tramo asignado. */
+export function coveragePercent(assignments: RangeLike[], filter: ZonePeriodFilter): number {
+  const total = filter === 'ALL' ? ZONE_HALF_MINUTES * 2 : ZONE_HALF_MINUTES;
+  const covered = assignments
+    .filter(a => filter === 'ALL' || a.period === filter)
+    .reduce((sum, a) => sum + (a.endMinute - a.startMinute), 0);
+  return Math.min(100, Math.round((covered / total) * 100));
 }

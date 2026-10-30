@@ -1,7 +1,7 @@
 <section class="zone-panel">
 
   <!-- Formulario primero: es la tarea principal -->
-  <div class="panel-card">
+  <div class="panel-card" *ngIf="!readOnly">
     <h2 class="section-title">{{ editingId ? 'Editar tramo' : 'Nuevo tramo' }}</h2>
     <p class="steps-hint">1. Tocá una zona en la cancha · 2. Definí el rango · 3. Guardá</p>
 
@@ -59,6 +59,13 @@
           </div>
         </div>
 
+        <p *ngIf="linkedEventCount !== null" class="preview" data-testid="linked-preview">
+          Se vincularán <strong>{{ linkedEventCount }}</strong> {{ linkedEventCount === 1 ? 'evento' : 'eventos' }}
+        </p>
+        <p *ngIf="releasedEventCount > 0" class="preview preview-warn" data-testid="released-preview">
+          {{ releasedEventCount }} {{ releasedEventCount === 1 ? 'evento pasará' : 'eventos pasarán' }} a "Sin zona"
+        </p>
+
         <p class="range-note">
           El minuto de inicio cuenta y el de fin no: 10–25 y 25–40 no se pisan. En el 2T los minutos siguen de 40 a 80.
           Los eventos después del 40′ (1T) o del 80′ (2T), por tiempo añadido, quedan sin zona.
@@ -111,7 +118,7 @@
           [class.is-editing]="zone.id === editingId">
         <button type="button" class="zone-item-main" data-testid="zone-edit"
                 [attr.aria-label]="'Editar tramo ' + segmentName(zone)"
-                [disabled]="store.isSaving()" (click)="startEdit(zone)">
+                [disabled]="store.isSaving() || readOnly" (click)="startEdit(zone)">
           <span class="zone-badge">{{ label(zone) }}</span>
           <span class="zone-text">
             <span class="zone-name">{{ rowName(zone.row) }} · {{ columnName(zone.col) }}</span>
@@ -119,7 +126,7 @@
           </span>
         </button>
 
-        <div class="zone-item-actions" *ngIf="pendingDeleteId !== zone.id">
+        <div class="zone-item-actions" *ngIf="!readOnly && pendingDeleteId !== zone.id">
           <button type="button" class="btn-icon btn-icon-danger" aria-label="Eliminar tramo" title="Eliminar tramo"
                   (click)="askDelete(zone.id)" [disabled]="store.isSaving()">
             <i class="bi bi-trash"></i>
@@ -127,7 +134,7 @@
         </div>
 
         <div class="zone-item-actions confirm" *ngIf="pendingDeleteId === zone.id" data-testid="zone-delete-confirm">
-          <span class="confirm-text">¿Eliminar? Sus eventos pasan a "Sin zona".</span>
+          <span class="confirm-text" data-testid="delete-impact">¿Eliminar? {{ eventsOf(zone) }} {{ eventsOf(zone) === 1 ? 'evento pasa' : 'eventos pasan' }} a "Sin zona".</span>
           <button type="button" class="btn btn-outline btn-sm-touch" (click)="cancelDelete()"
                   [disabled]="store.isSaving()">No</button>
           <button type="button" class="btn btn-delete btn-sm-touch" (click)="confirmDelete()"

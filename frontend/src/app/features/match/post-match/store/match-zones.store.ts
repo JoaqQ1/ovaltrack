@@ -1,29 +1,53 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { Observable, finalize, map, switchMap, tap } from 'rxjs';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, catchError, finalize, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import { EventService } from '../../services/event.service';
+import { EventTypeService } from '../../services/event-type.service';
 import { ZoneService } from '../../services/zone.service';
-import { MatchZonesResponse, ZoneAssignmentRequest, ZoneAssignmentResponse, ZoneSummary } from '../../types/zone.types';
+import { MatchTimelineEventResponse } from '../../types/event.types';
+import { ZoneAssignmentRequest, ZoneAssignmentResponse } from '../../types/zone.types';
 
-const EMPTY_SUMMARY: ZoneSummary = { cells: [], unzonedEventCount: 0 };
-
-/** Estado de las zonas del partido en revisión. Sin UX: los errores los maneja quien lo consume. */
+/**
+ * Estado de las zonas del partido en revisión: tramos asignados y eventos con su zona.
+ * La zona de cada evento la calcula el backend; los conteos de la pantalla se derivan de estos eventos,
+ * así hay una única fuente de verdad. Sin UX: los errores los maneja quien lo consume.
+ */
 @Injectable({ providedIn: 'root' })
 export class MatchZonesStore {
   private readonly zoneService = inject(ZoneService);
+  private readonly eventService = inject(EventService);
+  private readonly eventTypeService = inject(EventTypeService);
 
   readonly assignments = signal<ZoneAssignmentResponse[]>([]);
-  readonly summary = signal<ZoneSummary>(EMPTY_SUMMARY);
+  private readonly rawEvents = signal<MatchTimelineEventResponse[]>([]);
+  private readonly activeTypeIds = signal<Set<string> | null>(null);
   readonly isLoading = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
 
-  load(matchId: string): Observable<MatchZonesResponse> {
+  /** Mismos eventos que la revisión: se ocultan los de tipos dados de baja en el catálogo. */
+  readonly events = computed<MatchTimelineEventResponse[]>(() => {
+    const active = this.activeTypeIds();
+    const raw = this.rawEvents();
+    return active === null ? raw : raw.filter(event => active.has(event.eventTypeId));
+  });
+
+  load(matchId: string): Observable<void> {
     this.isLoading.set(true);
-    return this.zoneService.list(matchId).pipe(
-      tap(response => this.applyResponse(response)),
+    return forkJoin({
+      zones: this.zoneService.list(matchId),
+      events: this.eventService.getByMatchPostMatch(matchId),
+      types: this.eventTypeService.getAll()
+    }).pipe(
+      tap(({ zones, events, types }) => {
+        this.assignments.set(zones.assignments);
+        this.rawEvents.set(events);
+        this.activeTypeIds.set(types.length > 0 ? new Set(types.map(type => type.id)) : null);
+      }),
+      map(() => undefined),
       finalize(() => this.isLoading.set(false))
     );
   }
 
-  /** Crea la zona o, si se indica `zoneId`, la modifica; luego refresca la lista y el resumen. */
+  /** Crea el tramo o, si se indica `zoneId`, lo modifica; luego refresca tramos y eventos. */
   save(matchId: string, request: ZoneAssignmentRequest, zoneId?: string): Observable<void> {
     const write$ = zoneId
       ? this.zoneService.update(matchId, zoneId, request)
@@ -37,21 +61,24 @@ export class MatchZonesStore {
 
   reset(): void {
     this.assignments.set([]);
-    this.summary.set(EMPTY_SUMMARY);
+    this.rawEvents.set([]);
+    this.activeTypeIds.set(null);
   }
 
   private runAndReload(matchId: string, write$: Observable<unknown>): Observable<void> {
     this.isSaving.set(true);
     return write$.pipe(
-      switchMap(() => this.zoneService.list(matchId)),
-      tap(response => this.applyResponse(response)),
+      switchMap(() => forkJoin({
+        zones: this.zoneService.list(matchId),
+        // Si solo falla la recarga de eventos, el cambio ya se guardó: se conservan los que había.
+        events: this.eventService.getByMatchPostMatch(matchId).pipe(catchError(() => of(this.rawEvents())))
+      })),
+      tap(({ zones, events }) => {
+        this.assignments.set(zones.assignments);
+        this.rawEvents.set(events);
+      }),
       map(() => undefined),
       finalize(() => this.isSaving.set(false))
     );
-  }
-
-  private applyResponse(response: MatchZonesResponse): void {
-    this.assignments.set(response.assignments);
-    this.summary.set(response.summary ?? EMPTY_SUMMARY);
   }
 }

@@ -1,4 +1,7 @@
-import { describeSegment, findGaps, findOverlap, periodRange, suggestRange } from './zone-stats';
+import {
+  ZoneEvent, countByCell, coveragePercent, describeSegment, eventsInCell, eventsInRange, eventsReleasedByEdit,
+  findGaps, findOverlap, periodRange, sortChronologically, suggestRange, unzonedEvents
+} from './zone-stats';
 import { ZoneAssignmentResponse } from '../../types/zone.types';
 
 describe('zone-stats', () => {
@@ -93,5 +96,108 @@ describe('zone-stats', () => {
 
   it('describe un tramo con su zona', () => {
     expect(describeSegment(zone('a', 1, 10, 25))).toBe("1T 10'–25' (C3)");
+  });
+
+  describe('eventos por zona', () => {
+    const event = (id: string, period: 1 | 2, minute: number, zone: { row: number; col: number } | null = null): ZoneEvent =>
+      ({ id, period, matchTime: minute * 60, zone });
+
+    const events = [
+      event('a', 1, 12, { row: 2, col: 3 }),
+      event('b', 1, 18, { row: 2, col: 3 }),
+      event('c', 1, 35),
+      event('d', 2, 50, { row: 3, col: 6 }),
+      event('e', 2, 70)
+    ];
+
+    it('cuenta eventos por celda sin incluir los eventos sin zona', () => {
+      expect(countByCell(events, 'ALL')).toEqual([
+        { row: 2, col: 3, eventCount: 2 },
+        { row: 3, col: 6, eventCount: 1 }
+      ]);
+    });
+
+    it('el filtro de tiempo limita los conteos', () => {
+      expect(countByCell(events, 1)).toEqual([{ row: 2, col: 3, eventCount: 2 }]);
+      expect(countByCell(events, 2)).toEqual([{ row: 3, col: 6, eventCount: 1 }]);
+    });
+
+    it('devuelve los eventos sin zona ordenados y respetando el filtro', () => {
+      expect(unzonedEvents(events, 'ALL').map(e => e.id)).toEqual(['c', 'e']);
+      expect(unzonedEvents(events, 2).map(e => e.id)).toEqual(['e']);
+    });
+
+    it('devuelve los eventos de una celda', () => {
+      expect(eventsInCell(events, { row: 2, col: 3 }, 'ALL').map(e => e.id)).toEqual(['a', 'b']);
+      expect(eventsInCell(events, { row: 2, col: 3 }, 2)).toEqual([]);
+    });
+
+    it('sin eventos todo queda vacío', () => {
+      expect(countByCell([], 'ALL')).toEqual([]);
+      expect(unzonedEvents([], 'ALL')).toEqual([]);
+    });
+
+    it('ordena cronológicamente por tiempo y minuto', () => {
+      const shuffled = [event('x', 2, 41), event('y', 1, 39), event('z', 1, 2)];
+
+      expect(sortChronologically(shuffled).map(e => e.id)).toEqual(['z', 'y', 'x']);
+    });
+
+    describe('eventsInRange (misma regla que el backend)', () => {
+      const boundary = [event('start', 1, 10), event('inside', 1, 15), event('end', 1, 25), event('other', 2, 15 + 40)];
+
+      it('incluye el inicio y excluye el fin', () => {
+        const ids = eventsInRange({ period: 1, startMinute: 10, endMinute: 25 }, boundary).map(e => e.id);
+
+        expect(ids).toEqual(['start', 'inside']);
+      });
+
+      it('no mezcla tiempos: el 2T usa minutos acumulados', () => {
+        expect(eventsInRange({ period: 2, startMinute: 40, endMinute: 60 }, boundary).map(e => e.id)).toEqual(['other']);
+        expect(eventsInRange({ period: 1, startMinute: 40, endMinute: 60 }, boundary)).toEqual([]);
+      });
+
+      it('un evento a los 25:00 exactos pertenece al tramo siguiente', () => {
+        expect(eventsInRange({ period: 1, startMinute: 25, endMinute: 40 }, boundary).map(e => e.id)).toEqual(['end']);
+      });
+    });
+
+    describe('eventsReleasedByEdit', () => {
+      it('informa los eventos que perderían la zona al reducir el tramo', () => {
+        const released = eventsReleasedByEdit(
+          { period: 1, startMinute: 10, endMinute: 25 },
+          { period: 1, startMinute: 10, endMinute: 15 },
+          events
+        );
+
+        expect(released.map(e => e.id)).toEqual(['b']);
+      });
+
+      it('ampliar el tramo no libera ningún evento', () => {
+        expect(eventsReleasedByEdit(
+          { period: 1, startMinute: 10, endMinute: 25 },
+          { period: 1, startMinute: 5, endMinute: 30 },
+          events
+        )).toEqual([]);
+      });
+    });
+  });
+
+  describe('coveragePercent', () => {
+    it('sin tramos la cobertura es 0', () => {
+      expect(coveragePercent([], 'ALL')).toBe(0);
+    });
+
+    it('calcula sobre 80 minutos en total y sobre 40 por tiempo', () => {
+      const zones = [zone('a', 1, 0, 20), zone('b', 2, 40, 80)];
+
+      expect(coveragePercent(zones, 'ALL')).toBe(75);
+      expect(coveragePercent(zones, 1)).toBe(50);
+      expect(coveragePercent(zones, 2)).toBe(100);
+    });
+
+    it('el partido completamente cubierto es 100', () => {
+      expect(coveragePercent([zone('a', 1, 0, 40), zone('b', 2, 40, 80)], 'ALL')).toBe(100);
+    });
   });
 });

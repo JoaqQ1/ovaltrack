@@ -34,17 +34,56 @@
     </div>
   } @else {
     <div class="zones-layout">
-      <div class="field-card">
-        <h2 class="section-title">Eventos en la cancha</h2>
-        <app-rugby-field
-          [cells]="zonesStore.summary().cells"
-          [unzonedEventCount]="zonesStore.summary().unzonedEventCount"
-          [selectedCell]="selectedCell()"
-          [ownClubName]="ownClubName()"
-          (cellSelected)="onCellSelected($event)" />
+      <div class="zones-main">
+        <div class="field-card">
+          <!-- Barra de control: modo, filtro de tiempo e indicadores -->
+          <div class="toolbar">
+            <div class="segmented" role="group" aria-label="Modo">
+              <button type="button" class="segment" data-testid="mode-assign"
+                      [class.is-active]="mode() === 'assign'" [attr.aria-pressed]="mode() === 'assign'"
+                      (click)="setMode('assign')"><i class="bi bi-pencil-square"></i> Asignar zona</button>
+              <button type="button" class="segment" data-testid="mode-view"
+                      [class.is-active]="mode() === 'view'" [attr.aria-pressed]="mode() === 'view'"
+                      (click)="setMode('view')"><i class="bi bi-eye"></i> Ver eventos</button>
+            </div>
+
+            <div class="segmented" role="group" aria-label="Tiempo">
+              <button *ngFor="let option of periodOptions" type="button" class="segment" data-testid="period-filter"
+                      [class.is-active]="periodFilter() === option.value" [attr.aria-pressed]="periodFilter() === option.value"
+                      (click)="setPeriodFilter(option.value)">{{ option.label }}</button>
+            </div>
+
+            <button type="button" class="chip chip-warn" data-testid="unzoned-chip"
+                    [class.is-on]="showUnzoned()" (click)="showUnzonedEvents()"
+                    [disabled]="unzonedCount() === 0">
+              Sin zona: {{ unzonedCount() }} {{ unzonedCount() === 1 ? 'evento' : 'eventos' }}
+            </button>
+            <span class="chip chip-info" data-testid="coverage-chip">Cobertura <strong>{{ coverage() }}%</strong></span>
+          </div>
+
+          <app-rugby-field
+            [cells]="cellCounts()"
+            [unzonedEventCount]="0"
+            [selectedCell]="fieldSelectedCell()"
+            [ownClubName]="ownClubName()"
+            [mode]="mode()"
+            (cellSelected)="onCellSelected($event)" />
+        </div>
+
+        <div class="field-card">
+          <h2 class="section-title">Tramos del partido</h2>
+          <app-zone-timeline [assignments]="zonesStore.assignments()" [readOnly]="mode() === 'view'"
+                             (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)" />
+        </div>
       </div>
 
-      <app-zone-assignment-panel class="zones-side" [matchId]="matchId()" [(selectedCell)]="selectedCell" />
+      <div class="zones-side">
+        @if (mode() === 'view') {
+          <app-zone-events-list [title]="listTitle()" [subtitle]="listSubtitle()" [events]="listedEvents()"
+                                [hint]="listHint()" emptyText="No hay eventos en esta selección." />
+        }
+        <app-zone-assignment-panel [matchId]="matchId()" [readOnly]="mode() === 'view'" [(selectedCell)]="selectedCell" />
+      </div>
     </div>
   }
 </section>

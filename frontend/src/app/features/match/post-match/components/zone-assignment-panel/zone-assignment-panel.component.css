@@ -134,6 +134,8 @@
   background-color: #fafdf9;
 }
 
+.preview { margin: 10px 0 0; font-size: 13px; color: var(--success, #2e7d32); font-weight: 600; }
+.preview-warn { margin-top: 6px; color: var(--warning, #8a5700); }
 .range-note { margin: 10px 0 0; font-size: 12px; line-height: 1.4; color: var(--text-secondary, #3b4e33); }
 
 /* Mensajes */

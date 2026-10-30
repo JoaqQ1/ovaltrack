@@ -138,3 +138,13 @@ Si algo no coincide, **el código manda**. Corregir el doc cuando se detecte:
 - Responder en español. Commits en español siguiendo el estilo existente (`feat:`, `update(...)`, `refactor(...)`).
 - Antes de proponer cambios, verificar en el código que clases/archivos/endpoints citados existan.
 - Cambios mínimos y enfocados; no crear archivos de documentación salvo que se pidan.
+
+## 12. Zonas de cancha (post-partido)
+
+- **Vocabulario**: *tramo* = rango de tiempo + zona (entidad `ZoneAssignment`, tabla `match_zone_assignments`); *zona* = celda de la cancha. UI: "Nuevo tramo", "Tramos asignados".
+- **Grilla 3x6 fija** (fuente única: `frontend/.../post-match/utils/zone-grid.ts`): columnas `10/22/28/28/22/10 m` (in-goal propio, 22 propio, campo propio, campo rival, 22 rival, in-goal rival) y filas `15/40/15 m` (izquierda, centro, derecha) alineadas con las líneas de 15 m. Etiqueta de zona = letra de fila + columna (`I1`…`D6`).
+- **Vista relativa**: siempre se ataca hacia la derecha; en el 2T **no se espeja**. Izquierda/derecha se leen mirando al ataque.
+- **Rangos**: minutos acumulados de partido, 1T 0–40 y 2T 40–80, semiabiertos `[inicio, fin)` (el minuto 25 pertenece al tramo que empieza en 25). Sin solapes dentro de un mismo tiempo; solo editables con el partido `FINISHED`.
+- **La zona del evento se deriva**, no se guarda: `EventZoneResolver` (backend) la calcula y `GET /event/match/post-match` la expone como `zone: {row, col} | null`. La pantalla deriva conteos, cobertura y listas de esos eventos (una sola fuente de verdad).
+- **Límite conocido**: el tiempo añadido (eventos después del 40' o del 80') queda "Sin zona".
+- **API** `/matches/{matchId}/zones`: `GET` (tramos + resumen), `POST` 201, `PUT /{zoneId}`, `DELETE /{zoneId}` 204; 409 por partido no finalizado, rango/celda inválidos o solape (el mensaje nombra el tramo en conflicto). Ruta frontend: `/post-match/:id/zones`.

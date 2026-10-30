@@ -6,7 +6,7 @@ import { ToastService } from 'src/app/core/services/toast.service';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { validateZoneForm } from '../../utils/zone-form.utils';
 import { ZONE_COLUMN_NAMES, ZONE_ROW_NAMES, describeZone, zoneLabel } from '../../utils/zone-grid';
-import { describeSegment, findOverlap, periodRange, suggestRange } from '../../utils/zone-stats';
+import { describeSegment, eventsInRange, eventsReleasedByEdit, findOverlap, periodRange, suggestRange } from '../../utils/zone-stats';
 import { ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 
 type RangeField = 'start' | 'end';
@@ -28,6 +28,8 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   @Input() matchId = '';
+  /** En el modo "Ver eventos" el panel solo muestra los tramos: sin formulario ni acciones. */
+  @Input() readOnly = false;
 
   /** Zona elegida en la cancha (enlace bidireccional con la página). */
   readonly selectedCell = model<ZoneCellRef | null>(null);
@@ -48,6 +50,16 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.applySuggestion();
+  }
+
+  /** Precarga el formulario con un rango (ej. al tocar un hueco de la línea de tiempo). */
+  prefill(range: { period: ZonePeriod; startMinute: number; endMinute: number }): void {
+    this.editingId = null;
+    this.pendingDeleteId = null;
+    this.serverError = null;
+    this.period = range.period;
+    this.startMinute = range.startMinute;
+    this.endMinute = range.endMinute;
   }
 
   setPeriod(period: ZonePeriod): void {
@@ -88,6 +100,23 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
     const clash = findOverlap(this.currentRange(), this.store.assignments(), this.editingId);
     return clash ? `Choca con el tramo ${describeSegment(clash)}.` : null;
+  }
+
+  /** Eventos que quedarían vinculados con el rango actual; null mientras el rango no sea válido. */
+  get linkedEventCount(): number | null {
+    return this.rangeIsUsable() ? eventsInRange(this.currentRange(), this.store.events()).length : null;
+  }
+
+  /** Al editar: eventos que hoy tienen zona gracias a este tramo y la perderían con el nuevo rango. */
+  get releasedEventCount(): number {
+    const original = this.editingId ? this.store.assignments().find(a => a.id === this.editingId) : undefined;
+    if (!original || !this.rangeIsUsable()) return 0;
+    return eventsReleasedByEdit(original, this.currentRange(), this.store.events()).length;
+  }
+
+  /** Eventos de un tramo: son los que pasan a "Sin zona" si se elimina. */
+  eventsOf(zone: ZoneAssignmentResponse): number {
+    return eventsInRange(zone, this.store.events()).length;
   }
 
   startEdit(zone: ZoneAssignmentResponse): void {
@@ -169,6 +198,13 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
   segmentName(zone: ZoneAssignmentResponse): string {
     return `${zone.period}T ${zone.startMinute}′–${zone.endMinute}′, ${zoneLabel(zone)}`;
+  }
+
+  private rangeIsUsable(): boolean {
+    const { startMinute, endMinute } = this;
+    if (startMinute === null || endMinute === null || !Number.isInteger(startMinute) || !Number.isInteger(endMinute)) return false;
+    const bounds = periodRange(this.period);
+    return startMinute < endMinute && startMinute >= bounds.start && endMinute <= bounds.end;
   }
 
   private currentRange(): { period: ZonePeriod; startMinute: number; endMinute: number } {
