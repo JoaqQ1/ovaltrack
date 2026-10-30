@@ -27,7 +27,7 @@
 
     <button *ngFor="let bar of segments()" type="button" class="segment" data-testid="timeline-segment"
             [class.terr-rival]="bar.territory.side === 'rival'" [style.--terr-w]="bar.territory.weight"
-            [class.is-linked]="isLinked(bar.assignment)" [class.is-dimmed]="!!highlightCell() && !isLinked(bar.assignment)"
+            [class.is-new]="bar.isNew" [class.is-linked]="isLinked(bar.assignment)" [class.is-dimmed]="!!highlightCell() && !isLinked(bar.assignment)"
             (mouseenter)="segmentHover.emit(bar.assignment.id)" (mouseleave)="segmentHover.emit(null)"
             (focus)="segmentHover.emit(bar.assignment.id)" (blur)="segmentHover.emit(null)"
             [class.is-conflict]="bar.assignment.id === conflictId()"

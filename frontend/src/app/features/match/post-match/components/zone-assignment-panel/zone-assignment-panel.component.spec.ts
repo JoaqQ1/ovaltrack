@@ -341,6 +341,16 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect(queryAll('[data-testid="zone-item"]').length).toBe(1);
     });
 
+    it('al guardar con éxito la cancha pulsa la celda guardada', () => {
+      render();
+      selectCell(2, 3);
+      saveButton().click();
+      http.expectOne(zonesUrl).flush({ ...existingZone, startMinute: 0, endMinute: 5 });
+      flushReload([{ ...existingZone, startMinute: 0, endMinute: 5 }]);
+
+      expect(store.pulseCell()).toEqual({ row: 2, col: 3 });
+    });
+
     it('tras guardar, la zona queda sin elegir y "Desde" continúa donde terminó el tramo', () => {
       render();
       selectCell(2, 3);

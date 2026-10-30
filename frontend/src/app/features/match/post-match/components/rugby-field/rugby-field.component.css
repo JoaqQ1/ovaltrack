@@ -274,6 +274,43 @@
   pointer-events: none;
 }
 
+/* Microinteracciones (≤ 250 ms) */
+.field-cell.is-pulse { animation: cell-pulse 0.25s ease-out; }
+
+@keyframes cell-pulse {
+  0% { box-shadow: inset 0 0 0 0 #ffffff; }
+  40% { box-shadow: inset 0 0 0 8px #ffffff; }
+  100% { box-shadow: inset 0 0 0 0 #ffffff; }
+}
+
+/* Estado vacío: la cancha se atenúa y un aviso indica por dónde empezar */
+.pitch.is-start .pitch-bg { filter: saturate(0.55) brightness(0.9); }
+
+.start-hint {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  width: max-content;
+  max-width: 80%;
+  height: max-content;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text-primary, #111d0e) 82%, transparent);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field-cell, .field-cell.is-pulse { animation: none; transition: none; }
+}
+
 /* Eje de columnas */
 /* Debajo de la cancha: mismo ancho y alineación que ella (eje de filas + hueco a la izquierda) */
 .col-axis-wrap,

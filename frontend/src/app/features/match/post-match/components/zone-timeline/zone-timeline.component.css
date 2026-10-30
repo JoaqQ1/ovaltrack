@@ -80,6 +80,17 @@
 .segment.is-dimmed { opacity: 0.35; }
 .segment.is-linked { outline: 3px solid var(--text-primary, #111d0e); outline-offset: -3px; z-index: 3; }
 
+.segment.is-new { transform-origin: left center; animation: segment-grow 0.25s ease-out; }
+
+@keyframes segment-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment, .segment.is-new { animation: none; transition: none; }
+}
+
 .segment.terr-rival { --terr-hue: var(--zone-heat-high, #d9480f); }
 
 .segment-label { font-family: var(--font-mono, monospace); font-size: 12px; font-weight: 700; }

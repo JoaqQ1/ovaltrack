@@ -125,6 +125,40 @@ describe('PostMatchZonesComponent', () => {
     });
   });
 
+  describe('estados de carga y vacío', () => {
+    it('mientras carga muestra un esqueleto con aviso accesible, no un spinner suelto', () => {
+      create();
+
+      expect(query('[data-testid="zones-skeleton"]')).not.toBeNull();
+      expect(query('[data-testid="zones-skeleton"] [role="status"]')?.textContent).toContain('Cargando zonas del partido');
+      expect(query('.spinner')).toBeNull();
+
+      http.expectOne(zonesUrl).flush({ assignments: [], summary: { cells: [], unzonedEventCount: 0 } });
+      http.expectOne(eventsUrl).flush([]);
+    });
+
+    it('sin tramos la cancha invita a empezar y el formulario viene precargado con 0–5', () => {
+      createLoaded([], []);
+
+      expect(query('[data-testid="start-hint"]')).not.toBeNull();
+      const panel = fixture.debugElement.query(By.directive(ZoneAssignmentPanelComponent)).componentInstance as ZoneAssignmentPanelComponent;
+      expect([panel.startMinute, panel.endMinute]).toEqual([0, 5]);
+    });
+
+    it('la invitación desaparece al elegir una zona o al existir un tramo', () => {
+      createLoaded([], []);
+      cell(2, 3).click();
+      fixture.detectChanges();
+      expect(query('[data-testid="start-hint"]')).toBeNull();
+    });
+
+    it('con tramos ya cargados no hay invitación', () => {
+      createLoaded();
+
+      expect(query('[data-testid="start-hint"]')).toBeNull();
+    });
+  });
+
   describe('vínculo entre cancha, timeline y lista', () => {
     const segmentBars = (): HTMLElement[] => queryAll('[data-testid="timeline-segment"]');
 

@@ -4,6 +4,7 @@ import { EventService } from '../../services/event.service';
 import { EventTypeService } from '../../services/event-type.service';
 import { ZoneService } from '../../services/zone.service';
 import { MatchTimelineEventResponse } from '../../types/event.types';
+import { ZONE_MOTION_MS } from '../utils/zone-motion';
 import { ZoneAssignmentResponse, ZoneAssignmentRequest, ZoneCellRef, ZonePeriod } from '../../types/zone.types';
 
 /**
@@ -27,6 +28,9 @@ export class MatchZonesStore {
   /** Celda y tramo bajo el cursor o el foco: vinculan cancha, timeline y lista (estado de UI compartido). */
   /** Rango válido que está cargado en el formulario; la timeline lo dibuja como vista previa. */
   readonly formRange = signal<{ period: ZonePeriod; startMinute: number; endMinute: number } | null>(null);
+  /** Celda recién guardada: la cancha le hace un pulso breve y se apaga sola. */
+  readonly pulseCell = signal<ZoneCellRef | null>(null);
+  private pulseTimer: ReturnType<typeof setTimeout> | null = null;
   readonly hoverCell = signal<ZoneCellRef | null>(null);
   readonly hoverSegmentId = signal<string | null>(null);
 
@@ -66,7 +70,16 @@ export class MatchZonesStore {
     return this.runAndReload(matchId, this.zoneService.remove(matchId, zoneId));
   }
 
+  pulse(cell: ZoneCellRef): void {
+    if (this.pulseTimer) clearTimeout(this.pulseTimer);
+    this.pulseCell.set({ row: cell.row, col: cell.col });
+    this.pulseTimer = setTimeout(() => this.pulseCell.set(null), ZONE_MOTION_MS + 50);
+  }
+
   reset(): void {
+    if (this.pulseTimer) clearTimeout(this.pulseTimer);
+    this.pulseTimer = null;
+    this.pulseCell.set(null);
     this.conflictId.set(null);
     this.formRange.set(null);
     this.hoverCell.set(null);

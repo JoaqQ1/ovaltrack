@@ -219,4 +219,25 @@ describe('ZoneTimelineComponent', () => {
       expect(preview()).toBeNull();
     });
   });
+
+  describe('barra nueva', () => {
+    it('lo que ya estaba al cargar no se anima y el tramo recién guardado crece desde la izquierda', () => {
+      render([zone('a', 1, 0, 10)]);
+      expect(segments().map(bar => bar.classList.contains('is-new'))).toEqual([false]);
+
+      fixture.componentRef.setInput('assignments', [zone('a', 1, 0, 10), zone('b', 1, 10, 20)]);
+      fixture.detectChanges();
+
+      expect(segments().map(bar => bar.classList.contains('is-new'))).toEqual([false, true]);
+    });
+
+    it('editar un tramo existente no lo trata como nuevo', () => {
+      render([zone('a', 1, 0, 10)]);
+
+      fixture.componentRef.setInput('assignments', [zone('a', 1, 0, 15)]);
+      fixture.detectChanges();
+
+      expect(segments()[0].classList).not.toContain('is-new');
+    });
+  });
 });

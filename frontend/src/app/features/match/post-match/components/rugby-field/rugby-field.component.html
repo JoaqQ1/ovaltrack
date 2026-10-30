@@ -21,7 +21,7 @@
       </div>
     </div>
 
-    <div class="pitch">
+    <div class="pitch" [class.is-start]="startHint()">
       <!-- Fondo: solo dibujo, no interactivo -->
       <svg class="pitch-bg" [attr.viewBox]="'0 0 ' + width + ' ' + height" preserveAspectRatio="none" aria-hidden="true" focusable="false">
         <rect class="grass" x="0" y="0" [attr.width]="width" [attr.height]="height" />
@@ -60,21 +60,27 @@
         </g>
       </svg>
 
+      <!-- Estado vacío: la cancha se atenúa y se indica por dónde empezar -->
+      <p *ngIf="startHint()" class="start-hint" data-testid="start-hint">
+        Empezá por el minuto 0: tocá la zona donde arrancó el partido
+      </p>
+
       <!-- Identidad de cada in-goal: texto vertical y sutil (decorativo) -->
       <span class="ingoal-label ingoal-label--own" data-testid="ingoal-own" aria-hidden="true">Propio</span>
       <span class="ingoal-label ingoal-label--rival" data-testid="ingoal-rival" aria-hidden="true">{{ rivalShortName() }}</span>
 
       <!-- Grilla 3x6 accesible (role=grid, flechas, una sola parada de Tab) -->
       <div class="pitch-grid" role="grid" [attr.aria-label]="gridLabel()" [attr.aria-readonly]="!selectable()">
-        <div class="pitch-row" role="row" *ngFor="let line of fieldRows(); let r = index"
+        <div class="pitch-row" role="row" *ngFor="let line of fieldRows(); let r = index; trackBy: trackRow"
              [style.flex-grow]="rowMeters[r]" [style.grid-template-columns]="columnTemplate">
-          <div *ngFor="let cell of line"
+          <div *ngFor="let cell of line; trackBy: trackCell"
                role="gridcell"
                data-testid="zone-cell"
                class="field-cell"
                [class.has-events]="cell.count > 0"
                [class.is-selected]="isSelected(cell)"
                [class.is-linked]="isLinked(cell)"
+               [class.is-pulse]="isPulsing(cell)"
                [class.is-readonly]="!selectable()"
                [attr.data-row]="cell.row"
                [attr.data-col]="cell.col"
@@ -89,7 +95,7 @@
                (blur)="onLeave()"
                (keydown)="onKeydown($event, cell)">
             <span class="cell-label" data-testid="zone-label">{{ cell.label }}</span>
-            <span *ngIf="cell.count > 0" class="cell-count" data-testid="zone-count">{{ cell.countLabel }}</span>
+            <span *ngIf="cell.count > 0" class="cell-count" data-testid="zone-count" [appCountTween]="cell.count"></span>
           </div>
         </div>
       </div>

@@ -92,6 +92,26 @@
 
 .timeline-title { margin: 0 0 6px; font-size: .9rem; }
 
+/* ---------- Esqueleto de carga ---------- */
+.skeleton {
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--surface-alt, #eef1e7) 25%, var(--surface-hover, #f1f3ea) 50%, var(--surface-alt, #eef1e7) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.sk-toolbar { height: 44px; margin-bottom: 14px; }
+.sk-field { height: clamp(240px, calc(100dvh - 380px), 480px); margin-bottom: 14px; }
+.sk-timeline { height: 70px; }
+.sk-line { height: 18px; margin-bottom: 12px; }
+.sk-line--short { width: 55%; }
+.sk-block { height: 160px; }
+
+@keyframes skeleton-shimmer { to { background-position: -200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
 /* ---------- Estados ---------- */
 .state-box {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;

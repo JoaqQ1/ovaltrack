@@ -190,6 +190,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.store.pulse(cell);
           this.toastService.success(wasEditing ? 'Tramo actualizado' : 'Tramo guardado');
           this.resetForm(request.endMinute);
         },

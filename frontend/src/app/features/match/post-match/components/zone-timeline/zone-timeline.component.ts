@@ -19,6 +19,8 @@ interface TimelineBar {
 
 interface SegmentBar extends TimelineBar {
   assignment: ZoneAssignmentResponse;
+  /** Aparece por primera vez (recién guardada): crece desde la izquierda. No aplica a la carga inicial. */
+  isNew: boolean;
   territory: Territory;
   label: string;
   aria: string;
@@ -75,15 +77,23 @@ export class ZoneTimelineComponent {
   readonly ticks = TICKS.map(minute => ({ minute, left: toPercent(minute) }));
   readonly halfMark = toPercent(ZONE_HALF_MINUTES);
 
-  readonly segments = computed<SegmentBar[]>(() =>
-    this.assignments().map(assignment => ({
+  /** Ids ya dibujados; null hasta la primera carga, así lo que ya existía no se anima. */
+  private seenIds: Set<string> | null = null;
+
+  readonly segments = computed<SegmentBar[]>(() => {
+    const assignments = this.assignments();
+    const seen = this.seenIds;
+    this.seenIds = new Set(assignments.map(a => a.id));
+    return assignments.map(assignment => ({
       assignment,
+      isNew: seen !== null && !seen.has(assignment.id),
       territory: territoryOfColumn(assignment.col),
       left: toPercent(assignment.startMinute),
       width: toPercent(assignment.endMinute - assignment.startMinute),
       label: zoneLabel(assignment),
       aria: `Tramo ${assignment.period}T ${assignment.startMinute}′ a ${assignment.endMinute}′, zona ${zoneLabel(assignment)}`
-    })));
+    }));
+  });
 
   readonly gaps = computed<GapBar[]>(() =>
     ([1, 2] as ZonePeriod[]).flatMap(period =>

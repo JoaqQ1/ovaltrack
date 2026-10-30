@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, computed, inject, input, output, signal } from '@angular/core';
 import { ZONE_GRID_COLS, ZONE_GRID_ROWS, ZoneCellRef, ZoneCellSummary } from '../../../types/zone.types';
+import { CountTweenDirective } from './count-tween.directive';
 import { HEAT_STEPS, heatLevel, heatMix } from '../../utils/zone-heat';
 import {
   ZONE_COLUMN_METERS, ZONE_COLUMN_NAMES, ZONE_FIELD_LENGTH_M, ZONE_FIELD_WIDTH_M, ZONE_ROW_METERS,
@@ -27,7 +28,7 @@ const PX_PER_METER = 10;
 @Component({
   selector: 'app-rugby-field',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CountTweenDirective],
   templateUrl: './rugby-field.component.html',
   styleUrl: './rugby-field.component.css'
 })
@@ -44,6 +45,10 @@ export class RugbyFieldComponent {
   readonly selectable = input<boolean>(true);
   /** Interruptor "Calor" / "Solo números": sin calor las celdas quedan limpias y solo se ve el conteo. */
   readonly showHeat = input<boolean>(true);
+  /** Celda recién guardada: hace un pulso breve. */
+  readonly pulseCell = input<ZoneCellRef | null>(null);
+  /** Partido sin tramos: se atenúa la cancha y se invita a empezar por el minuto 0. */
+  readonly startHint = input<boolean>(false);
 
   /** Celda que corresponde al tramo bajo el cursor en la timeline o la lista (se resalta como el hover). */
   readonly linkedCell = input<ZoneCellRef | null>(null);
@@ -127,6 +132,15 @@ export class RugbyFieldComponent {
     const selected = this.selectedCell();
     return !!selected && selected.row === cell.row && selected.col === cell.col;
   }
+
+  isPulsing(cell: ZoneCellRef): boolean {
+    const pulse = this.pulseCell();
+    return !!pulse && pulse.row === cell.row && pulse.col === cell.col;
+  }
+
+  /** Identidad estable por fila y celda: así el DOM (y la animación del conteo) sobrevive a cada recálculo. */
+  trackRow = (index: number): number => index;
+  trackCell = (_: number, cell: FieldCell): string => `${cell.row}-${cell.col}`;
 
   isLinked(cell: ZoneCellRef): boolean {
     const linked = this.linkedCell();

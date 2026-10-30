@@ -171,6 +171,42 @@ describe('RugbyFieldComponent', () => {
     });
   });
 
+  describe('microinteracciones y estado vacío', () => {
+    it('la celda recién guardada hace un pulso y las demás no', () => {
+      render([]);
+      fixture.componentRef.setInput('pulseCell', { row: 2, col: 3 });
+      fixture.detectChanges();
+
+      expect(cellAt(2, 3)?.classList).toContain('is-pulse');
+      expect(cellAt(1, 1)?.classList).not.toContain('is-pulse');
+    });
+
+    it('las celdas conservan su elemento DOM al recalcular los conteos (para poder animarlos)', () => {
+      render([{ row: 2, col: 3, eventCount: 2 }]);
+      const before = cellAt(2, 3);
+
+      fixture.componentRef.setInput('cells', [{ row: 2, col: 3, eventCount: 5 }]);
+      fixture.detectChanges();
+
+      expect(cellAt(2, 3)).toBe(before);
+    });
+
+    it('sin tramos muestra la invitación a empezar por el minuto 0 y atenúa la cancha', () => {
+      render([]);
+      fixture.componentRef.setInput('startHint', true);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="start-hint"]')?.textContent).toContain('Empezá por el minuto 0');
+      expect(fixture.nativeElement.querySelector('.pitch').classList).toContain('is-start');
+    });
+
+    it('sin la invitación activa no hay aviso', () => {
+      render([]);
+
+      expect(fixture.nativeElement.querySelector('[data-testid="start-hint"]')).toBeNull();
+    });
+  });
+
   describe('escala de calor', () => {
     const legend = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="heat-legend"]');
 

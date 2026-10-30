@@ -23,9 +23,23 @@
   </header>
 
   @if (isLoading()) {
-    <div class="state-box">
-      <div class="spinner"></div>
-      <p>Cargando zonas del partido...</p>
+    <!-- Esqueleto con la forma de la pantalla, en lugar de un spinner suelto -->
+    <div class="zones-layout" aria-busy="true" data-testid="zones-skeleton">
+      <div class="zones-main">
+        <div class="field-card">
+          <div class="skeleton sk-toolbar"></div>
+          <div class="skeleton sk-field"></div>
+          <div class="skeleton sk-timeline"></div>
+        </div>
+      </div>
+      <div class="zones-side">
+        <div class="panel-card-skeleton field-card">
+          <div class="skeleton sk-line"></div>
+          <div class="skeleton sk-line sk-line--short"></div>
+          <div class="skeleton sk-block"></div>
+        </div>
+      </div>
+      <p class="visually-hidden" role="status">Cargando zonas del partido...</p>
     </div>
   } @else if (errorMessage()) {
     <div class="state-box state-box--error" role="alert">
@@ -113,6 +127,8 @@
             [opponentName]="opponent()"
             [mode]="mode()"
             [showHeat]="heatOn()"
+            [pulseCell]="zonesStore.pulseCell()"
+            [startHint]="showStartHint()"
             [linkedCell]="linkedCell()"
             (cellSelected)="onCellSelected($event)"
             (cellHover)="zonesStore.hoverCell.set($event)">
