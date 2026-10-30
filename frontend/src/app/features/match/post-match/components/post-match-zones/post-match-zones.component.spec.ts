@@ -116,6 +116,9 @@ describe('PostMatchZonesComponent', () => {
       const navigate = spyOn(router, 'navigate').and.resolveTo(true);
       createLoaded([], []);
 
+      expect(query('.hud-back')?.textContent?.trim()).toBe('Post-partido');
+      expect(query('.hud-back')?.getAttribute('aria-label')).toBe('Volver al post-partido');
+
       query<HTMLButtonElement>('.hud-back')?.click();
 
       expect(navigate).toHaveBeenCalledWith(['/post-match', 'match-1']);
