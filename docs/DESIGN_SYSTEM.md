@@ -326,6 +326,7 @@ Cuando decidas abordar y definir el **Modo Oscuro** para estas vistas en una eta
    - Outline Blanco Deportivo (`.btn-outline`): Para acciones secundarias, filtros o cancelar.
    - Rojo destructivo (`.btn-logout`, `.btn-delete`): Reservado para eliminar o cerrar sesión.
 3. **Mantener la consistencia de elevación:** Toda tarjeta, tabla o contenedor de datos debe tener borde de `2px` con radio redondeado (`16px` o `20px`) y sombra de elevación profunda.
+4. **Las acciones de una vista viven en la barra de esa vista:** el encabezado común solo contiene lo que vale para todas las vistas (volver, etiqueta, título, marcador, hora y selector de vistas), para que quede en las mismas coordenadas en todas.
 5. **No alterar ni forzar contenedores en Carga en Vivo ni Entretiempo:** Dichas pantallas (`/live-capture/:matchId` y `/live-capture/:matchId/halftime`) son instrumentos tácticos especializados para tablet en tiempo real; deben mantenerse a pantalla completa y están exentas de `.layout-container`.
 6. **Uso obligatorio de `.layout-container.page`:** Toda nueva pantalla o flujo de gestión debe construirse dentro de `.layout-container.page` para garantizar alineación pixel-perfect con la Navbar.
 
@@ -417,10 +418,12 @@ La pantalla de post-partido está estructurada como una estación de trabajo de 
    - Botón `.hud-back` (`←`) de 44px, etiqueta fija `ANÁLISIS POST-PARTIDO`, píldora de marcador con `--score-pill-bg` / `--score-pill-fg` (mono tabular) y línea inferior siempre `Hora de inicio HH:MM:SS`.
    - Burbuja flotante animada `.score-delta-badge` (`+5`), con `scoreDeltaPop` y temporizador de 3 segundos (solo cuando Eventos la informa).
    - Selector de vistas en la misma fila del título: `routerLink` + `routerLinkActive` (`aria-current="page"`), contenedor gris claro y vista activa **blanca elevada** (el verde queda para filtros). En pantallas < 1280px baja a su propia fila con tres partes iguales.
-   - Acción de la vista a la derecha, tras un divisor: la vista hija registra un `TemplateRef` y el encabezado lo pinta con `ngTemplateOutlet`. Hoy solo Eventos: botón primario verde rugby botella `+ Agregar evento`.
+   - El encabezado no tiene acciones propias de una vista: el selector queda siempre pegado al borde derecho. Lo que es de una vista vive en la barra de esa vista (p. ej. «Agregar evento», en la barra de Eventos).
 2. **Tira Condensada de KPIs (`PostMatchKpiStripComponent`):**
    - Altura de 44px con 3 secciones: total de eventos, conteo de jugadas sin jugador con botón `"Ver pendientes ›"` y porcentaje de carga con barra de progreso verde.
 3. **Timeline Táctico Compacto (`PostMatchTimelineComponent`):**
+   - Su barra de herramientas aloja los filtros, el buscador (44px) y la acción primaria `+ Agregar evento` (`.btn-primary-rugby`, 44px) a la derecha, separada por un divisor `--border-strong`. Atajo `N` (`aria-keyshortcuts`). Por debajo de 1121px los filtros scrollean en una fila con degradado, el buscador es un botón de ícono de 44×44 que se expande y la acción pasa a botón «+» de 44×44 con `aria-label`.
+   - El modal de alta abre con el período del filtro activo (o del evento seleccionado) y sugiere su tiempo, con una etiqueta de origen por campo. Si los filtros ocultan el evento creado, un toast ofrece «Mostrar evento» o «Limpiar filtros».
    - Altura de carril `--lane-h: 32px;` y marcadores de jugada de `20px`.
    - Container Queries (`@container (max-width: 650px)`) para abreviar nombres largos (*Infracción*, *Penal palos*, *Tackle ✓*, etc.).
 4. **Tabla Cronológica a 5 Columnas (`PostMatchTableComponent`):**
