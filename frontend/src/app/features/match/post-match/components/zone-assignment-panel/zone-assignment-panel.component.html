@@ -125,7 +125,9 @@
       <li *ngFor="let zone of store.assignments()"
           class="zone-item" data-testid="zone-item"
           [class.is-editing]="zone.id === editingId"
-          [class.is-conflict]="!readOnly && zone.id === store.conflictId()">
+          [class.is-conflict]="!readOnly && zone.id === store.conflictId()"
+          (mouseenter)="store.hoverSegmentId.set(zone.id)" (mouseleave)="store.hoverSegmentId.set(null)"
+          (focusin)="store.hoverSegmentId.set(zone.id)" (focusout)="store.hoverSegmentId.set(null)">
         <button type="button" class="zone-item-main" data-testid="zone-edit"
                 [attr.aria-label]="'Editar tramo ' + segmentName(zone)"
                 [disabled]="store.isSaving() || readOnly" (click)="startEdit(zone)">

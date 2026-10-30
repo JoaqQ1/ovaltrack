@@ -150,6 +150,28 @@ describe('RugbyFieldComponent', () => {
     });
   });
 
+  describe('vínculo con la timeline', () => {
+    it('avisa la celda bajo el cursor y cuándo se va', () => {
+      render([]);
+      const hovered: (ZoneCellRef | null)[] = [];
+      fixture.componentInstance.cellHover.subscribe(cell => hovered.push(cell));
+
+      cellAt(2, 4)?.dispatchEvent(new Event('mouseenter'));
+      cellAt(2, 4)?.dispatchEvent(new Event('mouseleave'));
+
+      expect(hovered).toEqual([{ row: 2, col: 4 }, null]);
+    });
+
+    it('resalta la celda vinculada a un tramo', () => {
+      render([]);
+      fixture.componentRef.setInput('linkedCell', { row: 3, col: 6 });
+      fixture.detectChanges();
+
+      expect(cellAt(3, 6)?.classList).toContain('is-linked');
+      expect(cellAt(1, 1)?.classList).not.toContain('is-linked');
+    });
+  });
+
   describe('selección', () => {
     it('emite la celda tocada', () => {
       render([]);

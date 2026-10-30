@@ -76,6 +76,10 @@
   z-index: 1;
 }
 
+.segment { transition: opacity 0.12s ease; }
+.segment.is-dimmed { opacity: 0.35; }
+.segment.is-linked { outline: 3px solid var(--text-primary, #111d0e); outline-offset: -3px; z-index: 3; }
+
 .segment.terr-rival { --terr-hue: var(--zone-heat-high, #d9480f); }
 
 .segment-label { font-family: var(--font-mono, monospace); font-size: 12px; font-weight: 700; }

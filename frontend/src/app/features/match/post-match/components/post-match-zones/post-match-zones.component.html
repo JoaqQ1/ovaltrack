@@ -68,10 +68,13 @@
             [selectedCell]="fieldSelectedCell()"
             [ownClubName]="ownClubName()"
             [mode]="mode()"
-            (cellSelected)="onCellSelected($event)">
+            [linkedCell]="linkedCell()"
+            (cellSelected)="onCellSelected($event)"
+            (cellHover)="zonesStore.hoverCell.set($event)">
             <h2 class="section-title timeline-title">Tramos del partido</h2>
             <app-zone-timeline [assignments]="zonesStore.assignments()" [events]="zonesStore.events()" [readOnly]="mode() === 'view'"
                                [conflictId]="mode() === 'assign' ? zonesStore.conflictId() : null"
+                               [highlightCell]="highlightedCell()" (segmentHover)="zonesStore.hoverSegmentId.set($event)"
                                (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)"
                                (markSelected)="onMarkSelected($event)" />
           </app-rugby-field>

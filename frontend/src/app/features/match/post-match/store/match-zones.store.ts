@@ -4,7 +4,7 @@ import { EventService } from '../../services/event.service';
 import { EventTypeService } from '../../services/event-type.service';
 import { ZoneService } from '../../services/zone.service';
 import { MatchTimelineEventResponse } from '../../types/event.types';
-import { ZoneAssignmentRequest, ZoneAssignmentResponse } from '../../types/zone.types';
+import { ZoneAssignmentRequest, ZoneAssignmentResponse, ZoneCellRef } from '../../types/zone.types';
 
 /**
  * Estado de las zonas del partido en revisión: tramos asignados y eventos con su zona.
@@ -24,6 +24,9 @@ export class MatchZonesStore {
   readonly isSaving = signal<boolean>(false);
   /** Tramo que choca con el rango en edición; lo resaltan la lista y la timeline (estado de UI compartido). */
   readonly conflictId = signal<string | null>(null);
+  /** Celda y tramo bajo el cursor o el foco: vinculan cancha, timeline y lista (estado de UI compartido). */
+  readonly hoverCell = signal<ZoneCellRef | null>(null);
+  readonly hoverSegmentId = signal<string | null>(null);
 
   /** Mismos eventos que la revisión: se ocultan los de tipos dados de baja en el catálogo. */
   readonly events = computed<MatchTimelineEventResponse[]>(() => {
@@ -63,6 +66,8 @@ export class MatchZonesStore {
 
   reset(): void {
     this.conflictId.set(null);
+    this.hoverCell.set(null);
+    this.hoverSegmentId.set(null);
     this.assignments.set([]);
     this.rawEvents.set([]);
     this.activeTypeIds.set(null);

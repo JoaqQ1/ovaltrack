@@ -65,6 +65,7 @@
                class="field-cell"
                [class.has-events]="cell.count > 0"
                [class.is-selected]="isSelected(cell)"
+               [class.is-linked]="isLinked(cell)"
                [class.is-readonly]="!selectable()"
                [attr.data-row]="cell.row"
                [attr.data-col]="cell.col"

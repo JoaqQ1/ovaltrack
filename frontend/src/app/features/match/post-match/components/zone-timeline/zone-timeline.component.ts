@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
-import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZonePeriod } from '../../../types/zone.types';
+import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 import { zoneLabel } from '../../utils/zone-grid';
 import { Territory, territoryOfColumn } from '../../utils/zone-territory';
 import { EventMark, MarkEvent, buildEventMarks } from '../../utils/zone-event-marks';
@@ -59,7 +59,12 @@ export class ZoneTimelineComponent {
   /** Eventos del partido: se dibujan como marcas sobre las barras para ver dónde cortar los tramos. */
   readonly events = input<MarkEvent[]>([]);
 
+  /** Celda resaltada (hover o foco en la cancha, o celda elegida en "Ver eventos"): sus tramos se destacan y el resto se atenúa. */
+  readonly highlightCell = input<ZoneCellRef | null>(null);
+
   readonly segmentSelected = output<ZoneAssignmentResponse>();
+  /** Tramo bajo el cursor o el foco (null al salir): la cancha resalta su celda. */
+  readonly segmentHover = output<string | null>();
   /** Tocar una marca propone su minuto como inicio o fin del rango. */
   readonly markSelected = output<{ period: ZonePeriod; minute: number }>();
   readonly gapSelected = output<ZoneGapSelection>();
@@ -93,6 +98,11 @@ export class ZoneTimelineComponent {
 
   selectSegment(assignment: ZoneAssignmentResponse): void {
     if (!this.readOnly()) this.segmentSelected.emit(assignment);
+  }
+
+  isLinked(assignment: ZoneAssignmentResponse): boolean {
+    const cell = this.highlightCell();
+    return !!cell && assignment.row === cell.row && assignment.col === cell.col;
   }
 
   selectMark(mark: EventMark): void {

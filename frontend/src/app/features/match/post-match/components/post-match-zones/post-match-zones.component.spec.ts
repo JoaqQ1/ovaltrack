@@ -125,6 +125,55 @@ describe('PostMatchZonesComponent', () => {
     });
   });
 
+  describe('vínculo entre cancha, timeline y lista', () => {
+    const segmentBars = (): HTMLElement[] => queryAll('[data-testid="timeline-segment"]');
+
+    it('hover en una celda resalta sus tramos en la timeline y atenúa el resto', () => {
+      createLoaded([zone, { ...zone, id: 'z2', startMinute: 25, endMinute: 40, row: 1, col: 5 }]);
+
+      cell(2, 3).dispatchEvent(new Event('mouseenter'));
+      fixture.detectChanges();
+
+      expect(segmentBars().map(bar => bar.classList.contains('is-linked'))).toEqual([true, false]);
+      expect(segmentBars().map(bar => bar.classList.contains('is-dimmed'))).toEqual([false, true]);
+
+      cell(2, 3).dispatchEvent(new Event('mouseleave'));
+      fixture.detectChanges();
+
+      expect(segmentBars().some(bar => bar.classList.contains('is-dimmed'))).toBeFalse();
+    });
+
+    it('hover en un tramo resalta su celda en la cancha', () => {
+      createLoaded();
+
+      segmentBars()[0].dispatchEvent(new Event('mouseenter'));
+      fixture.detectChanges();
+
+      expect(cell(2, 3).classList).toContain('is-linked');
+      expect(cell(1, 1).classList).not.toContain('is-linked');
+    });
+
+    it('hover en una fila de la lista de tramos también resalta su celda', () => {
+      createLoaded();
+
+      query('[data-testid="zone-item"]')?.dispatchEvent(new Event('mouseenter'));
+      fixture.detectChanges();
+
+      expect(cell(2, 3).classList).toContain('is-linked');
+    });
+
+    it('en "Ver eventos", elegir una celda resalta sus tramos en la timeline', () => {
+      createLoaded([zone, { ...zone, id: 'z2', startMinute: 25, endMinute: 40, row: 1, col: 5 }]);
+      component.setMode('view');
+      fixture.detectChanges();
+
+      cell(1, 5).click();
+      fixture.detectChanges();
+
+      expect(segmentBars().map(bar => bar.classList.contains('is-linked'))).toEqual([false, true]);
+    });
+  });
+
   describe('indicadores y conteos derivados de los eventos', () => {
     it('muestra los eventos sin zona y la cobertura', () => {
       createLoaded();

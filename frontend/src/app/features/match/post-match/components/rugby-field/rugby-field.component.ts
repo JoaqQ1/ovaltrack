@@ -39,7 +39,12 @@ export class RugbyFieldComponent {
   readonly mode = input<RugbyFieldMode>('assign');
   readonly selectable = input<boolean>(true);
 
+  /** Celda que corresponde al tramo bajo el cursor en la timeline o la lista (se resalta como el hover). */
+  readonly linkedCell = input<ZoneCellRef | null>(null);
+
   readonly cellSelected = output<ZoneCellRef>();
+  /** Celda bajo el cursor o el foco (null al salir): la página resalta sus tramos. */
+  readonly cellHover = output<ZoneCellRef | null>();
 
   // --- Geometría (todo sale de zone-grid) ---
   readonly width = ZONE_FIELD_LENGTH_M * PX_PER_METER;
@@ -110,6 +115,11 @@ export class RugbyFieldComponent {
     return !!selected && selected.row === cell.row && selected.col === cell.col;
   }
 
+  isLinked(cell: ZoneCellRef): boolean {
+    const linked = this.linkedCell();
+    return !!linked && linked.row === cell.row && linked.col === cell.col;
+  }
+
   /** Tabindex móvil: solo una celda es parada de Tab; las demás se recorren con las flechas. */
   isTabStop(cell: ZoneCellRef): boolean {
     const stop = this.focusCell() ?? this.selectedCell() ?? { row: 1, col: 1 };
@@ -123,11 +133,14 @@ export class RugbyFieldComponent {
   }
 
   onEnter(cell: ZoneCellRef): void {
-    this.activeCell.set({ row: cell.row, col: cell.col });
+    const ref = { row: cell.row, col: cell.col };
+    this.activeCell.set(ref);
+    this.cellHover.emit(ref);
   }
 
   onLeave(): void {
     this.activeCell.set(null);
+    this.cellHover.emit(null);
   }
 
   onFocus(cell: ZoneCellRef): void {

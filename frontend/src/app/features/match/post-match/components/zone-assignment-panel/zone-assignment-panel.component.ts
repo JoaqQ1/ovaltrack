@@ -51,7 +51,10 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.applySuggestion();
-    this.destroyRef.onDestroy(() => this.store.conflictId.set(null));
+    this.destroyRef.onDestroy(() => {
+      this.store.conflictId.set(null);
+      this.store.hoverSegmentId.set(null);
+    });
   }
 
   /** Precarga el formulario con un rango (ej. al tocar un hueco de la línea de tiempo). */

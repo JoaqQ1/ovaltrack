@@ -172,4 +172,32 @@ describe('ZoneTimelineComponent', () => {
       expect(fixture.nativeElement.querySelector('[data-testid="territory-legend"]')?.textContent).toContain('Campo rival');
     });
   });
+
+  describe('vínculo con la cancha', () => {
+    it('resalta los tramos de la celda indicada y atenúa los demás', () => {
+      render([zone('a', 1, 0, 10, 2, 3), zone('b', 1, 10, 20, 1, 1)]);
+      fixture.componentRef.setInput('highlightCell', { row: 2, col: 3 });
+      fixture.detectChanges();
+
+      expect(segments().map(bar => [bar.classList.contains('is-linked'), bar.classList.contains('is-dimmed')]))
+        .toEqual([[true, false], [false, true]]);
+    });
+
+    it('sin celda resaltada no atenúa nada', () => {
+      render([zone('a', 1, 0, 10)]);
+
+      expect(segments()[0].classList).not.toContain('is-dimmed');
+    });
+
+    it('avisa qué tramo está bajo el cursor y cuándo lo deja', () => {
+      render([zone('a', 1, 0, 10)]);
+      const hovered: (string | null)[] = [];
+      fixture.componentInstance.segmentHover.subscribe(id => hovered.push(id));
+
+      segments()[0].dispatchEvent(new Event('mouseenter'));
+      segments()[0].dispatchEvent(new Event('mouseleave'));
+
+      expect(hovered).toEqual(['a', null]);
+    });
+  });
 });

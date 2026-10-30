@@ -61,6 +61,16 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   readonly coverage = computed(() => coveragePercent(this.zonesStore.assignments(), this.periodFilter()));
   readonly fieldSelectedCell = computed(() => this.mode() === 'assign' ? this.selectedCell() : this.viewCell());
 
+  /** Tramos que se destacan en la timeline: los de la celda bajo el cursor o, en "Ver eventos", los de la celda elegida. */
+  readonly highlightedCell = computed(() => this.zonesStore.hoverCell() ?? (this.mode() === 'view' ? this.viewCell() : null));
+
+  /** Celda del tramo bajo el cursor en la timeline o la lista. */
+  readonly linkedCell = computed<ZoneCellRef | null>(() => {
+    const id = this.zonesStore.hoverSegmentId();
+    const segment = id ? this.zonesStore.assignments().find(a => a.id === id) : undefined;
+    return segment ? { row: segment.row, col: segment.col } : null;
+  });
+
   readonly listedEvents = computed(() => {
     const events = this.zonesStore.events();
     const filter = this.periodFilter();

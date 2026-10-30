@@ -163,6 +163,7 @@
 .field-cell.is-readonly { cursor: default; }
 
 .field-cell:not(.is-readonly):hover,
+.field-cell.is-linked,
 .field-cell:focus-visible {
   outline: 3px dotted #ffffff;
   outline-offset: -5px;
