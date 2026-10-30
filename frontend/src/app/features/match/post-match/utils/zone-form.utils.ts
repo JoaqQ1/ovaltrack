@@ -1,5 +1,8 @@
-import { ZONE_GRID_COLS, ZONE_GRID_ROWS, ZonePeriod } from '../../types/zone.types';
+import { ZONE_GRID_COLS, ZONE_GRID_ROWS, ZONE_HALF_MINUTES, ZonePeriod } from '../../types/zone.types';
 import { periodRange } from './zone-stats';
+
+export const HALFTIME_SPLIT_MESSAGE =
+  'El rango cruza el entretiempo (minuto 40). Partilo en dos tramos: uno hasta el 40′ y otro desde el 40′.';
 
 export interface ZoneFormValues {
   period: ZonePeriod;
@@ -34,4 +37,19 @@ export function validateZoneForm(values: ZoneFormValues): string | null {
     return `El ${period}° tiempo va del minuto ${bounds.start} al ${bounds.end}`;
   }
   return null;
+}
+
+/** Un rango cruza el entretiempo cuando empieza en el 1T y termina después del minuto 40. */
+export function rangeCrossesHalftime(startMinute: number, endMinute: number): boolean {
+  return startMinute < ZONE_HALF_MINUTES && endMinute > ZONE_HALF_MINUTES;
+}
+
+/**
+ * Tiempo del tramo según sus minutos acumulados (0–80): desde el minuto 40 es 2T, antes es 1T.
+ * Null si el rango no está completo, no es entero, no avanza o cruza el entretiempo.
+ */
+export function deduceZonePeriod(startMinute: number | null, endMinute: number | null): ZonePeriod | null {
+  if (startMinute === null || endMinute === null || !Number.isInteger(startMinute) || !Number.isInteger(endMinute)) return null;
+  if (startMinute >= endMinute || rangeCrossesHalftime(startMinute, endMinute)) return null;
+  return startMinute >= ZONE_HALF_MINUTES ? 2 : 1;
 }
