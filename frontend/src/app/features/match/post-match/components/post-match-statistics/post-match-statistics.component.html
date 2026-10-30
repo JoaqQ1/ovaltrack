@@ -20,24 +20,6 @@
       </div>
     </div>
 
-    <div class="hud-right">
-      <div class="segmented" role="tablist" aria-label="Período">
-        <button type="button" class="segment" [class.segment--active]="period() === 'ALL'" (click)="setPeriod('ALL')">Total</button>
-        <button type="button" class="segment" [class.segment--active]="period() === 1" (click)="setPeriod(1)">1T</button>
-        <button type="button" class="segment" [class.segment--active]="period() === 2" (click)="setPeriod(2)">2T</button>
-      </div>
-
-      <div class="segmented" role="tablist" aria-label="Sección">
-        <button type="button" role="tab" class="segment" [class.segment--active]="activeTab() === 'team'"
-                [attr.aria-selected]="activeTab() === 'team'" (click)="switchTab('team')">
-          <i class="bi bi-grid-1x2"></i><span>Equipo</span>
-        </button>
-        <button type="button" role="tab" class="segment" [class.segment--active]="activeTab() === 'players'"
-                [attr.aria-selected]="activeTab() === 'players'" (click)="switchTab('players')">
-          <i class="bi bi-people"></i><span>Jugadores</span>
-        </button>
-      </div>
-    </div>
   </header>
 
   @if (isLoading()) {
@@ -57,6 +39,25 @@
       <p>Este partido todavía no tiene eventos registrados.</p>
     </div>
   } @else {
+  <div class="stats-toolbar">
+    <div class="filter-group" role="group" aria-label="Período">
+      <button type="button" class="filter-pill" [class.active]="period() === 'ALL'" [attr.aria-pressed]="period() === 'ALL'" (click)="setPeriod('ALL')">Total</button>
+      <button type="button" class="filter-pill" [class.active]="period() === 1" [attr.aria-pressed]="period() === 1" (click)="setPeriod(1)">1T</button>
+      <button type="button" class="filter-pill" [class.active]="period() === 2" [attr.aria-pressed]="period() === 2" (click)="setPeriod(2)">2T</button>
+    </div>
+
+    <span class="filter-divider" aria-hidden="true"></span>
+
+    <div class="filter-group" role="group" aria-label="Sección">
+      <button type="button" class="filter-pill" [class.active]="activeTab() === 'team'" [attr.aria-pressed]="activeTab() === 'team'" (click)="switchTab('team')">
+        <i class="bi bi-grid-1x2"></i><span>Equipo</span>
+      </button>
+      <button type="button" class="filter-pill" [class.active]="activeTab() === 'players'" [attr.aria-pressed]="activeTab() === 'players'" (click)="switchTab('players')">
+        <i class="bi bi-people"></i><span>Jugadores</span>
+      </button>
+    </div>
+  </div>
+
   @if (stats(); as s) {
 
     @if (activeTab() === 'team') {
