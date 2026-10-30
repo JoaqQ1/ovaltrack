@@ -187,7 +187,7 @@ export const routes: Routes = [
         children: [
             {
                 path: '',
-                data: { preload: true, layout: 'wide', lockViewport: true },
+                data: { preload: true, layout: 'wide', lockViewport: true, viewTitle: 'Eventos' },
                 loadComponent: () =>
                     import('./features/match/post-match/post-match.component').then(
                         m => m.PostMatchComponent
@@ -195,7 +195,7 @@ export const routes: Routes = [
             },
             {
                 path: 'zones',
-                data: { layout: 'wide' },
+                data: { layout: 'wide', viewTitle: 'Zonas de cancha' },
                 loadComponent: () => import('./features/match/post-match/components/post-match-zones/post-match-zones.component')
                     .then(m => m.PostMatchZonesComponent),
             },
@@ -203,7 +203,7 @@ export const routes: Routes = [
                 path: 'statistics',
                 loadComponent: () => import('./features/match/post-match/components/post-match-statistics/post-match-statistics.component')
                     .then(m => m.PostMatchStatisticsComponent),
-                data: { layout: 'wide' },
+                data: { layout: 'wide', viewTitle: 'Estadísticas' },
             }
         ]
     },
