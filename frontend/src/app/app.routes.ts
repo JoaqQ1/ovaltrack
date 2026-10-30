@@ -174,6 +174,12 @@ export const routes: Routes = [
     },
     {
         path: 'post-match/:id',
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            preload: true
+        },
         loadComponent: () =>
             import('./features/match/post-match/post-match-shell.component').then(
                 m => m.PostMatchShellComponent
@@ -181,13 +187,7 @@ export const routes: Routes = [
         children: [
             {
                 path: '',
-                canMatch: [authGuard],
-                canActivate: [hasRoleGuard, hasClubGuard],
-                data: {
-                    roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
-                    preload: true,
-                    layout: 'wide'
-                },
+                data: { preload: true, layout: 'wide' },
                 loadComponent: () =>
                     import('./features/match/post-match/post-match.component').then(
                         m => m.PostMatchComponent
@@ -195,12 +195,7 @@ export const routes: Routes = [
             },
             {
                 path: 'zones',
-                canMatch: [authGuard],
-                canActivate: [hasRoleGuard, hasClubGuard],
-                data: {
-                    roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
-                    layout: 'wide'
-                },
+                data: { layout: 'wide' },
                 loadComponent: () => import('./features/match/post-match/components/post-match-zones/post-match-zones.component')
                     .then(m => m.PostMatchZonesComponent),
             },
