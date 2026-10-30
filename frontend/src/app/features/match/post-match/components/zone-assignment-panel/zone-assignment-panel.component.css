@@ -97,8 +97,8 @@
   color: var(--btn-primary-bg, #204b22);
 }
 
-/* Campos con − y + */
-.range-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* Campos con − y +: uno por fila, a ancho completo, para que el minuto nunca quede cortado */
+.range-row { display: grid; grid-template-columns: 1fr; gap: 12px; }
 .range-field { min-width: 0; }
 
 .stepper { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 4px; align-items: stretch; }
@@ -127,6 +127,11 @@
   background-color: #ffffff;
   color: var(--text-primary, #111d0e);
 }
+
+/* Los botones − y + reemplazan a las flechas nativas del input numérico */
+.form-control[type='number'] { appearance: textfield; -moz-appearance: textfield; min-width: 3ch; }
+.form-control[type='number']::-webkit-outer-spin-button,
+.form-control[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 .form-control:focus {
   border-color: var(--btn-primary-bg, #204b22);
@@ -268,6 +273,5 @@
 .btn-sm-touch { height: 44px; min-width: 56px; padding: 0 14px; }
 
 @media (max-width: 576px) {
-  .range-row { grid-template-columns: 1fr; }
   .zone-item { flex-wrap: wrap; }
 }
