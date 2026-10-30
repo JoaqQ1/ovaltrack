@@ -78,7 +78,7 @@
 /* Solo en pantallas angostas: la letra reemplaza al nombre */
 .row-axis-letter { display: none; font-family: var(--font-mono, monospace); font-size: 12px; font-weight: 700; color: var(--text-primary, #111d0e); }
 .row-axis-name { font-size: 12px; font-weight: 700; color: var(--text-primary, #111d0e); }
-.row-axis-range { font-family: var(--font-mono, monospace); font-size: 10px; color: var(--text-muted, #7a8c74); }
+.row-axis-range { font-family: var(--font-mono, monospace); font-size: 10px; color: var(--text-secondary, #3b4e33); }
 
 .pitch {
   position: relative;
@@ -240,7 +240,7 @@
 
 .col-axis-number { font-family: var(--font-mono, monospace); font-size: 13px; font-weight: 700; color: var(--text-primary, #111d0e); }
 .col-axis-name { font-size: 11px; font-weight: 700; color: var(--text-secondary, #3b4e33); }
-.col-axis-range { font-family: var(--font-mono, monospace); font-size: 10px; color: var(--text-muted, #7a8c74); }
+.col-axis-range { font-family: var(--font-mono, monospace); font-size: 10px; color: var(--text-secondary, #3b4e33); }
 
 .col-legend {
   display: none;
