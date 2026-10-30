@@ -75,7 +75,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent): void {
     const target = event.target as HTMLElement;
-    const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA');
+    const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 
     if (this.showCreateModal() || this.panel?.showDeleteModal()) {
       if (event.key === 'Escape') {
@@ -100,6 +100,13 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     }
 
     if (!isEditingField) {
+      // 0. Alta de evento (la acción primaria de la vista)
+      if (event.key.toLowerCase() === 'n' && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey) {
+        event.preventDefault();
+        this.openCreateModal();
+        return;
+      }
+
       // 1. Atajos de Triage dedicados (saltar entre pendientes sin importar qué está visible)
       if (event.key === ']' || (event.shiftKey && event.key === 'ArrowRight')) {
         event.preventDefault();
