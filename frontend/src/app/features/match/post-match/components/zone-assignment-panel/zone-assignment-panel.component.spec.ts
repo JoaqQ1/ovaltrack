@@ -116,6 +116,36 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect(query('[data-testid="range-help-toggle"]')?.getAttribute('aria-expanded')).toBe('true');
     });
 
+    describe('estirar un tramo desde la timeline', () => {
+      it('carga el tramo para editar con el borde movido, sin guardar nada', () => {
+        render([existingZone]);
+
+        component.applyResize(existingZone, 10, 31);
+        fixture.detectChanges();
+
+        expect(component.editingId).toBe('zone-1');
+        expect(component.selectedCell()).toEqual({ row: 2, col: 3 });
+        expect([component.startMinute, component.endMinute]).toEqual([10, 31]);
+        expect(store.formRange()).toEqual({ period: 1, startMinute: 10, endMinute: 31 });
+        http.expectNone(r => r.method === 'PUT');
+      });
+
+      it('tocar Guardar cambios envía el PUT con el rango nuevo', () => {
+        render([existingZone]);
+        component.applyResize(existingZone, 10, 31);
+        fixture.detectChanges();
+
+        saveButton().click();
+
+        const put = http.expectOne(r => r.url.endsWith('/matches/match-1/zones/zone-1'));
+        expect(put.request.method).toBe('PUT');
+        expect(put.request.body).toEqual({ row: 2, col: 3, period: 1, startMinute: 10, endMinute: 31 });
+        put.flush(existingZone);
+        http.expectOne(zonesUrl).flush(emptyResponse);
+        http.expectOne(eventsUrl).flush([]);
+      });
+    });
+
     describe('Ir al próximo hueco', () => {
       const nextGapButton = (): HTMLButtonElement | null => query<HTMLButtonElement>('[data-testid="next-gap"]');
 

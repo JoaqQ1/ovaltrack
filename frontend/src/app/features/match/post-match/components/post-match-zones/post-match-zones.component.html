@@ -137,7 +137,7 @@
                                [conflictId]="mode() === 'assign' ? zonesStore.conflictId() : null"
                                [highlightCell]="highlightedCell()" [previewRange]="mode() === 'assign' ? zonesStore.formRange() : null" (segmentHover)="zonesStore.hoverSegmentId.set($event)"
                                (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)"
-                               (markSelected)="onMarkSelected($event)" />
+                               (markSelected)="onMarkSelected($event)" (segmentResized)="onSegmentResized($event)" />
           </app-rugby-field>
         </div>
       </div>

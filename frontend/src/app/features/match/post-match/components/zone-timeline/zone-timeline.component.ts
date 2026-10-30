@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, input, output } from '@angular/core';
+import { Component, ElementRef, computed, input, output, signal, viewChild } from '@angular/core';
 import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 import { zoneLabel } from '../../utils/zone-grid';
 import { Territory, territoryOfColumn } from '../../utils/zone-territory';
 import { EventMark, MarkEvent, buildEventMarks } from '../../utils/zone-event-marks';
 import { findGaps } from '../../utils/zone-stats';
+import { DragRange, DragResult, dragNewRange, minuteAtPosition, resizeRange } from '../../utils/zone-drag';
 
 export interface ZoneGapSelection {
   period: ZonePeriod;
@@ -33,6 +34,13 @@ interface GapBar extends TimelineBar {
 
 const TOTAL_MINUTES = ZONE_HALF_MINUTES * 2;
 const TICKS = Array.from({ length: TOTAL_MINUTES / 10 + 1 }, (_, i) => i * 10);
+
+/** Cuánto dura el aviso de por qué se frenó un arrastre, ya soltado el puntero. */
+const NOTICE_MS = 3500;
+
+type ActiveDrag =
+  | { kind: 'new'; period: ZonePeriod; anchor: number }
+  | { kind: 'resize'; assignment: ZoneAssignmentResponse; edge: 'start' | 'end' };
 
 const toPercent = (minutes: number): number => (minutes / TOTAL_MINUTES) * 100;
 
@@ -72,7 +80,20 @@ export class ZoneTimelineComponent {
   readonly segmentHover = output<string | null>();
   /** Tocar una marca propone su minuto como inicio o fin del rango. */
   readonly markSelected = output<{ period: ZonePeriod; minute: number }>();
+  /** Arrastrar sobre un hueco propone ese rango; el usuario lo completa con la zona y guarda. */
   readonly gapSelected = output<ZoneGapSelection>();
+  /** Estirar o achicar un borde propone el nuevo rango del tramo; no se guarda solo. */
+  readonly segmentResized = output<{ assignment: ZoneAssignmentResponse; startMinute: number; endMinute: number }>();
+
+  private readonly track = viewChild<ElementRef<HTMLElement>>('track');
+  private active: ActiveDrag | null = null;
+  private suppressClick = false;
+  private noticeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** Rango provisorio mientras se arrastra (null fuera de un arrastre o antes de moverse). */
+  readonly draft = signal<DragRange | null>(null);
+  /** Motivo por el que el arrastre se frenó (entretiempo, final del partido u otro tramo). */
+  readonly dragNotice = signal<string | null>(null);
 
   readonly ticks = TICKS.map(minute => ({ minute, left: toPercent(minute) }));
   readonly halfMark = toPercent(ZONE_HALF_MINUTES);
@@ -115,10 +136,15 @@ export class ZoneTimelineComponent {
       : null;
   });
 
+  readonly draftBar = computed(() => {
+    const range = this.draft();
+    return range ? { left: toPercent(range.startMinute), width: toPercent(range.endMinute - range.startMinute) } : null;
+  });
+
   readonly hasGaps = computed(() => this.gaps().length > 0);
 
   selectSegment(assignment: ZoneAssignmentResponse): void {
-    if (!this.readOnly()) this.segmentSelected.emit(assignment);
+    if (!this.readOnly() && !this.suppressClick) this.segmentSelected.emit(assignment);
   }
 
   isLinked(assignment: ZoneAssignmentResponse): boolean {
@@ -131,6 +157,88 @@ export class ZoneTimelineComponent {
   }
 
   selectGap(selection: ZoneGapSelection): void {
-    if (!this.readOnly()) this.gapSelected.emit(selection);
+    if (!this.readOnly() && !this.suppressClick) this.gapSelected.emit(selection);
+  }
+
+  // --- Arrastre con Pointer Events (mouse y touch). El formulario sigue siendo la alternativa con teclado. ---
+
+  /** Pointer down sobre un hueco: empieza a dibujar un rango desde ese minuto. */
+  startGapDrag(event: PointerEvent, selection: ZoneGapSelection): void {
+    if (!this.canDrag(event)) return;
+    const minute = this.minuteAt(event);
+    const anchor = Math.min(Math.max(minute, selection.startMinute), selection.endMinute);
+    this.begin(event, { kind: 'new', period: selection.period, anchor });
+  }
+
+  /** Pointer down sobre una manija de borde: empieza a estirar o achicar ese tramo. */
+  startHandleDrag(event: PointerEvent, assignment: ZoneAssignmentResponse, edge: 'start' | 'end'): void {
+    if (!this.canDrag(event)) return;
+    event.stopPropagation();
+    this.begin(event, { kind: 'resize', assignment, edge });
+  }
+
+  moveDrag(event: PointerEvent): void {
+    if (!this.active) return;
+    const result = this.resolve(this.active, this.minuteAt(event));
+    this.draft.set(result.range);
+    this.showNotice(result.notice);
+  }
+
+  endDrag(): void {
+    const drag = this.active;
+    if (!drag) return;
+    this.active = null;
+
+    const range = this.draft();
+    this.draft.set(null);
+    if (!range) return; // sin arrastre real es un clic: sigue su curso normal (abrir el tramo o precargar el hueco)
+
+    // El click que el navegador dispara tras soltar no debe abrir el tramo ni pisar el rango propuesto.
+    this.suppressClick = true;
+    setTimeout(() => this.suppressClick = false, 0);
+
+    if (drag.kind === 'new') {
+      this.gapSelected.emit({ period: range.period, startMinute: range.startMinute, endMinute: range.endMinute });
+    } else if (range.startMinute !== drag.assignment.startMinute || range.endMinute !== drag.assignment.endMinute) {
+      this.segmentResized.emit({ assignment: drag.assignment, startMinute: range.startMinute, endMinute: range.endMinute });
+    }
+  }
+
+  cancelDrag(): void {
+    this.active = null;
+    this.draft.set(null);
+    this.showNotice(null);
+  }
+
+  private canDrag(event: PointerEvent): boolean {
+    return !this.readOnly() && (event.pointerType !== 'mouse' || event.button === 0);
+  }
+
+  private begin(event: PointerEvent, drag: ActiveDrag): void {
+    try {
+      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    } catch {
+      // Sin puntero activo (ej. eventos sintéticos): el arrastre sigue con los eventos de la propia pista.
+    }
+    this.active = drag;
+    this.draft.set(null);
+    this.showNotice(null);
+  }
+
+  private resolve(drag: ActiveDrag, minute: number): DragResult {
+    return drag.kind === 'new'
+      ? dragNewRange(this.assignments(), drag.period, drag.anchor, minute)
+      : resizeRange(this.assignments(), drag.assignment, drag.edge, minute);
+  }
+
+  private minuteAt(event: PointerEvent): number {
+    const rect = this.track()?.nativeElement.getBoundingClientRect();
+    return rect ? minuteAtPosition(event.clientX - rect.left, rect.width) : 0;
+  }
+
+  private showNotice(message: string | null): void {
+    if (this.noticeTimer) clearTimeout(this.noticeTimer);
+    this.dragNotice.set(message);
+    this.noticeTimer = message ? setTimeout(() => this.dragNotice.set(null), NOTICE_MS) : null;
   }
 }

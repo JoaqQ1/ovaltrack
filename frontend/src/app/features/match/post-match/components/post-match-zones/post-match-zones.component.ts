@@ -195,6 +195,11 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     this.panel()?.prefill(gap);
   }
 
+  /** Estirar o achicar un tramo carga el nuevo rango en el formulario, sin guardarlo. */
+  onSegmentResized(change: { assignment: ZoneAssignmentResponse; startMinute: number; endMinute: number }): void {
+    this.panel()?.applyResize(change.assignment, change.startMinute, change.endMinute);
+  }
+
   /** Tocar una marca de evento propone su minuto como inicio o fin del rango. */
   onMarkSelected(mark: { period: ZonePeriod; minute: number }): void {
     this.panel()?.pickMinute(mark.period, mark.minute);

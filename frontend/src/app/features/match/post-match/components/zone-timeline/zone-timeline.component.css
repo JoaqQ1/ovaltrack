@@ -56,6 +56,9 @@
   padding: 0;
   border: 0;
   overflow: hidden;
+  /* Los huecos se arrastran con el dedo: la página no debe scrollear mientras tanto */
+  touch-action: none;
+  user-select: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,6 +69,9 @@
  * Territorio por columna: escala divergente azul (campo propio) → neutro → naranja (campo rival), pensada para
  * daltonismo (no rojo/verde). La etiqueta I1…D6 sigue dentro de la barra; la fila no se codifica en color.
  */
+/* Las manijas sobresalen del borde: el recorte lo hace la etiqueta, no la barra */
+.segment { overflow: visible; touch-action: pan-y; }
+
 .segment {
   --terr-hue: var(--blue-mid, #2b6ca3);
   --terr-w: 0.2;
@@ -93,7 +99,63 @@
 
 .segment.terr-rival { --terr-hue: var(--zone-heat-high, #d9480f); }
 
-.segment-label { font-family: var(--font-mono, monospace); font-size: 12px; font-weight: 700; }
+.handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 44px;
+  cursor: ew-resize;
+  touch-action: none;
+  z-index: 5;
+}
+
+.handle-start { left: -22px; }
+.handle-end { right: -22px; z-index: 6; }
+
+/* Trazo fino visible dentro del área táctil */
+.handle::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 50%;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--text-primary, #111d0e);
+  opacity: 0.45;
+}
+
+.handle:hover::before { opacity: 0.9; }
+
+.range-draft {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border: 2px dashed var(--btn-primary-bg, #204b22);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--btn-primary-bg, #204b22) 18%, transparent);
+  pointer-events: none;
+  z-index: 7;
+}
+
+.drag-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--warning, #8a5700);
+}
+
+.segment-label {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+}
 
 .gap {
   background: repeating-linear-gradient(135deg, rgba(245, 158, 11, 0.28) 0 6px, rgba(255, 255, 255, 0.7) 6px 12px);

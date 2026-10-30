@@ -240,4 +240,112 @@ describe('ZoneTimelineComponent', () => {
       expect(segments()[0].classList).not.toContain('is-new');
     });
   });
+
+  describe('arrastre', () => {
+    const track = (): HTMLElement => fixture.nativeElement.querySelector('.track');
+    const draft = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="range-draft"]');
+    const notice = (): string | undefined => fixture.nativeElement.querySelector('[data-testid="drag-notice"]')?.textContent?.trim();
+    const handle = (index: number, edge: 'start' | 'end'): HTMLElement =>
+      segments()[index].querySelector(`[data-testid="handle-${edge}"]`) as HTMLElement;
+
+    /** La pista mide 800 px: 10 px por minuto. */
+    function stubTrack(): void {
+      spyOn(track(), 'getBoundingClientRect').and.returnValue(
+        { left: 0, top: 0, right: 800, bottom: 52, width: 800, height: 52, x: 0, y: 0, toJSON: () => ({}) } as DOMRect);
+    }
+
+    function pointer(target: HTMLElement, type: 'pointerdown' | 'pointermove' | 'pointerup', minute: number): void {
+      target.dispatchEvent(new PointerEvent(type, { clientX: minute * 10, pointerId: 1, pointerType: 'mouse', button: 0, bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    it('F2-H2. arrastrar sobre un hueco dibuja un rango provisorio y al soltar lo propone', () => {
+      render([]);
+      stubTrack();
+      const proposed: ZoneGapSelection[] = [];
+      fixture.componentInstance.gapSelected.subscribe(range => proposed.push(range));
+
+      pointer(gaps()[0], 'pointerdown', 10);
+      pointer(gaps()[0], 'pointermove', 20);
+      expect(draft()?.style.left).toBe('12.5%');
+      expect(draft()?.style.width).toBe('12.5%');
+
+      pointer(gaps()[0], 'pointerup', 20);
+
+      expect(draft()).toBeNull();
+      expect(proposed).toEqual([{ period: 1, startMinute: 10, endMinute: 20 }]);
+    });
+
+    it('F2-S1. el arrastre se frena en el entretiempo y muestra el motivo', () => {
+      render([]);
+      stubTrack();
+      const proposed: ZoneGapSelection[] = [];
+      fixture.componentInstance.gapSelected.subscribe(range => proposed.push(range));
+
+      pointer(gaps()[0], 'pointerdown', 30);
+      pointer(gaps()[0], 'pointermove', 60);
+
+      expect(notice()).toBe('Se frenó en el entretiempo');
+      pointer(gaps()[0], 'pointerup', 60);
+      expect(proposed).toEqual([{ period: 1, startMinute: 30, endMinute: 40 }]);
+    });
+
+    it('F2-S1. se frena en otro tramo y lo nombra', () => {
+      render([zone('a', 1, 20, 30)]);
+      stubTrack();
+
+      pointer(gaps()[0], 'pointerdown', 5);
+      pointer(gaps()[0], 'pointermove', 28);
+
+      expect(notice()).toContain("choca con el tramo 1T 20'–30'");
+    });
+
+    it('sin movimiento es un clic: no hay rango arrastrado y el clic normal precarga el hueco', () => {
+      render([]);
+      stubTrack();
+      const proposed: ZoneGapSelection[] = [];
+      fixture.componentInstance.gapSelected.subscribe(range => proposed.push(range));
+
+      pointer(gaps()[0], 'pointerdown', 10);
+      pointer(gaps()[0], 'pointerup', 10);
+      gaps()[0].click();
+
+      expect(proposed.length).toBe(1);
+      expect(proposed[0].period).toBe(1);
+    });
+
+    it('F2-H3. estirar el borde de un tramo propone el nuevo rango y no se guarda solo', () => {
+      render([zone('s', 1, 10, 20)]);
+      stubTrack();
+      const resized: { startMinute: number; endMinute: number }[] = [];
+      const selected: ZoneAssignmentResponse[] = [];
+      fixture.componentInstance.segmentResized.subscribe(change => resized.push(change));
+      fixture.componentInstance.segmentSelected.subscribe(assignment => selected.push(assignment));
+
+      pointer(handle(0, 'end'), 'pointerdown', 20);
+      pointer(handle(0, 'end'), 'pointermove', 26);
+      pointer(handle(0, 'end'), 'pointerup', 26);
+      segments()[0].click(); // el click posterior al arrastre no debe abrir el tramo
+
+      expect(resized.map(change => [change.startMinute, change.endMinute])).toEqual([[10, 26]]);
+      expect(selected).toEqual([]);
+    });
+
+    it('las manijas tienen un área táctil de 44 px', () => {
+      render([zone('s', 1, 10, 20)]);
+
+      expect(handle(0, 'start').classList).toContain('handle');
+      expect(handle(0, 'end').classList).toContain('handle');
+    });
+
+    it('en modo lectura no hay manijas y el arrastre no hace nada', () => {
+      render([zone('s', 1, 10, 20)], true);
+
+      expect(segments()[0].querySelector('.handle')).toBeNull();
+      stubTrack();
+      pointer(gaps()[0], 'pointerdown', 25);
+      pointer(gaps()[0], 'pointermove', 35);
+      expect(draft()).toBeNull();
+    });
+  });
 });

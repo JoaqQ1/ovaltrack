@@ -17,11 +17,13 @@
     </button>
   </div>
 
-  <div class="track">
+  <div class="track" #track>
     <button *ngFor="let gap of gaps()" type="button" class="gap" data-testid="timeline-gap"
             [style.left.%]="gap.left" [style.width.%]="gap.width"
             [disabled]="readOnly()" [attr.aria-label]="gap.aria" [title]="gap.aria"
-            (click)="selectGap(gap.selection)">
+            (click)="selectGap(gap.selection)"
+            (pointerdown)="startGapDrag($event, gap.selection)" (pointermove)="moveDrag($event)"
+            (pointerup)="endDrag()" (pointercancel)="cancelDrag()">
       <span class="gap-label">Sin zona</span>
     </button>
 
@@ -35,13 +37,29 @@
             [disabled]="readOnly()" [attr.aria-label]="bar.aria" [title]="bar.aria"
             (click)="selectSegment(bar.assignment)">
       <span class="segment-label">{{ bar.label }}</span>
+      <!-- Manijas de borde: se dibujan finas pero con área táctil de 44 px -->
+      <ng-container *ngIf="!readOnly()">
+        <span class="handle handle-start" data-testid="handle-start" aria-hidden="true"
+              (pointerdown)="startHandleDrag($event, bar.assignment, 'start')" (pointermove)="moveDrag($event)"
+              (pointerup)="endDrag()" (pointercancel)="cancelDrag()"></span>
+        <span class="handle handle-end" data-testid="handle-end" aria-hidden="true"
+              (pointerdown)="startHandleDrag($event, bar.assignment, 'end')" (pointermove)="moveDrag($event)"
+              (pointerup)="endDrag()" (pointercancel)="cancelDrag()"></span>
+      </ng-container>
     </button>
 
     <span *ngIf="preview() as range" class="range-preview" data-testid="range-preview"
           [style.left.%]="range.left" [style.width.%]="range.width" [attr.title]="range.aria" aria-hidden="true"></span>
 
+    <span *ngIf="draftBar() as draft" class="range-draft" data-testid="range-draft"
+          [style.left.%]="draft.left" [style.width.%]="draft.width" aria-hidden="true"></span>
+
     <span class="half-mark" [style.left.%]="halfMark" aria-hidden="true"></span>
   </div>
+
+  <p *ngIf="dragNotice() as notice" class="drag-notice" role="status" aria-live="polite" data-testid="drag-notice">
+    <i class="bi bi-info-circle"></i> {{ notice }}
+  </p>
 
   <div class="ticks" aria-hidden="true">
     <span *ngFor="let tick of ticks" class="tick" [style.left.%]="tick.left">{{ tick.minute }}′</span>

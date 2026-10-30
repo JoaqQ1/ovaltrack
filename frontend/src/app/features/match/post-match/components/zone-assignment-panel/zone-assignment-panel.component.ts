@@ -70,6 +70,14 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.syncSharedState();
   }
 
+  /** Carga el tramo para editar con el borde ya movido; no guarda: el usuario revisa y toca "Guardar cambios". */
+  applyResize(assignment: ZoneAssignmentResponse, startMinute: number, endMinute: number): void {
+    this.startEdit(assignment);
+    this.startMinute = startMinute;
+    this.endMinute = endMinute;
+    this.syncSharedState();
+  }
+
   /**
    * Completa el rango desde una marca de evento: si cambia de tiempo o el minuto no supera a "Desde", lo fija como
    * "Desde"; en otro caso lo toma como "Hasta". Así "Desde" ya precargado no impide elegir un nuevo inicio.
