@@ -81,8 +81,6 @@ describe('PostMatchZonesComponent', () => {
       expect(query('app-rugby-field')).not.toBeNull();
       expect(query('app-zone-timeline')).not.toBeNull();
       expect(query('app-zone-assignment-panel')).not.toBeNull();
-      expect(query('.hud-title')?.textContent).toContain('Trelew RC');
-      expect(query('.match-score-pill')?.textContent).toContain('12 – 7');
     });
 
     it('la línea de tiempo vive en la misma tarjeta que la cancha, debajo de las etiquetas de columna', () => {
@@ -112,14 +110,13 @@ describe('PostMatchZonesComponent', () => {
       http.expectNone(zonesUrl);
     });
 
-    it('la flecha de retorno navega al análisis del partido', () => {
+    it('el error permite volver al análisis del partido', () => {
       const navigate = spyOn(router, 'navigate').and.resolveTo(true);
-      createLoaded([], []);
+      create();
+      http.expectOne(zonesUrl).flush({ message: 'Acceso denegado' }, { status: 403, statusText: 'Forbidden' });
+      fixture.detectChanges();
 
-      expect(query('.hud-back')?.textContent?.trim()).toBe('Post-partido');
-      expect(query('.hud-back')?.getAttribute('aria-label')).toBe('Volver al post-partido');
-
-      query<HTMLButtonElement>('.hud-back')?.click();
+      query<HTMLButtonElement>('.state-box--error .btn-outline')?.click();
 
       expect(navigate).toHaveBeenCalledWith(['/post-match', 'match-1']);
     });

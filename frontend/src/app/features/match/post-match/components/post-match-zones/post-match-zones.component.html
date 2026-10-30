@@ -1,26 +1,4 @@
-<section class="layout-container page zones-page">
-
-  <!-- HUD (mismo patrón que Estadísticas) -->
-  <header class="hud-container">
-    <div class="hud-left">
-      <button type="button" class="hud-back" (click)="goBack()" aria-label="Volver al post-partido" title="Volver al post-partido">
-        <i class="bi bi-arrow-left"></i>
-        <span class="hud-back-text">Post-partido</span>
-      </button>
-
-      <div class="hud-content">
-        <div class="badge-tech"><span>Análisis • Zonas de cancha</span></div>
-        <h1 class="hud-title">
-          <span class="club-name">{{ ownClubName() }}</span>
-          @if (score(); as s) {
-            <span class="match-score-pill">{{ s.home }} – {{ s.away }}</span>
-          }
-          <span class="club-name">{{ opponent() }}</span>
-        </h1>
-        <p class="hud-subtitle">Marcá en qué zona de la cancha se jugó cada tramo del partido. Los eventos de ese tramo quedan vinculados a la zona.</p>
-      </div>
-    </div>
-  </header>
+<section class="zones-page">
 
   @if (isLoading()) {
     <!-- Esqueleto con la forma de la pantalla, en lugar de un spinner suelto -->

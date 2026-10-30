@@ -1,6 +1,21 @@
 @switch (store.status()) {
   @case ('ready') {
-    <router-outlet />
+    <div class="layout-container page pm-shell" [class.pm-shell--locked]="lockViewport()">
+      <app-post-match-header
+        [matchId]="store.matchId()"
+        [ownClubName]="ownClubName()"
+        [opponentName]="store.match()?.opponent || 'Visitante'"
+        [homeScore]="store.score().home"
+        [awayScore]="store.score().away"
+        [scoreDelta]="store.scoreDelta()"
+        [startTimeFormatted]="store.startTimeFormatted()"
+        [actionTemplate]="store.viewAction()"
+        (back)="goBack()"
+      />
+      <div class="pm-shell-view">
+        <router-outlet />
+      </div>
+    </div>
   }
   @case ('error') {
     <section class="layout-container page shell-state">

@@ -2,35 +2,6 @@
 
 .zones-page { display: flex; flex-direction: column; gap: 20px; }
 
-/* ---------- HUD (mismo patrón que Estadísticas y post-match-header) ---------- */
-.hud-container {
-  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
-}
-.hud-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
-.hud-back {
-  height: 44px; padding: 0 14px; gap: 8px; flex: 0 0 auto; border-radius: var(--radius-md, 10px);
-  font-size: 13.5px; font-weight: 600;
-  background: var(--btn-outline-bg, #fff); color: var(--btn-outline-fg, #204b22);
-  border: 1px solid var(--btn-outline-border, rgba(32, 75, 34, .25));
-  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
-  transition: all .15s ease;
-}
-.hud-back:hover { background: #f2f7ef; border-color: #204b22; transform: translateY(-1px); }
-.badge-tech {
-  display: inline-flex; padding: 3px 10px; border-radius: var(--radius-pill, 999px);
-  background: #d6eac0; border: 1px solid rgba(36, 76, 9, .25); color: #244c09;
-  font: 700 11px/1.4 var(--font-body, Inter, sans-serif); letter-spacing: .06em; text-transform: uppercase;
-}
-.hud-title {
-  display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 6px 0 2px;
-  font: 800 1.75rem/1.15 var(--font-head, 'Hanken Grotesk', sans-serif); color: var(--text-primary, #111d0e);
-}
-.match-score-pill {
-  padding: 4px 14px; border-radius: var(--radius-pill, 999px); background: #16210f; color: #fff;
-  font: 700 1.25rem/1.3 var(--font-mono, 'JetBrains Mono', monospace); font-variant-numeric: tabular-nums;
-}
-.hud-subtitle { margin: 0; font-size: 14px; font-weight: 500; color: var(--text-secondary, #3b4e33); }
-
 /* ---------- Contenido ---------- */
 .zones-layout {
   display: grid;
@@ -177,6 +148,5 @@ kbd {
 }
 
 @media (max-width: 768px) {
-  .hud-title { font-size: 1.35rem; }
   .field-card { padding: 14px; }
 }

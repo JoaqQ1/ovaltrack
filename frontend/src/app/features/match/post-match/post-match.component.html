@@ -1,20 +1,18 @@
-<div class="layout-container page pm">
-  <!-- Page Header Integrado con Tanteador y Delta (Fase 2) -->
-  <div class="pm-area-hud">
-    <app-post-match-header
-      [ownClubName]="userClubName()"
-      [opponentName]="opponent()"
-      [homeScore]="store.scoreboard().home"
-      [awayScore]="store.scoreboard().away"
-      [scoreDelta]="store.scoreDelta()"
-      [startTimeFormatted]="store.kpis().startTimeFormatted"
-      (back)="comeBack()"
-      (addEvent)="openCreateModal()"
-      (viewStats)="goToStatistics()"
-      (openZones)="goToZones()"
-    />
-  </div>
+<!-- Acción de la vista: la pinta el encabezado común del shell (ngTemplateOutlet) -->
+<ng-template #addEventAction>
+  <button
+    type="button"
+    class="btn-invite btn-hud"
+    (click)="openCreateModal()"
+    aria-label="Agregar evento"
+    title="Agregar evento"
+  >
+    <i class="bi bi-plus-lg"></i>
+    <span class="hud-btn-text">Agregar evento</span>
+  </button>
+</ng-template>
 
+<div class="pm">
   <!-- Banner de Error Semántico -->
   <div *ngIf="errorMessage()" class="alert-error" role="alert">
     <i class="bi bi-exclamation-triangle-fill"></i>

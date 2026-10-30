@@ -1,10 +1,14 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, Signal, TemplateRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { MatchService } from '../../services/match.service';
 import { Match } from '../../types/match.types';
+import { EMPTY_TIME_PLACEHOLDER, formatOnlyTime } from '../utils/match-review.utils';
 
 export type ShellStatus = 'loading' | 'ready' | 'error';
+
+export interface ShellScore { home: number; away: number; }
+export interface ShellScoreDelta { text: string; type: 'OWN' | 'OPPONENT'; }
 
 type LoadResult = { match: Match } | { error: unknown };
 
@@ -21,6 +25,27 @@ export class PostMatchShellStore {
   readonly match = signal<Match | null>(null);
   readonly status = signal<ShellStatus>('loading');
   readonly errorMessage = signal<string>('');
+
+  /** Acción principal de la vista activa (hoy solo Eventos); el encabezado la pinta con `ngTemplateOutlet`. */
+  readonly viewAction = signal<TemplateRef<unknown> | null>(null);
+
+  private readonly liveScore = signal<Signal<ShellScore> | null>(null);
+  private readonly liveScoreDelta = signal<Signal<ShellScoreDelta | null> | null>(null);
+
+  /** Marcador del partido; mientras Eventos está activo lo reemplaza por el que calcula con sus eventos. */
+  readonly score = computed<ShellScore>(() => {
+    const live = this.liveScore();
+    if (live) return live();
+    const match = this.match();
+    return { home: match?.homeScore ?? 0, away: match?.awayScore ?? 0 };
+  });
+
+  readonly scoreDelta = computed<ShellScoreDelta | null>(() => this.liveScoreDelta()?.() ?? null);
+
+  readonly startTimeFormatted = computed(() => {
+    const startedAt = this.match()?.startedAt;
+    return startedAt ? formatOnlyTime(startedAt) : EMPTY_TIME_PLACEHOLDER;
+  });
 
   constructor() {
     this.loadRequests.pipe(
@@ -53,6 +78,20 @@ export class PostMatchShellStore {
       return;
     }
     this.loadRequests.next(matchId);
+  }
+
+  setViewAction(action: TemplateRef<unknown> | null): void {
+    this.viewAction.set(action);
+  }
+
+  bindLiveScore(score: Signal<ShellScore>, delta: Signal<ShellScoreDelta | null>): void {
+    this.liveScore.set(score);
+    this.liveScoreDelta.set(delta);
+  }
+
+  unbindLiveScore(): void {
+    this.liveScore.set(null);
+    this.liveScoreDelta.set(null);
   }
 
   retry(): void {

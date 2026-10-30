@@ -1,26 +1,4 @@
-<section class="layout-container page stats-page">
-
-  <!-- HUD -->
-  <header class="hud-container">
-    <div class="hud-left">
-      <button type="button" class="hud-back" (click)="goBack()" aria-label="Volver al análisis" title="Volver al análisis">
-        <i class="bi bi-arrow-left"></i>
-      </button>
-
-      <div class="hud-content">
-        <div class="badge-tech"><span>Análisis • Estadísticas</span></div>
-        <h1 class="hud-title">
-          <span class="club-name">{{ ownClubName() }}</span>
-          @if (stats(); as s) {
-            <span class="match-score-pill">{{ s.score.own }} – {{ s.score.opponent }}</span>
-          }
-          <span class="club-name">{{ opponent() }}</span>
-        </h1>
-        <p class="hud-subtitle">{{ periodLabel() }}</p>
-      </div>
-    </div>
-
-  </header>
+<section class="stats-page">
 
   @if (isLoading()) {
     <div class="state-box">

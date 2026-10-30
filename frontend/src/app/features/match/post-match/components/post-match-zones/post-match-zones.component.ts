@@ -43,10 +43,6 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string>('');
   readonly opponent = computed(() => this.shell.match()?.opponent || 'Rival');
-  readonly score = computed(() => {
-    const match = this.shell.match();
-    return match ? { home: match.homeScore ?? 0, away: match.awayScore ?? 0 } : null;
-  });
   readonly ownClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
 
   // Estados separados: la zona del formulario y la zona que se está inspeccionando no se pisan.

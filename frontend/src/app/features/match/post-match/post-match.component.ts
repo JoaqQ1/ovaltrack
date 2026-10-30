@@ -1,17 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, HostListener, inject, OnDestroy, OnInit, signal, TemplateRef, ViewChild } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
 import { RosterService } from '../services/roster.service';
 import { LiveCaptureService } from '../services/live-capture.service';
-import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { MatchReviewStore } from './store/match-review.store';
 import { PostMatchShellStore } from './store/post-match-shell.store';
-import { PostMatchHeaderComponent } from './components/post-match-header/post-match-header.component';
 import { PostMatchKpiStripComponent } from './components/post-match-kpi-strip/post-match-kpi-strip.component';
 import { PostMatchTimelineComponent } from './components/post-match-timeline/post-match-timeline.component';
 import { PostMatchTableComponent } from './components/post-match-table/post-match-table.component';
@@ -24,7 +21,6 @@ import { LocalDatabaseService } from '../../local-database/services/local-databa
   standalone: true,
   imports: [
     CommonModule,
-    PostMatchHeaderComponent,
     PostMatchKpiStripComponent,
     PostMatchTimelineComponent,
     PostMatchTableComponent,
@@ -36,7 +32,6 @@ import { LocalDatabaseService } from '../../local-database/services/local-databa
 })
 export class PostMatchComponent implements OnInit, OnDestroy {
 
-  private readonly router = inject(Router);
   private readonly shell = inject(PostMatchShellStore);
   private readonly eventService = inject(EventService);
   private readonly eventTypeService = inject(EventTypeService);
@@ -45,25 +40,18 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly toastService = inject(ToastService);
   private readonly layoutService = inject(LayoutService);
-  readonly userContext = inject(UserContextService);
   readonly store = inject(MatchReviewStore);
 
-  readonly userClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
-
   @ViewChild(PostMatchPanelComponent) panel!: PostMatchPanelComponent;
+  @ViewChild('addEventAction', { static: true }) addEventAction!: TemplateRef<unknown>;
 
   matchId = '';
 
   // Estado del contenedor
-  readonly opponent = computed(() => this.shell.match()?.opponent || 'Visitante');
   readonly errorMessage = signal<string>('');
   readonly isLoading = signal<boolean>(true);
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
   readonly showCreateModal = signal<boolean>(false);
-
-  goToStatistics(): void {
-    this.router.navigate(['/post-match', this.matchId, 'statistics']);
-  }
 
   openCreateModal(): void {
     this.showCreateModal.set(true);
@@ -71,10 +59,6 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   closeCreateModal(): void {
     this.showCreateModal.set(false);
-  }
-
-  goToZones(): void {
-    this.router.navigate(['/post-match', this.matchId, 'zones']);
   }
 
   onEditRequested(): void {
@@ -145,6 +129,8 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.layoutService.setWide(true);
+    this.shell.setViewAction(this.addEventAction);
+    this.shell.bindLiveScore(this.store.scoreboard, this.store.scoreDelta);
     this.matchId = this.shell.matchId();
     if (this.matchId) {
       this.store.resetSession();
@@ -156,6 +142,8 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.shell.setViewAction(null);
+    this.shell.unbindLiveScore();
     this.layoutService.setWide(null);
     this.store.resetSession();
   }
@@ -283,7 +271,4 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     }
   }
 
-  comeBack(): void {
-    this.router.navigate(['/match-history']);
-  }
 }

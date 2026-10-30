@@ -187,7 +187,7 @@ export const routes: Routes = [
         children: [
             {
                 path: '',
-                data: { preload: true, layout: 'wide' },
+                data: { preload: true, layout: 'wide', lockViewport: true },
                 loadComponent: () =>
                     import('./features/match/post-match/post-match.component').then(
                         m => m.PostMatchComponent

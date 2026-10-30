@@ -69,6 +69,10 @@ Los tokens oficiales del sistema corresponden a la identidad visual **Sport Pro 
   --zone-heat-low: #fdb022;
   --zone-heat-high: #d9480f;
 
+  /* Píldora de marcador del encabezado de análisis post-partido: un solo estilo en Eventos, Zonas y Estadísticas */
+  --score-pill-bg: #204b22;
+  --score-pill-fg: #ffffff;
+
   /* Geometría y Sombras */
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -408,11 +412,12 @@ La pantalla de post-partido está estructurada como una estación de trabajo de 
   - La tarjeta de tabla adopta altura fija de `470px` y `padding-bottom: 96px !important` para dar despeje al inspector flotante.
 
 ### 8.2 Componentes de la Estación de Trabajo
-1. **HUD Analítico (`PostMatchHeaderComponent`):**
-   - Botón `.hud-back` (`←`) táctil de 40px con borde suave.
-   - Píldora de marcador oscura central `.match-score-pill`: `[ 27 – 19 ]` en fuente monoespaciada tabular y alto contraste.
-   - Burbuja flotante animada `.score-delta-badge` (`+5`), animada con `scoreDeltaPop` y temporizador de 3 segundos.
-   - Botón primario verde rugby botella `+ Agregar evento`.
+1. **Encabezado común (`PostMatchHeaderComponent` dentro de `PostMatchShellComponent`):**
+   - Compartido por Eventos (`/post-match/:id`), Zonas (`/zones`) y Estadísticas (`/statistics`), que son rutas hijas del shell.
+   - Botón `.hud-back` (`←`) de 44px, etiqueta fija `ANÁLISIS POST-PARTIDO`, píldora de marcador con `--score-pill-bg` / `--score-pill-fg` (mono tabular) y línea inferior siempre `Hora de inicio HH:MM:SS`.
+   - Burbuja flotante animada `.score-delta-badge` (`+5`), con `scoreDeltaPop` y temporizador de 3 segundos (solo cuando Eventos la informa).
+   - Selector de vistas en la misma fila del título: `routerLink` + `routerLinkActive` (`aria-current="page"`), contenedor gris claro y vista activa **blanca elevada** (el verde queda para filtros). En pantallas < 1280px baja a su propia fila con tres partes iguales.
+   - Acción de la vista a la derecha, tras un divisor: la vista hija registra un `TemplateRef` y el encabezado lo pinta con `ngTemplateOutlet`. Hoy solo Eventos: botón primario verde rugby botella `+ Agregar evento`.
 2. **Tira Condensada de KPIs (`PostMatchKpiStripComponent`):**
    - Altura de 44px con 3 secciones: total de eventos, conteo de jugadas sin jugador con botón `"Ver pendientes ›"` y porcentaje de carga con barra de progreso verde.
 3. **Timeline Táctico Compacto (`PostMatchTimelineComponent`):**

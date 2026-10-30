@@ -1,78 +1,68 @@
 <header class="hud-container">
-  <div class="hud-left">
-    <!-- Botón de Retroceso (.hud-back) -->
-    <button 
-      type="button" 
-      class="hud-back" 
-      (click)="onBack()" 
-      aria-label="Volver a partidos" 
+  <div class="hud-main">
+    <button
+      type="button"
+      class="hud-back"
+      (click)="onBack()"
+      aria-label="Volver a partidos"
       title="Volver a partidos"
     >
       <i class="bi bi-arrow-left"></i>
     </button>
 
     <div class="hud-content">
-      <!-- Badge de Sección -->
       <div class="badge-tech">
         <span>Análisis • Post-partido</span>
       </div>
 
-      <!-- Título con Tanteador Central y Delta -->
-      <div class="hud-title-row">
-        <h1 class="hud-title">
-          <span class="club-name">{{ ownClubName }}</span>
-          
-          <div class="score-wrapper" [attr.aria-label]="'Marcador: ' + homeScore + ' a ' + awayScore">
-            <span class="match-score-pill">
-              <span class="score-num">{{ homeScore }}</span>
-              <span class="score-sep">–</span>
-              <span class="score-num">{{ awayScore }}</span>
-            </span>
-            <span 
-              *ngIf="scoreDelta" 
+      <h1 class="hud-title">
+        <span class="club-name">{{ ownClubName }}</span>
+
+        <span class="score-wrapper" [attr.aria-label]="'Marcador: ' + homeScore + ' a ' + awayScore">
+          <span class="match-score-pill">
+            <span class="score-num">{{ homeScore }}</span>
+            <span class="score-sep">–</span>
+            <span class="score-num">{{ awayScore }}</span>
+          </span>
+          @if (scoreDelta) {
+            <span
               class="score-delta-badge"
               aria-live="polite"
               [title]="'Actualización de marcador: ' + scoreDelta.text"
             >
               {{ scoreDelta.text }}
             </span>
-          </div>
+          }
+        </span>
 
-          <span class="club-name">{{ opponentName }}</span>
-        </h1>
-      </div>
+        <span class="club-name">{{ opponentName }}</span>
+      </h1>
 
-      <!-- Subtítulo / Estado -->
-      <p class="hud-subtitle">
-        Hora de inicio {{ startTimeFormatted }}
-      </p>  
+      <p class="hud-subtitle">Hora de inicio {{ startTimeFormatted }}</p>
     </div>
   </div>
 
   <div class="hud-right">
-    <!-- CTA Principal Verde Sólido -->
+    <nav class="view-switch" aria-label="Vistas del análisis">
+      @for (option of viewOptions; track option.label) {
+        <a
+          class="view-option"
+          [routerLink]="option.path"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+          [routerLinkActiveOptions]="{ exact: option.exact }"
+        >
+          <i class="bi" [class]="option.icon"></i>
+          <span>{{ option.label }}</span>
+        </a>
+      }
+    </nav>
 
-    <button type="button" class="btn-outline btn-zones" (click)="onOpenZones()"
-            aria-label="Zonas de cancha" title="Zonas de cancha">
-      <i class="bi bi-grid-3x3-gap"></i>
-      <span class="btn-text">Zonas de cancha</span>
-    </button>
-
-    <button type="button" class="btn-outline btn-stats" (click)="onViewStats()"
-            aria-label="Ver estadísticas" title="Ver estadísticas">
-      <i class="bi bi-bar-chart-line"></i>
-      <span class="btn-text">Estadísticas</span>
-    </button>
-
-    <button 
-      type="button" 
-      class="btn-invite btn-add-event" 
-      (click)="onAddEvent()"
-      aria-label="Agregar evento"
-      title="Agregar evento"
-    >
-      <i class="bi bi-plus-lg"></i>
-      <span class="btn-text">Agregar evento</span>
-    </button>
+    @if (actionTemplate) {
+      <span class="hud-divider" aria-hidden="true"></span>
+      <div class="hud-action">
+        <ng-container [ngTemplateOutlet]="actionTemplate" />
+      </div>
+    }
   </div>
 </header>
