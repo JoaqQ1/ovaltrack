@@ -2,11 +2,13 @@
   display: block;
 }
 
-/* Columna: encabezado (alto automático) + vista hija */
+/* Columna: encabezado (alto automático) + vista hija.
+   El padding y el gap son los mismos en las tres vistas: el encabezado queda en las mismas coordenadas. */
 .pm-shell {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 8px;
+  padding-top: 14px !important;
 }
 
 .pm-shell-view {
@@ -15,11 +17,10 @@
 
 /* Eventos: la vista ocupa el alto de la ventana y la tabla virtual usa el resto */
 .pm-shell--locked {
-  gap: 8px;
   height: calc(100vh - var(--navbar-h, 64px) - 26px);
   height: calc(100dvh - var(--navbar-h, 64px) - 26px);
   min-height: 640px;
-  padding-block: 14px 12px !important;
+  padding-bottom: 12px !important;
   box-sizing: border-box;
 }
 
@@ -37,9 +38,13 @@
 
 /* Notebooks estándar (768px de alto) */
 @media (max-height: 800px) and (min-width: 1121px) {
-  .pm-shell--locked {
+  .pm-shell {
     gap: 6px;
-    padding-block: 6px 8px !important;
+    padding-top: 6px !important;
+  }
+
+  .pm-shell--locked {
+    padding-bottom: 8px !important;
   }
 }
 
