@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject, OnDestroy, OnInit, signal, TemplateRef, ViewChild } from '@angular/core';
+import { Component, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
 import { EventService } from '../services/event.service';
@@ -43,7 +43,6 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   readonly store = inject(MatchReviewStore);
 
   @ViewChild(PostMatchPanelComponent) panel!: PostMatchPanelComponent;
-  @ViewChild('addEventAction', { static: true }) addEventAction!: TemplateRef<unknown>;
 
   matchId = '';
 
@@ -129,7 +128,6 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.layoutService.setWide(true);
-    this.shell.setViewAction(this.addEventAction);
     this.shell.bindLiveScore(this.store.scoreboard, this.store.scoreDelta);
     this.matchId = this.shell.matchId();
     if (this.matchId) {
@@ -142,7 +140,6 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.shell.setViewAction(null);
     this.shell.unbindLiveScore();
     this.layoutService.setWide(null);
     this.store.resetSession();

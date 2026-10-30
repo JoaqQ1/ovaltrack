@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatchReviewStore } from '../../store/match-review.store';
@@ -15,6 +15,9 @@ import { ReviewEventViewModel, ReviewPeriodFilter } from '../../types/match-revi
 export class PostMatchTimelineComponent {
   readonly store = inject(MatchReviewStore);
   readonly halfTimeMin = RUGBY_HALF_TIME_MIN;
+
+  /** Acción primaria de la vista: abrir el alta de un evento post-partido. */
+  readonly addEvent = output<void>();
 
   getTooltip(occ: ReviewEventViewModel): string {
     if (occ.isUnassigned) {

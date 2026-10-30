@@ -66,21 +66,35 @@
       </button>
     </div>
 
-    <!-- Búsqueda por jugador o tipo -->
-    <div class="search-wrapper">
-      <i class="bi bi-search search-icon" aria-hidden="true"></i>
-      <input type="text" 
-             class="search-input" 
-             placeholder="Buscar jugador o tipo" 
-             [value]="store.filters().searchTerm" 
-             (input)="onSearchChange($event)">
-      <button *ngIf="store.filters().searchTerm" 
-              type="button" 
-              class="search-clear-btn" 
-              (click)="store.setSearchTerm('')" 
-              aria-label="Limpiar búsqueda"
-              title="Limpiar búsqueda">
-        <i class="bi bi-x-circle-fill"></i>
+    <div class="filter-right-group">
+      <!-- Búsqueda por jugador o tipo -->
+      <div class="search-wrapper">
+        <i class="bi bi-search search-icon" aria-hidden="true"></i>
+        <input type="text" 
+               class="search-input" 
+               placeholder="Buscar jugador o tipo" 
+               [value]="store.filters().searchTerm" 
+               (input)="onSearchChange($event)">
+        <button *ngIf="store.filters().searchTerm" 
+                type="button" 
+                class="search-clear-btn" 
+                (click)="store.setSearchTerm('')" 
+                aria-label="Limpiar búsqueda"
+                title="Limpiar búsqueda">
+          <i class="bi bi-x-circle-fill"></i>
+        </button>
+      </div>
+
+      <span class="filter-divider" aria-hidden="true"></span>
+
+      <!-- Acción primaria de la vista -->
+      <button type="button"
+              class="btn-primary-rugby btn-add-event"
+              (click)="addEvent.emit()"
+              aria-label="Agregar evento"
+              title="Agregar evento">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span class="btn-add-event-text">Agregar evento</span>
       </button>
     </div>
   </div>

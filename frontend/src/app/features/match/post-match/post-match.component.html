@@ -1,17 +1,3 @@
-<!-- Acción de la vista: la pinta el encabezado común del shell (ngTemplateOutlet) -->
-<ng-template #addEventAction>
-  <button
-    type="button"
-    class="btn-invite btn-hud"
-    (click)="openCreateModal()"
-    aria-label="Agregar evento"
-    title="Agregar evento"
-  >
-    <i class="bi bi-plus-lg"></i>
-    <span class="hud-btn-text">Agregar evento</span>
-  </button>
-</ng-template>
-
 <div class="pm">
   <!-- Banner de Error Semántico -->
   <div *ngIf="errorMessage()" class="alert-error" role="alert">
@@ -41,7 +27,7 @@
 
     <!-- Área de Línea Temporal -->
     <div class="pm-area-timeline">
-      <app-post-match-timeline />
+      <app-post-match-timeline (addEvent)="openCreateModal()" />
     </div>
 
     <!-- Área de Tabla Detallada -->

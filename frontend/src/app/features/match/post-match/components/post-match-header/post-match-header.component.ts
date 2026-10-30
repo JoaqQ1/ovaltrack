@@ -1,5 +1,4 @@
-import { NgTemplateOutlet } from '@angular/common';
-import { Component, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 interface ViewOption {
@@ -13,7 +12,7 @@ interface ViewOption {
 @Component({
   selector: 'app-post-match-header',
   standalone: true,
-  imports: [NgTemplateOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './post-match-header.component.html',
   styleUrl: './post-match-header.component.css'
 })
@@ -25,7 +24,6 @@ export class PostMatchHeaderComponent {
   @Input() awayScore = 0;
   @Input() scoreDelta: { text: string; type: 'OWN' | 'OPPONENT' } | null = null;
   @Input() startTimeFormatted = '--:--:--';
-  @Input() actionTemplate: TemplateRef<unknown> | null = null;
 
   @Output() back = new EventEmitter<void>();
 

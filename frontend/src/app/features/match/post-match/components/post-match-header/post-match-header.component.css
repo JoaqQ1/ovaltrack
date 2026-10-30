@@ -152,24 +152,13 @@
   margin: 0;
 }
 
-/* Zona derecha: selector de vistas + divisor + acción de la vista */
+/* Zona derecha: solo el selector de vistas */
 .hud-right {
   display: flex;
   align-items: center;
   gap: 16px;
   flex-shrink: 0;
   order: 2;
-}
-
-.hud-divider {
-  width: 1px;
-  height: 32px;
-  background: var(--border-sport-subtle, rgba(32, 75, 34, 0.2));
-}
-
-.hud-action {
-  display: flex;
-  align-items: center;
 }
 
 /* Selector de vistas: navegación (blanca elevada), no filtro (verde) */
@@ -261,14 +250,6 @@
 @media (max-width: 1279px) {
   .hud-right {
     display: contents;
-  }
-
-  .hud-divider {
-    display: none;
-  }
-
-  .hud-action {
-    order: 2;
   }
 
   .view-switch {

@@ -103,37 +103,3 @@
     row-gap: 6px;
   }
 }
-
-/* Acción "Agregar evento" (se renderiza en el encabezado común) */
-.btn-hud {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 44px;
-  min-width: 44px;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 0.88rem;
-  padding: 0 20px;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-/* En móvil: botón de ícono táctil de 44x44px (el aria-label ya está en el botón) */
-@media (max-width: 576px) {
-  .btn-hud {
-    padding: 0;
-    width: 44px;
-  }
-
-  .btn-hud .hud-btn-text {
-    display: none;
-  }
-
-  .btn-hud i {
-    font-size: 1.15rem;
-    margin: 0 !important;
-  }
-}

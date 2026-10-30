@@ -1,4 +1,4 @@
-import { Injectable, Signal, TemplateRef, computed, inject, signal } from '@angular/core';
+import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { MatchService } from '../../services/match.service';
@@ -25,9 +25,6 @@ export class PostMatchShellStore {
   readonly match = signal<Match | null>(null);
   readonly status = signal<ShellStatus>('loading');
   readonly errorMessage = signal<string>('');
-
-  /** Acción principal de la vista activa (hoy solo Eventos); el encabezado la pinta con `ngTemplateOutlet`. */
-  readonly viewAction = signal<TemplateRef<unknown> | null>(null);
 
   private readonly liveScore = signal<Signal<ShellScore> | null>(null);
   private readonly liveScoreDelta = signal<Signal<ShellScoreDelta | null> | null>(null);
@@ -78,10 +75,6 @@ export class PostMatchShellStore {
       return;
     }
     this.loadRequests.next(matchId);
-  }
-
-  setViewAction(action: TemplateRef<unknown> | null): void {
-    this.viewAction.set(action);
   }
 
   bindLiveScore(score: Signal<ShellScore>, delta: Signal<ShellScoreDelta | null>): void {
