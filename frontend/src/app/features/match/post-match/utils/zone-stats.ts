@@ -71,6 +71,14 @@ export type ZoneEvent = Pick<MatchTimelineEventResponse, 'id' | 'period' | 'matc
 
 const SECONDS_PER_MINUTE = 60;
 
+/**
+ * Segundo de juego con el que se ubica un evento en los tramos. El tiempo añadido cuenta como el minuto
+ * 40 (1T) o el 80 (2T): se limita al último segundo del tiempo, igual que `EventZoneResolver` del backend.
+ */
+export function effectiveMatchTime(period: ZonePeriod, matchTimeSeconds: number): number {
+  return Math.min(matchTimeSeconds, periodRange(period).end * SECONDS_PER_MINUTE - 1);
+}
+
 function inPeriod<T extends ZoneEvent>(events: T[], filter: ZonePeriodFilter): T[] {
   return filter === 'ALL' ? events : events.filter(event => event.period === filter);
 }
@@ -105,11 +113,11 @@ export function eventsInCell<T extends ZoneEvent>(events: T[], cell: ZoneCellRef
 
 /** Eventos que caerían en un rango: mismo tiempo y minuto [inicio, fin), igual que el resolver del backend. */
 export function eventsInRange<T extends ZoneEvent>(range: RangeLike, events: T[]): T[] {
-  return events.filter(event =>
-    event.period === range.period &&
-    event.matchTime >= range.startMinute * SECONDS_PER_MINUTE &&
-    event.matchTime < range.endMinute * SECONDS_PER_MINUTE
-  );
+  return events.filter(event => {
+    if (event.period !== range.period) return false;
+    const seconds = effectiveMatchTime(range.period, event.matchTime);
+    return seconds >= range.startMinute * SECONDS_PER_MINUTE && seconds < range.endMinute * SECONDS_PER_MINUTE;
+  });
 }
 
 /** Eventos que hoy tienen zona gracias al rango anterior y la perderían con el nuevo. */

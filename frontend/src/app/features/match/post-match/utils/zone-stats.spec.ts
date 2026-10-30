@@ -1,5 +1,5 @@
 import {
-  ZoneEvent, countByCell, coveragePercent, describeSegment, eventsInCell, eventsInRange, eventsReleasedByEdit,
+  ZoneEvent, effectiveMatchTime, countByCell, coveragePercent, describeSegment, eventsInCell, eventsInRange, eventsReleasedByEdit,
   findGaps, findOverlap, periodRange, sortChronologically, suggestRange, unzonedEvents
 } from './zone-stats';
 import { ZoneAssignmentResponse } from '../../types/zone.types';
@@ -12,6 +12,19 @@ describe('zone-stats', () => {
     it('1T va de 0 a 40 y 2T de 40 a 80', () => {
       expect(periodRange(1)).toEqual({ start: 0, end: 40 });
       expect(periodRange(2)).toEqual({ start: 40, end: 80 });
+    });
+  });
+
+  describe('effectiveMatchTime', () => {
+    it('no modifica los segundos dentro del tiempo reglamentario', () => {
+      expect(effectiveMatchTime(1, 39 * 60)).toBe(39 * 60);
+      expect(effectiveMatchTime(2, 50 * 60)).toBe(50 * 60);
+    });
+
+    it('limita el tiempo añadido al último segundo del 1T (39:59) y del 2T (79:59)', () => {
+      expect(effectiveMatchTime(1, 40 * 60)).toBe(40 * 60 - 1);
+      expect(effectiveMatchTime(1, 43 * 60)).toBe(40 * 60 - 1);
+      expect(effectiveMatchTime(2, 84 * 60)).toBe(80 * 60 - 1);
     });
   });
 
@@ -159,6 +172,30 @@ describe('zone-stats', () => {
 
       it('un evento a los 25:00 exactos pertenece al tramo siguiente', () => {
         expect(eventsInRange({ period: 1, startMinute: 25, endMinute: 40 }, boundary).map(e => e.id)).toEqual(['end']);
+      });
+
+      describe('tiempo añadido', () => {
+        const added = [event('min40', 1, 40), event('min43', 1, 43), event('min80', 2, 80), event('min84', 2, 84)];
+
+        it('el 1T pasado del minuto 40 entra en el tramo que termina en 40', () => {
+          const ids = eventsInRange({ period: 1, startMinute: 31, endMinute: 40 }, added).map(e => e.id);
+
+          expect(ids).toEqual(['min40', 'min43']);
+        });
+
+        it('el 2T pasado del minuto 80 entra en el tramo que termina en 80', () => {
+          const ids = eventsInRange({ period: 2, startMinute: 68, endMinute: 80 }, added).map(e => e.id);
+
+          expect(ids).toEqual(['min80', 'min84']);
+        });
+
+        it('si el tramo no llega a 40 u 80 el tiempo añadido no entra', () => {
+          expect(eventsInRange({ period: 1, startMinute: 31, endMinute: 38 }, added)).toEqual([]);
+        });
+
+        it('el tiempo añadido del 1T nunca cae en un tramo del 2T', () => {
+          expect(eventsInRange({ period: 2, startMinute: 40, endMinute: 80 }, added).map(e => e.id)).toEqual(['min80', 'min84']);
+        });
       });
     });
 
