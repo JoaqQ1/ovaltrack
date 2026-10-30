@@ -114,5 +114,29 @@
         <i class="bi bi-exclamation-triangle-fill"></i> {{ serverError }}
       </p>
     </div>
+
+    <!-- Huecos sin zona: tocar uno precarga el formulario con ese rango -->
+    <div class="gaps" data-testid="gaps">
+      <div class="gaps-head">
+        <h3 class="gaps-title">Huecos sin zona</h3>
+        <span class="count-pill" data-testid="gaps-count">{{ gaps.length }}</span>
+      </div>
+
+      <p *ngIf="gaps.length === 0" class="match-complete" data-testid="match-complete">
+        <i class="bi bi-check-circle-fill"></i> Partido completo
+      </p>
+
+      <ul *ngIf="gaps.length > 0" class="gap-list">
+        <li *ngFor="let gap of gaps">
+          <button type="button" class="gap-item" data-testid="gap-item" [class.is-loaded]="isGapLoaded(gap)"
+                  [disabled]="store.isSaving()" (click)="selectGap(gap)"
+                  [attr.aria-label]="'Hueco sin zona de ' + gap.start + ' a ' + gap.end + ' minutos, ' + gap.period + 'T, ' + gap.eventCount + ' ' + (gap.eventCount === 1 ? 'evento' : 'eventos') + '. Tocá para completar'">
+            <span class="gap-range">{{ gap.start }}′–{{ gap.end }}′</span>
+            <span class="gap-events">{{ gap.eventCount }} {{ gap.eventCount === 1 ? 'evento' : 'eventos' }}</span>
+            <span class="gap-period">{{ gap.period }}T</span>
+          </button>
+        </li>
+      </ul>
+    </div>
   </div>
 </section>

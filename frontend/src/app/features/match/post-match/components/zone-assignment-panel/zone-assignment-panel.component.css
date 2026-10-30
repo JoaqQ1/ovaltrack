@@ -214,6 +214,47 @@
   text-align: center;
 }
 
+/* Huecos sin zona */
+.gaps { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20)); }
+.gaps-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.gaps-title { margin: 0; font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary, #3b4e33); }
+
+.count-pill {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--warning-tint, rgba(253, 176, 34, 0.20));
+  color: var(--warning, #8a5700);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.match-complete { margin: 0; display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13.5px; font-weight: 700; color: var(--success, #2e7d32); }
+
+.gap-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.gap-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
+  background: var(--warning-tint, rgba(253, 176, 34, 0.20));
+  color: var(--text-primary, #111d0e);
+  text-align: left;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.gap-item:hover:not(:disabled) { border-color: var(--warning, #8a5700); }
+.gap-item.is-loaded { border-color: var(--warning, #8a5700); box-shadow: inset 0 0 0 1px var(--warning, #8a5700); }
+.gap-range { font-family: var(--font-mono, monospace); font-size: 13px; font-weight: 700; }
+.gap-events { font-size: 13px; color: var(--text-secondary, #3b4e33); }
+.gap-period { font-family: var(--font-mono, monospace); font-size: 12px; font-weight: 700; color: var(--warning, #8a5700); }
+
 /* El resumen de la hoja solo existe en móvil */
 .sheet-summary { display: none; }
 
@@ -254,7 +295,8 @@
   /* Compacta: solo el resumen y el botón de guardar */
   .panel-card.is-sheet:not(.is-open) .section-title,
   .panel-card.is-sheet:not(.is-open) .panel-subtitle,
-  .panel-card.is-sheet:not(.is-open) .field { display: none; }
+  .panel-card.is-sheet:not(.is-open) .field,
+  .panel-card.is-sheet:not(.is-open) .gaps { display: none; }
 
   .panel-card.is-sheet .panel-footer {
     position: static;

@@ -351,6 +351,68 @@ describe('ZoneAssignmentPanelComponent', () => {
     });
   });
 
+  describe('huecos sin zona', () => {
+    const gapItems = (): HTMLElement[] => queryAll('[data-testid="gap-item"]');
+    const text = (el: HTMLElement): string => el.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+
+    it('F2-H4. lista cada hueco con su rango, sus eventos y su tiempo', () => {
+      render([{ ...existingZone, startMinute: 10, endMinute: 25 }], [ev('1', 1, 5), ev('2', 1, 30), ev('3', 1, 33), ev('4', 2, 70)]);
+
+      expect(gapItems().map(text)).toEqual(['0′–10′ 1 evento 1T', '25′–40′ 2 eventos 1T', '40′–80′ 1 evento 2T']);
+      expect(query('[data-testid="gaps-count"]')?.textContent?.trim()).toBe('3');
+    });
+
+    it('F2-H4. tocar un hueco precarga el formulario con ese rango y conserva la franja elegida', () => {
+      render([existingZone]);
+      selectCell(2, 5);
+
+      gapItems()[1].click();
+      fixture.detectChanges();
+
+      expect([component.period, component.startMinute, component.endMinute]).toEqual([1, 25, 40]);
+      expect(component.selectedCell()).toEqual({ row: 2, col: 5 });
+      expect(store.formRange()).toEqual({ period: 1, startMinute: 25, endMinute: 40 });
+      expect(gapItems()[1].classList).toContain('is-loaded');
+    });
+
+    it('tocar un hueco mientras se edita un tramo sale de la edición', () => {
+      render([existingZone]);
+      component.startEdit(existingZone);
+
+      component.selectGap({ period: 2, start: 40, end: 80, eventCount: 0 });
+
+      expect(component.editingId).toBeNull();
+      expect(store.editingId()).toBeNull();
+    });
+
+    it('F2-H8. con el partido completo muestra "Partido completo" y ningún hueco', () => {
+      render([
+        { ...existingZone, id: 'p1', startMinute: 0, endMinute: 40 },
+        { ...existingZone, id: 'p2', period: 2, startMinute: 40, endMinute: 80 }
+      ]);
+
+      expect(gapItems().length).toBe(0);
+      expect(query('[data-testid="match-complete"]')?.textContent).toContain('Partido completo');
+    });
+
+    it('F2-H9. sin tramos los huecos son los dos tiempos enteros', () => {
+      render([], [ev('1', 1, 5)]);
+
+      expect(gapItems().map(text)).toEqual(['0′–40′ 1 evento 1T', '40′–80′ 0 eventos 2T']);
+    });
+
+    it('al guardar un tramo la lista se actualiza con los huecos que quedan', () => {
+      render();
+      selectCell(2, 3);
+      saveButton().click();
+      http.expectOne(zonesUrl).flush({ ...existingZone, startMinute: 0, endMinute: 5 });
+      flushReload([{ ...existingZone, startMinute: 0, endMinute: 5 }]);
+      fixture.detectChanges();
+
+      expect(gapItems().map(text)).toEqual(['5′–40′ 0 eventos 1T', '40′–80′ 0 eventos 2T']);
+    });
+  });
+
   describe('vista previa de eventos', () => {
     const events = [ev('1', 1, 12), ev('2', 1, 20), ev('3', 1, 30), ev('4', 2, 50)];
 

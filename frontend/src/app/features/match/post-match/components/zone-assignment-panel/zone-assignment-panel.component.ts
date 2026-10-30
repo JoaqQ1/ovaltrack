@@ -7,7 +7,7 @@ import { MatchZonesStore } from '../../store/match-zones.store';
 import { HALFTIME_SPLIT_MESSAGE, deduceZonePeriod, rangeCrossesHalftime, validateZoneForm } from '../../utils/zone-form.utils';
 import { ZONE_COLUMN_NAMES, ZONE_ROW_NAMES, columnRangeLabel, zoneLabel } from '../../utils/zone-grid';
 import { describeSegment, eventsInRange, eventsReleasedByEdit, findOverlap } from '../../utils/zone-stats';
-import { TRACK_MINUTES, suggestNextRange } from '../../utils/zone-track-layout';
+import { GapWithEvents, TRACK_MINUTES, gapsWithEventCount, suggestNextRange } from '../../utils/zone-track-layout';
 import { ZONE_HALF_MINUTES, ZoneAssignmentRequest, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 
 type RangeField = 'start' | 'end';
@@ -171,6 +171,21 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     const original = this.editingId ? this.store.assignments().find(a => a.id === this.editingId) : undefined;
     const range = this.usableRange();
     return original && range ? eventsReleasedByEdit(original, range, this.store.events()).length : 0;
+  }
+
+  /** Huecos sin zona de ambos tiempos, con los eventos que hoy caen en cada uno. */
+  get gaps(): GapWithEvents[] {
+    return gapsWithEventCount(this.store.assignments(), this.store.events());
+  }
+
+  /** El hueco ya está cargado en el formulario. */
+  isGapLoaded(gap: GapWithEvents): boolean {
+    return this.editingId === null && this.startMinute === gap.start && this.endMinute === gap.end;
+  }
+
+  /** Tocar un hueco precarga el formulario con ese rango; la franja elegida se conserva. */
+  selectGap(gap: GapWithEvents): void {
+    this.prefill({ startMinute: gap.start, endMinute: gap.end });
   }
 
   /** Resumen del rango para la hoja compacta, ej. "1T · 26′ a 31′ · 3 eventos". */
