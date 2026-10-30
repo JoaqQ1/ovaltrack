@@ -41,6 +41,9 @@
 
 .step-body { flex: 1 1 auto; min-width: 0; }
 
+/* El círculo del paso 3 se centra con el botón de 44 px */
+.step-action .step-number { margin-top: 10px; }
+
 .field-label {
   display: block;
   margin-bottom: 6px;
@@ -158,11 +161,21 @@
   font-weight: 600;
 }
 
-.save-hint { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--warning, #8a5700); }
+.save-hint { margin: 10px 0 0; font-size: 13px; font-weight: 600; color: var(--warning, #8a5700); }
+.step-body > .inline-error { margin: 10px 0 0; }
 
 .panel-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; }
 .panel-actions .btn { height: 44px; padding: 0 20px; }
-.panel-actions .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.panel-actions .btn:disabled { cursor: not-allowed; }
+
+/* El guardar deshabilitado sigue siendo el botón principal, solo apagado (no un outline secundario) */
+.panel-actions .btn-invite:disabled {
+  background-color: var(--btn-primary-bg, #204b22);
+  border-color: var(--btn-primary-bg, #204b22);
+  color: var(--btn-primary-fg, #ffffff);
+  box-shadow: none;
+  opacity: 0.45;
+}
 
 /* Lista de tramos */
 .list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }

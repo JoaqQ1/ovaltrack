@@ -73,16 +73,10 @@
       </div>
     </div>
 
-    <!-- Paso 3: guardar -->
-    <div class="step">
+    <!-- Paso 3: guardar. El "3" marca el botón; los avisos van debajo como ayuda -->
+    <div class="step step-action">
       <span class="step-number" aria-hidden="true">3</span>
       <div class="step-body">
-        <p *ngIf="serverError" class="inline-error" role="alert" data-testid="server-error">
-          <i class="bi bi-exclamation-triangle-fill"></i> {{ serverError }}
-        </p>
-
-        <p *ngIf="blockReason as reason" id="zone-save-hint" class="save-hint" data-testid="save-hint">{{ reason }}</p>
-
         <div class="panel-actions">
           <button type="button" class="btn btn-outline" *ngIf="editingId" (click)="cancelEdit()"
                   [disabled]="store.isSaving()">Cancelar edición</button>
@@ -93,6 +87,12 @@
             <span>{{ store.isSaving() ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Guardar tramo') }}</span>
           </button>
         </div>
+
+        <p *ngIf="blockReason as reason" id="zone-save-hint" class="save-hint" data-testid="save-hint">{{ reason }}</p>
+
+        <p *ngIf="serverError" class="inline-error" role="alert" data-testid="server-error">
+          <i class="bi bi-exclamation-triangle-fill"></i> {{ serverError }}
+        </p>
       </div>
     </div>
   </div>

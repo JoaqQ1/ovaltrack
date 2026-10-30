@@ -103,6 +103,14 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect(hint()).toContain('minutos enteros');
     });
 
+    it('el motivo que bloquea guardar va debajo del botón, como texto de ayuda', () => {
+      render();
+
+      const position = saveButton().compareDocumentPosition(query('[data-testid="save-hint"]') as Element);
+
+      expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
     it('al elegir la zona y con un rango válido se habilita guardar y desaparece el motivo', () => {
       render();
       selectCell(2, 3);
