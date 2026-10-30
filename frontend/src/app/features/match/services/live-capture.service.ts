@@ -152,7 +152,7 @@ export class LiveCaptureService {
       match,
       state: {
         homeTeam: HOME_TEAM_NAME,
-        awayTeam: match.opponent.name,
+        awayTeam: match.opponent.alias,
         scoreboard: {
           home: match.homeScore ?? 0,
           away: match.awayScore ?? 0,

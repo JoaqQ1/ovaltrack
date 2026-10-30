@@ -13,7 +13,7 @@ import { createInitialStartingSlots, createInitialSubstituteSlots } from '../dat
 @Component({
   selector: 'ot-selection-roster',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './selection-roster.component.html',
   styleUrl: './selection-roster.component.css'
 })
