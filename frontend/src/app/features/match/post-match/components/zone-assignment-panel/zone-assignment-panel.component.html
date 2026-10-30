@@ -124,7 +124,8 @@
     <ul class="zone-list" *ngIf="store.assignments().length > 0">
       <li *ngFor="let zone of store.assignments()"
           class="zone-item" data-testid="zone-item"
-          [class.is-editing]="zone.id === editingId">
+          [class.is-editing]="zone.id === editingId"
+          [class.is-conflict]="!readOnly && zone.id === store.conflictId()">
         <button type="button" class="zone-item-main" data-testid="zone-edit"
                 [attr.aria-label]="'Editar tramo ' + segmentName(zone)"
                 [disabled]="store.isSaving() || readOnly" (click)="startEdit(zone)">

@@ -276,19 +276,39 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect([component.startMinute, component.endMinute]).toEqual([5, 10]);
     });
 
-    it('ante un 409 muestra el error inline, conserva el formulario y no usa toast de error', () => {
+    it('ante un 409 muestra el error inline, conserva el formulario y además avisa con un toast', () => {
       render();
       selectCell(2, 3);
       const error = spyOn(toast, 'error');
+      const message = 'El tramo se solapa con el tramo 1T 3\'–8\' ya asignado';
 
       saveButton().click();
-      http.expectOne(zonesUrl).flush({ message: 'El tramo se solapa con el tramo 1T 3\'–8\' ya asignado' },
-        { status: 409, statusText: 'Conflict' });
+      http.expectOne(zonesUrl).flush({ message }, { status: 409, statusText: 'Conflict' });
       fixture.detectChanges();
 
       expect(query('[data-testid="server-error"]')?.textContent).toContain('se solapa con el tramo 1T');
       expect(component.selectedCell()).toEqual({ row: 2, col: 3 });
-      expect(error).not.toHaveBeenCalled();
+      expect(error).toHaveBeenCalledOnceWith(message);
+    });
+
+    it('resalta en la lista el tramo que choca con el rango y lo libera al corregirlo', () => {
+      render([existingZone]);
+      selectCell(2, 3);
+      component.startMinute = 20;
+      component.endMinute = 30;
+
+      component.onRangeChange();
+      fixture.detectChanges();
+
+      expect(store.conflictId()).toBe('zone-1');
+      expect(query('[data-testid="zone-item"]')?.classList).toContain('is-conflict');
+
+      component.startMinute = 25;
+      component.onRangeChange();
+      fixture.detectChanges();
+
+      expect(store.conflictId()).toBeNull();
+      expect(query('[data-testid="zone-item"]')?.classList).not.toContain('is-conflict');
     });
 
     it('el error del servidor se limpia al modificar el rango', () => {

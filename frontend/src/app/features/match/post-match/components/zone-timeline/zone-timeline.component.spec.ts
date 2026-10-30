@@ -97,4 +97,12 @@ describe('ZoneTimelineComponent', () => {
     expect(segments()[0].getAttribute('aria-label')).toContain('1T 10′ a 25′');
     expect(gaps()[0].getAttribute('aria-label')).toContain('0′ a 10′');
   });
+
+  it('resalta la barra del tramo en conflicto', () => {
+    render([zone('a', 1, 0, 10), zone('b', 1, 10, 20)]);
+    fixture.componentRef.setInput('conflictId', 'b');
+    fixture.detectChanges();
+
+    expect(segments().map(bar => bar.classList.contains('is-conflict'))).toEqual([false, true]);
+  });
 });

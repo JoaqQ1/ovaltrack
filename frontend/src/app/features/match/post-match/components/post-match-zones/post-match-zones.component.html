@@ -70,6 +70,7 @@
             (cellSelected)="onCellSelected($event)">
             <h2 class="section-title timeline-title">Tramos del partido</h2>
             <app-zone-timeline [assignments]="zonesStore.assignments()" [readOnly]="mode() === 'view'"
+                               [conflictId]="mode() === 'assign' ? zonesStore.conflictId() : null"
                                (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)" />
           </app-rugby-field>
         </div>

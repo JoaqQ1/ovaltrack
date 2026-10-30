@@ -22,6 +22,8 @@ export class MatchZonesStore {
   private readonly activeTypeIds = signal<Set<string> | null>(null);
   readonly isLoading = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
+  /** Tramo que choca con el rango en edición; lo resaltan la lista y la timeline (estado de UI compartido). */
+  readonly conflictId = signal<string | null>(null);
 
   /** Mismos eventos que la revisión: se ocultan los de tipos dados de baja en el catálogo. */
   readonly events = computed<MatchTimelineEventResponse[]>(() => {
@@ -60,6 +62,7 @@ export class MatchZonesStore {
   }
 
   reset(): void {
+    this.conflictId.set(null);
     this.assignments.set([]);
     this.rawEvents.set([]);
     this.activeTypeIds.set(null);

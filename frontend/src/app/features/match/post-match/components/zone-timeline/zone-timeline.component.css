@@ -36,6 +36,13 @@
   z-index: 1;
 }
 
+.segment.is-conflict {
+  background: var(--error-tint, rgba(240, 68, 56, 0.14));
+  border-color: var(--error, #b42318);
+  color: var(--error, #b42318);
+  z-index: 2;
+}
+
 .segment-label { font-family: var(--font-mono, monospace); font-size: 12px; font-weight: 700; }
 
 .gap {

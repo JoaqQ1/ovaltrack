@@ -43,6 +43,8 @@ export class ZoneTimelineComponent {
   readonly assignments = input<ZoneAssignmentResponse[]>([]);
   /** En modo lectura las barras y los huecos no responden. */
   readonly readOnly = input<boolean>(false);
+  /** Tramo que choca con el rango en edición: se resalta en rojo. */
+  readonly conflictId = input<string | null>(null);
 
   readonly segmentSelected = output<ZoneAssignmentResponse>();
   readonly gapSelected = output<ZoneGapSelection>();

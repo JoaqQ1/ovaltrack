@@ -51,6 +51,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.applySuggestion();
+    this.destroyRef.onDestroy(() => this.store.conflictId.set(null));
   }
 
   /** Precarga el formulario con un rango (ej. al tocar un hueco de la línea de tiempo). */
@@ -61,6 +62,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.period = range.period;
     this.startMinute = range.startMinute;
     this.endMinute = range.endMinute;
+    this.refreshConflict();
   }
 
   setPeriod(period: ZonePeriod): void {
@@ -75,6 +77,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
   onRangeChange(): void {
     this.serverError = null;
+    this.refreshConflict();
   }
 
   /** Botones − y + junto a cada minuto. */
@@ -87,6 +90,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     if (field === 'start') this.startMinute = next;
     else this.endMinute = next;
     this.serverError = null;
+    this.refreshConflict();
   }
 
   /** Motivo por el que no se puede guardar todavía (null = listo). Se muestra junto al botón. */
@@ -132,6 +136,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.startMinute = zone.startMinute;
     this.endMinute = zone.endMinute;
     this.selectedCell.set({ row: zone.row, col: zone.col });
+    this.refreshConflict();
   }
 
   cancelEdit(): void {
@@ -152,8 +157,12 @@ export class ZoneAssignmentPanelComponent implements OnInit {
           this.toastService.success(wasEditing ? 'Tramo actualizado' : 'Tramo guardado');
           this.resetForm(request.endMinute);
         },
-        // El formulario se conserva y el error queda visible junto al botón.
-        error: err => this.serverError = this.messageFrom(err, 'No se pudo guardar el tramo')
+        // El formulario se conserva: el error queda inline junto al botón y además se avisa con un toast.
+        error: err => {
+          this.serverError = this.messageFrom(err, 'No se pudo guardar el tramo');
+          this.toastService.error(this.serverError);
+          this.refreshConflict();
+        }
       });
   }
 
@@ -176,6 +185,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
         next: () => {
           this.pendingDeleteId = null;
           if (this.editingId === zoneId) this.resetForm();
+          else this.refreshConflict();
           this.toastService.success('Tramo eliminado');
         },
         error: err => {
@@ -221,6 +231,15 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     const range = suggestRange(this.store.assignments(), this.period, afterMinute);
     this.startMinute = range?.start ?? null;
     this.endMinute = range?.end ?? null;
+    this.refreshConflict();
+  }
+
+  /** Publica en el store el tramo que se pisa con el rango actual (null si no hay choque). */
+  private refreshConflict(): void {
+    const clash = !this.readOnly && this.rangeIsUsable()
+      ? findOverlap(this.currentRange(), this.store.assignments(), this.editingId)
+      : null;
+    this.store.conflictId.set(clash?.id ?? null);
   }
 
   /** Tras guardar o cancelar: la zona queda sin elegir a propósito y el rango continúa donde terminó el anterior. */

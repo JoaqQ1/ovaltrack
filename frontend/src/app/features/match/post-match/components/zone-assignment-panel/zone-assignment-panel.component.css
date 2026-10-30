@@ -253,6 +253,12 @@
   border-radius: 10px;
 }
 
+.zone-item.is-conflict {
+  border-color: var(--error, #b42318);
+  background: var(--error-tint, rgba(240, 68, 56, 0.14));
+  box-shadow: 0 0 0 2px var(--error-border, rgba(180, 35, 24, 0.35));
+}
+
 .zone-item.is-editing { border-color: var(--btn-primary-bg, #204b22); background: #f2f7ef; }
 
 .zone-item-main {
