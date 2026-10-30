@@ -116,6 +116,57 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect(query('[data-testid="range-help-toggle"]')?.getAttribute('aria-expanded')).toBe('true');
     });
 
+    describe('pickMinute (marcas de eventos)', () => {
+      it('con "Desde" ya precargado, un minuto posterior completa "Hasta"', () => {
+        render();
+        component.startMinute = 10;
+        component.endMinute = 15;
+
+        component.pickMinute(1, 30);
+
+        expect([component.startMinute, component.endMinute]).toEqual([10, 30]);
+      });
+
+      it('un minuto anterior a "Desde" lo reemplaza y descarta un "Hasta" que quedaría invertido', () => {
+        render();
+        component.startMinute = 10;
+        component.endMinute = 15;
+
+        component.pickMinute(1, 5);
+        expect([component.startMinute, component.endMinute]).toEqual([5, 15]);
+
+        component.pickMinute(1, 20);
+        component.pickMinute(1, 2);
+        expect([component.startMinute, component.endMinute]).toEqual([2, 20]);
+      });
+
+      it('sin "Desde" lo completa primero', () => {
+        render([{ ...existingZone, startMinute: 0, endMinute: 40 }]);
+
+        component.pickMinute(1, 12);
+
+        expect([component.startMinute, component.endMinute]).toEqual([12, null]);
+      });
+
+      it('una marca de otro tiempo cambia de tiempo y arranca el rango en ese minuto', () => {
+        render();
+
+        component.pickMinute(2, 55);
+
+        expect([component.period, component.startMinute, component.endMinute]).toEqual([2, 55, null]);
+      });
+
+      it('en modo lectura no modifica el formulario', () => {
+        render();
+        component.readOnly = true;
+        const before = [component.period, component.startMinute, component.endMinute];
+
+        component.pickMinute(2, 55);
+
+        expect([component.period, component.startMinute, component.endMinute]).toEqual(before);
+      });
+    });
+
     it('el motivo que bloquea guardar va debajo del botón, como texto de ayuda', () => {
       render();
 

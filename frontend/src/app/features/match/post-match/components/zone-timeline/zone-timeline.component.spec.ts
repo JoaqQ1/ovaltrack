@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ZoneGapSelection, ZoneTimelineComponent } from './zone-timeline.component';
 import { ZoneAssignmentResponse } from '../../../types/zone.types';
+import { MarkEvent } from '../../utils/zone-event-marks';
 
 describe('ZoneTimelineComponent', () => {
   let fixture: ComponentFixture<ZoneTimelineComponent>;
@@ -104,5 +105,54 @@ describe('ZoneTimelineComponent', () => {
     fixture.detectChanges();
 
     expect(segments().map(bar => bar.classList.contains('is-conflict'))).toEqual([false, true]);
+  });
+
+  describe('marcas de eventos', () => {
+    const ev = (id: string, period: number, minute: number, name = 'Try'): MarkEvent =>
+      ({ id, period, matchTime: minute * 60, eventTypeName: name, playerName: 'J. Pérez' });
+    const marks = (): HTMLButtonElement[] => Array.from(fixture.nativeElement.querySelectorAll('[data-testid="timeline-mark"]'));
+
+    function renderMarks(events: MarkEvent[], readOnly = false): void {
+      render([], readOnly);
+      fixture.componentRef.setInput('events', events);
+      fixture.detectChanges();
+    }
+
+    it('dibuja una marca por minuto con tooltip de minuto, tipo y jugador', () => {
+      renderMarks([ev('a', 1, 25), ev('b', 2, 50, 'Tarjeta Amarilla')]);
+
+      expect(marks().length).toBe(2);
+      expect(marks()[0].title).toBe('25′\nTry · J. Pérez');
+      expect(marks()[1].classList).toContain('mark-card');
+    });
+
+    it('el tiempo añadido se apila en el borde con su indicador "+N"', () => {
+      renderMarks([ev('a', 1, 41), ev('b', 1, 43)]);
+
+      expect(marks().length).toBe(1);
+      expect(fixture.nativeElement.querySelector('[data-testid="mark-added"]')?.textContent).toContain('+2');
+    });
+
+    it('tocar una marca emite su tiempo y minuto', () => {
+      renderMarks([ev('a', 2, 55)]);
+      const emitted: { period: number; minute: number }[] = [];
+      fixture.componentInstance.markSelected.subscribe(mark => emitted.push(mark));
+
+      marks()[0].click();
+
+      expect(emitted).toEqual([{ period: 2, minute: 55 }]);
+    });
+
+    it('en modo lectura las marcas no responden', () => {
+      renderMarks([ev('a', 1, 25)], true);
+
+      expect(marks()[0].disabled).toBeTrue();
+    });
+
+    it('sin eventos no hay marcas', () => {
+      renderMarks([]);
+
+      expect(marks().length).toBe(0);
+    });
   });
 });

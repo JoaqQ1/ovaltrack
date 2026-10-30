@@ -65,6 +65,27 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.refreshConflict();
   }
 
+  /**
+   * Completa el rango desde una marca de evento: si cambia de tiempo o el minuto no supera a "Desde", lo fija como
+   * "Desde"; en otro caso lo toma como "Hasta". Así "Desde" ya precargado no impide elegir un nuevo inicio.
+   */
+  pickMinute(period: ZonePeriod, minute: number): void {
+    if (this.readOnly) return;
+
+    if (period !== this.period) {
+      this.period = period;
+      this.startMinute = minute;
+      this.endMinute = null;
+    } else if (this.startMinute === null || minute <= this.startMinute) {
+      this.startMinute = minute;
+      if (this.endMinute !== null && this.endMinute <= minute) this.endMinute = null;
+    } else {
+      this.endMinute = minute;
+    }
+    this.serverError = null;
+    this.refreshConflict();
+  }
+
   setPeriod(period: ZonePeriod): void {
     this.period = period;
     this.serverError = null;

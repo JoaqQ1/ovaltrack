@@ -70,9 +70,10 @@
             [mode]="mode()"
             (cellSelected)="onCellSelected($event)">
             <h2 class="section-title timeline-title">Tramos del partido</h2>
-            <app-zone-timeline [assignments]="zonesStore.assignments()" [readOnly]="mode() === 'view'"
+            <app-zone-timeline [assignments]="zonesStore.assignments()" [events]="zonesStore.events()" [readOnly]="mode() === 'view'"
                                [conflictId]="mode() === 'assign' ? zonesStore.conflictId() : null"
-                               (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)" />
+                               (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)"
+                               (markSelected)="onMarkSelected($event)" />
           </app-rugby-field>
         </div>
       </div>

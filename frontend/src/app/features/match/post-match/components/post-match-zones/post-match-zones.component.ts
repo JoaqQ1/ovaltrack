@@ -6,7 +6,7 @@ import { forkJoin } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { MatchService } from '../../../services/match.service';
-import { ZoneAssignmentResponse, ZoneCellRef } from '../../../types/zone.types';
+import { ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { describeZone, zoneLabel } from '../../utils/zone-grid';
 import { ZonePeriodFilter, countByCell, coveragePercent, eventsInCell, unzonedEvents } from '../../utils/zone-stats';
@@ -139,6 +139,11 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   /** Tocar un hueco precarga el formulario con ese rango. */
   onGapSelected(gap: ZoneGapSelection): void {
     this.panel()?.prefill(gap);
+  }
+
+  /** Tocar una marca de evento propone su minuto como inicio o fin del rango. */
+  onMarkSelected(mark: { period: ZonePeriod; minute: number }): void {
+    this.panel()?.pickMinute(mark.period, mark.minute);
   }
 
   private load(matchId: string): void {

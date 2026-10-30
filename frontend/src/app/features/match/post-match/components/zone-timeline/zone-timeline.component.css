@@ -4,6 +4,40 @@
 .half { font-family: var(--font-mono, monospace); font-size: 11px; font-weight: 700; color: var(--text-secondary, #3b4e33); }
 .half:last-child { padding-left: 6px; }
 
+/* Fila fina de marcas de eventos: la forma distingue el tipo, no solo el color */
+.marks { position: relative; height: 16px; margin-bottom: 2px; }
+
+.mark {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  height: 16px;
+  min-width: 14px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary, #3b4e33);
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* Área táctil ampliada sin engrosar la fila */
+.mark::after { content: ''; position: absolute; inset: -14px -10px; }
+
+.mark:hover:not(:disabled) { color: var(--btn-primary-bg, #204b22); cursor: pointer; }
+.mark:disabled { cursor: default; }
+.mark:focus-visible { outline: 2px solid var(--btn-primary-bg, #204b22); outline-offset: 1px; border-radius: 4px; }
+.mark-try { color: var(--btn-primary-bg, #204b22); }
+.mark-card { color: var(--error, #b42318); }
+.mark-kick { color: var(--blue-mid, #2b6ca3); }
+.mark-glyph { font-size: 11px; }
+.mark-added { font-family: var(--font-mono, monospace); font-size: 9px; font-weight: 700; color: var(--text-primary, #111d0e); }
+
+.legend-glyph { font-size: 11px; margin-left: 4px; }
+
 .track {
   position: relative;
   height: 52px;

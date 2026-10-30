@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
 import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZonePeriod } from '../../../types/zone.types';
 import { zoneLabel } from '../../utils/zone-grid';
+import { EventMark, MarkEvent, buildEventMarks } from '../../utils/zone-event-marks';
 import { findGaps } from '../../utils/zone-stats';
 
 export interface ZoneGapSelection {
@@ -31,6 +32,13 @@ const TICKS = Array.from({ length: TOTAL_MINUTES / 10 + 1 }, (_, i) => i * 10);
 
 const toPercent = (minutes: number): number => (minutes / TOTAL_MINUTES) * 100;
 
+const MARK_GLYPHS: Record<EventMark['kind'], string> = { try: '▲', kick: '●', card: '■', other: '·' };
+
+interface MarkView extends EventMark {
+  left: number;
+  glyph: string;
+}
+
 /** Línea de tiempo de 0' a 80': tramos como barras y huecos sin zona rayados. Presentacional. */
 @Component({
   selector: 'app-zone-timeline',
@@ -46,7 +54,12 @@ export class ZoneTimelineComponent {
   /** Tramo que choca con el rango en edición: se resalta en rojo. */
   readonly conflictId = input<string | null>(null);
 
+  /** Eventos del partido: se dibujan como marcas sobre las barras para ver dónde cortar los tramos. */
+  readonly events = input<MarkEvent[]>([]);
+
   readonly segmentSelected = output<ZoneAssignmentResponse>();
+  /** Tocar una marca propone su minuto como inicio o fin del rango. */
+  readonly markSelected = output<{ period: ZonePeriod; minute: number }>();
   readonly gapSelected = output<ZoneGapSelection>();
 
   readonly ticks = TICKS.map(minute => ({ minute, left: toPercent(minute) }));
@@ -70,10 +83,17 @@ export class ZoneTimelineComponent {
         aria: `Sin zona de ${gap.start}′ a ${gap.end}′ (${period}T). Tocá para completar`
       }))));
 
+  readonly marks = computed<MarkView[]>(() =>
+    buildEventMarks(this.events()).map(mark => ({ ...mark, left: toPercent(mark.minute), glyph: MARK_GLYPHS[mark.kind] })));
+
   readonly hasGaps = computed(() => this.gaps().length > 0);
 
   selectSegment(assignment: ZoneAssignmentResponse): void {
     if (!this.readOnly()) this.segmentSelected.emit(assignment);
+  }
+
+  selectMark(mark: EventMark): void {
+    if (!this.readOnly()) this.markSelected.emit({ period: mark.period, minute: mark.minute });
   }
 
   selectGap(selection: ZoneGapSelection): void {
