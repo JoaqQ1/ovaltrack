@@ -103,6 +103,19 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect(hint()).toContain('minutos enteros');
     });
 
+    it('la ayuda del rango muestra una sola línea y el detalle se despliega con el ícono', () => {
+      render();
+
+      expect(query('.range-note')?.textContent?.trim()).toBe('Inicio incluido, fin excluido.');
+      expect(query('[data-testid="range-help"]')).toBeNull();
+
+      query<HTMLButtonElement>('[data-testid="range-help-toggle"]')?.click();
+      fixture.detectChanges();
+
+      expect(query('[data-testid="range-help"]')?.textContent).toContain('El tiempo añadido cuenta como minuto 40 (1T) y 80 (2T).');
+      expect(query('[data-testid="range-help-toggle"]')?.getAttribute('aria-expanded')).toBe('true');
+    });
+
     it('el motivo que bloquea guardar va debajo del botón, como texto de ayuda', () => {
       render();
 

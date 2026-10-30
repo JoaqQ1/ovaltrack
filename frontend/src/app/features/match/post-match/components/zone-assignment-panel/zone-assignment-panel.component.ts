@@ -45,6 +45,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   endMinute: number | null = null;
   editingId: string | null = null;
   pendingDeleteId: string | null = null;
+  helpOpen = false;
   serverError: string | null = null;
   listError: string | null = null;
 
@@ -66,6 +67,10 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.period = period;
     this.serverError = null;
     this.applySuggestion();
+  }
+
+  toggleHelp(): void {
+    this.helpOpen = !this.helpOpen;
   }
 
   onRangeChange(): void {

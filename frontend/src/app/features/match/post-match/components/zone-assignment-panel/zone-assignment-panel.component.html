@@ -66,10 +66,19 @@
           {{ releasedEventCount }} {{ releasedEventCount === 1 ? 'evento pasará' : 'eventos pasarán' }} a "Sin zona"
         </p>
 
-        <p class="range-note">
-          El minuto de inicio cuenta y el de fin no: 10–25 y 25–40 no se pisan. En el 2T los minutos siguen de 40 a 80.
-          Los eventos después del 40′ (1T) o del 80′ (2T), por tiempo añadido, quedan sin zona.
-        </p>
+        <div class="range-help">
+          <p class="range-note">Inicio incluido, fin excluido.</p>
+          <button type="button" class="help-toggle" data-testid="range-help-toggle"
+                  aria-controls="zone-range-help" [attr.aria-expanded]="helpOpen"
+                  aria-label="Más ayuda sobre el rango" (click)="toggleHelp()">
+            <i class="bi bi-question-circle"></i>
+          </button>
+        </div>
+        <ul *ngIf="helpOpen" id="zone-range-help" class="help-list" data-testid="range-help">
+          <li>10–25 y 25–40 no se pisan: el minuto de inicio cuenta y el de fin no.</li>
+          <li>En el 2T los minutos siguen de 40 a 80.</li>
+          <li>El tiempo añadido cuenta como minuto 40 (1T) y 80 (2T).</li>
+        </ul>
       </div>
     </div>
 
