@@ -116,6 +116,58 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect(query('[data-testid="range-help-toggle"]')?.getAttribute('aria-expanded')).toBe('true');
     });
 
+    describe('hoja inferior en móvil', () => {
+      const summary = (): string => query('[data-testid="sheet-summary"]')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+      const sheet = (): HTMLElement => query('.panel-card.is-sheet') as HTMLElement;
+
+      it('el resumen muestra la zona elegida, el rango y cuántos eventos se vinculan', () => {
+        render([], [ev('1', 1, 1), ev('2', 1, 3)]);
+        selectCell(2, 4);
+        component.startMinute = 0;
+        component.endMinute = 5;
+        fixture.detectChanges();
+
+        expect(summary()).toContain('Centro · Campo rival');
+        expect(query('[data-testid="sheet-range"]')?.textContent).toBe('1T · 0′ a 5′ · 2 eventos');
+      });
+
+      it('sin zona ni rango válido pide elegirlos', () => {
+        render([{ ...existingZone, startMinute: 0, endMinute: 40 }]);
+
+        expect(summary()).toContain('Elegí una zona en la cancha');
+        expect(query('[data-testid="sheet-range"]')?.textContent).toBe('Definí el rango');
+      });
+
+      it('"Rango" expande la hoja y "Cerrar" la vuelve a compactar', () => {
+        render();
+        expect(sheet().classList).not.toContain('is-open');
+
+        query<HTMLButtonElement>('[data-testid="sheet-toggle"]')?.click();
+        fixture.detectChanges();
+        expect(sheet().classList).toContain('is-open');
+        expect(query('[data-testid="sheet-toggle"]')?.textContent?.trim()).toBe('Cerrar');
+        expect(query('[data-testid="sheet-toggle"]')?.getAttribute('aria-expanded')).toBe('true');
+
+        query<HTMLButtonElement>('[data-testid="sheet-toggle"]')?.click();
+        fixture.detectChanges();
+        expect(sheet().classList).not.toContain('is-open');
+      });
+
+      it('al guardar, la hoja vuelve a quedar compacta', () => {
+        render();
+        selectCell(2, 3);
+        component.toggleSheet();
+        fixture.detectChanges();
+
+        saveButton().click();
+        http.expectOne(zonesUrl).flush({ ...existingZone, startMinute: 0, endMinute: 5 });
+        flushReload([{ ...existingZone, startMinute: 0, endMinute: 5 }]);
+        fixture.detectChanges();
+
+        expect(sheet().classList).not.toContain('is-open');
+      });
+    });
+
     describe('estirar un tramo desde la timeline', () => {
       it('carga el tramo para editar con el borde movido, sin guardar nada', () => {
         render([existingZone]);

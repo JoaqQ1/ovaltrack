@@ -48,6 +48,8 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   endMinute: number | null = null;
   editingId: string | null = null;
   helpOpen = false;
+  /** En móvil el formulario es una hoja inferior: compacta (zona, rango y Guardar) o expandida con todos los pasos. */
+  sheetOpen = false;
   serverError: string | null = null;
   listError: string | null = null;
 
@@ -103,6 +105,17 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.period = period;
     this.serverError = null;
     this.applySuggestion();
+  }
+
+  toggleSheet(): void {
+    this.sheetOpen = !this.sheetOpen;
+  }
+
+  /** Resumen del rango para la hoja compacta, ej. "1T · 26′ a 31′ · 3 eventos". */
+  get rangeSummary(): string {
+    if (!this.rangeIsUsable()) return 'Definí el rango';
+    const events = this.linkedEventCount ?? 0;
+    return `${this.period}T · ${this.startMinute}′ a ${this.endMinute}′ · ${events} ${events === 1 ? 'evento' : 'eventos'}`;
   }
 
   toggleHelp(): void {
@@ -302,6 +315,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
   /** Tras guardar o cancelar: la zona queda sin elegir a propósito y el rango continúa donde terminó el anterior. */
   private resetForm(afterMinute?: number): void {
+    this.sheetOpen = false;
     this.editingId = null;
     this.serverError = null;
     this.selectedCell.set(null);

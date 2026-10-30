@@ -171,6 +171,11 @@ kbd {
   .zones-layout { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* La hoja inferior del formulario (fixed) no debe tapar el final de la página */
+@media (max-width: 576px) {
+  .zones-page { padding-bottom: 180px; }
+}
+
 @media (max-width: 768px) {
   .hud-title { font-size: 1.35rem; }
   .field-card { padding: 14px; }

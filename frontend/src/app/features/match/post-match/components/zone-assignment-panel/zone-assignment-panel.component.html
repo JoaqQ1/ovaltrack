@@ -1,7 +1,19 @@
 <section class="zone-panel">
 
   <!-- Formulario primero: es la tarea principal -->
-  <div class="panel-card" *ngIf="!readOnly">
+  <div class="panel-card is-sheet" [class.is-open]="sheetOpen" *ngIf="!readOnly">
+    <!-- Solo móvil: resumen compacto de la hoja inferior (zona, rango y "Rango" para expandir) -->
+    <div class="sheet-summary" data-testid="sheet-summary">
+      <span *ngIf="selectedCell() as cell" class="zone-badge">{{ label(cell) }}</span>
+      <span class="summary-text">
+        <strong *ngIf="selectedCell() as cell; else noCell">{{ rowName(cell.row) }} · {{ columnName(cell.col) }}</strong>
+        <ng-template #noCell><strong>Elegí una zona en la cancha</strong></ng-template>
+        <small data-testid="sheet-range">{{ rangeSummary }}</small>
+      </span>
+      <button type="button" class="btn btn-outline btn-range" data-testid="sheet-toggle"
+              [attr.aria-expanded]="sheetOpen" (click)="toggleSheet()">{{ sheetOpen ? 'Cerrar' : 'Rango' }}</button>
+    </div>
+
     <h2 class="section-title">{{ editingId ? 'Editar tramo' : 'Nuevo tramo' }}</h2>
     <p class="steps-hint">1. Tocá una zona en la cancha · 2. Definí el rango · 3. Guardá</p>
 

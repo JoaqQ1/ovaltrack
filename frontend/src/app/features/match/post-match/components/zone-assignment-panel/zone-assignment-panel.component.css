@@ -321,6 +321,9 @@
   border-color: var(--error-border, rgba(180, 35, 24, 0.35));
 }
 
+/* El resumen de la hoja solo existe en móvil */
+.sheet-summary { display: none; }
+
 /* Una columna (tablet y móvil): "Guardar tramo" queda fijo al pie mientras el formulario está a la vista */
 @media (max-width: 1121px) {
   .step-action {
@@ -334,6 +337,44 @@
   }
 }
 
+/* Móvil: el formulario es una hoja inferior. Compacta muestra zona, rango y "Guardar tramo"; "Rango" la expande. */
 @media (max-width: 576px) {
   .zone-item { flex-wrap: wrap; }
+
+  .panel-card.is-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1020;
+    max-height: 78dvh;
+    overflow-y: auto;
+    border-radius: 20px 20px 0 0;
+    border-bottom-width: 0;
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .sheet-summary { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .summary-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+  .summary-text strong { font-size: 14px; color: var(--text-primary, #111d0e); }
+  .summary-text small { font-family: var(--font-mono, monospace); font-size: 12px; color: var(--text-secondary, #3b4e33); }
+  .btn-range { height: 44px; padding: 0 16px; flex: 0 0 auto; }
+
+  /* Compacta: solo el resumen y el botón de guardar */
+  .panel-card.is-sheet:not(.is-open) .section-title,
+  .panel-card.is-sheet:not(.is-open) .steps-hint,
+  .panel-card.is-sheet:not(.is-open) .step:not(.step-action) { display: none; }
+
+  .panel-card.is-sheet .step-action .step-number { display: none; }
+
+  .panel-card.is-sheet .step-action {
+    position: static;
+    margin: 0;
+    padding: 0;
+    border-top: 0;
+    background: transparent;
+  }
+
+  .panel-card.is-sheet .step-action .panel-actions { justify-content: stretch; }
+  .panel-card.is-sheet .step-action .panel-actions .btn { flex: 1 1 auto; }
 }
