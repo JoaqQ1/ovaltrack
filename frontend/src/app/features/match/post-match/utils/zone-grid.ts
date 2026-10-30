@@ -58,3 +58,8 @@ export function allZoneCells(): ZoneCellRef[] {
   }
   return cells;
 }
+
+/** Conteo para la burbuja de la celda: desde 1000 se abrevia ("1k") para que no se salga de la píldora. */
+export function formatEventCount(count: number): string {
+  return count > 999 ? `${Math.floor(count / 1000)}k` : String(count);
+}

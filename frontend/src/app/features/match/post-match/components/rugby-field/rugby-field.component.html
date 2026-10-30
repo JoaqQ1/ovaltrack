@@ -79,7 +79,7 @@
                (blur)="onLeave()"
                (keydown)="onKeydown($event, cell)">
             <span class="cell-label" data-testid="zone-label">{{ cell.label }}</span>
-            <span *ngIf="cell.count > 0" class="cell-count" data-testid="zone-count">{{ cell.count }}</span>
+            <span *ngIf="cell.count > 0" class="cell-count" data-testid="zone-count">{{ cell.countLabel }}</span>
           </div>
         </div>
       </div>

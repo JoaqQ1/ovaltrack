@@ -1,6 +1,6 @@
 import {
   ZONE_COLUMN_METERS, ZONE_FIELD_LENGTH_M, ZONE_FIELD_WIDTH_M, ZONE_ROW_METERS,
-  allZoneCells, columnRangeLabel, describeZone, rowRangeLabel, zoneLabel
+  allZoneCells, columnRangeLabel, describeZone, formatEventCount, rowRangeLabel, zoneLabel
 } from './zone-grid';
 
 describe('zone-grid', () => {
@@ -38,5 +38,19 @@ describe('zone-grid', () => {
     expect(cells.length).toBe(18);
     expect(cells[0]).toEqual({ row: 1, col: 1 });
     expect(cells[17]).toEqual({ row: 3, col: 6 });
+  });
+
+  describe('formatEventCount', () => {
+    it('muestra el número tal cual hasta 999', () => {
+      expect(formatEventCount(1)).toBe('1');
+      expect(formatEventCount(118)).toBe('118');
+      expect(formatEventCount(999)).toBe('999');
+    });
+
+    it('abrevia desde 1000 a miles', () => {
+      expect(formatEventCount(1000)).toBe('1k');
+      expect(formatEventCount(1999)).toBe('1k');
+      expect(formatEventCount(12500)).toBe('12k');
+    });
   });
 });

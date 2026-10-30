@@ -163,12 +163,15 @@
   position: absolute;
   inset: 0;
   margin: auto;
-  width: 34px;
+  width: max-content;
+  min-width: 34px;
   height: 34px;
+  padding: 0 9px;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--surface, #ffffff);
   border: 3px solid var(--btn-primary-bg, #204b22);
   color: var(--btn-primary-bg, #204b22);
@@ -242,5 +245,5 @@
 
   .col-legend { display: block; }
   .reading { text-align: left; }
-  .cell-count { width: 28px; height: 28px; font-size: 13px; }
+  .cell-count { min-width: 28px; height: 28px; padding: 0 7px; font-size: 13px; }
 }

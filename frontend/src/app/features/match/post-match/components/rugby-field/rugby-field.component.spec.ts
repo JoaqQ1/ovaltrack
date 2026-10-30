@@ -86,6 +86,13 @@ describe('RugbyFieldComponent', () => {
       expect(cellAt(2, 3)?.querySelector('[data-testid="zone-count"]')?.textContent).toContain('4');
     });
 
+    it('abrevia los conteos de mil o más, pero el aria-label conserva el número exacto', () => {
+      render([{ row: 2, col: 3, eventCount: 1200 }]);
+
+      expect(cellAt(2, 3)?.querySelector('[data-testid="zone-count"]')?.textContent?.trim()).toBe('1k');
+      expect(cellAt(2, 3)?.getAttribute('aria-label')).toContain('1200 eventos');
+    });
+
     it('no muestra conteo en las celdas sin eventos', () => {
       render([{ row: 2, col: 3, eventCount: 4 }]);
 

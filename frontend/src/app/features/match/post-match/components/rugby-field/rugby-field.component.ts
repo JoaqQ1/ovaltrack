@@ -3,7 +3,7 @@ import { Component, ElementRef, computed, inject, input, output, signal } from '
 import { ZONE_GRID_COLS, ZONE_GRID_ROWS, ZoneCellRef, ZoneCellSummary } from '../../../types/zone.types';
 import {
   ZONE_COLUMN_METERS, ZONE_COLUMN_NAMES, ZONE_FIELD_LENGTH_M, ZONE_FIELD_WIDTH_M, ZONE_ROW_METERS,
-  ZONE_ROW_LETTERS, ZONE_ROW_SHORT_NAMES, columnRangeLabel, describeZone, rowRangeLabel, zoneLabel
+  ZONE_ROW_LETTERS, ZONE_ROW_SHORT_NAMES, columnRangeLabel, describeZone, formatEventCount, rowRangeLabel, zoneLabel
 } from '../../utils/zone-grid';
 
 export type RugbyFieldMode = 'assign' | 'view';
@@ -11,6 +11,7 @@ export type RugbyFieldMode = 'assign' | 'view';
 interface FieldCell extends ZoneCellRef {
   label: string;
   count: number;
+  countLabel: string;
   heat: number;
 }
 
@@ -85,7 +86,7 @@ export class RugbyFieldComponent {
 
     return this.rows.map(row => this.cols.map(col => {
       const count = counts.get(`${row}-${col}`) ?? 0;
-      return { row, col, label: zoneLabel({ row, col }), count, heat: count > 0 ? count / maxCount : 0 };
+      return { row, col, label: zoneLabel({ row, col }), count, countLabel: formatEventCount(count), heat: count > 0 ? count / maxCount : 0 };
     }));
   });
 
