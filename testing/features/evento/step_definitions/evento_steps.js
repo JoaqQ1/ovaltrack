@@ -1,78 +1,27 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
-import { findEventTypeIdByName } from '../../support/event_helper.js';
+import { findEventType, parseAttributes, registerEvent } from '../../support/event_helper.js';
 import { makeHttpRequest } from '../../support/httpRequest.js';
-import { findDivisionId, getDivisionMatches, requestMatchCreation } from '../../support/match_helper.js';
+import {
+  changeMatchStatus,
+  createMatchForRival,
+  findDivisionId,
+  findMatchByStatus,
+  startMatch,
+} from '../../support/match_helper.js';
 
 // El "Dado que el coach ... ha iniciado sesión" está en division-jugador/step_definitions/creacion_jugadores.js
 // y el "Entonces el sistema responde con {int} y {string}" en support/common_steps.js
-
-// <==================== Helpers ====================>
-
-// Fecha usada al crear el partido cuando todavía no existe uno contra ese rival
-const matchDates = {
-  'Comodoro Rugby Club': '2026-12-12T15:30:00',
-  'Trelew Rugby Club': '2026-12-15T10:00:00',
-};
-const DEFAULT_MATCH_DATE = '2026-12-19T15:30:00';
-
-const findMatchByStatus = async (divisionId, rival, statuses, token) => {
-  const matches = await getDivisionMatches(divisionId, token);
-  return matches.find((m) => m.opponent === rival && statuses.includes(m.status)) ?? null;
-};
-
-const createMatch = async (divisionId, rival, token) => {
-  const response = await requestMatchCreation(matchDates[rival] ?? DEFAULT_MATCH_DATE, divisionId, rival, token);
-  assert.equal(response.status, 200, `No se pudo crear el partido contra ${rival}: ${response.body?.message}`);
-  return response.body;
-};
-
-const changeMatchStatus = async (match, method, action, token) => {
-  const response = await makeHttpRequest(method, `matches/${match.id}/${action}`, null, token);
-  assert.equal(response.status, 200, `No se pudo ${action} el partido: ${response.body?.message}`);
-  return response.body;
-};
-
-// "zone=center;wasSuccessful=true" -> { zone: 'center', wasSuccessful: true }; vacío -> sin atributos
-const parseAttributes = (text) => {
-  if (!text) return undefined;
-  return Object.fromEntries(
-    text.split(';').map((pair) => {
-      const [key, value] = pair.split('=').map((part) => part.trim());
-      if (value === 'true' || value === 'false') return [key, value === 'true'];
-      return [key, Number.isNaN(Number(value)) ? value : Number(value)];
-    }),
-  );
-};
-
-// Los slots titulares del partido se completan con los jugadores de la división (hasta 15)
-const saveRosterWithDivisionPlayers = async (match, token) => {
-  const players = await makeHttpRequest('GET', `players/with-user?divisionId=${match.divisionId}`, null, token);
-  assert.equal(players.status, 200, 'No se pudieron obtener los jugadores de la división');
-  assert.ok(players.body.length > 0, 'La división no tiene jugadores para armar el plantel');
-  const titularesIds = players.body.slice(0, 15).map((p) => p.personId);
-  const response = await makeHttpRequest('POST', `matches/${match.id}/roster`, { titularesIds, suplentesIds: [] }, token);
-  assert.equal(response.status, 200, `No se pudo guardar el plantel: ${response.body?.message}`);
-};
-
-const registerEvent = (token, event) => makeHttpRequest('POST', 'event', { origin: 'live-capture', ...event }, token);
-
-const findEventType = async (tipoEvento, token) => {
-  const eventTypeId = await findEventTypeIdByName(tipoEvento, token);
-  assert.ok(eventTypeId, `No se encontró el tipo de evento "${tipoEvento}"`);
-  return eventTypeId;
-};
 
 // <==================== Partidos de contexto ====================>
 
 Given('que existe un partido en curso para la división {string} contra {string}', async function (divisionNombre, rival) {
   const divisionId = await findDivisionId(divisionNombre, this.token);
   let match = await findMatchByStatus(divisionId, rival, ['IN_PROGRESS', 'NOT_STARTED'], this.token)
-    ?? await createMatch(divisionId, rival, this.token);
+    ?? await createMatchForRival(divisionId, rival, this.token);
 
   if (match.status === 'NOT_STARTED') {
-    await saveRosterWithDivisionPlayers(match, this.token);
-    match = await changeMatchStatus(match, 'PUT', 'start', this.token);
+    match = await startMatch(match, this.token);
   }
   this.currentMatch = match;
 });
@@ -80,7 +29,7 @@ Given('que existe un partido en curso para la división {string} contra {string}
 Given('que existe un partido en estado cancelado para la división {string} contra {string}', async function (divisionNombre, rival) {
   const divisionId = await findDivisionId(divisionNombre, this.token);
   this.currentMatch = await findMatchByStatus(divisionId, rival, ['CANCELLED'], this.token)
-    ?? await changeMatchStatus(await createMatch(divisionId, rival, this.token), 'DELETE', 'cancel', this.token);
+    ?? await changeMatchStatus(await createMatchForRival(divisionId, rival, this.token), 'DELETE', 'cancel', this.token);
 });
 
 // <==================== Registro de eventos ====================>
