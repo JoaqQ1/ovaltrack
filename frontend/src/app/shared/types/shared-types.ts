@@ -1,7 +1,6 @@
-export interface BackendResponse {
-    data: object,
-    message: string,
-    status: number
+/** Cuerpo de errores y de respuestas que solo informan un resultado (aprobar, eliminar, registrar…). */
+export interface MessageResponse {
+    message: string
 }
 export const STATUS_CODE = {
     OK: 200,
