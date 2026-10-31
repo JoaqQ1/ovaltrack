@@ -9,6 +9,7 @@ export interface FollowUpChoice {
   label?: string;
   /** Valores que se pre-llenan en el evento elegido (se salta ese paso). */
   preset?: Record<string, unknown>;
+  team?: 'SAME' | 'OTHER';
 }
 
 export interface TemplateOption {

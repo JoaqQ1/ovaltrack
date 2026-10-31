@@ -6,6 +6,7 @@ import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../statistics/services/statistic-calculation.service';
 import { LiveCaptureEventType } from '../types/event-type.types';
 import { CargaEnVivoComponent } from './carga-en-vivo.component';
+import { ToastService } from 'src/app/core/services/toast.service';
 
 declare const describe: (description: string, specDefinitions: () => void) => void;
 declare const beforeEach: (action: () => void | Promise<void>) => void;
@@ -49,7 +50,7 @@ describe('CargaEnVivoComponent', () => {
                 id: '550e8400-e29b-41d4-a716-446655440002',
                 date: '2026-09-14T12:00:00',
                 divisionId: '550e8400-e29b-41d4-a716-446655440001',
-                opponent: 'DRC',
+                opponent: { id: 'opponent-1', name: 'DRC', alias: 'DRC', city: null },
                 status: 'not_started' as const,
                 currentPeriod: 1,
                 clockElapsedSeconds: 0,
@@ -104,6 +105,12 @@ describe('CargaEnVivoComponent', () => {
             }),
           },
         },
+        {
+          provide: ToastService,
+          useValue: {
+            warning: () => undefined,
+          },
+        },
       ],
     }).compileComponents();
 
@@ -144,6 +151,42 @@ describe('CargaEnVivoComponent', () => {
     expect(component.currentPossession).toBe('OWN');
   });
 
+  it('should require the same event to be tapped twice while the clock is paused', () => {
+    const tryEvent = eventType({ id: 'try' });
+    const tackleEvent = eventType({
+      id: 'tackle',
+      name: 'Tackle',
+      code: 'TACKLE_MADE',
+      isScoring: false,
+      points: 0,
+    });
+    component.eventTypes = [tryEvent, tackleEvent];
+    component.isStarted = true;
+    component.clockPaused = true;
+
+    component.onEventTap(tryEvent);
+    expect(component.capture).toBe(null);
+
+    component.onEventTap(tackleEvent);
+    expect(component.capture).toBe(null);
+
+    component.onEventTap(tryEvent);
+    expect(component.capture?.event.id).toBe('try');
+  });
+
+  it('should clear the paused-event confirmation when the clock resumes', () => {
+    const tryEvent = eventType({ id: 'try' });
+    component.isStarted = true;
+    component.clockPaused = true;
+
+    component.onEventTap(tryEvent);
+    component.toggleClock();
+    component.toggleClock();
+    component.onEventTap(tryEvent);
+
+    expect(component.capture).toBe(null);
+  });
+
   it('should save the event without a player when "Sin jugador" is picked', () => {
     component.eventTypes = [eventType()];
     component.isStarted = true;
@@ -166,6 +209,16 @@ describe('CargaEnVivoComponent', () => {
 
     expect(component.capture?.team).toBe('OWN');
     expect(component.capture?.canChooseTeam).toBe(false);
+  });
+
+  it('should not ask for a player on rival events', () => {
+    component.isStarted = true;
+    component.currentPossession = 'OPPONENT';
+
+    component.onEventTap(eventType());
+
+    expect(component.capture).toBe(null);
+    expect((component as any).events[0].playerId).toBe(null);
   });
 
   it('should let the analyst choose the team when the actor is CHOOSE', () => {
@@ -199,7 +252,7 @@ describe('CargaEnVivoComponent', () => {
 
     component.pickFollowUp({ type: touch, label: touch.name, preset: { kind: 'penalty_touch' } });
 
-    expect(component.capture?.steps.map(step => step.kind)).toEqual(['player']);
+    expect(component.capture?.steps.map(step => step.kind)).toEqual(['field']);
     expect(component.capture?.values).toEqual({ kind: 'penalty_touch' });
     expect(component.capture?.team).toBe('OPPONENT');
   });

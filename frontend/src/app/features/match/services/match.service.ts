@@ -66,7 +66,12 @@ export class MatchService {
     return {
       ...match,
       status: this.normalizeStatus(match.status),
-      opponent: match.opponent ?? '',
+      opponent: match.opponent ?? {
+        id: '',
+        name: '',
+        alias: '',
+        city: null,
+      },
       date: match.date ?? ''
     };
   }
@@ -143,7 +148,7 @@ export class MatchService {
     const baseMatch: Match = cachedMatch ?? {
       id: matchId,
       status: nextLocalStatus,
-      opponent: '',
+      opponent: { id: '', name: '', alias: '', city: null },
       date: '',
       divisionId: '',
       currentPeriod,

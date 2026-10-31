@@ -18,7 +18,9 @@ public class EventTypeService {
 	private EventTypeRepository eventTypeRepository;
 
 	public Collection<EventTypeResponseDTO> findAllEventTypes() {
-		return eventTypeRepository.findByIsActiveTrue().stream().map(EventDTOMapper::toResponseDTO).toList();
+		return eventTypeRepository.findByIsActiveTrueOrderByNameAscIdAsc().stream()
+				.map(EventDTOMapper::toResponseDTO)
+				.toList();
 	}
 
 	public EventTypeResponseDTO findEventTypeById(UUID eventTypeId) {
