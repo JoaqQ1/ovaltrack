@@ -224,7 +224,7 @@ public class UserService {
 
 		userPermissionValidator.validateCanDeactivate(user, authentication);
 
-		user.setActive(true);
+		user.activate();
 		User savedUser = userRepository.save(user);
 		return UserDTOMapper.toResponseDTO(savedUser);
 	}
