@@ -51,3 +51,14 @@ export function parseAttributes(text) {
 export function registerEvent(token, event) {
   return makeHttpRequest('POST', 'event', { origin: 'live-capture', ...event }, token);
 }
+
+export function getPostMatchTimeline(matchId, token) {
+  return makeHttpRequest('GET', `event/match/post-match?matchId=${matchId}`, null, token);
+}
+
+/** Línea de eventos post-partido, fallando si la consulta no devuelve 200. */
+export async function getPostMatchEvents(matchId, token) {
+  const response = await getPostMatchTimeline(matchId, token);
+  assert.equal(response.status, 200, `No se pudo consultar la línea de eventos: ${response.body?.message}`);
+  return response.body;
+}
