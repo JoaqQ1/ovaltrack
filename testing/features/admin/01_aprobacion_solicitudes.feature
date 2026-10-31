@@ -48,7 +48,7 @@ Ejemplos:
 | Admin  | Puerto   | admin_puerto@test.com    | 200          | La cuenta fue aprobada con éxito. |
 | Admin  | Multi    | admin_multiclub@test.com | 200          | La cuenta fue aprobada con éxito. |
 
-Esquema del escenario: Intentar aprobar un Club
+Esquema del escenario: Intentar aprobar un club
 Dado que existe una solicitud de aprobacion para el club "<nombreClub>" de la ciudad "<ciudadClub>" con mail "<email>"
 Cuando se presiona el botón para aprobar su solicitud de club
 Entonces el sistema responde con <estadoCodigo> y "<estadoTexto>"
