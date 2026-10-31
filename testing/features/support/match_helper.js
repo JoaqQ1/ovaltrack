@@ -70,3 +70,29 @@ export async function startMatch(match, token) {
   await saveRosterWithDivisionPlayers(match, token);
   return changeMatchStatus(match, 'PUT', 'start', token);
 }
+
+// Cada partido finalizado de prueba se crea en un día distinto para no chocar con la franja horaria de otro
+let finishedMatchCount = 0;
+const nextFinishedMatchDate = () => {
+  const date = new Date(Date.UTC(2027, 1, 1, 15, 30));
+  date.setUTCDate(date.getUTCDate() + finishedMatchCount++);
+  return date.toISOString().slice(0, 19);
+};
+
+/**
+ * Crea un partido nuevo contra el rival, lo inicia con plantel, ejecuta `whileInProgress`
+ * (por ejemplo, cargar eventos en vivo) y lo finaliza.
+ */
+export async function createFinishedMatch(divisionId, rival, token, whileInProgress = async () => {}) {
+  const created = await requestMatchCreation(nextFinishedMatchDate(), divisionId, rival, token);
+  assert.equal(created.status, 200, `No se pudo crear el partido contra ${rival}: ${created.body?.message}`);
+  const started = await startMatch(created.body, token);
+  await whileInProgress(started);
+  return changeMatchStatus(started, 'PUT', 'finish', token);
+}
+
+export async function getMatchRosterPlayers(matchId, token) {
+  const response = await makeHttpRequest('GET', `matches/${matchId}/roster/players`, null, token);
+  assert.equal(response.status, 200, 'No se pudo obtener el plantel del partido');
+  return response.body;
+}
