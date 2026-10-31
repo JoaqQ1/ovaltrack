@@ -8,7 +8,7 @@ import { UserContextService } from '../../../core/services/user-context.service'
 import { ToastService } from '../../../core/services/toast.service';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 import { Observable, tap } from 'rxjs';
-import { BackendResponse } from 'src/app/shared/types/shared-types';
+import { MessageResponse } from 'src/app/shared/types/shared-types';
 import { RegisterFromInvitationRequest } from '../../invitation/types/invitation.types';
 @Injectable({
   providedIn: 'root'
@@ -30,11 +30,11 @@ export class AuthService {
     }
   }
 
-  registerClub(data: ClubRegistrationDTO): Observable<BackendResponse> {
-    return this.http.post<BackendResponse>(`${this.apiUrl}/register-club`, data);
+  registerClub(data: ClubRegistrationDTO): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/register-club`, data);
   }
-  registerMember(data: MemberRegistrationDTO): Observable<BackendResponse> {
-    return this.http.post<BackendResponse>(`${this.apiUrl}/register`, data);
+  registerMember(data: MemberRegistrationDTO): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/register`, data);
   }
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials).pipe(
@@ -121,8 +121,8 @@ export class AuthService {
 
     return null;
   }
-  registerFromInvitation(request: RegisterFromInvitationRequest): Observable<BackendResponse> {
-    return this.http.post<BackendResponse>(`${this.apiUrl}/register/invitation`, request);
+  registerFromInvitation(request: RegisterFromInvitationRequest): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/register/invitation`, request);
   }
 
   public getUserRole(): string | null {
