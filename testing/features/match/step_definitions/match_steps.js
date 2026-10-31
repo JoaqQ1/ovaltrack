@@ -1,6 +1,7 @@
 import { When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
 import { findDivisionIdByName } from '../../support/division_helper.js';
+import { makeHttpRequest } from '../../support/httpRequest.js';
 
 const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
 
@@ -31,133 +32,57 @@ export async function findMatchByOpponent(opponent, token) {
   return null;
 }
 
+// <==================== Helpers ====================>
+
+const findOpponentIdByName = async (name, token) => {
+  const response = await makeHttpRequest('GET', 'opponents', null, token);
+  assert.equal(response.status, 200, 'No se pudieron obtener los rivales');
+  const opponent = response.body.find((o) => o.name === name);
+  assert.ok(opponent, `No se encontró el rival "${name}"`);
+  return opponent.id;
+};
+
+const createMatch = async (fecha, divisionId, rival, token) => {
+  const opponentId = await findOpponentIdByName(rival, token);
+  const response = await makeHttpRequest('POST', 'matches', { date: fecha, divisionId, opponentId }, token);
+  if (response.status === 200 && response.body?.id) {
+    matchCache.set(rival, response.body);
+  }
+  return response;
+};
+
+const findDivisionId = async (divisionNombre, token) => {
+  const divisionId = await findDivisionIdByName(divisionNombre, token);
+  assert.ok(divisionId, `No se encontró la división con nombre "${divisionNombre}"`);
+  return divisionId;
+};
+
+const assertCreatedMatch = (response, rival, estado) => {
+  assert.ok(response.body?.id, `El partido contra ${rival} no contiene un ID asignado`);
+  assert.equal(response.body.opponent, rival);
+  assert.equal(response.body.status, estado);
+};
+
+// <==================== Creación de partidos ====================>
+
 When('programa un partido contra el rival {string} para la fecha {string} en la división {string}', async function (rival, fecha, divisionNombre) {
-  const divisionId = await findDivisionIdByName(divisionNombre, this.token);
-  assert.ok(divisionId, `No se encontró la división con nombre "${divisionNombre}"`);
-
-  this.lastResponse = await fetch(`${BACKEND_URL}/matches`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.token}`
-    },
-    body: JSON.stringify({
-      date: fecha,
-      divisionId: divisionId,
-      opponent: rival
-    })
-  });
-
-  const text = await this.lastResponse.text();
-  try {
-    this.lastResponseBody = JSON.parse(text);
-    if (this.lastResponse.ok && this.lastResponseBody.id) {
-      matchCache.set(rival, this.lastResponseBody);
-    }
-  } catch {
-    this.lastResponseBody = text;
-  }
+  const divisionId = await findDivisionId(divisionNombre, this.token);
+  this.response = await createMatch(fecha, divisionId, rival, this.token);
 });
 
-Then('el sistema responde con código {int} y devuelve el partido creado con rival {string} y estado {string}', function (statusCode, rivalEsperado, estadoEsperado) {
-  assert.equal(this.lastResponse.status, statusCode, `Se esperaba código ${statusCode} pero se obtuvo ${this.lastResponse.status}`);
-  assert.ok(this.lastResponseBody.id, 'El partido devuelto no contiene un ID asignado');
-  assert.equal(this.lastResponseBody.opponent, rivalEsperado, `Se esperaba rival ${rivalEsperado} pero se obtuvo ${this.lastResponseBody.opponent}`);
-  assert.equal(this.lastResponseBody.status, estadoEsperado, `Se esperaba estado ${estadoEsperado} pero se obtuvo ${this.lastResponseBody.status}`);
+Then('el sistema responde con {int} y devuelve el partido en estado {string} contra el rival {string}', function (statusCode, estado, rival) {
+  assert.equal(this.response.status, statusCode, this.response.body?.message);
+  assertCreatedMatch(this.response, rival, estado);
 });
 
-When('programa los siguientes partidos para la división {string}:', async function (divisionNombre, dataTable) {
-  const divisionId = await findDivisionIdByName(divisionNombre, this.token);
-  assert.ok(divisionId, `No se encontró la división con nombre "${divisionNombre}"`);
+// <==================== Errores al crear partidos ====================>
 
-  const rows = dataTable.hashes();
-  this.matchCreationResponses = [];
-
-  for (const row of rows) {
-    const res = await fetch(`${BACKEND_URL}/matches`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`
-      },
-      body: JSON.stringify({
-        date: row.fecha,
-        divisionId: divisionId,
-        opponent: row.rival
-      })
-    });
-
-    const text = await res.text();
-    let body;
-    try {
-      body = JSON.parse(text);
-      if (res.ok && body.id) {
-        matchCache.set(row.rival, body);
-      }
-    } catch {
-      body = text;
-    }
-
-    this.matchCreationResponses.push({ status: res.status, body, expectedRival: row.rival });
-  }
-});
-
-Then('el sistema responde con código {int} confirmando la creación exitosa de todos los partidos', function (statusCode) {
-  assert.ok(this.matchCreationResponses.length > 0, 'No se registraron respuestas de creación de partidos');
-  for (const item of this.matchCreationResponses) {
-    assert.equal(item.status, statusCode, `Se esperaba código ${statusCode} para el partido ${item.expectedRival} pero se obtuvo ${item.status}`);
-    assert.ok(item.body.id, `El partido ${item.expectedRival} no contiene un ID generado`);
-    assert.equal(item.body.opponent, item.expectedRival);
-    assert.equal(item.body.status, 'NOT_STARTED');
-  }
+When('intenta programar un partido contra {string} para el {string} en la división {string}', async function (rival, fecha, divisionNombre) {
+  const divisionId = await findDivisionId(divisionNombre, this.token);
+  this.response = await createMatch(fecha, divisionId, rival, this.token);
 });
 
 When('intenta programar un partido contra {string} asociándolo a un ID de división inexistente', async function (rival) {
   const fakeDivisionId = '00000000-0000-0000-0000-000000000000';
-
-  this.lastResponse = await fetch(`${BACKEND_URL}/matches`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.token}`
-    },
-    body: JSON.stringify({
-      date: '2026-10-15T15:30:00',
-      divisionId: fakeDivisionId,
-      opponent: rival
-    })
-  });
-
-  const text = await this.lastResponse.text();
-  try {
-    this.lastResponseBody = JSON.parse(text);
-  } catch {
-    this.lastResponseBody = text;
-  }
+  this.response = await createMatch('2026-11-15T15:30:00', fakeDivisionId, rival, this.token);
 });
-
-When('intenta programar un partido contra {string} para el {string} en la división {string}', async function (rival, fecha, divisionNombre) {
-  const divisionId = await findDivisionIdByName(divisionNombre, this.token);
-  assert.ok(divisionId, `No se encontró la división con nombre "${divisionNombre}"`);
-
-  this.lastResponse = await fetch(`${BACKEND_URL}/matches`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.token}`
-    },
-    body: JSON.stringify({
-      date: fecha,
-      divisionId: divisionId,
-      opponent: rival
-    })
-  });
-
-  const text = await this.lastResponse.text();
-  try {
-    this.lastResponseBody = JSON.parse(text);
-  } catch {
-    this.lastResponseBody = text;
-  }
-});
-
