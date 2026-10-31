@@ -6,7 +6,7 @@ import { makeHttpRequest } from "../../support/httpRequest.js";
 const findClub = async (nombreClub, ciudadClub) => {
   if (!nombreClub) return null;
   const response = await makeHttpRequest("GET", `club/search/${encodeURIComponent(nombreClub)}`);
-  const clubs = response.data ?? [];
+  const clubs = response.body ?? [];
   return clubs.find((club) => club.name === nombreClub && club.city === ciudadClub) ?? null;
 };
 
