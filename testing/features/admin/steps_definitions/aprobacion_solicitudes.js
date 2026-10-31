@@ -48,7 +48,7 @@ const withoutGeneratedFields = (section, fields) =>
 
 Then('el sistema devuelve los datos de las solicitudes pendientes', function (docString) {
   const expectedRequests = JSON.parse(docString);
-  const pendingRequests = this.response.data;
+  const pendingRequests = this.response.body;
 
   for (const expected of expectedRequests) {
     const found = pendingRequests.find(
@@ -79,7 +79,7 @@ Then('el sistema devuelve los datos de las solicitudes pendientes', function (do
 
 Given('que el usuario {string} {string} con mail {string} tiene una solicitud para darse de alta', async function (nombre, apellido, email) {
     const response = await getUsersRequestsPending();
-    const requestAdminClub = response.data;
+    const requestAdminClub = response.body;
     this.userPending = requestAdminClub.find((u) => {
       return (
         u.user.firstName === nombre &&
@@ -105,7 +105,7 @@ When('se presiona el botón para aprobar su solicitud de usuario', async functio
 
 Given('que existe una solicitud de aprobacion para el club {string} de la ciudad {string} con mail {string}', async function (nombreClub, ciudadClub, email) {
     const response = await getClubRequestsPendind();
-    const requestAdminClub = response.data;
+    const requestAdminClub = response.body;
 
     this.clubPending = requestAdminClub.find((u) => {
       return (
