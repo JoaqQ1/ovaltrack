@@ -186,7 +186,7 @@
     <div class="form-card-header card-header-inline">
       <div>
         <h2 class="form-card-title">Historial de partidos</h2>
-        <p class="form-card-subtitle">{{ filteredHistory().length }} partidos jugados</p>
+        <p class="form-card-subtitle">{{ filteredHistory().length }} partidos jugados · Tocá un partido para ver el detalle</p>
       </div>
       <div class="status-segment" role="tablist" aria-label="Filtrar partidos por rol">
         @for (filter of roleFilters; track filter) {
@@ -220,9 +220,11 @@
         </thead>
         <tbody>
           @for (match of filteredHistory(); track match.matchId) {
-          <tr>
+          <tr class="is-clickable" (click)="openMatch(match.matchId)">
             <td class="mono muted">{{ match.date | date:'dd/MM/yy' }}</td>
-            <td class="opponent">{{ match.opponent }}</td>
+            <td class="opponent">
+              <a class="match-link" [routerLink]="['/player-statistics', match.matchId]" (click)="$event.stopPropagation()">{{ match.opponent }}</a>
+            </td>
             <td class="result-cell">
               <span class="result-pill" [class.is-win]="match.result === 'win'" [class.is-loss]="match.result === 'loss'" [class.is-draw]="match.result === 'draw'">{{ resultLabels[match.result] }}</span>
               <span class="mono score">{{ match.ownScore }}–{{ match.opponentScore }}</span>

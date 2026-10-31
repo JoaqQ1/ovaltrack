@@ -1,4 +1,6 @@
 import { PlayerStatColumn, PlayerStatistic } from '../../match/statistics/types/statistic.types';
+import { LocalMatchEvent } from '../../match/types/event.types';
+import { LiveCaptureEventType } from '../../match/types/event-type.types';
 
 /** Resultado de un partido desde la perspectiva del club del jugador. */
 export type MatchResult = 'win' | 'loss' | 'draw';
@@ -20,6 +22,12 @@ export interface PlayerMatchDTO {
   slotNumber: number | null;
 }
 
+/** Datos base de un partido para calcular estadísticas: se cargan una vez por partido. */
+export interface PlayerMatchSource {
+  events: LocalMatchEvent[];
+  eventTypes: LiveCaptureEventType[];
+}
+
 /** Estadísticas del jugador autenticado en un partido, calculadas desde los eventos. */
 export interface PlayerMatchStatistic {
   match: PlayerMatchDTO;
@@ -27,6 +35,24 @@ export interface PlayerMatchStatistic {
   columns: PlayerStatColumn[];
   stat: PlayerStatistic;
 }
+
+/** Fila del detalle de un partido: una acción que el jugador registró. */
+export interface PlayerStatRow {
+  label: string;
+  /** Por ejemplo "3" o, en acciones con intentos, "2 de 3". */
+  value: string;
+  /** Efectividad en acciones con intentos; `null` en las demás. */
+  percent: number | null;
+}
+
+/** Sección del detalle de un partido: una por `groupName` del catálogo, solo con acciones registradas. */
+export interface PlayerStatSection {
+  title: string;
+  rows: PlayerStatRow[];
+}
+
+/** Filtro del detalle de un partido: partido completo o un tiempo. */
+export type PlayerPeriodFilter = 'ALL' | 1 | 2;
 
 /** Filtro del historial según el rol del jugador en el partido. */
 export type PlayerRoleFilter = 'all' | 'starter' | 'substitute';
