@@ -434,6 +434,16 @@
   background: var(--surface-hover, #f1f3ea);
 }
 
+.history-table tbody tr.is-clickable {
+  cursor: pointer;
+}
+
+.match-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .history-table tbody tr:last-child td {
   border-bottom: none;
 }

@@ -1,6 +1,5 @@
 import { PlayerEventTypeValue, PlayerStatColumn, PlayerStatistic } from "../../match/statistics/types/statistic.types";
-import { formatPlayerValue } from "../../match/statistics/presentation/stat-presentation";
-import { MatchResult, PlayerCountStat, PlayerMatchDTO, PlayerMatchHistory, PlayerMatchStatistic, PlayerStatGroup } from "../types/player-statistics.types";
+import { MatchResult, PlayerCountStat, PlayerKpi, PlayerMatchDTO, PlayerMatchHistory, PlayerMatchStatistic, PlayerStatSection } from "../types/player-statistics.types";
 
 export const EVENT_CODES = {
     TRY: 'TRY',
@@ -96,32 +95,87 @@ export function seasonsOf(matchStatistics: PlayerMatchStatistic[]): string[] {
     return Array.from(temporadas).sort((a, b) => b.localeCompare(a));
 }
 
-/** Tarjetas del detalle de un partido: primero los puntos y después una por `groupName`, en orden de catálogo. */
-export function toStatGroups(matchStatistic: PlayerMatchStatistic): PlayerStatGroup[] {
-    const { columns, stat } = matchStatistic;
-    const groups: PlayerStatGroup[] = [{
-        title: 'Puntos',
-        tiles: [{
-            label: 'Puntos conseguidos',
-            value: stat.totalPoints > 0 ? `${stat.totalPoints}` : '—',
-            empty: stat.totalPoints === 0,
-        }],
-    }];
+/** Títulos para el jugador cuando el nombre del grupo en el catálogo es técnico. */
+const SECTION_TITLES: Record<string, string> = {
+    'Puntuación': 'Puntos y pateo',
+    'Neutro': 'Disciplina',
+};
 
-    for (const column of columns) {
-        let group = groups.find(candidate => candidate.title === column.groupName);
-        if (!group) {
-            group = { title: column.groupName, tiles: [] };
-            groups.push(group);
-        }
+/** Nombres para el jugador cuando el del catálogo es técnico; los demás usan el del catálogo. */
+const FRIENDLY_LABELS: Record<string, string> = {
+    PENALTY_KICK: 'Penales a palos',
+    PENALTY_CONCEDED: 'Penales cometidos',
+    YELLOW_CARD: 'Tarjetas amarillas',
+    RED_CARD: 'Tarjetas rojas',
+};
+
+/** Tipos que requieren jugador pero no son una acción de juego. */
+const NON_PLAY_CODES = new Set(['INJURY', 'SUBSTITUTION']);
+
+const playColumns = (columns: PlayerStatColumn[]): PlayerStatColumn[] =>
+    columns.filter(column => !NON_PLAY_CODES.has(column.code));
+
+const friendlyLabel = (column: PlayerStatColumn): string => FRIENDLY_LABELS[column.code] ?? column.label;
+
+const effectiveness = (made: number, attempts: number): number =>
+    attempts === 0 ? 0 : Math.round((made / attempts) * 100);
+
+/** Los cuatro datos principales del partido, con su significado explicado. */
+export function toMatchHighlights(matchStatistic: PlayerMatchStatistic): PlayerKpi[] {
+    const { columns, stat } = matchStatistic;
+    const count = (code: string) => valueByCode(stat, columns, code).count;
+    const tacklesMade = count('TACKLE_MADE');
+    const tackles = tacklesMade + count('TACKLE_MISSED');
+    const yellowCards = count(EVENT_CODES.YELLOW_CARD);
+    const redCards = count(EVENT_CODES.RED_CARD);
+
+    return [
+        { label: 'Puntos', value: `${stat.totalPoints}`, detail: 'Conseguidos por vos' },
+        { label: 'Tries', value: `${count(EVENT_CODES.TRY)}`, detail: 'Apoyados por vos' },
+        {
+            label: 'Tackles',
+            value: tackles === 0 ? '—' : `${tacklesMade} de ${tackles}`,
+            detail: tackles === 0 ? 'Sin tackles registrados' : `${effectiveness(tacklesMade, tackles)}% completados`,
+        },
+        {
+            label: 'Penales cometidos',
+            value: `${count(EVENT_CODES.PENALTY_CONCEDED)}`,
+            detail: yellowCards + redCards === 0 ? 'Sin tarjetas' : `${yellowCards} amarilla(s) · ${redCards} roja(s)`,
+        },
+    ];
+}
+
+/** Secciones del detalle: solo las acciones que el jugador registró, en orden de catálogo. */
+export function toStatSections(matchStatistic: PlayerMatchStatistic): PlayerStatSection[] {
+    const { columns, stat } = matchStatistic;
+    const sections: PlayerStatSection[] = [];
+
+    for (const column of playColumns(columns)) {
         const value = stat.values[column.eventTypeId];
-        group.tiles.push({
-            label: column.label,
-            value: formatPlayerValue(column, value),
-            empty: (value?.count ?? 0) === 0,
+        if (!value || value.count === 0) continue;
+
+        const title = SECTION_TITLES[column.groupName] ?? column.groupName;
+        let section = sections.find(candidate => candidate.title === title);
+        if (!section) {
+            section = { title, rows: [] };
+            sections.push(section);
+        }
+        const made = value.made ?? 0;
+        section.rows.push({
+            label: friendlyLabel(column),
+            value: column.hasAttempts ? `${made} de ${value.count}` : `${value.count}`,
+            percent: column.hasAttempts ? effectiveness(made, value.count) : null,
         });
     }
-    return groups;
+    return sections;
+}
+
+/** Acciones sin registros en el partido, para aclarar que no faltan datos en la pantalla. */
+export function unrecordedStats(matchStatistic: PlayerMatchStatistic): string[] {
+    const { columns, stat } = matchStatistic;
+    return playColumns(columns)
+        .filter(column => (stat.values[column.eventTypeId]?.count ?? 0) === 0)
+        .map(friendlyLabel);
 }
 
 /** Cantidad de cada tipo de evento del jugador, salvo los de `excludedCodes`, en orden de catálogo. */

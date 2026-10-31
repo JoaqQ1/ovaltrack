@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of, tap } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
@@ -52,13 +53,14 @@ const ROLE_FILTER_LABELS: Record<PlayerRoleFilter, string> = {
 @Component({
   selector: 'app-player-statistics',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   templateUrl: './player-statistics.component.html',
   styleUrl: './player-statistics.component.css'
 })
 export class PlayerStatisticsComponent {
   private readonly playerStatisticsService = inject(PlayerStatisticsService);
   private readonly toastService = inject(ToastService);
+  private readonly router = inject(Router);
   private readonly userContext = inject(UserContextService);
 
   readonly isLoading = signal<boolean>(true);
@@ -176,6 +178,10 @@ export class PlayerStatisticsComponent {
       filter === 'all' || (filter === 'starter' ? m.isStarter : !m.isStarter)
     );
   });
+
+  openMatch(matchId: string): void {
+    this.router.navigate(['/player-statistics', matchId]);
+  }
 
   setRoleFilter(filter: PlayerRoleFilter): void {
     this.roleFilter.set(filter);

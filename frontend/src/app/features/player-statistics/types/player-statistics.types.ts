@@ -36,18 +36,19 @@ export interface PlayerMatchStatistic {
   stat: PlayerStatistic;
 }
 
-/** Dato individual dentro de una tarjeta del detalle de un partido. */
-export interface PlayerStatTile {
+/** Fila del detalle de un partido: una acción que el jugador registró. */
+export interface PlayerStatRow {
   label: string;
+  /** Por ejemplo "3" o, en acciones con intentos, "2 de 3". */
   value: string;
-  /** Sin eventos registrados: se muestra atenuado. */
-  empty: boolean;
+  /** Efectividad en acciones con intentos; `null` en las demás. */
+  percent: number | null;
 }
 
-/** Tarjeta del detalle de un partido: una por `groupName` del catálogo. */
-export interface PlayerStatGroup {
+/** Sección del detalle de un partido: una por `groupName` del catálogo, solo con acciones registradas. */
+export interface PlayerStatSection {
   title: string;
-  tiles: PlayerStatTile[];
+  rows: PlayerStatRow[];
 }
 
 /** Filtro del detalle de un partido: partido completo o un tiempo. */
