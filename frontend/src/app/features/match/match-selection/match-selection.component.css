@@ -1073,3 +1073,103 @@
 .compact-match-card:hover {
   filter: brightness(1.15);
 }
+
+/* ===== Ajustes del tema oscuro para historial y calendario ===== */
+.secondary-filters {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.calendar-view-toggle {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+}
+
+.calendar-wrapper,
+.calendar-modal-content {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.day-modal-title {
+  color: var(--text-primary);
+}
+
+:host-context([data-theme="dark"]) .secondary-filters {
+  box-shadow: var(--shadow-elevation);
+}
+
+:host-context([data-theme="dark"]) .calendar-view-toggle:hover {
+  background: var(--surface-hover);
+}
+
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: var(--surface);
+  --fc-neutral-bg-color: var(--surface-alt);
+  --fc-list-event-hover-bg-color: var(--surface-hover);
+  --fc-today-bg-color: rgba(163, 230, 53, 0.12);
+}
+
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-scrollgrid,
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-scrollgrid-section > *,
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-daygrid-day,
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-daygrid-day-frame {
+  background-color: var(--surface);
+}
+
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-scrollgrid,
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc td,
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc th {
+  border-color: var(--border);
+}
+
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc a,
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-col-header-cell-cushion,
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-daygrid-day-number,
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-toolbar-title,
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-multimonth-title {
+  color: var(--text-primary);
+}
+
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-day-other .fc-daygrid-day-number,
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-multimonth .fc-col-header-cell-cushion {
+  color: var(--text-muted) !important;
+}
+
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-dayGridMonth-button,
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .fc .fc-multiMonthYear-button {
+  background: var(--surface-alt);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .day-with-match .fc-daygrid-day-number {
+  color: var(--text-primary) !important;
+}
+
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .day-status-won .fc-daygrid-day-frame {
+  background-color: rgba(163, 230, 53, 0.2) !important;
+  border-color: rgba(163, 230, 53, 0.5) !important;
+}
+
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .day-status-lost .fc-daygrid-day-frame {
+  background-color: rgba(248, 113, 113, 0.2) !important;
+  border-color: rgba(248, 113, 113, 0.5) !important;
+}
+
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .day-status-tied .fc-daygrid-day-frame {
+  background-color: rgba(96, 165, 250, 0.2) !important;
+  border-color: rgba(96, 165, 250, 0.5) !important;
+}
+
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .day-status-live .fc-daygrid-day-frame {
+  background-color: rgba(250, 204, 21, 0.2) !important;
+  border-color: rgba(250, 204, 21, 0.5) !important;
+}
+
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .day-status-upcoming .fc-daygrid-day-frame {
+  background-color: rgba(148, 163, 184, 0.2) !important;
+  border-color: rgba(148, 163, 184, 0.5) !important;
+}

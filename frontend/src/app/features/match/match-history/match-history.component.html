@@ -42,7 +42,7 @@
   </div>
 
   <!-- Barra de Filtros de Historial -->
-  <div class="secondary-filters" style="display: flex; gap: 16px; margin-bottom: 24px; align-items: center; background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+  <div class="secondary-filters" style="display: flex; gap: 16px; margin-bottom: 24px; align-items: center; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
     
     <!-- Búsqueda de Oponente (Texto + Desplegable) -->
     <input 
@@ -78,15 +78,20 @@
   </div>
 
   <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
-    <button 
+    <button class="calendar-view-toggle"
       (click)="isCalendarView = !isCalendarView" 
-      style="background: white; border: 1px solid #1d3b20; color: #1d3b20; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+      style="padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">
       {{ isCalendarView ? '📅 Calendario' : '← Ver como tarjetas' }}
+    </button>
+    <button class="calendar-view-toggle"
+      style="padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+      Reporte de partidos
     </button>
   </div>
 
+
   <div *ngIf="!isCalendarView" class="calendar-wrapper" (click)="onCalendarClick($event)"
-      style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+      style="padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
 
     <full-calendar #calendar [options]="calendarOptions"></full-calendar>
 
@@ -239,11 +244,11 @@
 
   <!-- MODAL DE DÍA (Para la Vista Anual) -->
   <div class="calendar-modal-overlay" *ngIf="isDayModalOpen" (click)="closeDayModal()" style="z-index: 1060;">
-    <div class="calendar-modal-content" (click)="$event.stopPropagation()" style="background: white; border-radius: 12px; padding: 20px; width: 340px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+    <div class="calendar-modal-content" (click)="$event.stopPropagation()" style="border-radius: 12px; padding: 20px; width: 340px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
       
       <!-- Encabezado del modal -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="margin: 0; color: #1d3b20; font-family: var(--font-head); font-weight: 800; font-size: 1.2rem;">
+        <h3 class="day-modal-title" style="margin: 0; font-family: var(--font-head); font-weight: 800; font-size: 1.2rem;">
           Partidos del Día
         </h3>
         <button type="button" class="btn-delete-match" (click)="closeDayModal()" title="Cerrar" style="width: 32px; height: 32px;">

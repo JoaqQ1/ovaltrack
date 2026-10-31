@@ -18,7 +18,7 @@ import multiMonthPlugin from '@fullcalendar/multimonth';
   standalone: true,
   imports: [CommonModule, FormsModule, FullCalendarModule, ModalComponent],
   templateUrl: './match-history.component.html',
-  styleUrl: './match-selection.component.css', // Reutilizamos los mismos estilos
+  styleUrl: '../match-selection/match-selection.component.css',
 })
 export class MatchHistoryComponent implements OnInit {
   private readonly matchService = inject(MatchService);
@@ -287,7 +287,7 @@ export class MatchHistoryComponent implements OnInit {
 
       return {
         id: partido.id,
-        title: `${partido.opponent || 'Rival'}`,
+        title: `${partido.opponent.name || 'Rival'}`,
         start: isoDate,
         backgroundColor: bgColor, // <--- Aplicamos el fondo dinámico
         borderColor: bgColor,     // <--- Aplicamos el borde dinámico

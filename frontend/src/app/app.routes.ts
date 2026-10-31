@@ -10,7 +10,7 @@ import { hasRoleGuard } from './core/guards/has-role.guard';
 import { hasClubGuard } from './core/guards/has-club.guard';
 import { PostMatchComponent } from './features/match/post-match/post-match.component';
 import { DivisionPlayerListComponent } from './features/division-player/list/division-player-list.component';
-import { MatchHistoryComponent } from './features/match/match-selection/match-history.component';
+import { MatchHistoryComponent } from './features/match/match-history/match-history.component';
 import { OpponentManagerComponent } from './features/match/opponents/opponent-manager.component';
 
 

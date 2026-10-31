@@ -31,7 +31,7 @@ describe('MatchSelectionComponent', () => {
         },
       ],
     })
-    .compileComponents();
+      .compileComponents();
 
     fixture = TestBed.createComponent(MatchSelectComponent);
     component = fixture.componentInstance;
