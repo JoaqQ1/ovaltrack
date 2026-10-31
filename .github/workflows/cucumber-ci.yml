@@ -21,7 +21,7 @@ jobs:
         run: ./ds up
 
       - name: Esperar a que los servicios estén listos
-        run: sleep 20
+        run: sleep 60
 
       - name: Ejecutar tests de Cucumber
         run: ./ds test
