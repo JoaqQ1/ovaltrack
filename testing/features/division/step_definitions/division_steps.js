@@ -48,7 +48,7 @@ Given('que el administrador del club con email {string} y contraseña {string} h
     null,
     this.token,
   );
-  this.club = this.response;
+  this.club = this.response.body;
 });
 
 When('intenta crear la division con nombre {string}, categoria {string} y genero {string}', async function (nombreDivision, categoriaDivision, generoDivision) {
