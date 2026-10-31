@@ -1,30 +1,34 @@
 package com.ovaltrack.backend.match.business;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
 import com.ovaltrack.backend.club.business.ClubService;
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
+import com.ovaltrack.backend.common.config.exceptions.EntityNotFoundException;
 import com.ovaltrack.backend.division.business.DivisionService;
 import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionPlayer;
+import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
 import com.ovaltrack.backend.event.domain.dto.EventDTOMapper;
 import com.ovaltrack.backend.event.repository.EventRepository;
 import com.ovaltrack.backend.event.repository.EventTypeRepository;
@@ -33,25 +37,22 @@ import com.ovaltrack.backend.match.domain.MatchPlayer;
 import com.ovaltrack.backend.match.domain.MatchPlayerRole;
 import com.ovaltrack.backend.match.domain.MatchStatus;
 import com.ovaltrack.backend.match.domain.Opponent;
+import com.ovaltrack.backend.match.domain.dto.LiveMatchBootstrapDTO;
+import com.ovaltrack.backend.match.domain.dto.LiveMatchStateDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchCreationDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchDTOMapper;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
-import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
-import com.ovaltrack.backend.match.domain.dto.RosterDTO;
-import com.ovaltrack.backend.match.domain.dto.LiveMatchStateDTO;
-import com.ovaltrack.backend.match.domain.dto.LiveMatchBootstrapDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchRosterPlayerDTO;
+import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
+import com.ovaltrack.backend.match.domain.dto.PlayerMatchResponseDTO;
+import com.ovaltrack.backend.match.domain.dto.RosterDTO;
+import com.ovaltrack.backend.match.domain.event.MatchPeriodClosedEvent;
 import com.ovaltrack.backend.match.repository.MatchPlayerRepository;
 import com.ovaltrack.backend.match.repository.MatchRepository;
 import com.ovaltrack.backend.match.repository.OpponentRepository;
-import java.util.Comparator;
+import com.ovaltrack.backend.user.business.UserService;
+import com.ovaltrack.backend.user.domain.User;
 
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.core.Authentication;
-import com.ovaltrack.backend.common.config.exceptions.EntityNotFoundException;
-import com.ovaltrack.backend.match.domain.event.MatchPeriodClosedEvent;
-
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -72,6 +73,9 @@ public class MatchService {
 
     @Autowired
     private MatchPlayerRepository matchPlayerRepository;
+
+    @Autowired
+    private UserService userService;
 
     private final MatchRepository matchRepository;
     private final EventRepository eventRepository;
@@ -199,7 +203,8 @@ public class MatchService {
     }
 
     /**
-     * @param occurredAt momento real de la transición informado por el cliente; si es null se usa
+     * @param occurredAt momento real de la transición informado por el cliente; si
+     *                   es null se usa
      *                   la hora del servidor.
      */
     @Transactional
@@ -290,8 +295,10 @@ public class MatchService {
 
         List<MatchPlayer> nuevosJugadores = new ArrayList<>();
         Set<UUID> assignedPersonIds = new HashSet<>();
-        addRosterPlayers(match, titularesIds, MatchPlayerRole.TITULAR, divisionPlayersByPersonId, assignedPersonIds, nuevosJugadores);
-        addRosterPlayers(match, suplentesIds, MatchPlayerRole.SUPLENTE, divisionPlayersByPersonId, assignedPersonIds, nuevosJugadores);
+        addRosterPlayers(match, titularesIds, MatchPlayerRole.TITULAR, divisionPlayersByPersonId, assignedPersonIds,
+                nuevosJugadores);
+        addRosterPlayers(match, suplentesIds, MatchPlayerRole.SUPLENTE, divisionPlayersByPersonId, assignedPersonIds,
+                nuevosJugadores);
 
         if (match.getStatus() == null || match.getStatus() == MatchStatus.EMPTY_ROSTER) {
             match.setStatus(MatchStatus.NOT_STARTED);
@@ -324,8 +331,10 @@ public class MatchService {
     }
 
     /**
-     * Valida un cambio contra el plantel del partido. El plantel guardado es la formación inicial y
-     * no se modifica: quién está en cancha se deriva de los eventos SUBSTITUTION en orden, así un
+     * Valida un cambio contra el plantel del partido. El plantel guardado es la
+     * formación inicial y
+     * no se modifica: quién está en cancha se deriva de los eventos SUBSTITUTION en
+     * orden, así un
      * cambio cargado offline o borrado después no deja el plantel desfasado.
      */
     public void validateSubstitution(Match match, Map<String, Object> attributes) {
@@ -344,7 +353,10 @@ public class MatchService {
         }
     }
 
-    /** Busca por id de persona y, si falta, por número de slot (titulares 1-15, suplentes 16-23). */
+    /**
+     * Busca por id de persona y, si falta, por número de slot (titulares 1-15,
+     * suplentes 16-23).
+     */
     private MatchPlayer findRosterPlayer(Match match, Map<String, Object> attributes,
             String idKey, String slotKey) {
         Object rawId = attributes.get(idKey);
@@ -463,5 +475,25 @@ public class MatchService {
         Match updatedMatch = matchRepository.save(match);
 
         return MatchDTOMapper.toResponseDTO(updatedMatch);
+    }
+
+    @Transactional(readOnly = true)
+    public Collection<PlayerMatchResponseDTO> findMyPlayedMatches(Authentication auth) {
+        if (auth == null || auth.getName() == null) {
+            throw new EntityNotFoundException("No hay una sesión autenticada activa");
+        }
+
+        String email = auth.getName();
+        User user = userService.findUserByEmail(email);
+        if (user == null) {
+            throw new EntityNotFoundException("Usuario no encontrado con email: " + email);
+        }
+        if (user.getPerson() == null || user.getPerson().getId() == null) {
+            return List.of();
+        }
+        return matchPlayerRepository.findPlayedByPersonId(user.getPerson().getId())
+                .stream()
+                .map(MatchDTOMapper::toPlayerMatchResponseDTO)
+                .toList();
     }
 }

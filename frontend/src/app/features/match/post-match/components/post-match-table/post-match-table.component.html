@@ -65,13 +65,23 @@
           </div>
 
           <div class="col-note" (click)="$event.stopPropagation()">
-            <button type="button" 
-                    class="btn-row-action" 
-                    [title]="ev.note ? 'Ver/Editar nota' : 'Agregar nota'"
+            <!-- Si no hay nota: Botón minimalista de agregar -->
+            <div
+                    *ngIf="!ev.note"
+                    class="btn-row-action btn-add-note" 
+                    title="Agregar nota"
                     (click)="openNoteModal(ev)">
-              <!-- Cambia el ícono si tiene texto guardado -->
-              <i class="bi" [ngClass]="ev.note ? 'bi-chat-text-fill text-primary' : 'bi-chat-text'"></i>
-            </button>
+              <i class="bi bi-chat-text"></i> Añadir
+            </div>
+
+            <!-- Si hay nota: Adelanto truncado con ícono -->
+            <div *ngIf="ev.note" 
+                 class="note-preview-wrapper" 
+                 title="Ver/Editar nota completa"
+                 (click)="openNoteModal(ev)">
+              <i class="bi bi-chat-text-fill note-icon-filled"></i>
+              <span class="note-text-preview">{{ ev.note }}</span>
+            </div>
           </div>
 
           <div class="col-action" (click)="$event.stopPropagation()">
