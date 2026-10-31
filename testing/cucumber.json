@@ -10,8 +10,9 @@
       "features/invitar-jugador/**/*.feature",
       "features/oponentes/**/*.feature",
       "features/user/**/*.feature",
-      "features/match/**/*.feature",
-      "features/event/**/*.feature",
+      "features/partido/**/*.feature",
+      "features/evento/**/*.feature",
+      "features/partido-estados/**/*.feature",
       "features/auth/**/*.feature"
     ],
     "require": [
