@@ -4,7 +4,7 @@ import { ResultsPage } from '../../pagination/results-page';
 import { PersonService } from 'src/app/services/person.service';
 import { Division } from '../../division/types/division.types';
 import { InvitationService } from '../../invitation/service/invitation.service';
-import { BackendResponse, STATUS_CODE } from 'src/app/shared/types/shared-types';
+import { CreateInvitationRequest } from '../../invitation/types/invitation.types';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { finalize } from 'rxjs';
 
@@ -108,21 +108,20 @@ export class InvitePlayerModalComponent implements OnInit {
     const player = this.resultsPage.content.find((p) => p.id === this.selectedId());
     if (!player || !this.canSend) return;
 
-    const payload = {
-      divisionId: this.division?.id,
+    const divisionId = this.division?.id;
+    if (!divisionId) return;
+
+    const payload: CreateInvitationRequest = {
+      divisionId,
       personId: player.id
-    }
+    };
     this.isSending.set(true);
     this.invitationService.sendInvitation(payload).pipe(
       finalize(() => this.isSending.set(false))
     ).subscribe({
-      next: (response: BackendResponse) => {
-        if (response.status !== STATUS_CODE.OK) {
-          this.toastService.error(response.message, 'Error');
-        } else {
-          this.toastService.success(response.message, 'Invitacion enviada con exito', 2000);
-          this.invited.emit(player);
-        }
+      next: (invitation) => {
+        this.toastService.success(`Se envió la invitación al email ${invitation.email}`, 'Invitacion enviada con exito', 2000);
+        this.invited.emit(player);
         this.closed.emit();
       },
       error: (error) => {
