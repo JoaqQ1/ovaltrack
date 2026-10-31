@@ -2,6 +2,7 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
 import { findDivisionIdByName } from '../../support/division_helper.js';
 import { makeHttpRequest } from '../../support/httpRequest.js';
+import { findDivisionId, getDivisionMatches, requestMatchCreation } from '../../support/match_helper.js';
 
 const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
 
@@ -34,33 +35,17 @@ export async function findMatchByOpponent(opponent, token) {
 
 // <==================== Helpers ====================>
 
-const findOpponentIdByName = async (name, token) => {
-  const response = await makeHttpRequest('GET', 'opponents', null, token);
-  assert.equal(response.status, 200, 'No se pudieron obtener los rivales');
-  const opponent = response.body.find((o) => o.name === name);
-  assert.ok(opponent, `No se encontró el rival "${name}"`);
-  return opponent.id;
-};
-
 const createMatch = async (fecha, divisionId, rival, token) => {
-  const opponentId = await findOpponentIdByName(rival, token);
-  const response = await makeHttpRequest('POST', 'matches', { date: fecha, divisionId, opponentId }, token);
+  const response = await requestMatchCreation(fecha, divisionId, rival, token);
   if (response.status === 200 && response.body?.id) {
     matchCache.set(rival, response.body);
   }
   return response;
 };
 
-const findDivisionId = async (divisionNombre, token) => {
-  const divisionId = await findDivisionIdByName(divisionNombre, token);
-  assert.ok(divisionId, `No se encontró la división con nombre "${divisionNombre}"`);
-  return divisionId;
-};
-
 const findMatchInDivision = async (divisionId, rival, fecha, token) => {
-  const response = await makeHttpRequest('GET', `matches/division?divisionId=${divisionId}`, null, token);
-  assert.equal(response.status, 200, 'No se pudieron obtener los partidos de la división');
-  return response.body.find((m) => m.opponent === rival && m.date === fecha) ?? null;
+  const matches = await getDivisionMatches(divisionId, token);
+  return matches.find((m) => m.opponent === rival && m.date === fecha) ?? null;
 };
 
 const assertCreatedMatch = (response, rival, estado) => {
