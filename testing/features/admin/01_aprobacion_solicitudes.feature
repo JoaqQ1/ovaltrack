@@ -36,7 +36,7 @@ Ejemplos:
 | nombre | apellido | email                    | contrasenia    | fechaNacimiento | rol        | nombreClub | ciudadClub    | telefonoClub  |
 | Admin  | Puerto   | admin_puerto@test.com    | PassSegura123! | 1980-01-01      | ADMIN_CLUB | PMRC       | Puerto Madryn | +542804010203 |
 | Admin  | Multi    | admin_multiclub@test.com | PassSegura123! | 1980-01-01      | ADMIN_CLUB | TRC        | Trelew        | +542804010204 |
-| test   | admin    | admin@test.com           | PassSegura123! | 1980-01-01      | ADMIN_CLUB | RWS        | Rawson        | +542804010204 |
+| test   | admin    | admin@test_no_active.com | PassSegura123! | 1980-01-01      | ADMIN_CLUB | RWS        | Rawson        | +542804010204 |
 
 Esquema del escenario: Intentar aprobar al administrador de un club
 Dado que el usuario "<nombre>" "<apellido>" con mail "<email>" tiene una solicitud para darse de alta
@@ -57,4 +57,4 @@ Ejemplos:
 | nombreClub | ciudadClub    | email                    | estadoCodigo | estadoTexto                                                       |
 | PMRC       | Puerto Madryn | admin_puerto@test.com    | 200          | El club fue aprobado con éxito.                                   |
 | TRC        | Trelew        | admin_multiclub@test.com | 200          | El club fue aprobado con éxito.                                   |
-| RWS        | Rawson        | admin@test.com           | 409          | El administrador debe estar dado de alta para dar de alta el club |
+| RWS        | Rawson        | admin@test_no_active.com | 409          | El administrador debe estar dado de alta para dar de alta el club |
