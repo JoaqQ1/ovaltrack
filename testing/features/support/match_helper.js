@@ -56,7 +56,7 @@ export async function changeMatchStatus(match, method, action, token) {
 }
 
 // Los slots titulares del partido se completan con los jugadores de la división (hasta 15)
-async function saveRosterWithDivisionPlayers(match, token) {
+export async function saveRosterWithDivisionPlayers(match, token) {
   const players = await makeHttpRequest('GET', `players/with-user?divisionId=${match.divisionId}`, null, token);
   assert.equal(players.status, 200, 'No se pudieron obtener los jugadores de la división');
   assert.ok(players.body.length > 0, 'La división no tiene jugadores para armar el plantel');
