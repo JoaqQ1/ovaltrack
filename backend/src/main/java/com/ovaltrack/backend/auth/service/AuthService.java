@@ -64,7 +64,7 @@ public class AuthService {
 
         // 1. El email no puede estar registrado
         if (validateEmail(applicant.email()))
-            throw new BusinessException("The email is already registered");
+            throw new BusinessException("El email ya fue registrado con una cuenta");
 
         // 2. El club debe existir (el cliente solo envía su id) y estar activo
         UUID clubId = request.club().id();
@@ -108,7 +108,7 @@ public class AuthService {
 
         // 0. Validaciones previas: nada se guarda si alguna falla
         if (validateEmail(admin.email()))
-            throw new BusinessException("The email is already registered");
+            throw new BusinessException("El email ya fue registrado con una cuenta");
 
         validateRequestAdminClub(request);
 
