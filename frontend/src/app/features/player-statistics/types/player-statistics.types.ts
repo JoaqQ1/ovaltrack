@@ -50,6 +50,9 @@ export interface PlayerStatGroup {
   tiles: PlayerStatTile[];
 }
 
+/** Filtro del detalle de un partido: partido completo o un tiempo. */
+export type PlayerPeriodFilter = 'ALL' | 1 | 2;
+
 /** Filtro del historial según el rol del jugador en el partido. */
 export type PlayerRoleFilter = 'all' | 'starter' | 'substitute';
 

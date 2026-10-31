@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, forkJoin, from, map, of, shareReplay, switchMap } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Observable, catchError, filter, forkJoin, from, map, of, shareReplay, switchMap, take, timeout } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { PlayerMatchDTO, PlayerMatchSource, PlayerMatchStatistic } from '../types/player-statistics.types';
 import { UserContextService } from 'src/app/core/services/user-context.service';
@@ -10,6 +11,9 @@ import { LiveCaptureService } from '../../match/services/live-capture.service';
 import { StatisticCalculationService } from '../../match/statistics/services/statistic-calculation.service';
 import { RosterPlayerInfo } from '../../match/statistics/calculators';
 import { LocalMatchEvent } from '../../match/types/event.types';
+
+/** Si el contexto no llega en este tiempo, la carga termina con error en lugar de quedar colgada. */
+const USER_CONTEXT_TIMEOUT_MS = 10000;
 
 @Injectable({ providedIn: 'root' })
 export class PlayerStatisticsService {
@@ -23,6 +27,13 @@ export class PlayerStatisticsService {
 
   /** Catálogo de tipos activos: se pide una sola vez y lo comparten todos los partidos. */
   private readonly eventTypes$ = this.eventTypeService.getAll().pipe(shareReplay(1));
+
+  /** El contexto de usuario se carga aparte: al recargar la página puede llegar después que los partidos. */
+  private readonly personId$ = toObservable(this.userContext.personId).pipe(
+    filter(personId => personId !== null),
+    take(1),
+    timeout(USER_CONTEXT_TIMEOUT_MS)
+  );
 
   /** Partidos finalizados en los que jugó el usuario autenticado, del más reciente al más antiguo. */
   getMyMatches(): Observable<PlayerMatchDTO[]> {
@@ -47,10 +58,12 @@ export class PlayerStatisticsService {
 
   /** Eventos y catálogo de un partido: se cargan una vez y el cálculo por período se hace en memoria. */
   loadMatchSource(matchId: string): Observable<PlayerMatchSource> {
-    return forkJoin({
-      events: this.loadEvents(matchId),
-      eventTypes: this.eventTypes$,
-    });
+    return this.personId$.pipe(
+      switchMap(() => forkJoin({
+        events: this.loadEvents(matchId),
+        eventTypes: this.eventTypes$,
+      }))
+    );
   }
 
   /**
@@ -59,15 +72,24 @@ export class PlayerStatisticsService {
    */
   loadMatchStatistic(match: PlayerMatchDTO, period?: number): Observable<PlayerMatchStatistic> {
     return this.loadMatchSource(match.matchId).pipe(
-      map(source => this.computeMatchStatistic(match, source, period))
+      map(source => {
+        const statistic = this.computeMatchStatistic(match, source, period);
+        if (!statistic) {
+          throw new Error('El usuario autenticado no tiene una persona asociada');
+        }
+        return statistic;
+      })
     );
   }
 
-  /** Calcula las estadísticas del usuario autenticado sobre datos ya cargados, sin consultas. */
-  computeMatchStatistic(match: PlayerMatchDTO, source: PlayerMatchSource, period?: number): PlayerMatchStatistic {
+  /**
+   * Calcula las estadísticas del usuario autenticado sobre datos ya cargados, sin consultas.
+   * Devuelve `null` sin persona en el contexto, por ejemplo al cerrar sesión con la pantalla abierta.
+   */
+  computeMatchStatistic(match: PlayerMatchDTO, source: PlayerMatchSource, period?: number): PlayerMatchStatistic | null {
     const personId = this.userContext.personId();
     if (!personId) {
-      throw new Error('El usuario autenticado no tiene una persona asociada');
+      return null;
     }
 
     const me: RosterPlayerInfo = {

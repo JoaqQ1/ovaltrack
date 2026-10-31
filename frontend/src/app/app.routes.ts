@@ -12,7 +12,7 @@ import { PostMatchComponent } from './features/match/post-match/post-match.compo
 import { DivisionPlayerListComponent } from './features/division-player/list/division-player-list.component';
 import { MatchHistoryComponent } from './features/match/match-selection/match-history.component';
 import { OpponentManagerComponent } from './features/match/opponents/opponent-manager.component';
-import { PlayerStatisticsComponent } from './features/player-statistics/player-statistics.component';
+
 
 export const routes: Routes = [
     // Raíz: redirige a /home
@@ -228,6 +228,14 @@ export const routes: Routes = [
         path: 'player-statistics',
         loadComponent: () => import('./features/player-statistics/player-statistics.component')
             .then(c => c.PlayerStatisticsComponent),
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard],
+        data: { roles: ['PLAYER'] },
+    },
+    {
+        path: 'player-statistics/:matchId',
+        loadComponent: () => import('./features/player-statistics/player-match-statistics/player-match-statistics.component')
+            .then(c => c.PlayerMatchStatisticsComponent),
         canMatch: [authGuard],
         canActivate: [hasRoleGuard],
         data: { roles: ['PLAYER'] },
