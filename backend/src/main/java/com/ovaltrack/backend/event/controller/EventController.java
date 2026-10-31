@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +20,7 @@ import com.ovaltrack.backend.event.business.EventService;
 import com.ovaltrack.backend.event.domain.dto.event.EventCreationDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventResponseDTO;
 import com.ovaltrack.backend.event.domain.dto.event.EventUpdateDTO;
+import com.ovaltrack.backend.common.dto.response.MessageResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -103,7 +103,7 @@ public class EventController {
     public ResponseEntity<Object> findEventById(@PathVariable UUID eventId) {
         EventResponseDTO result = eventService.findEventById(eventId);
         return (result != null) ? ResponseEntity.ok(result) 
-        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Evento no encontrado");
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Evento no encontrado"));
     }
 
     @Operation(
@@ -123,12 +123,8 @@ public class EventController {
         @ApiResponse(responseCode = "409", description = "The request is invalid or the event cannot be saved because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> saveEvent(@Valid @RequestBody EventCreationDTO eventRequest, BindingResult bindingResult,
+    public ResponseEntity<Object> saveEvent(@Valid @RequestBody EventCreationDTO eventRequest,
             Authentication authentication) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
         return ResponseEntity.ok(eventService.saveEvent(eventRequest, authentication));
     }
 
@@ -162,12 +158,7 @@ public class EventController {
         @ApiResponse(responseCode = "409", description = "The event cannot be updated because of a business or data-integrity conflict.")
     })
     @PatchMapping("/{eventId}")
-    public ResponseEntity<Object> updateEvent(@PathVariable UUID eventId, @Valid @RequestBody EventUpdateDTO request,
-            BindingResult bindingResult, Authentication authentication) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
+    public ResponseEntity<Object> updateEvent(@PathVariable UUID eventId, @Valid @RequestBody EventUpdateDTO request, Authentication authentication) {
         return ResponseEntity.ok(eventService.updateEvent(eventId, request, authentication));
     }
 

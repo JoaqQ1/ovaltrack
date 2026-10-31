@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 import { Observable, catchError, from, map, switchMap, throwError } from 'rxjs';
 import { Division, DivisionCreationRequest, DivisionUpdateRequest } from '../features/division/types/division.types';
 import { LocalDatabaseService } from '../features/local-database/services/local-database.service';
+import { MessageResponse } from '../shared/types/shared-types';
 
 @Injectable({
   providedIn: 'root'
@@ -38,7 +39,7 @@ export class DivisionService {
     return this.http.put<Division>(`${this.apiUrl}/${id}`, division);
   }
 
-  deleteDivision(id: string): Observable<string> {
-    return this.http.delete<string>(`${this.apiUrl}/${id}`, { responseType: 'text' as 'json' });
+  deleteDivision(id: string): Observable<MessageResponse> {
+    return this.http.delete<MessageResponse>(`${this.apiUrl}/${id}`);
   }
 }

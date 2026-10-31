@@ -77,6 +77,7 @@ case "$cmd" in
     dc exec -t backend mvn "$@"
     ;;
   test)
+    clear
     echo "Ejecutando tests (Cucumber.js) contra la API del backend..."
     echo "Limpiando la base de datos mediante staging antes de ejecutar los tests..."
     "$0" staging clean.sql

@@ -1,16 +1,16 @@
-const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
+import { makeHttpRequest } from './httpRequest.js';
 
 export async function getUserToken(email, password = 'PassSegura123!') {
-  const loginRes = await fetch(`${BACKEND_URL}/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-  if (!loginRes.ok) return null;
-  const body = await loginRes.json();
-  return body.token;
+  const res = await makeHttpRequest('POST', 'api/auth/login', { email, password });
+  if (res.status !== 200) return null;
+  return res.body?.token ?? null;
 }
 
 export async function getAdminToken() {
   return getUserToken('admin@club.com', 'administrador');
+}
+
+/** Token del administrador de OvalTrack creado por el bootstrap (variables de entorno del contenedor). */
+export async function getOvalTrackAdminToken() {
+  return getUserToken(process.env.OVALTRACK_BOOTSTRAP_ADMIN_EMAIL, process.env.OVALTRACK_BOOTSTRAP_ADMIN_PASSWORD);
 }

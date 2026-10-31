@@ -24,7 +24,7 @@ export class ClubRegisterComponent {
     password: ['', [Validators.required, Validators.minLength(8)]],
     birthDate: ['', [Validators.required]],
     clubName: ['', [Validators.required]],
-    clubRegion: ['', [Validators.required]],
+    clubCity: ['', [Validators.required]],
     clubContactPhone: [''],
     termsAccepted: [false, [Validators.requiredTrue]]
   });
@@ -54,7 +54,7 @@ export class ClubRegisterComponent {
       },
       club: {
         name: rawData.clubName,
-        city: rawData.clubRegion,
+        city: rawData.clubCity,
         contactEmail: rawData.email,
         contactPhone: rawData.clubContactPhone || undefined
       }

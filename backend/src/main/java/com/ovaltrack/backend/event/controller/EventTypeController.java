@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ovaltrack.backend.event.business.EventTypeService;
 import com.ovaltrack.backend.event.domain.dto.EventTypeResponseDTO;
+import com.ovaltrack.backend.common.dto.response.MessageResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -50,7 +51,7 @@ public class EventTypeController {
     public ResponseEntity<Object> findEventTypeById(@PathVariable UUID eventTypeId) {
         EventTypeResponseDTO result = eventTypeService.findEventTypeById(eventTypeId);
         return (result != null) ? ResponseEntity.ok(result)
-                : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Tipo de evento no encontrado");
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Tipo de evento no encontrado"));
     }
 
 }
