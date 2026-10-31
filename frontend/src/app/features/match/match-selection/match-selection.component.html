@@ -210,7 +210,7 @@
               <span class="vs-label">VS</span>
               <h2 class="match-opponent-name">
                 <button type="button" class="match-card-link" [disabled]="selectedMatchForModal.status === 'cancelled'" (click)="onSelectMatch(selectedMatchForModal); closeMatchModal()">
-                  {{ selectedMatchForModal.opponent }}
+                  {{ selectedMatchForModal.opponent.name }}
                 </button>
               </h2>
             </div>
@@ -286,7 +286,7 @@
             </div>
             
             <div style="color: #ffffff; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; line-height: 1.2;">
-              {{ match.opponent }}
+              {{ match.opponent.alias }}
             </div>
             
             @if (match.status !== 'not_started' && match.status !== 'empty_roster') {

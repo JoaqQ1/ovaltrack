@@ -1,8 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { FullCalendarModule } from '@fullcalendar/angular';
+import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
 import { Match } from '../types/match.types';
 import { MatchService } from '../services/match.service';
 import { DivisionService } from 'src/app/services/division.service';
@@ -11,8 +11,6 @@ import { CalendarOptions } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { ModalComponent } from '../../modal/modal.component';
-import { ViewChild } from '@angular/core';
-import { FullCalendarComponent } from '@fullcalendar/angular';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 
 @Component({
