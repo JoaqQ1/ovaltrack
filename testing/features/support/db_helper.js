@@ -38,3 +38,23 @@ export async function personExists(email) {
   const result = await query('SELECT 1 FROM persons WHERE contact_email = $1', [email]);
   return result.rowCount > 0;
 }
+
+/**
+ * Registra una invitación ya enviada para la persona (por email) en la división, como haría
+ * POST /api/invitation/invite tras mandar el correo. El token es de prueba: nadie puede canjearlo.
+ */
+export async function createSentInvitation(email, divisionId) {
+  await query(
+    `WITH person AS (
+       SELECT id, club_id FROM persons WHERE contact_email = $1
+     ), token AS (
+       INSERT INTO tokens (id, email, expires_at, hash, used)
+       VALUES (gen_random_uuid(), $1, now() + interval '72 hours', md5(random()::text) || md5(random()::text), false)
+       RETURNING id
+     )
+     INSERT INTO invitations (id, sent_at, club_id, division_id, person_id, token_id)
+     SELECT gen_random_uuid(), now(), person.club_id, $2, person.id, token.id
+     FROM person, token`,
+    [email, divisionId],
+  );
+}
