@@ -56,10 +56,23 @@ public class User {
         return Boolean.FALSE.equals(this.active);
     }
 
+    public boolean isActivated() {
+        return Boolean.TRUE.equals(this.active);
+    }
+
+    public void activate() {
+        if (isActivated()) {
+            throw new IllegalStateException("El usuario ya se encuentra dado de alta");
+        }
+        this.active = true;
+        this.accountStatus = UserStatus.ACTIVE;
+    }
+
     public void deactivate() {
         if (isDeactivated()) {
             throw new IllegalStateException("El usuario ya se encuentra dado de baja");
         }
         this.active = false;
+        this.accountStatus = UserStatus.SUSPENDED;
     }
 }
