@@ -10,7 +10,8 @@
       "features/invitar-jugador/**/*.feature",
       "features/user/**/*.feature",
       "features/match/**/*.feature",
-      "features/event/**/*.feature"
+      "features/event/**/*.feature",
+      "features/auth/**/*.feature"
     ],
     "require": [
       "features/**/*.js"
