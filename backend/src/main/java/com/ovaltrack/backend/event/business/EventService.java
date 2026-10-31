@@ -109,7 +109,7 @@ public class EventService {
 					"No se puede crear un nuevo evento a partir de un tipo de evento que no existe");
 		}
 
-		EventAttributeValidator.validate(aEventType, eventRequest.attributes());
+		EventAttributeValidator.validate(aEventType, eventRequest.attributes(), eventRequest.teamPossession());
 		
 		Match match = matchService.findMatchEntityById(eventRequest.matchId());
 		if (match == null) {
@@ -265,7 +265,10 @@ public class EventService {
 		}
 
 		if (request.attributes() != null) {
-			EventAttributeValidator.validate(event.getEventType(), request.attributes());
+			EventPossession effectivePossession = request.teamPossession() != null
+					? request.teamPossession()
+					: event.getTeamPossession();
+			EventAttributeValidator.validate(event.getEventType(), request.attributes(), effectivePossession);
 			event.setAttributes(request.attributes());
 		}
 	}

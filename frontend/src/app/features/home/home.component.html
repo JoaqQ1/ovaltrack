@@ -38,18 +38,11 @@
             <line x1="12" y1="16" x2="12.01" y2="16"></line>
           </svg>
         </div>
-        @if (isPlayer()) {
-          <h4 class="warning-title fw-semibold">Portal del Jugador en desarrollo</h4>
-          <p class="warning-desc mx-auto mb-0" style="max-width: 480px">
-            Próximamente podrás consultar tus convocatorias, estado de ficha médica y estadísticas personales de rendimiento en tu club.
-          </p>
-        } @else {
-          <h4 class="warning-title fw-semibold">Cuenta pendiente de asignación</h4>
+        <h4 class="warning-title fw-semibold">Cuenta pendiente de asignación</h4>
           <p class="warning-desc mx-auto mb-0" style="max-width: 480px">
             Tu usuario está registrado, pero un administrador del club aún debe
             asignarte un rol deportivo o de gestión para habilitar las secciones.
           </p>
-        }
       </section>
     } @else {
       <!-- Grid de tarjetas dinámicas según rol -->
@@ -86,19 +79,7 @@
                           </svg>
                         }
                         @case ("division") {
-                          <svg
-                            width="20"
-                            height="20"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
-                            ></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                          </svg>
+                          <i class="bi bi-person fs-5"></i>
                         }
                         @case ("club") {
                           <svg
@@ -121,36 +102,10 @@
                           </svg>
                         }
                         @case ("player") {
-                          <svg
-                            width="20"
-                            height="20"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
-                            ></path>
-                            <circle cx="8.5" cy="7" r="4"></circle>
-                            <line x1="20" y1="8" x2="20" y2="14"></line>
-                            <line x1="23" y1="11" x2="17" y2="11"></line>
-                          </svg>
+                          <i class="bi bi-person-add fs-5"></i>
                         }
                         @case ("members") {
-                          <svg
-                            width="20"
-                            height="20"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="10" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                          </svg>
+                          <i class="bi bi-people fs-5"></i>
                         }
                       }
                     </div>

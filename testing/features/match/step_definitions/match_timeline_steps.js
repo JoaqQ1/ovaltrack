@@ -22,7 +22,7 @@ Given('que existe un partido finalizado para la división {string} contra {strin
   let match = null;
   if (listRes.ok) {
     const matches = await listRes.json();
-    match = matches.find(m => m.opponent === rival);
+    match = matches.find(m => m.opponent.name === rival);
   }
 
   // 2. Si no existe, crearlo

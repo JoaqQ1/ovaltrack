@@ -13,6 +13,7 @@ import { DivisionPlayerListComponent } from './features/division-player/list/div
 import { MatchHistoryComponent } from './features/match/match-selection/match-history.component';
 import { OpponentManagerComponent } from './features/match/opponents/opponent-manager.component';
 
+
 export const routes: Routes = [
     // Raíz: redirige a /home
     {
@@ -198,7 +199,7 @@ export const routes: Routes = [
             import('./features/invitation/invitation.component').then(
                 c => c.InvitationComponent
             )
-    }, 
+    },
     {
         path: 'match-history',
         canMatch: [authGuard],
@@ -222,6 +223,22 @@ export const routes: Routes = [
         loadComponent: () => import('./features/match/post-match/components/post-match-statistics/post-match-statistics.component')
             .then(m => m.PostMatchStatisticsComponent),
         data: { layout: 'wide' },
+    },
+    {
+        path: 'player-statistics',
+        loadComponent: () => import('./features/player-statistics/player-statistics.component')
+            .then(c => c.PlayerStatisticsComponent),
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard],
+        data: { roles: ['PLAYER'] },
+    },
+    {
+        path: 'player-statistics/:matchId',
+        loadComponent: () => import('./features/player-statistics/player-match-statistics/player-match-statistics.component')
+            .then(c => c.PlayerMatchStatisticsComponent),
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard],
+        data: { roles: ['PLAYER'] },
     },
     // Wildcard para rutas no encontradas
     {

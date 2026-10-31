@@ -10,7 +10,7 @@ import com.ovaltrack.backend.event.domain.EventType;
 
 public interface EventTypeRepository extends JpaRepository<EventType, UUID> {
 
-	Collection<EventType> findByIsActiveTrue();
+	Collection<EventType> findByIsActiveTrueOrderByNameAscIdAsc();
 
 	java.util.Optional<EventType> findByIdAndIsActiveTrue(UUID id);
 }

@@ -20,7 +20,7 @@ export async function findMatchByOpponent(opponent, token) {
     });
     if (res.ok) {
       const matches = await res.json();
-      const target = matches.find(m => m.opponent === opponent);
+      const target = matches.find(m => m.opponent.name === opponent);
       if (target) {
         matchCache.set(opponent, target);
         return target;
@@ -62,7 +62,7 @@ When('programa un partido contra el rival {string} para la fecha {string} en la 
 Then('el sistema responde con código {int} y devuelve el partido creado con rival {string} y estado {string}', function (statusCode, rivalEsperado, estadoEsperado) {
   assert.equal(this.lastResponse.status, statusCode, `Se esperaba código ${statusCode} pero se obtuvo ${this.lastResponse.status}`);
   assert.ok(this.lastResponseBody.id, 'El partido devuelto no contiene un ID asignado');
-  assert.equal(this.lastResponseBody.opponent, rivalEsperado, `Se esperaba rival ${rivalEsperado} pero se obtuvo ${this.lastResponseBody.opponent}`);
+  assert.equal(this.lastResponseBody.opponent.name, rivalEsperado, `Se esperaba rival ${rivalEsperado} pero se obtuvo ${this.lastResponseBody.opponent.name}`);
   assert.equal(this.lastResponseBody.status, estadoEsperado, `Se esperaba estado ${estadoEsperado} pero se obtuvo ${this.lastResponseBody.status}`);
 });
 
@@ -107,7 +107,7 @@ Then('el sistema responde con código {int} confirmando la creación exitosa de 
   for (const item of this.matchCreationResponses) {
     assert.equal(item.status, statusCode, `Se esperaba código ${statusCode} para el partido ${item.expectedRival} pero se obtuvo ${item.status}`);
     assert.ok(item.body.id, `El partido ${item.expectedRival} no contiene un ID generado`);
-    assert.equal(item.body.opponent, item.expectedRival);
+    assert.equal(item.body.opponent.name, item.expectedRival);
     assert.equal(item.body.status, 'NOT_STARTED');
   }
 });
@@ -160,4 +160,3 @@ When('intenta programar un partido contra {string} para el {string} en la divisi
     this.lastResponseBody = text;
   }
 });
-

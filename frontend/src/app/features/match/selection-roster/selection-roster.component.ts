@@ -13,7 +13,7 @@ import { createInitialStartingSlots, createInitialSubstituteSlots } from '../dat
 @Component({
   selector: 'ot-selection-roster',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './selection-roster.component.html',
   styleUrl: './selection-roster.component.css'
 })
@@ -76,7 +76,7 @@ export class SelectionRosterComponent implements OnInit {
     );
   });
 
-  readonly opponentName = computed(() => this.match()?.opponent || 'Rival');
+  readonly opponentName = computed(() => this.match()?.opponent.name || 'Rival');
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') || '';
