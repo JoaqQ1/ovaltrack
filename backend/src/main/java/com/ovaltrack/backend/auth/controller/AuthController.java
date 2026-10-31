@@ -1,10 +1,7 @@
 package com.ovaltrack.backend.auth.controller;
 
-import java.util.Map;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,8 +14,7 @@ import com.ovaltrack.backend.auth.dto.RegisterFromInvitationRequest;
 import com.ovaltrack.backend.auth.registration.domain.dto.ClubRegistrationDTO;
 import com.ovaltrack.backend.auth.registration.domain.dto.MemberRegistrationDTO;
 import com.ovaltrack.backend.auth.service.AuthService;
-import com.ovaltrack.backend.common.config.exceptions.BusinessException;
-import com.ovaltrack.backend.common.dto.response.BackendResponse;
+import com.ovaltrack.backend.common.dto.response.MessageResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -44,26 +40,10 @@ public class AuthController {
             @ApiResponse(responseCode = "409", description = "The request contains invalid or incomplete data, or violates a business rule.")
     })
     @PostMapping("/register")
-    public ResponseEntity<BackendResponse<Object>> registrar(@Valid @RequestBody MemberRegistrationDTO request,
-            BindingResult bindingResult) {
-
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage(); 
-            return BackendResponse.conflict(message, null);
-        }
-           
-        try {
-            authService.register(request);
-            return BackendResponse.response(
-                    HttpStatus.CREATED,
-                    "Solicitud de registro creada con éxito. Pendiente de aprobación",
-                    null);
-        } catch (BusinessException e) {
-            String errorMessage = e.getMessage() != null ? e.getMessage() : "Error en el registro";
-            return BackendResponse.conflict(errorMessage, null);
-        } catch (IllegalArgumentException e) {
-            return BackendResponse.conflict("Datos inválidos", e);
-        }
+    public ResponseEntity<MessageResponse> registrar(@Valid @RequestBody MemberRegistrationDTO request) {
+        authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new MessageResponse("Solicitud de registro creada con éxito. Pendiente de aprobación"));
     }
 
     @Operation(summary = "Register a new club and its administrator", description = "Creates a club administrator account together with a club registration request. "
@@ -73,24 +53,10 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "The request contains invalid or incomplete data, or violates a business rule.")
     })
     @PostMapping("/register-club")
-    public ResponseEntity<BackendResponse<Object>> registrarClub(@Valid @RequestBody ClubRegistrationDTO request,
-            BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage(); 
-            return BackendResponse.conflict(message, null);
-        }
-        try {
-            authService.registerClub(request);
-            return BackendResponse.response(
-                    HttpStatus.CREATED,
-                    "Solicitud de registro creada con éxito. Pendiente de aprobación",
-                    null);
-        } catch (BusinessException e) {
-            String errorMessage = e.getMessage() != null ? e.getMessage() : "Error en el registro";
-            return BackendResponse.conflict(errorMessage, null);
-        } catch (IllegalArgumentException e) {
-            return BackendResponse.conflict("Datos inválidos", e);
-        }
+    public ResponseEntity<MessageResponse> registrarClub(@Valid @RequestBody ClubRegistrationDTO request) {
+        authService.registerClub(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new MessageResponse("Solicitud de registro creada con éxito. Pendiente de aprobación"));
     }
 
     @Operation(summary = "Log in a user", description = "Authenticates the supplied credentials and returns a JWT token.")
@@ -105,7 +71,7 @@ public class AuthController {
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", "Credencial inválida"));
+                    .body(new MessageResponse("Credencial inválida"));
         }
     }
 
@@ -114,9 +80,9 @@ public class AuthController {
             @ApiResponse(responseCode = "202", description = "Password reset request accepted.")
     })
     @PostMapping("/password-reset/request")
-    public ResponseEntity<Object> passwordReset(@RequestBody PasswordResetRequest request) {
+    public ResponseEntity<MessageResponse> passwordReset(@RequestBody PasswordResetRequest request) {
         return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(Map.of("message", "Solicitud enviada correctamente"));
+                .body(new MessageResponse("Solicitud enviada correctamente"));
     }
 
     // ---- AuthController (agrega este método junto a los otros) ----
@@ -127,12 +93,9 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid data, invalid or expired token, or an account already exists.")
     })
     @PostMapping("/register/invitation")
-    public ResponseEntity<BackendResponse<Object>> registerFromInvitation(
-            @Valid @RequestBody RegisterFromInvitationRequest request,
-            BindingResult bindingResult) {
-        if (bindingResult.hasErrors())
-            throw new BusinessException("Campos invalidos");
+    public ResponseEntity<MessageResponse> registerFromInvitation(
+            @Valid @RequestBody RegisterFromInvitationRequest request) {
         authService.registerFromInvitation(request);
-        return BackendResponse.response(HttpStatus.CREATED, "Cuenta creada con éxito", null);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Cuenta creada con éxito"));
     }
 }
