@@ -64,8 +64,7 @@ public class AdminService {
         User user = userService.findUserById(userId);
         if (user == null)
             throw new BusinessException("El usuario no existe");
-        user.setActive(true);
-        user.setAccountStatus(UserStatus.ACTIVE);
+        user.activate();
         user.setRole(UserRole.ADMIN_CLUB);
         userService.saveUser(user);
     }
@@ -78,7 +77,7 @@ public class AdminService {
             throw new BusinessException("El usuario no existe");
         user.setActive(false);
         user.setAccountStatus(UserStatus.REJECTED);
-        user.setRole(UserRole.ADMIN_CLUB);
+        user.setRole(UserRole.NO_ROLE);
         userService.saveUser(user);
     }
 
@@ -89,7 +88,7 @@ public class AdminService {
         if (user == null) {
             throw new BusinessException("El usuario no existe");
         }
-        user.setActive(true);
+        user.activate();
         userService.saveUser(user);
     }
 
