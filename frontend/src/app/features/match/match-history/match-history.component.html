@@ -77,13 +77,15 @@
 
   </div>
 
-  <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+  <div style="display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 8px;">
     <button class="calendar-view-toggle"
       (click)="isCalendarView = !isCalendarView" 
       style="padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">
       {{ isCalendarView ? '📅 Calendario' : '← Ver como tarjetas' }}
     </button>
     <button class="calendar-view-toggle"
+      type="button"
+      (click)="goToDivisionStatistics()"
       style="padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">
       Reporte de partidos
     </button>

@@ -134,6 +134,30 @@ export const routes: Routes = [
         component: DivisionPlayerListComponent
     },
     {
+        path: 'divisions/:divisionId/statistics',
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            layout: 'wide'
+        },
+        canMatch: [authGuard],
+        loadComponent: () =>
+            import('./features/division-statistics/division-statistics.component')
+                .then(m => m.DivisionStatisticsComponent)
+    },
+    {
+        path: 'division-statistics/:divisionId',
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            layout: 'wide'
+        },
+        canMatch: [authGuard],
+        loadComponent: () =>
+            import('./features/division-statistics/division-statistics.component')
+                .then(m => m.DivisionStatisticsComponent)
+    },
+    {
         path: 'players/new',
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {

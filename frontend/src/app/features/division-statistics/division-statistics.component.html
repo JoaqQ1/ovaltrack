@@ -1,0 +1,107 @@
+<div class="ds-page">
+  <header class="ds-header">
+    <div>
+      <span class="ds-badge">Estadísticas • {{ data?.divisionName || 'División' }}</span>
+      <h1 class="ds-title">Dashboard de partidos</h1>
+      <p class="ds-subtitle">Evolución partido a partido dentro del rango de fechas elegido</p>
+    </div>
+    <button type="button" class="ds-btn ds-btn-outline" (click)="goBack()">← Volver</button>
+  </header>
+
+  <section class="ds-card ds-filters">
+    <div class="ds-field">
+      <label for="ds-from">Desde</label>
+      <input id="ds-from" type="date" [(ngModel)]="from" [max]="to" />
+    </div>
+    <div class="ds-field">
+      <label for="ds-to">Hasta</label>
+      <input id="ds-to" type="date" [(ngModel)]="to" [min]="from" />
+    </div>
+    <button type="button" class="ds-btn ds-btn-primary" (click)="load()" [disabled]="loading">
+      {{ loading ? 'Cargando…' : 'Aplicar' }}
+    </button>
+    <div class="ds-presets">
+      @for (preset of presets; track preset.id) {
+        <button type="button" class="ds-chip" (click)="applyPreset(preset.id)" [disabled]="loading">
+          {{ preset.label }}
+        </button>
+      }
+    </div>
+  </section>
+
+  @if (error) {
+    <section class="ds-card ds-error" role="alert">
+      <strong>{{ error === 'forbidden' ? 'Acceso denegado' : 'No se pudo mostrar el dashboard' }}</strong>
+      <p>{{ errorMessage }}</p>
+    </section>
+  } @else if (loading && !data) {
+    <section class="ds-card ds-empty">Cargando estadísticas…</section>
+  } @else if (data) {
+    @if (data.matches.length === 0) {
+      <section class="ds-card ds-empty">
+        No hay partidos finalizados entre el {{ data.from | date: 'dd/MM/yyyy' }} y el
+        {{ data.to | date: 'dd/MM/yyyy' }}. Probá ampliar el rango de fechas.
+      </section>
+    } @else {
+      <section class="ds-kpis">
+        @for (kpi of kpis; track kpi.label) {
+          <div class="ds-card ds-kpi">
+            <span class="ds-kpi-value">{{ kpi.value }}</span>
+            <span class="ds-kpi-label">{{ kpi.label }}</span>
+          </div>
+        }
+      </section>
+
+      <section class="ds-card">
+        <h2 class="ds-section-title">Métricas a graficar</h2>
+        <div class="ds-metric-picker">
+          @for (metric of metrics; track metric.id) {
+            <button type="button" class="ds-chip" [class.ds-chip-active]="isSelected(metric.id)"
+              [attr.aria-pressed]="isSelected(metric.id)" (click)="toggleMetric(metric.id)">
+              {{ metric.label }}
+            </button>
+          }
+        </div>
+      </section>
+
+      @if (charts.length === 0) {
+        <section class="ds-card ds-empty">Elegí al menos una métrica para ver los gráficos.</section>
+      } @else {
+        <section class="ds-charts">
+          @for (chart of charts; track chart.id) {
+            <article class="ds-card ds-chart-card">
+              <h3 class="ds-chart-title">{{ chart.label }}</h3>
+              <ot-stat-line-chart [labels]="labels" [details]="details" [series]="chart.series" [unit]="chart.unit" />
+            </article>
+          }
+        </section>
+      }
+
+      <section class="ds-card">
+        <h2 class="ds-section-title">Partidos incluidos</h2>
+        <div class="ds-table-wrap">
+          <table class="ds-table">
+            <thead>
+              <tr><th>Fecha</th><th>Rival</th><th>Resultado</th><th></th></tr>
+            </thead>
+            <tbody>
+              @for (row of rows; track row.matchId) {
+                <tr>
+                  <td>{{ row.date }}</td>
+                  <td>{{ row.opponent }}</td>
+                  <td>
+                    <span class="ds-result" [class.ds-win]="row.result === 'G'" [class.ds-loss]="row.result === 'P'">
+                      {{ row.result }}
+                    </span>
+                    {{ row.ownScore }} - {{ row.opponentScore }}
+                  </td>
+                  <td><a class="ds-link" [routerLink]="['/post-match', row.matchId]">Ver partido →</a></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+</div>

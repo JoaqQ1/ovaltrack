@@ -10,13 +10,12 @@ import { ToastService } from 'src/app/core/services/toast.service';
 import { CalendarOptions } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { ModalComponent } from '../../modal/modal.component';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 
 @Component({
   selector: 'ot-match-history',
   standalone: true,
-  imports: [CommonModule, FormsModule, FullCalendarModule, ModalComponent],
+  imports: [CommonModule, FormsModule, FullCalendarModule],
   templateUrl: './match-history.component.html',
   styleUrl: '../match-selection/match-selection.component.css',
 })
@@ -238,6 +237,15 @@ export class MatchHistoryComponent implements OnInit {
   goBack() {
     // Para el botón de volver
     this.router.navigate(['/match-selection']);
+  }
+
+  goToDivisionStatistics() {
+    if (!this.selectedDivisionId) {
+      this.toastService.show('warning', 'Seleccioná una división para ver su reporte.', 'División requerida');
+      return;
+    }
+
+    this.router.navigate(['/division-statistics', this.selectedDivisionId]);
   }
 
   openMatch(match: Match) {
