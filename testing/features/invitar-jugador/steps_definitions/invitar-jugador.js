@@ -1,6 +1,9 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
+import { findClubMember } from "../../support/club_helper.js";
+import { createSentInvitation } from "../../support/db_helper.js";
 import { makeHttpRequest } from "../../support/httpRequest.js";
+import { findDivisionId } from "../../support/match_helper.js";
 
 // El "Dado que el administrador del club ... ha iniciado sesión" está definido en support/common_steps.js
 
@@ -52,4 +55,22 @@ Then('el sistema responde con {int} y la invitación se envía a {string}', func
   assert.equal(this.response.status, statusCode, this.response.body?.message);
   assert.equal(this.response.body?.email, email);
   assert.ok(this.response.body?.sentAt, `La invitación a ${email} no tiene fecha de envío.`);
+});
+
+// <==================== Invitaciones no permitidas ====================>
+
+Given('que el jugador con email {string} ya fue invitado a la division {string}', async function (email, nombreDivision) {
+  const divisionId = await findDivisionId(nombreDivision, this.token);
+  await createSentInvitation(email, divisionId);
+});
+
+When('invita a la persona con email {string} a la division {string}', async function (email, nombreDivision) {
+  const member = await findClubMember(email, this.token);
+  const divisionId = await findDivisionId(nombreDivision, this.token);
+  this.response = await makeHttpRequest(
+    "POST",
+    "api/invitation/invite",
+    { divisionId, personId: member.personId },
+    this.token,
+  );
 });
