@@ -2,8 +2,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@environments/environment.docker';
-import { BackendResponse } from 'src/app/shared/types/shared-types';
-import { ClubStatus } from '../../club/types/club.types';
+import { MessageResponse } from 'src/app/shared/types/shared-types';
+import { Club, ClubStatus } from '../../club/types/club.types';
+import { UserClubRegistration } from '../types/ovaltrack-admin.types';
 
 @Injectable({ providedIn: 'root' })
 export class OvalTrackAdminService {
@@ -13,64 +14,64 @@ export class OvalTrackAdminService {
     /* ---------- Listados ---------- */
 
     /** GET /clubs/pending */
-    getPendingClubs(): Observable<BackendResponse> {
-        return this.http.get<BackendResponse>(`${this.apiUrl}/clubs/pending`);
+    getPendingClubs(): Observable<Club[]> {
+        return this.http.get<Club[]>(`${this.apiUrl}/clubs/pending`);
     }
 
     /** GET /users/pending */
-    getPendingUsers(): Observable<BackendResponse> {
-        return this.http.get<BackendResponse>(`${this.apiUrl}/users/pending`);
+    getPendingUsers(): Observable<UserClubRegistration[]> {
+        return this.http.get<UserClubRegistration[]>(`${this.apiUrl}/users/pending`);
     }
 
     /** GET /users: sin parámetro devuelve activas e inactivas; con `active` filtra. */
-    getUsers(active?: boolean): Observable<BackendResponse> {
+    getUsers(active?: boolean): Observable<UserClubRegistration[]> {
         let params = new HttpParams();
         if (active !== undefined) {
             params = params.set('active', active);
         }
-        return this.http.get<BackendResponse>(`${this.apiUrl}/users`, { params });
+        return this.http.get<UserClubRegistration[]>(`${this.apiUrl}/users`, { params });
     }
 
     /** GET /clubs: sin parámetro devuelve ACTIVE y REJECTED; con `status` filtra. */
-    getClubs(status?: ClubStatus): Observable<BackendResponse> {
+    getClubs(status?: ClubStatus): Observable<Club[]> {
         let params = new HttpParams();
         if (status) {
             params = params.set('status', status);
         }
-        return this.http.get<BackendResponse>(`${this.apiUrl}/clubs`, { params });
+        return this.http.get<Club[]>(`${this.apiUrl}/clubs`, { params });
     }
 
     /* ---------- Clubes ---------- */
 
     /** POST /clubs/{clubId}/approve */
-    approveClub(clubId: string, adminUserId: string): Observable<BackendResponse> {
+    approveClub(clubId: string, adminUserId: string): Observable<MessageResponse> {
         const params = new HttpParams().set('adminUserId', adminUserId);
 
-        return this.http.post<BackendResponse>(`${this.apiUrl}/clubs/${clubId}/approve`, null, { params });
+        return this.http.post<MessageResponse>(`${this.apiUrl}/clubs/${clubId}/approve`, null, { params });
     }
 
     /** POST /clubs/{clubId}/reject (comentario opcional) */
-    rejectClub(clubId: string): Observable<BackendResponse> {
-        return this.http.post<BackendResponse>(`${this.apiUrl}/clubs/${clubId}/reject`, null);
+    rejectClub(clubId: string): Observable<MessageResponse> {
+        return this.http.post<MessageResponse>(`${this.apiUrl}/clubs/${clubId}/reject`, null);
     }
 
     /* ---------- Cuentas ---------- */
 
     /** POST /users/{userId}/approve */
-    approveAccount(userId: string): Observable<BackendResponse> {
-        return this.http.post<BackendResponse>(`${this.apiUrl}/users/${userId}/approve`, null);
+    approveAccount(userId: string): Observable<MessageResponse> {
+        return this.http.post<MessageResponse>(`${this.apiUrl}/users/${userId}/approve`, null);
     }
 
     /** POST /users/{userId}/reject (comentario opcional) */
-    rejectAccount(userId: string): Observable<BackendResponse> {
-        return this.http.post<BackendResponse>(`${this.apiUrl}/users/${userId}/reject`, null);
+    rejectAccount(userId: string): Observable<MessageResponse> {
+        return this.http.post<MessageResponse>(`${this.apiUrl}/users/${userId}/reject`, null);
     }
 
-    activateAccount(userId: string): Observable<BackendResponse> {
-        return this.http.post<BackendResponse>(`${this.apiUrl}/${userId}/activate`, null);
+    activateAccount(userId: string): Observable<MessageResponse> {
+        return this.http.post<MessageResponse>(`${this.apiUrl}/${userId}/activate`, null);
     }
-    deactivateAccount(userId: string): Observable<BackendResponse> {
-        return this.http.delete<BackendResponse>(`${this.apiUrl}/${userId}/deactivate`);
+    deactivateAccount(userId: string): Observable<MessageResponse> {
+        return this.http.delete<MessageResponse>(`${this.apiUrl}/${userId}/deactivate`);
     }
 
 }
