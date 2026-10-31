@@ -1,8 +1,8 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
-import { findEventTypeIdByName } from '../../support/event_helper.js';
-import { getUserToken } from '../../support/auth_helper.js';
-import { findDivisionIdByName } from '../../support/division_helper.js';
+import { findEventTypeIdByName } from '../../../testing/features/support/event_helper.js';
+import { getUserToken } from '../../../testing/features/support/auth_helper.js';
+import { findDivisionIdByName } from '../../../testing/features/support/division_helper.js';
 
 const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
 
