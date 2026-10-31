@@ -2,7 +2,7 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
 import { findDivisionIdByName } from '../../support/division_helper.js';
 import { makeHttpRequest } from '../../support/httpRequest.js';
-import { findDivisionId, getDivisionMatches, requestMatchCreation } from '../../support/match_helper.js';
+import { findDivisionId, getDivisionMatches, requestMatchCreation, saveRosterWithDivisionPlayers } from '../../support/match_helper.js';
 
 export const matchCache = new Map();
 
@@ -65,4 +65,14 @@ Given('que existe un partido contra {string} para el {string} en la division {st
 
 When('intenta cancelar el partido', async function () {
   this.response = await makeHttpRequest('DELETE', `matches/${this.match.id}/cancel`, null, this.token);
+});
+
+// <==================== Inicio de partidos ====================>
+
+Given('el plantel del partido tiene como titulares a los jugadores de la division', async function () {
+  await saveRosterWithDivisionPlayers(this.match, this.token);
+});
+
+When('intenta iniciar el partido', async function () {
+  this.response = await makeHttpRequest('PUT', `matches/${this.match.id}/start`, null, this.token);
 });
