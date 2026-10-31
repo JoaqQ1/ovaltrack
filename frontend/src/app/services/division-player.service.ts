@@ -7,6 +7,7 @@ import {
   DivisionPlayerResponse
 } from '../features/division-player/type/division-player.types';
 import { ResultsPage } from '../features/pagination/results-page';
+import { MessageResponse } from '../shared/types/shared-types';
 
 @Injectable({
   providedIn: 'root'
@@ -42,9 +43,7 @@ export class DivisionPlayerService {
     return this.http.get<DivisionPlayerPersonUserResponse[]>(`${this.apiUrl}/with-user`, { params });
   }
 
-  remove(divisionPlayerId: string): Observable<string> {
-    return this.http.delete<string>(`${this.apiUrl}/${divisionPlayerId}`, {
-      responseType: 'text' as 'json'
-    });
+  remove(divisionPlayerId: string): Observable<MessageResponse> {
+    return this.http.delete<MessageResponse>(`${this.apiUrl}/${divisionPlayerId}`);
   }
 }
