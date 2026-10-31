@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.person.domain.Person;
 
 import java.time.LocalDateTime;
@@ -62,7 +63,7 @@ public class User {
 
     public void activate() {
         if (isActivated()) {
-            throw new IllegalStateException("El usuario ya se encuentra dado de alta");
+            throw new BusinessException("El usuario ya se encuentra dado de alta");
         }
         this.active = true;
         this.accountStatus = UserStatus.ACTIVE;
@@ -70,7 +71,7 @@ public class User {
 
     public void deactivate() {
         if (isDeactivated()) {
-            throw new IllegalStateException("El usuario ya se encuentra dado de baja");
+            throw new BusinessException("El usuario ya se encuentra dado de baja");
         }
         this.active = false;
         this.accountStatus = UserStatus.SUSPENDED;
