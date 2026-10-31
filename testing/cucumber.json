@@ -7,6 +7,7 @@
       "features/division/**/*.feature",
       "features/division-coach/**/*.feature",
       "features/division-jugador/**/*.feature",
+      "features/persona/**/*.feature",
       "features/invitar-jugador/**/*.feature",
       "features/cuenta-jugador/**/*.feature",
       "features/oponentes/**/*.feature",
@@ -14,13 +15,15 @@
       "features/evento/**/*.feature",
       "features/partido-flujo/**/*.feature",
       "features/user/**/*.feature",
+      "features/club/**/*.feature",
       "features/auth/**/*.feature"
     ],
     "require": [
       "features/**/*.js"
     ],
     "format": [
-      "pretty"
+      "summary",
+      "progress"
     ],
     "publishQuiet": true
   }
