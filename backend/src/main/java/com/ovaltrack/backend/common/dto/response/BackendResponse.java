@@ -36,6 +36,10 @@ public class BackendResponse<T> {
         return response(HttpStatus.BAD_REQUEST, message, errors);
     }
 
+    public static <T> ResponseEntity<BackendResponse<T>> conflict(String message, T errors) {
+        return response(HttpStatus.CONFLICT, message, errors);
+    }
+
     public static <T> ResponseEntity<BackendResponse<T>> accepted(String message, T data) {
         return response(HttpStatus.ACCEPTED, message, data);
     }
