@@ -27,3 +27,46 @@ export async function getDivisionMatches(divisionId, token) {
   assert.equal(response.status, 200, 'No se pudieron obtener los partidos de la división');
   return response.body;
 }
+
+// Fecha usada al crear el partido cuando todavía no existe uno contra ese rival
+const MATCH_DATES = {
+  'Comodoro Rugby Club': '2026-12-12T15:30:00',
+  'Trelew Rugby Club': '2026-12-15T10:00:00',
+  'Calafate Rugby Club': '2026-12-19T15:30:00',
+  'Deportivo Portugués': '2026-12-26T15:30:00',
+};
+const DEFAULT_MATCH_DATE = '2027-01-09T15:30:00';
+
+export async function findMatchByStatus(divisionId, rival, statuses, token) {
+  const matches = await getDivisionMatches(divisionId, token);
+  return matches.find((m) => m.opponent === rival && statuses.includes(m.status)) ?? null;
+}
+
+export async function createMatchForRival(divisionId, rival, token) {
+  const response = await requestMatchCreation(MATCH_DATES[rival] ?? DEFAULT_MATCH_DATE, divisionId, rival, token);
+  assert.equal(response.status, 200, `No se pudo crear el partido contra ${rival}: ${response.body?.message}`);
+  return response.body;
+}
+
+/** Ejecuta una transición (start, cancel, close-first-half, start-second-half...) esperando 200. */
+export async function changeMatchStatus(match, method, action, token) {
+  const response = await makeHttpRequest(method, `matches/${match.id}/${action}`, null, token);
+  assert.equal(response.status, 200, `No se pudo ${action} el partido: ${response.body?.message}`);
+  return response.body;
+}
+
+// Los slots titulares del partido se completan con los jugadores de la división (hasta 15)
+async function saveRosterWithDivisionPlayers(match, token) {
+  const players = await makeHttpRequest('GET', `players/with-user?divisionId=${match.divisionId}`, null, token);
+  assert.equal(players.status, 200, 'No se pudieron obtener los jugadores de la división');
+  assert.ok(players.body.length > 0, 'La división no tiene jugadores para armar el plantel');
+  const titularesIds = players.body.slice(0, 15).map((p) => p.personId);
+  const response = await makeHttpRequest('POST', `matches/${match.id}/roster`, { titularesIds, suplentesIds: [] }, token);
+  assert.equal(response.status, 200, `No se pudo guardar el plantel: ${response.body?.message}`);
+}
+
+/** Arma el plantel con los jugadores de la división e inicia el partido. */
+export async function startMatch(match, token) {
+  await saveRosterWithDivisionPlayers(match, token);
+  return changeMatchStatus(match, 'PUT', 'start', token);
+}
