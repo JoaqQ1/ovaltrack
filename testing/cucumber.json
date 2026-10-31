@@ -12,7 +12,7 @@
       "features/user/**/*.feature",
       "features/partido/**/*.feature",
       "features/evento/**/*.feature",
-      "features/partido-estados/**/*.feature",
+      "features/partido-flujo/**/*.feature",
       "features/auth/**/*.feature"
     ],
     "require": [
