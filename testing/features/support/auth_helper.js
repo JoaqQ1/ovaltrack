@@ -1,14 +1,9 @@
-const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
+import { makeHttpRequest } from './httpRequest.js';
 
 export async function getUserToken(email, password = 'PassSegura123!') {
-  const loginRes = await fetch(`${BACKEND_URL}/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-  if (!loginRes.ok) return null;
-  const body = await loginRes.json();
-  return body.token;
+  const res = await makeHttpRequest('POST', 'api/auth/login', { email, password });
+  if (res.status !== 200) return null;
+  return res.token;
 }
 
 export async function getAdminToken() {
