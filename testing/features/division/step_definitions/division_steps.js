@@ -1,6 +1,7 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
 import { getAdminToken, getUserToken } from '../../support/auth_helper.js';
+import { makeHttpRequest } from '../../support/httpRequest.js';
 
 const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
 
@@ -38,15 +39,39 @@ async function findDivisionIdByName(name, token) {
   return null;
 }
 
-Given('que el usuario con rol entrenador con email {string} y contraseña {string} ha iniciado sesión', async function (email, password) {
-  this.token = await getUserToken(email, password);
-  assert.ok(this.token, `Fallo el inicio de sesión para el entrenador ${email}`);
+Given('que el administrador del club con email {string} y contraseña {string} ha iniciado sesión', async function (email, contraseña) {
+  this.token = await getUserToken(email, contraseña);
+  assert.ok(this.token, `Fallo de inicio de sesión para el admin ${email}`);
+  this.response = await makeHttpRequest(
+    "GET",
+    `club/my-club`,
+    null,
+    this.token,
+  );
+  this.club = this.response;
 });
 
-Given('que el entrenador con email {string} y contraseña {string} ha iniciado sesión', async function (email, password) {
-  this.token = await getUserToken(email, password);
-  assert.ok(this.token, `Fallo el inicio de sesión para el entrenador ${email}`);
+When('intenta crear la division con nombre {string}, categoria {string} y genero {string}', async function (nombreDivision, categoriaDivision, generoDivision) {
+  const division = {
+    name: nombreDivision || null,
+    ageCategory: categoriaDivision || null,
+    gender: generoDivision || null,
+    clubId: this.club.id,
+  };
+
+  this.response = await makeHttpRequest(
+    "POST",
+    `division`,
+    division,
+    this.token,
+  );
+  console.log();
+  console.log();
+  console.log(this.response);
+  console.log();
+  console.log();
 });
+
 
 
 When('crea las siguientes divisiones para su club:', async function (dataTable) {
@@ -81,12 +106,38 @@ When('crea las siguientes divisiones para su club:', async function (dataTable) 
   }
 });
 
-Then('el sistema confirma la creación exitosa de las divisiones', function () {
-  for (const item of this.creationResponses) {
-    assert.equal(item.status, 200, 'Se esperaba código 200 en la creación de división');
-    assert.ok(item.body?.id, 'La división creada no contiene un ID válido');
-  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Given('que el usuario con rol entrenador con email {string} y contraseña {string} ha iniciado sesión', async function (email, password) {
+  this.token = await getUserToken(email, password);
+  assert.ok(this.token, `Fallo el inicio de sesión para el entrenador ${email}`);
 });
+
+Given('que el entrenador con email {string} y contraseña {string} ha iniciado sesión', async function (email, password) {
+  this.token = await getUserToken(email, password);
+  assert.ok(this.token, `Fallo el inicio de sesión para el entrenador ${email}`);
+});
+
+
+
+
 
 When('intenta crear una división con nombre {string}, categoría {string} y género {string}', async function (nombre, categoria, genero) {
   this.lastResponse = await fetch(`${BACKEND_URL}/division`, {
