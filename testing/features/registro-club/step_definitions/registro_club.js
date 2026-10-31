@@ -1,5 +1,4 @@
-import { Given, When, Then } from "@cucumber/cucumber";
-import assert from "node:assert/strict";
+import { Given, When } from "@cucumber/cucumber";
 import { makeHttpRequest } from "../../support/httpRequest.js";
 
 // ============================ Registro de Admin del Club ============================
@@ -33,7 +32,3 @@ When(
   }
 );
 
-Then('el sistema responde con {int} y {string}', function (statusCode, statusText) {
-    assert.equal(this.response.message, statusText);
-    assert.equal(this.response.status, statusCode);
-});
