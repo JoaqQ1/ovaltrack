@@ -4,34 +4,7 @@ import { findDivisionIdByName } from '../../support/division_helper.js';
 import { makeHttpRequest } from '../../support/httpRequest.js';
 import { findDivisionId, getDivisionMatches, requestMatchCreation } from '../../support/match_helper.js';
 
-const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
-
-// Cache para almacenar partidos creados entre pasos
 export const matchCache = new Map();
-
-export async function findMatchByOpponent(opponent, token) {
-  if (matchCache.has(opponent)) {
-    return matchCache.get(opponent);
-  }
-
-  // Buscar a través de la división Primera
-  const divisionId = await findDivisionIdByName('Primera', token);
-  if (divisionId) {
-    const res = await fetch(`${BACKEND_URL}/matches/division?divisionId=${divisionId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (res.ok) {
-      const matches = await res.json();
-      const target = matches.find(m => m.opponent === opponent);
-      if (target) {
-        matchCache.set(opponent, target);
-        return target;
-      }
-    }
-  }
-
-  return null;
-}
 
 // <==================== Helpers ====================>
 
