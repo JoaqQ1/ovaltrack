@@ -4,6 +4,7 @@
       "features/registro-club/**/*.feature",
       "features/admin/**/*.feature",
       "features/registro-coach/**/*.feature",
+      "features/player/**/*.feature",
       "features/invitar-jugador/**/*.feature",
       "features/club/**/*.feature",
       "features/user/**/*.feature",
@@ -15,8 +16,7 @@
       "features/**/*.js"
     ],
     "format": [
-      "summary",
-      "progress"
+      "pretty"
     ],
     "publishQuiet": true
   }
