@@ -32,7 +32,7 @@ yarn-debug.log*
 .DS_Store
 Thumbs.db
 .vim
-.zip
+*.zip
 
 # Carpetas locales
 supp/
