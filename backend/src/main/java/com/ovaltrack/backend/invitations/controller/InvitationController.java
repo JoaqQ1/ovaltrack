@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
-import com.ovaltrack.backend.common.dto.response.BackendResponse;
 import com.ovaltrack.backend.invitations.domain.CreateInvitationRequest;
 import com.ovaltrack.backend.invitations.domain.Invitation;
 import com.ovaltrack.backend.invitations.domain.InvitationResponse;
@@ -31,29 +30,29 @@ public class InvitationController {
     private InvitationService service;
 
     @GetMapping
-    public ResponseEntity<BackendResponse<Collection<Invitation>>> findAll() {
-        return BackendResponse.ok(service.findAll());
+    public ResponseEntity<Collection<Invitation>> findAll() {
+        return ResponseEntity.ok(service.findAll());
     }
     @PreAuthorize ("hasAnyRole('ADMIN_CLUB','COACH_ANALYST')")
     @GetMapping("/id/{id}")
-    public ResponseEntity<BackendResponse<Invitation>> findById(@PathVariable("id") UUID id) {
+    public ResponseEntity<Invitation> findById(@PathVariable("id") UUID id) {
         Invitation invitation = service.findById(id);
         if (invitation == null)
             throw new BusinessException("No se encontro la invitacion con id " + id);
-        return BackendResponse.ok(invitation, "Invitacion encontrada con exito!");
+        return ResponseEntity.ok(invitation);
     }
     @PreAuthorize ("hasAnyRole('ADMIN_CLUB','COACH_ANALYST')")
     @PostMapping("/invite")
-    public ResponseEntity<BackendResponse<Object>> invite(@RequestBody CreateInvitationRequest invitationRequest) {
+    public ResponseEntity<InvitationResponse> invite(@RequestBody CreateInvitationRequest invitationRequest) {
         InvitationResponse invitation = service.save(invitationRequest);
         if (invitation == null)
             throw new BusinessException("No se pudo enviar la peticion");
-        return BackendResponse.ok(invitation, "Se envio correctamente la invitacion al email " + invitation.email());
+        return ResponseEntity.ok(invitation);
     }
 
     @PostMapping("/validate")
-    public ResponseEntity<BackendResponse<InvitationValidationResponse>> validate(
+    public ResponseEntity<InvitationValidationResponse> validate(
             @RequestBody InvitationTokenDTO token) {
-        return BackendResponse.ok(service.validate(token));
+        return ResponseEntity.ok(service.validate(token));
     }
 }
