@@ -41,13 +41,17 @@ public class AuthController {
             + "To register a club and its administrator, use POST /register-club.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Registration request created successfully. Pending approval."),
-            @ApiResponse(responseCode = "400", description = "The request contains invalid or incomplete data, or violates a business rule.")
+            @ApiResponse(responseCode = "409", description = "The request contains invalid or incomplete data, or violates a business rule.")
     })
     @PostMapping("/register")
     public ResponseEntity<BackendResponse<Object>> registrar(@Valid @RequestBody MemberRegistrationDTO request,
             BindingResult bindingResult) {
-        if (bindingResult.hasErrors())
-            return BackendResponse.badRequest("Campos inválidos", null);
+
+        if (bindingResult.hasErrors()) {
+            String message = bindingResult.getFieldError().getDefaultMessage(); 
+            return BackendResponse.conflict(message, null);
+        }
+           
         try {
             authService.register(request);
             return BackendResponse.response(
@@ -56,9 +60,9 @@ public class AuthController {
                     null);
         } catch (BusinessException e) {
             String errorMessage = e.getMessage() != null ? e.getMessage() : "Error en el registro";
-            return BackendResponse.badRequest(errorMessage, null);
+            return BackendResponse.conflict(errorMessage, null);
         } catch (IllegalArgumentException e) {
-            return BackendResponse.badRequest("Datos inválidos", e);
+            return BackendResponse.conflict("Datos inválidos", e);
         }
     }
 
@@ -71,8 +75,10 @@ public class AuthController {
     @PostMapping("/register-club")
     public ResponseEntity<BackendResponse<Object>> registrarClub(@Valid @RequestBody ClubRegistrationDTO request,
             BindingResult bindingResult) {
-        if (bindingResult.hasErrors())
-            return BackendResponse.badRequest("Campos inválidos", null);
+        if (bindingResult.hasErrors()) {
+            String message = bindingResult.getFieldError().getDefaultMessage(); 
+            return BackendResponse.conflict(message, null);
+        }
         try {
             authService.registerClub(request);
             return BackendResponse.response(
@@ -81,9 +87,9 @@ public class AuthController {
                     null);
         } catch (BusinessException e) {
             String errorMessage = e.getMessage() != null ? e.getMessage() : "Error en el registro";
-            return BackendResponse.badRequest(errorMessage, null);
+            return BackendResponse.conflict(errorMessage, null);
         } catch (IllegalArgumentException e) {
-            return BackendResponse.badRequest("Datos inválidos", e);
+            return BackendResponse.conflict("Datos inválidos", e);
         }
     }
 
