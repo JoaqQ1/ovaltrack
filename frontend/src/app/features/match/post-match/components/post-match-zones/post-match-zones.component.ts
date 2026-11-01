@@ -149,6 +149,11 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     this.panel()?.startEdit(assignment);
   }
 
+  /** Estirar un tramo con las manijas cambia el rango del formulario; guardar sigue siendo una decisión del usuario. */
+  onRangeResized(range: { startMinute: number; endMinute: number }): void {
+    this.panel()?.setRange(range);
+  }
+
   /** Tocar una fila dentro de un hueco precarga el rango y la franja; el lateral queda en Centro si no había uno. */
   onGapSelected(gap: TerritoryGapSelection): void {
     this.selectedCell.update(cell => ({ row: cell?.row ?? DEFAULT_LATERAL_ROW, col: gap.col }));

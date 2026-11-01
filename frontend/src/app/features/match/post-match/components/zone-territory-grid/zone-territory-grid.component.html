@@ -55,6 +55,13 @@
                     (click)="selectSegment($event, block.assignment)">
               <span class="block-label">{{ block.label }}</span>
             </button>
+            <!-- Manijas del tramo en edición: estiran el rango del formulario; se confirma con "Guardar cambios" -->
+            @if (block.assignment.id === selectedId()) {
+              <span class="handle" data-testid="territory-handle-start" aria-hidden="true"
+                    [style.left.%]="block.left" (pointerdown)="onHandleDown($event, block.assignment, 'start')" (click)="$event.stopPropagation()"></span>
+              <span class="handle" data-testid="territory-handle-end" aria-hidden="true"
+                    [style.left.%]="block.left + block.width" (pointerdown)="onHandleDown($event, block.assignment, 'end')" (click)="$event.stopPropagation()"></span>
+            }
           }
         </div>
       }

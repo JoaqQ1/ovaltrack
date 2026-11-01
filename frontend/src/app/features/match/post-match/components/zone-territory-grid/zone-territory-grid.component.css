@@ -81,6 +81,20 @@
 .block.is-linked { box-shadow: 0 0 0 2px var(--surface, #fff), 0 0 0 4px var(--warning, #8a5700); z-index: 1; }
 .block.is-dimmed { opacity: .4; }
 
+/* Manijas de estiramiento: barra visible de 8 px y zona de agarre más ancha (44 px con pantalla táctil) */
+.handle {
+  position: absolute; top: 2px; bottom: 2px; z-index: 3; width: 16px; transform: translateX(-50%); cursor: ew-resize; touch-action: pan-y;
+}
+.handle::before {
+  content: ''; position: absolute; top: 4px; bottom: 4px; left: 50%; width: 6px; transform: translateX(-50%);
+  border-radius: var(--radius-pill, 999px); background: var(--surface, #fff);
+  border: 2px solid var(--btn-primary-bg, #204b22); box-sizing: border-box;
+}
+.handle:hover::before { background: #d6eac0; }
+@media (pointer: coarse) {
+  .handle { width: 44px; }
+}
+
 .half-line { position: absolute; top: 0; bottom: 0; border-left: 2px dashed var(--text-muted, #7a8c74); pointer-events: none; z-index: 1; }
 
 /* Hueco bajo el puntero y vista previa del formulario, dentro de la fila (--row = índice de fila) */

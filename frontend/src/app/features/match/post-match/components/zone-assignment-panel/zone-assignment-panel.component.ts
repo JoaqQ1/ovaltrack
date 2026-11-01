@@ -80,6 +80,14 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.syncSharedState();
   }
 
+  /** Cambia el rango sin tocar el tramo en edición (ej. al estirarlo con las manijas de la grilla). */
+  setRange(range: { startMinute: number; endMinute: number }): void {
+    this.serverError = null;
+    this.startMinute = range.startMinute;
+    this.endMinute = range.endMinute;
+    this.syncSharedState();
+  }
+
   toggleSheet(): void {
     this.sheetOpen = !this.sheetOpen;
   }

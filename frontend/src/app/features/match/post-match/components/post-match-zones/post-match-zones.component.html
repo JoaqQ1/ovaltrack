@@ -84,7 +84,7 @@
             [conflictId]="zonesStore.conflictId()"
             [highlightCell]="highlightedCell()" [previewRange]="zonesStore.formRange()"
             (segmentHover)="zonesStore.hoverSegmentId.set($event)"
-            (segmentSelected)="onSegmentSelected($event)" (gapSelected)="onGapSelected($event)" />
+            (segmentSelected)="onSegmentSelected($event)" (rangeResized)="onRangeResized($event)" (gapSelected)="onGapSelected($event)" />
 
           <app-rugby-field
             [cells]="cellCounts()"

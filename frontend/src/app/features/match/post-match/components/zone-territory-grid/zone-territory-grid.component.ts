@@ -1,6 +1,6 @@
 import { Component, ElementRef, HostListener, computed, input, output, signal, viewChild } from '@angular/core';
 import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
-import { DragRange, dragNewRange, minuteAtPosition } from '../../utils/zone-drag';
+import { DragRange, dragNewRange, minuteAtPosition, resizeRange } from '../../utils/zone-drag';
 import { zoneLabel } from '../../utils/zone-grid';
 import { ZoneEvent, ZonePeriodFilter, eventsInRange } from '../../utils/zone-stats';
 import {
@@ -45,7 +45,16 @@ const DRAG_THRESHOLD_PX = 4;
 const TIP_GAP_PX = 8;
 const TIP_EDGE_PX = 110;
 
-/** Arrastre en curso sobre un hueco: `anchor` es el minuto donde se apoyó el puntero. */
+type ResizeSegment = Pick<ZoneAssignmentResponse, 'id' | 'period' | 'startMinute' | 'endMinute' | 'row' | 'col'>;
+
+/** Estiramiento de un tramo desde una manija: `origin` es el rango al apoyar la manija, para volver con Esc. */
+interface ResizeTarget {
+  segment: ResizeSegment;
+  edge: 'start' | 'end';
+  origin: DragRange;
+}
+
+/** Gesto en curso: crear sobre un hueco (`anchor` es el minuto donde se apoyó el puntero) o estirar un tramo (`resize`). */
 interface DragState {
   pointerId: number;
   col: number;
@@ -57,6 +66,7 @@ interface DragState {
   notice: string | null;
   tipX: number;
   tipY: number;
+  resize: ResizeTarget | null;
 }
 
 /**
@@ -90,6 +100,8 @@ export class ZoneTerritoryGridComponent {
   readonly previewRange = input<{ period: ZonePeriod; startMinute: number; endMinute: number } | null>(null);
 
   readonly segmentSelected = output<ZoneAssignmentResponse>();
+  /** Rango del tramo en edición mientras se estira con las manijas: el formulario lo toma, pero no se guarda solo. */
+  readonly rangeResized = output<{ startMinute: number; endMinute: number }>();
   /** Tramo bajo el cursor o el foco (null al salir): la cancha resalta su celda. */
   readonly segmentHover = output<string | null>();
   /** Clic en una fila dentro de un hueco: propone ese hueco y esa franja. */
@@ -112,6 +124,8 @@ export class ZoneTerritoryGridComponent {
   private readonly drag = signal<DragState | null>(null);
   /** Un arrastre ya consumió el gesto: el clic que le sigue no debe precargar el hueco entero. */
   private suppressClick = false;
+  /** Elemento que tiene la captura del puntero durante el gesto (la pista o una manija). */
+  private captureElement: HTMLElement | null = null;
 
   readonly isEmpty = computed(() => this.assignments().length === 0);
 
@@ -123,7 +137,7 @@ export class ZoneTerritoryGridComponent {
     const events = range ? eventsInRange(range, this.allEvents()).length : 0;
     return {
       rowIndex: this.rows().findIndex(row => row.col === drag.col),
-      layout: range ? blockLayout(range) : null,
+      layout: range && !drag.resize ? blockLayout(range) : null,
       text: range
         ? `${range.startMinute}′–${range.endMinute}′ · ${range.period}T · ${events} ${events === 1 ? 'evento' : 'eventos'}`
         : 'Arrastrá dentro del hueco',
@@ -135,12 +149,16 @@ export class ZoneTerritoryGridComponent {
 
   readonly rows = computed<RowView[]>(() => {
     const counts = countByFranja(this.events(), this.periodFilter());
-    const blocks = this.assignments().map<BlockView>(assignment => ({
-      assignment,
-      ...blockLayout(assignment),
-      label: blockLabel(assignment),
-      aria: `Tramo ${assignment.period}T ${assignment.startMinute}′ a ${assignment.endMinute}′, zona ${zoneLabel(assignment)}. Tocá para editar`
-    }));
+    const blocks = this.assignments().map<BlockView>(assignment => {
+      // El bloque que se edita toma el rango del formulario: así las manijas lo mueven en vivo.
+      const shown = { ...assignment, ...this.currentRange(assignment) };
+      return {
+        assignment,
+        ...blockLayout(shown),
+        label: blockLabel(shown),
+        aria: `Tramo ${assignment.period}T ${assignment.startMinute}′ a ${assignment.endMinute}′, zona ${zoneLabel(assignment)}. Tocá para editar`
+      };
+    });
     return territoryRows().map(row => ({
       ...row,
       count: counts.get(row.col) ?? 0,
@@ -166,7 +184,8 @@ export class ZoneTerritoryGridComponent {
   /** Vista previa del formulario: en la fila de la franja elegida o, sin franja (`rowIndex` -1), como barra sobre el eje. */
   readonly preview = computed(() => {
     const range = this.previewRange();
-    if (!range) return null;
+    // Al editar, el propio bloque muestra el rango del formulario: no se dibuja una vista previa aparte.
+    if (!range || this.selectedId()) return null;
     const rowIndex = this.rows().findIndex(row => row.col === this.selectedCol());
     return {
       rowIndex,
@@ -174,6 +193,14 @@ export class ZoneTerritoryGridComponent {
       aria: `Rango en edición: ${range.period}T de ${range.startMinute}′ a ${range.endMinute}′`
     };
   });
+
+  /** Rango con el que se dibuja un tramo: el del formulario si es el que se está editando, si no el guardado. */
+  private currentRange(assignment: ZoneAssignmentResponse): DragRange {
+    const live = this.previewRange();
+    return assignment.id === this.selectedId() && live
+      ? live
+      : { period: assignment.period, startMinute: assignment.startMinute, endMinute: assignment.endMinute };
+  }
 
   isLinked(assignment: ZoneAssignmentResponse): boolean {
     const cell = this.highlightCell();
@@ -221,9 +248,26 @@ export class ZoneTerritoryGridComponent {
     this.drag.set({
       pointerId: event.pointerId, col: target.col, period: target.gap.period,
       anchor: minuteAtPosition(event.clientX - rect.left, rect.width),
-      startX: event.clientX, moved: false, range: null, notice: null, tipX: 0, tipY: 0
+      startX: event.clientX, moved: false, range: null, notice: null, tipX: 0, tipY: 0, resize: null
     });
-    element.setPointerCapture?.(event.pointerId);
+    this.capture(element, event.pointerId);
+  }
+
+  /** Apoyar una manija del tramo en edición: empieza a estirarlo desde ese borde. */
+  onHandleDown(event: PointerEvent, assignment: ZoneAssignmentResponse, edge: 'start' | 'end'): void {
+    if (event.button !== 0 || !event.isPrimary) return;
+    event.stopPropagation();
+    event.preventDefault();
+
+    const range = this.currentRange(assignment);
+    this.pointed.set(null);
+    this.suppressClick = false;
+    this.drag.set({
+      pointerId: event.pointerId, col: assignment.col, period: range.period, anchor: 0, startX: event.clientX,
+      moved: false, range: null, notice: null, tipX: 0, tipY: 0,
+      resize: { segment: { ...assignment, ...range }, edge, origin: range }
+    });
+    this.capture(event.currentTarget as HTMLElement, event.pointerId);
   }
 
   onPointerMove(event: PointerEvent): void {
@@ -234,7 +278,9 @@ export class ZoneTerritoryGridComponent {
 
     const rect = element.getBoundingClientRect();
     const current = minuteAtPosition(event.clientX - rect.left, rect.width);
-    const { range, notice } = dragNewRange(this.assignments(), drag.period, drag.anchor, current);
+    const { range, notice } = drag.resize
+      ? resizeRange(this.assignments(), drag.resize.segment, drag.resize.edge, current)
+      : dragNewRange(this.assignments(), drag.period, drag.anchor, current);
 
     // El tooltip es `fixed` (la grilla recorta lo que sobresale): se ubica sobre el centro del rango, encima de su fila.
     const rowIndex = this.rows().findIndex(row => row.col === drag.col);
@@ -244,6 +290,9 @@ export class ZoneTerritoryGridComponent {
       tipX: Math.min(Math.max(rect.left + (minuteToPercent(centerMinute) / 100) * rect.width, TIP_EDGE_PX), window.innerWidth - TIP_EDGE_PX),
       tipY: rect.top + (rect.height / this.rowCount) * rowIndex - TIP_GAP_PX
     });
+
+    const changed = range && (range.startMinute !== drag.range?.startMinute || range.endMinute !== drag.range?.endMinute);
+    if (drag.resize && range && changed) this.rangeResized.emit({ startMinute: range.startMinute, endMinute: range.endMinute });
   }
 
   /** Soltar precarga el formulario con el rango arrastrado; el guardado lo decide el usuario. */
@@ -252,28 +301,41 @@ export class ZoneTerritoryGridComponent {
     if (!drag || event.pointerId !== drag.pointerId) return;
 
     this.endDrag();
-    if (!drag.moved) return;
+    // Al estirar, el rango ya viajó al formulario en cada movimiento: soltar no hace nada más.
+    if (!drag.moved || drag.resize) return;
     this.suppressClick = true;
     if (drag.range) this.gapSelected.emit({ ...drag.range, col: drag.col });
   }
 
   onPointerCancel(): void {
-    this.endDrag();
+    this.cancelDrag();
   }
 
-  /** Cancela el arrastre en curso sin precargar nada. Devuelve true si había uno. */
+  /**
+   * Cancela el gesto en curso: al crear no precarga nada; al estirar el tramo vuelve al rango que tenía al apoyar la
+   * manija. Devuelve true si había un gesto.
+   */
   @HostListener('document:keydown.escape')
   cancelDrag(): boolean {
-    if (!this.drag()) return false;
+    const drag = this.drag();
+    if (!drag) return false;
+
     this.endDrag();
     // Si se sigue sosteniendo el botón, el clic al soltar no debe precargar el hueco.
     this.suppressClick = true;
+    if (drag.resize) this.rangeResized.emit({ startMinute: drag.resize.origin.startMinute, endMinute: drag.resize.origin.endMinute });
     return true;
+  }
+
+  private capture(element: HTMLElement, pointerId: number): void {
+    this.captureElement = element;
+    element.setPointerCapture?.(pointerId);
   }
 
   private endDrag(): void {
     const drag = this.drag();
-    if (drag) this.tracks()?.nativeElement.releasePointerCapture?.(drag.pointerId);
+    if (drag) this.captureElement?.releasePointerCapture?.(drag.pointerId);
+    this.captureElement = null;
     this.drag.set(null);
   }
 
