@@ -60,6 +60,8 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   /** En móvil el formulario es una hoja inferior: compacta (zona, rango y Guardar) o expandida con todos los campos. */
   sheetOpen = false;
   serverError: string | null = null;
+  /** Se intentó guardar sin elegir franja (atajo de teclado): el campo Franja lo marca como error. */
+  pickAttempted = false;
 
   ngOnInit(): void {
     this.applySuggestion();
@@ -216,9 +218,24 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.resetForm();
   }
 
+  /** Hay un tramo en edición o una franja elegida (o un hueco precargado): Esc y Cancelar tienen algo que deshacer. */
+  hasSelection(): boolean {
+    return this.editingId !== null || this.selectedCell() !== null;
+  }
+
+  /**
+   * Ctrl/Cmd + Enter: guarda con lo que está escrito en Desde/Hasta (no solo con el último valor confirmado). Si el
+   * formulario no es válido no guarda: el error ya se muestra inline junto al rango o en el campo Franja.
+   */
+  saveFromShortcut(target: EventTarget | null): void {
+    this.commitTypedMinute(target);
+    this.save();
+  }
+
   save(): void {
     const cell = this.selectedCell();
     const range = this.usableRange();
+    if (!cell) this.pickAttempted = true;
     if (!cell || !range || this.blockReason || this.store.isSaving()) return;
 
     const request: ZoneAssignmentRequest = { row: cell.row, col: cell.col, ...range };
@@ -290,6 +307,19 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     });
   }
 
+  /** Si el foco está en Desde o Hasta y lo escrito aún no llegó al modelo, lo toma antes de validar. */
+  private commitTypedMinute(target: EventTarget | null): void {
+    if (!(target instanceof HTMLInputElement) || (target.id !== 'zone-start' && target.id !== 'zone-end')) return;
+    if (target.value.trim() === '') return;
+
+    const typed = Number(target.value);
+    if (!Number.isFinite(typed)) return;
+    if (target.id === 'zone-start') this.startMinute = typed;
+    else this.endMinute = typed;
+    this.serverError = null;
+    this.syncSharedState();
+  }
+
   /** El rango cargado si es utilizable: enteros, dentro de 0–80, sin cruzar el entretiempo; con su tiempo deducido. */
   private usableRange(): UsableRange | null {
     const { startMinute, endMinute } = this;
@@ -321,6 +351,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   /** Tras guardar, eliminar o cancelar: la franja queda sin elegir y el rango continúa donde terminó el anterior. */
   private resetForm(afterMinute?: number): void {
     this.sheetOpen = false;
+    this.pickAttempted = false;
     this.editingId = null;
     this.serverError = null;
     this.selectedCell.set(null);

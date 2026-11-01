@@ -52,6 +52,17 @@
 .tracks.is-pointing { cursor: pointer; }
 /* Arrastrar para crear: el gesto horizontal es del rango; el scroll vertical de la página sigue siendo del navegador */
 .tracks { touch-action: pan-y; }
+/* Foco del teclado siempre visible: contorno de toda la pista y cursor sobre la fila */
+.tracks:focus { outline: none; }
+.tracks:focus-visible { outline: 3px solid var(--navy, #16324f); outline-offset: 2px; }
+.row-label.is-cursor { box-shadow: inset 4px 0 0 var(--navy, #16324f); background: var(--navy-tint, rgba(22, 50, 79, .08)); }
+.cursor-stop, .cursor-minute {
+  position: absolute; pointer-events: none; box-sizing: border-box; z-index: 5;
+  top: calc(var(--row) * var(--row-h)); height: var(--row-h);
+}
+.cursor-stop { border: 3px solid var(--navy, #16324f); border-radius: var(--radius-sm, 6px); box-shadow: 0 0 0 1px var(--surface, #fff); }
+.cursor-stop.on-block { border-style: double; border-width: 4px; }
+.cursor-minute { min-width: 4px; background: var(--navy, #16324f); opacity: .35; }
 .tracks.is-dragging { cursor: ew-resize; user-select: none; }
 
 .row-track { position: relative; height: var(--row-h); border-bottom: 1px solid var(--border, rgba(27, 33, 22, .1)); }

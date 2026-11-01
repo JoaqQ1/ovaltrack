@@ -19,7 +19,8 @@
   <div class="body" [style.--rows]="rowCount">
     <div class="labels">
       @for (row of rows(); track row.col) {
-        <div class="row-label" [class.is-selected]="selectedCol() === row.col" data-testid="territory-row-label">
+        <div class="row-label" [class.is-selected]="selectedCol() === row.col" [class.is-cursor]="cursorView()?.col === row.col"
+             data-testid="territory-row-label">
           <span class="row-text">
             <strong class="row-name">{{ row.name }}</strong>
             <span class="row-range">{{ row.range }}</span>
@@ -29,7 +30,10 @@
       }
     </div>
 
-    <div class="tracks" #tracks data-testid="territory-tracks"
+    <!-- Una sola parada de Tab: las flechas recorren franjas, tramos y minutos; los bloques se alcanzan por ahí -->
+    <div class="tracks" #tracks data-testid="territory-tracks" tabindex="0" role="application"
+         aria-roledescription="grilla de territorio" aria-label="Grilla de territorio. Flechas para moverte, Enter para abrir o completar, Esc para cancelar"
+         (keydown)="onTracksKeydown($event)" (focus)="onTracksFocus($event)" (blur)="onTracksBlur()"
          [class.is-pointing]="hoverGap() !== null" [class.is-dragging]="dragView() !== null"
          (click)="onTracksClick($event)" (mousemove)="onTracksMove($event)" (mouseleave)="onTracksLeave()"
          (pointerdown)="onPointerDown($event)" (pointermove)="onPointerMove($event)"
@@ -43,7 +47,7 @@
       @for (row of rows(); track row.col; let i = $index) {
         <div class="row-track" [class.is-selected]="selectedCol() === row.col" data-testid="territory-row">
           @for (block of row.blocks; track block.assignment.id) {
-            <button type="button" class="block" data-testid="territory-block"
+            <button type="button" class="block" data-testid="territory-block" tabindex="-1"
                     [class.is-selected]="block.assignment.id === selectedId()"
                     [class.is-conflict]="block.assignment.id === conflictId()"
                     [class.is-linked]="isLinked(block.assignment)"
@@ -81,6 +85,16 @@
         }
       }
 
+      @if (cursorView(); as cursor) {
+        <!-- Cursor del teclado: la parada (tramo o hueco) y el minuto, sobre la fila elegida -->
+        @if (cursor.stop; as stop) {
+          <span class="cursor-stop" data-testid="territory-cursor-stop" aria-hidden="true"
+                [class.on-block]="cursor.onBlock" [style.--row]="cursor.rowIndex" [style.left.%]="stop.left" [style.width.%]="stop.width"></span>
+        }
+        <span class="cursor-minute" data-testid="territory-cursor-minute" aria-hidden="true"
+              [style.--row]="cursor.rowIndex" [style.left.%]="cursor.minute.left" [style.width.%]="cursor.minute.width"></span>
+      }
+
       @if (dragView(); as drag) {
         @if (drag.layout; as layout) {
           <span class="drag-range" data-testid="territory-drag-range" aria-hidden="true"
@@ -104,4 +118,6 @@
       }
     </div>
   </div>
+
+  <span class="visually-hidden" role="status" aria-live="polite" data-testid="territory-cursor-status">{{ cursorStatus() }}</span>
 </div>

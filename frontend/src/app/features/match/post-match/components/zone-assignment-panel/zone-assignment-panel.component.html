@@ -24,7 +24,7 @@
     <!-- Franja: se elige tocando la grilla o la cancha -->
     <div class="field">
       <span class="field-label">Franja</span>
-      <div class="selected-cell" id="zone-franja" data-testid="selected-cell" [class.is-empty]="!selectedCell()">
+      <div class="selected-cell" id="zone-franja" data-testid="selected-cell" [class.is-empty]="!selectedCell()" [class.is-error]="pickAttempted && !selectedCell()">
         <ng-container *ngIf="franja as f; else pickHint">
           <span class="zone-badge">{{ f.label }}</span>
           <span class="franja-text"><strong>{{ f.name }}</strong> <small>{{ f.range }}</small></span>

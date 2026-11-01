@@ -54,6 +54,8 @@
   border: 1.5px dashed var(--border-sport-subtle, rgba(32, 75, 34, 0.30));
   color: var(--text-secondary, #3b4e33);
 }
+/* Se intentó guardar sin franja (Ctrl/Cmd + Enter): el campo lo marca, sin aviso aparte */
+.selected-cell.is-error { border-color: var(--error, #b42318); color: var(--error, #b42318); background: var(--error-tint, rgba(240, 68, 56, .14)); }
 
 /* Lateral: tres opciones */
 .segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

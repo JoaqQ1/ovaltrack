@@ -184,6 +184,119 @@ describe('PostMatchZonesComponent', () => {
       http.expectNone(r => r.method === 'POST');
     });
 
+    it('Ctrl/Cmd + Enter toma el minuto escrito en Hasta aunque no se haya confirmado', () => {
+      createLoaded([], []);
+      press('d');
+      const end = query<HTMLInputElement>('#zone-end') as HTMLInputElement;
+      end.value = '9';
+      end.dispatchEvent(new Event('input'));
+
+      press('Enter', { ctrlKey: true }, end);
+
+      const post = http.expectOne(zonesUrl);
+      expect(post.request.body).toEqual({ row: 2, col: 3, period: 1, startMinute: 0, endMinute: 9 });
+      post.flush({ ...zone, startMinute: 0, endMinute: 9 });
+      http.expectOne(zonesUrl).flush({ assignments: [], summary: { cells: [], unzonedEventCount: 0 } });
+      http.expectOne(eventsUrl).flush([]);
+    });
+
+    it('Ctrl/Cmd + Enter con el formulario inválido no guarda y deja el error inline', () => {
+      createLoaded([], []);
+      press('d');
+      const end = query<HTMLInputElement>('#zone-end') as HTMLInputElement;
+      end.value = '0';
+      end.dispatchEvent(new Event('input'));
+
+      press('Enter', { ctrlKey: true }, end);
+
+      http.expectNone(r => r.method === 'POST');
+      expect(query('[data-testid="range-error"]')).not.toBeNull();
+    });
+
+    it('Ctrl/Cmd + Enter sin franja marca el campo Franja como error', () => {
+      createLoaded([], []);
+
+      press('Enter', { ctrlKey: true });
+
+      expect(query('[data-testid="selected-cell"]')?.classList).toContain('is-error');
+    });
+
+    describe('Esc deshace una sola cosa por vez', () => {
+      it('con una zona elegida vuelve a "Nuevo tramo" vacío, sin confirmar', () => {
+        createLoaded([], []);
+        press('d');
+        expect(component.selectedCell()).not.toBeNull();
+
+        press('Escape');
+
+        expect(component.selectedCell()).toBeNull();
+      });
+
+      it('con el foco en Desde primero sale del campo y no borra lo escrito ni la selección', () => {
+        createLoaded([], []);
+        press('d');
+        const start = query<HTMLInputElement>('#zone-start') as HTMLInputElement;
+        start.value = '7';
+        start.dispatchEvent(new Event('input'));
+
+        press('Escape', {}, start);
+
+        expect(start.value).toBe('7');
+        expect(component.selectedCell()).toEqual({ row: 2, col: 3 });
+
+        press('Escape');
+        expect(component.selectedCell()).toBeNull();
+      });
+
+      it('sin nada que deshacer no hace nada', () => {
+        createLoaded([], []);
+
+        press('Escape');
+
+        expect(component.selectedCell()).toBeNull();
+      });
+    });
+
+    describe('teclado en la grilla', () => {
+      const tracks = (): HTMLElement => query('[data-testid="territory-tracks"]') as HTMLElement;
+
+      it('la grilla es una sola parada de Tab y sus bloques quedan fuera del orden de Tab', () => {
+        createLoaded();
+
+        expect(tracks().getAttribute('tabindex')).toBe('0');
+        queryAll('[data-testid="territory-block"]').forEach(block => expect(block.getAttribute('tabindex')).toBe('-1'));
+      });
+
+      it('F3-H1. Enter sobre un hueco precarga franja y rango desde el minuto del cursor', () => {
+        createLoaded([], []);
+        tracks().dispatchEvent(new FocusEvent('focus'));
+
+        press('Enter', {}, tracks());
+
+        expect(component.selectedCell()).toEqual({ row: 2, col: 6 });
+      });
+
+      it('↓ baja una franja antes de abrir el hueco', () => {
+        createLoaded([], []);
+        tracks().dispatchEvent(new FocusEvent('focus'));
+
+        press('ArrowDown', {}, tracks());
+        press('Enter', {}, tracks());
+
+        expect(component.selectedCell()).toEqual({ row: 2, col: 5 });
+      });
+
+      it('F3-S4. las flechas dentro de un campo no mueven la grilla', () => {
+        createLoaded([], []);
+        tracks().dispatchEvent(new FocusEvent('focus'));
+
+        press('ArrowDown', {}, query('#zone-start') as HTMLElement);
+        press('Enter', {}, tracks());
+
+        expect(component.selectedCell()).toEqual({ row: 2, col: 6 });
+      });
+    });
+
     it('el ícono "?" despliega la ayuda con las teclas de cada fila', () => {
       createLoaded();
       expect(query('[data-testid="shortcuts-help"]')).toBeNull();

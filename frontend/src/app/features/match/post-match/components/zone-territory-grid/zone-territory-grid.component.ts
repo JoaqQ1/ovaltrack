@@ -1,5 +1,7 @@
-import { Component, ElementRef, HostListener, computed, input, output, signal, viewChild } from '@angular/core';
-import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
+import { Component, ElementRef, computed, input, output, signal, viewChild } from '@angular/core';
+import { ZONE_COLUMN_NAMES } from '../../utils/zone-grid';
+import { NavStop, rowStops, stepMinute, stepRow, stopAt } from '../../utils/zone-nav';
+import { ZONE_GRID_COLS, ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 import { DragRange, dragNewRange, minuteAtPosition, resizeRange } from '../../utils/zone-drag';
 import { zoneLabel } from '../../utils/zone-grid';
 import { ZoneEvent, ZonePeriodFilter, eventsInRange } from '../../utils/zone-stats';
@@ -52,6 +54,12 @@ interface ResizeTarget {
   segment: ResizeSegment;
   edge: 'start' | 'end';
   origin: DragRange;
+}
+
+/** Posición del cursor del teclado: una franja (fila) y un minuto de partido. */
+interface GridCursor {
+  col: number;
+  minute: number;
 }
 
 /** Gesto en curso: crear sobre un hueco (`anchor` es el minuto donde se apoyó el puntero) o estirar un tramo (`resize`). */
@@ -124,10 +132,46 @@ export class ZoneTerritoryGridComponent {
   private readonly drag = signal<DragState | null>(null);
   /** Un arrastre ya consumió el gesto: el clic que le sigue no debe precargar el hueco entero. */
   private suppressClick = false;
+  /** Cursor del teclado (null hasta que se usa) y si se dibuja: solo con el foco puesto por el teclado. */
+  private readonly cursor = signal<GridCursor | null>(null);
+  private readonly cursorVisible = signal(false);
   /** Elemento que tiene la captura del puntero durante el gesto (la pista o una manija). */
   private captureElement: HTMLElement | null = null;
 
   readonly isEmpty = computed(() => this.assignments().length === 0);
+
+  /** Dónde se dibuja el cursor: la parada que lo contiene (tramo o hueco) y, dentro de un hueco, el minuto. */
+  readonly cursorView = computed(() => {
+    const cursor = this.cursor();
+    if (!cursor || !this.cursorVisible()) return null;
+
+    const stop = stopAt(rowStops(this.assignments(), cursor.col), cursor.minute);
+    // El tramo en edición se dibuja con el rango del formulario, igual que su bloque.
+    const shown = stop?.kind === 'block' ? this.currentRange(stop.assignment) : stop && { startMinute: stop.start, endMinute: stop.end };
+    return {
+      col: cursor.col,
+      rowIndex: this.rows().findIndex(row => row.col === cursor.col),
+      stop: shown ? blockLayout(shown) : null,
+      onBlock: stop?.kind === 'block',
+      minute: blockLayout({ startMinute: cursor.minute, endMinute: cursor.minute + 1 })
+    };
+  });
+
+  /** Lo que lee un lector de pantalla al mover el cursor. */
+  readonly cursorStatus = computed(() => {
+    const cursor = this.cursor();
+    if (!cursor || !this.cursorVisible()) return '';
+
+    const franja = ZONE_COLUMN_NAMES[cursor.col - 1];
+    const stop = stopAt(rowStops(this.assignments(), cursor.col), cursor.minute);
+    if (stop?.kind === 'block') {
+      return `${franja}: tramo ${zoneLabel(stop.assignment)}, ${stop.assignment.period}T de ${stop.start}′ a ${stop.end}′. Enter para editar`;
+    }
+    if (stop?.kind === 'gap') {
+      return `${franja}, minuto ${cursor.minute}: hueco sin zona de ${stop.start}′ a ${stop.end}′. Enter para completar desde acá`;
+    }
+    return `${franja}, minuto ${cursor.minute}: ocupado por un tramo de otra franja`;
+  });
 
   /** Lo que se dibuja mientras se arrastra: el rango en su fila, el tooltip en vivo y el tope si se frenó. */
   readonly dragView = computed(() => {
@@ -209,6 +253,8 @@ export class ZoneTerritoryGridComponent {
 
   selectSegment(event: Event, assignment: ZoneAssignmentResponse): void {
     event.stopPropagation();
+    this.cursor.set({ col: assignment.col, minute: assignment.startMinute });
+    this.tracks()?.nativeElement.focus({ preventScroll: true });
     this.segmentSelected.emit(assignment);
   }
 
@@ -219,6 +265,7 @@ export class ZoneTerritoryGridComponent {
     }
     const target = this.targetAt(event);
     if (target) {
+      this.cursor.set({ col: target.col, minute: target.gap.start });
       this.gapSelected.emit({ period: target.gap.period, startMinute: target.gap.start, endMinute: target.gap.end, col: target.col });
     }
   }
@@ -229,6 +276,47 @@ export class ZoneTerritoryGridComponent {
     const current = this.pointed();
     if (target?.col === current?.col && target?.gap.start === current?.gap.start && target?.gap.period === current?.gap.period) return;
     this.pointed.set(target);
+  }
+
+  /** Entra el foco: solo con el teclado se dibuja el cursor; con el mouse la grilla se usa como siempre. */
+  onTracksFocus(event: FocusEvent): void {
+    if (event.target !== event.currentTarget) return;
+    this.cursorVisible.set((event.target as HTMLElement).matches(':focus-visible'));
+    if (this.cursor() === null) this.cursor.set(this.initialCursor());
+  }
+
+  onTracksBlur(): void {
+    this.cursorVisible.set(false);
+  }
+
+  /**
+   * Teclado: ↑/↓ cambian de franja, ←/→ de tramo o de minuto y Enter abre el tramo o precarga el hueco desde el minuto
+   * del cursor. Ctrl/Cmd + Enter y Esc los resuelve la página. Con el foco en un campo de la página no llega nada acá.
+   */
+  onTracksKeydown(event: KeyboardEvent): void {
+    if (event.target !== event.currentTarget || event.ctrlKey || event.metaKey || event.altKey) return;
+
+    const cursor = this.cursor() ?? this.initialCursor();
+    switch (event.key) {
+      case 'ArrowUp': this.cursor.set({ ...cursor, col: stepRow(cursor.col, 1) }); break;
+      case 'ArrowDown': this.cursor.set({ ...cursor, col: stepRow(cursor.col, -1) }); break;
+      case 'ArrowRight': this.cursor.set({ ...cursor, minute: stepMinute(rowStops(this.assignments(), cursor.col), cursor.minute, 1) }); break;
+      case 'ArrowLeft': this.cursor.set({ ...cursor, minute: stepMinute(rowStops(this.assignments(), cursor.col), cursor.minute, -1) }); break;
+      case 'Enter': this.activate(cursor); break;
+      default: return;
+    }
+    event.preventDefault();
+    this.cursorVisible.set(true);
+  }
+
+  /** Devuelve el foco a la grilla (ej. al salir de un campo con Esc): sobre el tramo en edición, si lo hay. */
+  focusCursor(): void {
+    const selected = this.assignments().find(assignment => assignment.id === this.selectedId());
+    if (selected) this.cursor.set({ col: selected.col, minute: selected.startMinute });
+    else if (this.cursor() === null) this.cursor.set(this.initialCursor());
+
+    this.cursorVisible.set(true);
+    this.tracks()?.nativeElement.focus({ preventScroll: true });
   }
 
   onTracksLeave(): void {
@@ -313,9 +401,8 @@ export class ZoneTerritoryGridComponent {
 
   /**
    * Cancela el gesto en curso: al crear no precarga nada; al estirar el tramo vuelve al rango que tenía al apoyar la
-   * manija. Devuelve true si había un gesto.
+   * manija. Devuelve true si había un gesto. Lo llama la página con Esc, que decide el orden entre lo que se deshace.
    */
-  @HostListener('document:keydown.escape')
   cancelDrag(): boolean {
     const drag = this.drag();
     if (!drag) return false;
@@ -325,6 +412,21 @@ export class ZoneTerritoryGridComponent {
     this.suppressClick = true;
     if (drag.resize) this.rangeResized.emit({ startMinute: drag.resize.origin.startMinute, endMinute: drag.resize.origin.endMinute });
     return true;
+  }
+
+  /** Primera parada de la franja elegida o, sin franja, de la fila de arriba (el in-goal rival). */
+  private initialCursor(): GridCursor {
+    const col = this.selectedCol() ?? ZONE_GRID_COLS;
+    return { col, minute: rowStops(this.assignments(), col)[0]?.start ?? 0 };
+  }
+
+  /** Enter: abre el tramo del cursor o precarga el hueco desde el minuto del cursor hasta su fin. */
+  private activate(cursor: GridCursor): void {
+    const stop: NavStop | null = stopAt(rowStops(this.assignments(), cursor.col), cursor.minute);
+    if (stop?.kind === 'block') this.segmentSelected.emit(stop.assignment);
+    else if (stop?.kind === 'gap') {
+      this.gapSelected.emit({ period: stop.period, startMinute: cursor.minute, endMinute: stop.end, col: cursor.col });
+    }
   }
 
   private capture(element: HTMLElement, pointerId: number): void {

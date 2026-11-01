@@ -39,6 +39,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   readonly zonesStore = inject(MatchZonesStore);
 
   private readonly panel = viewChild(ZoneAssignmentPanelComponent);
+  private readonly grid = viewChild(ZoneTerritoryGridComponent);
 
   readonly matchId = signal<string>('');
   readonly isLoading = signal<boolean>(true);
@@ -108,8 +109,9 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Atajos de la página: las letras eligen la celda de la grilla (solo fuera de un campo de escritura) y
-   * Ctrl/Cmd + Enter guarda el tramo, también escribiendo un minuto.
+   * Atajos de la página: Ctrl/Cmd + Enter guarda el tramo (también escribiendo un minuto: toma lo que está escrito),
+   * Esc deshace una cosa por vez y las letras eligen la celda de la cancha (solo fuera de un campo de escritura).
+   * Las flechas y Enter los resuelve la grilla cuando tiene el foco.
    */
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
@@ -117,7 +119,12 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
 
     if (isSaveShortcut(event)) {
       event.preventDefault();
-      this.panel()?.save();
+      this.panel()?.saveFromShortcut(event.target);
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      this.onEscape(event);
       return;
     }
 
@@ -125,6 +132,31 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
 
     const cell = shortcutCell(event.key);
     if (cell) this.onCellSelected(cell);
+  }
+
+  /**
+   * Esc deshace una sola cosa por vez, en este orden: (a) arrastre o estiramiento en curso, que vuelve a su rango;
+   * (b) foco en Desde/Hasta, que sale del campo hacia el tramo o la fila sin borrar lo escrito; (c) tramo seleccionado
+   * o formulario precargado, que vuelve a "Nuevo tramo" vacío (igual que Cancelar). Sin confirmación.
+   */
+  private onEscape(event: KeyboardEvent): void {
+    if (this.grid()?.cancelDrag()) {
+      event.preventDefault();
+      return;
+    }
+
+    if (isTypingTarget(event.target)) {
+      (event.target as HTMLElement).blur();
+      this.grid()?.focusCursor();
+      event.preventDefault();
+      return;
+    }
+
+    const panel = this.panel();
+    if (panel?.hasSelection()) {
+      panel.cancel();
+      event.preventDefault();
+    }
   }
 
   goBack(): void {
