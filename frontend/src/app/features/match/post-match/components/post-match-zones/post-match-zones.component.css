@@ -131,7 +131,7 @@ app-zone-territory-grid { margin-bottom: 16px; }
 
 /* La hoja inferior del formulario (fixed) no debe tapar el final de la página */
 @media (max-width: 576px) {
-  .zones-page { padding-bottom: 180px; }
+  .zones-page { padding-bottom: 300px; }
 }
 
 @media (max-width: 768px) {

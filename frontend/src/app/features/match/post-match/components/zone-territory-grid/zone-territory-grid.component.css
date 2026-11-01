@@ -47,9 +47,10 @@
 .tracks {
   position: relative; display: flex; flex-direction: column; min-width: 0;
   /* guías cada 10 minutos (12,5 % del eje de 80') */
-  background: repeating-linear-gradient(90deg, var(--border, rgba(27, 33, 22, .1)) 0 1px, transparent 1px 12.5%);
+  background: repeating-linear-gradient(90deg, var(--border, rgba(27, 33, 22, .1)) 0 1px, transparent 1px var(--guide-step, 12.5%));
 }
 .tracks.is-pointing { cursor: pointer; }
+.tracks.is-picking { cursor: zoom-in; }
 /* Arrastrar para crear: el gesto horizontal es del rango; el scroll vertical de la página sigue siendo del navegador */
 .tracks { touch-action: pan-y; }
 /* Foco del teclado siempre visible: contorno de toda la pista y cursor sobre la fila */
@@ -134,6 +135,13 @@
 .drag-notice {
   padding: 4px 10px; border-radius: var(--radius-pill, 999px); background: var(--error, #b42318); color: #fff;
   font: 700 12px var(--font-body, sans-serif);
+}
+
+/* Con "Todo" en pantalla angosta: la grilla pide elegir el tiempo antes de tocar un hueco o un bloque */
+.period-hint {
+  position: absolute; right: 8px; bottom: 6px; z-index: 4; margin: 0; padding: 3px 10px; max-width: calc(100% - 16px);
+  border-radius: var(--radius-pill, 999px); background: var(--surface, #fff); border: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, .2));
+  font-size: 11px; font-weight: 700; color: var(--text-secondary, #3b4e33); pointer-events: none;
 }
 
 /* Velo sobre la mitad que el filtro de tiempo deja afuera */

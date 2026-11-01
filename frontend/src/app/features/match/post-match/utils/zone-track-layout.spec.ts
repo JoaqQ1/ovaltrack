@@ -1,7 +1,7 @@
 import { ZoneAssignmentResponse } from '../../types/zone.types';
 import { ZoneEvent } from './zone-stats';
 import {
-  allGaps, blockLabel, blockLayout, countByFranja, gapAtMinute, gapsWithEventCount, isOutsidePeriodFilter, isShortBlock,
+  FULL_TRACK, allGaps, blockLabel, blockLayout, isInWindow, trackWindow, countByFranja, gapAtMinute, gapsWithEventCount, isOutsidePeriodFilter, isShortBlock,
   minuteAtOffset, minuteToPercent, suggestNextRange, territoryRows
 } from './zone-track-layout';
 
@@ -27,6 +27,32 @@ describe('zone-track-layout', () => {
     });
   });
 
+  describe('tiempo a la vista', () => {
+    it('en pantalla angosta con 1T o 2T la grilla muestra ese tiempo; con "Todo" o en pantalla ancha, los 80 minutos', () => {
+      expect(trackWindow(1, true)).toEqual({ start: 0, end: 40 });
+      expect(trackWindow(2, true)).toEqual({ start: 40, end: 80 });
+      expect(trackWindow('ALL', true)).toEqual(FULL_TRACK);
+      expect(trackWindow(2, false)).toEqual(FULL_TRACK);
+    });
+
+    it('las posiciones se miden contra el tramo mostrado: en el 2T el minuto 50 queda al 25 %', () => {
+      expect(minuteToPercent(50, { start: 40, end: 80 })).toBe(25);
+      expect(blockLayout({ startMinute: 50, endMinute: 60 }, { start: 40, end: 80 })).toEqual({ left: 25, width: 25 });
+    });
+
+    it('un rango que sobresale del tramo mostrado se recorta y uno de afuera no se ve', () => {
+      const first = { start: 0, end: 40 };
+      expect(blockLayout({ startMinute: 30, endMinute: 50 }, first)).toEqual({ left: 75, width: 25 });
+      expect(isInWindow({ startMinute: 40, endMinute: 50 }, first)).toBeFalse();
+      expect(isInWindow({ startMinute: 39, endMinute: 41 }, first)).toBeTrue();
+    });
+
+    it('el minuto bajo el puntero se mide dentro del tramo mostrado', () => {
+      expect(minuteAtOffset(0, 400, { start: 40, end: 80 })).toBe(40);
+      expect(minuteAtOffset(399, 400, { start: 40, end: 80 })).toBe(79);
+    });
+  });
+
   describe('bloques cortos', () => {
     it('de 1 o 2 minutos son cortos; de 3 o más, no', () => {
       expect(isShortBlock({ startMinute: 10, endMinute: 11 })).toBeTrue();
@@ -38,6 +64,17 @@ describe('zone-track-layout', () => {
       expect(blockLabel(zone('a', 1, 10, 25, 3, 5))).toBe('D5');
       expect(blockLabel(zone('b', 1, 10, 11, 3, 5))).toBe('D');
       expect(blockLabel(zone('c', 1, 10, 12, 1, 2))).toBe('I');
+    });
+  });
+
+  describe('etiqueta en pantalla angosta', () => {
+    it('los bloques de menos de 4 minutos no llevan etiqueta; los de 4 o más, la celda', () => {
+      expect(blockLabel(zone('a', 1, 10, 13), true)).toBe('');
+      expect(blockLabel(zone('b', 1, 10, 14), true)).toBe('C3');
+    });
+
+    it('en pantalla ancha no cambia: el corto muestra la letra del lateral', () => {
+      expect(blockLabel(zone('a', 1, 10, 12))).toBe('C');
     });
   });
 

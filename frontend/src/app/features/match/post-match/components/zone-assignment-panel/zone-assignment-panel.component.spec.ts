@@ -143,7 +143,7 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect(saveButton().getAttribute('aria-describedby')).toBeNull();
       expect(query('[data-testid="selected-cell"]')?.textContent).toContain('C3');
       expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Campo propio');
-      expect(query('[data-testid="sheet-zone"]')?.textContent).toContain('Campo propio · Centro');
+      expect(query('[data-testid="sheet-zone"]')?.textContent).toContain('Campo propio');
     });
 
     describe('lateral', () => {
@@ -180,7 +180,7 @@ describe('ZoneAssignmentPanelComponent', () => {
         component.endMinute = 5;
         fixture.detectChanges();
 
-        expect(summary()).toContain('Campo rival · Centro');
+        expect(summary()).toContain('Campo rival');
         expect(query('[data-testid="sheet-range"]')?.textContent).toBe('0′–5′ · 1T · 2 eventos');
       });
 
@@ -194,19 +194,65 @@ describe('ZoneAssignmentPanelComponent', () => {
         expect(query('[data-testid="sheet-range"]')).toBeNull();
       });
 
-      it('"Rango" expande la hoja y "Cerrar" la vuelve a compactar', () => {
+      it('"Más opciones" expande la hoja y "Menos opciones" la vuelve a compactar', () => {
         render();
         expect(sheet().classList).not.toContain('is-open');
+        expect(query('[data-testid="sheet-toggle"]')?.textContent?.trim()).toBe('Más opciones');
 
         query<HTMLButtonElement>('[data-testid="sheet-toggle"]')?.click();
         fixture.detectChanges();
         expect(sheet().classList).toContain('is-open');
-        expect(query('[data-testid="sheet-toggle"]')?.textContent?.trim()).toBe('Cerrar');
+        expect(query('[data-testid="sheet-toggle"]')?.textContent?.trim()).toBe('Menos opciones');
         expect(query('[data-testid="sheet-toggle"]')?.getAttribute('aria-expanded')).toBe('true');
 
         query<HTMLButtonElement>('[data-testid="sheet-toggle"]')?.click();
         fixture.detectChanges();
         expect(sheet().classList).not.toContain('is-open');
+      });
+
+      it('cerrar la hoja equivale a Esc: deselecciona y vuelve a "Nuevo tramo" vacío', () => {
+        render();
+        selectCell(2, 3);
+        component.toggleSheet();
+        fixture.detectChanges();
+
+        query<HTMLButtonElement>('[data-testid="sheet-close"]')?.click();
+        fixture.detectChanges();
+
+        expect(component.selectedCell()).toBeNull();
+        expect(sheet().classList).not.toContain('is-open');
+        expect(query('[data-testid="panel-title"]')?.textContent?.trim()).toBe('Nuevo tramo');
+      });
+
+      it('sin nada elegido, cerrar solo compacta la hoja expandida', () => {
+        render();
+        component.toggleSheet();
+        fixture.detectChanges();
+
+        query<HTMLButtonElement>('[data-testid="sheet-close"]')?.click();
+        fixture.detectChanges();
+
+        expect(sheet().classList).not.toContain('is-open');
+      });
+
+      it('el resumen compacto muestra el problema del rango, porque Desde/Hasta están ocultos', () => {
+        render([{ ...existingZone, startMinute: 0, endMinute: 10 }]);
+        selectCell(2, 3);
+        component.startMinute = 5;
+        component.endMinute = 8;
+        component.onRangeChange();
+        fixture.detectChanges();
+
+        expect(query('[data-testid="sheet-error"]')?.textContent).toContain('Choca con el tramo');
+      });
+
+      it('la hoja suma el título con la celda elegida y el lateral con nombres cortos', () => {
+        render();
+        selectCell(2, 3);
+
+        expect(query('[data-testid="sheet-zone-badge"]')?.textContent?.trim()).toBe('C3');
+        expect(queryAll('[data-testid="lateral-option"]').map(b => b.querySelector('.lat-short')?.textContent?.trim()))
+          .toEqual(['Izq.', 'Centro', 'Der.']);
       });
 
       it('al guardar, la hoja vuelve a quedar compacta', () => {

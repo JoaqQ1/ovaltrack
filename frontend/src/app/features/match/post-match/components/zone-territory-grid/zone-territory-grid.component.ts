@@ -1,12 +1,12 @@
 import { Component, ElementRef, computed, input, output, signal, viewChild } from '@angular/core';
-import { ZONE_COLUMN_NAMES } from '../../utils/zone-grid';
 import { NavStop, rowStops, stepMinute, stepRow, stopAt } from '../../utils/zone-nav';
 import { ZONE_GRID_COLS, ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 import { DragRange, dragNewRange, minuteAtPosition, resizeRange } from '../../utils/zone-drag';
-import { zoneLabel } from '../../utils/zone-grid';
+import { ZONE_COLUMN_NAMES, zoneLabel } from '../../utils/zone-grid';
 import { ZoneEvent, ZonePeriodFilter, eventsInRange } from '../../utils/zone-stats';
 import {
-  PeriodGap, TRACK_MINUTES, allGaps, blockLabel, blockLayout, countByFranja, gapAtMinute, minuteAtOffset, minuteToPercent, territoryRows
+  BlockLayout, PeriodGap, TRACK_MINUTES, allGaps, blockLabel, blockLayout, countByFranja, gapAtMinute, isInWindow, minuteAtOffset,
+  minuteToPercent, territoryRows, trackWindow
 } from '../../utils/zone-track-layout';
 
 /** Tramo o hueco elegido en una fila de la grilla: `col` es la franja (fila de la grilla) sobre la que se hizo clic. */
@@ -96,6 +96,11 @@ export class ZoneTerritoryGridComponent {
   readonly allEvents = input<ZoneEvent[]>([]);
   /** El tiempo elegido en los filtros: la otra mitad de la grilla se atenúa y los conteos solo cuentan este tiempo. */
   readonly periodFilter = input<ZonePeriodFilter>('ALL');
+  /**
+   * Pantalla angosta: con 1T o 2T la grilla muestra solo ese tiempo, para que los bloques tengan ancho tocable. Con
+   * "Todo" tocar la grilla no crea ni selecciona: pide cambiar al tiempo tocado (`periodRequested`).
+   */
+  readonly compact = input(false);
   /** Tramo que se está editando: su bloque lleva un anillo. */
   readonly selectedId = input<string | null>(null);
   /** Franja elegida en el formulario: su fila se resalta y el rango cargado se dibuja ahí. */
@@ -112,18 +117,39 @@ export class ZoneTerritoryGridComponent {
   readonly rangeResized = output<{ startMinute: number; endMinute: number }>();
   /** Tramo bajo el cursor o el foco (null al salir): la cancha resalta su celda. */
   readonly segmentHover = output<string | null>();
+  /** Con "Todo" en pantalla angosta: el tiempo (1T o 2T) del minuto tocado, para que la página cambie el filtro. */
+  readonly periodRequested = output<ZonePeriod>();
   /** Clic en una fila dentro de un hueco: propone ese hueco y esa franja. */
   readonly gapSelected = output<TerritoryGapSelection>();
 
   private readonly tracks = viewChild<ElementRef<HTMLElement>>('tracks');
 
   readonly rowCount = territoryRows().length;
-  readonly halfMark = minuteToPercent(ZONE_HALF_MINUTES);
-  readonly ticks: Tick[] = Array.from({ length: TRACK_MINUTES / TICK_STEP + 1 }, (_, i) => i * TICK_STEP).map(minute => ({
-    minute,
-    left: minuteToPercent(minute),
-    label: minute === 0 ? 'INICIO' : minute === ZONE_HALF_MINUTES ? 'E.T.' : minute === TRACK_MINUTES ? 'FIN' : `${minute}′`
-  }));
+
+  /** Tramo de partido que se ve en el eje: los 80 minutos o, en pantalla angosta con 1T/2T, un solo tiempo. */
+  readonly view = computed(() => trackWindow(this.periodFilter(), this.compact()));
+  /** Con "Todo" en pantalla angosta los bloques son chicos: tocar la grilla elige el tiempo en vez de un hueco. */
+  readonly pickingPeriod = computed(() => this.compact() && this.periodFilter() === 'ALL');
+
+  /** Divisor del entretiempo; fuera del eje cuando solo se ve un tiempo (queda en el borde). */
+  readonly halfMark = computed(() => {
+    const mark = minuteToPercent(ZONE_HALF_MINUTES, this.view());
+    return mark > 0 && mark < 100 ? mark : null;
+  });
+
+  /** Separación de las guías verticales: cada 10 minutos. */
+  readonly guideStep = computed(() => `${(TICK_STEP / (this.view().end - this.view().start)) * 100}%`);
+
+  readonly ticks = computed<Tick[]>(() => {
+    const { start, end } = this.view();
+    return Array.from({ length: (end - start) / TICK_STEP + 1 }, (_, i) => start + i * TICK_STEP).map(minute => ({
+      minute,
+      left: minuteToPercent(minute, this.view()),
+      // En pantalla angosta las etiquetas largas (INICIO, E.T.) no entran: solo el minuto.
+      label: this.compact() ? `${minute}′`
+        : minute === 0 ? 'INICIO' : minute === ZONE_HALF_MINUTES ? 'E.T.' : minute === TRACK_MINUTES ? 'FIN' : `${minute}′`
+    }));
+  });
 
   /** Hueco y franja bajo el puntero (null si está sobre un tramo o fuera de un hueco). */
   private readonly pointed = signal<{ col: number; gap: PeriodGap } | null>(null);
@@ -151,9 +177,9 @@ export class ZoneTerritoryGridComponent {
     return {
       col: cursor.col,
       rowIndex: this.rows().findIndex(row => row.col === cursor.col),
-      stop: shown ? blockLayout(shown) : null,
+      stop: shown ? this.layoutOf(shown) : null,
       onBlock: stop?.kind === 'block',
-      minute: blockLayout({ startMinute: cursor.minute, endMinute: cursor.minute + 1 })
+      minute: this.layoutOf({ startMinute: cursor.minute, endMinute: cursor.minute + 1 })
     };
   });
 
@@ -181,7 +207,7 @@ export class ZoneTerritoryGridComponent {
     const events = range ? eventsInRange(range, this.allEvents()).length : 0;
     return {
       rowIndex: this.rows().findIndex(row => row.col === drag.col),
-      layout: range && !drag.resize ? blockLayout(range) : null,
+      layout: range && !drag.resize ? this.layoutOf(range) : null,
       text: range
         ? `${range.startMinute}′–${range.endMinute}′ · ${range.period}T · ${events} ${events === 1 ? 'evento' : 'eventos'}`
         : 'Arrastrá dentro del hueco',
@@ -193,15 +219,19 @@ export class ZoneTerritoryGridComponent {
 
   readonly rows = computed<RowView[]>(() => {
     const counts = countByFranja(this.events(), this.periodFilter());
-    const blocks = this.assignments().map<BlockView>(assignment => {
+    const compact = this.compact();
+    const blocks = this.assignments().flatMap<BlockView>(assignment => {
       // El bloque que se edita toma el rango del formulario: así las manijas lo mueven en vivo.
       const shown = { ...assignment, ...this.currentRange(assignment) };
-      return {
+      const layout = this.layoutOf(shown);
+      if (!layout) return [];
+      return [{
         assignment,
-        ...blockLayout(shown),
-        label: blockLabel(shown),
-        aria: `Tramo ${assignment.period}T ${assignment.startMinute}′ a ${assignment.endMinute}′, zona ${zoneLabel(assignment)}. Tocá para editar`
-      };
+        ...layout,
+        label: blockLabel(shown, compact),
+        aria: `Tramo ${assignment.period}T ${assignment.startMinute}′ a ${assignment.endMinute}′, zona ${zoneLabel(assignment)}. `
+          + (this.pickingPeriod() ? `Tocá para ver el ${assignment.period}T` : 'Tocá para editar')
+      }];
     });
     return territoryRows().map(row => ({
       ...row,
@@ -210,33 +240,44 @@ export class ZoneTerritoryGridComponent {
     }));
   });
 
-  readonly gaps = computed(() => allGaps(this.assignments()).map(gap => ({ ...gap, ...blockLayout({ startMinute: gap.start, endMinute: gap.end }) })));
+  readonly gaps = computed(() => allGaps(this.assignments()).flatMap(gap => {
+    const layout = this.layoutOf({ startMinute: gap.start, endMinute: gap.end });
+    return layout ? [{ ...gap, ...layout }] : [];
+  }));
 
   /** Mitad que no está en el filtro de tiempo: se cubre con un velo. */
   readonly dimmedHalf = computed<'first' | 'second' | null>(() => {
     const filter = this.periodFilter();
-    return filter === 'ALL' ? null : filter === 1 ? 'second' : 'first';
+    // Con un solo tiempo a la vista no hay otra mitad que cubrir.
+    if (filter === 'ALL' || this.view().end - this.view().start < TRACK_MINUTES) return null;
+    return filter === 1 ? 'second' : 'first';
   });
 
   readonly hoverGap = computed(() => {
     const target = this.pointed();
     if (!target) return null;
-    const rowIndex = this.rows().findIndex(row => row.col === target.col);
-    return { rowIndex, ...blockLayout({ startMinute: target.gap.start, endMinute: target.gap.end }) };
+    const layout = this.layoutOf({ startMinute: target.gap.start, endMinute: target.gap.end });
+    return layout && { rowIndex: this.rows().findIndex(row => row.col === target.col), ...layout };
   });
 
   /** Vista previa del formulario: en la fila de la franja elegida o, sin franja (`rowIndex` -1), como barra sobre el eje. */
   readonly preview = computed(() => {
     const range = this.previewRange();
     // Al editar, el propio bloque muestra el rango del formulario: no se dibuja una vista previa aparte.
-    if (!range || this.selectedId()) return null;
+    const layout = range && this.layoutOf(range);
+    if (!range || !layout || this.selectedId()) return null;
     const rowIndex = this.rows().findIndex(row => row.col === this.selectedCol());
     return {
       rowIndex,
-      ...blockLayout(range),
+      ...layout,
       aria: `Rango en edición: ${range.period}T de ${range.startMinute}′ a ${range.endMinute}′`
     };
   });
+
+  /** Posición del rango en el eje que se ve; null si cae en el tiempo que no se muestra. */
+  private layoutOf(range: { startMinute: number; endMinute: number }): BlockLayout | null {
+    return isInWindow(range, this.view()) ? blockLayout(range, this.view()) : null;
+  }
 
   /** Rango con el que se dibuja un tramo: el del formulario si es el que se está editando, si no el guardado. */
   private currentRange(assignment: ZoneAssignmentResponse): DragRange {
@@ -253,6 +294,11 @@ export class ZoneTerritoryGridComponent {
 
   selectSegment(event: Event, assignment: ZoneAssignmentResponse): void {
     event.stopPropagation();
+    // Con "Todo" en pantalla angosta el bloque es demasiado chico para tocarlo: primero se elige el tiempo.
+    if (this.pickingPeriod()) {
+      this.periodRequested.emit(assignment.period);
+      return;
+    }
     this.cursor.set({ col: assignment.col, minute: assignment.startMinute });
     this.tracks()?.nativeElement.focus({ preventScroll: true });
     this.segmentSelected.emit(assignment);
@@ -263,6 +309,10 @@ export class ZoneTerritoryGridComponent {
       this.suppressClick = false;
       return;
     }
+    if (this.pickingPeriod()) {
+      this.requestPeriodAt(event);
+      return;
+    }
     const target = this.targetAt(event);
     if (target) {
       this.cursor.set({ col: target.col, minute: target.gap.start });
@@ -271,7 +321,7 @@ export class ZoneTerritoryGridComponent {
   }
 
   onTracksMove(event: MouseEvent): void {
-    if (this.drag()) return;
+    if (this.drag() || this.pickingPeriod()) return;
     const target = this.targetAt(event);
     const current = this.pointed();
     if (target?.col === current?.col && target?.gap.start === current?.gap.start && target?.gap.period === current?.gap.period) return;
@@ -326,6 +376,7 @@ export class ZoneTerritoryGridComponent {
   onPointerDown(event: PointerEvent): void {
     if (event.button !== 0 || !event.isPrimary || (event.target as HTMLElement).closest('.block')) return;
     this.suppressClick = false;
+    if (this.pickingPeriod()) return;
 
     const target = this.targetAt(event);
     const element = this.tracks()?.nativeElement;
@@ -335,7 +386,7 @@ export class ZoneTerritoryGridComponent {
     this.pointed.set(null);
     this.drag.set({
       pointerId: event.pointerId, col: target.col, period: target.gap.period,
-      anchor: minuteAtPosition(event.clientX - rect.left, rect.width),
+      anchor: minuteAtPosition(event.clientX - rect.left, rect.width, this.view()),
       startX: event.clientX, moved: false, range: null, notice: null, tipX: 0, tipY: 0, resize: null
     });
     this.capture(element, event.pointerId);
@@ -365,7 +416,7 @@ export class ZoneTerritoryGridComponent {
     if (!drag.moved && Math.abs(event.clientX - drag.startX) < DRAG_THRESHOLD_PX) return;
 
     const rect = element.getBoundingClientRect();
-    const current = minuteAtPosition(event.clientX - rect.left, rect.width);
+    const current = minuteAtPosition(event.clientX - rect.left, rect.width, this.view());
     const { range, notice } = drag.resize
       ? resizeRange(this.assignments(), drag.resize.segment, drag.resize.edge, current)
       : dragNewRange(this.assignments(), drag.period, drag.anchor, current);
@@ -375,7 +426,7 @@ export class ZoneTerritoryGridComponent {
     const centerMinute = range ? (range.startMinute + range.endMinute) / 2 : current;
     this.drag.set({
       ...drag, moved: true, range, notice,
-      tipX: Math.min(Math.max(rect.left + (minuteToPercent(centerMinute) / 100) * rect.width, TIP_EDGE_PX), window.innerWidth - TIP_EDGE_PX),
+      tipX: Math.min(Math.max(rect.left + (minuteToPercent(centerMinute, this.view()) / 100) * rect.width, TIP_EDGE_PX), window.innerWidth - TIP_EDGE_PX),
       tipY: rect.top + (rect.height / this.rowCount) * rowIndex - TIP_GAP_PX
     });
 
@@ -441,6 +492,14 @@ export class ZoneTerritoryGridComponent {
     this.drag.set(null);
   }
 
+  /** Con "Todo" en pantalla angosta: el tiempo (1T o 2T) del minuto tocado. */
+  private requestPeriodAt(event: MouseEvent): void {
+    const rect = this.tracks()?.nativeElement.getBoundingClientRect();
+    if (!rect || rect.width <= 0) return;
+    const minute = minuteAtOffset(event.clientX - rect.left, rect.width, this.view());
+    this.periodRequested.emit(minute >= ZONE_HALF_MINUTES ? 2 : 1);
+  }
+
   /** Franja (por la altura del puntero) y hueco (por el minuto) bajo el puntero; null si ese minuto ya tiene tramo. */
   private targetAt(event: MouseEvent): { col: number; gap: PeriodGap } | null {
     const rect = this.tracks()?.nativeElement.getBoundingClientRect();
@@ -448,7 +507,7 @@ export class ZoneTerritoryGridComponent {
 
     const rows = territoryRows();
     const rowIndex = Math.min(Math.max(Math.floor(((event.clientY - rect.top) / rect.height) * rows.length), 0), rows.length - 1);
-    const gap = gapAtMinute(this.assignments(), minuteAtOffset(event.clientX - rect.left, rect.width));
+    const gap = gapAtMinute(this.assignments(), minuteAtOffset(event.clientX - rect.left, rect.width, this.view()));
     return gap ? { col: rows[rowIndex].col, gap } : null;
   }
 }

@@ -6,6 +6,12 @@ describe('zone-drag', () => {
     ({ id, matchId: 'm', period, startMinute, endMinute, row, col });
 
   describe('minuteAtPosition', () => {
+    it('con un solo tiempo a la vista el minuto sale de ese tramo (2T: 40–80)', () => {
+      expect(minuteAtPosition(0, 400, { start: 40, end: 80 })).toBe(40);
+      expect(minuteAtPosition(200, 400, { start: 40, end: 80 })).toBe(60);
+      expect(minuteAtPosition(999, 400, { start: 40, end: 80 })).toBe(80);
+    });
+
     it('convierte la posición en el minuto entero más cercano de los 80', () => {
       expect(minuteAtPosition(0, 800)).toBe(0);
       expect(minuteAtPosition(400, 800)).toBe(40);

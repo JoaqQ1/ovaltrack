@@ -1,6 +1,7 @@
-import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZonePeriod } from '../../types/zone.types';
+import { ZoneAssignmentResponse, ZonePeriod } from '../../types/zone.types';
 import { zoneLabel } from './zone-grid';
 import { findGaps, periodRange } from './zone-stats';
+import { FULL_TRACK, TrackWindow } from './zone-track-layout';
 
 export interface DragRange {
   period: ZonePeriod;
@@ -14,14 +15,13 @@ export interface DragResult {
   notice: string | null;
 }
 
-const TOTAL_MINUTES = ZONE_HALF_MINUTES * 2;
-
 type Segment = Pick<ZoneAssignmentResponse, 'id' | 'period' | 'startMinute' | 'endMinute' | 'row' | 'col'>;
 
-/** Minuto entero (0–80) bajo un punto horizontal de la pista de la timeline. */
-export function minuteAtPosition(offsetX: number, trackWidth: number): number {
-  if (!(trackWidth > 0)) return 0;
-  return Math.min(Math.max(Math.round((offsetX / trackWidth) * TOTAL_MINUTES), 0), TOTAL_MINUTES);
+/** Minuto entero bajo un punto horizontal de la pista: por defecto 0–80, o los límites del tramo mostrado. */
+export function minuteAtPosition(offsetX: number, trackWidth: number, window: TrackWindow = FULL_TRACK): number {
+  if (!(trackWidth > 0)) return window.start;
+  const span = window.end - window.start;
+  return Math.min(Math.max(window.start + Math.round((offsetX / trackWidth) * span), window.start), window.end);
 }
 
 function boundaryNotice(period: ZonePeriod, side: 'start' | 'end'): string {

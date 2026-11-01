@@ -1,16 +1,8 @@
 <section class="zone-panel">
 
   <div class="panel-card is-sheet" [class.is-open]="sheetOpen">
-    <!-- Solo móvil: resumen compacto de la hoja inferior (zona, rango y "Rango" para expandir) -->
-    <div class="sheet-summary" data-testid="sheet-summary">
-      <span *ngIf="franja as f" class="zone-badge">{{ f.label }}</span>
-      <span class="summary-text">
-        <strong data-testid="sheet-zone">{{ zoneSummary ?? pickFranjaHelp }}</strong>
-        <small *ngIf="zoneSummary" data-testid="sheet-range">{{ rangeSummary }}</small>
-      </span>
-      <button type="button" class="btn btn-outline btn-range" data-testid="sheet-toggle"
-              [attr.aria-expanded]="sheetOpen" (click)="toggleSheet()">{{ sheetOpen ? 'Cerrar' : 'Rango' }}</button>
-    </div>
+    <!-- Solo móvil: la hoja inferior. Compacta: título, resumen, lateral y Guardar; "Más opciones" suma Desde/Hasta y los huecos -->
+    <span class="sheet-handle" aria-hidden="true"></span>
 
     <div class="panel-head">
       <h2 class="section-title" data-testid="panel-title">{{ editingId ? 'Editar tramo' : 'Nuevo tramo' }}</h2>
@@ -19,10 +11,22 @@
         <span class="zone-badge" data-testid="edit-zone">{{ f.label }}</span>
         <span *ngIf="period" class="period-tag" data-testid="edit-period">{{ period }}T</span>
       </ng-container>
+      <span *ngIf="!editingId && franja as f" class="zone-badge sheet-only" data-testid="sheet-zone-badge">{{ f.label }}</span>
+      <button type="button" class="sheet-close" data-testid="sheet-close" aria-label="Cerrar" title="Cerrar" (click)="closeSheet()">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
     </div>
 
+    <p class="sheet-summary" data-testid="sheet-summary">
+      <ng-container *ngIf="franja as f; else sheetPick">
+        <strong data-testid="sheet-zone">{{ f.name }}</strong> · <span data-testid="sheet-range">{{ rangeSummary }}</span>
+      </ng-container>
+      <ng-template #sheetPick><strong data-testid="sheet-zone">{{ pickFranjaHelp }}</strong></ng-template>
+      <span *ngIf="rangeProblem as problem" class="summary-error" data-testid="sheet-error">{{ problem }}</span>
+    </p>
+
     <!-- Franja: se elige tocando la grilla o la cancha -->
-    <div class="field">
+    <div class="field field-detail">
       <span class="field-label">Franja</span>
       <div class="selected-cell" id="zone-franja" data-testid="selected-cell" [class.is-empty]="!selectedCell()" [class.is-error]="pickAttempted && !selectedCell()">
         <ng-container *ngIf="franja as f; else pickHint">
@@ -34,17 +38,19 @@
     </div>
 
     <!-- Lateral: izquierda, centro o derecha mirando al ataque -->
-    <div class="field">
+    <div class="field field-lateral">
       <span class="field-label" id="zone-lateral-label">Lateral</span>
       <div class="segmented" role="group" aria-labelledby="zone-lateral-label">
         <button *ngFor="let lateral of laterals" type="button" class="segment" data-testid="lateral-option"
                 [class.is-active]="selectedCell()?.row === lateral.row" [attr.aria-pressed]="selectedCell()?.row === lateral.row"
-                [disabled]="!selectedCell() || store.isSaving()" (click)="setLateral(lateral.row)">{{ lateral.name }}</button>
+                [attr.aria-label]="lateral.name" [disabled]="!selectedCell() || store.isSaving()" (click)="setLateral(lateral.row)">
+          <span class="lat-long" aria-hidden="true">{{ lateral.name }}</span><span class="lat-short" aria-hidden="true">{{ lateral.short }}</span>
+        </button>
       </div>
     </div>
 
     <!-- Rango en minutos acumulados de partido (0–80); el tiempo se deduce -->
-    <div class="field">
+    <div class="field field-detail">
       <div class="range-row">
         <div class="range-field">
           <label class="field-label" for="zone-start">Desde (min)</label>
@@ -95,7 +101,9 @@
                 [disabled]="store.isSaving()" (click)="deleteEditing()">
           <i class="bi bi-trash" aria-hidden="true"></i>
         </button>
-        <button type="button" class="btn btn-outline" data-testid="zone-cancel"
+        <button type="button" class="btn btn-outline btn-more" data-testid="sheet-toggle"
+                [attr.aria-expanded]="sheetOpen" (click)="toggleSheet()">{{ sheetOpen ? 'Menos opciones' : 'Más opciones' }}</button>
+        <button type="button" class="btn btn-outline btn-cancel" data-testid="zone-cancel"
                 [disabled]="store.isSaving()" (click)="cancel()">Cancelar</button>
         <button type="button" class="btn btn-invite d-flex align-items-center justify-content-center gap-2"
                 data-testid="zone-save" [attr.aria-describedby]="pickHelp ? 'zone-franja' : null"

@@ -2,8 +2,8 @@
   <div class="axis">
     <span class="axis-corner">Zona <i class="bi bi-arrow-up" aria-hidden="true"></i> ataque</span>
     <div class="ruler" aria-hidden="true">
-      @for (tick of ticks; track tick.minute) {
-        <span class="tick" [class.is-first]="$first" [class.is-last]="$last" [class.is-milestone]="tick.label.length > 3"
+      @for (tick of ticks(); track tick.minute) {
+        <span class="tick" [class.is-first]="$first" [class.is-last]="$last" [class.is-milestone]="!compact() && tick.label.length > 3"
               [style.left.%]="tick.left">{{ tick.label }}</span>
       }
       <!-- Sin franja elegida, el rango del formulario se marca solo sobre el eje -->
@@ -16,7 +16,7 @@
     </div>
   </div>
 
-  <div class="body" [style.--rows]="rowCount">
+  <div class="body" [style.--rows]="rowCount" [style.--guide-step]="guideStep()">
     <div class="labels">
       @for (row of rows(); track row.col) {
         <div class="row-label" [class.is-selected]="selectedCol() === row.col" [class.is-cursor]="cursorView()?.col === row.col"
@@ -32,6 +32,7 @@
 
     <!-- Una sola parada de Tab: las flechas recorren franjas, tramos y minutos; los bloques se alcanzan por ahí -->
     <div class="tracks" #tracks data-testid="territory-tracks" tabindex="0" role="application"
+         [class.is-picking]="pickingPeriod()"
          aria-roledescription="grilla de territorio" aria-label="Grilla de territorio. Flechas para moverte, Enter para abrir o completar, Esc para cancelar"
          (keydown)="onTracksKeydown($event)" (focus)="onTracksFocus($event)" (blur)="onTracksBlur()"
          [class.is-pointing]="hoverGap() !== null" [class.is-dragging]="dragView() !== null"
@@ -70,7 +71,9 @@
         </div>
       }
 
-      <span class="half-line" [style.left.%]="halfMark" aria-hidden="true"></span>
+      @if (halfMark(); as mark) {
+        <span class="half-line" [style.left.%]="mark" aria-hidden="true"></span>
+      }
 
       @if (hoverGap(); as hover) {
         <span class="hover-gap" data-testid="territory-hover" aria-hidden="true"
@@ -91,8 +94,10 @@
           <span class="cursor-stop" data-testid="territory-cursor-stop" aria-hidden="true"
                 [class.on-block]="cursor.onBlock" [style.--row]="cursor.rowIndex" [style.left.%]="stop.left" [style.width.%]="stop.width"></span>
         }
-        <span class="cursor-minute" data-testid="territory-cursor-minute" aria-hidden="true"
-              [style.--row]="cursor.rowIndex" [style.left.%]="cursor.minute.left" [style.width.%]="cursor.minute.width"></span>
+        @if (cursor.minute; as minute) {
+          <span class="cursor-minute" data-testid="territory-cursor-minute" aria-hidden="true"
+                [style.--row]="cursor.rowIndex" [style.left.%]="minute.left" [style.width.%]="minute.width"></span>
+        }
       }
 
       @if (dragView(); as drag) {
@@ -115,6 +120,8 @@
 
       @if (isEmpty()) {
         <p class="empty-note" data-testid="territory-empty">Todavía no hay tramos. Tocá una fila de la grilla para empezar.</p>
+      } @else if (pickingPeriod()) {
+        <p class="period-hint" data-testid="territory-period-hint">Tocá la grilla para ver ese tiempo</p>
       }
     </div>
   </div>

@@ -516,7 +516,7 @@ describe('PostMatchZonesComponent', () => {
       fixture.detectChanges();
 
       expect(component.selectedCell()).toEqual({ row: 3, col: 5 });
-      expect(query('[data-testid="sheet-zone"]')?.textContent).toContain('22 rival · Derecha');
+      expect(query('[data-testid="sheet-zone"]')?.textContent).toContain('22 rival');
       expect(queryAll('[data-testid="lateral-option"]')[2].classList).toContain('is-active');
     });
 

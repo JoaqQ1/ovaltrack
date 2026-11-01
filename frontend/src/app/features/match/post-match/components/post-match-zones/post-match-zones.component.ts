@@ -6,6 +6,7 @@ import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ZoneAssignmentResponse, ZoneCellRef } from '../../../types/zone.types';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { PostMatchShellStore } from '../../store/post-match-shell.store';
+import { watchCompactLayout } from '../../utils/zone-compact';
 import { ZONE_SHORTCUT_HELP, isSaveShortcut, isTypingTarget, shortcutCell } from '../../utils/zone-shortcuts';
 import {
   NO_ZONE_EVENT_FILTERS, ZonePeriodFilter, countByCell, filterEvents, unzonedEvents, zoneCoveragePercent
@@ -52,8 +53,11 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   readonly periodFilter = signal<ZonePeriodFilter>('ALL');
   readonly possessionFilter = signal<Possession | 'ALL'>('ALL');
 
-  readonly periodOptions: { value: ZonePeriodFilter; label: string }[] = [
-    { value: 'ALL', label: 'Todo el partido' }, { value: 1, label: '1T' }, { value: 2, label: '2T' }
+  /** Pantalla angosta: la grilla muestra un tiempo por vez y el formulario es una hoja inferior. */
+  readonly compact = watchCompactLayout(this.destroyRef);
+
+  readonly periodOptions: { value: ZonePeriodFilter; label: string; short: string }[] = [
+    { value: 'ALL', label: 'Todo el partido', short: 'Todo' }, { value: 1, label: '1T', short: '1T' }, { value: 2, label: '2T', short: '2T' }
   ];
 
   readonly possessionOptions: { value: Possession | 'ALL'; label: string }[] = [
@@ -88,6 +92,8 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.layoutService.setWide(true);
     this.zonesStore.reset();
+    // En pantalla angosta se arranca en el 1T: los bloques tienen ancho tocable. "Todo" sigue disponible.
+    if (this.compact()) this.periodFilter.set(1);
 
     const id = this.shell.matchId();
     this.matchId.set(id);

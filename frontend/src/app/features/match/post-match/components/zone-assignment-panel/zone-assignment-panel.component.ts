@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { HALFTIME_SPLIT_MESSAGE, deduceZonePeriod, rangeCrossesHalftime, validateZoneForm } from '../../utils/zone-form.utils';
-import { ZONE_COLUMN_NAMES, ZONE_ROW_NAMES, columnRangeLabel, zoneLabel } from '../../utils/zone-grid';
+import { ZONE_COLUMN_NAMES, ZONE_ROW_NAMES, ZONE_ROW_SHORT_NAMES, columnRangeLabel, zoneLabel } from '../../utils/zone-grid';
 import { describeSegment, eventsInRange, eventsReleasedByEdit, findOverlap } from '../../utils/zone-stats';
 import { GapWithEvents, TRACK_MINUTES, gapsWithEventCount, suggestNextRange } from '../../utils/zone-track-layout';
 import { ZONE_HALF_MINUTES, ZoneAssignmentRequest, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
@@ -49,7 +49,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   /** Zona elegida en la grilla o la cancha (enlace bidireccional con la página). */
   readonly selectedCell = model<ZoneCellRef | null>(null);
 
-  readonly laterals = ZONE_ROW_NAMES.map((name, index) => ({ row: index + 1, name }));
+  readonly laterals = ZONE_ROW_NAMES.map((name, index) => ({ row: index + 1, name, short: ZONE_ROW_SHORT_NAMES[index] }));
   readonly pickFranjaHelp = PICK_FRANJA_HELP;
   readonly rangeRuleHelp = RANGE_RULE_HELP;
 
@@ -57,7 +57,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   startMinute: number | null = null;
   endMinute: number | null = null;
   editingId: string | null = null;
-  /** En móvil el formulario es una hoja inferior: compacta (zona, rango y Guardar) o expandida con todos los campos. */
+  /** En móvil el formulario es una hoja inferior: compacta (resumen, lateral y Guardar) o expandida con todos los campos. */
   sheetOpen = false;
   serverError: string | null = null;
   /** Se intentó guardar sin elegir franja (atajo de teclado): el campo Franja lo marca como error. */
@@ -92,6 +92,12 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
   toggleSheet(): void {
     this.sheetOpen = !this.sheetOpen;
+  }
+
+  /** Cerrar la hoja inferior equivale a Esc: deselecciona (como Cancelar) y, sin nada elegido, solo la compacta. */
+  closeSheet(): void {
+    if (this.hasSelection()) this.cancel();
+    else this.sheetOpen = false;
   }
 
   onRangeChange(): void {

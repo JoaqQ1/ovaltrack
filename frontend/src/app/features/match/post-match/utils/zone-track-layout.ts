@@ -1,12 +1,28 @@
 import { ZONE_GRID_COLS, ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZonePeriod } from '../../types/zone.types';
 import { ZONE_COLUMN_NAMES, ZONE_ROW_LETTERS, columnRangeLabel, zoneLabel } from './zone-grid';
-import { MinuteRange, ZoneEvent, ZonePeriodFilter, eventsInRange, findGaps } from './zone-stats';
+import { MinuteRange, ZoneEvent, ZonePeriodFilter, eventsInRange, findGaps, periodRange } from './zone-stats';
 
 /** Largo del eje horizontal de la grilla de territorio: los 80 minutos del partido, con el 2T a continuación del 1T. */
 export const TRACK_MINUTES = ZONE_HALF_MINUTES * 2;
 
 /** Un bloque de esta duración o menor no entra con la etiqueta completa: muestra solo la letra del lateral. */
 export const SHORT_BLOCK_MINUTES = 2;
+
+/** En pantallas angostas, un bloque de menos de estos minutos no lleva etiqueta: el detalle va en su aria-label y tooltip. */
+export const UNLABELED_BLOCK_MINUTES = 4;
+
+/** Tramo de partido que muestra el eje horizontal (minutos acumulados): los 80 o un solo tiempo. */
+export interface TrackWindow {
+  start: number;
+  end: number;
+}
+
+export const FULL_TRACK: TrackWindow = { start: 0, end: TRACK_MINUTES };
+
+/** En pantallas angostas la grilla muestra un tiempo por vez; con "Todo" (o en pantallas anchas), los 80 minutos. */
+export function trackWindow(filter: ZonePeriodFilter, compact: boolean): TrackWindow {
+  return compact && filter !== 'ALL' ? periodRange(filter) : FULL_TRACK;
+}
 
 type TimeRange = Pick<ZoneAssignmentResponse, 'startMinute' | 'endMinute'>;
 
@@ -16,20 +32,33 @@ export interface BlockLayout {
   width: number;
 }
 
-export function minuteToPercent(minute: number): number {
-  return (minute / TRACK_MINUTES) * 100;
+/** Posición del minuto en el eje, en % del tramo mostrado (puede salirse de 0–100 si el minuto está fuera). */
+export function minuteToPercent(minute: number, window: TrackWindow = FULL_TRACK): number {
+  return ((minute - window.start) / (window.end - window.start)) * 100;
 }
 
-export function blockLayout(range: TimeRange): BlockLayout {
-  return { left: minuteToPercent(range.startMinute), width: minuteToPercent(range.endMinute - range.startMinute) };
+/** El rango se ve, al menos en parte, dentro del tramo mostrado. */
+export function isInWindow(range: TimeRange, window: TrackWindow = FULL_TRACK): boolean {
+  return range.endMinute > window.start && range.startMinute < window.end;
+}
+
+/** Posición y ancho del rango en el eje; si sobresale del tramo mostrado se recorta. */
+export function blockLayout(range: TimeRange, window: TrackWindow = FULL_TRACK): BlockLayout {
+  const start = Math.max(range.startMinute, window.start);
+  const end = Math.max(Math.min(range.endMinute, window.end), start);
+  return { left: minuteToPercent(start, window), width: ((end - start) / (window.end - window.start)) * 100 };
 }
 
 export function isShortBlock(range: TimeRange): boolean {
   return range.endMinute - range.startMinute <= SHORT_BLOCK_MINUTES;
 }
 
-/** Etiqueta del bloque: la celda completa (D5) o, si es muy corto, solo la letra del lateral (D). */
-export function blockLabel(assignment: ZoneAssignmentResponse): string {
+/**
+ * Etiqueta del bloque: la celda completa (D5) o, si es muy corto, solo la letra del lateral (D). En pantallas angostas
+ * los de menos de 4 minutos no llevan etiqueta.
+ */
+export function blockLabel(assignment: ZoneAssignmentResponse, compact = false): string {
+  if (compact && assignment.endMinute - assignment.startMinute < UNLABELED_BLOCK_MINUTES) return '';
   return isShortBlock(assignment) ? ZONE_ROW_LETTERS[assignment.row - 1] : zoneLabel(assignment);
 }
 
@@ -60,11 +89,12 @@ export function countByFranja(events: ZoneEvent[], filter: ZonePeriodFilter): Ma
   return counts;
 }
 
-/** Minuto (entero, 0–79) que corresponde a una posición horizontal dentro del eje de 80 minutos. */
-export function minuteAtOffset(offsetX: number, trackWidth: number): number {
-  if (!(trackWidth > 0)) return 0;
-  const minute = Math.floor((offsetX / trackWidth) * TRACK_MINUTES);
-  return Math.min(Math.max(minute, 0), TRACK_MINUTES - 1);
+/** Minuto (entero) que corresponde a una posición horizontal dentro del tramo mostrado (por defecto, 0–79). */
+export function minuteAtOffset(offsetX: number, trackWidth: number, window: TrackWindow = FULL_TRACK): number {
+  if (!(trackWidth > 0)) return window.start;
+  const span = window.end - window.start;
+  const minute = window.start + Math.floor((offsetX / trackWidth) * span);
+  return Math.min(Math.max(minute, window.start), window.end - 1);
 }
 
 export type PeriodGap = MinuteRange & { period: ZonePeriod };

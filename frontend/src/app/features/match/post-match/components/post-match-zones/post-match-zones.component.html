@@ -37,7 +37,7 @@
               @for (option of periodOptions; track option.value) {
                 <button type="button" class="filter-pill-btn" data-testid="period-filter"
                         [class.active]="periodFilter() === option.value" [attr.aria-pressed]="periodFilter() === option.value"
-                        (click)="setPeriodFilter(option.value)">{{ option.label }}</button>
+                        (click)="setPeriodFilter(option.value)">{{ compact() ? option.short : option.label }}</button>
               }
               <span class="filter-divider" aria-hidden="true"></span>
               @for (option of possessionOptions; track option.value) {
@@ -86,12 +86,12 @@
           </div>
 
           <app-zone-territory-grid
-            [assignments]="zonesStore.assignments()" [events]="filteredEvents()" [allEvents]="zonesStore.events()" [periodFilter]="periodFilter()"
+            [assignments]="zonesStore.assignments()" [events]="filteredEvents()" [allEvents]="zonesStore.events()" [periodFilter]="periodFilter()" [compact]="compact()"
             [selectedId]="zonesStore.editingId()" [selectedCol]="selectedCell()?.col ?? null"
             [conflictId]="zonesStore.conflictId()"
             [highlightCell]="highlightedCell()" [previewRange]="zonesStore.formRange()"
             (segmentHover)="zonesStore.hoverSegmentId.set($event)"
-            (segmentSelected)="onSegmentSelected($event)" (rangeResized)="onRangeResized($event)" (gapSelected)="onGapSelected($event)" />
+            (segmentSelected)="onSegmentSelected($event)" (rangeResized)="onRangeResized($event)" (periodRequested)="setPeriodFilter($event)" (gapSelected)="onGapSelected($event)" />
 
           <app-rugby-field
             [cells]="cellCounts()"
