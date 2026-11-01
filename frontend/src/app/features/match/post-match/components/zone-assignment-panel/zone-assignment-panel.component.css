@@ -10,8 +10,12 @@
   padding: 18px 20px;
 }
 
+.panel-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin-bottom: 14px; }
+
+.period-tag { font-family: var(--font-mono, monospace); font-size: 13px; font-weight: 700; color: var(--text-secondary, #3b4e33); }
+
 .section-title {
-  margin: 0 0 14px;
+  margin: 0;
   font-family: var(--font-head);
   font-weight: 800;
   font-size: 1rem;
@@ -81,9 +85,49 @@
   color: var(--btn-primary-bg, #204b22);
 }
 
-/* Campos con − y +: uno por fila, a ancho completo, para que el minuto nunca quede cortado */
-.range-row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+/* Desde y Hasta lado a lado: así los botones de abajo entran en una fila del panel */
+.range-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .range-field { min-width: 0; }
+
+.label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.label-row .field-label { margin-bottom: 0; }
+
+/* "?" chico junto a "Hasta": la regla va en el tooltip (hover, foco o toque); el área táctil es de 44 px */
+.rule-help {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: -12px -12px -12px -4px;
+  border: 12px solid transparent;
+  border-radius: 50%;
+  box-sizing: content-box;
+  background: var(--btn-outline-bg, #fff) padding-box;
+  color: var(--btn-outline-fg, #204b22);
+  font: 700 12px/20px var(--font-mono, monospace);
+  box-shadow: inset 0 0 0 1px var(--btn-outline-border, rgba(32, 75, 34, 0.25));
+  cursor: help;
+}
+.rule-help:hover, .rule-help:focus-visible { background-color: #d6eac0; }
+.rule-help::after {
+  content: attr(data-tip);
+  position: absolute;
+  z-index: 10;
+  right: -12px;
+  bottom: calc(100% + 2px);
+  width: max-content;
+  max-width: 220px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md, 10px);
+  background: var(--text-primary, #111d0e);
+  color: #fff;
+  font: 500 12px/1.35 var(--font-body, Inter, sans-serif);
+  text-align: left;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+.rule-help:hover::after, .rule-help:focus::after { opacity: 1; }
 
 .stepper { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 4px; align-items: stretch; }
 
@@ -103,6 +147,8 @@
 
 .form-control {
   min-height: 44px;
+  min-width: 0;
+  padding-inline: 4px;
   text-align: center;
   border: 1.5px solid var(--border-strong, rgba(27, 33, 22, 0.22));
   border-radius: 10px;
@@ -125,38 +171,6 @@
 
 .preview { margin: 10px 0 0; font-size: 13px; color: var(--success, #2e7d32); font-weight: 600; }
 .preview-warn { margin-top: 6px; color: var(--warning, #8a5700); }
-.range-help { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
-.range-note { margin: 0; font-size: 12px; line-height: 1.4; color: var(--text-secondary, #3b4e33); }
-
-.help-toggle {
-  flex: 0 0 auto;
-  width: 44px;
-  height: 44px;
-  margin: -8px -6px -8px 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--btn-outline-fg, #204b22);
-  font-size: 1.1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.help-toggle:hover { background: rgba(32, 75, 34, 0.08); }
-.help-toggle[aria-expanded='true'] { background: #d6eac0; }
-
-.help-list {
-  margin: 8px 0 0;
-  padding: 10px 12px 10px 28px;
-  border-radius: 10px;
-  background: var(--surface-alt, #eef1e7);
-  border: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--text-secondary, #3b4e33);
-}
-
 /* Mensajes */
 .inline-error {
   display: flex;
@@ -175,17 +189,22 @@
 .field > .inline-error { margin: 10px 0 0; }
 .panel-footer > .inline-error { margin: 10px 0 0; }
 
-.panel-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; }
+/* Una sola fila, sin salirse del panel: eliminar (ícono) a la izquierda; Cancelar y Guardar a la derecha */
+.panel-actions { display: flex; justify-content: flex-end; gap: 12px; min-width: 0; }
+.panel-actions .btn { height: 46px; padding: 0 16px; min-width: 0; white-space: nowrap; }
 .panel-actions .btn-delete {
+  flex: 0 0 46px;
+  width: 46px;
   margin-right: auto;
+  padding: 0;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  font-size: 1.1rem;
   color: var(--error, #b42318);
   border-color: var(--error-border, rgba(180, 35, 24, 0.35));
 }
 .panel-actions .btn-delete:hover:not(:disabled) { background: var(--error-tint, rgba(240, 68, 56, 0.14)); border-color: var(--error, #b42318); }
-.panel-actions .btn { height: 44px; padding: 0 20px; }
 .panel-actions .btn:disabled { cursor: not-allowed; }
 
 /* El guardar deshabilitado sigue siendo el botón principal, solo apagado (no un outline secundario) */
@@ -290,7 +309,7 @@
   .btn-range { height: 44px; padding: 0 16px; flex: 0 0 auto; }
 
   /* Compacta: solo el resumen y el botón de guardar */
-  .panel-card.is-sheet:not(.is-open) .section-title,
+  .panel-card.is-sheet:not(.is-open) .panel-head,
   .panel-card.is-sheet:not(.is-open) .field,
   .panel-card.is-sheet:not(.is-open) .gaps { display: none; }
 
@@ -303,5 +322,5 @@
   }
 
   .panel-card.is-sheet .panel-footer .panel-actions { justify-content: stretch; }
-  .panel-card.is-sheet .panel-footer .panel-actions .btn { flex: 1 1 auto; }
+  .panel-card.is-sheet .panel-footer .panel-actions .btn:not(.btn-delete) { flex: 1 1 auto; }
 }

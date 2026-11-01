@@ -196,6 +196,17 @@ describe('PostMatchZonesComponent', () => {
       expect(help).toContain('Enter');
       expect(query('[data-testid="shortcuts-toggle"]')?.getAttribute('aria-expanded')).toBe('true');
     });
+
+    it('la ayuda general incluye la regla del rango', () => {
+      createLoaded();
+
+      query<HTMLButtonElement>('[data-testid="shortcuts-toggle"]')?.click();
+      fixture.detectChanges();
+
+      const rules = query('[data-testid="range-rules"]')?.textContent ?? '';
+      expect(rules).toContain('Inicio incluido, fin excluido: 20′–25′ y 25′–30′ no se pisan.');
+      expect(rules).toContain('El tiempo añadido cuenta como minuto 40 (1T) y 80 (2T).');
+    });
   });
 
   describe('estados de carga y vacío', () => {

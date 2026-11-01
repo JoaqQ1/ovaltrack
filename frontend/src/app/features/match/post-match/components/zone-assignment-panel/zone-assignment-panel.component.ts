@@ -21,6 +21,9 @@ interface UsableRange {
 /** Instrucción de inicio: vive solo en el campo Franja (y en el resumen de la hoja móvil) mientras falta elegirla. */
 export const PICK_FRANJA_HELP = 'Tocá una fila de la grilla o una zona de la cancha';
 
+/** Regla del rango: se muestra en el tooltip de "Hasta" y en la ayuda general de la pantalla. */
+export const RANGE_RULE_HELP = 'Inicio incluido, fin excluido: 20′–25′ y 25′–30′ no se pisan.';
+
 /** Cuánto tiempo queda disponible el "Deshacer" tras borrar un tramo. */
 const UNDO_WINDOW_MS = 6000;
 
@@ -48,12 +51,12 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
   readonly laterals = ZONE_ROW_NAMES.map((name, index) => ({ row: index + 1, name }));
   readonly pickFranjaHelp = PICK_FRANJA_HELP;
+  readonly rangeRuleHelp = RANGE_RULE_HELP;
 
   // Estado del formulario: nada se guarda sin que el usuario lo decida.
   startMinute: number | null = null;
   endMinute: number | null = null;
   editingId: string | null = null;
-  helpOpen = false;
   /** En móvil el formulario es una hoja inferior: compacta (zona, rango y Guardar) o expandida con todos los campos. */
   sheetOpen = false;
   serverError: string | null = null;
@@ -79,10 +82,6 @@ export class ZoneAssignmentPanelComponent implements OnInit {
 
   toggleSheet(): void {
     this.sheetOpen = !this.sheetOpen;
-  }
-
-  toggleHelp(): void {
-    this.helpOpen = !this.helpOpen;
   }
 
   onRangeChange(): void {

@@ -115,17 +115,24 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect(rangeError()).toContain('minutos enteros');
     });
 
-    it('la ayuda del rango muestra una sola línea y el detalle se despliega con el ícono', () => {
+    it('la regla del rango va en un "?" junto a "Hasta", con tooltip y aria-label, y no hay fila de ayuda', () => {
       render();
 
-      expect(query('.range-note')?.textContent?.trim()).toBe('Inicio incluido, fin excluido.');
-      expect(query('[data-testid="range-help"]')).toBeNull();
+      const rule = query<HTMLButtonElement>('[data-testid="range-rule-help"]');
+      expect(rule?.getAttribute('aria-label')).toBe('Inicio incluido, fin excluido: 20′–25′ y 25′–30′ no se pisan.');
+      expect(rule?.title).toBe(rule?.getAttribute('aria-label') ?? '');
+      expect(query('label[for="zone-end"]')?.parentElement).toBe(rule?.parentElement ?? null);
+      expect(query('.range-note')).toBeNull();
+      expect(query('[data-testid="range-help-toggle"]')).toBeNull();
+    });
 
-      query<HTMLButtonElement>('[data-testid="range-help-toggle"]')?.click();
-      fixture.detectChanges();
+    it('Desde y Hasta van lado a lado, también al crear un tramo', () => {
+      render();
 
-      expect(query('[data-testid="range-help"]')?.textContent).toContain('El tiempo añadido cuenta como minuto 40 (1T) y 80 (2T).');
-      expect(query('[data-testid="range-help-toggle"]')?.getAttribute('aria-expanded')).toBe('true');
+      const fields = queryAll('.range-row .range-field');
+      expect(fields.length).toBe(2);
+      expect(fields[0].querySelector('#zone-start')).not.toBeNull();
+      expect(fields[1].querySelector('#zone-end')).not.toBeNull();
     });
 
     it('al elegir la franja y con un rango válido se habilita guardar y desaparece la referencia a la ayuda', () => {
@@ -605,7 +612,7 @@ describe('ZoneAssignmentPanelComponent', () => {
         fixture.detectChanges();
       }
 
-      it('"Eliminar" solo aparece al editar un tramo', () => {
+      it('"Eliminar" solo aparece al editar un tramo, como botón de ícono con aria-label', () => {
         render([existingZone]);
         expect(deleteButton()).toBeNull();
 
@@ -613,6 +620,19 @@ describe('ZoneAssignmentPanelComponent', () => {
         fixture.detectChanges();
 
         expect(deleteButton()).not.toBeNull();
+        expect(deleteButton()?.getAttribute('aria-label')).toBe('Eliminar tramo');
+        expect(deleteButton()?.textContent?.trim()).toBe('');
+      });
+
+      it('al editar el título lleva la celda del tramo y su tiempo; al crear no', () => {
+        render([existingZone]);
+        expect(query('[data-testid="edit-zone"]')).toBeNull();
+
+        component.startEdit(existingZone);
+        fixture.detectChanges();
+
+        expect(query('[data-testid="edit-zone"]')?.textContent?.trim()).toBe('C3');
+        expect(query('[data-testid="edit-period"]')?.textContent?.trim()).toBe(`${existingZone.period}T`);
       });
 
       it('F2-H3. quita el tramo de inmediato, sin confirmar, y avisa cuántos eventos quedan sin zona', () => {

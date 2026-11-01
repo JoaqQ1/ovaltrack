@@ -12,7 +12,14 @@
               [attr.aria-expanded]="sheetOpen" (click)="toggleSheet()">{{ sheetOpen ? 'Cerrar' : 'Rango' }}</button>
     </div>
 
-    <h2 class="section-title" data-testid="panel-title">{{ editingId ? 'Editar tramo' : 'Nuevo tramo' }}</h2>
+    <div class="panel-head">
+      <h2 class="section-title" data-testid="panel-title">{{ editingId ? 'Editar tramo' : 'Nuevo tramo' }}</h2>
+      <!-- Al editar: la celda del tramo (la misma que se marca en la cancha) y su tiempo -->
+      <ng-container *ngIf="editingId && franja as f">
+        <span class="zone-badge" data-testid="edit-zone">{{ f.label }}</span>
+        <span *ngIf="period" class="period-tag" data-testid="edit-period">{{ period }}T</span>
+      </ng-container>
+    </div>
 
     <!-- Franja: se elige tocando la grilla o la cancha -->
     <div class="field">
@@ -51,7 +58,11 @@
           </div>
         </div>
         <div class="range-field">
-          <label class="field-label" for="zone-end">Hasta (min)</label>
+          <div class="label-row">
+            <label class="field-label" for="zone-end">Hasta (min)</label>
+            <button type="button" class="rule-help" data-testid="range-rule-help"
+                    [attr.aria-label]="rangeRuleHelp" [attr.data-tip]="rangeRuleHelp" [title]="rangeRuleHelp">?</button>
+          </div>
           <div class="stepper">
             <button type="button" class="step-btn" aria-label="Restar un minuto a Hasta"
                     [disabled]="store.isSaving()" (click)="adjust('end', -1)">−</button>
@@ -74,28 +85,15 @@
         <i class="bi bi-exclamation-triangle-fill"></i> {{ problem }}
       </p>
 
-      <div class="range-help">
-        <p class="range-note">Inicio incluido, fin excluido.</p>
-        <button type="button" class="help-toggle" data-testid="range-help-toggle"
-                aria-controls="zone-range-help" [attr.aria-expanded]="helpOpen"
-                aria-label="Más ayuda sobre el rango" (click)="toggleHelp()">
-          <i class="bi bi-question-circle"></i>
-        </button>
-      </div>
-      <ul *ngIf="helpOpen" id="zone-range-help" class="help-list" data-testid="range-help">
-        <li>10–25 y 25–40 no se pisan: el minuto de inicio cuenta y el de fin no.</li>
-        <li>Los minutos son del partido: el 2T va de 40 a 80. El tiempo (1T o 2T) se deduce del rango.</li>
-        <li>Un tramo no puede cruzar el entretiempo: partilo en uno hasta el 40′ y otro desde el 40′.</li>
-        <li>El tiempo añadido cuenta como minuto 40 (1T) y 80 (2T).</li>
-      </ul>
     </div>
 
     <!-- Acciones: "Guardar tramo" es el único primario; la instrucción de inicio vive solo en el campo Franja -->
     <div class="panel-footer">
       <div class="panel-actions">
         <button type="button" class="btn btn-outline btn-delete" *ngIf="editingId" data-testid="zone-delete"
+                aria-label="Eliminar tramo" title="Eliminar tramo"
                 [disabled]="store.isSaving()" (click)="deleteEditing()">
-          <i class="bi bi-trash"></i> Eliminar
+          <i class="bi bi-trash" aria-hidden="true"></i>
         </button>
         <button type="button" class="btn btn-outline" data-testid="zone-cancel"
                 [disabled]="store.isSaving()" (click)="cancel()">Cancelar</button>
