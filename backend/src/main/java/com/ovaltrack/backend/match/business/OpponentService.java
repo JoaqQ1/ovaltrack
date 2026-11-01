@@ -1,9 +1,9 @@
 package com.ovaltrack.backend.match.business;
 
+import com.ovaltrack.backend.common.config.exceptions.EntityNotFoundException;
 import com.ovaltrack.backend.match.domain.Opponent;
 import com.ovaltrack.backend.match.repository.OpponentRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -36,9 +36,9 @@
   - Initial system admin bootstrap: `BootstrapAdminRunner` creates the first `ADMIN_OVALTRACK` from environment variables `OVALTRACK_BOOTSTRAP_ADMIN_EMAIL` and `OVALTRACK_BOOTSTRAP_ADMIN_PASSWORD` (min 12 characters).
   - User Roles (`UserRole`): `ADMIN_OVALTRACK`, `ADMIN_CLUB`, `COACH_ANALYST`, `PLAYER`, `NO_ROLE`.
 - **API & Error Standards**:
-  - Direct REST payloads (`ResponseEntity<DTO>`) or `BackendResponse<T>` depending on domain module.
+  - Direct REST payloads (`ResponseEntity<DTO>`), no generic envelopes. Endpoints with no resource to return (approve, delete, register…) respond with `MessageResponse` (`{ "message": "..." }`).
   - Standard HTTP status codes (`200 OK`, `201 Created`, `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `409 Conflict`).
-  - Centralized exception handling in `GlobalExceptionHandler` (`BusinessException` $\rightarrow$ 409, `EntityNotFoundException` $\rightarrow$ 404, `AccessDeniedException` $\rightarrow$ 401/403, `HttpMessageNotReadableException` $\rightarrow$ 400), returning standard JSON error responses (`{ "message": "..." }`).
+  - Centralized exception handling in `GlobalExceptionHandler` (`BusinessException` $\rightarrow$ 409, `MethodArgumentNotValidException` from `@Valid` $\rightarrow$ 409 with the first field's message, `EntityNotFoundException` $\rightarrow$ 404, `AccessDeniedException` $\rightarrow$ 401/403, `HttpMessageNotReadableException` $\rightarrow$ 400). Every error, including the Spring Security 401, uses `MessageResponse`. Controllers don't take `BindingResult` or catch business exceptions.
   - Strict layer separation: Entity $\leftrightarrow$ DTO Mapper $\leftrightarrow$ Service $\leftrightarrow$ Controller/Presenter.
 
 ## Frontend Architecture & Stack

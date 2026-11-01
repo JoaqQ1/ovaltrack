@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@environments/environment.docker';
 import { SaveUserRequest, User } from '../types/user.types';
+import { MessageResponse } from '../../../shared/types/shared-types';
 
 @Injectable({
   providedIn: 'root'
@@ -23,8 +24,8 @@ export class UserService {
     return this.http.post<User>(this.apiUrl, user);
   }
 
-  deleteUser(userId: string): Observable<string> {
-    return this.http.delete(this.buildUserUrl(userId), { responseType: 'text' });
+  deleteUser(userId: string): Observable<MessageResponse> {
+    return this.http.delete<MessageResponse>(this.buildUserUrl(userId));
   }
 
   private buildUserUrl(userId: string): string {

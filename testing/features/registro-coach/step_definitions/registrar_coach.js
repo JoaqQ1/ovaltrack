@@ -1,51 +1,38 @@
-import { Given, When, Then } from "@cucumber/cucumber";
-import assert from "node:assert/strict";
+import { Given, When } from "@cucumber/cucumber";
+import { makeHttpRequest } from "../../support/httpRequest.js";
 
-const BACKEND_URL = process.env.API_URL || "http://backend:8080";
+// <==================== Helpers ====================>
 
-// ============================ Registro de Entrenador / Analista del Club ============================
+const findClub = async (nombreClub, ciudadClub) => {
+  if (!nombreClub) return null;
+  const response = await makeHttpRequest("GET", `club/search/${encodeURIComponent(nombreClub)}`);
+  const clubs = response.body ?? [];
+  return clubs.find((club) => club.name === nombreClub && club.city === ciudadClub) ?? null;
+};
+
+// <==================== Registro de coach ====================>
 
 Given(
-  `el usuario con {string} {string} {string} {string} {string} {string} {string} {string}`,
-  async function (
-    firstName,
-    lastName,
-    email,
-    password,
-    birthDate,
-    requestedRole,
-    clubName,
-    clubCity,
-  ) {
-    this.coach = { firstName, lastName, email, password, birthDate, requestedRole };
-    const response = await fetch(`${BACKEND_URL}/club/search/${clubName}`);
-    let json = await response.json();
-    this.club = json.data[0];
+  'que el coach {string} {string} {string} {string} {string} quiere registrarse en el {string} {string} como {string}',
+  async function (nombre, apellido, email, contrasenia, fechaNacimiento, nombreClub, ciudadClub, rol) {
+    this.applicant = {
+      email,
+      password: contrasenia,
+      requestedRole: rol,
+      firstName: nombre,
+      lastName: apellido,
+      birthDate: fechaNacimiento || null,
+    };
+    this.club = await findClub(nombreClub, ciudadClub);
+
   },
 );
 
-When("se presiona el botón Enviar solicitud de acceso", async function () {
-  const member = { ...this.coach };
-  const club = { ...this.club };
-  const memberRegistrationDTO = {
-    applicant: member,
-    club: club,
-  };
-  (memberRegistrationDTO)
-
-  const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(memberRegistrationDTO),
+When('el coach presiona el botón para enviar su solicitud', async function () {
+  this.response = await makeHttpRequest("POST", "api/auth/register", {
+    applicant: this.applicant,
+    club: this.club ? { id: this.club.id } : null,
   });
-  this.response = await response.json();
-  (this.response)
 });
 
-Then(
-  `se espera el siguiente {int} con la {string}`,
-  async function (status, response) {
-    assert.strictEqual(this.response.status, status);
-    assert.strictEqual(this.response.message, response);
-  },
-);
+

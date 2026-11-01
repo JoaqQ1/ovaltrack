@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +22,7 @@ import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlaye
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerPersonUserResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerResponseDTO;
 import com.ovaltrack.backend.division.domain.dto.divisionplayerdto.DivisionPlayerUpdateDTO;
+import com.ovaltrack.backend.common.dto.response.MessageResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -104,7 +104,7 @@ public class DivisionPlayerController {
             Authentication authentication) {
         DivisionPlayerResponseDTO result = divisionPlayerService.findDivisionPlayerById(divisionPlayerId, authentication);
         return (result != null) ? ResponseEntity.ok(result)
-        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro al jugador asociado a la division");
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("No se encontro al jugador asociado a la division"));
     }
 
     @Operation(
@@ -127,12 +127,7 @@ public class DivisionPlayerController {
     @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
     public ResponseEntity<Object> saveDivisionPlayer(
             @Valid @RequestBody DivisionPlayerCreationDTO aDivisionPlayerRequest,
-            BindingResult bindingResult,
             Authentication authentication) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
         return ResponseEntity.ok(divisionPlayerService.saveDivisionPlayer(aDivisionPlayerRequest, authentication));
     }
 
@@ -150,7 +145,7 @@ public class DivisionPlayerController {
             @PathVariable UUID divisionPlayerId,
             Authentication authentication) {
         divisionPlayerService.deleteDivisionPlayer(divisionPlayerId, authentication);
-        return ResponseEntity.ok("Jugador eliminado correctamente");
+        return ResponseEntity.ok(new MessageResponse("Jugador eliminado correctamente"));
     }
 
     @Operation(
@@ -174,12 +169,7 @@ public class DivisionPlayerController {
     public ResponseEntity<Object> updateDivisionPlayer(
             @PathVariable UUID divisionPlayerId,
             @Valid @RequestBody DivisionPlayerUpdateDTO request,
-            BindingResult bindingResult,
             Authentication authentication) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
         return ResponseEntity.ok(divisionPlayerService.updateDivisionPlayer(divisionPlayerId, request, authentication));
     }
 

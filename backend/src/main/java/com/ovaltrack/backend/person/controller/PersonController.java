@@ -4,6 +4,7 @@ import com.ovaltrack.backend.person.business.PersonService;
 import com.ovaltrack.backend.person.domain.dto.PersonCreationDTO;
 import com.ovaltrack.backend.person.domain.dto.PersonResponseDTO;
 import com.ovaltrack.backend.person.domain.dto.PersonUpdateDTO;
+import com.ovaltrack.backend.common.dto.response.MessageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -13,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -82,7 +82,7 @@ public class PersonController {
     public ResponseEntity<Object> findPersonById(@PathVariable UUID personId) {
         PersonResponseDTO result = personService.findPersonById(personId);
         return (result != null) ? ResponseEntity.ok(result)
-                : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Persona no encontrada");
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Persona no encontrada"));
     }
 
     @Operation(
@@ -101,11 +101,7 @@ public class PersonController {
         @ApiResponse(responseCode = "409", description = "The request is invalid or the person cannot be saved because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> savePerson(@Valid @RequestBody PersonCreationDTO request, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError() != null ? bindingResult.getFieldError().getDefaultMessage() : "Datos inválidos";
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
+    public ResponseEntity<Object> savePerson(@Valid @RequestBody PersonCreationDTO request) {
         return ResponseEntity.ok(personService.savePerson(request));
     }
 
@@ -126,12 +122,7 @@ public class PersonController {
     })
     @PutMapping("/{personId}")
     public ResponseEntity<Object> updatePerson(@PathVariable UUID personId,
-                                               @Valid @RequestBody PersonUpdateDTO request,
-                                               BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError() != null ? bindingResult.getFieldError().getDefaultMessage() : "Datos inválidos";
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
+                                               @Valid @RequestBody PersonUpdateDTO request) {
         return ResponseEntity.ok(personService.updatePerson(personId, request));
     }
 
@@ -146,6 +137,6 @@ public class PersonController {
     @DeleteMapping("/{personId}")
     public ResponseEntity<Object> deletePerson(@PathVariable UUID personId) {
         personService.deletePerson(personId);
-        return ResponseEntity.ok("Persona eliminada correctamente");
+        return ResponseEntity.ok(new MessageResponse("Persona eliminada correctamente"));
     }
 }

@@ -106,6 +106,10 @@ services:
       API_URL: http://backend:8080
       OVALTRACK_BOOTSTRAP_ADMIN_EMAIL: ${OVALTRACK_BOOTSTRAP_ADMIN_EMAIL:-}
       OVALTRACK_BOOTSTRAP_ADMIN_PASSWORD: ${OVALTRACK_BOOTSTRAP_ADMIN_PASSWORD:-}
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-ovaltrack}
+      DB_USER: ${DB_USER:-APP}
+      DB_PASSWORD: ${DB_PASSWORD:-APP}
     volumes:
       - ./testing:/app
       - testing_node_modules:/app/node_modules
