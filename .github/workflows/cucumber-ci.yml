@@ -24,4 +24,6 @@ jobs:
         run: sleep 60
 
       - name: Ejecutar tests de Cucumber
+        env:
+         TERM: xterm
         run: ./ds test
