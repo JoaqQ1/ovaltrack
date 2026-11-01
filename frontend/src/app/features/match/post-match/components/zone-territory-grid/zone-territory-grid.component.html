@@ -6,6 +6,13 @@
         <span class="tick" [class.is-first]="$first" [class.is-last]="$last" [class.is-milestone]="tick.label.length > 3"
               [style.left.%]="tick.left">{{ tick.label }}</span>
       }
+      <!-- Sin franja elegida, el rango del formulario se marca solo sobre el eje -->
+      @if (preview(); as range) {
+        @if (range.rowIndex < 0) {
+          <span class="axis-range" data-testid="territory-axis-range" [style.left.%]="range.left" [style.width.%]="range.width"
+                [attr.title]="range.aria"></span>
+        }
+      }
     </div>
   </div>
 
@@ -58,9 +65,11 @@
       }
 
       @if (preview(); as range) {
-        <span class="preview" data-testid="territory-preview" [class.is-full]="range.rowIndex < 0"
-              [style.--row]="range.rowIndex" [style.left.%]="range.left" [style.width.%]="range.width"
-              [attr.title]="range.aria" aria-hidden="true"></span>
+        @if (range.rowIndex >= 0) {
+          <span class="preview" data-testid="territory-preview"
+                [style.--row]="range.rowIndex" [style.left.%]="range.left" [style.width.%]="range.width"
+                [attr.title]="range.aria" aria-hidden="true"></span>
+        }
       }
 
       @if (dimmedHalf(); as half) {

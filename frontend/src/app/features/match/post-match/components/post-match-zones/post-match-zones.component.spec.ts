@@ -352,10 +352,20 @@ describe('PostMatchZonesComponent', () => {
       expect(query('[data-testid="unzoned-chip"]')).toBeNull();
     });
 
-    it('la grilla dibuja como vista previa el rango cargado en el formulario', () => {
+    it('sin franja elegida el rango del formulario es una barra sobre el eje, no una columna en las filas', () => {
       createLoaded();
 
-      expect(query('[data-testid="territory-preview"]')).not.toBeNull();
+      expect(query('[data-testid="territory-axis-range"]')).not.toBeNull();
+      expect(query('[data-testid="territory-preview"]')).toBeNull();
+    });
+
+    it('con franja elegida la vista previa va solo en esa fila', () => {
+      createLoaded();
+      cell(2, 3).click();
+      fixture.detectChanges();
+
+      expect(query('[data-testid="territory-axis-range"]')).toBeNull();
+      expect(queryAll('[data-testid="territory-preview"]').length).toBe(1);
     });
 
     it('la cancha cuenta los eventos de cada celda', () => {

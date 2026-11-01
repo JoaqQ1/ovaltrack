@@ -117,7 +117,7 @@ export class ZoneTerritoryGridComponent {
     return { rowIndex, ...blockLayout({ startMinute: target.gap.start, endMinute: target.gap.end }) };
   });
 
-  /** Vista previa del formulario: en la fila de la franja elegida o, sin franja, a lo alto de toda la grilla. */
+  /** Vista previa del formulario: en la fila de la franja elegida o, sin franja (`rowIndex` -1), como barra sobre el eje. */
   readonly preview = computed(() => {
     const range = this.previewRange();
     if (!range) return null;
