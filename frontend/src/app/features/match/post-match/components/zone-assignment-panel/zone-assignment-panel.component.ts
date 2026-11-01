@@ -259,8 +259,8 @@ export class ZoneAssignmentPanelComponent implements OnInit {
           this.toastService.success(
             released > 0
               ? `${released} ${released === 1 ? 'evento pasa' : 'eventos pasan'} a "Sin zona".`
-              : 'Se quitó el tramo del partido.',
-            'Tramo eliminado',
+              : 'El rango vuelve a ser un hueco.',
+            `Tramo ${zoneLabel(zone)} · ${zone.startMinute}′–${zone.endMinute}′ eliminado`,
             UNDO_WINDOW_MS,
             { label: 'Deshacer', handler: () => this.undoDelete(restore) }
           );
@@ -270,8 +270,17 @@ export class ZoneAssignmentPanelComponent implements OnInit {
       });
   }
 
-  /** Corre desde el toast, que puede sobrevivir al panel: no se cancela si el usuario navega. */
+  /**
+   * Corre desde el toast, que puede sobrevivir al panel: no se cancela si el usuario navega. Si el rango ya lo ocupa
+   * otro tramo, avisa sin enviar nada; si lo ocupó otro analista, el 409 del backend llega al mismo aviso.
+   */
   private undoDelete(restore: ZoneAssignmentRequest): void {
+    const clash = findOverlap(restore, this.store.assignments());
+    if (clash) {
+      this.toastService.error(`El rango ya está ocupado por el tramo ${describeSegment(clash)}.`, 'No se pudo deshacer');
+      return;
+    }
+
     this.store.save(this.matchId, restore).subscribe({
       next: () => this.toastService.success('El tramo volvió al partido.', 'Tramo restaurado'),
       error: err => this.toastService.error(

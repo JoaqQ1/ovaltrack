@@ -648,7 +648,7 @@ describe('ZoneAssignmentPanelComponent', () => {
         flushReload();
 
         expect(success).toHaveBeenCalledOnceWith(
-          '2 eventos pasan a "Sin zona".', 'Tramo eliminado', 6000,
+          '2 eventos pasan a "Sin zona".', 'Tramo C3 · 10′–25′ eliminado', 6000,
           jasmine.objectContaining({ label: 'Deshacer' }));
         expect(component.editingId).toBeNull();
         expect(component.selectedCell()).toBeNull();
@@ -682,6 +682,21 @@ describe('ZoneAssignmentPanelComponent', () => {
 
         expect(error).toHaveBeenCalledOnceWith('El tramo se solapa con el tramo 1T 12′–20′ ya asignado', 'No se pudo deshacer');
         expect(store.assignments().length).toBe(0);
+      });
+
+      it('F3-S2. si "Deshacer" encuentra el rango ya ocupado por otro tramo, avisa y no envía nada', () => {
+        render([existingZone]);
+        const success = spyOn(toast, 'success');
+        const error = spyOn(toast, 'error');
+        deleteExistingZone();
+        store.assignments.set([{ ...existingZone, id: 'zone-9', startMinute: 20, endMinute: 30 }]);
+
+        success.calls.mostRecent().args[3]?.handler();
+
+        http.expectNone(zonesUrl);
+        expect(error).toHaveBeenCalledOnceWith(
+          jasmine.stringContaining('El rango ya está ocupado por el tramo'), 'No se pudo deshacer');
+        expect(store.assignments().length).toBe(1);
       });
 
       it('F2-S5. si falla el borrado avisa con un toast y el formulario conserva lo cargado', () => {
