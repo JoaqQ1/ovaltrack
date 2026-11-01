@@ -51,7 +51,7 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
   readonly matchId = signal<string>('');
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string>('');
-  readonly opponent = computed(() => this.shell.match()?.opponent || 'Rival');
+  readonly opponent = computed(() => this.shell.match()?.opponent?.name || 'Rival');
   readonly ownClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
 
   readonly activeTab = signal<StatsTab>('team');
@@ -223,18 +223,6 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
       await firstValueFrom(this.eventTypeService.getAll());
     } catch { /* se usa lo que haya en caché */ }
     this.eventTypes.set(await this.cacheService.getActiveEventTypes());
-  }
-
-  private async resolveOpponent(matchId: string): Promise<void> {
-    try {
-      const match = await firstValueFrom(this.matchService.getMatchById(matchId));
-      if (match?.opponent) {
-        this.opponent.set(match.opponent.name);
-        return;
-      }
-    } catch { /* fallback a caché */ }
-    const local = await this.cacheService.getMatch(matchId);
-    if (local?.opponent) this.opponent.set(local.opponent.name);
   }
 
   /**

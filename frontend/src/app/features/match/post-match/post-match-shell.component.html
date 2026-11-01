@@ -4,7 +4,7 @@
       <app-post-match-header
         [matchId]="store.matchId()"
         [ownClubName]="ownClubName()"
-        [opponentName]="store.match()?.opponent || 'Visitante'"
+        [opponentName]="store.match()?.opponent?.name || 'Visitante'"
         [homeScore]="store.score().home"
         [awayScore]="store.score().away"
         [scoreDelta]="store.scoreDelta()"

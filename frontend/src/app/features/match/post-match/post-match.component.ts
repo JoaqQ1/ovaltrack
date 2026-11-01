@@ -187,28 +187,6 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadMatchDetails(): void {
-    this.matchService.getMatchById(this.matchId).subscribe({
-      next: (match) => {
-        this.applyMatchDetails(match);
-      },
-      error: async () => {
-        try {
-          const cached = await this.cacheService.getMatch(this.matchId);
-          if (cached) {
-            this.applyMatchDetails(cached);
-            return;
-          }
-        } catch {
-          // Fallback falló
-        }
-        this.toastService.error('No se pudieron obtener los detalles del partido');
-      }
-    });
-  }
-
-  private applyMatchDetails(match: { opponent?: { name: string } | null; startedAt?: string | null; homeScore?: number; awayScore?: number }): void {
-    this.opponent.set(match.opponent?.name || 'Visitante');
   private applyMatchDetails(): void {
     const match = this.shell.match();
     if (!match) return;

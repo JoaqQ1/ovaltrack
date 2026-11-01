@@ -20,7 +20,7 @@ describe('PostMatchZonesComponent', () => {
   let http: HttpTestingController;
   let router: Router;
 
-  const match = { id: 'match-1', opponent: 'Trelew RC', homeScore: 12, awayScore: 7 } as Match;
+  const match = { id: 'match-1', opponent: { id: 'opp-1', name: 'Trelew RC', alias: 'Trelew', city: null }, homeScore: 12, awayScore: 7 } as Match;
   const zonesUrl = (r: { url: string }) => r.url.endsWith('/matches/match-1/zones');
   const eventsUrl = (r: { url: string }) => r.url.includes('/event/match/post-match');
 

@@ -43,7 +43,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   readonly matchId = signal<string>('');
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string>('');
-  readonly opponent = computed(() => this.shell.match()?.opponent || 'Rival');
+  readonly opponent = computed(() => this.shell.match()?.opponent?.name || 'Rival');
   readonly ownClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
 
   /** Zona elegida en la grilla o la cancha: la usa el formulario. */
