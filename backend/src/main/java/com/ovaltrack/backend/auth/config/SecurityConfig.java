@@ -1,6 +1,7 @@
 package com.ovaltrack.backend.auth.config;
 
 import com.ovaltrack.backend.auth.security.JwtAuthenticationFilter;
+import com.ovaltrack.backend.common.config.exceptions.GlobalExceptionHandler;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,7 +34,8 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, authException) -> {
                     res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     res.setContentType("application/json");
-                    res.getWriter().write("{\"error\": \"No autorizado\", \"mensaje\": \"" + authException.getMessage() + "\"}");
+                    res.setCharacterEncoding("UTF-8");
+                    res.getWriter().write("{\"message\": \"" + GlobalExceptionHandler.UNAUTHORIZED_MESSAGE + "\"}");
                 }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

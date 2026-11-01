@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,7 +18,7 @@ import com.ovaltrack.backend.club.business.ClubService;
 import com.ovaltrack.backend.club.domain.dto.ClubCreationDTO;
 import com.ovaltrack.backend.club.domain.dto.ClubResponseDTO;
 import com.ovaltrack.backend.club.domain.dto.ClubUpdateDTO;
-import com.ovaltrack.backend.common.dto.response.BackendResponse;
+import com.ovaltrack.backend.common.dto.response.MessageResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -47,7 +46,7 @@ public class ClubController {
     public ResponseEntity<Object> getMyClub(org.springframework.security.core.Authentication authentication) {
         ClubResponseDTO result = clubService.findClubForAuthenticatedUser(authentication);
         return (result != null) ? ResponseEntity.ok(result)
-                : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Club no encontrado"));
     }
 
     @Operation(summary = "Get current authenticated club's members", description = "Returns the users associated with the authenticated user's club.")
@@ -84,7 +83,7 @@ public class ClubController {
     public ResponseEntity<Object> findClubById(@PathVariable UUID clubId) {
         ClubResponseDTO result = clubService.findClubById(clubId);
         return (result != null) ? ResponseEntity.ok(result)
-                : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Club no encontrado");
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Club no encontrado"));
     }
 
     @GetMapping("/actives-clubs")
@@ -93,9 +92,9 @@ public class ClubController {
     }
 
     @GetMapping("/search/{term}")
-    public ResponseEntity<BackendResponse<Collection<ClubResponseDTO>>> search(@PathVariable("term") String term) {
+    public ResponseEntity<Collection<ClubResponseDTO>> search(@PathVariable("term") String term) {
 
-        return BackendResponse.ok(this.clubService.search(term));
+        return ResponseEntity.ok(this.clubService.search(term));
     }
 
     @Operation(summary = "Create a club in the system", description = "Creates a club in the system and returns it", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Club data required to create a club.", required = true, content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ClubCreationDTO.class))))
@@ -105,11 +104,7 @@ public class ClubController {
             @ApiResponse(responseCode = "409", description = "The request is invalid or the club cannot be saved because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> saveClub(@Valid @RequestBody ClubCreationDTO aClub, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
+    public ResponseEntity<Object> saveClub(@Valid @RequestBody ClubCreationDTO aClub) {
         return ResponseEntity.ok(clubService.saveClub(aClub));
     }
 
@@ -120,12 +115,7 @@ public class ClubController {
             @ApiResponse(responseCode = "409", description = "The club cannot be updated because of a business or data-integrity conflict.")
     })
     @PutMapping("/{clubId}")
-    public ResponseEntity<Object> updateClub(@PathVariable UUID clubId, @Valid @RequestBody ClubUpdateDTO request,
-            BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
+    public ResponseEntity<Object> updateClub(@PathVariable UUID clubId, @Valid @RequestBody ClubUpdateDTO request) {
         return ResponseEntity.ok(clubService.updateClub(clubId, request));
     }
 
@@ -137,6 +127,6 @@ public class ClubController {
     @DeleteMapping("/{clubId}")
     public ResponseEntity<Object> deleteClub(@PathVariable UUID clubId) {
         clubService.deleteClub(clubId);
-        return ResponseEntity.ok("Club eliminado correctamente");
+        return ResponseEntity.ok(new MessageResponse("Club eliminado correctamente"));
     }
 }

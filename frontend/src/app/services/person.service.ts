@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { ResultsPage } from '../features/pagination/results-page';
 import { PersonResponse, PersonCreationRequest, PersonUpdateRequest } from '../features/person/types/person.types';
+import { MessageResponse } from '../shared/types/shared-types';
 
 @Injectable({
   providedIn: 'root'
@@ -46,7 +47,7 @@ export class PersonService {
     return this.http.put<PersonResponse>(`${this.apiUrl}/${id}`, person);
   }
 
-  deletePerson(id: string): Observable<string> {
-    return this.http.delete<string>(`${this.apiUrl}/${id}`, { responseType: 'text' as 'json' });
+  deletePerson(id: string): Observable<MessageResponse> {
+    return this.http.delete<MessageResponse>(`${this.apiUrl}/${id}`);
   }
 }

@@ -7,7 +7,6 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,6 +28,7 @@ import com.ovaltrack.backend.match.domain.dto.MatchRosterDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchRosterPlayerDTO;
 import com.ovaltrack.backend.match.domain.dto.LiveMatchStateDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchTransitionDTO;
+import com.ovaltrack.backend.common.dto.response.MessageResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -75,7 +75,7 @@ public class MatchController {
     public ResponseEntity<Object> findMatchById(@PathVariable UUID matchId) {
         MatchResponseDTO result = matchService.findMatchById(matchId);
         return (result != null) ? ResponseEntity.ok(result)
-                : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro el partido");
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("No se encontro el partido"));
     }
 
     @Operation(summary = "Get the persisted live state of a match", description = "Returns the operational state currently persisted for the match.")
@@ -108,12 +108,7 @@ public class MatchController {
     @PutMapping("/{matchId}/live-state")
     public ResponseEntity<Object> updateLiveMatchState(
             @PathVariable UUID matchId,
-            @Valid @RequestBody LiveMatchStateDTO request,
-            BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
+            @Valid @RequestBody LiveMatchStateDTO request) {
         return ResponseEntity.ok(matchService.updateLiveMatchState(matchId, request));
     }
 
@@ -124,11 +119,7 @@ public class MatchController {
             @ApiResponse(responseCode = "409", description = "The match cannot be created because of a business or data-integrity conflict.")
     })
     @PostMapping
-    public ResponseEntity<Object> saveMatch(@Valid @RequestBody MatchCreationDTO match, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
+    public ResponseEntity<Object> saveMatch(@Valid @RequestBody MatchCreationDTO match) {
         return ResponseEntity.ok(matchService.saveMatch(match));
     }
 
@@ -141,11 +132,7 @@ public class MatchController {
     @PutMapping("/{matchId}")
     public ResponseEntity<Object> updateMatch(
             @PathVariable UUID matchId,
-            @Valid @RequestBody MatchUpdateDTO request, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
+            @Valid @RequestBody MatchUpdateDTO request) {
         return ResponseEntity.ok(matchService.updateMatch(matchId, request));
     }
 

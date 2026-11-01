@@ -6,6 +6,7 @@ import {
   DivisionCoachResponse,
   DivisionCoachCreationRequest
 } from '../features/division-coach/types/division-coach.types';
+import { MessageResponse } from '../shared/types/shared-types';
 
 @Injectable({
   providedIn: 'root'
@@ -37,9 +38,7 @@ export class DivisionCoachService {
     return this.http.post<DivisionCoachResponse>(this.apiUrl, request);
   }
 
-  remove(divisionCoachId: string): Observable<string> {
-    return this.http.delete<string>(`${this.apiUrl}/${divisionCoachId}`, {
-      responseType: 'text' as 'json'
-    });
+  remove(divisionCoachId: string): Observable<MessageResponse> {
+    return this.http.delete<MessageResponse>(`${this.apiUrl}/${divisionCoachId}`);
   }
 }

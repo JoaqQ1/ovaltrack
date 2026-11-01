@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { ClubDetailsComponent } from './features/club/club-details.component';
-import { ClubCreateComponent } from './features/club/club-create.component';
 import { DivisionFormComponent } from './features/division/division-form.component';
 import { DivisionListComponent } from './features/division/division-list.component';
 import { DivisionPlayerFormComponent } from './features/division-player/form/division-player-form.component';
@@ -88,14 +87,6 @@ export const routes: Routes = [
         },
         path: 'club',
         component: ClubDetailsComponent
-    },
-    {
-        path: 'club/new',
-        canActivate: [hasRoleGuard],
-        data: {
-            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
-        },
-        component: ClubCreateComponent
     },
     {
         path: 'divisions/new',

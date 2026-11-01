@@ -1,5 +1,7 @@
-import { Then } from '@cucumber/cucumber';
+import { Given, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
+import { getUserToken } from './auth_helper.js';
+import { makeHttpRequest } from './httpRequest.js';
 
 export function extractResponseMessage(responseBody) {
   if (!responseBody) return '';
@@ -44,6 +46,27 @@ export async function assertResponseCodeAndMessage(world, expectedStatus, expect
     `Se esperaba que el mensaje contuviera "${expectedMessage}", pero se obtuvo: "${actualMessage}" (Status ${actualStatus})`
   );
 }
+
+Given('que el administrador del club con email {string} y contraseña {string} ha iniciado sesión', async function (email, contraseña) {
+  this.token = await getUserToken(email, contraseña);
+  assert.ok(this.token, `Fallo de inicio de sesión para el admin ${email}`);
+  this.response = await makeHttpRequest(
+    "GET",
+    `club/my-club`,
+    null,
+    this.token,
+  );
+  this.club = this.response.body;
+});
+
+Then('el sistema responde con {int} y {string}', function (statusCode, statusText) {
+    assert.equal(this.response.body?.message, statusText);
+    assert.equal(this.response.status, statusCode);
+});
+
+Then('el sistema responde con {int}', function (statusCode) {
+    assert.equal(this.response.status, statusCode);
+});
 
 Then('el sistema rechaza la solicitud con código {int} y el mensaje {string}', async function (statusCode, mensajeEsperado) {
   await assertResponseCodeAndMessage(this, statusCode, mensajeEsperado);
