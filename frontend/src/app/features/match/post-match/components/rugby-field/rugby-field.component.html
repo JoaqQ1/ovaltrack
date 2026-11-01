@@ -21,7 +21,7 @@
       </div>
     </div>
 
-    <div class="pitch" [class.is-start]="startHint()">
+    <div class="pitch">
       <!-- Fondo: solo dibujo, no interactivo -->
       <svg class="pitch-bg" [attr.viewBox]="'0 0 ' + width + ' ' + height" preserveAspectRatio="none" aria-hidden="true" focusable="false">
         <rect class="grass" x="0" y="0" [attr.width]="width" [attr.height]="height" />
@@ -29,11 +29,6 @@
         <rect class="ingoal" x="0" y="0" [attr.width]="goalLineLeft" [attr.height]="height" />
         <rect class="ingoal" [attr.x]="goalLineRight" y="0" [attr.width]="width - goalLineRight" [attr.height]="height" />
       </svg>
-
-      <!-- Estado vacío: la cancha se atenúa y se indica por dónde empezar -->
-      <p *ngIf="startHint()" class="start-hint" data-testid="start-hint">
-        Empezá por el minuto 0: tocá la zona donde arrancó el partido
-      </p>
 
       <!-- Identidad de cada in-goal: texto vertical y sutil (decorativo) -->
       <span class="ingoal-label ingoal-label--own" data-testid="ingoal-own" aria-hidden="true">Propio</span>
@@ -122,9 +117,6 @@
         <i class="heat-swatch" [class.is-empty]="step.level === 0" [style.--heat]="heatMix(step.level)" aria-hidden="true"></i>{{ step.label }}
       </span>
     </div>
-    <p *ngIf="isEmpty()" class="field-empty" data-testid="zones-empty">
-      Todavía no hay eventos vinculados a una zona. Asigná un tramo del partido a una zona para verlos acá.
-    </p>
     <p *ngIf="unzonedEventCount() > 0" class="field-unzoned" data-testid="unzoned-notice">
       <i class="bi bi-exclamation-circle"></i>
       {{ unzonedEventCount() }} {{ unzonedEventCount() === 1 ? 'evento sin zona' : 'eventos sin zona' }}

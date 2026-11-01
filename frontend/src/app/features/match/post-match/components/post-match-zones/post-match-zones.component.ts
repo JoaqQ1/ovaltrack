@@ -84,9 +84,6 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     return segment ? { row: segment.row, col: segment.col } : null;
   });
 
-  /** Sin ningún tramo y sin zona elegida: la cancha invita a empezar por el minuto 0. */
-  readonly showStartHint = computed(() => this.zonesStore.assignments().length === 0 && !this.selectedCell());
-
   ngOnInit(): void {
     this.layoutService.setWide(true);
     this.zonesStore.reset();

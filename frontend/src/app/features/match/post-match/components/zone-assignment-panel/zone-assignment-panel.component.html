@@ -5,25 +5,24 @@
     <div class="sheet-summary" data-testid="sheet-summary">
       <span *ngIf="franja as f" class="zone-badge">{{ f.label }}</span>
       <span class="summary-text">
-        <strong>{{ selectedCell() ? subtitle : 'Elegí una franja en la grilla o la cancha' }}</strong>
-        <small data-testid="sheet-range">{{ rangeSummary }}</small>
+        <strong data-testid="sheet-zone">{{ zoneSummary ?? pickFranjaHelp }}</strong>
+        <small *ngIf="zoneSummary" data-testid="sheet-range">{{ rangeSummary }}</small>
       </span>
       <button type="button" class="btn btn-outline btn-range" data-testid="sheet-toggle"
               [attr.aria-expanded]="sheetOpen" (click)="toggleSheet()">{{ sheetOpen ? 'Cerrar' : 'Rango' }}</button>
     </div>
 
     <h2 class="section-title" data-testid="panel-title">{{ editingId ? 'Editar tramo' : 'Nuevo tramo' }}</h2>
-    <p class="panel-subtitle" data-testid="panel-subtitle">{{ subtitle }}</p>
 
     <!-- Franja: se elige tocando la grilla o la cancha -->
     <div class="field">
       <span class="field-label">Franja</span>
-      <div class="selected-cell" data-testid="selected-cell" [class.is-empty]="!selectedCell()">
+      <div class="selected-cell" id="zone-franja" data-testid="selected-cell" [class.is-empty]="!selectedCell()">
         <ng-container *ngIf="franja as f; else pickHint">
           <span class="zone-badge">{{ f.label }}</span>
           <span class="franja-text"><strong>{{ f.name }}</strong> <small>{{ f.range }}</small></span>
         </ng-container>
-        <ng-template #pickHint><i class="bi bi-geo-alt"></i><span>Tocá una fila de la grilla o una zona de la cancha</span></ng-template>
+        <ng-template #pickHint><i class="bi bi-geo-alt"></i><span>{{ pickFranjaHelp }}</span></ng-template>
       </div>
     </div>
 
@@ -91,7 +90,7 @@
       </ul>
     </div>
 
-    <!-- Acciones: "Guardar tramo" es el único primario; los avisos van debajo como ayuda -->
+    <!-- Acciones: "Guardar tramo" es el único primario; la instrucción de inicio vive solo en el campo Franja -->
     <div class="panel-footer">
       <div class="panel-actions">
         <button type="button" class="btn btn-outline btn-delete" *ngIf="editingId" data-testid="zone-delete"
@@ -101,14 +100,12 @@
         <button type="button" class="btn btn-outline" data-testid="zone-cancel"
                 [disabled]="store.isSaving()" (click)="cancel()">Cancelar</button>
         <button type="button" class="btn btn-invite d-flex align-items-center justify-content-center gap-2"
-                data-testid="zone-save" aria-describedby="zone-save-hint"
+                data-testid="zone-save" [attr.aria-describedby]="pickHelp ? 'zone-franja' : null"
                 (click)="save()" [disabled]="store.isSaving() || !!blockReason">
           <span *ngIf="store.isSaving()" class="spinner-border spinner-border-sm"></span>
           <span>{{ store.isSaving() ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Guardar tramo') }}</span>
         </button>
       </div>
-
-      <p *ngIf="pickHelp as help" id="zone-save-hint" class="save-hint" data-testid="save-hint">{{ help }}</p>
 
       <p *ngIf="serverError" class="inline-error" role="alert" data-testid="server-error">
         <i class="bi bi-exclamation-triangle-fill"></i> {{ serverError }}

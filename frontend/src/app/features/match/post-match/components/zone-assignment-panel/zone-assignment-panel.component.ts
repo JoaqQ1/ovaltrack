@@ -18,8 +18,8 @@ interface UsableRange {
   endMinute: number;
 }
 
-/** Ayuda que acompaña al botón deshabilitado mientras falta elegir la franja. */
-export const PICK_FRANJA_HELP = 'Elegí la franja en la grilla o en la cancha.';
+/** Instrucción de inicio: vive solo en el campo Franja (y en el resumen de la hoja móvil) mientras falta elegirla. */
+export const PICK_FRANJA_HELP = 'Tocá una fila de la grilla o una zona de la cancha';
 
 /** Cuánto tiempo queda disponible el "Deshacer" tras borrar un tramo. */
 const UNDO_WINDOW_MS = 6000;
@@ -47,6 +47,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   readonly selectedCell = model<ZoneCellRef | null>(null);
 
   readonly laterals = ZONE_ROW_NAMES.map((name, index) => ({ row: index + 1, name }));
+  readonly pickFranjaHelp = PICK_FRANJA_HELP;
 
   // Estado del formulario: nada se guarda sin que el usuario lo decida.
   startMinute: number | null = null;
@@ -112,10 +113,10 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     return cell ? { label: zoneLabel(cell), name: ZONE_COLUMN_NAMES[cell.col - 1], range: columnRangeLabel(cell.col) || 'in-goal' } : null;
   }
 
-  /** Subtítulo del formulario, ej. "Centro · Campo rival". */
-  get subtitle(): string {
+  /** Zona elegida en una línea, ej. "22 rival · Centro"; null si todavía no se eligió. */
+  get zoneSummary(): string | null {
     const cell = this.selectedCell();
-    return cell ? `${ZONE_ROW_NAMES[cell.row - 1]} · ${ZONE_COLUMN_NAMES[cell.col - 1]}` : 'Elegí la franja en la grilla o en la cancha';
+    return cell ? `${ZONE_COLUMN_NAMES[cell.col - 1]} · ${ZONE_ROW_NAMES[cell.row - 1]}` : null;
   }
 
   /** El tiempo (1T/2T) que se deduce del rango; null mientras el rango no sea utilizable. */
@@ -186,12 +187,12 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     this.prefill({ startMinute: gap.start, endMinute: gap.end });
   }
 
-  /** Resumen del rango para la hoja compacta, ej. "1T · 26′ a 31′ · 3 eventos". */
+  /** Resumen del rango para la hoja compacta, ej. "26′–31′ · 1T · 3 eventos". */
   get rangeSummary(): string {
     const range = this.usableRange();
     if (!range) return 'Definí el rango';
     const events = this.linkedEventCount ?? 0;
-    return `${range.period}T · ${range.startMinute}′ a ${range.endMinute}′ · ${events} ${events === 1 ? 'evento' : 'eventos'}`;
+    return `${range.startMinute}′–${range.endMinute}′ · ${range.period}T · ${events} ${events === 1 ? 'evento' : 'eventos'}`;
   }
 
   startEdit(zone: ZoneAssignmentResponse): void {

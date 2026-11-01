@@ -90,9 +90,12 @@
 .veil-first { left: 0; }
 .veil-second { left: 50%; }
 
+/* Píldora con fondo propio: el divisor punteado de E.T. no la atraviesa */
 .empty-note {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; padding: 0 16px;
-  text-align: center; font-size: 13px; font-weight: 700; color: var(--warning, #8a5700); pointer-events: none; z-index: 2;
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 4;
+  width: max-content; max-width: calc(100% - 24px); margin: 0; padding: 8px 16px; box-sizing: border-box;
+  border: 1.5px solid var(--zone-heat-low, #fdb022); border-radius: var(--radius-pill, 999px); background: var(--surface, #fff);
+  text-align: center; font-size: 13px; font-weight: 700; color: var(--warning, #8a5700); pointer-events: none;
 }
 
 @media (pointer: coarse) {

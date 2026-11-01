@@ -41,8 +41,6 @@ export class RugbyFieldComponent {
   readonly selectable = input<boolean>(true);
   /** Celda recién guardada: hace un pulso breve. */
   readonly pulseCell = input<ZoneCellRef | null>(null);
-  /** Partido sin tramos: se atenúa la cancha y se invita a empezar por el minuto 0. */
-  readonly startHint = input<boolean>(false);
 
   /** Celda que corresponde al tramo bajo el cursor en la timeline o la lista (se resalta como el hover). */
   readonly linkedCell = input<ZoneCellRef | null>(null);
@@ -104,8 +102,6 @@ export class RugbyFieldComponent {
   });
 
   readonly rivalShortName = computed(() => shortTeamName(this.opponentName()) || 'Rival');
-
-  readonly isEmpty = computed(() => this.cells().length === 0);
 
   readonly reading = computed(() => {
     const cell = this.activeCell();

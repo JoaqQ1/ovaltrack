@@ -114,10 +114,11 @@ describe('RugbyFieldComponent', () => {
       expect(fixture.nativeElement.querySelector('[data-testid="unzoned-notice"]')).toBeNull();
     });
 
-    it('muestra un estado vacío cuando no hay eventos en ninguna zona', () => {
+    it('sin eventos en ninguna zona no agrega carteles: la instrucción de inicio vive en la grilla y el formulario', () => {
       render([], 0);
 
-      expect(fixture.nativeElement.querySelector('[data-testid="zones-empty"]')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="zones-empty"]')).toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="start-hint"]')).toBeNull();
     });
   });
 
@@ -198,21 +199,6 @@ describe('RugbyFieldComponent', () => {
       fixture.detectChanges();
 
       expect(cellAt(2, 3)).toBe(before);
-    });
-
-    it('sin tramos muestra la invitación a empezar por el minuto 0 y atenúa la cancha', () => {
-      render([]);
-      fixture.componentRef.setInput('startHint', true);
-      fixture.detectChanges();
-
-      expect(fixture.nativeElement.querySelector('[data-testid="start-hint"]')?.textContent).toContain('Empezá por el minuto 0');
-      expect(fixture.nativeElement.querySelector('.pitch').classList).toContain('is-start');
-    });
-
-    it('sin la invitación activa no hay aviso', () => {
-      render([]);
-
-      expect(fixture.nativeElement.querySelector('[data-testid="start-hint"]')).toBeNull();
     });
   });
 

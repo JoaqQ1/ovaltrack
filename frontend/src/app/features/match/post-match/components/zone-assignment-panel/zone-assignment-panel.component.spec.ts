@@ -26,7 +26,6 @@ describe('ZoneAssignmentPanelComponent', () => {
   const query = <T extends HTMLElement>(selector: string): T | null => fixture.nativeElement.querySelector(selector);
   const queryAll = (selector: string): HTMLElement[] => Array.from(fixture.nativeElement.querySelectorAll(selector));
   const saveButton = (): HTMLButtonElement => query<HTMLButtonElement>('[data-testid="zone-save"]') as HTMLButtonElement;
-  const hint = (): string => query('[data-testid="save-hint"]')?.textContent?.trim() ?? '';
   const rangeError = (): string => query('[data-testid="range-error"]')?.textContent?.trim() ?? '';
 
   const ev = (id: string, period: 1 | 2, minute: number): MatchTimelineEventResponse => ({
@@ -74,12 +73,14 @@ describe('ZoneAssignmentPanelComponent', () => {
   afterEach(() => http.verify());
 
   describe('formulario', () => {
-    it('F2-S4. sin franja elegida el botón está deshabilitado y la ayuda dice dónde elegirla', () => {
+    it('F2-S4. sin franja elegida el botón está deshabilitado y el campo Franja dice dónde elegirla', () => {
       render();
 
       expect(saveButton().disabled).toBeTrue();
-      expect(hint()).toBe('Elegí la franja en la grilla o en la cancha.');
-      expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Tocá una fila de la grilla');
+      expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Tocá una fila de la grilla o una zona de la cancha');
+      expect(saveButton().getAttribute('aria-describedby')).toBe('zone-franja');
+      expect(query('#zone-franja')).not.toBeNull();
+      expect(query('[data-testid="save-hint"]')).toBeNull();
     });
 
     it('no hay selector de tiempo: el 1T o 2T se deduce del rango', () => {
@@ -127,23 +128,15 @@ describe('ZoneAssignmentPanelComponent', () => {
       expect(query('[data-testid="range-help-toggle"]')?.getAttribute('aria-expanded')).toBe('true');
     });
 
-    it('el motivo que bloquea guardar va debajo del botón, como texto de ayuda', () => {
-      render();
-
-      const position = saveButton().compareDocumentPosition(query('[data-testid="save-hint"]') as Element);
-
-      expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    });
-
-    it('al elegir la franja y con un rango válido se habilita guardar y desaparece la ayuda', () => {
+    it('al elegir la franja y con un rango válido se habilita guardar y desaparece la referencia a la ayuda', () => {
       render();
       selectCell(2, 3);
 
       expect(saveButton().disabled).toBeFalse();
-      expect(query('[data-testid="save-hint"]')).toBeNull();
+      expect(saveButton().getAttribute('aria-describedby')).toBeNull();
       expect(query('[data-testid="selected-cell"]')?.textContent).toContain('C3');
       expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Campo propio');
-      expect(query('[data-testid="panel-subtitle"]')?.textContent).toContain('Centro · Campo propio');
+      expect(query('[data-testid="sheet-zone"]')?.textContent).toContain('Campo propio · Centro');
     });
 
     describe('lateral', () => {
@@ -180,18 +173,18 @@ describe('ZoneAssignmentPanelComponent', () => {
         component.endMinute = 5;
         fixture.detectChanges();
 
-        expect(summary()).toContain('Centro · Campo rival');
-        expect(query('[data-testid="sheet-range"]')?.textContent).toBe('1T · 0′ a 5′ · 2 eventos');
+        expect(summary()).toContain('Campo rival · Centro');
+        expect(query('[data-testid="sheet-range"]')?.textContent).toBe('0′–5′ · 1T · 2 eventos');
       });
 
-      it('sin franja ni rango válido pide elegirlos', () => {
+      it('sin franja el resumen repite el texto del campo Franja y no muestra rango', () => {
         render([
           { ...existingZone, id: 'p1', startMinute: 0, endMinute: 40 },
           { ...existingZone, id: 'p2', period: 2, startMinute: 40, endMinute: 80 }
         ]);
 
-        expect(summary()).toContain('Elegí una franja en la grilla o la cancha');
-        expect(query('[data-testid="sheet-range"]')?.textContent).toBe('Definí el rango');
+        expect(summary()).toContain('Tocá una fila de la grilla o una zona de la cancha');
+        expect(query('[data-testid="sheet-range"]')).toBeNull();
       });
 
       it('"Rango" expande la hoja y "Cerrar" la vuelve a compactar', () => {

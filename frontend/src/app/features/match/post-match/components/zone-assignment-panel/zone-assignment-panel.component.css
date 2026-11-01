@@ -11,14 +11,12 @@
 }
 
 .section-title {
-  margin: 0 0 4px;
+  margin: 0 0 14px;
   font-family: var(--font-head);
   font-weight: 800;
   font-size: 1rem;
   color: var(--text-primary, #111d0e);
 }
-
-.panel-subtitle { margin: 0 0 14px; font-size: 13px; font-weight: 600; color: var(--text-secondary, #3b4e33); }
 
 .field { margin-bottom: 14px; }
 
@@ -174,7 +172,6 @@
   font-weight: 600;
 }
 
-.save-hint { margin: 10px 0 0; font-size: 13px; font-weight: 600; color: var(--warning, #8a5700); }
 .field > .inline-error { margin: 10px 0 0; }
 .panel-footer > .inline-error { margin: 10px 0 0; }
 
@@ -294,7 +291,6 @@
 
   /* Compacta: solo el resumen y el botón de guardar */
   .panel-card.is-sheet:not(.is-open) .section-title,
-  .panel-card.is-sheet:not(.is-open) .panel-subtitle,
   .panel-card.is-sheet:not(.is-open) .field,
   .panel-card.is-sheet:not(.is-open) .gaps { display: none; }
 

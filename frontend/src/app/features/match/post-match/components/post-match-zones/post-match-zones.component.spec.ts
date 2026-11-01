@@ -210,25 +210,21 @@ describe('PostMatchZonesComponent', () => {
       http.expectOne(eventsUrl).flush([]);
     });
 
-    it('sin tramos la cancha invita a empezar y el formulario viene precargado con 0–5', () => {
+    it('sin tramos el formulario viene precargado con 0–5', () => {
       createLoaded([], []);
 
-      expect(query('[data-testid="start-hint"]')).not.toBeNull();
       const panel = fixture.debugElement.query(By.directive(ZoneAssignmentPanelComponent)).componentInstance as ZoneAssignmentPanelComponent;
       expect([panel.startMinute, panel.endMinute]).toEqual([0, 5]);
     });
 
-    it('la invitación desaparece al elegir una zona o al existir un tramo', () => {
+    it('sin tramos solo se ven dos mensajes de inicio: la grilla y el campo Franja', () => {
       createLoaded([], []);
-      cell(2, 3).click();
-      fixture.detectChanges();
-      expect(query('[data-testid="start-hint"]')).toBeNull();
-    });
 
-    it('con tramos ya cargados no hay invitación', () => {
-      createLoaded();
-
-      expect(query('[data-testid="start-hint"]')).toBeNull();
+      expect(query('[data-testid="territory-empty"]')?.textContent).toContain('Tocá una fila de la grilla para empezar');
+      expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Tocá una fila de la grilla o una zona de la cancha');
+      for (const repeated of ['start-hint', 'zones-empty', 'save-hint', 'panel-subtitle']) {
+        expect(query(`[data-testid="${repeated}"]`)).withContext(repeated).toBeNull();
+      }
     });
   });
 
@@ -386,7 +382,7 @@ describe('PostMatchZonesComponent', () => {
       fixture.detectChanges();
 
       expect(component.selectedCell()).toEqual({ row: 3, col: 5 });
-      expect(query('[data-testid="panel-subtitle"]')?.textContent).toContain('Derecha · 22 rival');
+      expect(query('[data-testid="sheet-zone"]')?.textContent).toContain('22 rival · Derecha');
       expect(queryAll('[data-testid="lateral-option"]')[2].classList).toContain('is-active');
     });
 
