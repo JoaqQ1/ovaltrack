@@ -11,23 +11,28 @@
 }
 
 /*
- * Cancha compacta: el alto manda y el ancho se deriva de la proporción 120:70. Tope de 300 px (la fila lateral
- * más baja, de 15 m, queda en ~64 px) o el que entra a lo ancho sin deformar la cancha.
+ * Cancha compacta alineada a la izquierda: el alto manda (250 px) y el ancho se deriva de la proporción 120:70, o
+ * el que entra a lo ancho sin deformarla. La leyenda va al costado; en anchos angostos pasa debajo.
  */
 .rugby-field {
-  --pitch-h: min(300px, calc((100cqw - var(--row-axis-w) - 8px) * 70 / 120));
+  --pitch-h: min(250px, calc((100cqw - var(--row-axis-w) - 8px) * 70 / 120));
   --pitch-w: calc(var(--pitch-h) * 120 / 70);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 16px 28px;
   margin: 0;
 }
 
-/* Cabecera: sentido de ataque y lectura */
-.field-head {
+.field-main { min-width: 0; }
+
+/* Costado: sentido de ataque, escala de calor y lectura de la zona apuntada */
+.field-side {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  margin-bottom: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding-top: 2px;
   font-size: 13px;
 }
 
@@ -44,7 +49,6 @@
   min-height: 20px;
   color: var(--text-secondary, #3b4e33);
   font-weight: 600;
-  text-align: right;
 }
 
 /* Marco: eje de filas + cancha */
@@ -53,7 +57,6 @@
   gap: 8px;
   width: fit-content;
   max-width: 100%;
-  margin-inline: auto;
 }
 
 .row-axis {
@@ -196,16 +199,16 @@
 
 .heat-legend {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  margin: 0 0 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   font-family: var(--font-mono, monospace);
   font-size: 11px;
   color: var(--text-secondary, #3b4e33);
 }
 
-.heat-legend-title { font-family: var(--font-body, Inter, sans-serif); font-weight: 700; }
+.heat-legend-title { font-family: var(--font-body, Inter, sans-serif); font-size: 13px; font-weight: 700; }
+.heat-legend-steps { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .heat-legend-step { display: inline-flex; align-items: center; gap: 5px; }
 
 .heat-swatch {
@@ -253,9 +256,9 @@
   inset: 0;
   margin: auto;
   width: max-content;
-  min-width: 28px;
-  height: 28px;
-  padding: 0 8px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
@@ -265,7 +268,7 @@
   border: 2px solid var(--btn-primary-bg, #204b22);
   color: var(--btn-primary-bg, #204b22);
   font-family: var(--font-mono, monospace);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   pointer-events: none;
   z-index: 2;
@@ -284,56 +287,29 @@
   .field-cell, .field-cell.is-pulse { animation: none; transition: none; }
 }
 
-/* Eje de columnas */
-/* Debajo de la cancha: mismo ancho y alineación que ella (eje de filas + hueco a la izquierda) */
-.col-axis-wrap,
-.field-slot {
+/* Eje de columnas: solo los números, con el mismo ancho y alineación que la cancha (eje de filas + hueco a la izquierda) */
+.col-axis-wrap {
   width: calc(var(--row-axis-w) + 8px + var(--pitch-w));
   max-width: 100%;
-  margin-inline: auto;
+  margin-top: 6px;
   padding-left: calc(var(--row-axis-w) + 8px);
   box-sizing: border-box;
 }
 
-.col-axis-wrap { margin-top: 8px; }
-.field-slot { margin-top: 10px; }
-.field-slot:empty { display: none; }
+.col-axis { display: grid; }
 
-.col-axis {
-  display: grid;
-}
-
-.col-axis-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
+.col-axis-number {
   text-align: center;
-  line-height: 1.25;
-}
-
-.col-axis-number { font-family: var(--font-mono, monospace); font-size: 13px; font-weight: 700; color: var(--text-primary, #111d0e); }
-.col-axis-name { font-size: 11px; font-weight: 700; color: var(--text-secondary, #3b4e33); }
-.col-axis-range { font-family: var(--font-mono, monospace); font-size: 10px; color: var(--text-secondary, #3b4e33); }
-
-.col-legend {
-  display: none;
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: var(--text-secondary, #3b4e33);
-}
-
-/* Notas */
-.field-notes { margin-top: 12px; }
-
-.field-unzoned {
-  margin: 0 0 6px;
-  font-size: 12.5px;
-  color: var(--text-secondary, #3b4e33);
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary, #111d0e);
 }
 
 .field-unzoned {
   display: inline-flex;
+  margin: 0;
+  font-size: 12.5px;
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
@@ -343,18 +319,18 @@
   font-weight: 600;
 }
 
-/* Tablet/móvil: sin nombres en los ejes, la leyenda de columnas va debajo */
+/* Espacio angosto (tablet vertical, móvil): la leyenda baja debajo de la cancha */
+@container (max-width: 760px) {
+  .rugby-field { grid-template-columns: minmax(0, 1fr); }
+  .field-side { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
+}
+
+/* Móvil: sin nombres en el eje de filas, la letra los reemplaza */
 @media (max-width: 576px) {
   :host { --row-axis-w: 28px; }
 
   .row-axis-name,
-  .row-axis-range,
-  .col-axis-name,
-  .col-axis-range { display: none; }
+  .row-axis-range { display: none; }
 
   .row-axis-letter { display: block; }
-
-  .col-legend { display: block; }
-  .reading { text-align: left; }
-  .cell-count { min-width: 28px; height: 28px; padding: 0 7px; font-size: 13px; }
 }

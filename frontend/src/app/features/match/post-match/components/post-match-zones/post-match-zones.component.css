@@ -81,7 +81,7 @@ app-zone-territory-grid { margin-bottom: 16px; }
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
 .sk-toolbar { height: 44px; margin-bottom: 14px; }
-.sk-field { height: 260px; }
+.sk-field { height: 250px; }
 .sk-timeline { height: 250px; margin-bottom: 14px; }
 .sk-line { height: 18px; margin-bottom: 12px; }
 .sk-line--short { width: 55%; }

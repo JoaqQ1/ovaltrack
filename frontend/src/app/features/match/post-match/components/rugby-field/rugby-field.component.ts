@@ -4,8 +4,8 @@ import { ZONE_GRID_COLS, ZONE_GRID_ROWS, ZoneCellRef, ZoneCellSummary } from '..
 import { CountTweenDirective } from './count-tween.directive';
 import { HEAT_STEPS, heatLevel, heatMix } from '../../utils/zone-heat';
 import {
-  ZONE_COLUMN_METERS, ZONE_COLUMN_NAMES, ZONE_FIELD_LENGTH_M, ZONE_FIELD_WIDTH_M, ZONE_ROW_METERS,
-  ZONE_ROW_LETTERS, ZONE_ROW_SHORT_NAMES, columnRangeLabel, describeZone, formatEventCount, rowRangeLabel, shortTeamName, zoneLabel
+  ZONE_COLUMN_METERS, ZONE_FIELD_LENGTH_M, ZONE_FIELD_WIDTH_M, ZONE_ROW_METERS,
+  ZONE_ROW_LETTERS, ZONE_ROW_SHORT_NAMES, describeZone, formatEventCount, rowRangeLabel, shortTeamName, zoneLabel
 } from '../../utils/zone-grid';
 
 interface FieldCell extends ZoneCellRef {
@@ -75,14 +75,9 @@ export class RugbyFieldComponent {
   readonly postBottom = this.height / 2 + 28;
 
   // --- Ejes ---
-  readonly columnAxis = this.cols.map(col => ({
-    number: col,
-    name: ZONE_COLUMN_NAMES[col - 1],
-    range: columnRangeLabel(col) || 'in-goal',
-    meters: ZONE_COLUMN_METERS[col - 1]
-  }));
+  /** Solo el número de cada columna: nombres y metros ya figuran en las filas de la grilla de territorio. */
+  readonly columnAxis = this.cols.map(col => ({ number: col }));
   readonly rowAxis = this.rows.map(row => ({ letter: ZONE_ROW_LETTERS[row - 1], name: ZONE_ROW_SHORT_NAMES[row - 1], range: rowRangeLabel(row), meters: ZONE_ROW_METERS[row - 1] }));
-  readonly columnLegend = this.columnAxis.map(c => `${c.number} ${c.name.toLowerCase()}`).join(' · ');
 
   // --- Estado interno de foco/lectura ---
   private readonly activeCell = signal<ZoneCellRef | null>(null);
