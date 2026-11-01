@@ -76,10 +76,15 @@
 .block:hover { background: var(--btn-primary-hover, #163618); }
 .block:focus-visible { outline: 3px solid var(--navy, #16324f); outline-offset: 2px; }
 .block-label { font: 700 11px var(--font-mono, monospace); letter-spacing: .02em; white-space: nowrap; }
-.block.is-selected { box-shadow: 0 0 0 2px var(--surface, #fff), 0 0 0 4px var(--text-primary, #111d0e); z-index: 2; }
+/* Anillos: el ámbar es "sin zona" en esta pantalla, así que no se usa para resaltar. El orden importa: gana el último. */
+/* Resalte cruzado (hover en la cancha): anillo verde oscuro fino; el resto de los bloques se atenúa */
+.block.is-linked { box-shadow: 0 0 0 1px var(--surface, #fff), 0 0 0 3px var(--btn-primary-bg, #204b22); z-index: 1; }
+/* Seleccionado: anillo verde oscuro grueso con separación blanca */
+.block.is-selected { box-shadow: 0 0 0 2px var(--surface, #fff), 0 0 0 5px var(--btn-primary-bg, #204b22); z-index: 2; }
 .block.is-conflict { box-shadow: 0 0 0 2px var(--surface, #fff), 0 0 0 4px var(--error, #b42318); z-index: 2; }
-.block.is-linked { box-shadow: 0 0 0 2px var(--surface, #fff), 0 0 0 4px var(--warning, #8a5700); z-index: 1; }
 .block.is-dimmed { opacity: .4; }
+/* El tramo en edición no se atenúa: la selección tiene que verse siempre */
+.block.is-selected.is-dimmed, .block.is-conflict.is-dimmed { opacity: 1; }
 
 /* Manijas de estiramiento: barra visible de 8 px y zona de agarre más ancha (44 px con pantalla táctil) */
 .handle {
