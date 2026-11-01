@@ -1,5 +1,6 @@
 import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZonePeriod } from '../../types/zone.types';
-import { describeSegment, findGaps, periodRange } from './zone-stats';
+import { zoneLabel } from './zone-grid';
+import { findGaps, periodRange } from './zone-stats';
 
 export interface DragRange {
   period: ZonePeriod;
@@ -24,8 +25,8 @@ export function minuteAtPosition(offsetX: number, trackWidth: number): number {
 }
 
 function boundaryNotice(period: ZonePeriod, side: 'start' | 'end'): string {
-  if (period === 1) return side === 'start' ? 'Se frenó en el inicio del partido' : 'Se frenó en el entretiempo';
-  return side === 'start' ? 'Se frenó en el entretiempo' : 'Se frenó en el final del partido';
+  if (period === 1) return side === 'start' ? 'tope: inicio del partido' : 'tope: entretiempo';
+  return side === 'start' ? 'tope: entretiempo' : 'tope: final del partido';
 }
 
 /** Motivo de frenado en `limit`: el borde del tiempo, o el tramo vecino que ocupa el otro lado. */
@@ -35,7 +36,7 @@ function limitNotice(assignments: Segment[], period: ZonePeriod, limit: number, 
 
   const neighbor = assignments.find(a =>
     a.id !== ignoredId && a.period === period && (side === 'start' ? a.endMinute === limit : a.startMinute === limit));
-  return neighbor ? `Se frenó: choca con el tramo ${describeSegment(neighbor as ZoneAssignmentResponse)}` : 'Se frenó en el límite del hueco';
+  return neighbor ? `tope: tramo ${zoneLabel(neighbor)}` : 'tope: límite del hueco';
 }
 
 /**

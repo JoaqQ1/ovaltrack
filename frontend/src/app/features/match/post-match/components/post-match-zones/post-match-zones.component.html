@@ -79,7 +79,7 @@
           </div>
 
           <app-zone-territory-grid
-            [assignments]="zonesStore.assignments()" [events]="filteredEvents()" [periodFilter]="periodFilter()"
+            [assignments]="zonesStore.assignments()" [events]="filteredEvents()" [allEvents]="zonesStore.events()" [periodFilter]="periodFilter()"
             [selectedId]="zonesStore.editingId()" [selectedCol]="selectedCell()?.col ?? null"
             [conflictId]="zonesStore.conflictId()"
             [highlightCell]="highlightedCell()" [previewRange]="zonesStore.formRange()"

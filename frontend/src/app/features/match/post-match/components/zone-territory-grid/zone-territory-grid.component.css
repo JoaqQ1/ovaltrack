@@ -50,6 +50,9 @@
   background: repeating-linear-gradient(90deg, var(--border, rgba(27, 33, 22, .1)) 0 1px, transparent 1px 12.5%);
 }
 .tracks.is-pointing { cursor: pointer; }
+/* Arrastrar para crear: el gesto horizontal es del rango; el scroll vertical de la página sigue siendo del navegador */
+.tracks { touch-action: pan-y; }
+.tracks.is-dragging { cursor: ew-resize; user-select: none; }
 
 .row-track { position: relative; height: var(--row-h); border-bottom: 1px solid var(--border, rgba(27, 33, 22, .1)); }
 .row-track:last-child { border-bottom: 0; }
@@ -81,12 +84,27 @@
 .half-line { position: absolute; top: 0; bottom: 0; border-left: 2px dashed var(--text-muted, #7a8c74); pointer-events: none; z-index: 1; }
 
 /* Hueco bajo el puntero y vista previa del formulario, dentro de la fila (--row = índice de fila) */
-.hover-gap, .preview {
+.hover-gap, .preview, .drag-range {
   position: absolute; pointer-events: none; z-index: 1; box-sizing: border-box;
   top: calc(var(--row) * var(--row-h)); height: var(--row-h);
 }
 .hover-gap { outline: 2px dashed var(--btn-primary-bg, #204b22); outline-offset: -2px; background: rgba(32, 75, 34, .08); }
+.drag-range { z-index: 2; border: 2px solid var(--navy, #16324f); border-radius: var(--radius-sm, 6px); background: var(--navy-tint, rgba(22, 50, 79, .08)); }
 .preview { border: 2px dashed var(--navy, #16324f); border-radius: var(--radius-sm, 6px); background: var(--navy-tint, rgba(22, 50, 79, .08)); }
+
+/* Tooltip en vivo del arrastre: `fixed` para no recortarse con el borde de la grilla */
+.drag-tip {
+  position: fixed; z-index: 1040; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; gap: 4px;
+  pointer-events: none; white-space: nowrap;
+}
+.drag-tip > span:first-child {
+  padding: 5px 10px; border-radius: var(--radius-md, 10px); background: var(--navy, #16324f); color: #fff;
+  font: 700 12px var(--font-mono, monospace); box-shadow: var(--shadow-elevation);
+}
+.drag-notice {
+  padding: 4px 10px; border-radius: var(--radius-pill, 999px); background: var(--error, #b42318); color: #fff;
+  font: 700 12px var(--font-body, sans-serif);
+}
 
 /* Velo sobre la mitad que el filtro de tiempo deja afuera */
 .veil { position: absolute; top: 0; bottom: 0; width: 50%; background: rgba(255, 255, 255, .62); pointer-events: none; z-index: 3; }

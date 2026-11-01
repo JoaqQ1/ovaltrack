@@ -30,8 +30,10 @@
     </div>
 
     <div class="tracks" #tracks data-testid="territory-tracks"
-         [class.is-pointing]="hoverGap() !== null"
-         (click)="onTracksClick($event)" (mousemove)="onTracksMove($event)" (mouseleave)="onTracksLeave()">
+         [class.is-pointing]="hoverGap() !== null" [class.is-dragging]="dragView() !== null"
+         (click)="onTracksClick($event)" (mousemove)="onTracksMove($event)" (mouseleave)="onTracksLeave()"
+         (pointerdown)="onPointerDown($event)" (pointermove)="onPointerMove($event)"
+         (pointerup)="onPointerUp($event)" (pointercancel)="onPointerCancel()">
 
       @for (gap of gaps(); track gap.period + '-' + gap.start) {
         <span class="gap" data-testid="territory-gap" aria-hidden="true"
@@ -70,6 +72,20 @@
                 [style.--row]="range.rowIndex" [style.left.%]="range.left" [style.width.%]="range.width"
                 [attr.title]="range.aria" aria-hidden="true"></span>
         }
+      }
+
+      @if (dragView(); as drag) {
+        @if (drag.layout; as layout) {
+          <span class="drag-range" data-testid="territory-drag-range" aria-hidden="true"
+                [style.--row]="drag.rowIndex" [style.left.%]="layout.left" [style.width.%]="layout.width"></span>
+        }
+        <div class="drag-tip" data-testid="territory-drag-tip" role="status" aria-live="polite"
+             [style.left.px]="drag.tipX" [style.top.px]="drag.tipY">
+          <span>{{ drag.text }}</span>
+          @if (drag.notice; as notice) {
+            <span class="drag-notice" data-testid="territory-drag-notice"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> {{ notice }}</span>
+          }
+        </div>
       }
 
       @if (dimmedHalf(); as half) {
