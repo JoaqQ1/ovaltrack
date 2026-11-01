@@ -39,7 +39,7 @@ const DEFAULT_MATCH_DATE = '2027-01-09T15:30:00';
 
 export async function findMatchByStatus(divisionId, rival, statuses, token) {
   const matches = await getDivisionMatches(divisionId, token);
-  return matches.find((m) => m.opponent === rival && statuses.includes(m.status)) ?? null;
+  return matches.find((m) => m.opponent?.name === rival && statuses.includes(m.status)) ?? null;
 }
 
 export async function createMatchForRival(divisionId, rival, token) {
