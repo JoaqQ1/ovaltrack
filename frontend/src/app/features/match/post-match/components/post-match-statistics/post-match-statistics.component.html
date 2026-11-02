@@ -1,10 +1,9 @@
 <section class="stats-page">
 
-  @if (isLoading()) {
-    <div class="state-box">
-      <div class="spinner"></div>
-      <p>Calculando estadísticas del partido...</p>
-    </div>
+  @if (loading.pending()) {
+    @if (loading.showIndicator()) {
+      <app-rugby-ball-loader message="Calculando estadísticas del partido..." />
+    }
   } @else if (errorMessage()) {
     <div class="state-box state-box--error">
       <i class="bi bi-exclamation-triangle"></i>

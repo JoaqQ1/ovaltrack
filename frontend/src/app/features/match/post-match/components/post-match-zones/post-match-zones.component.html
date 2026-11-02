@@ -1,24 +1,9 @@
 <section class="zones-page">
 
-  @if (isLoading()) {
-    <!-- Esqueleto con la forma de la pantalla, en lugar de un spinner suelto -->
-    <div class="zones-layout" aria-busy="true" data-testid="zones-skeleton">
-      <div class="zones-main">
-        <div class="field-card">
-          <div class="skeleton sk-toolbar"></div>
-          <div class="skeleton sk-timeline"></div>
-          <div class="skeleton sk-field"></div>
-        </div>
-      </div>
-      <div class="zones-side">
-        <div class="panel-card-skeleton field-card">
-          <div class="skeleton sk-line"></div>
-          <div class="skeleton sk-line sk-line--short"></div>
-          <div class="skeleton sk-block"></div>
-        </div>
-      </div>
-      <p class="visually-hidden" role="status">Cargando zonas del partido...</p>
-    </div>
+  @if (loading.pending()) {
+    @if (loading.showIndicator()) {
+      <app-rugby-ball-loader data-testid="zones-loading" message="Cargando zonas del partido..." />
+    }
   } @else if (errorMessage()) {
     <div class="state-box state-box--error" role="alert">
       <i class="bi bi-exclamation-triangle"></i>

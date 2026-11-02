@@ -1,25 +1,15 @@
 <div class="pm">
   <!-- Banner de Error Semántico -->
-  <div *ngIf="errorMessage()" class="alert-error" role="alert">
+  <div *ngIf="errorMessage() && !loading.pending()" class="alert-error" role="alert">
     <i class="bi bi-exclamation-triangle-fill"></i>
     <span>{{ errorMessage() }}</span>
   </div>
 
-  <!-- Estado de Carga con Skeletons Oficiales -->
-  <div *ngIf="isLoading()" class="skeleton-state">
-    <div class="sk-row" *ngFor="let i of [1, 2, 3, 4]">
-      <div class="sk sk-avatar"></div>
-      <div style="flex: 1">
-        <div class="sk sk-line"></div>
-        <div class="sk sk-line s"></div>
-      </div>
-      <div class="sk sk-block" style="max-width: 140px"></div>
-      <div class="sk sk-pill"></div>
-    </div>
-  </div>
+  <!-- Carga: la pelota aparece solo si tarda más de 100 ms -->
+  <app-rugby-ball-loader *ngIf="loading.showIndicator()" class="pm-loading" message="Cargando eventos del partido…" />
 
   <!-- Contenido Principal: Grilla de Estación de Trabajo (Fase 1 y 2) -->
-  <ng-container *ngIf="!isLoading() && !errorMessage()">
+  <ng-container *ngIf="!loading.pending() && !errorMessage()">
     <!-- Área de KPIs: Strip Horizontal Compacto -->
     <div class="pm-area-kpi">
       <app-post-match-kpi-strip />

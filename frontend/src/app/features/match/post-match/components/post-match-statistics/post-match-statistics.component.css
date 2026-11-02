@@ -92,11 +92,6 @@
   height: 44px; padding: 0 20px; border-radius: 10px; background: #fff; cursor: pointer;
   border: 1px solid var(--btn-outline-border, rgba(32, 75, 34, .25)); color: var(--btn-outline-fg, #204b22); font-weight: 600;
 }
-.spinner {
-  width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--surface-alt, #eef1e7);
-  border-top-color: var(--btn-primary-bg, #204b22); animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ---------- Detalle por área (Fixed size & dynamic scrolling) ---------- */
 .detail-grid { 

@@ -8,6 +8,7 @@ import { ZoneAssignmentResponse, ZoneCellRef } from '../../../types/zone.types';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { PostMatchShellStore } from '../../store/post-match-shell.store';
 import { watchCompactLayout } from '../../utils/zone-compact';
+import { LoadingGate } from '../../utils/loading-gate';
 import { ZoneDeepLinkTarget, resolveZoneDeepLink } from '../../utils/zone-deep-link';
 import { ZONE_SHORTCUT_HELP, isSaveShortcut, isTypingTarget, shortcutCell } from '../../utils/zone-shortcuts';
 import {
@@ -17,6 +18,7 @@ import { Possession } from '../../../types/live-capture.types';
 import { RugbyFieldComponent } from '../rugby-field/rugby-field.component';
 import { ZoneAssignmentPanelComponent } from '../zone-assignment-panel/zone-assignment-panel.component';
 import { ZoneKpiStripComponent } from '../zone-kpi-strip/zone-kpi-strip.component';
+import { RugbyBallLoaderComponent } from '../../../../../shared/components/rugby-ball-loader/rugby-ball-loader.component';
 import { TerritoryGapSelection, ZoneTerritoryGridComponent } from '../zone-territory-grid/zone-territory-grid.component';
 
 /** Lateral que se propone al tocar una fila de la grilla: el centro de la cancha. */
@@ -29,7 +31,7 @@ const DEFAULT_LATERAL_ROW = 2;
 @Component({
   selector: 'app-post-match-zones',
   standalone: true,
-  imports: [RugbyFieldComponent, ZoneAssignmentPanelComponent, ZoneTerritoryGridComponent, ZoneKpiStripComponent],
+  imports: [RugbyFieldComponent, ZoneAssignmentPanelComponent, ZoneTerritoryGridComponent, ZoneKpiStripComponent, RugbyBallLoaderComponent],
   templateUrl: './post-match-zones.component.html',
   styleUrl: './post-match-zones.component.css'
 })
@@ -47,7 +49,8 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   private readonly grid = viewChild(ZoneTerritoryGridComponent);
 
   readonly matchId = signal<string>('');
-  readonly isLoading = signal<boolean>(true);
+  /** La pelota aparece solo si la carga tarda (ver LoadingGate). */
+  readonly loading = new LoadingGate();
   readonly errorMessage = signal<string>('');
   readonly opponent = computed(() => this.shell.match()?.opponent?.name || 'Rival');
   readonly ownClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
@@ -119,7 +122,6 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     this.matchId.set(id);
     if (!id) {
       this.errorMessage.set('No se indicó el partido.');
-      this.isLoading.set(false);
       return;
     }
     this.load(id);
@@ -128,6 +130,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.layoutService.setWide(null);
     this.zonesStore.reset();
+    this.loading.dispose();
   }
 
   toggleHelp(): void {
@@ -141,7 +144,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
    */
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
-    if (this.isLoading() || this.errorMessage()) return;
+    if (this.loading.pending() || this.errorMessage()) return;
 
     if (isSaveShortcut(event)) {
       event.preventDefault();
@@ -252,7 +255,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   }
 
   private load(matchId: string): void {
-    this.isLoading.set(true);
+    this.loading.start();
     this.errorMessage.set('');
 
     this.zonesStore.load(matchId)
@@ -260,12 +263,12 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.readDeepLink();
-          this.isLoading.set(false);
+          this.loading.finish();
         },
         error: err => {
           const message = err?.error?.message;
           this.errorMessage.set(typeof message === 'string' && message ? message : 'No se pudieron cargar las zonas del partido.');
-          this.isLoading.set(false);
+          this.loading.finish();
         }
       });
   }

@@ -12,12 +12,17 @@ import { ToastService } from 'src/app/core/services/toast.service';
 import { HidingFilter, MatchReviewStore } from './store/match-review.store';
 import { MatchTimelineEventResponse } from '../types/event.types';
 import { PostMatchShellStore } from './store/post-match-shell.store';
+import { RugbyBallLoaderComponent } from '../../../shared/components/rugby-ball-loader/rugby-ball-loader.component';
+import { LoadingGate } from './utils/loading-gate';
 import { PostMatchKpiStripComponent } from './components/post-match-kpi-strip/post-match-kpi-strip.component';
 import { PostMatchTimelineComponent } from './components/post-match-timeline/post-match-timeline.component';
 import { PostMatchTableComponent } from './components/post-match-table/post-match-table.component';
 import { PostMatchPanelComponent } from './components/post-match-panel/post-match-panel.component';
 import { PostMatchCreateModalComponent } from './components/post-match-create-modal/post-match-create-modal.component';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
+
+/** Desde esta cantidad de eventos, dibujar la vista traba el hilo un rato: la pelota se muestra antes de empezar. */
+const HEAVY_RENDER_EVENTS = 200;
 
 const HIDING_FILTER_LABELS: Record<HidingFilter, string> = {
   period: 'período',
@@ -32,6 +37,7 @@ const HIDING_FILTER_LABELS: Record<HidingFilter, string> = {
   standalone: true,
   imports: [
     CommonModule,
+    RugbyBallLoaderComponent,
     PostMatchKpiStripComponent,
     PostMatchTimelineComponent,
     PostMatchTableComponent,
@@ -62,7 +68,8 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   // Estado del contenedor
   readonly errorMessage = signal<string>('');
-  readonly isLoading = signal<boolean>(true);
+  /** La pelota aparece solo si la carga tarda (ver LoadingGate). */
+  readonly loading = new LoadingGate();
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
   readonly showCreateModal = signal<boolean>(false);
 
@@ -172,6 +179,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
       this.store.resetSession();
       this.store.setMatchId(this.matchId);
       this.applyMatchDetails();
+      this.loading.start();
       this.loadZones();
       this.loadRoster();
       this.loadEventTypesAndEvents();
@@ -183,6 +191,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     this.shell.unbindLiveScore();
     this.layoutService.setWide(null);
     this.store.resetSession();
+    this.loading.dispose();
   }
 
   /**
@@ -255,7 +264,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   }
 
   async loadEvents(): Promise<void> {
-    this.isLoading.set(true);
+    this.loading.start();
     this.errorMessage.set('');
 
     try {
@@ -280,7 +289,6 @@ export class PostMatchComponent implements OnInit, OnDestroy {
           : (error.error?.message || 'El partido aún no se encuentra cerrado.');
         this.errorMessage.set(msg);
         this.toastService.warning(msg);
-        this.isLoading.set(false);
         return;
       }
 
@@ -306,9 +314,22 @@ export class PostMatchComponent implements OnInit, OnDestroy {
         this.toastService.error(msg);
       }
     } finally {
-      this.isLoading.set(false);
-      if (!this.errorMessage()) this.restoreSelection();
+      if (this.errorMessage()) {
+        await this.loading.finish();
+      } else {
+        await this.revealEvents();
+      }
     }
+  }
+
+  /**
+   * Con cientos de eventos, dibujar la vista traba el hilo un rato: la pelota se pinta antes de empezar y el navegador
+   * la sigue mostrando (girando) hasta que la vista está lista, en lugar de quedar en blanco.
+   */
+  private async revealEvents(): Promise<void> {
+    if (this.store.rawEvents().length >= HEAVY_RENDER_EVENTS) await this.loading.showNow();
+    await this.loading.finish();
+    this.restoreSelection();
   }
 
 }

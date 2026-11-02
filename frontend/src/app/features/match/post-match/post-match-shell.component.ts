@@ -5,6 +5,7 @@ import { ActivatedRoute, Data, NavigationEnd, Router, RouterOutlet } from '@angu
 import { filter, map, startWith } from 'rxjs';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { PostMatchHeaderComponent } from './components/post-match-header/post-match-header.component';
+import { RugbyBallLoaderComponent } from '../../../shared/components/rugby-ball-loader/rugby-ball-loader.component';
 import { PostMatchShellStore } from './store/post-match-shell.store';
 
 /**
@@ -15,7 +16,7 @@ import { PostMatchShellStore } from './store/post-match-shell.store';
 @Component({
   selector: 'app-post-match-shell',
   standalone: true,
-  imports: [RouterOutlet, PostMatchHeaderComponent],
+  imports: [RouterOutlet, PostMatchHeaderComponent, RugbyBallLoaderComponent],
   providers: [PostMatchShellStore],
   templateUrl: './post-match-shell.component.html',
   styleUrl: './post-match-shell.component.css'
