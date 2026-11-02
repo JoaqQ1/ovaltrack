@@ -1,5 +1,6 @@
 import { Component, ElementRef, ViewChild, computed, effect, inject, signal, untracked, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, of } from 'rxjs';
@@ -13,11 +14,16 @@ import { ReviewEventViewModel } from '../../types/match-review.types';
 import { ModalComponent } from '../../../../modal/modal.component';
 import { EventFormComponent, EventFormData } from '../event-form/event-form.component';
 import { TemplateField } from '../../../types/event-type.types';
+import { ZoneCellRef } from '../../../types/zone.types';
+import { EventZoneLink, describeEventZone, resolveEventZoneLink } from '../../utils/zone-event-link';
+import { zoneDeepLinkParams } from '../../utils/zone-deep-link';
+import { zoneLabel } from '../../utils/zone-grid';
+import { ZoneMiniMapComponent } from '../zone-mini-map/zone-mini-map.component';
 
 @Component({
   selector: 'app-post-match-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent, EventFormComponent],
+  imports: [CommonModule, RouterLink, FormsModule, ModalComponent, EventFormComponent, ZoneMiniMapComponent],
   templateUrl: './post-match-panel.component.html',
   styleUrl: './post-match-panel.component.css'
 })
@@ -120,6 +126,27 @@ export class PostMatchPanelComponent implements OnDestroy {
         attributes: formData.attributes
       }
     });
+  }
+
+  readonly zoneLabel = zoneLabel;
+
+  /**
+   * A dónde lleva el evento en Zonas, calculado con los tramos cargados. Si no se pudieron cargar, no se ofrece hueco
+   * ni tramo (el enlace va a Zonas sin parámetros). Null si el evento no tiene un tiempo válido: la fila no se muestra.
+   */
+  zoneLinkFor(ev: ReviewEventViewModel): EventZoneLink | null {
+    const loaded = this.store.zonesStatus() === 'loaded';
+    const link = resolveEventZoneLink(ev, loaded ? this.store.zoneAssignments() : []);
+    return link && !loaded ? { ...link, segment: null, gap: null } : link;
+  }
+
+  zoneLinkParamsFor(link: EventZoneLink): Record<string, string> {
+    return zoneDeepLinkParams(link);
+  }
+
+  zoneDescription(ev: ReviewEventViewModel, link: EventZoneLink): string {
+    const zone: ZoneCellRef | null = ev.zone ?? null;
+    return describeEventZone(zone, link);
   }
 
   getEnrichedAttributesDisplay(ev: ReviewEventViewModel): { label: string; value: string }[] {

@@ -175,6 +175,30 @@
                   </div>
                 </div>
 
+                <!--
+                  Zona (solo lectura): una línea, toda la fila es el enlace a Zonas (tramo o hueco de ese minuto).
+                  El detalle va en el tooltip y el aria-label. Sin datos de zona (no se sabe) no se muestra.
+                -->
+                <a *ngIf="ev.zone !== undefined && zoneLinkFor(ev) as link"
+                   class="detail-item-clean detail-item-zone"
+                   [class.is-unzoned]="ev.zone === null"
+                   [routerLink]="['/post-match', store.matchId(), 'zones']"
+                   [queryParams]="zoneLinkParamsFor(link)"
+                   [attr.title]="zoneDescription(ev, link)"
+                   [attr.aria-label]="'Zona: ' + zoneDescription(ev, link) + '. Abrir en Zonas'"
+                   data-testid="event-zone-row">
+                  <span class="item-label">Zona</span>
+                  <span class="zone-row-value">
+                    <span *ngIf="link.isAddedTime" class="zone-added-note">T. añadido</span>
+                    <ng-container *ngIf="ev.zone as zone; else unzoned">
+                      <app-zone-mini-map [cell]="zone" />
+                      <span class="zone-row-label">{{ zoneLabel(zone) }}</span>
+                    </ng-container>
+                    <ng-template #unzoned><span class="zone-row-none">Sin zona</span></ng-template>
+                    <i class="bi bi-chevron-right zone-row-chevron" aria-hidden="true"></i>
+                  </span>
+                </a>
+
                 <!-- Atributos de Enriquecimiento Táctico (Modo Lectura) -->
                 <ng-container *ngIf="getEnrichedAttributesDisplay(ev) as attrList">
                   <div *ngIf="attrList.length > 0" class="detail-enrichment-divider"></div>

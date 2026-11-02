@@ -1,5 +1,6 @@
 import { MatchTimelineEventResponse } from '../../types/event.types';
-import { ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../types/zone.types';
+import { ZONE_HALF_MINUTES, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../types/zone.types';
+import { zoneLabel, zoneName } from './zone-grid';
 import { effectiveMatchTime, periodRange } from './zone-stats';
 import { PeriodGap, gapAtMinute } from './zone-track-layout';
 
@@ -66,4 +67,26 @@ export function resolveEventZoneLink(event: ZoneLinkEvent, assignments: ZoneAssi
   const gap = event.zone || container ? null : gapAtMinute(assignments, minute);
 
   return { segment, gap, minute, isAddedTime };
+}
+
+/** Minuto en que termina el tiempo del evento (40 o 80), para aclarar a qué tramo cuenta el tiempo añadido. */
+function periodEndMinute(link: EventZoneLink): number {
+  return (Math.floor(link.minute / ZONE_HALF_MINUTES) + 1) * ZONE_HALF_MINUTES;
+}
+
+/**
+ * Descripción de la zona de un evento para tooltips y lectores de pantalla: la zona con su lateral y franja, el rango
+ * del tramo si se conoce (o el hueco, si no tiene zona) y la aclaración del tiempo añadido.
+ */
+export function describeEventZone(zone: ZoneCellRef | null, link: EventZoneLink | null): string {
+  const parts: string[] = [];
+  if (zone) {
+    parts.push(`${zoneLabel(zone)} · ${zoneName(zone)}`);
+    if (link?.segment) parts.push(`tramo ${link.segment.startMinute}′–${link.segment.endMinute}′`);
+  } else {
+    parts.push('Sin zona');
+    if (link?.gap) parts.push(`hueco ${link.gap.start}′–${link.gap.end}′`);
+  }
+  if (link?.isAddedTime) parts.push(`tiempo añadido: cuenta en el tramo que termina en ${periodEndMinute(link)}′`);
+  return parts.join(' · ');
 }

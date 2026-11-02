@@ -1,4 +1,4 @@
-import { resolveEventZoneLink, zoneForEvent } from './zone-event-link';
+import { EventZoneLink, describeEventZone, resolveEventZoneLink, zoneForEvent } from './zone-event-link';
 import { ZoneAssignmentResponse } from '../../types/zone.types';
 
 describe('zone-event-link', () => {
@@ -124,6 +124,32 @@ describe('zone-event-link', () => {
     it('devuelve null sin tramo en ese minuto o sin tiempo válido', () => {
       expect(zoneForEvent(event(2, 55), [segment('a', 1, 0, 40)])).toBeNull();
       expect(zoneForEvent({ period: 0, matchTime: 600 }, [segment('a', 1, 0, 40)])).toBeNull();
+    });
+  });
+
+  describe('describeEventZone', () => {
+    const link = (overrides: Partial<EventZoneLink>): EventZoneLink => ({ segment: null, gap: null, minute: 12, isAddedTime: false, ...overrides });
+
+    it('con zona y tramo: etiqueta, lateral, franja y rango', () => {
+      expect(describeEventZone({ row: 2, col: 4 }, link({ segment: segment('a', 1, 10, 25) })))
+        .toBe('C4 · Centro · Campo rival · tramo 10′–25′');
+    });
+
+    it('con zona pero sin tramo conocido: solo la zona', () => {
+      expect(describeEventZone({ row: 3, col: 6 }, link({}))).toBe('D6 · Derecha · In-goal rival');
+      expect(describeEventZone({ row: 3, col: 6 }, null)).toBe('D6 · Derecha · In-goal rival');
+    });
+
+    it('sin zona: nombra el hueco si se conoce', () => {
+      expect(describeEventZone(null, link({ gap: { period: 1, start: 0, end: 10 } }))).toBe('Sin zona · hueco 0′–10′');
+      expect(describeEventZone(null, null)).toBe('Sin zona');
+    });
+
+    it('aclara el tiempo añadido con el minuto en que termina el tiempo (40′ o 80′)', () => {
+      expect(describeEventZone({ row: 2, col: 4 }, link({ segment: segment('a', 1, 30, 40), minute: 39, isAddedTime: true })))
+        .toBe('C4 · Centro · Campo rival · tramo 30′–40′ · tiempo añadido: cuenta en el tramo que termina en 40′');
+      expect(describeEventZone(null, link({ minute: 79, isAddedTime: true })))
+        .toBe('Sin zona · tiempo añadido: cuenta en el tramo que termina en 80′');
     });
   });
 

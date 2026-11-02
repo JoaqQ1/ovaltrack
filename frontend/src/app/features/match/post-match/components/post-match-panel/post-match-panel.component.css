@@ -566,6 +566,51 @@
   font-weight: 700;
 }
 
+/* Zona: una línea del alto de los demás atributos; toda la fila es el enlace a Zonas */
+.detail-item-zone {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* Sin padding ni márgenes negativos (ensancharían el bloque y mostrarían una barra horizontal) */
+.detail-item-zone:hover {
+  background: var(--surface-hover, #f1f3ea);
+  box-shadow: -4px 0 0 var(--surface-hover, #f1f3ea), 4px 0 0 var(--surface-hover, #f1f3ea);
+}
+
+.zone-row-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zone-row-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary, #111d0e);
+}
+
+/* Sin zona en ámbar (el mismo del selector «Sin asignar»): invita a completarla en Zonas */
+.zone-row-none {
+  font-weight: 700;
+  color: var(--warning, #8a5700);
+}
+
+.zone-added-note {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary, #3b4e33);
+}
+
+.zone-row-chevron {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #3b4e33);
+}
+
 .detail-enrichment-divider {
   height: 1px;
   background: var(--border-sport, rgba(32, 75, 34, 0.15));
