@@ -46,6 +46,7 @@ export class ZoneMiniMapComponent {
       });
       y += rowMeters;
     });
-    return cells;
+    // La celda marcada se dibuja al final: queda por encima de los trazos vecinos (en los in-goals mide apenas unos píxeles)
+    return cells.sort((a, b) => Number(a.isActive) - Number(b.isActive));
   });
 }
