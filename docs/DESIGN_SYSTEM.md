@@ -431,6 +431,8 @@ La pantalla de post-partido está estructurada como una estación de trabajo de 
    - Selector inline `[ Sin asignar ▾ ]`: chip con borde discontinuo ámbar (`#d97706`), fondo crema (`#fffdf0`) y desplegable nativo sin solapamiento de virtual scroll.
 5. **Inspector Dual y Formulario Reactivo (`PostMatchPanelComponent`):**
    - **Desktop:** Columna lateral fija de 320px con solapas `[Ver]` y `[Editar]`.
+   - **Eliminar:** ícono rojo (`--error`) a la derecha del selector `[Ver | Editar]`, en la barra superior y en los dos modos; 32px visibles y 44px tocables, con `aria-label` y la confirmación de siempre. El pie de Editar solo dice «Los cambios se guardan automáticamente».
+   - **Prioridad de la cola (desktop):** la cola de revisión reserva siempre dos ítems y el aviso «+N más». Si los atributos del evento no entran, scrollean dentro del bloque de detalle (el título queda fijo) con un degradado abajo que avisa que hay más.
    - **Tablet/Mobile:** Bottom Sheet flotante con estado *peek* (comprimido con handle, stepper `‹ 1 de 4 ›`, selector rápido y botón Editar) y estado *open* (expandido al 78vh con backdrop blur).
    - **Autoguardado con Debounce:** Pipeline RxJS con `debounceTime(400)` e indicador visual en tiempo real (`Guardando...`, `Guardado ✓`, `Error al guardar`).
    - **Cola de Revisión:** Tarjetas compactas (`02:36 Penal / infracción 1T`) con resaltado ámbar al seleccionar y stepper rápido.

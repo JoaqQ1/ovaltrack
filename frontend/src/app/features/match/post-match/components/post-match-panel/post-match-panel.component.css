@@ -355,6 +355,49 @@
   flex: none;
 }
 
+.tab-bar-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Eliminar: ícono de 32px que se toca en 44px (cabe en el padding de la barra sin agrandarla) */
+.btn-tab-delete {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--error, #b42318);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.btn-tab-delete::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+}
+
+.btn-tab-delete:hover:not(:disabled) {
+  background: var(--error-tint, rgba(240, 68, 56, 0.14));
+}
+
+.btn-tab-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .tab-pill-group {
   display: inline-flex;
   background: rgba(32, 75, 34, 0.08);
@@ -467,16 +510,41 @@
   margin-top: 3px;
 }
 
-.detail-list-clean {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 6px;
+/* Detalle de "Ver": el bloque que scrollea si los atributos no entran; el degradado avisa que hay más abajo */
+.detail-frame {
+  position: relative;
+}
+
+.detail-frame::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 28px;
+  background: linear-gradient(to bottom, transparent, var(--surface, #ffffff));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.detail-frame.has-more::after {
+  opacity: 1;
+}
+
+.detail-scroll {
   max-height: clamp(240px, 42vh, 320px);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-sport, rgba(32, 75, 34, 0.28)) transparent;
   padding-right: 2px;
+}
+
+.detail-list-clean {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 6px;
 }
 
 .detail-item-clean {
@@ -575,53 +643,13 @@
   box-shadow: 0 0 0 3px rgba(32, 75, 34, 0.12);
 }
 
-.panel-actions-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-top: 10px;
-}
-
-.btn-panel-action {
-  height: 34px;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-}
-
-.btn-panel-delete {
-  background: transparent;
-  border: none;
-  color: #dc2626;
-  padding: 6px 12px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 6px;
-}
-
-.btn-panel-delete:hover {
-  background: rgba(220, 38, 38, 0.08);
-  color: #b91c1c;
-  text-decoration: none;
-}
-
 .panel-edit-footer {
   margin-top: auto;
   padding-top: 8px;
   border-top: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.18));
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   flex: none;
 }
@@ -649,6 +677,13 @@
 
 /* ================= COLA DE REVISIÓN INTEGRADA ================= */
 .queue-section {
+  /* Altos fijos de la cola: con ellos se calcula la reserva de dos ítems en escritorio */
+  --queue-pad-y: 24px;        /* 10px arriba + 14px abajo */
+  --queue-header-h: 24px;     /* rótulo 18px + 6px de margen */
+  --queue-stepper-h: 46px;    /* stepper 38px + 8px de margen */
+  --queue-item-h: 34px;
+  --queue-item-gap: 5px;
+  --queue-hint-h: 26px;
   padding: 10px 16px 14px;
   display: flex;
   flex-direction: column;
@@ -657,6 +692,7 @@
 }
 
 .queue-section-header {
+  height: 18px;
   margin-bottom: 6px;
   flex: none;
 }
@@ -713,7 +749,7 @@
 .queue-cards-list {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--queue-item-gap);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-sport, rgba(32, 75, 34, 0.28)) transparent;
@@ -727,6 +763,7 @@
   grid-template-columns: 46px 1fr auto;
   align-items: center;
   gap: 8px;
+  height: var(--queue-item-h);
   padding: 6px 10px;
   background: #fffdf7;
   border: 1px solid #ebdcc1;
@@ -777,12 +814,53 @@
 }
 
 .queue-more-hint {
+  height: var(--queue-hint-h);
   text-align: center;
   font-size: 0.72rem;
   font-weight: 600;
+  line-height: 18px;
   color: var(--text-secondary, #3b4e33);
   padding: 6px 0 2px;
   flex: none;
+}
+
+/*
+ * Escritorio: el inspector tiene alto fijo y la cola es el flujo principal. La cola reserva siempre dos ítems y el
+ * aviso "+N más"; lo que no entra del detalle scrollea dentro de su bloque, con el título fijo.
+ */
+@media (min-width: 1121px) {
+  .view-tab-content {
+    flex: 0 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-section-header {
+    flex: none;
+  }
+
+  .detail-frame {
+    flex: 0 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .detail-scroll {
+    flex: 0 1 auto;
+    min-height: 0;
+  }
+
+  .queue-section {
+    flex: 1 1 0;
+    min-height: calc(var(--queue-pad-y) + var(--queue-header-h) + var(--queue-stepper-h)
+      + 2 * var(--queue-item-h) + var(--queue-item-gap) + var(--queue-hint-h));
+  }
+
+  .queue-cards-list {
+    min-height: calc(2 * var(--queue-item-h) + var(--queue-item-gap));
+  }
 }
 
 .queue-completed {

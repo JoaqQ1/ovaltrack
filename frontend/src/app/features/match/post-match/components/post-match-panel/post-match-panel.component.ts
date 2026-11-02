@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, OnDestroy } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, effect, inject, signal, untracked, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -41,6 +41,27 @@ export class PostMatchPanelComponent implements OnDestroy {
   readonly showDeleteModal = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
 
+  // Detalle de "Ver": si los atributos no entran, scrollea y un degradado avisa que hay más abajo
+  readonly detailHasMore = signal<boolean>(false);
+  private detailScrollEl: HTMLElement | null = null;
+  private detailObserver?: ResizeObserver;
+
+  @ViewChild('detailScroll')
+  set detailScroll(ref: ElementRef<HTMLElement> | undefined) {
+    const el = ref?.nativeElement ?? null;
+    if (el === this.detailScrollEl) return;
+    this.detailObserver?.disconnect();
+    this.detailScrollEl = el;
+    if (el && typeof ResizeObserver !== 'undefined') {
+      // El contenedor cambia con el alto de la ventana; su contenido, con los atributos del evento
+      this.detailObserver = new ResizeObserver(() => this.updateDetailOverflow());
+      this.detailObserver.observe(el);
+      if (el.firstElementChild) this.detailObserver.observe(el.firstElementChild);
+    }
+    // Se mide al terminar el ciclo de detección, con el DOM ya actualizado
+    queueMicrotask(() => this.updateDetailOverflow());
+  }
+
   constructor() {
     this.saveSubject.pipe(
       debounceTime(400),
@@ -67,6 +88,20 @@ export class PostMatchPanelComponent implements OnDestroy {
       ),
       takeUntilDestroyed()
     ).subscribe();
+
+    // Cada evento nuevo se muestra desde el principio del detalle
+    effect(() => {
+      this.store.selectedEventId();
+      untracked(() => queueMicrotask(() => {
+        if (this.detailScrollEl) this.detailScrollEl.scrollTop = 0;
+        this.updateDetailOverflow();
+      }));
+    });
+  }
+
+  updateDetailOverflow(): void {
+    const el = this.detailScrollEl;
+    this.detailHasMore.set(!!el && el.scrollTop + el.clientHeight < el.scrollHeight - 1);
   }
 
   onFormChange(formData: EventFormData): void {
@@ -173,6 +208,7 @@ export class PostMatchPanelComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.detailObserver?.disconnect();
     if (this.saveTimer) {
       clearTimeout(this.saveTimer);
     }

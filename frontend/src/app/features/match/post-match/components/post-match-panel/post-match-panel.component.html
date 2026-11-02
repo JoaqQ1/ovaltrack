@@ -85,19 +85,31 @@
       <section class="panel-card inspector-station-card">
         <!-- 1. Barra de Solapas y Estado de Autoguardado -->
         <div class="panel-tab-bar">
-          <div class="tab-pill-group">
-            <button type="button" 
-                    class="panel-tab-btn" 
-                    [class.active]="activeTab() === 'view'" 
-                    (click)="activeTab.set('view')">
-              Ver
-            </button>
-            <button type="button" 
-                    class="panel-tab-btn" 
-                    [class.active]="activeTab() === 'edit'" 
-                    (click)="activeTab.set('edit')"
-                    [disabled]="!store.selectedEvent()">
-              Editar
+          <div class="tab-bar-start">
+            <div class="tab-pill-group">
+              <button type="button"
+                      class="panel-tab-btn"
+                      [class.active]="activeTab() === 'view'"
+                      (click)="activeTab.set('view')">
+                Ver
+              </button>
+              <button type="button"
+                      class="panel-tab-btn"
+                      [class.active]="activeTab() === 'edit'"
+                      (click)="activeTab.set('edit')"
+                      [disabled]="!store.selectedEvent()">
+                Editar
+              </button>
+            </div>
+            <!-- Eliminar: ícono junto al selector, en Ver y en Editar (misma confirmación) -->
+            <button *ngIf="store.selectedEvent()"
+                    type="button"
+                    class="btn-tab-delete"
+                    aria-label="Eliminar evento"
+                    title="Eliminar evento"
+                    [disabled]="isSubmitting()"
+                    (click)="openDeleteModal()">
+              <i class="bi bi-trash3" aria-hidden="true"></i>
             </button>
           </div>
           <div class="save-indicator">
@@ -128,58 +140,52 @@
             </h3>
           </div>
 
-          <ng-container *ngIf="store.selectedEvent() as ev">
-            <div class="detail-list-clean">
-              <div class="detail-item-clean">
-                <span class="item-label">Posesión</span>
-                <span class="item-value">{{ ev.teamPossession === 'OPPONENT' ? 'Rival' : (ev.teamPossession === 'NEUTRAL' ? 'Neutral' : 'Propia') }}</span>
-              </div>
-              <div class="detail-item-clean">
-                <span class="item-label">Origen</span>
-                <span class="item-value">{{ ev.isPostMatch ? 'Post-partido' : 'En vivo' }}</span>
-              </div>
-              <div class="detail-item-clean detail-item-player">
-                <span class="item-label">Jugador</span>
-                <div class="item-player-control">
-                  <span *ngIf="ev.teamPossession === 'OPPONENT'" class="badge-rival-readonly">
-                    Rival
-                  </span>
-                  <span *ngIf="ev.teamPossession !== 'OPPONENT' && ev.hasPlayer" class="item-value player-assigned-text">
-                    {{ ev.playerName }}
-                  </span>
-                  <select *ngIf="ev.teamPossession !== 'OPPONENT' && !ev.hasPlayer"
-                          class="form-select form-select-sm custom-assign-select is-unassigned"
-                          [value]="ev.playerId || ''"
-                          (change)="onQuickPlayerSelectChange($event, ev)"
-                          [disabled]="isSubmitting()"
-                          aria-label="Asignar jugador">
-                    <option value="">Elegir jugador...</option>
-                    <option *ngFor="let p of store.availablePlayers()" [value]="p.id">
-                      {{ p.jerseyNumber ? '#' + p.jerseyNumber + ' ' : '' }}{{ p.fullName }}
-                    </option>
-                  </select>
+          <!-- Si los atributos no entran, scrollean acá: el título queda fijo y el degradado avisa que hay más -->
+          <div *ngIf="store.selectedEvent() as ev" class="detail-frame" [class.has-more]="detailHasMore()">
+            <div #detailScroll class="detail-scroll" (scroll)="updateDetailOverflow()">
+              <div class="detail-list-clean">
+                <div class="detail-item-clean">
+                  <span class="item-label">Posesión</span>
+                  <span class="item-value">{{ ev.teamPossession === 'OPPONENT' ? 'Rival' : (ev.teamPossession === 'NEUTRAL' ? 'Neutral' : 'Propia') }}</span>
                 </div>
-              </div>
-
-              <!-- Atributos de Enriquecimiento Táctico (Modo Lectura) -->
-              <ng-container *ngIf="getEnrichedAttributesDisplay(ev) as attrList">
-                <div *ngIf="attrList.length > 0" class="detail-enrichment-divider"></div>
-                <div *ngFor="let attr of attrList" class="detail-item-clean detail-item-attr">
-                  <span class="item-label">{{ attr.label }}</span>
-                  <span class="item-value fw-semibold">{{ attr.value }}</span>
+                <div class="detail-item-clean">
+                  <span class="item-label">Origen</span>
+                  <span class="item-value">{{ ev.isPostMatch ? 'Post-partido' : 'En vivo' }}</span>
                 </div>
-              </ng-container>
-            </div>
+                <div class="detail-item-clean detail-item-player">
+                  <span class="item-label">Jugador</span>
+                  <div class="item-player-control">
+                    <span *ngIf="ev.teamPossession === 'OPPONENT'" class="badge-rival-readonly">
+                      Rival
+                    </span>
+                    <span *ngIf="ev.teamPossession !== 'OPPONENT' && ev.hasPlayer" class="item-value player-assigned-text">
+                      {{ ev.playerName }}
+                    </span>
+                    <select *ngIf="ev.teamPossession !== 'OPPONENT' && !ev.hasPlayer"
+                            class="form-select form-select-sm custom-assign-select is-unassigned"
+                            [value]="ev.playerId || ''"
+                            (change)="onQuickPlayerSelectChange($event, ev)"
+                            [disabled]="isSubmitting()"
+                            aria-label="Asignar jugador">
+                      <option value="">Elegir jugador...</option>
+                      <option *ngFor="let p of store.availablePlayers()" [value]="p.id">
+                        {{ p.jerseyNumber ? '#' + p.jerseyNumber + ' ' : '' }}{{ p.fullName }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
 
-            <!-- Botones de Acción en Ver: Solo Eliminar -->
-            <div class="panel-actions-row">
-              <button type="button" 
-                      class="btn-panel-action btn-panel-delete" 
-                      (click)="openDeleteModal()">
-                <i class="bi bi-trash3 me-1"></i> Eliminar
-              </button>
+                <!-- Atributos de Enriquecimiento Táctico (Modo Lectura) -->
+                <ng-container *ngIf="getEnrichedAttributesDisplay(ev) as attrList">
+                  <div *ngIf="attrList.length > 0" class="detail-enrichment-divider"></div>
+                  <div *ngFor="let attr of attrList" class="detail-item-clean detail-item-attr">
+                    <span class="item-label">{{ attr.label }}</span>
+                    <span class="item-value fw-semibold">{{ attr.value }}</span>
+                  </div>
+                </ng-container>
+              </div>
             </div>
-          </ng-container>
+          </div>
 
           <div *ngIf="!store.selectedEvent()" class="empty-panel-msg">
             <p>Seleccioná un evento de la gráfica o tabla para ver su detalle.</p>
@@ -205,11 +211,6 @@
               <span class="footer-save-hint">
                 <i class="bi bi-cloud-check me-1"></i> Los cambios se guardan automáticamente
               </span>
-              <button type="button" 
-                      class="btn-panel-action btn-panel-delete" 
-                      (click)="openDeleteModal()">
-                <i class="bi bi-trash3 me-1"></i> Eliminar
-              </button>
             </div>
           </ng-container>
         </div>
