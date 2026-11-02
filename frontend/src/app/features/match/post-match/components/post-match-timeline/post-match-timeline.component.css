@@ -140,14 +140,41 @@
   margin-left: 2px;
 }
 
-.filter-pill-btn.clear-pill {
-  color: var(--btn-primary-bg, #204b22);
-  border-color: var(--border-strong, rgba(27, 33, 22, 0.22));
+/*
+ * «Limpiar filtros»: botón de texto (fantasma), no verde: el verde es "filtro aplicado". 36px visibles y 44px
+ * tocables, así no agranda la barra al aparecer.
+ */
+.clear-filters-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary, #3b4e33);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong, rgba(27, 33, 22, 0.22));
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
 
-.filter-pill-btn.clear-pill:hover {
-  background: #ffffff;
-  border-color: var(--btn-primary-bg, #204b22);
+.clear-filters-btn::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
+.clear-filters-btn:hover {
+  color: var(--text-primary, #111d0e);
+  text-decoration-color: currentColor;
 }
 
 .filter-right-group {
@@ -214,13 +241,6 @@
  * La barra siempre es una sola fila: la acción primaria queda fija a la derecha y los filtros ceden espacio.
  * Escalones según el ancho de la tarjeta (no del viewport).
  */
-
-/* «Limpiar filtros» con texto solo cuando entra junto al buscador completo */
-@container timeline-card (max-width: 1419px) {
-  .clear-pill-text {
-    display: none;
-  }
-}
 
 /* Medio: buscador como botón de ícono que se expande */
 @container timeline-card (max-width: 1299px) {

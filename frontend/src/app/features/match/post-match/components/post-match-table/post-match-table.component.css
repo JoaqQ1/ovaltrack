@@ -261,33 +261,45 @@
   color: var(--text-primary, #111d0e);
 }
 
+/* Compacto: entra completo (mensaje + botón) en la tabla baja de 1366×768, sin scrollear */
 .table-empty-state {
-  padding: 2.5rem;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   text-align: center;
 }
 
-.empty-icon {
-  font-size: 1.75rem;
+.empty-msg-icon {
+  font-size: 0.95rem;
   color: var(--text-muted, #7a8c74);
-  margin-bottom: 0.5rem;
+  margin-right: 6px;
 }
 
 .empty-msg {
+  margin: 0;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-secondary, #3b4e33);
-  margin-bottom: 0.75rem;
 }
 
+/* Outline: la acción primaria de la vista sigue siendo «Agregar evento» */
 .btn-clear-empty {
-  background: var(--btn-primary-bg, #204b22);
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.35rem 0.85rem;
-  font-size: 0.8rem;
+  height: 44px;
+  padding: 0 20px;
+  background: var(--btn-outline-bg, #ffffff);
+  color: var(--btn-outline-fg, #204b22);
+  border: 1px solid var(--btn-outline-border, rgba(32, 75, 34, 0.25));
+  border-radius: 10px;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+.btn-clear-empty:hover {
+  background: var(--surface-hover, #f1f3ea);
+  border-color: var(--btn-primary-bg, #204b22);
 }
 
 .col-note {

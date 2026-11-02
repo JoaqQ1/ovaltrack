@@ -3,7 +3,8 @@
   <div class="filter-bar" [class.search-open]="searchOpen()">
     <div class="filter-left-group">
       <!-- Botones de Período estilo Pill -->
-      <button type="button" 
+      <button #allPeriodPill
+              type="button" 
               class="filter-pill-btn" 
               [class.active]="store.filters().period === 'ALL'" 
               (click)="setPeriod('ALL')">
@@ -54,16 +55,15 @@
         Solo sin jugador &bull; {{ store.kpis().unassignedEvents }}
       </button>
 
-      <!-- Limpiar Filtros (Visible solo cuando hay filtros activos) -->
-      <button *ngIf="store.hasActiveFilters()"
-              type="button" 
-              class="filter-pill-btn clear-pill" 
-              (click)="store.clearFilters()"
-              aria-label="Limpiar filtros activos"
-              title="Restablecer todos los filtros a sus valores por defecto">
-        <i class="bi bi-x-circle-fill" aria-hidden="true"></i>
-        <span class="clear-pill-text">Limpiar filtros</span>
-      </button>
+      <!-- Limpiar filtros: solo si algo difiere del estado por defecto; limpia todo, búsqueda incluida -->
+      <ng-container *ngIf="store.hasActiveFilters()">
+        <span class="filter-divider" aria-hidden="true"></span>
+        <button type="button"
+                class="clear-filters-btn"
+                (click)="clearAllFilters()">
+          Limpiar filtros
+        </button>
+      </ng-container>
     </div>
 
     <div class="filter-right-group">

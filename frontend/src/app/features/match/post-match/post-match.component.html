@@ -27,12 +27,13 @@
 
     <!-- Área de Línea Temporal -->
     <div class="pm-area-timeline">
-      <app-post-match-timeline (addEvent)="openCreateModal()" />
+      <app-post-match-timeline #timeline (addEvent)="openCreateModal()" />
     </div>
 
     <!-- Área de Tabla Detallada -->
     <div class="pm-area-table">
-      <app-post-match-table (editRequested)="onEditRequested()" (deleteRequested)="onDeleteRequested()" />
+      <app-post-match-table (editRequested)="onEditRequested()" (deleteRequested)="onDeleteRequested()"
+                            (clearFiltersRequested)="timeline.clearAllFilters()" />
     </div>
 
     <!-- Área del Inspector Lateral (320px) -->

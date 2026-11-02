@@ -1,4 +1,4 @@
-import { Component, computed, inject, output, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, inject, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatchReviewStore } from '../../store/match-review.store';
@@ -18,6 +18,8 @@ export class PostMatchTimelineComponent {
 
   /** Acción primaria de la vista: abrir el alta de un evento post-partido. */
   readonly addEvent = output<void>();
+
+  @ViewChild('allPeriodPill') private allPeriodPill?: ElementRef<HTMLButtonElement>;
 
   getTooltip(occ: ReviewEventViewModel): string {
     if (occ.isUnassigned) {
@@ -70,6 +72,14 @@ export class PostMatchTimelineComponent {
   onSearchChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.store.setSearchTerm(input.value);
+  }
+
+  /** Vuelve todos los filtros al estado por defecto (búsqueda incluida) y deja el foco en "Todo el partido". */
+  clearAllFilters(): void {
+    this.store.clearFilters();
+    this.searchOpen.set(false);
+    // Después del render: con la búsqueda abierta la píldora todavía no está visible
+    setTimeout(() => this.allPeriodPill?.nativeElement.focus());
   }
 
   setPeriod(period: ReviewPeriodFilter): void {

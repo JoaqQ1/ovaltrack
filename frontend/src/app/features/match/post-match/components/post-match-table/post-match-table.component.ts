@@ -17,6 +17,8 @@ import { ToastService } from 'src/app/core/services/toast.service';
 export class PostMatchTableComponent implements AfterViewInit, OnDestroy {
   @Output() editRequested = new EventEmitter<ReviewEventViewModel>();
   @Output() deleteRequested = new EventEmitter<ReviewEventViewModel>();
+  /** "Limpiar filtros" del estado vacío: lo resuelve la barra de filtros (limpia todo y mueve el foco). */
+  @Output() clearFiltersRequested = new EventEmitter<void>();
   readonly store = inject(MatchReviewStore);
   private readonly eventService = inject(EventService);
   private readonly toastService = inject(ToastService);

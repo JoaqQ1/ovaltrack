@@ -88,13 +88,13 @@ export class MatchReviewStore {
   });
 
   // --- Indicador Reactivo de Filtros Activos ---
+  /** Algo de la barra difiere del estado por defecto: período, posesión, "Solo sin jugador" o búsqueda. */
   readonly hasActiveFilters = computed<boolean>(() => {
     const f = this.filters();
     return f.period !== 'ALL' ||
            f.team !== 'ALL' ||
            f.onlyUnassigned ||
-           f.searchTerm.trim() !== '' ||
-           f.hiddenLaneIds.length > 0;
+           f.searchTerm.trim() !== '';
   });
 
   // --- Duración Dinámica y Escala (Eje X) ---
