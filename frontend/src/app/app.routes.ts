@@ -8,7 +8,7 @@ import { DivisionCoachListComponent } from './features/division-coach/division-c
 import { hasRoleGuard } from './core/guards/has-role.guard';
 import { hasClubGuard } from './core/guards/has-club.guard';
 import { DivisionPlayerListComponent } from './features/division-player/list/division-player-list.component';
-import { MatchHistoryComponent } from './features/match/match-selection/match-history.component';
+import { MatchHistoryComponent } from './features/match/match-history/match-history.component';
 import { OpponentManagerComponent } from './features/match/opponents/opponent-manager.component';
 
 
@@ -122,6 +122,30 @@ export const routes: Routes = [
         },
         canMatch: [authGuard],
         component: DivisionPlayerListComponent
+    },
+    {
+        path: 'divisions/:divisionId/statistics',
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            layout: 'wide'
+        },
+        canMatch: [authGuard],
+        loadComponent: () =>
+            import('./features/division-statistics/division-statistics.component')
+                .then(m => m.DivisionStatisticsComponent)
+    },
+    {
+        path: 'division-statistics/:divisionId',
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            layout: 'wide'
+        },
+        canMatch: [authGuard],
+        loadComponent: () =>
+            import('./features/division-statistics/division-statistics.component')
+                .then(m => m.DivisionStatisticsComponent)
     },
     {
         path: 'players/new',

@@ -31,4 +31,19 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
         @Param("overlapStart") LocalDateTime overlapStart,
         @Param("newEnd") LocalDateTime newEnd
     );
+
+    @Query("""
+        SELECT m
+        FROM Match m
+        WHERE m.division.id = :divisionId
+        AND m.status = MatchStatus.FINISHED
+        AND m.date >= :from
+        AND m.date < :toExclusive
+        ORDER BY m.date ASC
+    """)
+    Collection<Match> findFinishedByDivisionIdAndDateRange(
+        @Param("divisionId") UUID divisionId,
+        @Param("from") LocalDateTime from,
+        @Param("toExclusive") LocalDateTime toExclusive
+    );
 }
