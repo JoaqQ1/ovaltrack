@@ -1,7 +1,13 @@
 <section class="timeline-card" [style.--lanes]="store.activeLanesCount()">
   <!-- Barra de Filtros Deportiva Integrada -->
-  <div class="filter-bar" [class.search-open]="searchOpen()">
-    <div class="filter-left-group">
+  <!-- La búsqueda se muestra según el espacio real de la barra: campo visible, lupa, abierta en la fila o con los filtros en otra línea -->
+  <div #filterBar
+       class="filter-bar"
+       [class.search-inline]="searchMode() === 'inline'"
+       [class.search-collapsed]="searchMode() === 'collapsed'"
+       [class.search-open]="searchMode() === 'open'"
+       [class.search-wrapped]="searchMode() === 'wrapped'">
+    <div class="filter-left-group" [class.is-clipped]="filtersClipped()">
       <!-- Botones de Período estilo Pill -->
       <button #allPeriodPill
               type="button" 
@@ -55,15 +61,17 @@
         Solo sin jugador &bull; {{ store.kpis().unassignedEvents }}
       </button>
 
-      <!-- Limpiar filtros: solo si algo difiere del estado por defecto; limpia todo, búsqueda incluida -->
-      <ng-container *ngIf="store.hasActiveFilters()">
-        <span class="filter-divider" aria-hidden="true"></span>
-        <button type="button"
-                class="clear-filters-btn"
-                (click)="clearAllFilters()">
-          Limpiar filtros
-        </button>
-      </ng-container>
+      <!--
+        Limpiar filtros: solo si algo difiere del estado por defecto; limpia todo, búsqueda incluida.
+        Oculto conserva su lugar (visibility), así al aparecer no cambia el espacio de la búsqueda.
+      -->
+      <span class="filter-divider" [class.is-hidden]="!store.hasActiveFilters()" aria-hidden="true"></span>
+      <button type="button"
+              class="clear-filters-btn"
+              [class.is-hidden]="!store.hasActiveFilters()"
+              (click)="clearAllFilters()">
+        Limpiar filtros
+      </button>
     </div>
 
     <div class="filter-right-group">
@@ -90,10 +98,10 @@
         <button *ngIf="store.filters().searchTerm" 
                 type="button" 
                 class="search-clear-btn" 
-                (click)="store.setSearchTerm('')" 
-                aria-label="Limpiar búsqueda"
-                title="Limpiar búsqueda">
-          <i class="bi bi-x-circle-fill"></i>
+                (click)="clearSearch(searchInput)" 
+                aria-label="Borrar búsqueda"
+                title="Borrar búsqueda">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
         </button>
       </div>
 

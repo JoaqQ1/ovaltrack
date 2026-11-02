@@ -177,6 +177,12 @@
   text-decoration-color: currentColor;
 }
 
+/* Sin filtros activos «Limpiar filtros» no se ve pero conserva su lugar: lo absorbe el espacio libre de la barra */
+.filter-divider.is-hidden,
+.clear-filters-btn.is-hidden {
+  visibility: hidden;
+}
+
 .filter-right-group {
   /* Alto de los controles de la derecha: cercano al de las píldoras; 44px táctil en pantallas touch */
   --toolbar-ctl-h: 36px;
@@ -191,9 +197,11 @@
   background: var(--border-strong, rgba(27, 33, 22, 0.22));
 }
 
+/* Campo visible: de 220 a 250px, a la izquierda de la acción primaria (el componente decide si entra) */
 .search-wrapper,
 .search-wrap {
   position: relative;
+  flex: 0 1 250px;
   min-width: 220px;
 }
 
@@ -217,7 +225,7 @@
   }
 }
 
-/* Botón de ícono del buscador: solo en pantallas angostas */
+/* Lupa del buscador: solo cuando el campo no entra en la barra */
 .search-toggle {
   display: none;
   align-items: center;
@@ -238,41 +246,73 @@
 }
 
 /*
- * La barra siempre es una sola fila: la acción primaria queda fija a la derecha y los filtros ceden espacio.
- * Escalones según el ancho de la tarjeta (no del viewport).
+ * Búsqueda según el espacio real de la barra (lo mide el componente, no un breakpoint):
+ * - inline: campo visible de 220–250px; los filtros conservan su ancho.
+ * - collapsed: lupa de 44px tocables; si los filtros no entran, scrollean con un degradado a la derecha.
+ * - open: la lupa se abrió y crece sobre el espacio libre de la fila, sin ocultar los filtros.
+ * - wrapped: abierta sin lugar en la fila: búsqueda y acción arriba, los filtros en una segunda línea.
  */
+.filter-bar.search-inline .filter-left-group {
+  flex: 1 0 auto;
+}
 
-/* Medio: buscador como botón de ícono que se expande */
-@container timeline-card (max-width: 1299px) {
-  .filter-left-group {
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
-    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
-  }
+.filter-bar.search-collapsed .search-toggle {
+  display: inline-flex;
+}
 
-  .search-toggle {
-    display: inline-flex;
-  }
+.filter-bar.search-collapsed .search-wrapper {
+  display: none;
+}
 
-  .search-wrapper {
-    display: none;
-    min-width: 0;
-  }
+.filter-bar.search-open .filter-left-group {
+  flex: 0 0 auto;
+}
 
-  /* Buscador abierto: ocupa la barra y los filtros se ocultan hasta cerrarlo */
-  .filter-bar.search-open .filter-left-group,
-  .filter-bar.search-open .search-toggle {
-    display: none;
-  }
+.filter-bar.search-open .filter-right-group {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 
-  .filter-bar.search-open .filter-right-group {
-    flex: 1 1 0;
-    min-width: 0;
-  }
+.filter-bar.search-open .search-wrapper,
+.filter-bar.search-wrapped .search-wrapper {
+  flex: 1 1 0;
+  min-width: 0;
+}
 
-  .filter-bar.search-open .search-wrapper {
-    display: block;
-    flex: 1 1 0;
-  }
+.filter-bar.search-wrapped {
+  flex-wrap: wrap;
+  row-gap: 4px;
+  padding-bottom: 6px;
+}
+
+.filter-bar.search-wrapped .filter-right-group {
+  order: 1;
+  flex: 1 1 100%;
+}
+
+.filter-bar.search-wrapped .filter-left-group {
+  order: 2;
+  flex: 1 1 100%;
+}
+
+.filter-left-group.is-clipped {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+
+/* Lupa: 36px con mouse; el área tocable llega a 44px */
+.search-toggle {
+  position: relative;
+}
+
+.search-toggle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
 }
 
 /* Angosto: la acción pasa a botón «+» */
@@ -328,20 +368,26 @@
 
 .search-clear-btn {
   position: absolute;
-  right: 10px;
+  right: 4px;
   top: 50%;
   transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   background: none;
   border: none;
   color: var(--text-muted, #7a8c74);
+  font-size: 0.8rem;
   cursor: pointer;
   padding: 0;
   display: flex;
   align-items: center;
-  transition: color 0.15s ease;
+  justify-content: center;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .search-clear-btn:hover {
+  background: var(--surface-alt, #eef1e7);
   color: var(--text-primary, #111d0e);
 }
 
