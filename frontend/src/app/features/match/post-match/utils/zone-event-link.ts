@@ -1,0 +1,54 @@
+import { MatchTimelineEventResponse } from '../../types/event.types';
+import { ZoneAssignmentResponse, ZonePeriod } from '../../types/zone.types';
+import { effectiveMatchTime, periodRange } from './zone-stats';
+import { PeriodGap, gapAtMinute } from './zone-track-layout';
+
+const SECONDS_PER_MINUTE = 60;
+
+export type ZoneLinkEvent = Pick<MatchTimelineEventResponse, 'period' | 'matchTime' | 'zone'>;
+
+/** A dónde lleva el evento en Zonas: el tramo que explica su zona, o el hueco de su minuto si no tiene zona. */
+export interface EventZoneLink {
+  /** Tramo que contiene el minuto del evento y coincide con su `zone`; null si no hay zona o no coincide. */
+  segment: ZoneAssignmentResponse | null;
+  /** Hueco sin zona que contiene el minuto; solo si el evento no tiene zona y el minuto no está en un tramo. */
+  gap: PeriodGap | null;
+  /** Minuto acumulado de partido (0–79) con el que se ubica el evento; el tiempo añadido queda en el último. */
+  minute: number;
+  /** El evento ocurrió después del 40′ (1T) o del 80′ (2T) y cuenta en el tramo que termina ahí. */
+  isAddedTime: boolean;
+}
+
+/** Período válido (1T o 2T) y minuto de juego presente; sin eso el evento no se puede ubicar. */
+function isLocatable(event: ZoneLinkEvent): event is ZoneLinkEvent & { period: ZonePeriod } {
+  return (event.period === 1 || event.period === 2) && Number.isFinite(event.matchTime) && event.matchTime >= 0;
+}
+
+/**
+ * Ubica un evento en los tramos del partido con la misma regla que el backend (`EventZoneResolver`): rango
+ * semiabierto [inicio, fin) y tiempo añadido limitado al último segundo del 1T / 2T. Es la única función que busca
+ * el tramo de un evento por su minuto.
+ *
+ * Si el tramo encontrado no coincide con `event.zone` (datos desfasados entre la zona y los tramos), no se devuelve:
+ * Eventos muestra solo la zona, sin rango ni enlace al tramo.
+ * Devuelve null si el evento no tiene un tiempo válido (no se puede ubicar).
+ */
+export function resolveEventZoneLink(event: ZoneLinkEvent, assignments: ZoneAssignmentResponse[]): EventZoneLink | null {
+  if (!isLocatable(event)) return null;
+
+  const seconds = effectiveMatchTime(event.period, event.matchTime);
+  const minute = Math.floor(seconds / SECONDS_PER_MINUTE);
+  const isAddedTime = event.matchTime >= periodRange(event.period).end * SECONDS_PER_MINUTE;
+
+  const container = assignments.find(zone =>
+    zone.period === event.period &&
+    zone.startMinute * SECONDS_PER_MINUTE <= seconds &&
+    seconds < zone.endMinute * SECONDS_PER_MINUTE) ?? null;
+
+  const segment = container && event.zone && container.row === event.zone.row && container.col === event.zone.col
+    ? container
+    : null;
+  const gap = event.zone || container ? null : gapAtMinute(assignments, minute);
+
+  return { segment, gap, minute, isAddedTime };
+}
