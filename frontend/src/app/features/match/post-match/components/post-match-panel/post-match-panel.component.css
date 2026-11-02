@@ -804,16 +804,16 @@
   color: var(--text-primary, #111d0e);
 }
 
+/* Sin scroll interno: el componente dibuja solo los ítems que entran completos en la región */
+.queue-region {
+  flex: 1;
+  min-height: 0;
+}
+
 .queue-cards-list {
   display: flex;
   flex-direction: column;
   gap: var(--queue-item-gap);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-sport, rgba(32, 75, 34, 0.28)) transparent;
-  flex: 1;
-  min-height: 0;
-  padding-right: 2px;
 }
 
 .queue-card-item {
@@ -916,8 +916,12 @@
       + 2 * var(--queue-item-h) + var(--queue-item-gap) + var(--queue-hint-h));
   }
 
-  .queue-cards-list {
-    min-height: calc(2 * var(--queue-item-h) + var(--queue-item-gap));
+  /* Alto fijo por el espacio libre (no por el contenido); como mínimo, dos ítems y el aviso */
+  .queue-region {
+    flex: 1 1 0;
+    min-height: calc(2 * var(--queue-item-h) + var(--queue-item-gap) + var(--queue-hint-h));
+    overflow: clip;
+    overflow-clip-margin: 3px; /* deja ver el anillo del ítem seleccionado */
   }
 }
 

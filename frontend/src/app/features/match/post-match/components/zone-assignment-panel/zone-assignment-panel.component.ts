@@ -7,7 +7,8 @@ import { MatchZonesStore } from '../../store/match-zones.store';
 import { HALFTIME_SPLIT_MESSAGE, deduceZonePeriod, rangeCrossesHalftime, validateZoneForm } from '../../utils/zone-form.utils';
 import { ZONE_COLUMN_NAMES, ZONE_ROW_NAMES, ZONE_ROW_SHORT_NAMES, columnRangeLabel, zoneLabel } from '../../utils/zone-grid';
 import { describeSegment, eventsInRange, eventsReleasedByEdit, findOverlap } from '../../utils/zone-stats';
-import { GAPS_UNBOUNDED_PREVIEW, GapOverflow, gapCapacity, visibleWithOverflow } from '../../utils/zone-gap-overflow';
+import { ListOverflow, OverflowMetrics, overflowCapacity, visibleWithOverflow } from '../../utils/list-overflow';
+import { observeHeight } from '../../utils/observe-height';
 import { GapWithEvents, TRACK_MINUTES, gapsWithEventCount, suggestNextRange } from '../../utils/zone-track-layout';
 import { ZONE_HALF_MINUTES, ZoneAssignmentRequest, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 
@@ -24,6 +25,12 @@ export const PICK_FRANJA_HELP = 'Tocá la grilla o la cancha';
 
 /** Regla del rango: se muestra en el tooltip de "Hasta" y en la ayuda general de la pantalla. */
 export const RANGE_RULE_HELP = 'Inicio incluido, fin excluido: 20′–25′ y 25′–30′ no se pisan.';
+
+/** Alturas fijas de «Huecos sin zona» (las fija el CSS del panel): ítem, separación y aviso «+N más en la grilla». */
+const GAP_LIST_METRICS: OverflowMetrics = { itemHeight: 44, itemSpacing: 8, hintHeight: 28 };
+
+/** Sin alto acotado (una columna, hoja móvil) no hay qué medir: se listan estos huecos y el resto va a la grilla. */
+const GAPS_UNBOUNDED_PREVIEW = 4;
 
 /** Desde este ancho el panel ocupa el alto de la fila y la lista de huecos se ajusta a lo que queda libre. */
 const DESKTOP_QUERY = '(min-width: 1122px)';
@@ -57,7 +64,7 @@ export class ZoneAssignmentPanelComponent implements OnInit, AfterViewInit {
   readonly laterals = ZONE_ROW_NAMES.map((name, index) => ({ row: index + 1, name, short: ZONE_ROW_SHORT_NAMES[index] }));
   /** Alto libre para la lista de huecos; null cuando el panel no tiene alto acotado (una columna, hoja móvil). */
   private gapsRegionHeight: number | null = null;
-  private gapsObserver?: ResizeObserver;
+  private stopObservingGaps?: () => void;
   @ViewChild('gapsRegion') private gapsRegion?: ElementRef<HTMLElement>;
   readonly pickFranjaHelp = PICK_FRANJA_HELP;
   readonly rangeRuleHelp = RANGE_RULE_HELP;
@@ -74,20 +81,19 @@ export class ZoneAssignmentPanelComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     const region = this.gapsRegion?.nativeElement;
-    if (!region || typeof ResizeObserver === 'undefined') return;
+    if (!region) return;
 
-    this.gapsObserver = new ResizeObserver(() => {
+    this.stopObservingGaps = observeHeight(region, regionHeight => {
       const bounded = typeof matchMedia === 'function' && matchMedia(DESKTOP_QUERY).matches;
-      const height = bounded ? region.clientHeight : null;
+      const height = bounded ? regionHeight : null;
       if (height !== this.gapsRegionHeight) this.ngZone.run(() => { this.gapsRegionHeight = height; });
     });
-    this.gapsObserver.observe(region);
   }
 
   ngOnInit(): void {
     this.applySuggestion();
     this.destroyRef.onDestroy(() => {
-      this.gapsObserver?.disconnect();
+      this.stopObservingGaps?.();
       this.store.conflictId.set(null);
       this.store.editingId.set(null);
       this.store.formRange.set(null);
@@ -218,9 +224,9 @@ export class ZoneAssignmentPanelComponent implements OnInit, AfterViewInit {
    * Huecos listados y cuántos quedan para la grilla: los que entran completos en el alto libre, en orden cronológico,
    * con el hueco precargado en el formulario en lugar del último visible si no entra.
    */
-  get gapView(): GapOverflow<GapWithEvents> {
+  get gapView(): ListOverflow<GapWithEvents> {
     const gaps = this.gaps;
-    const capacity = this.gapsRegionHeight === null ? GAPS_UNBOUNDED_PREVIEW : gapCapacity(this.gapsRegionHeight, gaps.length);
+    const capacity = this.gapsRegionHeight === null ? GAPS_UNBOUNDED_PREVIEW : overflowCapacity(this.gapsRegionHeight, gaps.length, GAP_LIST_METRICS);
     return visibleWithOverflow(gaps, capacity, gap => this.isGapLoaded(gap));
   }
 

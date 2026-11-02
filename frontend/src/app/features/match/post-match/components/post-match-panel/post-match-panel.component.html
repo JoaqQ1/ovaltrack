@@ -272,19 +272,21 @@
             </button>
           </div>
 
-          <!-- Lista de Tarjetas de Eventos Pendientes -->
-          <div class="queue-cards-list" *ngIf="store.pendingQueue().length > 0">
-            <div *ngFor="let item of store.pendingQueue().slice(0, 6)" 
-                 class="queue-card-item" 
-                 [class.selected]="item.id === store.selectedEventId()"
-                 (click)="store.selectEvent(item.id)">
-              <span class="qc-time">{{ item.matchTimeFormatted }}</span>
-              <span class="qc-name">{{ item.eventTypeName }}</span>
-              <span class="qc-period">{{ item.period === 1 ? '1T' : '2T' }}</span>
+          <!-- Solo entran los ítems completos en el alto libre (mínimo 2); el resto se resume al pie, sin scroll -->
+          <div #queueRegion class="queue-region" *ngIf="store.pendingQueue().length > 0">
+            <div class="queue-cards-list">
+              <div *ngFor="let item of queueView().visible"
+                   class="queue-card-item"
+                   [class.selected]="item.id === store.selectedEventId()"
+                   (click)="store.selectEvent(item.id)">
+                <span class="qc-time">{{ item.matchTimeFormatted }}</span>
+                <span class="qc-name">{{ item.eventTypeName }}</span>
+                <span class="qc-period">{{ item.period === 1 ? '1T' : '2T' }}</span>
+              </div>
             </div>
-          </div>
-          <div *ngIf="store.pendingQueue().length > 6" class="queue-more-hint">
-            +{{ store.pendingQueue().length - 6 }} más en la tabla
+            <div *ngIf="queueView().hidden > 0" class="queue-more-hint" data-testid="queue-more">
+              +{{ queueView().hidden }} más en la tabla
+            </div>
           </div>
 
           <!-- Estado si no quedan pendientes -->
