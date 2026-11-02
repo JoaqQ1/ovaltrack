@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, DestroyRef, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
 import { RosterService } from '../services/roster.service';
+import { ZoneService } from '../services/zone.service';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { HidingFilter, MatchReviewStore } from './store/match-review.store';
@@ -49,6 +51,8 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly toastService = inject(ToastService);
   private readonly layoutService = inject(LayoutService);
+  private readonly zoneService = inject(ZoneService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly store = inject(MatchReviewStore);
 
   @ViewChild(PostMatchPanelComponent) panel!: PostMatchPanelComponent;
@@ -165,6 +169,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
       this.store.resetSession();
       this.store.setMatchId(this.matchId);
       this.applyMatchDetails();
+      this.loadZones();
       this.loadRoster();
       this.loadEventTypesAndEvents();
     }
@@ -174,6 +179,17 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     this.shell.unbindLiveScore();
     this.layoutService.setWide(null);
     this.store.resetSession();
+  }
+
+  /**
+   * Tramos del partido, solo para mostrar rango y enlace de la zona de cada evento. No bloquea la pantalla: si falla,
+   * la zona se sigue viendo (viene en el evento) pero sin el rango del tramo.
+   */
+  private loadZones(): void {
+    this.zoneService.list(this.matchId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ assignments }) => this.store.setZoneAssignments(assignments),
+      error: () => this.store.setZonesFailed()
+    });
   }
 
   loadRoster(): void {

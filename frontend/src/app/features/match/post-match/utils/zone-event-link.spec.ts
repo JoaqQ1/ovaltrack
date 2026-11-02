@@ -1,4 +1,4 @@
-import { resolveEventZoneLink } from './zone-event-link';
+import { resolveEventZoneLink, zoneForEvent } from './zone-event-link';
 import { ZoneAssignmentResponse } from '../../types/zone.types';
 
 describe('zone-event-link', () => {
@@ -109,6 +109,21 @@ describe('zone-event-link', () => {
 
       expect(link?.segment).toBeNull();
       expect(link?.gap).toBeNull();
+    });
+  });
+
+  describe('zoneForEvent', () => {
+    it('devuelve la celda del tramo que contiene el minuto, con el tiempo añadido en el último tramo', () => {
+      const tramos = [segment('a', 1, 0, 20, 1, 2), segment('b', 1, 20, 40, 3, 5)];
+
+      expect(zoneForEvent(event(1, 10), tramos)).toEqual({ row: 1, col: 2 });
+      expect(zoneForEvent(event(1, 20), tramos)).toEqual({ row: 3, col: 5 });
+      expect(zoneForEvent(event(1, 42), tramos)).toEqual({ row: 3, col: 5 });
+    });
+
+    it('devuelve null sin tramo en ese minuto o sin tiempo válido', () => {
+      expect(zoneForEvent(event(2, 55), [segment('a', 1, 0, 40)])).toBeNull();
+      expect(zoneForEvent({ period: 0, matchTime: 600 }, [segment('a', 1, 0, 40)])).toBeNull();
     });
   });
 

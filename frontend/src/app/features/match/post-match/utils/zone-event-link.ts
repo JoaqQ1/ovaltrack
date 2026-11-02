@@ -1,5 +1,5 @@
 import { MatchTimelineEventResponse } from '../../types/event.types';
-import { ZoneAssignmentResponse, ZonePeriod } from '../../types/zone.types';
+import { ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../types/zone.types';
 import { effectiveMatchTime, periodRange } from './zone-stats';
 import { PeriodGap, gapAtMinute } from './zone-track-layout';
 
@@ -24,6 +24,24 @@ function isLocatable(event: ZoneLinkEvent): event is ZoneLinkEvent & { period: Z
   return (event.period === 1 || event.period === 2) && Number.isFinite(event.matchTime) && event.matchTime >= 0;
 }
 
+/** Tramo que contiene el segundo de juego (rango semiabierto [inicio, fin)). */
+function containingSegment(period: ZonePeriod, seconds: number, assignments: ZoneAssignmentResponse[]): ZoneAssignmentResponse | null {
+  return assignments.find(zone =>
+    zone.period === period &&
+    zone.startMinute * SECONDS_PER_MINUTE <= seconds &&
+    seconds < zone.endMinute * SECONDS_PER_MINUTE) ?? null;
+}
+
+/**
+ * Zona de un evento calculada en el cliente con los tramos cargados. Solo para eventos que el servidor no zonificó
+ * (los que se acaban de crear en la pantalla): los demás traen su `zone` de `GET /event/match/post-match`.
+ */
+export function zoneForEvent(event: Pick<ZoneLinkEvent, 'period' | 'matchTime'>, assignments: ZoneAssignmentResponse[]): ZoneCellRef | null {
+  if (!isLocatable({ ...event, zone: null })) return null;
+  const segment = containingSegment(event.period as ZonePeriod, effectiveMatchTime(event.period as ZonePeriod, event.matchTime), assignments);
+  return segment ? { row: segment.row, col: segment.col } : null;
+}
+
 /**
  * Ubica un evento en los tramos del partido con la misma regla que el backend (`EventZoneResolver`): rango
  * semiabierto [inicio, fin) y tiempo añadido limitado al último segundo del 1T / 2T. Es la única función que busca
@@ -40,10 +58,7 @@ export function resolveEventZoneLink(event: ZoneLinkEvent, assignments: ZoneAssi
   const minute = Math.floor(seconds / SECONDS_PER_MINUTE);
   const isAddedTime = event.matchTime >= periodRange(event.period).end * SECONDS_PER_MINUTE;
 
-  const container = assignments.find(zone =>
-    zone.period === event.period &&
-    zone.startMinute * SECONDS_PER_MINUTE <= seconds &&
-    seconds < zone.endMinute * SECONDS_PER_MINUTE) ?? null;
+  const container = containingSegment(event.period, seconds, assignments);
 
   const segment = container && event.zone && container.row === event.zone.row && container.col === event.zone.col
     ? container

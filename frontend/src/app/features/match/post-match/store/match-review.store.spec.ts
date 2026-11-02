@@ -18,6 +18,49 @@ describe('MatchReviewStore (HU-8.4)', () => {
     expect(store.selectedEventId()).toBeNull();
   });
 
+  describe('zona del evento', () => {
+    const event = (id: string, matchTime: number, zone?: { row: number; col: number } | null): MatchTimelineEventResponse => ({
+      id, eventTypeId: 't', eventTypeName: 'Pase / Offload', matchTime, period: 1, teamPossession: 'OWN', zone
+    });
+    const tramo = { id: 'z', matchId: 'm', period: 1 as const, startMinute: 10, endMinute: 20, row: 2, col: 4 };
+
+    it('usa la zona que informa el servidor, también null', () => {
+      store.setEvents([event('a', 600, { row: 1, col: 1 }), event('b', 660, null)]);
+
+      expect(store.allViewModels().map(vm => vm.zone)).toEqual([{ row: 1, col: 1 }, null]);
+    });
+
+    it('sin zona del servidor y sin tramos cargados, no se sabe (undefined)', () => {
+      store.setEvents([event('a', 600)]);
+
+      expect(store.allViewModels()[0].zone).toBeUndefined();
+    });
+
+    it('un evento recién creado (sin zona del servidor) deriva la zona de los tramos cargados', () => {
+      store.setEvents([event('a', 600), event('b', 1500)]);
+      store.setZoneAssignments([tramo]);
+
+      expect(store.allViewModels().map(vm => vm.zone)).toEqual([{ row: 2, col: 4 }, null]);
+    });
+
+    it('si fallaron los tramos no inventa una zona', () => {
+      store.setEvents([event('a', 600)]);
+      store.setZonesFailed();
+
+      expect(store.zonesStatus()).toBe('failed');
+      expect(store.allViewModels()[0].zone).toBeUndefined();
+    });
+
+    it('resetSession descarta los tramos', () => {
+      store.setZoneAssignments([tramo]);
+
+      store.resetSession();
+
+      expect(store.zoneAssignments()).toEqual([]);
+      expect(store.zonesStatus()).toBe('idle');
+    });
+  });
+
   it('should add event, sort chronologically and select it', () => {
     const event1: MatchTimelineEventResponse = {
       id: 'ev-1',
