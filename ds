@@ -83,6 +83,10 @@ case "$cmd" in
     "$0" staging clean.sql
     docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" --profile test run --rm testing
     ;;
+  test-front)
+    echo "Ejecutando specs puros del frontend (Jasmine en Node, sin Chrome)..."
+    docker exec -t ovaltrack-frontend node scripts/run-pure-specs.mjs "$@"
+    ;;
   reset)
     read -r -p "Esto borra los volúmenes (incluye los datos de la base). ¿Continuar? [y/N] " confirm
     if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
@@ -164,6 +168,7 @@ Comandos disponibles:
   compile   Compila el código Java en el contenedor (dispara DevTools)
   mvn       Ejecuta cualquier comando Maven (ej: ./ds mvn clean install)
   test      Corre la suite de tests (Cucumber.js) contra el backend y se cierra sola
+  test-front Corre los specs puros del frontend (utils/) en Node, sin Chrome (ej: ./ds test-front src/app/features/match)
   reset     Baja el entorno y borra los volúmenes (pide confirmación)
   backend   Abre una terminal interactiva en el contenedor del backend
   frontend  Abre una terminal interactiva en el contenedor del frontend
