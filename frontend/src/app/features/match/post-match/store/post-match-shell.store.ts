@@ -26,6 +26,12 @@ export class PostMatchShellStore {
   readonly status = signal<ShellStatus>('loading');
   readonly errorMessage = signal<string>('');
 
+  /**
+   * Evento que estaba seleccionado en Eventos al irse a otra vista. Vive en el shell (no en la URL) para que Eventos
+   * lo recupere al volver, tanto con el selector de vistas como con Atrás.
+   */
+  readonly lastSelectedEventId = signal<string | null>(null);
+
   private readonly liveScore = signal<Signal<ShellScore> | null>(null);
   private readonly liveScoreDelta = signal<Signal<ShellScoreDelta | null> | null>(null);
 

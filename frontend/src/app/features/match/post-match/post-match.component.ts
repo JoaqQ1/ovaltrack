@@ -58,6 +58,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   @ViewChild(PostMatchPanelComponent) panel!: PostMatchPanelComponent;
 
   matchId = '';
+  private eventToRestore: string | null = null;
 
   // Estado del contenedor
   readonly errorMessage = signal<string>('');
@@ -166,6 +167,8 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     this.shell.bindLiveScore(this.store.scoreboard, this.store.scoreDelta);
     this.matchId = this.shell.matchId();
     if (this.matchId) {
+      // El evento que estaba seleccionado al irse a otra vista (resetSession lo borra: se restaura al terminar la carga)
+      this.eventToRestore = this.shell.lastSelectedEventId();
       this.store.resetSession();
       this.store.setMatchId(this.matchId);
       this.applyMatchDetails();
@@ -176,9 +179,23 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.shell.lastSelectedEventId.set(this.store.selectedEventId());
     this.shell.unbindLiveScore();
     this.layoutService.setWide(null);
     this.store.resetSession();
+  }
+
+  /**
+   * Vuelve a seleccionar el evento que había al irse a Zonas o Estadísticas; la tabla scrollea hasta él. Si ya no existe
+   * (se eliminó mientras tanto) no se selecciona nada. Se aplica una sola vez, con la tabla ya dibujada.
+   */
+  private restoreSelection(): void {
+    const id = this.eventToRestore;
+    this.eventToRestore = null;
+    if (!id) return;
+    setTimeout(() => {
+      if (this.store.rawEvents().some(event => event.id === id)) this.store.selectEvent(id);
+    });
   }
 
   /**
@@ -290,6 +307,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
       }
     } finally {
       this.isLoading.set(false);
+      if (!this.errorMessage()) this.restoreSelection();
     }
   }
 
