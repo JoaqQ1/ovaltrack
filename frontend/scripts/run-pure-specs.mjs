@@ -1,4 +1,4 @@
-// Corre en Node los specs Jasmine que no necesitan navegador (funciones puras de utils/), sin Karma ni Chrome.
+// Corre en Node los specs Jasmine que no necesitan navegador (funciones puras de utils/ y stores sin inject()), sin Karma ni Chrome.
 // Empaqueta con esbuild y ejecuta con jasmine-core; ambos ya vienen con `npm install` (esbuild lo trae @angular-devkit/build-angular).
 // Uso (dentro del contenedor): node scripts/run-pure-specs.mjs [carpeta-o-archivo ...]
 // Desde el host: ./ds test-front [carpeta-o-archivo ...]
@@ -11,7 +11,7 @@ import { join, relative, resolve } from 'node:path';
 
 const require = createRequire(import.meta.url);
 const root = resolve(import.meta.dirname, '..');
-const DEFAULT_TARGETS = ['src/app/features/match/post-match/utils'];
+const DEFAULT_TARGETS = ['src/app/features/match/post-match/utils', 'src/app/features/match/post-match/store'];
 const NEEDS_BROWSER = /TestBed|@angular\/core\/testing|@angular\/common\/http\/testing/;
 
 function collectSpecs(target) {
