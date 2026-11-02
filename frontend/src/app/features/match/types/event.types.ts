@@ -74,4 +74,6 @@ export interface MatchTimelineEventResponse {
   origin?: string | null;
   attributes?: Record<string, unknown> | null;
   note?: string | null;
+  /** Zona de la cancha derivada del período asignado; null/ausente = sin zona. */
+  zone?: { row: number; col: number } | null;
 }

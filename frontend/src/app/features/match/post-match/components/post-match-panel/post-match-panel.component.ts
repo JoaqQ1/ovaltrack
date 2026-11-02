@@ -1,5 +1,6 @@
-import { Component, computed, inject, signal, OnDestroy } from '@angular/core';
+import { Component, ElementRef, NgZone, ViewChild, computed, effect, inject, signal, untracked, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, of } from 'rxjs';
@@ -13,16 +14,37 @@ import { ReviewEventViewModel } from '../../types/match-review.types';
 import { ModalComponent } from '../../../../modal/modal.component';
 import { EventFormComponent, EventFormData } from '../event-form/event-form.component';
 import { TemplateField } from '../../../types/event-type.types';
+import { ZoneCellRef } from '../../../types/zone.types';
+import { EventZoneLink, describeEventZone, resolveEventZoneLink } from '../../utils/zone-event-link';
+import { displayAttributeLabel } from '../../utils/attribute-labels';
+import { OverflowMetrics, overflowCapacity, visibleWithOverflow } from '../../utils/list-overflow';
+import { observeHeight } from '../../utils/observe-height';
+import { zoneDeepLinkParams } from '../../utils/zone-deep-link';
+import { zoneLabel } from '../../utils/zone-grid';
+import { ZoneMiniMapComponent } from '../zone-mini-map/zone-mini-map.component';
+
+/** Alturas fijas de la cola (las fija el CSS del panel): ítem, separación y aviso «+N más en la tabla». */
+const QUEUE_METRICS: OverflowMetrics = { itemHeight: 34, itemSpacing: 5, hintHeight: 26 };
+
+/** La cola nunca muestra menos de dos ítems (el CSS reserva ese lugar). */
+const QUEUE_MIN_ITEMS = 2;
+
+/** Sin alto acotado (hoja inferior en tablet y móvil) no hay qué medir: se listan estos y el resto va a la tabla. */
+const QUEUE_UNBOUNDED_PREVIEW = 6;
+
+/** Desde este ancho el inspector es una columna de alto fijo y la cola se ajusta al espacio libre. */
+const DESKTOP_QUERY = '(min-width: 1121px)';
 
 @Component({
   selector: 'app-post-match-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent, EventFormComponent],
+  imports: [CommonModule, RouterLink, FormsModule, ModalComponent, EventFormComponent, ZoneMiniMapComponent],
   templateUrl: './post-match-panel.component.html',
   styleUrl: './post-match-panel.component.css'
 })
 export class PostMatchPanelComponent implements OnDestroy {
   readonly store = inject(MatchReviewStore);
+  private readonly ngZone = inject(NgZone);
   private readonly eventService = inject(EventService);
   private readonly toastService = inject(ToastService);
 
@@ -40,6 +62,53 @@ export class PostMatchPanelComponent implements OnDestroy {
   // Estados de Modales
   readonly showDeleteModal = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
+
+  // Cola de revisión: solo los ítems que entran completos en el alto libre (null = alto sin acotar)
+  private readonly queueRegionHeight = signal<number | null>(null);
+  private stopObservingQueue?: () => void;
+
+  readonly queueView = computed(() => {
+    const queue = this.store.pendingQueue();
+    const height = this.queueRegionHeight();
+    const capacity = height === null
+      ? Math.min(queue.length, QUEUE_UNBOUNDED_PREVIEW)
+      : overflowCapacity(height, queue.length, QUEUE_METRICS, QUEUE_MIN_ITEMS);
+    return visibleWithOverflow(queue, capacity);
+  });
+
+  @ViewChild('queueRegion')
+  set queueRegion(ref: ElementRef<HTMLElement> | undefined) {
+    this.stopObservingQueue?.();
+    this.stopObservingQueue = undefined;
+    const region = ref?.nativeElement;
+    if (!region) return;
+    this.stopObservingQueue = observeHeight(region, height => {
+      const bounded = typeof matchMedia === 'function' && matchMedia(DESKTOP_QUERY).matches;
+      const next = bounded ? height : null;
+      if (next !== this.queueRegionHeight()) this.ngZone.run(() => this.queueRegionHeight.set(next));
+    });
+  }
+
+  // Detalle de "Ver": si los atributos no entran, scrollea y un degradado avisa que hay más abajo
+  readonly detailHasMore = signal<boolean>(false);
+  private detailScrollEl: HTMLElement | null = null;
+  private detailObserver?: ResizeObserver;
+
+  @ViewChild('detailScroll')
+  set detailScroll(ref: ElementRef<HTMLElement> | undefined) {
+    const el = ref?.nativeElement ?? null;
+    if (el === this.detailScrollEl) return;
+    this.detailObserver?.disconnect();
+    this.detailScrollEl = el;
+    if (el && typeof ResizeObserver !== 'undefined') {
+      // El contenedor cambia con el alto de la ventana; su contenido, con los atributos del evento
+      this.detailObserver = new ResizeObserver(() => this.updateDetailOverflow());
+      this.detailObserver.observe(el);
+      if (el.firstElementChild) this.detailObserver.observe(el.firstElementChild);
+    }
+    // Se mide al terminar el ciclo de detección, con el DOM ya actualizado
+    queueMicrotask(() => this.updateDetailOverflow());
+  }
 
   constructor() {
     this.saveSubject.pipe(
@@ -67,6 +136,20 @@ export class PostMatchPanelComponent implements OnDestroy {
       ),
       takeUntilDestroyed()
     ).subscribe();
+
+    // Cada evento nuevo se muestra desde el principio del detalle
+    effect(() => {
+      this.store.selectedEventId();
+      untracked(() => queueMicrotask(() => {
+        if (this.detailScrollEl) this.detailScrollEl.scrollTop = 0;
+        this.updateDetailOverflow();
+      }));
+    });
+  }
+
+  updateDetailOverflow(): void {
+    const el = this.detailScrollEl;
+    this.detailHasMore.set(!!el && el.scrollTop + el.clientHeight < el.scrollHeight - 1);
   }
 
   onFormChange(formData: EventFormData): void {
@@ -87,6 +170,27 @@ export class PostMatchPanelComponent implements OnDestroy {
     });
   }
 
+  readonly zoneLabel = zoneLabel;
+
+  /**
+   * A dónde lleva el evento en Zonas, calculado con los tramos cargados. Si no se pudieron cargar, no se ofrece hueco
+   * ni tramo (el enlace va a Zonas sin parámetros). Null si el evento no tiene un tiempo válido: la fila no se muestra.
+   */
+  zoneLinkFor(ev: ReviewEventViewModel): EventZoneLink | null {
+    const loaded = this.store.zonesStatus() === 'loaded';
+    const link = resolveEventZoneLink(ev, loaded ? this.store.zoneAssignments() : []);
+    return link && !loaded ? { ...link, segment: null, gap: null } : link;
+  }
+
+  zoneLinkParamsFor(link: EventZoneLink): Record<string, string> {
+    return zoneDeepLinkParams(link);
+  }
+
+  zoneDescription(ev: ReviewEventViewModel, link: EventZoneLink): string {
+    const zone: ZoneCellRef | null = ev.zone ?? null;
+    return describeEventZone(zone, link);
+  }
+
   getEnrichedAttributesDisplay(ev: ReviewEventViewModel): { label: string; value: string }[] {
     if (!ev.attributes || Object.keys(ev.attributes).length === 0) {
       return [];
@@ -103,7 +207,7 @@ export class PostMatchPanelComponent implements OnDestroy {
       if (val === null || val === undefined || val === '') continue;
 
       const field = fieldsMap.get(key);
-      const label = field ? field.label : key;
+      const label = field ? displayAttributeLabel(type?.code, key, field.label) : key;
       let displayVal = String(val);
 
       if (field) {
@@ -173,6 +277,8 @@ export class PostMatchPanelComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopObservingQueue?.();
+    this.detailObserver?.disconnect();
     if (this.saveTimer) {
       clearTimeout(this.saveTimer);
     }

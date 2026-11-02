@@ -1,4 +1,5 @@
 import { Possession } from '../../types/live-capture.types';
+import { ZoneCellRef } from '../../types/zone.types';
 
 export type ReviewPeriodFilter = 'ALL' | 1 | 2;
 
@@ -32,6 +33,8 @@ export interface ReviewEventViewModel {
   isPostMatch: boolean;
   attributes?: Record<string, unknown> | null;
   note?: string | null;
+  /** Zona de la cancha del evento; null = sin zona; ausente = no se sabe (el servidor no la informó y no hay tramos cargados). */
+  zone?: ZoneCellRef | null;
   isDimmed: boolean; // True si queda fuera de los filtros activos (para el gráfico)
 }
 

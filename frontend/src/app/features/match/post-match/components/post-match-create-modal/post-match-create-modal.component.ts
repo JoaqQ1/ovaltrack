@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatchReviewStore } from '../../store/match-review.store';
@@ -8,6 +8,7 @@ import { Possession } from '../../../types/live-capture.types';
 import { BackendEventCreationRequest, MatchTimelineEventResponse } from '../../../types/event.types';
 import { EventFormComponent, EventFormData } from '../event-form/event-form.component';
 import { HALF_DURATION_SECONDS } from '../../../types/match.types';
+import { EventPrefillHints, buildEventPrefill } from '../../utils/event-prefill';
 
 @Component({
   selector: 'app-post-match-create-modal',
@@ -16,7 +17,7 @@ import { HALF_DURATION_SECONDS } from '../../../types/match.types';
   templateUrl: './post-match-create-modal.component.html',
   styleUrl: './post-match-create-modal.component.css'
 })
-export class PostMatchCreateModalComponent {
+export class PostMatchCreateModalComponent implements OnChanges {
   readonly store = inject(MatchReviewStore);
   private readonly eventService = inject(EventService);
   private readonly toastService = inject(ToastService);
@@ -28,6 +29,40 @@ export class PostMatchCreateModalComponent {
   @Output() created = new EventEmitter<MatchTimelineEventResponse>();
 
   readonly isSubmitting = signal<boolean>(false);
+
+  /** Valores iniciales del formulario según el filtro de período y el evento seleccionado al abrir. */
+  readonly initialData = signal<EventFormData | null>(null);
+  readonly prefillHints = signal<EventPrefillHints | null>(null);
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['isOpen'] && this.isOpen) {
+      this.applyPrefill();
+    }
+  }
+
+  private applyPrefill(): void {
+    this.resetForm();
+    const prefill = buildEventPrefill(this.store.filters().period, this.store.selectedEvent());
+    if (!prefill) {
+      this.initialData.set(null);
+      this.prefillHints.set(null);
+      return;
+    }
+    this.period = prefill.period;
+    if (prefill.minute !== null) {
+      this.minute = prefill.minute;
+      this.second = prefill.second;
+    }
+    this.initialData.set({
+      eventTypeId: '',
+      teamPossession: 'OWN',
+      playerId: null,
+      period: this.period,
+      minute: this.minute,
+      second: this.second
+    });
+    this.prefillHints.set(prefill.hints);
+  }
 
   // Form State
   eventTypeId = '';

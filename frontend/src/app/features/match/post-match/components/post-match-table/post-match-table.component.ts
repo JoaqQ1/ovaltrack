@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { MatchReviewStore } from '../../store/match-review.store';
 import { ReviewEventViewModel } from '../../types/match-review.types';
+import { zoneLabel, zoneName } from '../../utils/zone-grid';
 import { EventService } from '../../../services/event.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 
@@ -15,8 +16,13 @@ import { ToastService } from 'src/app/core/services/toast.service';
   styleUrl: './post-match-table.component.css'
 })
 export class PostMatchTableComponent implements AfterViewInit, OnDestroy {
+  readonly zoneLabel = zoneLabel;
+  readonly zoneName = zoneName;
+
   @Output() editRequested = new EventEmitter<ReviewEventViewModel>();
   @Output() deleteRequested = new EventEmitter<ReviewEventViewModel>();
+  /** "Limpiar filtros" del estado vacío: lo resuelve la barra de filtros (limpia todo y mueve el foco). */
+  @Output() clearFiltersRequested = new EventEmitter<void>();
   readonly store = inject(MatchReviewStore);
   private readonly eventService = inject(EventService);
   private readonly toastService = inject(ToastService);

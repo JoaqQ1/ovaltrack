@@ -41,6 +41,13 @@
   --warning: #8a5700;
   --warning-tint: rgba(253, 176, 34, 0.20);
   --warning-border: rgba(154, 104, 0, 0.4);
+  /* Calor de la cancha de zonas: escala secuencial ámbar → naranja (nunca blanco, no se confunde con selección/hover) */
+  --zone-heat-low: #fdb022;
+  --zone-heat-high: #d9480f;
+
+  /* Píldora de marcador del encabezado de análisis post-partido (igual en las tres vistas) */
+  --score-pill-bg: #204b22;
+  --score-pill-fg: #ffffff;
   --error: #b42318;
   --error-tint: rgba(240, 68, 56, 0.14);
   --error-border: rgba(180, 35, 24, 0.35);
@@ -131,6 +138,9 @@
 
   --shadow-elevation: 0 16px 36px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
   --shadow-button: 0 4px 12px rgba(163, 230, 53, 0.25);
+
+  --score-pill-bg: #0b111e;
+  --score-pill-fg: #a3e635;
 }
 
 /* ==========================================================================
@@ -145,6 +155,11 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
+}
+
+/* Post-partido: Eventos no scrollea y Zonas/Estadísticas sí; se reserva la barra para que el encabezado no se corra */
+html:has(.pm-shell) {
+  scrollbar-gutter: stable;
 }
 
 [data-theme="dark"] body {

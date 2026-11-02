@@ -1,0 +1,4 @@
+<svg class="mini-map" [attr.viewBox]="viewBox" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+  <rect *ngFor="let c of cells()" class="cell" [class.ingoal]="c.isIngoal" [class.active]="c.isActive"
+        [attr.x]="c.x" [attr.y]="c.y" [attr.width]="c.width" [attr.height]="c.height" />
+</svg>

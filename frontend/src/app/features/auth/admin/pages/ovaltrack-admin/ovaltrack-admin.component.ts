@@ -5,7 +5,6 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClubService } from 'src/app/services/club.service';
 import { Club } from 'src/app/features/club/types/club.types';
-import { BackendResponse, STATUS_CODE } from 'src/app/shared/types/shared-types';
 import { Router } from '@angular/router';
 
 @Component({
@@ -40,11 +39,8 @@ export class OvaltrackAdminComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
     this.adminService.getOverview().subscribe({
-      next: (response: BackendResponse) => {
-        if (response.status === STATUS_CODE.OK) {
-          console.log(response)
-          this.overview = response.data as OvalTrackAdminOverview;
-        }
+      next: (overview) => {
+        this.overview = overview;
         this.isLoading = false;
       },
       error: () => {
@@ -58,11 +54,7 @@ export class OvaltrackAdminComponent implements OnInit {
 
   onAccept(id: string): void {
     this.adminService.approveClubRequest(id).subscribe({
-      next: (response: BackendResponse) => {
-        if (response.status === STATUS_CODE.OK) {
-          this.loadOverview();
-        }
-      },
+      next: () => this.loadOverview(),
       error: (err) => {
         console.error('Error al aprobar solicitud', err);
         this.errorMessage = 'No se pudo aprobar la solicitud.';
@@ -133,11 +125,7 @@ export class OvaltrackAdminComponent implements OnInit {
   }
   activateAccount(userId: string) {
     this.adminService.activateAccount(userId).subscribe({
-      next: (response: BackendResponse) => {
-        if (response.status === STATUS_CODE.OK) {
-          this.loadOverview();
-        }
-      },
+      next: () => this.loadOverview(),
       error(err) {
         console.error(err);
       },
@@ -146,11 +134,7 @@ export class OvaltrackAdminComponent implements OnInit {
   deactivateAccount(userId: string) {
     console.log(userId)
     this.adminService.deactivateAccount(userId).subscribe({
-      next: (response: BackendResponse) => {
-        if (response.status === STATUS_CODE.OK) {
-          this.loadOverview();
-        }
-      },
+      next: () => this.loadOverview(),
       error(err) {
         console.error(err);
       },

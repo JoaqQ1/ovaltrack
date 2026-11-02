@@ -8,7 +8,6 @@ import { Club } from 'src/app/features/club/types/club.types'; // Ajusta la ruta
 import { User, UserResponseDTO } from 'src/app/features/user/types/user.types';
 import { UserClubRegistration } from '../../types/ovaltrack-admin.types';
 import { DatePipe } from '@angular/common';
-import { BackendResponse, STATUS_CODE } from 'src/app/shared/types/shared-types';
 
 export type AccountFilter = 'all' | 'active' | 'inactive';
 export type ClubFilter = 'all' | 'active' | 'rejected';
@@ -121,11 +120,11 @@ export class OvaltrackAdminComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ pendingUsers, pendingClubs, users, clubs }) => {
-          const pClubs = (pendingClubs.data ?? []) as Club[];
-          const uList = (users.data ?? []) as UserClubRegistration[];
-          const cList = (clubs.data ?? []) as Club[];
+          const pClubs = pendingClubs;
+          const uList = users;
+          const cList = clubs;
 
-          this.requests.set((pendingUsers.data ?? []) as UserClubRegistration[]);
+          this.requests.set(pendingUsers);
           this.pendingClubs.set(pClubs);
           this.selectedAdmin.set(Object.fromEntries(pClubs.map((c) => [c.id, c.adminUserId ?? null])));
           this.allAccounts.set(uList);
@@ -148,9 +147,8 @@ export class OvaltrackAdminComponent implements OnInit {
       .getUsers(active)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res) => {
+        next: (list) => {
           if (this.accountFilter() !== filter) return this.end();
-          const list = (res.data ?? []) as UserClubRegistration[];
           this.visibleAccounts.set(list);
           if (filter === 'all') this.allAccounts.set(list);
           this.end();
@@ -169,9 +167,8 @@ export class OvaltrackAdminComponent implements OnInit {
       .getClubs(status)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res) => {
+        next: (list) => {
           if (this.clubFilter() !== filter) return this.end();
-          const list = (res.data ?? []) as Club[];
           this.visibleClubs.set(list);
           if (filter === 'all') this.allClubs.set(list);
           this.end();
@@ -184,12 +181,7 @@ export class OvaltrackAdminComponent implements OnInit {
   approveRequest(user: UserClubRegistration): void {
     this.adminService.approveAccount(user.user.id)
       .subscribe({
-        next: (response: BackendResponse) => {
-          if (response.status === STATUS_CODE.OK) {
-            this.loadAll();
-
-          }
-        },
+        next: () => this.loadAll(),
         error: (error) => {
           this.fail(error, 'No se puedo aprobar la cuenta.');
         }
@@ -201,12 +193,7 @@ export class OvaltrackAdminComponent implements OnInit {
   rejectRequest(user: UserResponseDTO): void {
     this.adminService.rejectAccount(user.id)
       .subscribe({
-        next: (response: BackendResponse) => {
-          if (response.status === STATUS_CODE.OK) {
-            this.loadAll();
-
-          }
-        },
+        next: () => this.loadAll(),
         error: (error) => {
           this.fail(error, 'No se pudo rechazar la cuenta')
         }
@@ -227,12 +214,7 @@ export class OvaltrackAdminComponent implements OnInit {
     if (adminUserId === null) return;
     this.adminService.approveClub(club.id, adminUserId)
       .subscribe({
-        next: (response: BackendResponse) => {
-          if (response.status === STATUS_CODE.OK) {
-            this.loadAll();
-
-          }
-        },
+        next: () => this.loadAll(),
         error: (error) => {
           this.fail(error, 'No se puedo aprobar el club')
         }
@@ -251,21 +233,13 @@ export class OvaltrackAdminComponent implements OnInit {
     if (active) {
       this.adminService.activateAccount(account.user.id)
         .subscribe({
-          next: (response: BackendResponse) => {
-            if (response.status === STATUS_CODE.OK) {
-              this.loadAll();
-            }
-          },
+          next: () => this.loadAll(),
           error: (err) => this.fail(err,'No se puedo activar la cuenta')
         })
     } else {
       this.adminService.deactivateAccount(account.user.id)
         .subscribe({
-          next: (response: BackendResponse) => {
-            if (response.status === STATUS_CODE.OK) {
-              this.loadAll();
-            }
-          }, error: (err) => this.fail(err,'No se puedo desactivar la cuenta')
+          next: () => this.loadAll(), error: (err) => this.fail(err,'No se puedo desactivar la cuenta')
         })
     }
     // this.updateAccounts((list) => list.map((a) => (a.user.id === account.user.id ? { ...a, active } : a)));

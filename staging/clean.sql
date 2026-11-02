@@ -8,6 +8,7 @@ BEGIN;
 SET session_replication_role = 'replica';
 
 -- 2. Ejecutar la limpieza de datos en orden seguro (desde los hijos hacia los padres)
+DELETE FROM match_zone_assignments;
 DELETE FROM events;
 DELETE FROM event_types;
 DELETE FROM matches_players;
@@ -29,8 +30,6 @@ DELETE FROM clubs;
 SET session_replication_role = 'origin';
 
 COMMIT;
-
-
 
 -- Modificaciones estructurales y constraints
 ALTER TABLE matches DROP CONSTRAINT IF EXISTS matches_status_check;
@@ -86,7 +85,7 @@ ALTER TABLE event_types ADD COLUMN IF NOT EXISTS follow_up_choices JSONB NOT NUL
 --     Un turnover se registra una sola vez; los resultados de Maul/Scrum/Line-out ya cambian la posesión por sí solos.
 -- Pendientes: Cambio sin campos (cambia la lista de jugadores en cancha); elegir el evento siguiente tras un penal.
 
-/* INSERT INTO event_types
+INSERT INTO event_types
 (id, code, name, group_name, category, is_scoring, points,
  requires_player, is_active, show_in_palette, follow_up_event_type_id, actor, possession_after, follow_up_choices, template_event_fields, stat_view, created_at)
 VALUES
@@ -1382,6 +1381,4 @@ VALUES
     ]$$::jsonb,
     $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
-)
-ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, template_event_fields = EXCLUDED.template_event_fields;
- */
+);

@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -25,6 +24,7 @@ import com.ovaltrack.backend.user.domain.dto.UserCreateRequestDTO;
 import com.ovaltrack.backend.user.domain.dto.UserDTOMapper;
 import com.ovaltrack.backend.user.domain.dto.UserResponseDTO;
 import com.ovaltrack.backend.user.domain.dto.UserRoleUpdateDTO;
+import com.ovaltrack.backend.common.dto.response.MessageResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -61,7 +61,7 @@ public class UserController {
 	public ResponseEntity<Object> findUserById(@PathVariable UUID userId) {
 		User user = userService.findUserById(userId);
 		return (user != null) ? ResponseEntity.ok(UserDTOMapper.toResponseDTO(user))
-				: ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
+				: ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Usuario no encontrado"));
 	}
 
 	@Operation(summary = "Save a user", description = "Creates a user in the system.")
@@ -74,9 +74,9 @@ public class UserController {
 		try {
 			return ResponseEntity.ok(userService.createUser(request));
 		} catch (BusinessException anError) {
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(new MessageResponse(anError.getMessage()));
 		} catch (DataIntegrityViolationException anError) {
-			return ResponseEntity.status(HttpStatus.CONFLICT).body("Error al guardar usuario");
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(new MessageResponse("Error al guardar usuario"));
 		}
 	}
 
@@ -94,14 +94,7 @@ public class UserController {
 	public ResponseEntity<UserResponseDTO> updateUserRole(
 			@PathVariable UUID userId,
 			@Valid @RequestBody UserRoleUpdateDTO request,
-			BindingResult bindingResult,
 			Authentication authentication) {
-		if (bindingResult.hasErrors()) {
-			String message = bindingResult.getFieldError() != null
-					? bindingResult.getFieldError().getDefaultMessage()
-					: "Datos inválidos";
-			throw new BusinessException(message);
-		}
 		UserResponseDTO updatedUser = userService.updateUserRole(userId, request.role(), authentication);
 		return ResponseEntity.ok(updatedUser);
 	}
@@ -147,15 +140,15 @@ public class UserController {
 			@ApiResponse(responseCode = "409", description = "The user cannot be deleted because of related entities.")
 	})
 	@DeleteMapping("/{userId}")
-	public ResponseEntity<String> deleteUser(@PathVariable UUID userId) {
+	public ResponseEntity<MessageResponse> deleteUser(@PathVariable UUID userId) {
 		try {
 			userService.deleteUser(userId);
-			return ResponseEntity.ok("Usuario eliminado correctamente");
+			return ResponseEntity.ok(new MessageResponse("Usuario eliminado correctamente"));
 		} catch (BusinessException anError) {
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(anError.getMessage());
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(new MessageResponse(anError.getMessage()));
 		} catch (DataIntegrityViolationException anError) {
 			return ResponseEntity.status(HttpStatus.CONFLICT)
-					.body("Error al eliminar usuario, hay entidades relacionadas");
+					.body(new MessageResponse("Error al eliminar usuario, hay entidades relacionadas"));
 		}
 	}
 }

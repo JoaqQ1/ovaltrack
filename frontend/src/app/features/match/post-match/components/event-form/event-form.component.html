@@ -63,7 +63,9 @@
   <!-- 4. Campos Opcionales de Tiempo (Período y Minutos/Segundos) -->
   <ng-container *ngIf="showTimeFields">
     <div class="form-group mb-2">
-      <label class="form-label-sport">Período *</label>
+      <label class="form-label-sport">Período *
+        <span *ngIf="periodHint() as hint" class="prefill-hint">{{ hint }}</span>
+      </label>
       <div class="possession-segmented">
         <button type="button" 
                 class="possession-segment-btn" 
@@ -84,7 +86,9 @@
 
     <div class="row g-2">
       <div class="col-6">
-        <label class="form-label-sport">Minuto (0-40)</label>
+        <label class="form-label-sport">Minuto (0-40)
+          <span *ngIf="timeHint() as hint" class="prefill-hint">{{ hint }}</span>
+        </label>
         <input type="number" 
                class="form-control custom-sport-input"
                [ngModel]="minute()"

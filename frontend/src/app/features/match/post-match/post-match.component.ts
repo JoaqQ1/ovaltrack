@@ -1,17 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, DestroyRef, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
-import { MatchService } from '../services/match.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
 import { RosterService } from '../services/roster.service';
+import { ZoneService } from '../services/zone.service';
 import { LiveCaptureService } from '../services/live-capture.service';
-import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ToastService } from 'src/app/core/services/toast.service';
-import { MatchReviewStore } from './store/match-review.store';
-import { PostMatchHeaderComponent } from './components/post-match-header/post-match-header.component';
+import { HidingFilter, MatchReviewStore } from './store/match-review.store';
+import { MatchTimelineEventResponse } from '../types/event.types';
+import { PostMatchShellStore } from './store/post-match-shell.store';
+import { RugbyBallLoaderComponent } from '../../../shared/components/rugby-ball-loader/rugby-ball-loader.component';
+import { LoadingGate } from './utils/loading-gate';
 import { PostMatchKpiStripComponent } from './components/post-match-kpi-strip/post-match-kpi-strip.component';
 import { PostMatchTimelineComponent } from './components/post-match-timeline/post-match-timeline.component';
 import { PostMatchTableComponent } from './components/post-match-table/post-match-table.component';
@@ -19,12 +21,23 @@ import { PostMatchPanelComponent } from './components/post-match-panel/post-matc
 import { PostMatchCreateModalComponent } from './components/post-match-create-modal/post-match-create-modal.component';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 
+/** Desde esta cantidad de eventos, dibujar la vista traba el hilo un rato: la pelota se muestra antes de empezar. */
+const HEAVY_RENDER_EVENTS = 200;
+
+const HIDING_FILTER_LABELS: Record<HidingFilter, string> = {
+  period: 'período',
+  team: 'equipo',
+  unassigned: 'solo sin jugador',
+  search: 'búsqueda',
+  lane: 'jugada oculta'
+};
+
 @Component({
   selector: 'app-post-match',
   standalone: true,
   imports: [
     CommonModule,
-    PostMatchHeaderComponent,
+    RugbyBallLoaderComponent,
     PostMatchKpiStripComponent,
     PostMatchTimelineComponent,
     PostMatchTableComponent,
@@ -36,9 +49,7 @@ import { LocalDatabaseService } from '../../local-database/services/local-databa
 })
 export class PostMatchComponent implements OnInit, OnDestroy {
 
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly matchService = inject(MatchService);
+  private readonly shell = inject(PostMatchShellStore);
   private readonly eventService = inject(EventService);
   private readonly eventTypeService = inject(EventTypeService);
   private readonly rosterService = inject(RosterService);
@@ -46,25 +57,21 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly toastService = inject(ToastService);
   private readonly layoutService = inject(LayoutService);
-  readonly userContext = inject(UserContextService);
+  private readonly zoneService = inject(ZoneService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly store = inject(MatchReviewStore);
-
-  readonly userClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
 
   @ViewChild(PostMatchPanelComponent) panel!: PostMatchPanelComponent;
 
   matchId = '';
+  private eventToRestore: string | null = null;
 
   // Estado del contenedor
-  readonly opponent = signal<string>('Cargando...');
   readonly errorMessage = signal<string>('');
-  readonly isLoading = signal<boolean>(true);
+  /** La pelota aparece solo si la carga tarda (ver LoadingGate). */
+  readonly loading = new LoadingGate();
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
   readonly showCreateModal = signal<boolean>(false);
-
-  goToStatistics(): void {
-    this.router.navigate(['/post-match', this.matchId, 'statistics']);
-  }
 
   openCreateModal(): void {
     this.showCreateModal.set(true);
@@ -72,6 +79,21 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   closeCreateModal(): void {
     this.showCreateModal.set(false);
+  }
+
+  /** Si los filtros activos esconden el evento recién creado, avisa por qué y ofrece mostrarlo. */
+  onEventCreated(event: MatchTimelineEventResponse): void {
+    const hiding = this.store.hiddenByFilters(event.id);
+    if (hiding.length === 0) return;
+
+    const reasons = hiding.map(filter => HIDING_FILTER_LABELS[filter]).join(', ');
+    this.toastService.info(
+      `Se guardó, pero no se ve por los filtros activos (${reasons}).`,
+      'Evento agregado',
+      8000,
+      { label: 'Mostrar evento', handler: () => this.store.revealEvent(event.id) },
+      { label: 'Limpiar filtros', handler: () => this.store.clearFilters() }
+    );
   }
 
   onEditRequested(): void {
@@ -89,7 +111,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent): void {
     const target = event.target as HTMLElement;
-    const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA');
+    const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 
     if (this.showCreateModal() || this.panel?.showDeleteModal()) {
       if (event.key === 'Escape') {
@@ -114,6 +136,13 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     }
 
     if (!isEditingField) {
+      // 0. Alta de evento (la acción primaria de la vista)
+      if (event.key.toLowerCase() === 'n' && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey) {
+        event.preventDefault();
+        this.openCreateModal();
+        return;
+      }
+
       // 1. Atajos de Triage dedicados (saltar entre pendientes sin importar qué está visible)
       if (event.key === ']' || (event.shiftKey && event.key === 'ArrowRight')) {
         event.preventDefault();
@@ -142,19 +171,53 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.layoutService.setWide(true);
-    this.matchId = this.route.snapshot.paramMap.get('id') || '';
+    this.shell.bindLiveScore(this.store.scoreboard, this.store.scoreDelta);
+    // El servidor recalcula el marcador con cada cambio de eventos: el shell lo vuelve a pedir para Zonas y Estadísticas
+    this.store.confirmedChange$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.shell.refresh());
+    this.matchId = this.shell.matchId();
     if (this.matchId) {
+      // El evento que estaba seleccionado al irse a otra vista (resetSession lo borra: se restaura al terminar la carga)
+      this.eventToRestore = this.shell.lastSelectedEventId();
       this.store.resetSession();
       this.store.setMatchId(this.matchId);
-      this.loadMatchDetails();
+      this.applyMatchDetails();
+      this.loading.start();
+      this.loadZones();
       this.loadRoster();
       this.loadEventTypesAndEvents();
     }
   }
 
   ngOnDestroy(): void {
+    this.shell.lastSelectedEventId.set(this.store.selectedEventId());
+    this.shell.unbindLiveScore();
     this.layoutService.setWide(null);
     this.store.resetSession();
+    this.loading.dispose();
+  }
+
+  /**
+   * Vuelve a seleccionar el evento que había al irse a Zonas o Estadísticas; la tabla scrollea hasta él. Si ya no existe
+   * (se eliminó mientras tanto) no se selecciona nada. Se aplica una sola vez, con la tabla ya dibujada.
+   */
+  private restoreSelection(): void {
+    const id = this.eventToRestore;
+    this.eventToRestore = null;
+    if (!id) return;
+    setTimeout(() => {
+      if (this.store.rawEvents().some(event => event.id === id)) this.store.selectEvent(id);
+    });
+  }
+
+  /**
+   * Tramos del partido, solo para mostrar rango y enlace de la zona de cada evento. No bloquea la pantalla: si falla,
+   * la zona se sigue viendo (viene en el evento) pero sin el rango del tramo.
+   */
+  private loadZones(): void {
+    this.zoneService.list(this.matchId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ assignments }) => this.store.setZoneAssignments(assignments),
+      error: () => this.store.setZonesFailed()
+    });
   }
 
   loadRoster(): void {
@@ -168,28 +231,9 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadMatchDetails(): void {
-    this.matchService.getMatchById(this.matchId).subscribe({
-      next: (match) => {
-        this.applyMatchDetails(match);
-      },
-      error: async () => {
-        try {
-          const cached = await this.cacheService.getMatch(this.matchId);
-          if (cached) {
-            this.applyMatchDetails(cached);
-            return;
-          }
-        } catch {
-          // Fallback falló
-        }
-        this.toastService.error('No se pudieron obtener los detalles del partido');
-      }
-    });
-  }
-
-  private applyMatchDetails(match: { opponent?: { name: string } | null; startedAt?: string | null; homeScore?: number; awayScore?: number }): void {
-    this.opponent.set(match.opponent?.name || 'Visitante');
+  private applyMatchDetails(): void {
+    const match = this.shell.match();
+    if (!match) return;
     if (match.startedAt) {
       this.store.matchStartTime.set(match.startedAt);
     }
@@ -222,7 +266,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   }
 
   async loadEvents(): Promise<void> {
-    this.isLoading.set(true);
+    this.loading.start();
     this.errorMessage.set('');
 
     try {
@@ -247,7 +291,6 @@ export class PostMatchComponent implements OnInit, OnDestroy {
           : (error.error?.message || 'El partido aún no se encuentra cerrado.');
         this.errorMessage.set(msg);
         this.toastService.warning(msg);
-        this.isLoading.set(false);
         return;
       }
 
@@ -273,11 +316,22 @@ export class PostMatchComponent implements OnInit, OnDestroy {
         this.toastService.error(msg);
       }
     } finally {
-      this.isLoading.set(false);
+      if (this.errorMessage()) {
+        await this.loading.finish();
+      } else {
+        await this.revealEvents();
+      }
     }
   }
 
-  comeBack(): void {
-    this.router.navigate(['/match-history']);
+  /**
+   * Con cientos de eventos, dibujar la vista traba el hilo un rato: la pelota se pinta antes de empezar y el navegador
+   * la sigue mostrando (girando) hasta que la vista está lista, en lugar de quedar en blanco.
+   */
+  private async revealEvents(): Promise<void> {
+    if (this.store.rawEvents().length >= HEAVY_RENDER_EVENTS) await this.loading.showNow();
+    await this.loading.finish();
+    this.restoreSelection();
   }
+
 }

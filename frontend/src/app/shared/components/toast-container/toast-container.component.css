@@ -19,6 +19,21 @@
   animation: toast-drop 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.toast-action {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid currentColor;
+  background: var(--surface, #ffffff);
+  color: var(--btn-outline-fg, #204b22);
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.toast-action:hover { background: var(--surface-hover, #f1f3ea); }
+
 @keyframes toast-drop {
   from {
     opacity: 0;

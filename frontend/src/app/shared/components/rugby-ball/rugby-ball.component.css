@@ -1,0 +1,75 @@
+:host {
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 72px;
+}
+
+.ball-bob {
+  animation: ball-bob 0.6s ease-in-out infinite alternate;
+}
+
+.ball {
+  display: block;
+  width: 48px;
+  height: 30px;
+  animation: ball-spin 1.2s linear infinite;
+}
+
+/* En su propia capa: la animación sigue en el compositor aunque el hilo principal esté ocupado dibujando */
+.ball,
+.ball-bob {
+  will-change: transform;
+}
+
+/* Pelota blanca (tipo Gilbert) con contorno marcado para no perderse sobre la tarjeta blanca */
+.ball {
+  --ball-ink: var(--btn-primary-bg, #204b22);
+}
+
+/* En oscuro el primario es lima y no contrasta sobre blanco: se mantiene el verde de la paleta */
+:host-context([data-theme="dark"]) .ball {
+  --ball-ink: #204b22;
+}
+
+.ball-body {
+  fill: #ffffff;
+  stroke: var(--ball-ink);
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+}
+
+.ball-seam,
+.ball-stripe {
+  fill: none;
+  stroke: var(--ball-ink);
+  stroke-linecap: round;
+}
+
+.ball-seam { stroke-width: 1.75; }
+.ball-stripe { stroke-width: 3; }
+
+@keyframes ball-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ball-bob {
+  from { transform: translateY(0); }
+  to { transform: translateY(-14px); }
+}
+
+@keyframes ball-pulse {
+  from { opacity: 1; }
+  to { opacity: 0.5; }
+}
+
+/* Sin giro ni rebote: la pelota queda quieta y solo late */
+@media (prefers-reduced-motion: reduce) {
+  .ball-bob {
+    animation: none;
+  }
+
+  .ball {
+    animation: ball-pulse 1.2s ease-in-out infinite alternate;
+  }
+}

@@ -1,6 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ToastService } from '../../../core/services/toast.service';
+import { Toast, ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-toast-container',
@@ -13,4 +13,10 @@ import { ToastService } from '../../../core/services/toast.service';
 export class ToastContainerComponent {
   readonly toastService = inject(ToastService);
   readonly toasts = this.toastService.toasts;
+
+  /** Cierra el toast antes de correr la acción, así un toast nuevo (ej. un error) no se pisa. */
+  runAction(toast: Toast, kind: 'action' | 'secondaryAction' = 'action'): void {
+    this.toastService.dismiss(toast.id);
+    toast[kind]?.handler();
+  }
 }

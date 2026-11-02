@@ -1,14 +1,12 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { ClubDetailsComponent } from './features/club/club-details.component';
-import { ClubCreateComponent } from './features/club/club-create.component';
 import { DivisionFormComponent } from './features/division/division-form.component';
 import { DivisionListComponent } from './features/division/division-list.component';
 import { DivisionPlayerFormComponent } from './features/division-player/form/division-player-form.component';
 import { DivisionCoachListComponent } from './features/division-coach/division-coach-list.component';
 import { hasRoleGuard } from './core/guards/has-role.guard';
 import { hasClubGuard } from './core/guards/has-club.guard';
-import { PostMatchComponent } from './features/match/post-match/post-match.component';
 import { DivisionPlayerListComponent } from './features/division-player/list/division-player-list.component';
 import { MatchHistoryComponent } from './features/match/match-history/match-history.component';
 import { OpponentManagerComponent } from './features/match/opponents/opponent-manager.component';
@@ -88,14 +86,6 @@ export const routes: Routes = [
         },
         path: 'club',
         component: ClubDetailsComponent
-    },
-    {
-        path: 'club/new',
-        canActivate: [hasRoleGuard],
-        data: {
-            roles: ["ADMIN_OVALTRACK", "ADMIN_CLUB"]
-        },
-        component: ClubCreateComponent
     },
     {
         path: 'divisions/new',
@@ -212,10 +202,34 @@ export const routes: Routes = [
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
-            preload: true,
-            layout: 'wide'
+            preload: true
         },
-        component: PostMatchComponent
+        loadComponent: () =>
+            import('./features/match/post-match/post-match-shell.component').then(
+                m => m.PostMatchShellComponent
+            ),
+        children: [
+            {
+                path: '',
+                data: { preload: true, layout: 'wide', lockViewport: true, viewTitle: 'Eventos' },
+                loadComponent: () =>
+                    import('./features/match/post-match/post-match.component').then(
+                        m => m.PostMatchComponent
+                    )
+            },
+            {
+                path: 'zones',
+                data: { layout: 'wide', viewTitle: 'Zonas de cancha' },
+                loadComponent: () => import('./features/match/post-match/components/post-match-zones/post-match-zones.component')
+                    .then(m => m.PostMatchZonesComponent),
+            },
+            {
+                path: 'statistics',
+                loadComponent: () => import('./features/match/post-match/components/post-match-statistics/post-match-statistics.component')
+                    .then(m => m.PostMatchStatisticsComponent),
+                data: { layout: 'wide', viewTitle: 'Estadísticas' },
+            }
+        ]
     },
     {
         path: 'invitation',
@@ -241,12 +255,6 @@ export const routes: Routes = [
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB']
         },
         component: OpponentManagerComponent
-    },
-    {
-        path: 'post-match/:id/statistics',
-        loadComponent: () => import('./features/match/post-match/components/post-match-statistics/post-match-statistics.component')
-            .then(m => m.PostMatchStatisticsComponent),
-        data: { layout: 'wide' },
     },
     {
         path: 'player-statistics',

@@ -1,9 +1,16 @@
 <section class="timeline-card" [style.--lanes]="store.activeLanesCount()">
   <!-- Barra de Filtros Deportiva Integrada -->
-  <div class="filter-bar">
-    <div class="filter-left-group">
+  <!-- La búsqueda se muestra según el espacio real de la barra: campo visible, lupa, abierta en la fila o con los filtros en otra línea -->
+  <div #filterBar
+       class="filter-bar"
+       [class.search-inline]="searchMode() === 'inline'"
+       [class.search-collapsed]="searchMode() === 'collapsed'"
+       [class.search-open]="searchMode() === 'open'"
+       [class.search-wrapped]="searchMode() === 'wrapped'">
+    <div class="filter-left-group" [class.is-clipped]="filtersClipped()">
       <!-- Botones de Período estilo Pill -->
-      <button type="button" 
+      <button #allPeriodPill
+              type="button" 
               class="filter-pill-btn" 
               [class.active]="store.filters().period === 'ALL'" 
               (click)="setPeriod('ALL')">
@@ -54,33 +61,61 @@
         Solo sin jugador &bull; {{ store.kpis().unassignedEvents }}
       </button>
 
-      <!-- Limpiar Filtros (Visible solo cuando hay filtros activos) -->
-      <button *ngIf="store.hasActiveFilters()"
-              type="button" 
-              class="filter-pill-btn clear-pill" 
-              (click)="store.clearFilters()"
-              aria-label="Limpiar filtros activos"
-              title="Restablecer todos los filtros a sus valores por defecto">
-        <i class="bi bi-x-circle-fill me-1"></i>
-        <span>Limpiar filtros</span>
+      <!--
+        Limpiar filtros: solo si algo difiere del estado por defecto; limpia todo, búsqueda incluida.
+        Oculto conserva su lugar (visibility), así al aparecer no cambia el espacio de la búsqueda.
+      -->
+      <span class="filter-divider" [class.is-hidden]="!store.hasActiveFilters()" aria-hidden="true"></span>
+      <button type="button"
+              class="clear-filters-btn"
+              [class.is-hidden]="!store.hasActiveFilters()"
+              (click)="clearAllFilters()">
+        Limpiar filtros
       </button>
     </div>
 
-    <!-- Búsqueda por jugador o tipo -->
-    <div class="search-wrapper">
-      <i class="bi bi-search search-icon" aria-hidden="true"></i>
-      <input type="text" 
-             class="search-input" 
-             placeholder="Buscar jugador o tipo" 
-             [value]="store.filters().searchTerm" 
-             (input)="onSearchChange($event)">
-      <button *ngIf="store.filters().searchTerm" 
-              type="button" 
-              class="search-clear-btn" 
-              (click)="store.setSearchTerm('')" 
-              aria-label="Limpiar búsqueda"
-              title="Limpiar búsqueda">
-        <i class="bi bi-x-circle-fill"></i>
+    <div class="filter-right-group">
+      <!-- Búsqueda por jugador o tipo -->
+      <button type="button"
+              class="search-toggle"
+              [class.has-term]="!!store.filters().searchTerm"
+              (click)="openSearch(searchInput)"
+              aria-label="Buscar jugador o tipo"
+              title="Buscar jugador o tipo">
+        <i class="bi bi-search" aria-hidden="true"></i>
+      </button>
+      <div class="search-wrapper">
+        <i class="bi bi-search search-icon" aria-hidden="true"></i>
+        <input #searchInput
+               type="text"
+               class="search-input"
+               placeholder="Buscar jugador o tipo"
+               aria-label="Buscar jugador o tipo"
+               [value]="store.filters().searchTerm"
+               (input)="onSearchChange($event)"
+               (blur)="closeSearchIfEmpty()"
+               (keydown.escape)="onSearchEscape($event, searchInput)">
+        <button *ngIf="store.filters().searchTerm" 
+                type="button" 
+                class="search-clear-btn" 
+                (click)="clearSearch(searchInput)" 
+                aria-label="Borrar búsqueda"
+                title="Borrar búsqueda">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <span class="filter-divider" aria-hidden="true"></span>
+
+      <!-- Acción primaria de la vista -->
+      <button type="button"
+              class="btn-primary-rugby btn-add-event"
+              (click)="addEvent.emit()"
+              aria-label="Agregar evento"
+              aria-keyshortcuts="N"
+              title="Agregar evento (N)">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span class="btn-add-event-text">Agregar evento</span>
       </button>
     </div>
   </div>

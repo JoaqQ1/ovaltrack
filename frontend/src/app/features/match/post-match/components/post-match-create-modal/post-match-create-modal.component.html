@@ -19,6 +19,8 @@
       <div class="form-card-body p-4">
         <app-event-form
           [showTimeFields]="true"
+          [initialData]="initialData()"
+          [prefillHints]="prefillHints()"
           [showEnrichmentSlot]="true"
           [disabled]="isSubmitting()"
           (formChange)="onFormChange($event)"

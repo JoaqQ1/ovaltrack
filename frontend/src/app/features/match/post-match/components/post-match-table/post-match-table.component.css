@@ -57,6 +57,8 @@
 }
 
 .table-grid-wrapper {
+  /* Período | Juego | Video | Jugada | Jugador | Zona | Nota | Acción */
+  --table-cols: 56px 64px 64px minmax(150px, 1fr) minmax(150px, 1.1fr) 48px minmax(96px, 1fr) 72px;
   min-width: 550px; /* Ancho cómodo optimizado para 6 columnas con acciones en hover */
   width: 100%;
   flex: 1;
@@ -67,7 +69,7 @@
 
 .table-grid-header {
   display: grid;
-  grid-template-columns: 78px 68px 68px minmax(125px, 1fr) minmax(140px, 1.2fr) 50px 62px;
+  grid-template-columns: var(--table-cols);
   background: var(--surface-alt, #eef1e7);
   padding: 0 calc(0.85rem + 8px) 0 0.85rem;
   height: 32px;
@@ -109,7 +111,7 @@
 
 .table-grid-row {
   display: grid;
-  grid-template-columns: 78px 68px 68px minmax(125px, 1fr) minmax(140px, 1.2fr) 50px 62px;
+  grid-template-columns: var(--table-cols);
   align-items: center;
   padding: 0 0.85rem;
   height: 34px;
@@ -261,39 +263,71 @@
   color: var(--text-primary, #111d0e);
 }
 
+/* Compacto: entra completo (mensaje + botón) en la tabla baja de 1366×768, sin scrollear */
 .table-empty-state {
-  padding: 2.5rem;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   text-align: center;
 }
 
-.empty-icon {
-  font-size: 1.75rem;
+.empty-msg-icon {
+  font-size: 0.95rem;
   color: var(--text-muted, #7a8c74);
-  margin-bottom: 0.5rem;
+  margin-right: 6px;
 }
 
 .empty-msg {
+  margin: 0;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-secondary, #3b4e33);
-  margin-bottom: 0.75rem;
 }
 
+/* Outline: la acción primaria de la vista sigue siendo «Agregar evento» */
 .btn-clear-empty {
-  background: var(--btn-primary-bg, #204b22);
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.35rem 0.85rem;
-  font-size: 0.8rem;
+  height: 44px;
+  padding: 0 20px;
+  background: var(--btn-outline-bg, #ffffff);
+  color: var(--btn-outline-fg, #204b22);
+  border: 1px solid var(--btn-outline-border, rgba(32, 75, 34, 0.25));
+  border-radius: 10px;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+.btn-clear-empty:hover {
+  background: var(--surface-hover, #f1f3ea);
+  border-color: var(--btn-primary-bg, #204b22);
 }
 
 .col-note {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ===== Columna de Zona (solo lectura) ===== */
+.col-zone {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.zone-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary, #3b4e33);
+}
+
+/* Sin zona: «—» gris, sin ámbar (son muchos y haría ruido) */
+.zone-none {
+  color: var(--text-muted, #7a8c74);
+  font-weight: 700;
 }
 
 /* ================= ACCIONES POR FILA (HOVER / SELECTED) ================= */
@@ -466,13 +500,10 @@
 .table-grid-header,
 .table-grid-row {
   display: grid;
-  /* 
-     Distribución:
-     Período | Juego | Video | Jugada | Jugador | Nota (toma el resto) | Acción
-  */
-  grid-template-columns: 60px 70px 70px 200px 220px 1fr 80px;
+  /* Las columnas están en --table-cols (Período | Juego | Video | Jugada | Jugador | Zona | Nota | Acción) */
+  grid-template-columns: var(--table-cols);
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   width: 100%;
 }
 

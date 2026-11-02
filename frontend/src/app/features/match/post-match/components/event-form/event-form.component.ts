@@ -5,6 +5,7 @@ import { MatchReviewStore } from '../../store/match-review.store';
 import { Possession } from '../../../types/live-capture.types';
 
 import { TemplateField } from '../../../types/event-type.types';
+import { EventPrefillHints } from '../../utils/event-prefill';
 
 export interface EventFormData {
   eventTypeId: string;
@@ -38,6 +39,15 @@ export class EventFormComponent {
       this.attributes.set(data.attributes ? { ...data.attributes } : {});
     }
   }
+
+  /** Etiquetas de origen de los valores precargados; se ocultan apenas el usuario edita ese campo. */
+  @Input() set prefillHints(hints: EventPrefillHints | null) {
+    this.periodHint.set(hints?.period ?? null);
+    this.timeHint.set(hints?.time ?? null);
+  }
+
+  readonly periodHint = signal<string | null>(null);
+  readonly timeHint = signal<string | null>(null);
 
   @Input() showTimeFields = false;
   @Input() showEnrichmentSlot = false;
@@ -184,16 +194,19 @@ export class EventFormComponent {
   }
 
   onPeriodChange(p: 1 | 2): void {
+    this.periodHint.set(null);
     this.period.set(p);
     this.emitChange();
   }
 
   onMinuteChange(m: number | null): void {
+    this.timeHint.set(null);
     this.minute.set(m);
     this.emitChange();
   }
 
   onSecondChange(s: number | null): void {
+    this.timeHint.set(null);
     this.second.set(s);
     this.emitChange();
   }

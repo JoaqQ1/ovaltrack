@@ -1,177 +1,90 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
-import { getAdminToken } from '../../support/auth_helper.js';
+import { getUserToken } from '../../support/auth_helper.js';
+import { makeHttpRequest } from '../../support/httpRequest.js';
 
-const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
+// El "Dado que el administrador del club ... ha iniciado sesión" y los
+// "Entonces el sistema responde con {int}" / "... con {int} y {string}" están en support/common_steps.js
 
-Given('que el usuario con email {string} ha sido dado de baja previamente por el administrador', async function (email) {
-  const adminToken = await getAdminToken();
-  assert.ok(adminToken, 'Debe obtenerse token técnico para preparar el estado inactivo');
+// <==================== Helpers ====================>
 
-  // Buscar el usuario por email
-  const usersRes = await fetch(`${BACKEND_URL}/user`, {
-    headers: { 'Authorization': `Bearer ${adminToken}` }
-  });
-  assert.ok(usersRes.ok, 'Error al consultar lista de usuarios');
-  const users = await usersRes.json();
-  let targetUser = users.find(u => (u.email || u.loginEmail) === email);
-  assert.ok(targetUser, `El usuario ${email} debe existir previamente`);
+// Las cuentas se buscan como las ve el administrador del club en su tabla de miembros, así los
+// escenarios sin sesión o con un jugador también pueden apuntar a una cuenta por su email
+const CLUB_ADMIN = { email: 'admin_puerto@test.com', password: 'PassSegura123!' };
 
-  // Enviar baja lógica si es necesario para asegurar que el usuario esté inactivo
-  const bajaRes = await fetch(`${BACKEND_URL}/user/${targetUser.id}/baja`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${adminToken}`
-    }
-  });
+const getClubAdminToken = async () => {
+  const token = await getUserToken(CLUB_ADMIN.email, CLUB_ADMIN.password);
+  assert.ok(token, `Fallo de inicio de sesión para ${CLUB_ADMIN.email}`);
+  return token;
+};
 
-  assert.ok(
-    bajaRes.status === 200 || bajaRes.status === 409,
-    `Error al preparar usuario inactivo ${email}: se obtuvo status ${bajaRes.status}`
-  );
+const findClubMember = async (email) => {
+  const response = await makeHttpRequest('GET', 'club/my-club/members', null, await getClubAdminToken());
+  assert.equal(response.status, 200, 'No se pudieron obtener los miembros del club');
+  const member = response.body.find((m) => m.email === email);
+  assert.ok(member, `La cuenta ${email} no pertenece al club`);
+  return member;
+};
 
-  targetUser.active = false;
-  this.targetUser = targetUser;
+const changeRole = (userId, role, token) => makeHttpRequest('PATCH', `user/${userId}/role`, { role }, token);
+
+const deactivate = (userId, token) => makeHttpRequest('PATCH', `user/${userId}/baja`, null, token);
+
+// <==================== Sesiones ====================>
+
+Given('que el jugador con email {string} y contraseña {string} ha iniciado sesión', async function (email, contraseña) {
+  this.token = await getUserToken(email, contraseña);
+  assert.ok(this.token, `Fallo de inicio de sesión para el jugador ${email}`);
 });
 
-Given('que el usuario {string} tiene el rol de administrador de club', async function (email) {
-  const adminToken = await getAdminToken();
-  assert.ok(adminToken, 'Debe obtenerse token técnico para asignar rol ADMIN_CLUB');
+Given('un usuario sin sesión iniciada en la plataforma', function () {
+  this.token = null;
+});
 
-  const usersRes = await fetch(`${BACKEND_URL}/user`, {
-    headers: { 'Authorization': `Bearer ${adminToken}` }
-  });
-  assert.ok(usersRes.ok, 'Error al consultar usuarios');
-  const users = await usersRes.json();
-  const targetUser = users.find(u => (u.email || u.loginEmail) === email);
-  assert.ok(targetUser, `Usuario ${email} no encontrado`);
+When('el usuario con email {string} y contraseña {string} intenta iniciar sesión', async function (email, contraseña) {
+  this.response = await makeHttpRequest('POST', 'api/auth/login', { email, password: contraseña });
+});
 
-  if (targetUser.role !== 'ADMIN_CLUB') {
-    const roleRes = await fetch(`${BACKEND_URL}/user/${targetUser.id}/role`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminToken}`
-      },
-      body: JSON.stringify({ role: 'ADMIN_CLUB' })
-    });
-    assert.ok(roleRes.ok, `Error al asignar rol ADMIN_CLUB a ${email}`);
+// <==================== Modificación de rol ====================>
+
+When('cambia el rol de {string} a {string}', async function (email, nuevoRol) {
+  const member = await findClubMember(email);
+  this.response = await changeRole(member.id, nuevoRol, this.token);
+});
+
+When('cambia el rol del usuario inexistente con ID {string} a {string}', async function (userId, nuevoRol) {
+  this.response = await changeRole(userId, nuevoRol, this.token);
+});
+
+// <==================== Revocación de rol y acceso ====================>
+
+// El rol se revoca antes de la baja: el backend no permite cambiar el rol de una cuenta dada de baja
+When('revoca el rol y el acceso de {string}', async function (email) {
+  const member = await findClubMember(email);
+  const roleResponse = await changeRole(member.id, 'NO_ROLE', this.token);
+  assert.equal(roleResponse.status, 200, `No se pudo revocar el rol de ${email}: ${roleResponse.body?.message}`);
+  this.response = await deactivate(member.id, this.token);
+});
+
+When('da de baja la cuenta {string}', async function (email) {
+  const member = await findClubMember(email);
+  this.response = await deactivate(member.id, this.token);
+});
+
+When('da de baja al usuario inexistente con ID {string}', async function (userId) {
+  this.response = await deactivate(userId, this.token);
+});
+
+Given('que la cuenta {string} fue dada de baja', async function (email) {
+  const member = await findClubMember(email);
+  if (member.active) {
+    const response = await deactivate(member.id, await getClubAdminToken());
+    assert.equal(response.status, 200, `No se pudo dar de baja a ${email}: ${response.body?.message}`);
   }
 });
 
-When('solicita dar de baja al usuario con email {string}', async function (email) {
-  const setupToken = this.token || await getAdminToken();
-
-  const usersRes = await fetch(`${BACKEND_URL}/user`, {
-    headers: { 'Authorization': `Bearer ${setupToken}` }
-  });
-  assert.ok(usersRes.ok, 'Error al consultar usuarios');
-  const users = await usersRes.json();
-  const targetUser = users.find(u => (u.email || u.loginEmail) === email);
-  assert.ok(targetUser, `Usuario ${email} no encontrado para dar de baja`);
-
-  this.targetUser = targetUser;
-  this.lastResponse = await fetch(`${BACKEND_URL}/user/${targetUser.id}/baja`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.token}`
-    }
-  });
-
-  try {
-    this.lastResponseBody = await this.lastResponse.json();
-  } catch {
-    this.lastResponseBody = await this.lastResponse.text();
-  }
+Then('la cuenta {string} figura en el club con el rol {string} y acceso {string}', async function (email, rol, acceso) {
+  const member = await findClubMember(email);
+  assert.equal(member.role, rol);
+  assert.equal(member.active, acceso === 'activo');
 });
-
-When('intenta enviar la solicitud de baja para el usuario {string}', async function (email) {
-  const adminToken = await getAdminToken();
-  const usersRes = await fetch(`${BACKEND_URL}/user`, {
-    headers: { 'Authorization': `Bearer ${adminToken}` }
-  });
-  assert.ok(usersRes.ok, 'Error al buscar usuario');
-  const users = await usersRes.json();
-  const targetUser = users.find(u => (u.email || u.loginEmail) === email);
-  assert.ok(targetUser, `Usuario ${email} no encontrado`);
-
-  this.lastResponse = await fetch(`${BACKEND_URL}/user/${targetUser.id}/baja`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': this.token ? `Bearer ${this.token}` : ''
-    }
-  });
-
-  try {
-    this.lastResponseBody = await this.lastResponse.json();
-  } catch {
-    this.lastResponseBody = await this.lastResponse.text();
-  }
-});
-
-When('solicita dar de baja al usuario inexistente con ID {string}', async function (nonexistentId) {
-  this.lastResponse = await fetch(`${BACKEND_URL}/user/${nonexistentId}/baja`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.token}`
-    }
-  });
-
-  try {
-    this.lastResponseBody = await this.lastResponse.json();
-  } catch {
-    this.lastResponseBody = await this.lastResponse.text();
-  }
-});
-
-When('el usuario con email {string} y contraseña {string} intenta iniciar sesión', async function (email, password) {
-  this.lastResponse = await fetch(`${BACKEND_URL}/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-
-  try {
-    this.lastResponseBody = await this.lastResponse.json();
-  } catch {
-    this.lastResponseBody = await this.lastResponse.text();
-  }
-});
-
-Then('el sistema confirma la baja del usuario correctamente', function () {
-  assert.equal(
-    this.lastResponse.status,
-    200,
-    `Se esperaba status 200 al dar de baja pero se recibió ${this.lastResponse.status}`
-  );
-  assert.ok(this.lastResponseBody, 'Debe recibir cuerpo de respuesta');
-  assert.equal(this.lastResponseBody.active, false, 'El campo active debe ser false en la respuesta');
-});
-
-Then('el usuario con email {string} figura como inactivo en el sistema', async function (email) {
-  const adminToken = await getAdminToken();
-  const usersRes = await fetch(`${BACKEND_URL}/user`, {
-    headers: { 'Authorization': `Bearer ${adminToken}` }
-  });
-  const users = await usersRes.json();
-  const userInDb = users.find(u => (u.email || u.loginEmail) === email);
-  assert.ok(userInDb, `El usuario ${email} debe existir`);
-  assert.equal(userInDb.active, false, `El usuario ${email} debe tener active = false`);
-});
-
-Then('la persona asociada al usuario con email {string} y sus registros de eventos y divisiones permanecen en la base de datos', async function (email) {
-  const adminToken = await getAdminToken();
-  const usersRes = await fetch(`${BACKEND_URL}/user`, {
-    headers: { 'Authorization': `Bearer ${adminToken}` }
-  });
-  const users = await usersRes.json();
-  const user = users.find(u => (u.email || u.loginEmail) === email);
-
-  assert.ok(user, `El usuario ${email} debe existir en el sistema`);
-  assert.ok(user.personId || (user.person && (user.person.id || user.person.firstName)), `El usuario ${email} debe conservar su vinculación con Person`);
-});
-

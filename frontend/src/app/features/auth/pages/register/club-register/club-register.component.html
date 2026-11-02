@@ -69,7 +69,7 @@
                         placeholder="Ej: Carlos" 
                       />
                       @if (registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched) {
-                        <span class="error-text">El nombre es obligatorio.</span>
+                        <span class="error-text">El nombre del usuario es obligatorio.</span>
                       }
                     </div>
                   </div>
@@ -84,7 +84,7 @@
                         placeholder="Ej: Gómez" 
                       />
                       @if (registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched) {
-                        <span class="error-text">El apellido es obligatorio.</span>
+                        <span class="error-text">El apellido del usuario es obligatorio.</span>
                       }
                     </div>
                   </div>
@@ -92,7 +92,7 @@
 
                 <div class="mb-3">
                   <div class="form-field">
-                    <label class="custom-label">Correo Electrónico</label>
+                    <label class="custom-label">Correo Electrónico de cuenta y club</label>
                     <input 
                       type="email" 
                       formControlName="email" 
@@ -118,7 +118,7 @@
                         placeholder="Mínimo 8 caracteres" 
                       />
                       @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
-                        <span class="error-text">Debe tener al menos 8 caracteres.</span>
+                        <span class="error-text">La contraseña debe tener al menos 8 caracteres.</span>
                       }
                     </div>
                   </div>
@@ -132,7 +132,7 @@
                         [class.is-invalid]="registerForm.get('birthDate')?.invalid && registerForm.get('birthDate')?.touched"
                       />
                       @if (registerForm.get('birthDate')?.invalid && registerForm.get('birthDate')?.touched) {
-                        <span class="error-text">La fecha es obligatoria.</span>
+                        <span class="error-text">La fecha de nacimiento es obligatoria.</span>
                       }
                     </div>
                   </div>
@@ -159,16 +159,16 @@
 
                 <div class="mb-4">
                   <div class="form-field">
-                    <label class="custom-label">País / Región</label>
+                    <label class="custom-label">Ciudad</label>
                     <input 
                       type="text" 
-                      formControlName="clubRegion" 
+                      formControlName="clubCity" 
                       class="custom-input" 
-                      [class.is-invalid]="registerForm.get('clubRegion')?.invalid && registerForm.get('clubRegion')?.touched"
-                      placeholder="Ej: Chubut, Argentina" 
+                      [class.is-invalid]="registerForm.get('clubCity')?.invalid && registerForm.get('clubCity')?.touched"
+                      placeholder="Ej: Puerto Madryn, Trelew" 
                     />
-                    @if (registerForm.get('clubRegion')?.invalid && registerForm.get('clubRegion')?.touched) {
-                      <span class="error-text">La región es obligatoria.</span>
+                    @if (registerForm.get('clubCity')?.invalid && registerForm.get('clubCity')?.touched) {
+                      <span class="error-text">La ciudad del club es obligatoria.</span>
                     }
                   </div>
                 </div>

@@ -27,32 +27,32 @@ public record MemberRegistrationDTO(
     /** Datos de la cuenta que se solicita. */
     public record ApplicantData(
 
-            @NotBlank(message = "El email es obligatorio")
+            @NotBlank(message = "El email es obligatorio.")
             @Email(message = "El formato del email no es válido")
             @Size(max = 254, message = "El email no puede superar los 254 caracteres")
             @Schema(example = "tomas.paredes@tigresrc.com")
             String email,
 
-            @NotBlank(message = "La contraseña es obligatoria")
-            @Size(min = 8, message = "La contraseña debe tener al menos 6 caracteres")
+            @NotBlank(message = "La contraseña es obligatoria.")
+            @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
             @Schema(example = "Secreta123", accessMode = Schema.AccessMode.WRITE_ONLY)
             String password,
 
-            @NotNull(message = "El rol solicitado es obligatorio")
+            @NotNull(message = "El rol solicitado es obligatorio.")
             @Schema(description = "Rol que solicita la cuenta. No admite roles de administración.")
             UserRole requestedRole,
 
-            @NotBlank(message = "El nombre es obligatorio")
+            @NotBlank(message = "El nombre del usuario es obligatorio.")
             @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
             @Schema(example = "Tomás")
             String firstName,
 
-            @NotBlank(message = "El apellido es obligatorio")
+            @NotBlank(message = "El apellido del usuario es obligatorio.")
             @Size(max = 100, message = "El apellido no puede superar los 100 caracteres")
             @Schema(example = "Paredes")
             String lastName,
 
-            @NotNull(message = "La fecha de nacimiento es obligatoria")
+            @NotNull(message = "La fecha de nacimiento es obligatoria.")
             @Past(message = "La fecha de nacimiento debe ser anterior a hoy")
             @Schema(example = "1998-03-22")
             LocalDate birthDate) {

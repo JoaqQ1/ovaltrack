@@ -1,8 +1,5 @@
 package com.ovaltrack.backend.common.config.exceptions;
 
-import java.util.Date;
-import java.util.Map;
-
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,87 +8,96 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
-import com.ovaltrack.backend.common.dto.ErrorResponse;
+import com.ovaltrack.backend.common.dto.response.MessageResponse;
 
 import org.springframework.http.converter.HttpMessageNotReadableException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+        public static final String UNAUTHORIZED_MESSAGE = "No autorizado: se requiere autenticación";
+
         @ExceptionHandler(DataIntegrityViolationException.class)
-        public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(
+        public ResponseEntity<MessageResponse> handleDataIntegrityViolation(
                         DataIntegrityViolationException exception) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
-                                .body(Map.of("message",
+                                .body(new MessageResponse(
                                                 "No se pudo guardar la información porque viola una restricción de datos."));
         }
 
         @ExceptionHandler(AccessDeniedException.class)
-        public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
+        public ResponseEntity<MessageResponse> handleAccessDenied(AccessDeniedException ex) {
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
                 if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken
                                 || "anonymousUser".equals(auth.getPrincipal())) {
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                        .body(Map.of("message", "No autorizado: se requiere autenticación"));
+                                        .body(new MessageResponse(UNAUTHORIZED_MESSAGE));
                 }
                 String message = (ex.getMessage() != null && !ex.getMessage().equals("Access Denied")
                                 && !ex.getMessage().isBlank())
                                                 ? ex.getMessage()
                                                 : "Acceso denegado: solo el administrador del club puede realizar esta acción";
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                .body(Map.of("message", message));
+                                .body(new MessageResponse(message));
         }
 
         @ExceptionHandler(AuthenticationException.class)
-        public ResponseEntity<Map<String, String>> handleAuthenticationException(AuthenticationException ex) {
+        public ResponseEntity<MessageResponse> handleAuthenticationException(AuthenticationException ex) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                .body(Map.of("message", "No autorizado: se requiere autenticación"));
+                                .body(new MessageResponse(UNAUTHORIZED_MESSAGE));
         }
 
         @ExceptionHandler(EntityNotFoundException.class)
-        public ResponseEntity<Map<String, String>> handleEntityNotFound(EntityNotFoundException ex) {
+        public ResponseEntity<MessageResponse> handleEntityNotFound(EntityNotFoundException ex) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                .body(Map.of("message", ex.getMessage()));
+                                .body(new MessageResponse(ex.getMessage()));
         }
 
         @ExceptionHandler(BusinessException.class)
-        public ResponseEntity<Map<String, String>> handleBusinessException(BusinessException ex) {
+        public ResponseEntity<MessageResponse> handleBusinessException(BusinessException ex) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
-                                .body(Map.of("message", ex.getMessage()));
+                                .body(new MessageResponse(ex.getMessage()));
         }
 
         @ExceptionHandler(UserDeactivatedException.class)
-        public ResponseEntity<Map<String, String>> handleUserDeactivatedException(UserDeactivatedException ex) {
+        public ResponseEntity<MessageResponse> handleUserDeactivatedException(UserDeactivatedException ex) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                .body(Map.of("message", ex.getMessage()));
+                                .body(new MessageResponse(ex.getMessage()));
+        }
+
+        /** Falla de @Valid: se informa el mensaje del primer campo inválido. */
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<MessageResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+                FieldError fieldError = ex.getBindingResult().getFieldError();
+                String message = fieldError != null ? fieldError.getDefaultMessage() : "Datos inválidos";
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(new MessageResponse(message));
         }
 
         @ExceptionHandler(HttpMessageNotReadableException.class)
-        public ResponseEntity<Map<String, String>> handleHttpMessageNotReadable(
+        public ResponseEntity<MessageResponse> handleHttpMessageNotReadable(
                         HttpMessageNotReadableException ex) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(Map.of("message", "El cuerpo de la solicitud no contiene un JSON válido."));
+                                .body(new MessageResponse("El cuerpo de la solicitud no contiene un JSON válido."));
         }
 
         @ExceptionHandler(NoHandlerFoundException.class)
-        public ResponseEntity<ErrorResponse> notFountException(NoHandlerFoundException ex) {
-                ErrorResponse error = new ErrorResponse();
-                error.setDate(new Date());
-                error.setError("Api reste no encontrada");
-                error.setMessage(ex.getMessage());
-                error.setStatus(HttpStatus.NOT_FOUND.value());
-                return ResponseEntity.status(HttpStatus.NOT_FOUND.value()).body(error);
+        public ResponseEntity<MessageResponse> notFoundException(NoHandlerFoundException ex) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(new MessageResponse(ex.getMessage()));
         }
 
         @ExceptionHandler(IllegalArgumentException.class)
-        public ResponseEntity<Map<String, String>> handleIllegalArgumentException(
+        public ResponseEntity<MessageResponse> handleIllegalArgumentException(
                         IllegalArgumentException ex) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(Map.of("message",
+                                .body(new MessageResponse(
                                                 ex.getMessage() != null ? ex.getMessage() : "Parámetro inválido."));
         }
 }

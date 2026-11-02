@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.ovaltrack.backend.division.business.DivisionCoachService;
 import com.ovaltrack.backend.division.domain.dto.divisioncoachdto.DivisionCoachCreationDTO;
 import com.ovaltrack.backend.division.domain.dto.divisioncoachdto.DivisionCoachResponseDTO;
+import com.ovaltrack.backend.common.dto.response.MessageResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -84,7 +84,7 @@ public class DivisionCoachController {
             Authentication authentication) {
         DivisionCoachResponseDTO result = divisionCoachService.findDivisionCoachById(divisionCoachId, authentication);
         return (result != null) ? ResponseEntity.ok(result)
-        : ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro al entrenador asociado a la division");
+        : ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("No se encontro al entrenador asociado a la division"));
 
     }
 
@@ -108,12 +108,7 @@ public class DivisionCoachController {
     @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
     public ResponseEntity<Object> saveDivisionCoach(
             @Valid @RequestBody DivisionCoachCreationDTO divisionCoach,
-            BindingResult bindingResult,
             Authentication authentication) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
         return ResponseEntity.ok(divisionCoachService.saveDivisionCoach(divisionCoach, authentication));
     }
 
@@ -131,7 +126,7 @@ public class DivisionCoachController {
             @PathVariable UUID divisionCoachId,
             Authentication authentication) {
         divisionCoachService.deleteDivisionCoach(divisionCoachId, authentication);
-        return ResponseEntity.ok("Entrenador eliminado correctamente");
+        return ResponseEntity.ok(new MessageResponse("Entrenador eliminado correctamente"));
     }
 
 }

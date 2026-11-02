@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +25,7 @@ import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionResponseDTO
 import com.ovaltrack.backend.division.domain.dto.divisiondto.DivisionUpdateDTO;
 
 import com.ovaltrack.backend.match.domain.dto.AvailablePlayerDTO;
+import com.ovaltrack.backend.common.dto.response.MessageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -79,7 +79,7 @@ public class DivisionController {
             Authentication authentication) {
         DivisionResponseDTO result = divisionService.findDivisionById(divisionId, authentication);
         return (result != null) ? ResponseEntity.ok(result)
-                : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Division no encontrada");
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Division no encontrada"));
     }
 
     @Operation(summary = "Create a division", description = "Creates a division from the request body and returns the created division.", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Division data required to create a division.", required = true, content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DivisionCreationDTO.class))))
@@ -92,13 +92,7 @@ public class DivisionController {
     @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'ADMIN_OVALTRACK')")
     public ResponseEntity<Object> saveDivision(
             @Valid @RequestBody DivisionCreationDTO aDivisionRequest,
-            BindingResult bindingResult,
             Authentication authentication) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
-
         return ResponseEntity.ok(divisionService.saveDivision(aDivisionRequest, authentication));
     }
 
@@ -113,7 +107,7 @@ public class DivisionController {
             @PathVariable UUID divisionId,
             Authentication authentication) {
         divisionService.deleteDivision(divisionId, authentication);
-        return ResponseEntity.ok("Division desactivada correctamente");
+        return ResponseEntity.ok(new MessageResponse("Division desactivada correctamente"));
     }
 
     @Operation(summary = "Update a division", description = "Updates the division identified by the divisionId path parameter and returns the updated division.", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Division data required to update a division.", required = true, content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DivisionUpdateDTO.class))))
@@ -127,12 +121,7 @@ public class DivisionController {
     public ResponseEntity<Object> updateDivision(
             @PathVariable UUID divisionId,
             @Valid @RequestBody DivisionUpdateDTO request,
-            BindingResult bindingResult,
             Authentication authentication) {
-        if (bindingResult.hasErrors()) {
-            String message = bindingResult.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
-        }
         return ResponseEntity.ok(divisionService.updateDivision(divisionId, request, authentication));
     }
 

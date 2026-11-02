@@ -18,6 +18,49 @@ describe('MatchReviewStore (HU-8.4)', () => {
     expect(store.selectedEventId()).toBeNull();
   });
 
+  describe('zona del evento', () => {
+    const event = (id: string, matchTime: number, zone?: { row: number; col: number } | null): MatchTimelineEventResponse => ({
+      id, eventTypeId: 't', eventTypeName: 'Pase / Offload', matchTime, period: 1, teamPossession: 'OWN', zone
+    });
+    const tramo = { id: 'z', matchId: 'm', period: 1 as const, startMinute: 10, endMinute: 20, row: 2, col: 4 };
+
+    it('usa la zona que informa el servidor, también null', () => {
+      store.setEvents([event('a', 600, { row: 1, col: 1 }), event('b', 660, null)]);
+
+      expect(store.allViewModels().map(vm => vm.zone)).toEqual([{ row: 1, col: 1 }, null]);
+    });
+
+    it('sin zona del servidor y sin tramos cargados, no se sabe (undefined)', () => {
+      store.setEvents([event('a', 600)]);
+
+      expect(store.allViewModels()[0].zone).toBeUndefined();
+    });
+
+    it('un evento recién creado (sin zona del servidor) deriva la zona de los tramos cargados', () => {
+      store.setEvents([event('a', 600), event('b', 1500)]);
+      store.setZoneAssignments([tramo]);
+
+      expect(store.allViewModels().map(vm => vm.zone)).toEqual([{ row: 2, col: 4 }, null]);
+    });
+
+    it('si fallaron los tramos no inventa una zona', () => {
+      store.setEvents([event('a', 600)]);
+      store.setZonesFailed();
+
+      expect(store.zonesStatus()).toBe('failed');
+      expect(store.allViewModels()[0].zone).toBeUndefined();
+    });
+
+    it('resetSession descarta los tramos', () => {
+      store.setZoneAssignments([tramo]);
+
+      store.resetSession();
+
+      expect(store.zoneAssignments()).toEqual([]);
+      expect(store.zonesStatus()).toBe('idle');
+    });
+  });
+
   it('should add event, sort chronologically and select it', () => {
     const event1: MatchTimelineEventResponse = {
       id: 'ev-1',
@@ -286,6 +329,19 @@ describe('MatchReviewStore (HU-8.4)', () => {
     });
   });
 
+  it('avisa cada alta, edición y baja confirmada (el servidor recalcula el marcador)', () => {
+    let changes = 0;
+    store.confirmedChange$.subscribe(() => changes++);
+    store.setEvents([{ id: 'a', eventTypeId: 't', eventTypeName: 'Kick', matchTime: 100, period: 1, teamPossession: 'OWN' }]);
+    expect(changes).withContext('cargar eventos no es un cambio').toBe(0);
+
+    store.addEvent({ id: 'b', eventTypeId: 't', eventTypeName: 'Kick', matchTime: 200, period: 1, teamPossession: 'OWN' });
+    store.updateEvent('a', { note: 'nota' });
+    store.removeEvent('b');
+
+    expect(changes).toBe(3);
+  });
+
   describe('timelineLanes and activeLanesCount', () => {
     it('should maintain stable activeLanesCount and keep lanes present when filtering', () => {
       store.setEventTypesList([
@@ -341,5 +397,36 @@ describe('MatchReviewStore (HU-8.4)', () => {
 
     expect(store.visibleEvents().map(event => event.id)).toEqual(['a']);
     expect(store.rawEvents().length).withContext('los eventos no se borran').toBe(3);
+  });
+
+  describe('hiddenByFilters y revealEvent', () => {
+    const event: MatchTimelineEventResponse = {
+      id: 'ev-1', eventTypeId: 'type-1', eventTypeName: 'Tackle completado',
+      matchTime: 600, absoluteMatchTime: 600, period: 1, teamPossession: 'OWN', origin: 'post_capture'
+    };
+
+    beforeEach(() => store.setEvents([event]));
+
+    it('no informa filtros si el evento se ve', () => {
+      expect(store.hiddenByFilters('ev-1')).toEqual([]);
+    });
+
+    it('informa los filtros que ocultan el evento', () => {
+      store.setPeriod(2);
+      store.setSearchTerm('scrum');
+
+      expect(store.hiddenByFilters('ev-1')).toEqual(['period', 'search']);
+    });
+
+    it('revealEvent limpia solo los filtros que lo ocultan y lo selecciona', () => {
+      store.setPeriod(2);
+      store.setTeamFilter('OWN');
+
+      store.revealEvent('ev-1');
+
+      expect(store.filters().period).toBe('ALL');
+      expect(store.filters().team).withContext('un filtro que no lo oculta se conserva').toBe('OWN');
+      expect(store.selectedEventId()).toBe('ev-1');
+    });
   });
 });

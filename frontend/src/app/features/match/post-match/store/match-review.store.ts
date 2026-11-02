@@ -1,7 +1,9 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { Subject } from 'rxjs';
 import { MatchTimelineEventResponse } from '../../types/event.types';
 import { AvailablePlayer } from '../../types/roster.types';
 import { LiveCaptureEventType } from '../../types/event-type.types';
+import { ZoneAssignmentResponse } from '../../types/zone.types';
 import {
   ReviewEventViewModel,
   ReviewFilters,
@@ -20,9 +22,13 @@ import {
   formatAbsoluteTime,
   formatOnlyTime
 } from '../utils/match-review.utils';
+import { zoneForEvent } from '../utils/zone-event-link';
 import { countsAsScoring, scoringTeam } from '../../statistics/calculators/event-rules';
 
 export { RUGBY_HALF_TIME_MIN, RUGBY_FULL_TIME_MIN, EMPTY_TIME_PLACEHOLDER };
+
+/** Filtro de Eventos que puede dejar un evento fuera de la vista. */
+export type HidingFilter = 'period' | 'team' | 'unassigned' | 'search' | 'lane';
 
 @Injectable({
   providedIn: 'root'
@@ -37,9 +43,20 @@ export class MatchReviewStore {
   readonly eventTypesDict = signal<Record<string, string>>({});
   readonly eventTypesList = signal<LiveCaptureEventType[]>([]);
   readonly availablePlayers = signal<AvailablePlayer[]>([]);
+  /** Tramos de zona del partido (solo lectura): dan el rango y el enlace a Zonas de cada evento. */
+  readonly zoneAssignments = signal<ZoneAssignmentResponse[]>([]);
+  /** Si falló `GET /zones` la zona se sigue viendo (viene en el evento), pero sin rango ni enlace al tramo. */
+  readonly zonesStatus = signal<'idle' | 'loaded' | 'failed'>('idle');
   readonly initialHomeScore = signal<number>(0);
   readonly initialAwayScore = signal<number>(0);
   readonly scoreDelta = signal<{ text: string; type: 'OWN' | 'OPPONENT' } | null>(null);
+
+  /**
+   * Avisa cada alta, edición o baja de un evento. Los mutadores (`addEvent`, `updateEvent`, `removeEvent`) se llaman
+   * solo con el cambio ya confirmado por el servidor, que en ese momento recalcula el marcador del partido.
+   */
+  private readonly confirmedChange = new Subject<void>();
+  readonly confirmedChange$ = this.confirmedChange.asObservable();
 
   readonly filters = signal<ReviewFilters>({
     period: 'ALL',
@@ -85,13 +102,13 @@ export class MatchReviewStore {
   });
 
   // --- Indicador Reactivo de Filtros Activos ---
+  /** Algo de la barra difiere del estado por defecto: período, posesión, "Solo sin jugador" o búsqueda. */
   readonly hasActiveFilters = computed<boolean>(() => {
     const f = this.filters();
     return f.period !== 'ALL' ||
            f.team !== 'ALL' ||
            f.onlyUnassigned ||
-           f.searchTerm.trim() !== '' ||
-           f.hiddenLaneIds.length > 0;
+           f.searchTerm.trim() !== '';
   });
 
   // --- Duración Dinámica y Escala (Eje X) ---
@@ -113,9 +130,13 @@ export class MatchReviewStore {
     const scale = this.matchDurationScale();
     const currentFilters = this.filters();
     const term = currentFilters.searchTerm.trim().toLowerCase();
+    const zonesLoaded = this.zonesStatus() === 'loaded';
+    const assignments = this.zoneAssignments();
 
     return raw.map(e => {
       const vm = this.buildBaseViewModel(e, dict, scale);
+      // El servidor informa la zona; los eventos recién creados en esta pantalla no la traen y se derivan con los tramos
+      vm.zone = e.zone !== undefined ? e.zone : (zonesLoaded ? zoneForEvent(e, assignments) : undefined);
       vm.isDimmed = !this.evaluateFilters(vm, currentFilters, term);
       return vm;
     });
@@ -234,6 +255,16 @@ export class MatchReviewStore {
     this.matchId.set(id);
   }
 
+  setZoneAssignments(assignments: ZoneAssignmentResponse[]): void {
+    this.zoneAssignments.set(assignments);
+    this.zonesStatus.set('loaded');
+  }
+
+  setZonesFailed(): void {
+    this.zoneAssignments.set([]);
+    this.zonesStatus.set('failed');
+  }
+
   setAvailablePlayers(players: AvailablePlayer[]): void {
     this.availablePlayers.set(players);
   }
@@ -337,6 +368,31 @@ export class MatchReviewStore {
     });
   }
 
+  /** Filtros activos que dejan fuera de la vista a un evento (vacío si se ve). */
+  hiddenByFilters(eventId: string): HidingFilter[] {
+    const ev = this.allViewModels().find(e => e.id === eventId);
+    if (!ev) return [];
+    const filters = this.filters();
+    return this.findHidingFilters(ev, filters, filters.searchTerm.trim().toLowerCase());
+  }
+
+  /** Limpia solo los filtros que ocultan al evento, lo selecciona y la tabla hace scroll hasta él. */
+  revealEvent(eventId: string): void {
+    const hiding = this.hiddenByFilters(eventId);
+    const ev = this.allViewModels().find(e => e.id === eventId);
+    if (ev && hiding.length > 0) {
+      this.filters.update(f => ({
+        ...f,
+        period: hiding.includes('period') ? 'ALL' : f.period,
+        team: hiding.includes('team') ? 'ALL' : f.team,
+        onlyUnassigned: hiding.includes('unassigned') ? false : f.onlyUnassigned,
+        searchTerm: hiding.includes('search') ? '' : f.searchTerm,
+        hiddenLaneIds: hiding.includes('lane') ? f.hiddenLaneIds.filter(id => id !== ev.eventTypeId) : f.hiddenLaneIds
+      }));
+    }
+    this.selectEvent(eventId);
+  }
+
   clearFilters(): void {
     this.filters.set({
       period: 'ALL',
@@ -350,6 +406,8 @@ export class MatchReviewStore {
   resetSession(): void {
     this.selectedEventId.set(null);
     this.scoreDelta.set(null);
+    this.zoneAssignments.set([]);
+    this.zonesStatus.set('idle');
     this.clearFilters();
   }
 
@@ -368,6 +426,7 @@ export class MatchReviewStore {
     if (this.selectedEventId() === eventId) {
       this.selectedEventId.set(null);
     }
+    this.confirmedChange.next();
   }
 
   updateEvent(eventId: string, partial: Partial<MatchTimelineEventResponse>): void {
@@ -405,6 +464,7 @@ export class MatchReviewStore {
       newArray[index] = updated;
       this.rawEvents.set(newArray);
     }
+    this.confirmedChange.next();
   }
 
   addEvent(event: MatchTimelineEventResponse): void {
@@ -449,6 +509,7 @@ export class MatchReviewStore {
     } else if (pts.home > 0) {
       this.triggerScoreDelta(pts.home, 'OWN');
     }
+    this.confirmedChange.next();
   }
 
   /**
@@ -518,15 +579,20 @@ export class MatchReviewStore {
   }
 
   private evaluateFilters(ev: ReviewEventViewModel, filters: ReviewFilters, term: string): boolean {
-    const matchesPeriod = filters.period === 'ALL' || ev.period === filters.period;
-    const matchesTeam = filters.team === 'ALL' || ev.teamPossession === filters.team;
-    const matchesUnassigned = !filters.onlyUnassigned || ev.isUnassigned;
+    return this.findHidingFilters(ev, filters, term).length === 0;
+  }
+
+  private findHidingFilters(ev: ReviewEventViewModel, filters: ReviewFilters, term: string): HidingFilter[] {
+    const hiding: HidingFilter[] = [];
+    if (filters.period !== 'ALL' && ev.period !== filters.period) hiding.push('period');
+    if (filters.team !== 'ALL' && ev.teamPossession !== filters.team) hiding.push('team');
+    if (filters.onlyUnassigned && !ev.isUnassigned) hiding.push('unassigned');
     const matchesSearch = term === '' ||
       ev.playerName.toLowerCase().includes(term) ||
       ev.eventTypeName.toLowerCase().includes(term);
-    const matchesLane = !filters.hiddenLaneIds.includes(ev.eventTypeId);
-
-    return matchesPeriod && matchesTeam && matchesUnassigned && matchesSearch && matchesLane;
+    if (!matchesSearch) hiding.push('search');
+    if (filters.hiddenLaneIds.includes(ev.eventTypeId)) hiding.push('lane');
+    return hiding;
   }
 
   private getEventPoints(ev: MatchTimelineEventResponse, typesMap?: Map<string, LiveCaptureEventType>): { home: number; away: number } {

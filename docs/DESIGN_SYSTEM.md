@@ -65,6 +65,14 @@ Los tokens oficiales del sistema corresponden a la identidad visual **Sport Pro 
   --error-tint: rgba(240, 68, 56, 0.14);
   --error-border: rgba(180, 35, 24, 0.35);
 
+  /* Calor de la cancha de zonas (post-partido): escala secuencial ámbar → naranja */
+  --zone-heat-low: #fdb022;
+  --zone-heat-high: #d9480f;
+
+  /* Píldora de marcador del encabezado de análisis post-partido: un solo estilo en Eventos, Zonas y Estadísticas */
+  --score-pill-bg: #204b22;
+  --score-pill-fg: #ffffff;
+
   /* Geometría y Sombras */
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -318,6 +326,7 @@ Cuando decidas abordar y definir el **Modo Oscuro** para estas vistas en una eta
    - Outline Blanco Deportivo (`.btn-outline`): Para acciones secundarias, filtros o cancelar.
    - Rojo destructivo (`.btn-logout`, `.btn-delete`): Reservado para eliminar o cerrar sesión.
 3. **Mantener la consistencia de elevación:** Toda tarjeta, tabla o contenedor de datos debe tener borde de `2px` con radio redondeado (`16px` o `20px`) y sombra de elevación profunda.
+4. **Las acciones de una vista viven en la barra de esa vista:** el encabezado común solo contiene lo que vale para todas las vistas (volver, etiqueta, título, marcador, hora y selector de vistas), para que quede en las mismas coordenadas en todas.
 5. **No alterar ni forzar contenedores en Carga en Vivo ni Entretiempo:** Dichas pantallas (`/live-capture/:matchId` y `/live-capture/:matchId/halftime`) son instrumentos tácticos especializados para tablet en tiempo real; deben mantenerse a pantalla completa y están exentas de `.layout-container`.
 6. **Uso obligatorio de `.layout-container.page`:** Toda nueva pantalla o flujo de gestión debe construirse dentro de `.layout-container.page` para garantizar alineación pixel-perfect con la Navbar.
 
@@ -387,38 +396,47 @@ La pantalla de post-partido está estructurada como una estación de trabajo de 
 
 ### 8.1 Grilla CSS Grid y Viewport Lock
 - **Desktop ($\ge 1121\text{px}$):**
-  - Contenedor `.pm` con `height: calc(100dvh - var(--navbar-h, 64px) - var(--layout-pad-y, 24px) - 16px);`.
-  - Grid Template:
+  - El shell (`PostMatchShellComponent`) bloquea el viewport solo en Eventos (`data.lockViewport`): `.pm-shell--locked` con `height: calc(100dvh - var(--navbar-h, 64px) - 26px);` y columna flex (encabezado de alto automático + vista con `flex: 1`). Así Eventos ocupa el alto restante sin depender de la altura del encabezado.
+  - El padding superior (14px, 6px con alto ≤ 800px) y el gap (8px, 6px) de la shell son los mismos en las tres vistas, y `html:has(.pm-shell)` reserva el espacio de la barra de scroll (`scrollbar-gutter: stable`): así el encabezado queda en las mismas coordenadas aunque Zonas y Estadísticas scrolleen y Eventos no. Las vistas no agregan padding ni margen superior propio.
+  - La vista Eventos (`.pm`) ocupa el 100% de ese espacio con:
     ```css
     grid-template-areas:
-      "hud hud"
       "kpi kpi"
       "timeline inspector"
       "table inspector";
     grid-template-columns: minmax(0, 1fr) 320px;
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
     ```
   - La tabla aloja un `cdk-virtual-scroll-viewport` vertical que aprovecha todo el espacio remanente del viewport.
 - **Tablet y Mobile ($< 1121\text{px}$):**
-  - Flujo vertical a 1 columna: `hud`, `kpi`, `timeline`, `table`.
-  - La tarjeta de tabla adopta altura fija de `470px` y `padding-bottom: 96px !important` para dar despeje al inspector flotante.
+  - Flujo vertical a 1 columna: `kpi`, `timeline`, `table` (el encabezado común va arriba, fuera de la grilla).
+  - La tarjeta de tabla adopta altura fija de `470px` y `padding-bottom` extra para dar despeje al inspector flotante.
 
 ### 8.2 Componentes de la Estación de Trabajo
-1. **HUD Analítico (`PostMatchHeaderComponent`):**
-   - Botón `.hud-back` (`←`) táctil de 40px con borde suave.
-   - Píldora de marcador oscura central `.match-score-pill`: `[ 27 – 19 ]` en fuente monoespaciada tabular y alto contraste.
-   - Burbuja flotante animada `.score-delta-badge` (`+5`), animada con `scoreDeltaPop` y temporizador de 3 segundos.
-   - Botón primario verde rugby botella `+ Agregar evento`.
+1. **Encabezado común (`PostMatchHeaderComponent` dentro de `PostMatchShellComponent`):**
+   - Compartido por Eventos (`/post-match/:id`), Zonas (`/zones`) y Estadísticas (`/statistics`), que son rutas hijas del shell.
+   - Botón `.hud-back` (`←`) de 44px, etiqueta fija `ANÁLISIS POST-PARTIDO`, píldora de marcador con `--score-pill-bg` / `--score-pill-fg` (mono tabular) y línea inferior siempre `Hora de inicio HH:MM:SS`.
+   - Burbuja flotante animada `.score-delta-badge` (`+5`), con `scoreDeltaPop` y temporizador de 3 segundos (solo cuando Eventos la informa).
+   - Selector de vistas en la misma fila del título: `routerLink` + `routerLinkActive` (`aria-current="page"`), contenedor gris claro y vista activa **blanca elevada** (el verde queda para filtros). En pantallas < 1280px baja a su propia fila con tres partes iguales.
+   - El encabezado no tiene acciones propias de una vista: el selector queda siempre pegado al borde derecho. Lo que es de una vista vive en la barra de esa vista (p. ej. «Agregar evento», en la barra de Eventos).
 2. **Tira Condensada de KPIs (`PostMatchKpiStripComponent`):**
    - Altura de 44px con 3 secciones: total de eventos, conteo de jugadas sin jugador con botón `"Ver pendientes ›"` y porcentaje de carga con barra de progreso verde.
 3. **Timeline Táctico Compacto (`PostMatchTimelineComponent`):**
+   - Su barra de herramientas aloja los filtros, el buscador y la acción primaria `+ Agregar evento` (`.btn-primary-rugby`), ambos de 36px con mouse y 44px en pantallas táctiles (`--toolbar-ctl-h`) a la derecha, separada por un divisor `--border-strong`. Atajo `N` (`aria-keyshortcuts`). La acción queda fija a la derecha. **< 1000px** de tarjeta (`@container timeline-card`) la acción pasa a botón «+» con `aria-label` (mismo `--toolbar-ctl-h`).
+   - **Búsqueda:** con lugar es un campo visible de 220–250px a la izquierda de la acción, con una × interna que borra el texto. El componente mide el ancho real de la barra (filtros, incluido el lugar reservado de «Limpiar filtros», y la acción) y solo si el campo no entra lo pliega a una lupa (36px con mouse, 44px tocables). Abierta, crece sobre el espacio libre de la fila sin ocultar los filtros; si no queda lugar (< 180px), la búsqueda y la acción quedan arriba y los filtros pasan a una segunda línea. Nunca se pliega con texto; Esc la cierra solo si está vacía. Con la lupa, si los filtros no entran scrollean en horizontal con un degradado a la derecha.
+   - **«Limpiar filtros»:** botón de texto fantasma (no verde: el verde es "filtro aplicado"), 44px tocables, al final del grupo de filtros después de un divisor. Aparece solo si algo difiere del estado por defecto (período, posesión, «Solo sin jugador» o búsqueda); limpia todo, búsqueda incluida, y deja el foco en «Todo el partido». El estado vacío de la tabla repite la acción como botón outline.
+   - El modal de alta abre con el período del filtro activo (o del evento seleccionado) y sugiere su tiempo, con una etiqueta de origen por campo. Si los filtros ocultan el evento creado, un toast ofrece «Mostrar evento» o «Limpiar filtros».
    - Altura de carril `--lane-h: 32px;` y marcadores de jugada de `20px`.
    - Container Queries (`@container (max-width: 650px)`) para abreviar nombres largos (*Infracción*, *Penal palos*, *Tackle ✓*, etc.).
-4. **Tabla Cronológica a 5 Columnas (`PostMatchTableComponent`):**
-   - Columnas: `PER.` (55px) | `JUEGO` (75px) | `VIDEO` (75px) | `JUGADA` (1fr) | `JUGADOR` (1.2fr).
+4. **Tabla Cronológica (`PostMatchTableComponent`):**
+   - Columnas (`--table-cols`): `PERÍODO` (56px) | `JUEGO` (64px) | `VIDEO` (64px) | `JUGADA` (1fr) | `JUGADOR` (1.1fr) | `ZONA` (48px) | `NOTA` (1fr) | `ACCIÓN` (72px).
+   - **Zona (solo lectura):** solo la etiqueta mono (C4) en `--text-secondary`, sin mini mapa (el mini mapa queda en el inspector); tooltip y `aria-label` con el nombre completo («Centro · Campo rival»). Sin zona: «—» gris, sin ámbar (son muchos). La zona se edita solo en Zonas.
    - Selector inline `[ Sin asignar ▾ ]`: chip con borde discontinuo ámbar (`#d97706`), fondo crema (`#fffdf0`) y desplegable nativo sin solapamiento de virtual scroll.
 5. **Inspector Dual y Formulario Reactivo (`PostMatchPanelComponent`):**
    - **Desktop:** Columna lateral fija de 320px con solapas `[Ver]` y `[Editar]`.
+   - **Eliminar:** mismo estilo que el de la fila seleccionada de la tabla (ícono con borde rojo claro, lleno al pasar el cursor), en el borde derecho de la barra `[Ver | Editar]` y en los dos modos; 28px visibles y 44px tocables, con tooltip y `aria-label` «Eliminar evento» y la confirmación de siempre. El pie de Editar solo dice «Los cambios se guardan automáticamente».
+   - **Zona (solo lectura):** en «Ver», una fila de una línea del alto de los demás atributos, justo después de Jugador: mini mapa + etiqueta + ›. Toda la fila es el enlace a Zonas (`?tramo=<id>`, o `?minuto=<n>` si no tiene zona); el detalle (lateral, franja, tramo y tiempo añadido) va en el tooltip y el `aria-label`. Sin zona: «Sin zona» en ámbar (`--warning`). El tiempo añadido se rotula «T. añadido».
+   - **Prioridad de la cola (desktop):** la cola de revisión muestra solo los ítems que entran completos en el alto libre (mínimo 2), sin barra de scroll, y suma los que no entran al aviso «+N más en la tabla» (misma utilidad de desborde que «Huecos sin zona»: `utils/list-overflow.ts`). Si los atributos del evento no entran, scrollean dentro del bloque de detalle (el título queda fijo) con un degradado abajo que avisa que hay más.
    - **Tablet/Mobile:** Bottom Sheet flotante con estado *peek* (comprimido con handle, stepper `‹ 1 de 4 ›`, selector rápido y botón Editar) y estado *open* (expandido al 78vh con backdrop blur).
    - **Autoguardado con Debounce:** Pipeline RxJS con `debounceTime(400)` e indicador visual en tiempo real (`Guardando...`, `Guardado ✓`, `Error al guardar`).
    - **Cola de Revisión:** Tarjetas compactas (`02:36 Penal / infracción 1T`) con resaltado ámbar al seleccionar y stepper rápido.
