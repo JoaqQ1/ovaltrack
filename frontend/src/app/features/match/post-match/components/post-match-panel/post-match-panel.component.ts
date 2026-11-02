@@ -16,6 +16,7 @@ import { EventFormComponent, EventFormData } from '../event-form/event-form.comp
 import { TemplateField } from '../../../types/event-type.types';
 import { ZoneCellRef } from '../../../types/zone.types';
 import { EventZoneLink, describeEventZone, resolveEventZoneLink } from '../../utils/zone-event-link';
+import { displayAttributeLabel } from '../../utils/attribute-labels';
 import { zoneDeepLinkParams } from '../../utils/zone-deep-link';
 import { zoneLabel } from '../../utils/zone-grid';
 import { ZoneMiniMapComponent } from '../zone-mini-map/zone-mini-map.component';
@@ -165,7 +166,7 @@ export class PostMatchPanelComponent implements OnDestroy {
       if (val === null || val === undefined || val === '') continue;
 
       const field = fieldsMap.get(key);
-      const label = field ? field.label : key;
+      const label = field ? displayAttributeLabel(type?.code, key, field.label) : key;
       let displayVal = String(val);
 
       if (field) {
