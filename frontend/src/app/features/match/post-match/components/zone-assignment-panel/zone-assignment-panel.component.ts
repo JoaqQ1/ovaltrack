@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, Input, OnInit, inject, model } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, Input, NgZone, OnInit, ViewChild, inject, model } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from 'src/app/core/services/toast.service';
@@ -7,6 +7,7 @@ import { MatchZonesStore } from '../../store/match-zones.store';
 import { HALFTIME_SPLIT_MESSAGE, deduceZonePeriod, rangeCrossesHalftime, validateZoneForm } from '../../utils/zone-form.utils';
 import { ZONE_COLUMN_NAMES, ZONE_ROW_NAMES, ZONE_ROW_SHORT_NAMES, columnRangeLabel, zoneLabel } from '../../utils/zone-grid';
 import { describeSegment, eventsInRange, eventsReleasedByEdit, findOverlap } from '../../utils/zone-stats';
+import { GAPS_UNBOUNDED_PREVIEW, GapOverflow, gapCapacity, visibleWithOverflow } from '../../utils/zone-gap-overflow';
 import { GapWithEvents, TRACK_MINUTES, gapsWithEventCount, suggestNextRange } from '../../utils/zone-track-layout';
 import { ZONE_HALF_MINUTES, ZoneAssignmentRequest, ZoneAssignmentResponse, ZoneCellRef, ZonePeriod } from '../../../types/zone.types';
 
@@ -24,8 +25,8 @@ export const PICK_FRANJA_HELP = 'Tocá la grilla o la cancha';
 /** Regla del rango: se muestra en el tooltip de "Hasta" y en la ayuda general de la pantalla. */
 export const RANGE_RULE_HELP = 'Inicio incluido, fin excluido: 20′–25′ y 25′–30′ no se pisan.';
 
-/** Huecos que se listan sin expandir; el resto se ve en la grilla o con "Ver todos". */
-const GAPS_PREVIEW = 4;
+/** Desde este ancho el panel ocupa el alto de la fila y la lista de huecos se ajusta a lo que queda libre. */
+const DESKTOP_QUERY = '(min-width: 1122px)';
 
 /** Cuánto tiempo queda disponible el "Deshacer" tras borrar un tramo. */
 const UNDO_WINDOW_MS = 6000;
@@ -42,10 +43,11 @@ const UNDO_WINDOW_MS = 6000;
   templateUrl: './zone-assignment-panel.component.html',
   styleUrl: './zone-assignment-panel.component.css'
 })
-export class ZoneAssignmentPanelComponent implements OnInit {
+export class ZoneAssignmentPanelComponent implements OnInit, AfterViewInit {
   readonly store = inject(MatchZonesStore);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly ngZone = inject(NgZone);
 
   @Input() matchId = '';
 
@@ -53,7 +55,10 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   readonly selectedCell = model<ZoneCellRef | null>(null);
 
   readonly laterals = ZONE_ROW_NAMES.map((name, index) => ({ row: index + 1, name, short: ZONE_ROW_SHORT_NAMES[index] }));
-  gapsExpanded = false;
+  /** Alto libre para la lista de huecos; null cuando el panel no tiene alto acotado (una columna, hoja móvil). */
+  private gapsRegionHeight: number | null = null;
+  private gapsObserver?: ResizeObserver;
+  @ViewChild('gapsRegion') private gapsRegion?: ElementRef<HTMLElement>;
   readonly pickFranjaHelp = PICK_FRANJA_HELP;
   readonly rangeRuleHelp = RANGE_RULE_HELP;
 
@@ -67,9 +72,22 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   /** Se intentó guardar sin elegir franja (atajo de teclado): el campo Franja lo marca como error. */
   pickAttempted = false;
 
+  ngAfterViewInit(): void {
+    const region = this.gapsRegion?.nativeElement;
+    if (!region || typeof ResizeObserver === 'undefined') return;
+
+    this.gapsObserver = new ResizeObserver(() => {
+      const bounded = typeof matchMedia === 'function' && matchMedia(DESKTOP_QUERY).matches;
+      const height = bounded ? region.clientHeight : null;
+      if (height !== this.gapsRegionHeight) this.ngZone.run(() => { this.gapsRegionHeight = height; });
+    });
+    this.gapsObserver.observe(region);
+  }
+
   ngOnInit(): void {
     this.applySuggestion();
     this.destroyRef.onDestroy(() => {
+      this.gapsObserver?.disconnect();
       this.store.conflictId.set(null);
       this.store.editingId.set(null);
       this.store.formRange.set(null);
@@ -196,19 +214,14 @@ export class ZoneAssignmentPanelComponent implements OnInit {
     return gapsWithEventCount(this.store.assignments(), this.store.events());
   }
 
-  /** Con más de un hueco oculto se resume; ocultar uno solo ahorra casi nada y obliga a un clic. */
-  get canToggleGaps(): boolean {
-    return this.gaps.length > GAPS_PREVIEW + 1;
-  }
-
-  /** Huecos visibles: los primeros en orden cronológico, o todos si se expandió. */
-  get visibleGaps(): GapWithEvents[] {
+  /**
+   * Huecos listados y cuántos quedan para la grilla: los que entran completos en el alto libre, en orden cronológico,
+   * con el hueco precargado en el formulario en lugar del último visible si no entra.
+   */
+  get gapView(): GapOverflow<GapWithEvents> {
     const gaps = this.gaps;
-    return this.gapsExpanded || gaps.length <= GAPS_PREVIEW + 1 ? gaps : gaps.slice(0, GAPS_PREVIEW);
-  }
-
-  toggleGaps(): void {
-    this.gapsExpanded = !this.gapsExpanded;
+    const capacity = this.gapsRegionHeight === null ? GAPS_UNBOUNDED_PREVIEW : gapCapacity(this.gapsRegionHeight, gaps.length);
+    return visibleWithOverflow(gaps, capacity, gap => this.isGapLoaded(gap));
   }
 
   /** El hueco ya está cargado en el formulario. */
