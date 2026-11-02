@@ -428,8 +428,9 @@ La pantalla de post-partido está estructurada como una estación de trabajo de 
    - El modal de alta abre con el período del filtro activo (o del evento seleccionado) y sugiere su tiempo, con una etiqueta de origen por campo. Si los filtros ocultan el evento creado, un toast ofrece «Mostrar evento» o «Limpiar filtros».
    - Altura de carril `--lane-h: 32px;` y marcadores de jugada de `20px`.
    - Container Queries (`@container (max-width: 650px)`) para abreviar nombres largos (*Infracción*, *Penal palos*, *Tackle ✓*, etc.).
-4. **Tabla Cronológica a 5 Columnas (`PostMatchTableComponent`):**
-   - Columnas: `PER.` (55px) | `JUEGO` (75px) | `VIDEO` (75px) | `JUGADA` (1fr) | `JUGADOR` (1.2fr).
+4. **Tabla Cronológica (`PostMatchTableComponent`):**
+   - Columnas (`--table-cols`): `PERÍODO` (56px) | `JUEGO` (64px) | `VIDEO` (64px) | `JUGADA` (1fr) | `JUGADOR` (1.1fr) | `ZONA` (84px) | `NOTA` (1fr) | `ACCIÓN` (72px).
+   - **Zona (solo lectura):** mini mapa 3×6 (`ZoneMiniMapComponent`, con las proporciones reales de la grilla y la celda en `--zone-heat-high`) + etiqueta mono (C4); tooltip y `aria-label` con el nombre completo («Centro · Campo rival»). Sin zona: «—» gris, sin ámbar (son muchos). La zona se edita solo en Zonas.
    - Selector inline `[ Sin asignar ▾ ]`: chip con borde discontinuo ámbar (`#d97706`), fondo crema (`#fffdf0`) y desplegable nativo sin solapamiento de virtual scroll.
 5. **Inspector Dual y Formulario Reactivo (`PostMatchPanelComponent`):**
    - **Desktop:** Columna lateral fija de 320px con solapas `[Ver]` y `[Editar]`.

@@ -9,6 +9,7 @@
         <div class="col-video">VIDEO</div>
         <div class="col-type">JUGADA</div>
         <div class="col-player">JUGADOR</div>
+        <div class="col-zone">ZONA</div>
         <div class="col-note">NOTA</div>
         <div class="col-action">ACCIÓN</div>
       </div>
@@ -62,6 +63,16 @@
                 </option>
               </select>
             </div>
+          </div>
+
+          <!-- Zona del evento (solo lectura; se edita en Zonas): mini mapa + etiqueta. Sin zona: «—» gris -->
+          <div class="col-zone">
+            <span *ngIf="ev.zone as zone" class="zone-cell" [attr.title]="zoneName(zone)"
+                  [attr.aria-label]="'Zona ' + zoneLabel(zone) + ': ' + zoneName(zone)">
+              <app-zone-mini-map [cell]="zone" />
+              <span class="zone-label">{{ zoneLabel(zone) }}</span>
+            </span>
+            <span *ngIf="ev.zone === null" class="zone-none" aria-label="Sin zona" title="Sin zona">—</span>
           </div>
 
           <div class="col-note" (click)="$event.stopPropagation()">

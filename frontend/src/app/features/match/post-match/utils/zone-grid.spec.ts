@@ -1,6 +1,6 @@
 import {
   ZONE_COLUMN_METERS, ZONE_FIELD_LENGTH_M, ZONE_FIELD_WIDTH_M, ZONE_ROW_METERS,
-  allZoneCells, columnRangeLabel, describeZone, formatEventCount, rowRangeLabel, shortTeamName, zoneLabel
+  allZoneCells, columnRangeLabel, describeZone, formatEventCount, rowRangeLabel, shortTeamName, zoneLabel, zoneName
 } from './zone-grid';
 
 describe('zone-grid', () => {
@@ -30,6 +30,11 @@ describe('zone-grid', () => {
   it('describe una zona de juego y una de in-goal', () => {
     expect(describeZone({ row: 3, col: 5 })).toBe('D5 · Derecha (55–70 m) · 22 rival (78–100 m)');
     expect(describeZone({ row: 1, col: 1 })).toBe('I1 · Izquierda (0–15 m) · In-goal propio');
+  });
+
+  it('zoneName da el lateral y la franja para tooltips', () => {
+    expect(zoneName({ row: 2, col: 4 })).toBe('Centro · Campo rival');
+    expect(zoneName({ row: 3, col: 6 })).toBe('Derecha · In-goal rival');
   });
 
   it('genera las 18 celdas de la grilla en orden', () => {
