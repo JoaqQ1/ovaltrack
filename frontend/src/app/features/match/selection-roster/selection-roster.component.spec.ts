@@ -31,7 +31,11 @@ describe('SelectionRosterComponent', () => {
         {
           provide: MatchService,
           useValue: {
-            getMatchById: () => of({ id: 'match-123', opponent: 'Rival FC', date: '2026-10-03' }),
+            getMatchById: () => of({
+              id: 'match-123',
+              opponent: { id: 'opponent-1', name: 'Rival FC', alias: 'RFC', city: null },
+              date: '2026-10-03'
+            }),
           },
         },
         {
@@ -63,4 +67,3 @@ describe('SelectionRosterComponent', () => {
     expect(component).toBeTruthy();
   });
 });
-

@@ -113,6 +113,7 @@ public final class EventDTOMapper {
                 event.getTeamPossession(),
                 event.getOrigin(),
                 event.getAttributes(),
-                event.getNote());
+                event.getNote(),
+                null);
     }
 }

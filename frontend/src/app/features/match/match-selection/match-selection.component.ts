@@ -501,7 +501,7 @@ export class MatchSelectComponent implements OnInit {
 
       return {
         id: partido.id,
-        title: `${partido.opponent || 'Rival'}`,
+        title: `${partido.opponent.name || 'Rival'}`,
         start: isoDate,
         backgroundColor: bgColor, // <--- Aplica el color dinámico
         borderColor: bgColor,

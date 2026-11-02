@@ -149,7 +149,7 @@
             <span class="vs-label">VS</span>
             <h2 class="match-opponent-name">
               <button type="button" class="match-card-link" (click)="openMatch(match)">
-                {{ match.opponent }}
+                {{ match.opponent.name }}
               </button>
             </h2>
           </div>
@@ -209,7 +209,7 @@
               <span class="vs-label">VS</span>
               <h2 class="match-opponent-name">
                 <button type="button" class="match-card-link" (click)="openMatch(selectedMatchForModal); closeMatchModal()">
-                  {{ selectedMatchForModal.opponent }}
+                  {{ selectedMatchForModal.opponent.name }}
                 </button>
               </h2>
             </div>
@@ -254,7 +254,6 @@
       <!-- Tarjetas Compactas de los partidos -->
       <div style="display: flex; flex-direction: column; gap: 4px;">
         @for (match of matchesForDayModal; track match.id) {
-          <!-- AQUÍ ESTÁ EL CAMBIO: [style.backgroundColor]="getMatchColor(match)" -->
           <div class="compact-match-card" (click)="openMatchDetailsFromDayModal(match)" 
                [style.backgroundColor]="getMatchColor(match)"
                style="border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: filter 0.15s ease;">
@@ -268,7 +267,7 @@
             </div>
             
             <div style="color: #ffffff; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; line-height: 1.2;">
-              {{ match.opponent }}
+              {{ match.opponent.name }}
             </div>
             
             @if (match.status !== 'not_started' && match.status !== 'empty_roster') {

@@ -1,19 +1,4 @@
-<div class="layout-container page pm">
-  <!-- Page Header Integrado con Tanteador y Delta (Fase 2) -->
-  <div class="pm-area-hud">
-    <app-post-match-header
-      [ownClubName]="userClubName()"
-      [opponentName]="opponent()"
-      [homeScore]="store.scoreboard().home"
-      [awayScore]="store.scoreboard().away"
-      [scoreDelta]="store.scoreDelta()"
-      [startTimeFormatted]="store.kpis().startTimeFormatted"
-      (back)="comeBack()"
-      (addEvent)="openCreateModal()"
-      (viewStats)="goToStatistics()"
-    />
-  </div>
-
+<div class="pm">
   <!-- Banner de Error Semántico -->
   <div *ngIf="errorMessage()" class="alert-error" role="alert">
     <i class="bi bi-exclamation-triangle-fill"></i>
@@ -42,7 +27,7 @@
 
     <!-- Área de Línea Temporal -->
     <div class="pm-area-timeline">
-      <app-post-match-timeline />
+      <app-post-match-timeline (addEvent)="openCreateModal()" />
     </div>
 
     <!-- Área de Tabla Detallada -->
@@ -57,5 +42,5 @@
   </ng-container>
 
   <!-- Modal de Alta de Eventos Post-Partido (HU-8.4) -->
-  <app-post-match-create-modal [isOpen]="showCreateModal()" [matchId]="matchId" (close)="closeCreateModal()" />
+  <app-post-match-create-modal [isOpen]="showCreateModal()" [matchId]="matchId" (close)="closeCreateModal()" (created)="onEventCreated($event)" />
 </div>

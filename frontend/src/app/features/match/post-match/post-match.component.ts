@@ -1,17 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
-import { MatchService } from '../services/match.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
 import { RosterService } from '../services/roster.service';
 import { LiveCaptureService } from '../services/live-capture.service';
-import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ToastService } from 'src/app/core/services/toast.service';
-import { MatchReviewStore } from './store/match-review.store';
-import { PostMatchHeaderComponent } from './components/post-match-header/post-match-header.component';
+import { HidingFilter, MatchReviewStore } from './store/match-review.store';
+import { MatchTimelineEventResponse } from '../types/event.types';
+import { PostMatchShellStore } from './store/post-match-shell.store';
 import { PostMatchKpiStripComponent } from './components/post-match-kpi-strip/post-match-kpi-strip.component';
 import { PostMatchTimelineComponent } from './components/post-match-timeline/post-match-timeline.component';
 import { PostMatchTableComponent } from './components/post-match-table/post-match-table.component';
@@ -19,12 +17,19 @@ import { PostMatchPanelComponent } from './components/post-match-panel/post-matc
 import { PostMatchCreateModalComponent } from './components/post-match-create-modal/post-match-create-modal.component';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 
+const HIDING_FILTER_LABELS: Record<HidingFilter, string> = {
+  period: 'período',
+  team: 'equipo',
+  unassigned: 'solo sin jugador',
+  search: 'búsqueda',
+  lane: 'jugada oculta'
+};
+
 @Component({
   selector: 'app-post-match',
   standalone: true,
   imports: [
     CommonModule,
-    PostMatchHeaderComponent,
     PostMatchKpiStripComponent,
     PostMatchTimelineComponent,
     PostMatchTableComponent,
@@ -36,9 +41,7 @@ import { LocalDatabaseService } from '../../local-database/services/local-databa
 })
 export class PostMatchComponent implements OnInit, OnDestroy {
 
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly matchService = inject(MatchService);
+  private readonly shell = inject(PostMatchShellStore);
   private readonly eventService = inject(EventService);
   private readonly eventTypeService = inject(EventTypeService);
   private readonly rosterService = inject(RosterService);
@@ -46,25 +49,17 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly toastService = inject(ToastService);
   private readonly layoutService = inject(LayoutService);
-  readonly userContext = inject(UserContextService);
   readonly store = inject(MatchReviewStore);
-
-  readonly userClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
 
   @ViewChild(PostMatchPanelComponent) panel!: PostMatchPanelComponent;
 
   matchId = '';
 
   // Estado del contenedor
-  readonly opponent = signal<string>('Cargando...');
   readonly errorMessage = signal<string>('');
   readonly isLoading = signal<boolean>(true);
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
   readonly showCreateModal = signal<boolean>(false);
-
-  goToStatistics(): void {
-    this.router.navigate(['/post-match', this.matchId, 'statistics']);
-  }
 
   openCreateModal(): void {
     this.showCreateModal.set(true);
@@ -72,6 +67,21 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   closeCreateModal(): void {
     this.showCreateModal.set(false);
+  }
+
+  /** Si los filtros activos esconden el evento recién creado, avisa por qué y ofrece mostrarlo. */
+  onEventCreated(event: MatchTimelineEventResponse): void {
+    const hiding = this.store.hiddenByFilters(event.id);
+    if (hiding.length === 0) return;
+
+    const reasons = hiding.map(filter => HIDING_FILTER_LABELS[filter]).join(', ');
+    this.toastService.info(
+      `Se guardó, pero no se ve por los filtros activos (${reasons}).`,
+      'Evento agregado',
+      8000,
+      { label: 'Mostrar evento', handler: () => this.store.revealEvent(event.id) },
+      { label: 'Limpiar filtros', handler: () => this.store.clearFilters() }
+    );
   }
 
   onEditRequested(): void {
@@ -89,7 +99,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent): void {
     const target = event.target as HTMLElement;
-    const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA');
+    const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 
     if (this.showCreateModal() || this.panel?.showDeleteModal()) {
       if (event.key === 'Escape') {
@@ -114,6 +124,13 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     }
 
     if (!isEditingField) {
+      // 0. Alta de evento (la acción primaria de la vista)
+      if (event.key.toLowerCase() === 'n' && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey) {
+        event.preventDefault();
+        this.openCreateModal();
+        return;
+      }
+
       // 1. Atajos de Triage dedicados (saltar entre pendientes sin importar qué está visible)
       if (event.key === ']' || (event.shiftKey && event.key === 'ArrowRight')) {
         event.preventDefault();
@@ -142,17 +159,19 @@ export class PostMatchComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.layoutService.setWide(true);
-    this.matchId = this.route.snapshot.paramMap.get('id') || '';
+    this.shell.bindLiveScore(this.store.scoreboard, this.store.scoreDelta);
+    this.matchId = this.shell.matchId();
     if (this.matchId) {
       this.store.resetSession();
       this.store.setMatchId(this.matchId);
-      this.loadMatchDetails();
+      this.applyMatchDetails();
       this.loadRoster();
       this.loadEventTypesAndEvents();
     }
   }
 
   ngOnDestroy(): void {
+    this.shell.unbindLiveScore();
     this.layoutService.setWide(null);
     this.store.resetSession();
   }
@@ -168,28 +187,9 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadMatchDetails(): void {
-    this.matchService.getMatchById(this.matchId).subscribe({
-      next: (match) => {
-        this.applyMatchDetails(match);
-      },
-      error: async () => {
-        try {
-          const cached = await this.cacheService.getMatch(this.matchId);
-          if (cached) {
-            this.applyMatchDetails(cached);
-            return;
-          }
-        } catch {
-          // Fallback falló
-        }
-        this.toastService.error('No se pudieron obtener los detalles del partido');
-      }
-    });
-  }
-
-  private applyMatchDetails(match: { opponent?: string | null; startedAt?: string | null; homeScore?: number; awayScore?: number }): void {
-    this.opponent.set(match.opponent || 'Visitante');
+  private applyMatchDetails(): void {
+    const match = this.shell.match();
+    if (!match) return;
     if (match.startedAt) {
       this.store.matchStartTime.set(match.startedAt);
     }
@@ -277,7 +277,4 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     }
   }
 
-  comeBack(): void {
-    this.router.navigate(['/match-history']);
-  }
 }

@@ -5,34 +5,26 @@
 
 :host {
   display: block;
+  height: 100%;
 }
 
 
-/* Modificador .pm sobre .layout-container.page (Estación de Trabajo) */
+/* Estación de Trabajo: el shell fija el alto de la ventana (data.lockViewport) y la grilla lo ocupa */
 .pm {
   display: grid;
   row-gap: 8px;
   column-gap: 12px;
   grid-template-columns: minmax(0, 1fr) 320px;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   grid-template-areas:
-    "hud hud"
     "kpi kpi"
     "timeline inspector"
     "table inspector";
-  height: calc(100vh - var(--navbar-h, 64px) - 26px);
-  height: calc(100dvh - var(--navbar-h, 64px) - 26px);
-  min-height: 640px;
-  padding-block: 14px 12px !important;
+  height: 100%;
   box-sizing: border-box;
 }
 
 /* Áreas de la Grilla */
-.pm-area-hud {
-  grid-area: hud;
-  margin: 0 !important;
-}
-
 .pm-area-kpi {
   grid-area: kpi;
   min-width: 0;
@@ -87,13 +79,11 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto;
     height: auto;
-    min-height: auto;
     grid-template-areas:
-      "hud"
       "kpi"
       "timeline"
       "table";
-    padding-bottom: 96px !important; /* Espacio para que el bottom sheet no tape la tabla */
+    padding-bottom: 84px; /* Espacio para que el bottom sheet no tape la tabla (suma el padding del shell) */
   }
 
   .pm-area-table {
@@ -107,55 +97,9 @@
   }
 }
 
-/* Optimización para notebooks estándar (pantallas de 768px de alto) */
+/* Notebooks estándar (pantallas de 768px de alto): el shell ajusta su padding; acá solo el espaciado de la grilla */
 @media (max-height: 800px) and (min-width: 1121px) {
   .pm {
     row-gap: 6px;
-    padding-block: 6px 8px !important;
   }
 }
-
-/* Acciones del HUD */
-.hud-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.btn-hud {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 44px;
-  min-width: 44px;
-  border-radius: 10px;
-  font-weight: 600;
-  padding: 0 18px;
-  transition: all 0.15s ease;
-}
-
-/* En móvil: botones como íconos táctiles de 44x44px con aria-label */
-@media (max-width: 576px) {
-  .hud-actions {
-    gap: 8px;
-  }
-
-  .btn-hud {
-    padding: 0;
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-  }
-
-  .btn-hud .hud-btn-text {
-    display: none;
-  }
-
-  .btn-hud i {
-    font-size: 1.15rem;
-    margin: 0 !important;
-  }
-}
-
-

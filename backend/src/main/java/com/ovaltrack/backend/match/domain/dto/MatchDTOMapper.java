@@ -18,8 +18,12 @@ public final class MatchDTOMapper {
                 match.getId(),
                 match.getDate(),
                 match.getDivision() == null ? null : match.getDivision().getId(),
-                // Extraemos el nombre del objeto Opponent para el DTO
-                match.getOpponent() == null ? null : match.getOpponent().getName(),
+                match.getOpponent() == null ? null : new OpponentDTO(
+                        match.getOpponent().getId(),
+                        match.getOpponent().getName(),
+                        match.getOpponent().getAlias(),
+                        match.getOpponent().getCity()
+                ),
                 match.getStatus(),
                 match.getCurrentPeriod() != null ? match.getCurrentPeriod() : 1,
                 match.getClockElapsedSeconds() != null ? match.getClockElapsedSeconds() : 0,

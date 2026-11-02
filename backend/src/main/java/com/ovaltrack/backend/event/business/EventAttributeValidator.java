@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.ovaltrack.backend.common.config.exceptions.BusinessException;
 import com.ovaltrack.backend.event.domain.EventType;
+import com.ovaltrack.backend.event.domain.EventPossession;
 import com.ovaltrack.backend.event.domain.TemplateField;
 
 /**
@@ -21,17 +22,30 @@ public final class EventAttributeValidator {
 
     private static final Set<String> RESERVED_KEYS = Set.of("playerNumber", "playerOutId", "playerInId");
 
-    public static void validate(EventType type, Map<String, Object> attributes) {
+    public static void validate(EventType type, Map<String, Object> attributes, EventPossession teamPossession) {
         if (type == null) {
             return;
         }
 
         Map<String, Object> attributesMap = attributes == null ? Map.of() : attributes;
+        if (teamPossession == EventPossession.OPPONENT
+                && attributesMap.keySet().stream().anyMatch(EventAttributeValidator::isPlayerAttribute)) {
+            throw new BusinessException("No se pueden asignar datos de jugador a un evento del equipo rival");
+        }
         validateUndeclaredKeys(type, attributesMap);
 
         for (TemplateField field : safeTemplateFields(type)) {
+            if (teamPossession == EventPossession.OPPONENT && isPlayerAttribute(field.key())) {
+                continue;
+            }
             validateField(field, attributesMap.get(field.key()));
         }
+    }
+
+    private static boolean isPlayerAttribute(String key) {
+        return RESERVED_KEYS.contains(key)
+                || "playerOutNumber".equals(key)
+                || "playerInNumber".equals(key);
     }
 
     private static List<TemplateField> safeTemplateFields(EventType type) {

@@ -1,0 +1,339 @@
+:host {
+  display: block;
+  /* Contenedor de consulta: el alto de la cancha se limita también por el ancho disponible */
+  container-type: inline-size;
+  /* Verdes del pasto derivados del verde de marca, sin introducir colores nuevos */
+  --pitch-a: color-mix(in srgb, var(--btn-primary-bg, #204b22) 58%, #a8d5a2);
+  --pitch-b: color-mix(in srgb, var(--btn-primary-bg, #204b22) 66%, #a8d5a2);
+  --pitch-ingoal: color-mix(in srgb, var(--btn-primary-bg, #204b22) 82%, #a8d5a2);
+  --pitch-line: #ffffff;
+  --row-axis-w: 56px;
+}
+
+/*
+ * Cancha compacta alineada a la izquierda: el alto manda (250 px) y el ancho se deriva de la proporción 120:70, o
+ * el que entra a lo ancho sin deformarla. La leyenda va al costado; en anchos angostos pasa debajo.
+ */
+.rugby-field {
+  /* Ancho que ocupa la leyenda al costado (y su separación); en anchos angostos baja debajo de la cancha */
+  --side-w: 240px;
+  --side-gap: 28px;
+  --pitch-h: min(285px, calc((100cqw - var(--row-axis-w) - 8px - var(--side-w) - var(--side-gap)) * 70 / 120));
+  --pitch-w: calc(var(--pitch-h) * 120 / 70);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 16px var(--side-gap);
+  margin: 0;
+}
+
+.field-main { min-width: 0; }
+
+/* Costado: sentido de ataque, escala de calor y lectura de la zona apuntada */
+.field-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding-top: 2px;
+  font-size: 13px;
+}
+
+.attack-dir {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--btn-primary-bg, #204b22);
+}
+
+.attack-dir svg { flex-shrink: 0; }
+
+.reading {
+  min-height: 20px;
+  color: var(--text-secondary, #3b4e33);
+  font-weight: 600;
+}
+
+/* Marco: eje de filas + cancha */
+.field-frame {
+  display: flex;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.row-axis {
+  flex: 0 0 var(--row-axis-w);
+  display: flex;
+  flex-direction: column;
+}
+
+.row-axis-item {
+  flex-basis: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  text-align: right;
+  line-height: 1.2;
+}
+
+/* Solo en pantallas angostas: la letra reemplaza al nombre */
+.row-axis-letter { display: none; font-family: var(--font-mono, monospace); font-size: 12px; font-weight: 700; color: var(--text-primary, #111d0e); }
+.row-axis-name { font-size: 12px; font-weight: 700; color: var(--text-primary, #111d0e); }
+.row-axis-range { font-family: var(--font-mono, monospace); font-size: 10px; color: var(--text-secondary, #3b4e33); }
+
+.pitch {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--pitch-w);
+  height: var(--pitch-h);
+  border-radius: 14px;
+  border: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
+  box-shadow: var(--shadow-elevation, 0 16px 36px rgba(15, 35, 15, 0.12));
+  overflow: hidden;
+}
+
+/* Fondo SVG */
+.pitch-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Líneas: capa propia sobre la grilla, así el calor translúcido no las tapa */
+.pitch-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.grass { fill: var(--pitch-a); }
+.stripe { fill: transparent; }
+.stripe.odd { fill: var(--pitch-b); opacity: 0.55; }
+.ingoal { fill: var(--pitch-ingoal); opacity: 0.9; }
+
+.lines line,
+.lines .boundary {
+  stroke: var(--pitch-line);
+  stroke-width: 3;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.lines .boundary { stroke-width: 5; }
+/* Jerarquía de líneas: gol y mitad gruesas, 22 intermedia, 10 m y 5 m finas, para que la grilla de celdas no compita */
+.lines .goal { stroke-width: 5; }
+.lines .halfway { stroke-width: 5; }
+.lines .dashed { stroke-width: 2; stroke-dasharray: 10 8; opacity: 0.85; }
+.lines .dashed.fine { stroke-width: 1.25; opacity: 0.6; }
+
+/* Texto vertical dentro de cada in-goal: PROPIO a la izquierda (se lee de abajo hacia arriba) y el rival a la derecha */
+.ingoal-label {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(10 / 120 * 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.ingoal-label--own { left: 0; transform: rotate(180deg); }
+.ingoal-label--rival { right: 0; }
+.lines .posts line { stroke-width: 4; }
+.lines .post-dot { stroke-width: 9; stroke-linecap: round; }
+
+/* Grilla interactiva */
+.pitch-grid {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pitch-row {
+  flex-basis: 0;
+  display: grid;
+  min-height: 0;
+}
+
+/*
+ * Tres estados, tres lenguajes visuales:
+ *  - calor (cantidad de eventos): relleno ámbar → naranja, siempre con el conteo;
+ *  - hover / foco: contorno punteado, sin relleno;
+ *  - selección: anillo grueso blanco + verde botella.
+ */
+.field-cell {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.field-cell.has-events {
+  background: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--zone-heat-high) calc(var(--heat, 0) * 100%), var(--zone-heat-low)) 62%,
+    transparent
+  );
+}
+
+.heat-legend {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--text-secondary, #3b4e33);
+}
+
+.heat-legend-title { font-family: var(--font-body, Inter, sans-serif); font-size: 13px; font-weight: 700; }
+.heat-legend-steps { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.heat-legend-step { display: inline-flex; align-items: center; gap: 5px; }
+
+.heat-swatch {
+  width: 18px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
+  background: color-mix(in srgb, color-mix(in srgb, var(--zone-heat-high) calc(var(--heat, 0) * 100%), var(--zone-heat-low)) 62%, var(--pitch-a));
+}
+
+/* "0" sin el verde del césped: la leyenda no sugiere que cero sea un color de calor */
+.heat-swatch.is-empty { background: var(--surface-alt, #eef1e7); }
+
+.field-cell.is-readonly { cursor: default; }
+
+.field-cell:not(.is-readonly):hover,
+.field-cell.is-linked,
+.field-cell:focus-visible {
+  outline: 3px dotted #ffffff;
+  outline-offset: -5px;
+  z-index: 2;
+}
+
+.field-cell.is-selected {
+  box-shadow: inset 0 0 0 3px #ffffff, inset 0 0 0 7px var(--btn-primary-bg, #204b22);
+  z-index: 1;
+}
+
+/* Chip oscuro: el contraste de I1…D6 (≥ 4.5:1) no depende del césped ni del calor de la celda */
+.cell-label {
+  margin: 4px;
+  padding: 2px 5px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text-primary, #111d0e) 78%, transparent);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+  pointer-events: none;
+}
+
+.cell-count {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: max-content;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--surface, #ffffff);
+  border: 2px solid var(--btn-primary-bg, #204b22);
+  color: var(--btn-primary-bg, #204b22);
+  font-family: var(--font-mono, monospace);
+  font-size: 12.5px;
+  font-weight: 700;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Microinteracciones (≤ 250 ms) */
+.field-cell.is-pulse { animation: cell-pulse 0.25s ease-out; }
+
+@keyframes cell-pulse {
+  0% { box-shadow: inset 0 0 0 0 #ffffff; }
+  40% { box-shadow: inset 0 0 0 8px #ffffff; }
+  100% { box-shadow: inset 0 0 0 0 #ffffff; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field-cell, .field-cell.is-pulse { animation: none; transition: none; }
+}
+
+/* Eje de columnas: solo los números, con el mismo ancho y alineación que la cancha (eje de filas + hueco a la izquierda) */
+.col-axis-wrap {
+  width: calc(var(--row-axis-w) + 8px + var(--pitch-w));
+  max-width: 100%;
+  margin-top: 6px;
+  padding-left: calc(var(--row-axis-w) + 8px);
+  box-sizing: border-box;
+}
+
+.col-axis { display: grid; }
+
+.col-axis-number {
+  text-align: center;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary, #111d0e);
+}
+
+.field-unzoned {
+  display: inline-flex;
+  margin: 0;
+  font-size: 12.5px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--warning-tint, rgba(253, 176, 34, 0.20));
+  color: var(--warning, #8a5700);
+  font-weight: 600;
+}
+
+/* Espacio angosto (tablet vertical, móvil): la leyenda baja debajo de la cancha */
+@container (max-width: 760px) {
+  .rugby-field { grid-template-columns: minmax(0, 1fr); --side-w: 0px; --side-gap: 0px; }
+  .field-side { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
+}
+
+/* Móvil: sin nombres en el eje de filas, la letra los reemplaza */
+@media (max-width: 576px) {
+  :host { --row-axis-w: 28px; }
+
+  .row-axis-name,
+  .row-axis-range { display: none; }
+
+  .row-axis-letter { display: block; }
+}

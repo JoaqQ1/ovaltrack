@@ -18,12 +18,12 @@ const createMatch = async (fecha, divisionId, rival, token) => {
 
 const findMatchInDivision = async (divisionId, rival, fecha, token) => {
   const matches = await getDivisionMatches(divisionId, token);
-  return matches.find((m) => m.opponent === rival && m.date === fecha) ?? null;
+  return matches.find((m) => m.opponent?.name === rival && m.date === fecha) ?? null;
 };
 
 const assertCreatedMatch = (response, rival, estado) => {
   assert.ok(response.body?.id, `El partido contra ${rival} no contiene un ID asignado`);
-  assert.equal(response.body.opponent, rival);
+  assert.equal(response.body.opponent?.name, rival);
   assert.equal(response.body.status, estado);
 };
 

@@ -1,10 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, inject, signal} from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
-import { MatchService } from '../../../services/match.service';
 import { EventTypeService } from '../../../services/event-type.service';
 import { RosterService } from '../../../services/roster.service';
 import { LiveCaptureService } from '../../../services/live-capture.service';
@@ -21,6 +20,7 @@ import {
   scoringLines,
   StatLine,
 } from '../../../statistics/presentation/stat-presentation';
+import { PostMatchShellStore } from '../../store/post-match-shell.store';
 import { LocalDatabaseService } from 'src/app/features/local-database/services/local-database.service';
 
 export type StatsPeriodFilter = 'ALL' | 1 | 2;
@@ -38,10 +38,9 @@ interface RosterGroup { label: string; players: PlayerStatistic[]; }
   styleUrl: './post-match-statistics.component.css',
 })
 export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly layoutService = inject(LayoutService);
-  private readonly matchService = inject(MatchService);
+  private readonly shell = inject(PostMatchShellStore);
   private readonly eventTypeService = inject(EventTypeService);
   private readonly rosterService = inject(RosterService);
   private readonly cacheService = inject(LocalDatabaseService);
@@ -52,7 +51,7 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
   readonly matchId = signal<string>('');
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string>('');
-  readonly opponent = signal<string>('Rival');
+  readonly opponent = computed(() => this.shell.match()?.opponent?.name || 'Rival');
   readonly ownClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
 
   readonly activeTab = signal<StatsTab>('team');
@@ -156,7 +155,7 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     this.layoutService.setWide(true);
-    const id = this.route.snapshot.paramMap.get('id') || '';
+    const id = this.shell.matchId();
     this.matchId.set(id);
     if (!id) {
       this.errorMessage.set('No se indicó el partido.');
@@ -192,7 +191,6 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
 
     try {
       await Promise.all([
-        this.resolveOpponent(matchId),
         this.hydrateEvents(matchId),
         this.loadEventTypes(),
       ]);
@@ -225,18 +223,6 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
       await firstValueFrom(this.eventTypeService.getAll());
     } catch { /* se usa lo que haya en caché */ }
     this.eventTypes.set(await this.cacheService.getActiveEventTypes());
-  }
-
-  private async resolveOpponent(matchId: string): Promise<void> {
-    try {
-      const match = await firstValueFrom(this.matchService.getMatchById(matchId));
-      if (match?.opponent) {
-        this.opponent.set(match.opponent);
-        return;
-      }
-    } catch { /* fallback a caché */ }
-    const local = await this.cacheService.getMatch(matchId);
-    if (local?.opponent) this.opponent.set(local.opponent);
   }
 
   /**

@@ -1,6 +1,6 @@
 <section class="timeline-card" [style.--lanes]="store.activeLanesCount()">
   <!-- Barra de Filtros Deportiva Integrada -->
-  <div class="filter-bar">
+  <div class="filter-bar" [class.search-open]="searchOpen()">
     <div class="filter-left-group">
       <!-- Botones de Período estilo Pill -->
       <button type="button" 
@@ -61,26 +61,53 @@
               (click)="store.clearFilters()"
               aria-label="Limpiar filtros activos"
               title="Restablecer todos los filtros a sus valores por defecto">
-        <i class="bi bi-x-circle-fill me-1"></i>
-        <span>Limpiar filtros</span>
+        <i class="bi bi-x-circle-fill" aria-hidden="true"></i>
+        <span class="clear-pill-text">Limpiar filtros</span>
       </button>
     </div>
 
-    <!-- Búsqueda por jugador o tipo -->
-    <div class="search-wrapper">
-      <i class="bi bi-search search-icon" aria-hidden="true"></i>
-      <input type="text" 
-             class="search-input" 
-             placeholder="Buscar jugador o tipo" 
-             [value]="store.filters().searchTerm" 
-             (input)="onSearchChange($event)">
-      <button *ngIf="store.filters().searchTerm" 
-              type="button" 
-              class="search-clear-btn" 
-              (click)="store.setSearchTerm('')" 
-              aria-label="Limpiar búsqueda"
-              title="Limpiar búsqueda">
-        <i class="bi bi-x-circle-fill"></i>
+    <div class="filter-right-group">
+      <!-- Búsqueda por jugador o tipo -->
+      <button type="button"
+              class="search-toggle"
+              [class.has-term]="!!store.filters().searchTerm"
+              (click)="openSearch(searchInput)"
+              aria-label="Buscar jugador o tipo"
+              title="Buscar jugador o tipo">
+        <i class="bi bi-search" aria-hidden="true"></i>
+      </button>
+      <div class="search-wrapper">
+        <i class="bi bi-search search-icon" aria-hidden="true"></i>
+        <input #searchInput
+               type="text"
+               class="search-input"
+               placeholder="Buscar jugador o tipo"
+               aria-label="Buscar jugador o tipo"
+               [value]="store.filters().searchTerm"
+               (input)="onSearchChange($event)"
+               (blur)="closeSearchIfEmpty()"
+               (keydown.escape)="onSearchEscape($event, searchInput)">
+        <button *ngIf="store.filters().searchTerm" 
+                type="button" 
+                class="search-clear-btn" 
+                (click)="store.setSearchTerm('')" 
+                aria-label="Limpiar búsqueda"
+                title="Limpiar búsqueda">
+          <i class="bi bi-x-circle-fill"></i>
+        </button>
+      </div>
+
+      <span class="filter-divider" aria-hidden="true"></span>
+
+      <!-- Acción primaria de la vista -->
+      <button type="button"
+              class="btn-primary-rugby btn-add-event"
+              (click)="addEvent.emit()"
+              aria-label="Agregar evento"
+              aria-keyshortcuts="N"
+              title="Agregar evento (N)">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span class="btn-add-event-text">Agregar evento</span>
       </button>
     </div>
   </div>

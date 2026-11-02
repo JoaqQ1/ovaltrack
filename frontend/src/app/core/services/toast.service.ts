@@ -2,12 +2,21 @@ import { Injectable, signal } from '@angular/core';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
+/** Acción opcional del toast (ej. "Deshacer"): corre al tocar el botón y el toast se cierra. */
+export interface ToastAction {
+  label: string;
+  handler: () => void;
+}
+
 export interface Toast {
   id: string;
   type: ToastType;
   title?: string;
   message: string;
   durationMs?: number;
+  action?: ToastAction;
+  /** Segunda acción opcional (ej. "Mostrar evento" + "Limpiar filtros"); se pinta como outline. */
+  secondaryAction?: ToastAction;
 }
 
 @Injectable({
@@ -17,7 +26,7 @@ export class ToastService {
   readonly toasts = signal<Toast[]>([]);
   private activeTimer: ReturnType<typeof setTimeout> | null = null;
 
-  show(type: ToastType, message: string, title?: string, durationMs?: number): string {
+  show(type: ToastType, message: string, title?: string, durationMs?: number, action?: ToastAction, secondaryAction?: ToastAction): string {
     if (this.activeTimer) {
       clearTimeout(this.activeTimer);
       this.activeTimer = null;
@@ -31,7 +40,9 @@ export class ToastService {
       type,
       title,
       message,
-      durationMs: effectiveDuration
+      durationMs: effectiveDuration,
+      action,
+      secondaryAction
     };
 
     // Opción A: Siempre un único toast a la vez (reemplazo inmediato)
@@ -47,20 +58,20 @@ export class ToastService {
     return id;
   }
 
-  success(message: string, title = 'Operación exitosa', durationMs = 4000): string {
-    return this.show('success', message, title, durationMs);
+  success(message: string, title = 'Operación exitosa', durationMs = 4000, action?: ToastAction): string {
+    return this.show('success', message, title, durationMs, action);
   }
 
-  error(message: string, title = 'Error', durationMs = 7000): string {
-    return this.show('error', message, title, durationMs);
+  error(message: string, title = 'Error', durationMs = 7000, action?: ToastAction): string {
+    return this.show('error', message, title, durationMs, action);
   }
 
-  warning(message: string, title = 'Atención', durationMs = 5000): string {
-    return this.show('warning', message, title, durationMs);
+  warning(message: string, title = 'Atención', durationMs = 5000, action?: ToastAction): string {
+    return this.show('warning', message, title, durationMs, action);
   }
 
-  info(message: string, title = 'Información', durationMs = 4000): string {
-    return this.show('info', message, title, durationMs);
+  info(message: string, title = 'Información', durationMs = 4000, action?: ToastAction, secondaryAction?: ToastAction): string {
+    return this.show('info', message, title, durationMs, action, secondaryAction);
   }
 
   dismiss(id: string): void {

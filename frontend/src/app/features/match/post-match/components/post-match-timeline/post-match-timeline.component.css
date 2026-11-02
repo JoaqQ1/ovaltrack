@@ -39,9 +39,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem;
   padding: 4px 12px;
+  /* Alto fijo de la barra (44px de control + padding): los controles de la derecha pueden ser más bajos sin achicarla */
+  min-height: 52px;
+  box-sizing: border-box;
   background: var(--surface-toolbar, #eaf3e6);
   border: none;
   border-bottom: 1px solid var(--border-sport, rgba(32, 75, 34, 0.28));
@@ -53,8 +56,21 @@
 .filter-left-group {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-wrap: nowrap;
   gap: 0.45rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filter-left-group::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-left-group > * {
+  flex: none;
+  white-space: nowrap;
 }
 
 .filter-pill-btn {
@@ -70,6 +86,12 @@
   color: var(--text-primary, #111d0e);
   cursor: pointer;
   transition: all 0.15s ease;
+}
+
+@media (pointer: coarse) {
+  .filter-pill-btn {
+    min-height: 44px;
+  }
 }
 
 .filter-pill-btn:hover {
@@ -128,16 +150,128 @@
   border-color: var(--btn-primary-bg, #204b22);
 }
 
+.filter-right-group {
+  /* Alto de los controles de la derecha: cercano al de las píldoras; 44px táctil en pantallas touch */
+  --toolbar-ctl-h: 36px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: none;
+}
+
+.filter-right-group .filter-divider {
+  height: 24px;
+  background: var(--border-strong, rgba(27, 33, 22, 0.22));
+}
+
 .search-wrapper,
 .search-wrap {
   position: relative;
   min-width: 220px;
 }
 
-@media (max-width: 768px) {
-  .search-wrapper,
-  .search-wrap {
-    flex: 1 1 100%;
+.btn-add-event {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--toolbar-ctl-h);
+  min-width: var(--toolbar-ctl-h);
+  padding: 0 16px;
+  font-size: 0.85rem;
+  border-radius: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .filter-right-group {
+    --toolbar-ctl-h: 44px;
+  }
+}
+
+/* Botón de ícono del buscador: solo en pantallas angostas */
+.search-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--toolbar-ctl-h);
+  height: var(--toolbar-ctl-h);
+  flex: none;
+  border-radius: 10px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border-strong, rgba(27, 33, 22, 0.22));
+  color: var(--text-primary, #111d0e);
+  cursor: pointer;
+}
+
+.search-toggle.has-term {
+  border-color: var(--btn-primary-bg, #204b22);
+  color: var(--btn-primary-bg, #204b22);
+}
+
+/*
+ * La barra siempre es una sola fila: la acción primaria queda fija a la derecha y los filtros ceden espacio.
+ * Escalones según el ancho de la tarjeta (no del viewport).
+ */
+
+/* «Limpiar filtros» con texto solo cuando entra junto al buscador completo */
+@container timeline-card (max-width: 1419px) {
+  .clear-pill-text {
+    display: none;
+  }
+}
+
+/* Medio: buscador como botón de ícono que se expande */
+@container timeline-card (max-width: 1299px) {
+  .filter-left-group {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  }
+
+  .search-toggle {
+    display: inline-flex;
+  }
+
+  .search-wrapper {
+    display: none;
+    min-width: 0;
+  }
+
+  /* Buscador abierto: ocupa la barra y los filtros se ocultan hasta cerrarlo */
+  .filter-bar.search-open .filter-left-group,
+  .filter-bar.search-open .search-toggle {
+    display: none;
+  }
+
+  .filter-bar.search-open .filter-right-group {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .filter-bar.search-open .search-wrapper {
+    display: block;
+    flex: 1 1 0;
+  }
+}
+
+/* Angosto: la acción pasa a botón «+» */
+@container timeline-card (max-width: 999px) {
+  .filter-right-group {
+    gap: 8px;
+  }
+
+  .filter-right-group .filter-divider {
+    display: none;
+  }
+
+  .btn-add-event {
+    width: var(--toolbar-ctl-h);
+    padding: 0;
+  }
+
+  .btn-add-event-text {
+    display: none;
   }
 }
 
@@ -157,6 +291,7 @@
 
 .search-input {
   width: 100%;
+  height: var(--toolbar-ctl-h);
   padding: 0.25rem 2rem 0.25rem 2.2rem;
   font-size: 0.8rem;
   background: var(--surface, #ffffff);

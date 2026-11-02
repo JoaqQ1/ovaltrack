@@ -8,6 +8,7 @@ BEGIN;
 SET session_replication_role = 'replica';
 
 -- 2. Ejecutar la limpieza de datos en orden seguro (desde los hijos hacia los padres)
+DELETE FROM match_zone_assignments;
 DELETE FROM events;
 DELETE FROM event_types;
 DELETE FROM matches_players;
@@ -690,7 +691,8 @@ VALUES
             "possession": "KEEP",
             "followUps": [
               {
-                "code": "PENALTY_CONCEDED"
+                "code": "PENALTY_CONCEDED",
+                "team": "OTHER"
               }
             ]
           },
@@ -700,7 +702,8 @@ VALUES
             "possession": "OTHER",
             "followUps": [
               {
-                "code": "PENALTY_CONCEDED"
+                "code": "PENALTY_CONCEDED",
+                "team": "SAME"
               }
             ]
           }

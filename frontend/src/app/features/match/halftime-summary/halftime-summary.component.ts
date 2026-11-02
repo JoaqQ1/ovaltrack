@@ -20,6 +20,7 @@ import { AvailablePlayer, SavedRoster } from '../types/roster.types';
 import { RosterPlayerInfo } from '../statistics/calculators';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 import { HALF_DURATION_SECONDS } from '../types/match.types';
+import { UserContextService } from '../../../core/services/user-context.service';
 
 @Component({
   selector: 'ot-halftime-summary',
@@ -37,13 +38,14 @@ export class HalftimeSummaryComponent implements OnInit {
   private readonly statisticCalculationService = inject(StatisticCalculationService);
   private readonly cacheService = inject(LocalDatabaseService);
   private readonly liveCaptureService = inject(LiveCaptureService);
+  private readonly userContextService = inject(UserContextService);
 
   readonly matchId = signal<string>('');
   readonly activeTab = signal<'general' | 'players'>('general');
   readonly currentTheme = signal<'light' | 'dark'>('light');
   readonly isLoading = signal<boolean>(true);
   readonly isOffline = signal<boolean>(!navigator.onLine);
-  readonly homeTeam = signal<string>('Cardenales');
+  readonly homeTeam = computed(() => this.userContextService.currentClub()?.name || 'Mi Club');
   readonly opponent = signal<string>('Rival');
   /** Vista `intermediate`: tipos marcados con `stat_view` "intermediate" en el catálogo. */
   readonly generalStats = signal<MatchStatistics | null>(null);
@@ -143,7 +145,7 @@ export class HalftimeSummaryComponent implements OnInit {
     try {
       const match = await firstValueFrom(this.matchService.getMatchById(matchId));
       if (match?.opponent) {
-        this.opponent.set(match.opponent);
+        this.opponent.set(match.opponent.alias);
         return;
       }
     } catch {
@@ -152,7 +154,7 @@ export class HalftimeSummaryComponent implements OnInit {
 
     const localMatch = await this.cacheService.getMatch(matchId);
     if (localMatch?.opponent) {
-      this.opponent.set(localMatch.opponent);
+      this.opponent.set(localMatch.opponent.alias);
     }
   }
 

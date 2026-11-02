@@ -1,11 +1,18 @@
 import { UUID } from './common.types';
 
+export interface MatchOpponent {
+  id: UUID;
+  name: string;
+  alias: string;
+  city: string | null;
+}
+
 /** Respuesta de un partido según el contrato consumido por la interfaz. */
 export interface Match {
   id: string;
   date: string;
   divisionId: UUID;
-  opponent: string;
+  opponent: MatchOpponent;
   status: MatchStatus;
   currentPeriod: number;
   clockElapsedSeconds: number;
@@ -23,7 +30,7 @@ export interface BackendMatchResponse {
   id: UUID;
   date: string | null;
   divisionId: UUID; 
-  opponent: string | null;
+  opponent: MatchOpponent | null;
   status: 'EMPTY_ROSTER' | 'NOT_STARTED' | 'IN_PROGRESS' | 'HALFTIME' | 'FINISHED' | 'CANCELLED';
   currentPeriod: number;
   clockElapsedSeconds: number;

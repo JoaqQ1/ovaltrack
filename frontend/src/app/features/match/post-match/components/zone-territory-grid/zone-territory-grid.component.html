@@ -1,0 +1,130 @@
+<div class="territory" role="group" aria-label="Territorio del partido en el tiempo: una fila por franja de la cancha">
+  <div class="axis">
+    <span class="axis-corner">Zona <i class="bi bi-arrow-up" aria-hidden="true"></i> ataque</span>
+    <div class="ruler" aria-hidden="true">
+      @for (tick of ticks(); track tick.minute) {
+        <span class="tick" [class.is-first]="$first" [class.is-last]="$last" [class.is-milestone]="!compact() && tick.label.length > 3"
+              [style.left.%]="tick.left">{{ tick.label }}</span>
+      }
+      <!-- Sin franja elegida, el rango del formulario se marca solo sobre el eje -->
+      @if (preview(); as range) {
+        @if (range.rowIndex < 0) {
+          <span class="axis-range" data-testid="territory-axis-range" [style.left.%]="range.left" [style.width.%]="range.width"
+                [attr.title]="range.aria"></span>
+        }
+      }
+    </div>
+  </div>
+
+  <div class="body" [style.--rows]="rowCount" [style.--guide-step]="guideStep()">
+    <div class="labels">
+      @for (row of rows(); track row.col) {
+        <div class="row-label" [class.is-selected]="selectedCol() === row.col" [class.is-cursor]="cursorView()?.col === row.col"
+             data-testid="territory-row-label">
+          <span class="row-text">
+            <strong class="row-name">{{ row.name }}</strong>
+            <span class="row-range">{{ row.range }}</span>
+          </span>
+          <span class="row-count" data-testid="territory-row-count">{{ row.count }}</span>
+        </div>
+      }
+    </div>
+
+    <!-- Una sola parada de Tab: las flechas recorren franjas, tramos y minutos; los bloques se alcanzan por ahí -->
+    <div class="tracks" #tracks data-testid="territory-tracks" tabindex="0" role="application"
+         [class.is-picking]="pickingPeriod()"
+         aria-roledescription="grilla de territorio" aria-label="Grilla de territorio. Flechas para moverte, Enter para abrir o completar, Esc para cancelar"
+         (keydown)="onTracksKeydown($event)" (focus)="onTracksFocus($event)" (blur)="onTracksBlur()"
+         [class.is-pointing]="hoverGap() !== null" [class.is-dragging]="dragView() !== null"
+         (click)="onTracksClick($event)" (mousemove)="onTracksMove($event)" (mouseleave)="onTracksLeave()"
+         (pointerdown)="onPointerDown($event)" (pointermove)="onPointerMove($event)"
+         (pointerup)="onPointerUp($event)" (pointercancel)="onPointerCancel()">
+
+      @for (gap of gaps(); track gap.period + '-' + gap.start) {
+        <span class="gap" data-testid="territory-gap" aria-hidden="true"
+              [style.left.%]="gap.left" [style.width.%]="gap.width"></span>
+      }
+
+      @for (row of rows(); track row.col; let i = $index) {
+        <div class="row-track" [class.is-selected]="selectedCol() === row.col" data-testid="territory-row">
+          @for (block of row.blocks; track block.assignment.id) {
+            <button type="button" class="block" data-testid="territory-block" tabindex="-1"
+                    [class.is-selected]="block.assignment.id === selectedId()"
+                    [class.is-conflict]="block.assignment.id === conflictId()"
+                    [class.is-linked]="isLinked(block.assignment)"
+                    [class.is-dimmed]="!!highlightCell() && !isLinked(block.assignment)"
+                    [style.left.%]="block.left" [style.width.%]="block.width"
+                    [attr.aria-label]="block.aria" [title]="block.aria"
+                    (mouseenter)="segmentHover.emit(block.assignment.id)" (mouseleave)="segmentHover.emit(null)"
+                    (focus)="segmentHover.emit(block.assignment.id)" (blur)="segmentHover.emit(null)"
+                    (click)="selectSegment($event, block.assignment)">
+              <span class="block-label">{{ block.label }}</span>
+            </button>
+            <!-- Manijas del tramo en edición: estiran el rango del formulario; se confirma con "Guardar cambios" -->
+            @if (block.assignment.id === selectedId()) {
+              <span class="handle" data-testid="territory-handle-start" aria-hidden="true"
+                    [style.left.%]="block.left" (pointerdown)="onHandleDown($event, block.assignment, 'start')" (click)="$event.stopPropagation()"></span>
+              <span class="handle" data-testid="territory-handle-end" aria-hidden="true"
+                    [style.left.%]="block.left + block.width" (pointerdown)="onHandleDown($event, block.assignment, 'end')" (click)="$event.stopPropagation()"></span>
+            }
+          }
+        </div>
+      }
+
+      @if (halfMark(); as mark) {
+        <span class="half-line" [style.left.%]="mark" aria-hidden="true"></span>
+      }
+
+      @if (hoverGap(); as hover) {
+        <span class="hover-gap" data-testid="territory-hover" aria-hidden="true"
+              [style.--row]="hover.rowIndex" [style.left.%]="hover.left" [style.width.%]="hover.width"></span>
+      }
+
+      @if (preview(); as range) {
+        @if (range.rowIndex >= 0) {
+          <span class="preview" data-testid="territory-preview"
+                [style.--row]="range.rowIndex" [style.left.%]="range.left" [style.width.%]="range.width"
+                [attr.title]="range.aria" aria-hidden="true"></span>
+        }
+      }
+
+      @if (cursorView(); as cursor) {
+        <!-- Cursor del teclado: la parada (tramo o hueco) y el minuto, sobre la fila elegida -->
+        @if (cursor.stop; as stop) {
+          <span class="cursor-stop" data-testid="territory-cursor-stop" aria-hidden="true"
+                [class.on-block]="cursor.onBlock" [style.--row]="cursor.rowIndex" [style.left.%]="stop.left" [style.width.%]="stop.width"></span>
+        }
+        @if (cursor.minute; as minute) {
+          <span class="cursor-minute" data-testid="territory-cursor-minute" aria-hidden="true"
+                [style.--row]="cursor.rowIndex" [style.left.%]="minute.left" [style.width.%]="minute.width"></span>
+        }
+      }
+
+      @if (dragView(); as drag) {
+        @if (drag.layout; as layout) {
+          <span class="drag-range" data-testid="territory-drag-range" aria-hidden="true"
+                [style.--row]="drag.rowIndex" [style.left.%]="layout.left" [style.width.%]="layout.width"></span>
+        }
+        <div class="drag-tip" data-testid="territory-drag-tip" role="status" aria-live="polite"
+             [style.left.px]="drag.tipX" [style.top.px]="drag.tipY">
+          <span>{{ drag.text }}</span>
+          @if (drag.notice; as notice) {
+            <span class="drag-notice" data-testid="territory-drag-notice"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> {{ notice }}</span>
+          }
+        </div>
+      }
+
+      @if (dimmedHalf(); as half) {
+        <span class="veil" [class.veil-first]="half === 'first'" [class.veil-second]="half === 'second'" data-testid="territory-veil" aria-hidden="true"></span>
+      }
+
+      @if (isEmpty()) {
+        <p class="empty-note" data-testid="territory-empty">Todavía no hay tramos. Tocá una fila de la grilla para empezar.</p>
+      } @else if (pickingPeriod()) {
+        <p class="period-hint" data-testid="territory-period-hint">Tocá la grilla para ver ese tiempo</p>
+      }
+    </div>
+  </div>
+
+  <span class="visually-hidden" role="status" aria-live="polite" data-testid="territory-cursor-status">{{ cursorStatus() }}</span>
+</div>
