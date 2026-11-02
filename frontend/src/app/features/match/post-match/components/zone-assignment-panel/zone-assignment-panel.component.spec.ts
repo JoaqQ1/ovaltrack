@@ -77,7 +77,7 @@ describe('ZoneAssignmentPanelComponent', () => {
       render();
 
       expect(saveButton().disabled).toBeTrue();
-      expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Tocá una fila de la grilla o una zona de la cancha');
+      expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Tocá la grilla o la cancha');
       expect(saveButton().getAttribute('aria-describedby')).toBe('zone-franja');
       expect(query('#zone-franja')).not.toBeNull();
       expect(query('[data-testid="save-hint"]')).toBeNull();
@@ -190,7 +190,7 @@ describe('ZoneAssignmentPanelComponent', () => {
           { ...existingZone, id: 'p2', period: 2, startMinute: 40, endMinute: 80 }
         ]);
 
-        expect(summary()).toContain('Tocá una fila de la grilla o una zona de la cancha');
+        expect(summary()).toContain('Tocá la grilla o la cancha');
         expect(query('[data-testid="sheet-range"]')).toBeNull();
       });
 
@@ -456,6 +456,47 @@ describe('ZoneAssignmentPanelComponent', () => {
       fixture.detectChanges();
 
       expect(gapItems().map(text)).toEqual(['5′–40′ 0 eventos 1T', '40′–80′ 0 eventos 2T']);
+    });
+  });
+
+  describe('tope de huecos', () => {
+    const gapItems = (): HTMLElement[] => queryAll('[data-testid="gap-item"]');
+    const toggle = (): HTMLButtonElement | null => query<HTMLButtonElement>('[data-testid="gaps-toggle"]');
+    /** Tramos de 5′ separados por 5′ desde el minuto 5: n-1 tramos dejan n huecos (el último llega hasta el 80′). */
+    const zonesWithGaps = (gaps: number): ZoneAssignmentResponse[] =>
+      Array.from({ length: gaps - 1 }, (_, i) => {
+        const start = 5 + i * 10;
+        return { ...existingZone, id: `zone-${i}`, period: start < 40 ? 1 : 2, startMinute: start, endMinute: start + 5 };
+      });
+
+    it('con hasta cinco huecos los muestra todos, sin botón', () => {
+      render(zonesWithGaps(5));
+
+      expect(gapItems().length).toBe(5);
+      expect(toggle()).toBeNull();
+    });
+
+    it('con más de cinco muestra los primeros cuatro en orden y "Ver todos (N)"', () => {
+      render(zonesWithGaps(7));
+
+      expect(gapItems().length).toBe(4);
+      expect(query('[data-testid="gaps-count"]')?.textContent?.trim()).toBe('7');
+      expect(toggle()?.textContent?.trim()).toBe('Ver todos (7)');
+      expect(toggle()?.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('"Ver todos" expande la lista y "Ver menos" la resume de nuevo', () => {
+      render(zonesWithGaps(7));
+
+      toggle()?.click();
+      fixture.detectChanges();
+      expect(gapItems().length).toBe(7);
+      expect(toggle()?.textContent?.trim()).toBe('Ver menos');
+      expect(toggle()?.getAttribute('aria-expanded')).toBe('true');
+
+      toggle()?.click();
+      fixture.detectChanges();
+      expect(gapItems().length).toBe(4);
     });
   });
 

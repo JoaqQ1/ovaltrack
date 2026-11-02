@@ -345,7 +345,7 @@ describe('PostMatchZonesComponent', () => {
       createLoaded([], []);
 
       expect(query('[data-testid="territory-empty"]')?.textContent).toContain('Tocá una fila de la grilla para empezar');
-      expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Tocá una fila de la grilla o una zona de la cancha');
+      expect(query('[data-testid="selected-cell"]')?.textContent).toContain('Tocá la grilla o la cancha');
       for (const repeated of ['start-hint', 'zones-empty', 'save-hint', 'panel-subtitle']) {
         expect(query(`[data-testid="${repeated}"]`)).withContext(repeated).toBeNull();
       }

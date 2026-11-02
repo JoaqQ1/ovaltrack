@@ -115,7 +115,10 @@ app-zone-territory-grid { margin-bottom: 16px; }
 
 /* Desktop: el panel (formulario + lista) acompaña al scroll debajo de la navbar; si no entra en el viewport, scrollea por dentro */
 @media (min-width: 1122px) {
+  /* La tarjeta de la cancha fija el alto de la fila; el panel se estira a él sin aportar altura propia */
+  .zones-layout { align-items: stretch; }
   .zones-side {
+    contain: size;
     position: sticky;
     top: calc(var(--navbar-h, 64px) + 16px);
     max-height: calc(100dvh - var(--navbar-h, 64px) - 32px);

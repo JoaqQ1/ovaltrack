@@ -287,7 +287,7 @@ export class MatchHistoryComponent implements OnInit {
 
       return {
         id: partido.id,
-        title: `${partido.opponent || 'Rival'}`,
+        title: `${partido.opponent?.name || 'Rival'}`,
         start: isoDate,
         backgroundColor: bgColor, // <--- Aplicamos el fondo dinámico
         borderColor: bgColor,     // <--- Aplicamos el borde dinámico

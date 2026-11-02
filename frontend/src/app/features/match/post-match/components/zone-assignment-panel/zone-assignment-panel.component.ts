@@ -19,10 +19,13 @@ interface UsableRange {
 }
 
 /** Instrucción de inicio: vive solo en el campo Franja (y en el resumen de la hoja móvil) mientras falta elegirla. */
-export const PICK_FRANJA_HELP = 'Tocá una fila de la grilla o una zona de la cancha';
+export const PICK_FRANJA_HELP = 'Tocá la grilla o la cancha';
 
 /** Regla del rango: se muestra en el tooltip de "Hasta" y en la ayuda general de la pantalla. */
 export const RANGE_RULE_HELP = 'Inicio incluido, fin excluido: 20′–25′ y 25′–30′ no se pisan.';
+
+/** Huecos que se listan sin expandir; el resto se ve en la grilla o con "Ver todos". */
+const GAPS_PREVIEW = 4;
 
 /** Cuánto tiempo queda disponible el "Deshacer" tras borrar un tramo. */
 const UNDO_WINDOW_MS = 6000;
@@ -50,6 +53,7 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   readonly selectedCell = model<ZoneCellRef | null>(null);
 
   readonly laterals = ZONE_ROW_NAMES.map((name, index) => ({ row: index + 1, name, short: ZONE_ROW_SHORT_NAMES[index] }));
+  gapsExpanded = false;
   readonly pickFranjaHelp = PICK_FRANJA_HELP;
   readonly rangeRuleHelp = RANGE_RULE_HELP;
 
@@ -190,6 +194,21 @@ export class ZoneAssignmentPanelComponent implements OnInit {
   /** Huecos sin zona de ambos tiempos, con los eventos que hoy caen en cada uno. */
   get gaps(): GapWithEvents[] {
     return gapsWithEventCount(this.store.assignments(), this.store.events());
+  }
+
+  /** Con más de un hueco oculto se resume; ocultar uno solo ahorra casi nada y obliga a un clic. */
+  get canToggleGaps(): boolean {
+    return this.gaps.length > GAPS_PREVIEW + 1;
+  }
+
+  /** Huecos visibles: los primeros en orden cronológico, o todos si se expandió. */
+  get visibleGaps(): GapWithEvents[] {
+    const gaps = this.gaps;
+    return this.gapsExpanded || gaps.length <= GAPS_PREVIEW + 1 ? gaps : gaps.slice(0, GAPS_PREVIEW);
+  }
+
+  toggleGaps(): void {
+    this.gapsExpanded = !this.gapsExpanded;
   }
 
   /** El hueco ya está cargado en el formulario. */

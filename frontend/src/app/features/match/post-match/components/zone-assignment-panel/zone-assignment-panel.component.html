@@ -129,8 +129,8 @@
         <i class="bi bi-check-circle-fill"></i> Partido completo
       </p>
 
-      <ul *ngIf="gaps.length > 0" class="gap-list">
-        <li *ngFor="let gap of gaps">
+      <ul *ngIf="gaps.length > 0" class="gap-list" data-testid="gap-list">
+        <li *ngFor="let gap of visibleGaps">
           <button type="button" class="gap-item" data-testid="gap-item" [class.is-loaded]="isGapLoaded(gap)"
                   [disabled]="store.isSaving()" (click)="selectGap(gap)"
                   [attr.aria-label]="'Hueco sin zona de ' + gap.start + ' a ' + gap.end + ' minutos, ' + gap.period + 'T, ' + gap.eventCount + ' ' + (gap.eventCount === 1 ? 'evento' : 'eventos') + '. Tocá para completar'">
@@ -140,6 +140,11 @@
           </button>
         </li>
       </ul>
+
+      <button *ngIf="canToggleGaps" type="button" class="gaps-toggle" data-testid="gaps-toggle"
+              [attr.aria-expanded]="gapsExpanded" (click)="toggleGaps()">
+        {{ gapsExpanded ? 'Ver menos' : 'Ver todos (' + gaps.length + ')' }}
+      </button>
     </div>
   </div>
 </section>

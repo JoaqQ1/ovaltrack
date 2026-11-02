@@ -15,12 +15,15 @@
  * el que entra a lo ancho sin deformarla. La leyenda va al costado; en anchos angostos pasa debajo.
  */
 .rugby-field {
-  --pitch-h: min(250px, calc((100cqw - var(--row-axis-w) - 8px) * 70 / 120));
+  /* Ancho que ocupa la leyenda al costado (y su separación); en anchos angostos baja debajo de la cancha */
+  --side-w: 240px;
+  --side-gap: 28px;
+  --pitch-h: min(285px, calc((100cqw - var(--row-axis-w) - 8px - var(--side-w) - var(--side-gap)) * 70 / 120));
   --pitch-w: calc(var(--pitch-h) * 120 / 70);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
-  gap: 16px 28px;
+  gap: 16px var(--side-gap);
   margin: 0;
 }
 
@@ -321,7 +324,7 @@
 
 /* Espacio angosto (tablet vertical, móvil): la leyenda baja debajo de la cancha */
 @container (max-width: 760px) {
-  .rugby-field { grid-template-columns: minmax(0, 1fr); }
+  .rugby-field { grid-template-columns: minmax(0, 1fr); --side-w: 0px; --side-gap: 0px; }
   .field-side { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
 }
 
