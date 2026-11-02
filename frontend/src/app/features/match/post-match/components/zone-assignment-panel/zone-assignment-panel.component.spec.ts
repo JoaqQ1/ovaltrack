@@ -461,7 +461,8 @@ describe('ZoneAssignmentPanelComponent', () => {
 
   describe('tope de huecos', () => {
     const gapItems = (): HTMLElement[] => queryAll('[data-testid="gap-item"]');
-    const toggle = (): HTMLButtonElement | null => query<HTMLButtonElement>('[data-testid="gaps-toggle"]');
+    const more = (): HTMLElement | null => query('[data-testid="gaps-more"]');
+    const gaps = (): { start: number; end: number }[] => component.gaps;
     /** Tramos de 5′ separados por 5′ desde el minuto 5: n-1 tramos dejan n huecos (el último llega hasta el 80′). */
     const zonesWithGaps = (gaps: number): ZoneAssignmentResponse[] =>
       Array.from({ length: gaps - 1 }, (_, i) => {
@@ -469,34 +470,33 @@ describe('ZoneAssignmentPanelComponent', () => {
         return { ...existingZone, id: `zone-${i}`, period: start < 40 ? 1 : 2, startMinute: start, endMinute: start + 5 };
       });
 
-    it('con hasta cinco huecos los muestra todos, sin botón', () => {
-      render(zonesWithGaps(5));
+    it('con hasta cuatro huecos los muestra todos, sin aviso', () => {
+      render(zonesWithGaps(4));
 
-      expect(gapItems().length).toBe(5);
-      expect(toggle()).toBeNull();
+      expect(gapItems().length).toBe(4);
+      expect(more()).toBeNull();
     });
 
-    it('con más de cinco muestra los primeros cuatro en orden y "Ver todos (N)"', () => {
+    it('con más de cuatro muestra los primeros en orden y "+N más en la grilla", sin botón ni scroll', () => {
       render(zonesWithGaps(7));
 
       expect(gapItems().length).toBe(4);
       expect(query('[data-testid="gaps-count"]')?.textContent?.trim()).toBe('7');
-      expect(toggle()?.textContent?.trim()).toBe('Ver todos (7)');
-      expect(toggle()?.getAttribute('aria-expanded')).toBe('false');
+      expect(more()?.textContent?.trim()).toBe('+3 más en la grilla');
+      expect(query('[data-testid="gaps-toggle"]')).toBeNull();
     });
 
-    it('"Ver todos" expande la lista y "Ver menos" la resume de nuevo', () => {
+    it('el hueco precargado que no entra ocupa el lugar del último visible', () => {
       render(zonesWithGaps(7));
+      const hidden = gaps()[6];
 
-      toggle()?.click();
+      component.prefill({ startMinute: hidden.start, endMinute: hidden.end });
       fixture.detectChanges();
-      expect(gapItems().length).toBe(7);
-      expect(toggle()?.textContent?.trim()).toBe('Ver menos');
-      expect(toggle()?.getAttribute('aria-expanded')).toBe('true');
 
-      toggle()?.click();
-      fixture.detectChanges();
-      expect(gapItems().length).toBe(4);
+      const items = gapItems();
+      expect(items.length).toBe(4);
+      expect(items[3].classList).toContain('is-loaded');
+      expect(more()?.textContent?.trim()).toBe('+3 más en la grilla');
     });
   });
 

@@ -1,9 +1,10 @@
-import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { MatchService } from '../../services/match.service';
 import { Match } from '../../types/match.types';
 import { EMPTY_TIME_PLACEHOLDER, formatOnlyTime } from '../utils/match-review.utils';
+import { LoadingGate } from '../utils/loading-gate';
 
 export type ShellStatus = 'loading' | 'ready' | 'error';
 
@@ -25,6 +26,14 @@ export class PostMatchShellStore {
   readonly match = signal<Match | null>(null);
   readonly status = signal<ShellStatus>('loading');
   readonly errorMessage = signal<string>('');
+  /** La pelota aparece solo si la carga del partido tarda (ver LoadingGate). */
+  readonly loading = new LoadingGate();
+
+  /**
+   * Evento que estaba seleccionado en Eventos al irse a otra vista. Vive en el shell (no en la URL) para que Eventos
+   * lo recupere al volver, tanto con el selector de vistas como con Atrás.
+   */
+  readonly lastSelectedEventId = signal<string | null>(null);
 
   private readonly liveScore = signal<Signal<ShellScore> | null>(null);
   private readonly liveScoreDelta = signal<Signal<ShellScoreDelta | null> | null>(null);
@@ -45,11 +54,13 @@ export class PostMatchShellStore {
   });
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.loading.dispose());
     this.loadRequests.pipe(
       tap(() => {
         this.match.set(null);
         this.errorMessage.set('');
         this.status.set('loading');
+        this.loading.start();
       }),
       switchMap(id => this.matchService.getMatchById(id).pipe(
         map((match): LoadResult => ({ match })),
@@ -57,6 +68,7 @@ export class PostMatchShellStore {
       )),
       takeUntilDestroyed()
     ).subscribe(result => {
+      this.loading.finish();
       if ('match' in result) {
         this.match.set(result.match);
         this.status.set('ready');

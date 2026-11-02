@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
@@ -323,16 +323,32 @@ describe('PostMatchZonesComponent', () => {
   });
 
   describe('estados de carga y vacío', () => {
-    it('mientras carga muestra un esqueleto con aviso accesible, no un spinner suelto', () => {
+    it('una carga rápida no muestra la pelota', () => {
       create();
-
-      expect(query('[data-testid="zones-skeleton"]')).not.toBeNull();
-      expect(query('[data-testid="zones-skeleton"] [role="status"]')?.textContent).toContain('Cargando zonas del partido');
-      expect(query('.spinner')).toBeNull();
+      expect(query('[data-testid="zones-loading"]')).toBeNull();
 
       http.expectOne(zonesUrl).flush({ assignments: [], summary: { cells: [], unzonedEventCount: 0 } });
       http.expectOne(eventsUrl).flush([]);
+      fixture.detectChanges();
+
+      expect(query('[data-testid="zones-loading"]')).toBeNull();
     });
+
+    it('si la carga pasa de 100 ms muestra la pelota de rugby con aviso accesible', fakeAsync(() => {
+      create();
+      tick(100);
+      fixture.detectChanges();
+
+      expect(query('[data-testid="zones-loading"]')).not.toBeNull();
+      expect(query('[data-testid="zones-loading"] [role="status"]')?.textContent).toContain('Cargando zonas del partido');
+
+      http.expectOne(zonesUrl).flush({ assignments: [], summary: { cells: [], unzonedEventCount: 0 } });
+      http.expectOne(eventsUrl).flush([]);
+      tick(400);
+      fixture.detectChanges();
+
+      expect(query('[data-testid="zones-loading"]')).toBeNull();
+    }));
 
     it('sin tramos el formulario viene precargado con 0–5', () => {
       createLoaded([], []);

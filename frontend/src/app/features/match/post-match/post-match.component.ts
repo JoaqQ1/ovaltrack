@@ -1,21 +1,28 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, DestroyRef, HostListener, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { LayoutService } from 'src/app/core/services/layout.service';
 import { EventService } from '../services/event.service';
 import { EventTypeService } from '../services/event-type.service';
 import { RosterService } from '../services/roster.service';
+import { ZoneService } from '../services/zone.service';
 import { LiveCaptureService } from '../services/live-capture.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { HidingFilter, MatchReviewStore } from './store/match-review.store';
 import { MatchTimelineEventResponse } from '../types/event.types';
 import { PostMatchShellStore } from './store/post-match-shell.store';
+import { RugbyBallLoaderComponent } from '../../../shared/components/rugby-ball-loader/rugby-ball-loader.component';
+import { LoadingGate } from './utils/loading-gate';
 import { PostMatchKpiStripComponent } from './components/post-match-kpi-strip/post-match-kpi-strip.component';
 import { PostMatchTimelineComponent } from './components/post-match-timeline/post-match-timeline.component';
 import { PostMatchTableComponent } from './components/post-match-table/post-match-table.component';
 import { PostMatchPanelComponent } from './components/post-match-panel/post-match-panel.component';
 import { PostMatchCreateModalComponent } from './components/post-match-create-modal/post-match-create-modal.component';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
+
+/** Desde esta cantidad de eventos, dibujar la vista traba el hilo un rato: la pelota se muestra antes de empezar. */
+const HEAVY_RENDER_EVENTS = 200;
 
 const HIDING_FILTER_LABELS: Record<HidingFilter, string> = {
   period: 'período',
@@ -30,6 +37,7 @@ const HIDING_FILTER_LABELS: Record<HidingFilter, string> = {
   standalone: true,
   imports: [
     CommonModule,
+    RugbyBallLoaderComponent,
     PostMatchKpiStripComponent,
     PostMatchTimelineComponent,
     PostMatchTableComponent,
@@ -49,15 +57,19 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   private readonly liveCaptureService = inject(LiveCaptureService);
   private readonly toastService = inject(ToastService);
   private readonly layoutService = inject(LayoutService);
+  private readonly zoneService = inject(ZoneService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly store = inject(MatchReviewStore);
 
   @ViewChild(PostMatchPanelComponent) panel!: PostMatchPanelComponent;
 
   matchId = '';
+  private eventToRestore: string | null = null;
 
   // Estado del contenedor
   readonly errorMessage = signal<string>('');
-  readonly isLoading = signal<boolean>(true);
+  /** La pelota aparece solo si la carga tarda (ver LoadingGate). */
+  readonly loading = new LoadingGate();
   readonly eventTypesDiccionario = signal<{ [id: string]: string }>({});
   readonly showCreateModal = signal<boolean>(false);
 
@@ -162,18 +174,48 @@ export class PostMatchComponent implements OnInit, OnDestroy {
     this.shell.bindLiveScore(this.store.scoreboard, this.store.scoreDelta);
     this.matchId = this.shell.matchId();
     if (this.matchId) {
+      // El evento que estaba seleccionado al irse a otra vista (resetSession lo borra: se restaura al terminar la carga)
+      this.eventToRestore = this.shell.lastSelectedEventId();
       this.store.resetSession();
       this.store.setMatchId(this.matchId);
       this.applyMatchDetails();
+      this.loading.start();
+      this.loadZones();
       this.loadRoster();
       this.loadEventTypesAndEvents();
     }
   }
 
   ngOnDestroy(): void {
+    this.shell.lastSelectedEventId.set(this.store.selectedEventId());
     this.shell.unbindLiveScore();
     this.layoutService.setWide(null);
     this.store.resetSession();
+    this.loading.dispose();
+  }
+
+  /**
+   * Vuelve a seleccionar el evento que había al irse a Zonas o Estadísticas; la tabla scrollea hasta él. Si ya no existe
+   * (se eliminó mientras tanto) no se selecciona nada. Se aplica una sola vez, con la tabla ya dibujada.
+   */
+  private restoreSelection(): void {
+    const id = this.eventToRestore;
+    this.eventToRestore = null;
+    if (!id) return;
+    setTimeout(() => {
+      if (this.store.rawEvents().some(event => event.id === id)) this.store.selectEvent(id);
+    });
+  }
+
+  /**
+   * Tramos del partido, solo para mostrar rango y enlace de la zona de cada evento. No bloquea la pantalla: si falla,
+   * la zona se sigue viendo (viene en el evento) pero sin el rango del tramo.
+   */
+  private loadZones(): void {
+    this.zoneService.list(this.matchId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ assignments }) => this.store.setZoneAssignments(assignments),
+      error: () => this.store.setZonesFailed()
+    });
   }
 
   loadRoster(): void {
@@ -222,7 +264,7 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   }
 
   async loadEvents(): Promise<void> {
-    this.isLoading.set(true);
+    this.loading.start();
     this.errorMessage.set('');
 
     try {
@@ -247,7 +289,6 @@ export class PostMatchComponent implements OnInit, OnDestroy {
           : (error.error?.message || 'El partido aún no se encuentra cerrado.');
         this.errorMessage.set(msg);
         this.toastService.warning(msg);
-        this.isLoading.set(false);
         return;
       }
 
@@ -273,8 +314,22 @@ export class PostMatchComponent implements OnInit, OnDestroy {
         this.toastService.error(msg);
       }
     } finally {
-      this.isLoading.set(false);
+      if (this.errorMessage()) {
+        await this.loading.finish();
+      } else {
+        await this.revealEvents();
+      }
     }
+  }
+
+  /**
+   * Con cientos de eventos, dibujar la vista traba el hilo un rato: la pelota se pinta antes de empezar y el navegador
+   * la sigue mostrando (girando) hasta que la vista está lista, en lugar de quedar en blanco.
+   */
+  private async revealEvents(): Promise<void> {
+    if (this.store.rawEvents().length >= HEAVY_RENDER_EVENTS) await this.loading.showNow();
+    await this.loading.finish();
+    this.restoreSelection();
   }
 
 }

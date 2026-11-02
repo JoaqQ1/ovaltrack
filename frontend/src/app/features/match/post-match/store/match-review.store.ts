@@ -2,6 +2,7 @@ import { Injectable, computed, signal } from '@angular/core';
 import { MatchTimelineEventResponse } from '../../types/event.types';
 import { AvailablePlayer } from '../../types/roster.types';
 import { LiveCaptureEventType } from '../../types/event-type.types';
+import { ZoneAssignmentResponse } from '../../types/zone.types';
 import {
   ReviewEventViewModel,
   ReviewFilters,
@@ -20,6 +21,7 @@ import {
   formatAbsoluteTime,
   formatOnlyTime
 } from '../utils/match-review.utils';
+import { zoneForEvent } from '../utils/zone-event-link';
 import { countsAsScoring, scoringTeam } from '../../statistics/calculators/event-rules';
 
 export { RUGBY_HALF_TIME_MIN, RUGBY_FULL_TIME_MIN, EMPTY_TIME_PLACEHOLDER };
@@ -40,6 +42,10 @@ export class MatchReviewStore {
   readonly eventTypesDict = signal<Record<string, string>>({});
   readonly eventTypesList = signal<LiveCaptureEventType[]>([]);
   readonly availablePlayers = signal<AvailablePlayer[]>([]);
+  /** Tramos de zona del partido (solo lectura): dan el rango y el enlace a Zonas de cada evento. */
+  readonly zoneAssignments = signal<ZoneAssignmentResponse[]>([]);
+  /** Si falló `GET /zones` la zona se sigue viendo (viene en el evento), pero sin rango ni enlace al tramo. */
+  readonly zonesStatus = signal<'idle' | 'loaded' | 'failed'>('idle');
   readonly initialHomeScore = signal<number>(0);
   readonly initialAwayScore = signal<number>(0);
   readonly scoreDelta = signal<{ text: string; type: 'OWN' | 'OPPONENT' } | null>(null);
@@ -88,13 +94,13 @@ export class MatchReviewStore {
   });
 
   // --- Indicador Reactivo de Filtros Activos ---
+  /** Algo de la barra difiere del estado por defecto: período, posesión, "Solo sin jugador" o búsqueda. */
   readonly hasActiveFilters = computed<boolean>(() => {
     const f = this.filters();
     return f.period !== 'ALL' ||
            f.team !== 'ALL' ||
            f.onlyUnassigned ||
-           f.searchTerm.trim() !== '' ||
-           f.hiddenLaneIds.length > 0;
+           f.searchTerm.trim() !== '';
   });
 
   // --- Duración Dinámica y Escala (Eje X) ---
@@ -116,9 +122,13 @@ export class MatchReviewStore {
     const scale = this.matchDurationScale();
     const currentFilters = this.filters();
     const term = currentFilters.searchTerm.trim().toLowerCase();
+    const zonesLoaded = this.zonesStatus() === 'loaded';
+    const assignments = this.zoneAssignments();
 
     return raw.map(e => {
       const vm = this.buildBaseViewModel(e, dict, scale);
+      // El servidor informa la zona; los eventos recién creados en esta pantalla no la traen y se derivan con los tramos
+      vm.zone = e.zone !== undefined ? e.zone : (zonesLoaded ? zoneForEvent(e, assignments) : undefined);
       vm.isDimmed = !this.evaluateFilters(vm, currentFilters, term);
       return vm;
     });
@@ -235,6 +245,16 @@ export class MatchReviewStore {
 
   setMatchId(id: string): void {
     this.matchId.set(id);
+  }
+
+  setZoneAssignments(assignments: ZoneAssignmentResponse[]): void {
+    this.zoneAssignments.set(assignments);
+    this.zonesStatus.set('loaded');
+  }
+
+  setZonesFailed(): void {
+    this.zoneAssignments.set([]);
+    this.zonesStatus.set('failed');
   }
 
   setAvailablePlayers(players: AvailablePlayer[]): void {
@@ -378,6 +398,8 @@ export class MatchReviewStore {
   resetSession(): void {
     this.selectedEventId.set(null);
     this.scoreDelta.set(null);
+    this.zoneAssignments.set([]);
+    this.zonesStatus.set('idle');
     this.clearFilters();
   }
 

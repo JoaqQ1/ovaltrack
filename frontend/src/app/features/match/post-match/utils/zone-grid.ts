@@ -38,6 +38,11 @@ export function columnRangeLabel(col: number): string {
   return `${start}–${start + ZONE_COLUMN_METERS[col - 1]} m`;
 }
 
+/** Nombre de una zona para tooltips y lectores de pantalla, ej. "Derecha · 22 rival" (lateral y franja). */
+export function zoneName(cell: ZoneCellRef): string {
+  return `${ZONE_ROW_NAMES[cell.row - 1]} · ${ZONE_COLUMN_NAMES[cell.col - 1]}`;
+}
+
 /** Texto completo de una zona, ej. "D5 · Derecha (55–70 m) · 22 rival (78–100 m)". */
 export function describeZone(cell: ZoneCellRef): string {
   const column = columnRangeLabel(cell.col);

@@ -1,12 +1,15 @@
-import { Component, DestroyRef, HostListener, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LayoutService } from 'src/app/core/services/layout.service';
+import { ToastService } from 'src/app/core/services/toast.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ZoneAssignmentResponse, ZoneCellRef } from '../../../types/zone.types';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { PostMatchShellStore } from '../../store/post-match-shell.store';
 import { watchCompactLayout } from '../../utils/zone-compact';
+import { LoadingGate } from '../../utils/loading-gate';
+import { ZoneDeepLinkTarget, resolveZoneDeepLink } from '../../utils/zone-deep-link';
 import { ZONE_SHORTCUT_HELP, isSaveShortcut, isTypingTarget, shortcutCell } from '../../utils/zone-shortcuts';
 import {
   NO_ZONE_EVENT_FILTERS, ZonePeriodFilter, countByCell, filterEvents, unzonedEvents, zoneCoveragePercent
@@ -15,6 +18,7 @@ import { Possession } from '../../../types/live-capture.types';
 import { RugbyFieldComponent } from '../rugby-field/rugby-field.component';
 import { ZoneAssignmentPanelComponent } from '../zone-assignment-panel/zone-assignment-panel.component';
 import { ZoneKpiStripComponent } from '../zone-kpi-strip/zone-kpi-strip.component';
+import { RugbyBallLoaderComponent } from '../../../../../shared/components/rugby-ball-loader/rugby-ball-loader.component';
 import { TerritoryGapSelection, ZoneTerritoryGridComponent } from '../zone-territory-grid/zone-territory-grid.component';
 
 /** Lateral que se propone al tocar una fila de la grilla: el centro de la cancha. */
@@ -27,12 +31,14 @@ const DEFAULT_LATERAL_ROW = 2;
 @Component({
   selector: 'app-post-match-zones',
   standalone: true,
-  imports: [RugbyFieldComponent, ZoneAssignmentPanelComponent, ZoneTerritoryGridComponent, ZoneKpiStripComponent],
+  imports: [RugbyFieldComponent, ZoneAssignmentPanelComponent, ZoneTerritoryGridComponent, ZoneKpiStripComponent, RugbyBallLoaderComponent],
   templateUrl: './post-match-zones.component.html',
   styleUrl: './post-match-zones.component.css'
 })
 export class PostMatchZonesComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly toastService = inject(ToastService);
   private readonly layoutService = inject(LayoutService);
   private readonly shell = inject(PostMatchShellStore);
   private readonly userContext = inject(UserContextService);
@@ -43,7 +49,8 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   private readonly grid = viewChild(ZoneTerritoryGridComponent);
 
   readonly matchId = signal<string>('');
-  readonly isLoading = signal<boolean>(true);
+  /** La pelota aparece solo si la carga tarda (ver LoadingGate). */
+  readonly loading = new LoadingGate();
   readonly errorMessage = signal<string>('');
   readonly opponent = computed(() => this.shell.match()?.opponent?.name || 'Rival');
   readonly ownClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
@@ -63,6 +70,9 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   readonly possessionOptions: { value: Possession | 'ALL'; label: string }[] = [
     { value: 'ALL', label: 'Todos' }, { value: 'OWN', label: 'Propios' }, { value: 'OPPONENT', label: 'Rival' }
   ];
+
+  /** Enlace desde Eventos (`?tramo=` / `?minuto=`) ya interpretado, a la espera de que el formulario exista. */
+  private readonly pendingDeepLink = signal<ZoneDeepLinkTarget | null>(null);
 
   readonly helpOpen = signal<boolean>(false);
   readonly shortcutHelp = ZONE_SHORTCUT_HELP;
@@ -89,6 +99,19 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     return segment ? { row: segment.row, col: segment.col } : null;
   });
 
+  constructor() {
+    // El formulario recién existe cuando termina la carga: el enlace se aplica una sola vez, en ese momento
+    effect(() => {
+      const panel = this.panel();
+      const target = this.pendingDeepLink();
+      if (!panel || !target) return;
+      untracked(() => {
+        this.pendingDeepLink.set(null);
+        this.applyDeepLink(panel, target);
+      });
+    });
+  }
+
   ngOnInit(): void {
     this.layoutService.setWide(true);
     this.zonesStore.reset();
@@ -99,7 +122,6 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     this.matchId.set(id);
     if (!id) {
       this.errorMessage.set('No se indicó el partido.');
-      this.isLoading.set(false);
       return;
     }
     this.load(id);
@@ -108,6 +130,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.layoutService.setWide(null);
     this.zonesStore.reset();
+    this.loading.dispose();
   }
 
   toggleHelp(): void {
@@ -121,7 +144,7 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
    */
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
-    if (this.isLoading() || this.errorMessage()) return;
+    if (this.loading.pending() || this.errorMessage()) return;
 
     if (isSaveShortcut(event)) {
       event.preventDefault();
@@ -198,18 +221,54 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     this.panel()?.prefill(gap);
   }
 
+  /** Interpreta `?tramo=` / `?minuto=` contra los tramos cargados; un enlace inválido se ignora y se avisa. */
+  private readDeepLink(): void {
+    const query = this.route.snapshot.queryParamMap;
+    const target = resolveZoneDeepLink(
+      { tramo: query.get('tramo'), minuto: query.get('minuto') },
+      this.zonesStore.assignments()
+    );
+    if (target.kind === 'none') return;
+
+    // El enlace se consume una vez: la URL queda limpia y recargar no vuelve a abrirlo
+    this.router.navigate([], { relativeTo: this.route, queryParams: { tramo: null, minuto: null }, queryParamsHandling: 'merge', replaceUrl: true });
+
+    if (target.kind === 'invalid') {
+      this.toastService.info(
+        target.reason === 'tramo' ? 'El tramo del enlace ya no existe.' : 'El minuto del enlace no es válido.',
+        'Enlace a Zonas'
+      );
+      return;
+    }
+    this.pendingDeepLink.set(target);
+  }
+
+  /** Abre el tramo para editarlo o precarga el hueco; en pantalla angosta muestra el tiempo que corresponde. */
+  private applyDeepLink(panel: ZoneAssignmentPanelComponent, target: ZoneDeepLinkTarget): void {
+    if (target.kind === 'segment') {
+      if (this.compact()) this.periodFilter.set(target.segment.period);
+      panel.startEdit(target.segment);
+    } else if (target.kind === 'gap') {
+      if (this.compact()) this.periodFilter.set(target.gap.period);
+      panel.prefill({ startMinute: target.gap.start, endMinute: target.gap.end });
+    }
+  }
+
   private load(matchId: string): void {
-    this.isLoading.set(true);
+    this.loading.start();
     this.errorMessage.set('');
 
     this.zonesStore.load(matchId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => this.isLoading.set(false),
+        next: () => {
+          this.readDeepLink();
+          this.loading.finish();
+        },
         error: err => {
           const message = err?.error?.message;
           this.errorMessage.set(typeof message === 'string' && message ? message : 'No se pudieron cargar las zonas del partido.');
-          this.isLoading.set(false);
+          this.loading.finish();
         }
       });
   }

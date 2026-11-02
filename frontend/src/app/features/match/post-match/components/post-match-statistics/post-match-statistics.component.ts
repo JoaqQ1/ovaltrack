@@ -21,6 +21,8 @@ import {
   StatLine,
 } from '../../../statistics/presentation/stat-presentation';
 import { PostMatchShellStore } from '../../store/post-match-shell.store';
+import { LoadingGate } from '../../utils/loading-gate';
+import { RugbyBallLoaderComponent } from '../../../../../shared/components/rugby-ball-loader/rugby-ball-loader.component';
 import { LocalDatabaseService } from 'src/app/features/local-database/services/local-database.service';
 
 export type StatsPeriodFilter = 'ALL' | 1 | 2;
@@ -33,7 +35,7 @@ interface RosterGroup { label: string; players: PlayerStatistic[]; }
 @Component({
   selector: 'app-post-match-statistics',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RugbyBallLoaderComponent],
   templateUrl: './post-match-statistics.component.html',
   styleUrl: './post-match-statistics.component.css',
 })
@@ -49,7 +51,8 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
   private readonly userContext = inject(UserContextService);
 
   readonly matchId = signal<string>('');
-  readonly isLoading = signal<boolean>(true);
+  /** La pelota aparece solo si la carga tarda (ver LoadingGate). */
+  readonly loading = new LoadingGate();
   readonly errorMessage = signal<string>('');
   readonly opponent = computed(() => this.shell.match()?.opponent?.name || 'Rival');
   readonly ownClubName = computed(() => this.userContext.currentClub()?.name || 'Mi Club');
@@ -159,7 +162,6 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
     this.matchId.set(id);
     if (!id) {
       this.errorMessage.set('No se indicó el partido.');
-      this.isLoading.set(false);
       return;
     }
     await this.load(id);
@@ -167,6 +169,7 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.layoutService.setWide(null);
+    this.loading.dispose();
   }
 
   setPeriod(period: StatsPeriodFilter): void {
@@ -186,7 +189,7 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
   }
 
   private async load(matchId: string): Promise<void> {
-    this.isLoading.set(true);
+    this.loading.start();
     this.errorMessage.set('');
 
     try {
@@ -201,7 +204,7 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
       console.error('Error al cargar las estadísticas del partido:', err);
       this.errorMessage.set('No se pudieron cargar las estadísticas del partido.');
     } finally {
-      this.isLoading.set(false);
+      await this.loading.finish();
     }
   }
 

@@ -73,26 +73,6 @@ kbd {
 
 app-zone-territory-grid { margin-bottom: 16px; }
 
-/* ---------- Esqueleto de carga ---------- */
-.skeleton {
-  border-radius: 12px;
-  background: linear-gradient(90deg, var(--surface-alt, #eef1e7) 25%, var(--surface-hover, #f1f3ea) 50%, var(--surface-alt, #eef1e7) 75%);
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.4s ease-in-out infinite;
-}
-.sk-toolbar { height: 44px; margin-bottom: 14px; }
-.sk-field { height: 250px; }
-.sk-timeline { height: 250px; margin-bottom: 14px; }
-.sk-line { height: 18px; margin-bottom: 12px; }
-.sk-line--short { width: 55%; }
-.sk-block { height: 160px; }
-
-@keyframes skeleton-shimmer { to { background-position: -200% 0; } }
-
-@media (prefers-reduced-motion: reduce) {
-  .skeleton { animation: none; }
-}
-
 /* ---------- Estados ---------- */
 .state-box {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
@@ -107,11 +87,6 @@ app-zone-territory-grid { margin-bottom: 16px; }
   height: 44px; padding: 0 20px; border-radius: 10px; background: #fff; cursor: pointer;
   border: 1px solid var(--btn-outline-border, rgba(32, 75, 34, .25)); color: var(--btn-outline-fg, #204b22); font-weight: 600;
 }
-.spinner {
-  width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--surface-alt, #eef1e7);
-  border-top-color: var(--btn-primary-bg, #204b22); animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
 
 /* Desktop: el panel (formulario + lista) acompaña al scroll debajo de la navbar; si no entra en el viewport, scrollea por dentro */
 @media (min-width: 1122px) {

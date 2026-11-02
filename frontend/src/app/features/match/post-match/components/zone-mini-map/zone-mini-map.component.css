@@ -1,0 +1,38 @@
+:host {
+  display: inline-flex;
+  flex: none;
+  vertical-align: middle;
+}
+
+/* Mismos colores de césped que la cancha de Zonas; la zona marcada usa el calor alto del sistema */
+.mini-map {
+  --pitch-base: var(--btn-primary-bg, #204b22);
+  --pitch: color-mix(in srgb, var(--pitch-base) 66%, #a8d5a2);
+  --pitch-ingoal: color-mix(in srgb, var(--pitch-base) 82%, #a8d5a2);
+  width: 38px;
+  height: 20px;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pitch-base) 55%, transparent);
+}
+
+/* En oscuro --btn-primary-bg es lima: el césped conserva el verde bosque del modo claro para que la zona marcada resalte */
+:host-context([data-theme="dark"]) .mini-map {
+  --pitch-base: #204b22;
+}
+
+.cell {
+  fill: var(--pitch);
+  stroke: #ffffff;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-opacity: 0.85;
+}
+
+.cell.ingoal {
+  fill: var(--pitch-ingoal);
+}
+
+.cell.active {
+  fill: var(--zone-heat-high, #d9480f);
+}
