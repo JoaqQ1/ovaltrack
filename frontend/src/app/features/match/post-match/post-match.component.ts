@@ -172,6 +172,8 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.layoutService.setWide(true);
     this.shell.bindLiveScore(this.store.scoreboard, this.store.scoreDelta);
+    // El servidor recalcula el marcador con cada cambio de eventos: el shell lo vuelve a pedir para Zonas y Estadísticas
+    this.store.confirmedChange$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.shell.refresh());
     this.matchId = this.shell.matchId();
     if (this.matchId) {
       // El evento que estaba seleccionado al irse a otra vista (resetSession lo borra: se restaura al terminar la carga)

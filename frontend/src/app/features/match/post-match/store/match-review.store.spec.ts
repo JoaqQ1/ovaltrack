@@ -329,6 +329,19 @@ describe('MatchReviewStore (HU-8.4)', () => {
     });
   });
 
+  it('avisa cada alta, edición y baja confirmada (el servidor recalcula el marcador)', () => {
+    let changes = 0;
+    store.confirmedChange$.subscribe(() => changes++);
+    store.setEvents([{ id: 'a', eventTypeId: 't', eventTypeName: 'Kick', matchTime: 100, period: 1, teamPossession: 'OWN' }]);
+    expect(changes).withContext('cargar eventos no es un cambio').toBe(0);
+
+    store.addEvent({ id: 'b', eventTypeId: 't', eventTypeName: 'Kick', matchTime: 200, period: 1, teamPossession: 'OWN' });
+    store.updateEvent('a', { note: 'nota' });
+    store.removeEvent('b');
+
+    expect(changes).toBe(3);
+  });
+
   describe('timelineLanes and activeLanesCount', () => {
     it('should maintain stable activeLanesCount and keep lanes present when filtering', () => {
       store.setEventTypesList([
