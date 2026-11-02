@@ -1,0 +1,115 @@
+:host {
+  display: block;
+}
+
+/* Columna: encabezado (alto automático) + vista hija.
+   El padding y el gap son los mismos en las tres vistas: el encabezado queda en las mismas coordenadas. */
+.pm-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 14px !important;
+}
+
+.pm-shell-view {
+  min-width: 0;
+}
+
+/* Eventos: la vista ocupa el alto de la ventana y la tabla virtual usa el resto */
+.pm-shell--locked {
+  height: calc(100vh - var(--navbar-h, 64px) - 26px);
+  height: calc(100dvh - var(--navbar-h, 64px) - 26px);
+  min-height: 640px;
+  padding-bottom: 12px !important;
+  box-sizing: border-box;
+}
+
+.pm-shell--locked .pm-shell-view {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+@media (max-width: 1120px) {
+  .pm-shell--locked {
+    height: auto;
+    min-height: auto;
+  }
+}
+
+/* Notebooks estándar (768px de alto) */
+@media (max-height: 800px) and (min-width: 1121px) {
+  .pm-shell {
+    gap: 6px;
+    padding-top: 6px !important;
+  }
+
+  .pm-shell--locked {
+    padding-bottom: 8px !important;
+  }
+}
+
+.state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-secondary, #3b4e33);
+  background: var(--surface, #ffffff);
+  border: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
+  border-radius: var(--radius-xl, 20px);
+  box-shadow: var(--shadow-elevation);
+}
+
+.state-box i {
+  font-size: 2rem;
+}
+
+.state-box p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.state-box--error {
+  color: var(--error, #b42318);
+  border-color: var(--error-border, rgba(180, 35, 24, 0.35));
+}
+
+.state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.state-actions .btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 10px;
+  background: var(--btn-outline-bg, #ffffff);
+  border: 1.5px solid var(--btn-outline-border, rgba(32, 75, 34, 0.25));
+  color: var(--btn-outline-fg, #204b22);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.2));
+  border-top-color: var(--btn-primary-bg, #204b22);
+  animation: shell-spin 0.8s linear infinite;
+}
+
+@keyframes shell-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation-duration: 2s; }
+}

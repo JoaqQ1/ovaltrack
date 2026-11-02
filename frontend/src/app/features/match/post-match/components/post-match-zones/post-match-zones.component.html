@@ -1,0 +1,114 @@
+<section class="zones-page">
+
+  @if (isLoading()) {
+    <!-- Esqueleto con la forma de la pantalla, en lugar de un spinner suelto -->
+    <div class="zones-layout" aria-busy="true" data-testid="zones-skeleton">
+      <div class="zones-main">
+        <div class="field-card">
+          <div class="skeleton sk-toolbar"></div>
+          <div class="skeleton sk-timeline"></div>
+          <div class="skeleton sk-field"></div>
+        </div>
+      </div>
+      <div class="zones-side">
+        <div class="panel-card-skeleton field-card">
+          <div class="skeleton sk-line"></div>
+          <div class="skeleton sk-line sk-line--short"></div>
+          <div class="skeleton sk-block"></div>
+        </div>
+      </div>
+      <p class="visually-hidden" role="status">Cargando zonas del partido...</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="state-box state-box--error" role="alert">
+      <i class="bi bi-exclamation-triangle"></i>
+      <p>{{ errorMessage() }}</p>
+      <button type="button" class="btn-outline" (click)="goBack()">Volver al análisis</button>
+    </div>
+  } @else {
+    <app-zone-kpi-strip [totalEvents]="totalEvents()" [unzonedEvents]="totalUnzoned()" [coveragePercent]="coveragePercent()" />
+
+    <div class="zones-layout">
+      <div class="zones-main">
+        <div class="field-card">
+          <!-- Barra de filtros: tiempo y posesión, más la ayuda -->
+          <div class="toolbar">
+            <div class="filter-group" role="group" aria-label="Filtros de la cancha">
+              @for (option of periodOptions; track option.value) {
+                <button type="button" class="filter-pill-btn" data-testid="period-filter"
+                        [class.active]="periodFilter() === option.value" [attr.aria-pressed]="periodFilter() === option.value"
+                        (click)="setPeriodFilter(option.value)">{{ compact() ? option.short : option.label }}</button>
+              }
+              <span class="filter-divider" aria-hidden="true"></span>
+              @for (option of possessionOptions; track option.value) {
+                <button type="button" class="filter-pill-btn" data-testid="possession-filter"
+                        [class.active]="possessionFilter() === option.value" [attr.aria-pressed]="possessionFilter() === option.value"
+                        (click)="setPossessionFilter(option.value)">{{ option.label }}</button>
+              }
+            </div>
+
+            <div class="shortcuts">
+              <button type="button" class="help-btn" data-testid="shortcuts-toggle"
+                      aria-controls="zone-shortcuts" [attr.aria-expanded]="helpOpen()"
+                      aria-label="Ayuda" title="Ayuda" (click)="toggleHelp()">?</button>
+              @if (helpOpen()) {
+                <div id="zone-shortcuts" class="shortcuts-pop" data-testid="shortcuts-help" role="region" aria-label="Ayuda">
+                  <strong>Vista de la cancha</strong>
+                  <p data-testid="relative-note">
+                    Vista relativa a tu equipo: siempre atacás hacia la derecha. En el 2T marcá como si no hubiera cambio de lado.
+                    Izquierda y derecha se leen mirando hacia el ataque.
+                  </p>
+                  <strong>Rango del tramo</strong>
+                  <ul data-testid="range-rules">
+                    <li>Inicio incluido, fin excluido: 20′–25′ y 25′–30′ no se pisan.</li>
+                    <li>Los minutos son del partido: el 2T va de 40 a 80. El tiempo (1T o 2T) se deduce del rango.</li>
+                    <li>Un tramo no puede cruzar el entretiempo: partilo en uno hasta el 40′ y otro desde el 40′.</li>
+                    <li>El tiempo añadido cuenta como minuto 40 (1T) y 80 (2T).</li>
+                  </ul>
+                  <strong>Elegir zona con el teclado</strong>
+                  <ul>
+                    @for (row of shortcutHelp; track row.rowName) {
+                      <li><span class="shortcut-row">{{ row.rowName }}</span> <kbd>{{ row.keys }}</kbd></li>
+                    }
+                  </ul>
+                  <p>Cada fila de teclas recorre las columnas 1 a 6 de la cancha (de tu in-goal al rival).</p>
+                  <strong>Recorrer la grilla</strong>
+                  <ul data-testid="grid-keys">
+                    <li><kbd>Tab</kbd> lleva el foco a la grilla; <kbd>↑</kbd> <kbd>↓</kbd> cambian de franja.</li>
+                    <li><kbd>←</kbd> <kbd>→</kbd> saltan de tramo; dentro de un hueco avanzan de a un minuto.</li>
+                    <li><kbd>Enter</kbd> abre el tramo o precarga el hueco desde el minuto marcado.</li>
+                    <li><kbd>Esc</kbd> deshace una cosa por vez: el arrastre, el foco en un campo o la selección.</li>
+                  </ul>
+                  <p><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> guarda el tramo, también escribiendo un minuto. Con el foco en un campo, las flechas, Enter y las letras no hacen nada.</p>
+                </div>
+              }
+            </div>
+          </div>
+
+          <app-zone-territory-grid
+            [assignments]="zonesStore.assignments()" [events]="filteredEvents()" [allEvents]="zonesStore.events()" [periodFilter]="periodFilter()" [compact]="compact()"
+            [selectedId]="zonesStore.editingId()" [selectedCol]="selectedCell()?.col ?? null"
+            [conflictId]="zonesStore.conflictId()"
+            [highlightCell]="highlightedCell()" [previewRange]="zonesStore.formRange()"
+            (segmentHover)="zonesStore.hoverSegmentId.set($event)"
+            (segmentSelected)="onSegmentSelected($event)" (rangeResized)="onRangeResized($event)" (periodRequested)="setPeriodFilter($event)" (gapSelected)="onGapSelected($event)" />
+
+          <app-rugby-field
+            [cells]="cellCounts()"
+            [unzonedEventCount]="0"
+            [selectedCell]="selectedCell()"
+            [ownClubName]="ownClubName()"
+            [opponentName]="opponent()"
+            [pulseCell]="zonesStore.pulseCell()"
+            [linkedCell]="linkedCell()"
+            (cellSelected)="onCellSelected($event)"
+            (cellHover)="zonesStore.hoverCell.set($event)" />
+        </div>
+      </div>
+
+      <div class="zones-side">
+        <app-zone-assignment-panel [matchId]="matchId()" [(selectedCell)]="selectedCell" />
+      </div>
+    </div>
+  }
+</section>

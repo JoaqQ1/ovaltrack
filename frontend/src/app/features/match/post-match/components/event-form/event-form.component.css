@@ -142,3 +142,12 @@
 }
 
 
+
+/* Origen de un valor precargado (filtro o evento seleccionado) */
+.prefill-hint {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary, #3b4e33);
+}

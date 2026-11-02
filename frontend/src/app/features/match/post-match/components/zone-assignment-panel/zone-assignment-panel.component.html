@@ -1,0 +1,150 @@
+<section class="zone-panel">
+
+  <div class="panel-card is-sheet" [class.is-open]="sheetOpen">
+    <!-- Solo móvil: la hoja inferior. Compacta: título, resumen, lateral y Guardar; "Más opciones" suma Desde/Hasta y los huecos -->
+    <span class="sheet-handle" aria-hidden="true"></span>
+
+    <div class="panel-head">
+      <h2 class="section-title" data-testid="panel-title">{{ editingId ? 'Editar tramo' : 'Nuevo tramo' }}</h2>
+      <!-- Al editar: la celda del tramo (la misma que se marca en la cancha) y su tiempo -->
+      <ng-container *ngIf="editingId && franja as f">
+        <span class="zone-badge" data-testid="edit-zone">{{ f.label }}</span>
+        <span *ngIf="period" class="period-tag" data-testid="edit-period">{{ period }}T</span>
+      </ng-container>
+      <span *ngIf="!editingId && franja as f" class="zone-badge sheet-only" data-testid="sheet-zone-badge">{{ f.label }}</span>
+      <button type="button" class="sheet-close" data-testid="sheet-close" aria-label="Cerrar" title="Cerrar" (click)="closeSheet()">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <p class="sheet-summary" data-testid="sheet-summary">
+      <ng-container *ngIf="franja as f; else sheetPick">
+        <strong data-testid="sheet-zone">{{ f.name }}</strong> · <span data-testid="sheet-range">{{ rangeSummary }}</span>
+      </ng-container>
+      <ng-template #sheetPick><strong data-testid="sheet-zone">{{ pickFranjaHelp }}</strong></ng-template>
+      <span *ngIf="rangeProblem as problem" class="summary-error" data-testid="sheet-error">{{ problem }}</span>
+    </p>
+
+    <!-- Franja: se elige tocando la grilla o la cancha -->
+    <div class="field field-detail">
+      <span class="field-label">Franja</span>
+      <div class="selected-cell" id="zone-franja" data-testid="selected-cell" [class.is-empty]="!selectedCell()" [class.is-error]="pickAttempted && !selectedCell()">
+        <ng-container *ngIf="franja as f; else pickHint">
+          <span class="zone-badge">{{ f.label }}</span>
+          <span class="franja-text"><strong>{{ f.name }}</strong> <small>{{ f.range }}</small></span>
+        </ng-container>
+        <ng-template #pickHint><i class="bi bi-geo-alt"></i><span>{{ pickFranjaHelp }}</span></ng-template>
+      </div>
+    </div>
+
+    <!-- Lateral: izquierda, centro o derecha mirando al ataque -->
+    <div class="field field-lateral">
+      <span class="field-label" id="zone-lateral-label">Lateral</span>
+      <div class="segmented" role="group" aria-labelledby="zone-lateral-label">
+        <button *ngFor="let lateral of laterals" type="button" class="segment" data-testid="lateral-option"
+                [class.is-active]="selectedCell()?.row === lateral.row" [attr.aria-pressed]="selectedCell()?.row === lateral.row"
+                [attr.aria-label]="lateral.name" [disabled]="!selectedCell() || store.isSaving()" (click)="setLateral(lateral.row)">
+          <span class="lat-long" aria-hidden="true">{{ lateral.name }}</span><span class="lat-short" aria-hidden="true">{{ lateral.short }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Rango en minutos acumulados de partido (0–80); el tiempo se deduce -->
+    <div class="field field-detail">
+      <div class="range-row">
+        <div class="range-field">
+          <label class="field-label" for="zone-start">Desde (min)</label>
+          <div class="stepper">
+            <button type="button" class="step-btn" aria-label="Restar un minuto a Desde"
+                    [disabled]="store.isSaving()" (click)="adjust('start', -1)">−</button>
+            <input id="zone-start" type="number" class="form-control" step="1" inputmode="numeric"
+                   [(ngModel)]="startMinute" (ngModelChange)="onRangeChange()" [disabled]="store.isSaving()" />
+            <button type="button" class="step-btn" aria-label="Sumar un minuto a Desde"
+                    [disabled]="store.isSaving()" (click)="adjust('start', 1)">+</button>
+          </div>
+        </div>
+        <div class="range-field">
+          <div class="label-row">
+            <label class="field-label" for="zone-end">Hasta (min)</label>
+            <button type="button" class="rule-help" data-testid="range-rule-help"
+                    [attr.aria-label]="rangeRuleHelp" [attr.data-tip]="rangeRuleHelp" [title]="rangeRuleHelp">?</button>
+          </div>
+          <div class="stepper">
+            <button type="button" class="step-btn" aria-label="Restar un minuto a Hasta"
+                    [disabled]="store.isSaving()" (click)="adjust('end', -1)">−</button>
+            <input id="zone-end" type="number" class="form-control" step="1" inputmode="numeric"
+                   [(ngModel)]="endMinute" (ngModelChange)="onRangeChange()" [disabled]="store.isSaving()" />
+            <button type="button" class="step-btn" aria-label="Sumar un minuto a Hasta"
+                    [disabled]="store.isSaving()" (click)="adjust('end', 1)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <p *ngIf="linkedEventCount !== null" class="preview" data-testid="linked-preview">
+        {{ period }}T · se vincularán <strong>{{ linkedEventCount }}</strong> {{ linkedEventCount === 1 ? 'evento' : 'eventos' }}
+      </p>
+      <p *ngIf="releasedEventCount > 0" class="preview preview-warn" data-testid="released-preview">
+        {{ releasedEventCount }} {{ releasedEventCount === 1 ? 'evento pasará' : 'eventos pasarán' }} a "Sin zona"
+      </p>
+
+      <p *ngIf="rangeProblem as problem" class="inline-error" role="alert" data-testid="range-error">
+        <i class="bi bi-exclamation-triangle-fill"></i> {{ problem }}
+      </p>
+
+    </div>
+
+    <!-- Acciones: "Guardar tramo" es el único primario; la instrucción de inicio vive solo en el campo Franja -->
+    <div class="panel-footer">
+      <div class="panel-actions">
+        <button type="button" class="btn btn-outline btn-delete" *ngIf="editingId" data-testid="zone-delete"
+                aria-label="Eliminar tramo" title="Eliminar tramo"
+                [disabled]="store.isSaving()" (click)="deleteEditing()">
+          <i class="bi bi-trash" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="btn btn-outline btn-more" data-testid="sheet-toggle"
+                [attr.aria-expanded]="sheetOpen" (click)="toggleSheet()">{{ sheetOpen ? 'Menos opciones' : 'Más opciones' }}</button>
+        <button type="button" class="btn btn-outline btn-cancel" data-testid="zone-cancel"
+                [disabled]="store.isSaving()" (click)="cancel()">Cancelar</button>
+        <button type="button" class="btn btn-invite d-flex align-items-center justify-content-center gap-2"
+                data-testid="zone-save" [attr.aria-describedby]="pickHelp ? 'zone-franja' : null"
+                (click)="save()" [disabled]="store.isSaving() || !!blockReason">
+          <span *ngIf="store.isSaving()" class="spinner-border spinner-border-sm"></span>
+          <span>{{ store.isSaving() ? 'Guardando...' : (editingId ? 'Guardar cambios' : 'Guardar tramo') }}</span>
+        </button>
+      </div>
+
+      <p *ngIf="serverError" class="inline-error" role="alert" data-testid="server-error">
+        <i class="bi bi-exclamation-triangle-fill"></i> {{ serverError }}
+      </p>
+    </div>
+
+    <!-- Huecos sin zona: tocar uno precarga el formulario con ese rango -->
+    <div class="gaps" data-testid="gaps">
+      <div class="gaps-head">
+        <h3 class="gaps-title">Huecos sin zona</h3>
+        <span class="count-pill" data-testid="gaps-count">{{ gaps.length }}</span>
+      </div>
+
+      <p *ngIf="gaps.length === 0" class="match-complete" data-testid="match-complete">
+        <i class="bi bi-check-circle-fill"></i> Partido completo
+      </p>
+
+      <ul *ngIf="gaps.length > 0" class="gap-list" data-testid="gap-list">
+        <li *ngFor="let gap of visibleGaps">
+          <button type="button" class="gap-item" data-testid="gap-item" [class.is-loaded]="isGapLoaded(gap)"
+                  [disabled]="store.isSaving()" (click)="selectGap(gap)"
+                  [attr.aria-label]="'Hueco sin zona de ' + gap.start + ' a ' + gap.end + ' minutos, ' + gap.period + 'T, ' + gap.eventCount + ' ' + (gap.eventCount === 1 ? 'evento' : 'eventos') + '. Tocá para completar'">
+            <span class="gap-range">{{ gap.start }}′–{{ gap.end }}′</span>
+            <span class="gap-events">{{ gap.eventCount }} {{ gap.eventCount === 1 ? 'evento' : 'eventos' }}</span>
+            <span class="gap-period">{{ gap.period }}T</span>
+          </button>
+        </li>
+      </ul>
+
+      <button *ngIf="canToggleGaps" type="button" class="gaps-toggle" data-testid="gaps-toggle"
+              [attr.aria-expanded]="gapsExpanded" (click)="toggleGaps()">
+        {{ gapsExpanded ? 'Ver menos' : 'Ver todos (' + gaps.length + ')' }}
+      </button>
+    </div>
+  </div>
+</section>

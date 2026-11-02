@@ -1,0 +1,365 @@
+:host { display: block; }
+
+.zone-panel { display: flex; flex-direction: column; gap: 16px; }
+
+.panel-card {
+  background: var(--surface, #ffffff);
+  border: 2px solid var(--border-sport, rgba(32, 75, 34, 0.28));
+  border-radius: var(--radius-xl, 20px);
+  box-shadow: var(--shadow-elevation);
+  padding: 20px;
+}
+
+.panel-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin-bottom: 10px; }
+
+.period-tag { font-family: var(--font-mono, monospace); font-size: 13px; font-weight: 700; color: var(--text-secondary, #3b4e33); }
+
+.section-title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--text-primary, #111d0e);
+}
+
+.field { margin-bottom: 12px; }
+
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-primary, #111d0e);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+/* Zona elegida */
+.selected-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #d6eac0;
+  border: 1.5px solid var(--btn-primary-bg, #204b22);
+  color: var(--text-primary, #111d0e);
+  font-size: 13.5px;
+}
+
+.franja-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.franja-text small { font-family: var(--font-mono, monospace); font-size: 11.5px; color: var(--text-secondary, #3b4e33); }
+
+.selected-cell.is-empty {
+  background: var(--surface-alt, #eef1e7);
+  border: 1.5px dashed var(--border-sport-subtle, rgba(32, 75, 34, 0.30));
+  color: var(--text-secondary, #3b4e33);
+}
+/* Se intentó guardar sin franja (Ctrl/Cmd + Enter): el campo lo marca, sin aviso aparte */
+.selected-cell.is-error { border-color: var(--error, #b42318); color: var(--error, #b42318); background: var(--error-tint, rgba(240, 68, 56, .14)); }
+
+/* Lateral: tres opciones */
+.segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+.segment {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1.5px solid var(--border-strong, rgba(27, 33, 22, 0.22));
+  color: var(--text-secondary, #3b4e33);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.segment:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.segment:hover:not(:disabled) { background: #f2f7ef; border-color: var(--btn-primary-bg, #204b22); }
+
+.segment.is-active {
+  background: #d6eac0;
+  border-color: var(--btn-primary-bg, #204b22);
+  box-shadow: inset 0 0 0 1px var(--btn-primary-bg, #204b22);
+  color: var(--btn-primary-bg, #204b22);
+}
+
+/* Desde y Hasta lado a lado: así los botones de abajo entran en una fila del panel */
+.range-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.range-field { min-width: 0; }
+
+.label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.label-row .field-label { margin-bottom: 0; }
+
+/* "?" chico junto a "Hasta": la regla va en el tooltip (hover, foco o toque); el área táctil es de 44 px */
+.rule-help {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: -12px -12px -12px -4px;
+  border: 12px solid transparent;
+  border-radius: 50%;
+  box-sizing: content-box;
+  background: var(--btn-outline-bg, #fff) padding-box;
+  color: var(--btn-outline-fg, #204b22);
+  font: 700 12px/20px var(--font-mono, monospace);
+  box-shadow: inset 0 0 0 1px var(--btn-outline-border, rgba(32, 75, 34, 0.25));
+  cursor: help;
+}
+.rule-help:hover, .rule-help:focus-visible { background-color: #d6eac0; }
+.rule-help::after {
+  content: attr(data-tip);
+  position: absolute;
+  z-index: 10;
+  right: -12px;
+  bottom: calc(100% + 2px);
+  width: max-content;
+  max-width: 220px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md, 10px);
+  background: var(--text-primary, #111d0e);
+  color: #fff;
+  font: 500 12px/1.35 var(--font-body, Inter, sans-serif);
+  text-align: left;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+.rule-help:hover::after, .rule-help:focus::after { opacity: 1; }
+
+.stepper { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 4px; align-items: stretch; }
+
+.step-btn {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1.5px solid var(--btn-outline-border, rgba(32, 75, 34, 0.25));
+  background: #ffffff;
+  color: var(--btn-outline-fg, #204b22);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.step-btn:hover:not(:disabled) { background: #f2f7ef; border-color: var(--btn-primary-bg, #204b22); }
+
+.form-control {
+  min-height: 44px;
+  min-width: 0;
+  padding-inline: 4px;
+  text-align: center;
+  border: 1.5px solid var(--border-strong, rgba(27, 33, 22, 0.22));
+  border-radius: 10px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  background-color: #ffffff;
+  color: var(--text-primary, #111d0e);
+}
+
+/* Los botones − y + reemplazan a las flechas nativas del input numérico */
+.form-control[type='number'] { appearance: textfield; -moz-appearance: textfield; min-width: 3ch; }
+.form-control[type='number']::-webkit-outer-spin-button,
+.form-control[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.form-control:focus {
+  border-color: var(--btn-primary-bg, #204b22);
+  box-shadow: 0 0 0 3px rgba(32, 75, 34, 0.15);
+  background-color: #fafdf9;
+}
+
+.preview { margin: 10px 0 0; font-size: 13px; color: var(--success, #2e7d32); font-weight: 600; }
+.preview-warn { margin-top: 6px; color: var(--warning, #8a5700); }
+/* Mensajes */
+.inline-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--error-tint, rgba(240, 68, 56, 0.14));
+  border: 1.5px solid var(--error-border, rgba(180, 35, 24, 0.35));
+  color: var(--error, #b42318);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.field > .inline-error { margin: 10px 0 0; }
+.panel-footer > .inline-error { margin: 10px 0 0; }
+
+/* Una sola fila, sin salirse del panel: eliminar (ícono) a la izquierda; Cancelar y Guardar a la derecha */
+.panel-actions { display: flex; justify-content: flex-end; gap: 12px; min-width: 0; }
+.panel-actions .btn { height: 46px; padding: 0 16px; min-width: 0; white-space: nowrap; }
+.panel-actions .btn-delete {
+  flex: 0 0 46px;
+  width: 46px;
+  margin-right: auto;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: var(--error, #b42318);
+  border-color: var(--error-border, rgba(180, 35, 24, 0.35));
+}
+.panel-actions .btn-delete:hover:not(:disabled) { background: var(--error-tint, rgba(240, 68, 56, 0.14)); border-color: var(--error, #b42318); }
+.panel-actions .btn:disabled { cursor: not-allowed; }
+
+/* El guardar deshabilitado sigue siendo el botón principal, solo apagado (no un outline secundario) */
+.panel-actions .btn-invite:disabled {
+  background-color: var(--btn-primary-bg, #204b22);
+  border-color: var(--btn-primary-bg, #204b22);
+  color: var(--btn-primary-fg, #ffffff);
+  box-shadow: none;
+  opacity: 0.45;
+}
+
+.zone-badge {
+  flex: 0 0 auto;
+  min-width: 38px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: #d6eac0;
+  border: 1.5px solid var(--btn-primary-bg, #204b22);
+  color: #244c09;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Huecos sin zona */
+.gaps { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20)); }
+.gaps-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.gaps-title { margin: 0; font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary, #3b4e33); }
+
+.count-pill {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--warning-tint, rgba(253, 176, 34, 0.20));
+  color: var(--warning, #8a5700);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.match-complete { margin: 0; display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13.5px; font-weight: 700; color: var(--success, #2e7d32); }
+
+.gap-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.gap-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
+  background: var(--warning-tint, rgba(253, 176, 34, 0.20));
+  color: var(--text-primary, #111d0e);
+  text-align: left;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.gap-item:hover:not(:disabled) { border-color: var(--warning, #8a5700); }
+.gap-item.is-loaded { border-color: var(--warning, #8a5700); box-shadow: inset 0 0 0 1px var(--warning, #8a5700); }
+.gap-range { font-family: var(--font-mono, monospace); font-size: 13px; font-weight: 700; }
+.gap-events { font-size: 13px; color: var(--text-secondary, #3b4e33); }
+.gap-period { font-family: var(--font-mono, monospace); font-size: 12px; font-weight: 700; color: var(--warning, #8a5700); }
+
+/* Botón de la lista de huecos: alterna entre los primeros y todos */
+.gaps-toggle {
+  display: block; width: 100%; min-height: 44px; margin-top: 4px; padding: 0 8px; background: none; border: 0; cursor: pointer;
+  font-size: 13px; font-weight: 700; color: var(--btn-outline-fg, #204b22); text-align: center;
+}
+.gaps-toggle:hover { text-decoration: underline; }
+
+/* Desktop: el panel ocupa el alto de la fila (lo fija la tarjeta de la cancha); solo la lista de huecos cede o scrollea */
+@media (min-width: 1122px) {
+  :host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .zone-panel { flex: 1 1 auto; min-height: 0; }
+  .panel-card { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; }
+  .panel-card > * { flex: none; }
+  .panel-card > .gaps { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .gap-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 2px; margin: -2px; }
+}
+
+/* Lo propio de la hoja inferior solo existe en móvil */
+.sheet-handle, .sheet-summary, .sheet-close, .btn-more, .sheet-only, .lat-short { display: none; }
+
+/* Una columna (tablet y móvil): "Guardar tramo" queda fijo al pie mientras el formulario está a la vista */
+@media (max-width: 1121px) {
+  .panel-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin: 0 -8px -8px;
+    padding: 10px 8px 8px;
+    background: var(--surface, #ffffff);
+    border-top: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
+  }
+}
+
+/*
+ * Móvil: el formulario es una hoja inferior. Compacta: título con la celda, resumen del tramo, lateral y, fijo al pie,
+ * "Más opciones" + "Guardar tramo". "Más opciones" la expande con Franja, Desde/Hasta y los huecos; el pie sigue visible.
+ */
+@media (max-width: 576px) {
+  .panel-card.is-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1020;
+    max-height: 78dvh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px 20px 0 0;
+    border-bottom-width: 0;
+    padding: 8px 16px 0;
+  }
+
+  .sheet-handle { display: block; flex: 0 0 auto; width: 40px; height: 4px; margin: 0 auto 8px; border-radius: 2px; background: var(--border-strong, rgba(27, 33, 22, 0.22)); }
+  .sheet-only { display: inline-flex; }
+  .panel-head { flex-wrap: nowrap; margin-bottom: 2px; }
+  .sheet-close {
+    display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; margin-left: auto;
+    width: 44px; height: 44px; padding: 0; border-radius: 50%; cursor: pointer;
+    background: var(--btn-outline-bg, #fff); color: var(--btn-outline-fg, #204b22); border: 1px solid var(--btn-outline-border, rgba(32, 75, 34, 0.25));
+  }
+
+  .sheet-summary { display: block; margin: 0 0 10px; font-size: 14px; line-height: 1.35; color: var(--text-secondary, #3b4e33); }
+  .sheet-summary strong { color: var(--text-primary, #111d0e); }
+  .summary-error { display: block; margin-top: 2px; font-weight: 600; color: var(--error, #b42318); }
+
+  /* Compacta: solo el lateral, con nombres cortos y sin su rótulo; lo demás aparece con "Más opciones" */
+  .field-lateral { margin-bottom: 10px; }
+  .field-lateral .field-label { display: none; }
+  .lat-long { display: none; }
+  .lat-short { display: inline; }
+  .field-detail, .gaps { display: none; }
+  .panel-card.is-open .field-detail, .panel-card.is-open .gaps { display: block; }
+  .panel-card.is-open .gaps { margin-top: 4px; padding-bottom: 8px; }
+
+  /* Pie fijo: queda al final de la hoja, también expandida y con scroll */
+  .panel-card.is-sheet .panel-footer {
+    order: 99;
+    position: sticky;
+    bottom: 0;
+    margin: 0 -16px;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--surface, #ffffff);
+    border-top: 1px solid var(--border-sport-subtle, rgba(32, 75, 34, 0.20));
+  }
+  .panel-footer .btn-cancel { display: none; }
+  .btn-more { display: inline-flex; align-items: center; justify-content: center; }
+  .panel-card.is-sheet .panel-footer .panel-actions { justify-content: stretch; }
+  .panel-card.is-sheet .panel-footer .panel-actions .btn:not(.btn-delete) { flex: 1 1 0; }
+}

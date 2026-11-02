@@ -7,6 +7,16 @@
         }
         <p>{{ toast.message }}</p>
       </div>
+      @if (toast.action; as action) {
+        <button class="toast-action" type="button" data-testid="toast-action" (click)="runAction(toast)">
+          {{ action.label }}
+        </button>
+      }
+      @if (toast.secondaryAction; as secondary) {
+        <button class="toast-action" type="button" data-testid="toast-secondary-action" (click)="runAction(toast, 'secondaryAction')">
+          {{ secondary.label }}
+        </button>
+      }
       <button
         class="close"
         type="button"

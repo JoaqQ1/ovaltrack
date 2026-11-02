@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatchReviewStore } from '../../store/match-review.store';
@@ -15,6 +15,9 @@ import { ReviewEventViewModel, ReviewPeriodFilter } from '../../types/match-revi
 export class PostMatchTimelineComponent {
   readonly store = inject(MatchReviewStore);
   readonly halfTimeMin = RUGBY_HALF_TIME_MIN;
+
+  /** Acción primaria de la vista: abrir el alta de un evento post-partido. */
+  readonly addEvent = output<void>();
 
   getTooltip(occ: ReviewEventViewModel): string {
     if (occ.isUnassigned) {
@@ -43,6 +46,26 @@ export class PostMatchTimelineComponent {
     const selected = this.store.selectedEvent();
     return selected ? selected.pct : null;
   });
+
+  /** En pantallas angostas el buscador es un botón de ícono que se expande al tocarlo. */
+  readonly searchOpen = signal(false);
+
+  openSearch(input: HTMLInputElement): void {
+    this.searchOpen.set(true);
+    setTimeout(() => input.focus());
+  }
+
+  closeSearchIfEmpty(): void {
+    if (!this.store.filters().searchTerm) {
+      this.searchOpen.set(false);
+    }
+  }
+
+  onSearchEscape(event: Event, input: HTMLInputElement): void {
+    event.stopPropagation();
+    input.blur();
+    this.searchOpen.set(false);
+  }
 
   onSearchChange(event: Event): void {
     const input = event.target as HTMLInputElement;

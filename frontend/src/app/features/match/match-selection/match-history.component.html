@@ -254,7 +254,6 @@
       <!-- Tarjetas Compactas de los partidos -->
       <div style="display: flex; flex-direction: column; gap: 4px;">
         @for (match of matchesForDayModal; track match.id) {
-          <!-- AQUÍ ESTÁ EL CAMBIO: [style.backgroundColor]="getMatchColor(match)" -->
           <div class="compact-match-card" (click)="openMatchDetailsFromDayModal(match)" 
                [style.backgroundColor]="getMatchColor(match)"
                style="border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: filter 0.15s ease;">

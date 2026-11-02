@@ -1,0 +1,41 @@
+@switch (store.status()) {
+  @case ('ready') {
+    <div class="layout-container page pm-shell" [class.pm-shell--locked]="lockViewport()">
+      <app-post-match-header
+        [matchId]="store.matchId()"
+        [ownClubName]="ownClubName()"
+        [opponentName]="store.match()?.opponent?.name || 'Visitante'"
+        [homeScore]="store.score().home"
+        [awayScore]="store.score().away"
+        [scoreDelta]="store.scoreDelta()"
+        [startTimeFormatted]="store.startTimeFormatted()"
+        (back)="goBack()"
+      />
+      <div class="pm-shell-view">
+        <router-outlet />
+      </div>
+    </div>
+  }
+  @case ('error') {
+    <section class="layout-container page shell-state">
+      <div class="state-box state-box--error" role="alert">
+        <i class="bi bi-exclamation-triangle"></i>
+        <p>{{ store.errorMessage() }}</p>
+        <div class="state-actions">
+          <button type="button" class="btn-outline" (click)="goBack()">Volver a partidos</button>
+          @if (store.matchId()) {
+            <button type="button" class="btn-invite" (click)="store.retry()">Reintentar</button>
+          }
+        </div>
+      </div>
+    </section>
+  }
+  @default {
+    <section class="layout-container page shell-state" aria-busy="true">
+      <div class="state-box">
+        <div class="spinner"></div>
+        <p role="status">Cargando el partido...</p>
+      </div>
+    </section>
+  }
+}
