@@ -85,23 +85,34 @@
       <section class="panel-card inspector-station-card">
         <!-- 1. Barra de Solapas y Estado de Autoguardado -->
         <div class="panel-tab-bar">
-          <div class="tab-bar-start">
-            <div class="tab-pill-group">
-              <button type="button"
-                      class="panel-tab-btn"
-                      [class.active]="activeTab() === 'view'"
-                      (click)="activeTab.set('view')">
-                Ver
-              </button>
-              <button type="button"
-                      class="panel-tab-btn"
-                      [class.active]="activeTab() === 'edit'"
-                      (click)="activeTab.set('edit')"
-                      [disabled]="!store.selectedEvent()">
-                Editar
-              </button>
+          <div class="tab-pill-group">
+            <button type="button"
+                    class="panel-tab-btn"
+                    [class.active]="activeTab() === 'view'"
+                    (click)="activeTab.set('view')">
+              Ver
+            </button>
+            <button type="button"
+                    class="panel-tab-btn"
+                    [class.active]="activeTab() === 'edit'"
+                    (click)="activeTab.set('edit')"
+                    [disabled]="!store.selectedEvent()">
+              Editar
+            </button>
+          </div>
+          <div class="tab-bar-end">
+            <div class="save-indicator">
+              <span *ngIf="saveStatus() === 'saved'" class="status-saved">
+                Guardado <i class="bi bi-check2"></i>
+              </span>
+              <span *ngIf="saveStatus() === 'saving'" class="status-saving">
+                <span class="spinner-border spinner-border-sm me-1"></span> Guardando...
+              </span>
+              <span *ngIf="saveStatus() === 'error'" class="status-error">
+                <i class="bi bi-exclamation-circle-fill me-1"></i> Error al guardar
+              </span>
             </div>
-            <!-- Eliminar: ícono junto al selector, en Ver y en Editar (misma confirmación) -->
+            <!-- Eliminar: en el borde derecho de la barra, en Ver y en Editar (misma confirmación) -->
             <button *ngIf="store.selectedEvent()"
                     type="button"
                     class="btn-tab-delete"
@@ -111,17 +122,6 @@
                     (click)="openDeleteModal()">
               <i class="bi bi-trash3" aria-hidden="true"></i>
             </button>
-          </div>
-          <div class="save-indicator">
-            <span *ngIf="saveStatus() === 'saved'" class="status-saved">
-              Guardado <i class="bi bi-check2"></i>
-            </span>
-            <span *ngIf="saveStatus() === 'saving'" class="status-saving">
-              <span class="spinner-border spinner-border-sm me-1"></span> Guardando...
-            </span>
-            <span *ngIf="saveStatus() === 'error'" class="status-error">
-              <i class="bi bi-exclamation-circle-fill me-1"></i> Error al guardar
-            </span>
           </div>
         </div>
 

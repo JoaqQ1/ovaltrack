@@ -355,28 +355,28 @@
   flex: none;
 }
 
-.tab-bar-start {
+.tab-bar-end {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
-/* Eliminar: ícono de 32px que se toca en 44px (cabe en el padding de la barra sin agrandarla) */
+/* Eliminar: mismo estilo que el de la fila seleccionada de la tabla (ícono con borde rojo claro); 28px visibles y 44px tocables */
 .btn-tab-delete {
   position: relative;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--error, #b42318);
-  font-size: 0.95rem;
+  border: 1px solid rgba(220, 38, 38, 0.32);
+  border-radius: 6px;
+  background: #ffffff;
+  color: #dc2626;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: background-color 0.12s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
 .btn-tab-delete::after {
@@ -390,12 +390,25 @@
 }
 
 .btn-tab-delete:hover:not(:disabled) {
-  background: var(--error-tint, rgba(240, 68, 56, 0.14));
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
 }
 
 .btn-tab-delete:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+:host-context([data-theme="dark"]) .btn-tab-delete {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #f87171;
+}
+
+:host-context([data-theme="dark"]) .btn-tab-delete:hover:not(:disabled) {
+  background: #dc2626;
+  color: #ffffff;
 }
 
 .tab-pill-group {
