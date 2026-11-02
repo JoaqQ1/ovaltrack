@@ -1,4 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { Subject } from 'rxjs';
 import { MatchTimelineEventResponse } from '../../types/event.types';
 import { AvailablePlayer } from '../../types/roster.types';
 import { LiveCaptureEventType } from '../../types/event-type.types';
@@ -49,6 +50,13 @@ export class MatchReviewStore {
   readonly initialHomeScore = signal<number>(0);
   readonly initialAwayScore = signal<number>(0);
   readonly scoreDelta = signal<{ text: string; type: 'OWN' | 'OPPONENT' } | null>(null);
+
+  /**
+   * Avisa cada alta, edición o baja de un evento. Los mutadores (`addEvent`, `updateEvent`, `removeEvent`) se llaman
+   * solo con el cambio ya confirmado por el servidor, que en ese momento recalcula el marcador del partido.
+   */
+  private readonly confirmedChange = new Subject<void>();
+  readonly confirmedChange$ = this.confirmedChange.asObservable();
 
   readonly filters = signal<ReviewFilters>({
     period: 'ALL',
@@ -418,6 +426,7 @@ export class MatchReviewStore {
     if (this.selectedEventId() === eventId) {
       this.selectedEventId.set(null);
     }
+    this.confirmedChange.next();
   }
 
   updateEvent(eventId: string, partial: Partial<MatchTimelineEventResponse>): void {
@@ -455,6 +464,7 @@ export class MatchReviewStore {
       newArray[index] = updated;
       this.rawEvents.set(newArray);
     }
+    this.confirmedChange.next();
   }
 
   addEvent(event: MatchTimelineEventResponse): void {
@@ -499,6 +509,7 @@ export class MatchReviewStore {
     } else if (pts.home > 0) {
       this.triggerScoreDelta(pts.home, 'OWN');
     }
+    this.confirmedChange.next();
   }
 
   /**

@@ -1,6 +1,6 @@
 import { DestroyRef, Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, catchError, map, of, switchMap, tap } from 'rxjs';
+import { EMPTY, Subject, catchError, map, of, switchMap, takeUntil, tap } from 'rxjs';
 import { MatchService } from '../../services/match.service';
 import { Match } from '../../types/match.types';
 import { EMPTY_TIME_PLACEHOLDER, formatOnlyTime } from '../utils/match-review.utils';
@@ -21,6 +21,7 @@ type LoadResult = { match: Match } | { error: unknown };
 export class PostMatchShellStore {
   private readonly matchService = inject(MatchService);
   private readonly loadRequests = new Subject<string>();
+  private readonly refreshRequests = new Subject<string>();
 
   readonly matchId = signal<string>('');
   readonly match = signal<Match | null>(null);
@@ -77,6 +78,15 @@ export class PostMatchShellStore {
       this.errorMessage.set(this.describeError(result.error));
       this.status.set('error');
     });
+
+    // Recarga en segundo plano: switchMap se queda con la última y una carga nueva (otro partido) la cancela
+    this.refreshRequests.pipe(
+      switchMap(id => this.matchService.getMatchById(id).pipe(
+        takeUntil(this.loadRequests),
+        catchError(() => EMPTY)
+      )),
+      takeUntilDestroyed()
+    ).subscribe(match => this.match.set(match));
   }
 
   load(matchId: string): void {
@@ -87,6 +97,15 @@ export class PostMatchShellStore {
       return;
     }
     this.loadRequests.next(matchId);
+  }
+
+  /**
+   * Vuelve a pedir el partido sin pasar por el estado de carga (la vista no se desmonta). Se usa cuando cambia algo que
+   * el servidor recalcula, como el marcador al editar eventos. Si falla, queda el último dato bueno.
+   */
+  refresh(): void {
+    if (this.status() !== 'ready') return;
+    this.refreshRequests.next(this.matchId());
   }
 
   bindLiveScore(score: Signal<ShellScore>, delta: Signal<ShellScoreDelta | null>): void {
