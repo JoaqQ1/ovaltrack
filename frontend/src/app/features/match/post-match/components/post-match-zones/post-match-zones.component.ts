@@ -1,12 +1,14 @@
-import { Component, DestroyRef, HostListener, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LayoutService } from 'src/app/core/services/layout.service';
+import { ToastService } from 'src/app/core/services/toast.service';
 import { UserContextService } from 'src/app/core/services/user-context.service';
 import { ZoneAssignmentResponse, ZoneCellRef } from '../../../types/zone.types';
 import { MatchZonesStore } from '../../store/match-zones.store';
 import { PostMatchShellStore } from '../../store/post-match-shell.store';
 import { watchCompactLayout } from '../../utils/zone-compact';
+import { ZoneDeepLinkTarget, resolveZoneDeepLink } from '../../utils/zone-deep-link';
 import { ZONE_SHORTCUT_HELP, isSaveShortcut, isTypingTarget, shortcutCell } from '../../utils/zone-shortcuts';
 import {
   NO_ZONE_EVENT_FILTERS, ZonePeriodFilter, countByCell, filterEvents, unzonedEvents, zoneCoveragePercent
@@ -33,6 +35,8 @@ const DEFAULT_LATERAL_ROW = 2;
 })
 export class PostMatchZonesComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly toastService = inject(ToastService);
   private readonly layoutService = inject(LayoutService);
   private readonly shell = inject(PostMatchShellStore);
   private readonly userContext = inject(UserContextService);
@@ -64,6 +68,9 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     { value: 'ALL', label: 'Todos' }, { value: 'OWN', label: 'Propios' }, { value: 'OPPONENT', label: 'Rival' }
   ];
 
+  /** Enlace desde Eventos (`?tramo=` / `?minuto=`) ya interpretado, a la espera de que el formulario exista. */
+  private readonly pendingDeepLink = signal<ZoneDeepLinkTarget | null>(null);
+
   readonly helpOpen = signal<boolean>(false);
   readonly shortcutHelp = ZONE_SHORTCUT_HELP;
 
@@ -88,6 +95,19 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     const segment = id ? this.zonesStore.assignments().find(a => a.id === id) : undefined;
     return segment ? { row: segment.row, col: segment.col } : null;
   });
+
+  constructor() {
+    // El formulario recién existe cuando termina la carga: el enlace se aplica una sola vez, en ese momento
+    effect(() => {
+      const panel = this.panel();
+      const target = this.pendingDeepLink();
+      if (!panel || !target) return;
+      untracked(() => {
+        this.pendingDeepLink.set(null);
+        this.applyDeepLink(panel, target);
+      });
+    });
+  }
 
   ngOnInit(): void {
     this.layoutService.setWide(true);
@@ -198,6 +218,39 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     this.panel()?.prefill(gap);
   }
 
+  /** Interpreta `?tramo=` / `?minuto=` contra los tramos cargados; un enlace inválido se ignora y se avisa. */
+  private readDeepLink(): void {
+    const query = this.route.snapshot.queryParamMap;
+    const target = resolveZoneDeepLink(
+      { tramo: query.get('tramo'), minuto: query.get('minuto') },
+      this.zonesStore.assignments()
+    );
+    if (target.kind === 'none') return;
+
+    // El enlace se consume una vez: la URL queda limpia y recargar no vuelve a abrirlo
+    this.router.navigate([], { relativeTo: this.route, queryParams: { tramo: null, minuto: null }, queryParamsHandling: 'merge', replaceUrl: true });
+
+    if (target.kind === 'invalid') {
+      this.toastService.info(
+        target.reason === 'tramo' ? 'El tramo del enlace ya no existe.' : 'El minuto del enlace no es válido.',
+        'Enlace a Zonas'
+      );
+      return;
+    }
+    this.pendingDeepLink.set(target);
+  }
+
+  /** Abre el tramo para editarlo o precarga el hueco; en pantalla angosta muestra el tiempo que corresponde. */
+  private applyDeepLink(panel: ZoneAssignmentPanelComponent, target: ZoneDeepLinkTarget): void {
+    if (target.kind === 'segment') {
+      if (this.compact()) this.periodFilter.set(target.segment.period);
+      panel.startEdit(target.segment);
+    } else if (target.kind === 'gap') {
+      if (this.compact()) this.periodFilter.set(target.gap.period);
+      panel.prefill({ startMinute: target.gap.start, endMinute: target.gap.end });
+    }
+  }
+
   private load(matchId: string): void {
     this.isLoading.set(true);
     this.errorMessage.set('');
@@ -205,7 +258,10 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     this.zonesStore.load(matchId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => this.isLoading.set(false),
+        next: () => {
+          this.readDeepLink();
+          this.isLoading.set(false);
+        },
         error: err => {
           const message = err?.error?.message;
           this.errorMessage.set(typeof message === 'string' && message ? message : 'No se pudieron cargar las zonas del partido.');
