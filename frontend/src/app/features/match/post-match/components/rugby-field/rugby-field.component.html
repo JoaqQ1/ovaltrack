@@ -110,9 +110,5 @@
       </span>
     </div>
     <span class="reading" data-testid="zone-reading" aria-live="polite">{{ reading() }}</span>
-    <p *ngIf="unzonedEventCount() > 0" class="field-unzoned" data-testid="unzoned-notice">
-      <i class="bi bi-exclamation-circle"></i>
-      {{ unzonedEventCount() }} {{ unzonedEventCount() === 1 ? 'evento sin zona' : 'eventos sin zona' }}
-    </p>
   </figcaption>
 </figure>

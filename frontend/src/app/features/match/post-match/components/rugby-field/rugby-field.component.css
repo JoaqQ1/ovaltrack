@@ -309,19 +309,6 @@
   color: var(--text-primary, #111d0e);
 }
 
-.field-unzoned {
-  display: inline-flex;
-  margin: 0;
-  font-size: 12.5px;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--warning-tint, rgba(253, 176, 34, 0.20));
-  color: var(--warning, #8a5700);
-  font-weight: 600;
-}
-
 /* Espacio angosto (tablet vertical, móvil): la leyenda baja debajo de la cancha */
 @container (max-width: 760px) {
   .rugby-field { grid-template-columns: minmax(0, 1fr); --side-w: 0px; --side-gap: 0px; }
