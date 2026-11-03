@@ -28,11 +28,6 @@ export interface PeriodStatisticDTO {
   opponentRedCards: number;
   scrumsTotal: number;
   lineoutsTotal: number;
-  /** Saque propio de scrum/line cuya posesión quedó en nuestro equipo (ganado) o pasó al rival (perdido). */
-  ownScrumsWon: number;
-  ownScrumsLost: number;
-  ownLineoutsWon: number;
-  ownLineoutsLost: number;
   ownPossessionPercentage: number;
 }
 

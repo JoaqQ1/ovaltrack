@@ -21,14 +21,3 @@
 
 .point { stroke: var(--surface, #ffffff); stroke-width: 2; cursor: default; }
 .point:hover { r: 6.5; }
-
-/* Número del punto; el halo del color de la tarjeta lo mantiene legible si cruza una línea. */
-.point-label {
-  font-size: 11px;
-  font-weight: 700;
-  pointer-events: none;
-  paint-order: stroke;
-  stroke: var(--surface, #ffffff);
-  stroke-width: 3px;
-  stroke-linejoin: round;
-}

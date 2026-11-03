@@ -37,16 +37,13 @@ public class StatisticController {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Statistics returned successfully."),
-        @ApiResponse(responseCode = "403", description = "The user has no access to the division of the match."),
         @ApiResponse(responseCode = "404", description = "Match not found.")
     })
     @GetMapping("/match/{matchId}")
-    @PreAuthorize("hasAnyRole('ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK')")
     public ResponseEntity<PeriodStatisticDTO> getMatchPeriodStatistics(
             @PathVariable UUID matchId,
-            @RequestParam(required = false, defaultValue = "1") Integer period,
-            Authentication authentication) {
-        return ResponseEntity.ok(statisticService.calculatePeriodStatistics(matchId, period, authentication));
+            @RequestParam(required = false, defaultValue = "1") Integer period) {
+        return ResponseEntity.ok(statisticService.calculatePeriodStatistics(matchId, period));
     }
 
     @Operation(

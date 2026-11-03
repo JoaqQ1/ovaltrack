@@ -44,7 +44,7 @@ interface CaptureSession {
   steps: CaptureStep[];
   stepIndex: number;
   team: CaptureTeam;
-  /** Con actor CHOOSE el analista elige entre Propio y Rival. */
+  /** Con actor CHOOSE o posesión NEUTRAL el analista elige entre Propio y Rival. */
   canChooseTeam: boolean;
   /** Indica si el analista ya confirmó el equipo del evento. */
   teamSelected: boolean;
@@ -76,7 +76,7 @@ interface SlotView {
 /**
  * La vista breve de un evento que se muestra en el historial de la pantalla.
  */
-const POSSESSIONS: readonly Possession[] = ['OWN', 'OPPONENT'] as const;
+const POSSESSIONS: readonly Possession[] = ['OWN', 'NEUTRAL', 'OPPONENT'] as const;
 /**
  * Pantalla de captura en vivo del partido.
  *
@@ -222,7 +222,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
             this.gameClock = this.formatClock(this.clockElapsedSeconds);
           }
         }
-        this.currentPossession = state.currentPossession === 'OPPONENT' ? 'OPPONENT' : 'OWN';
+        this.currentPossession = state.currentPossession;
         this.eventTypes = response.eventTypes;
         this.eventVariants.clear();
         this.nextEventVariantIndex = 0;
@@ -303,7 +303,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   * al momento de registrarse.
    */
   selectPossession(possession: Possession): void {
-    if (!this.isStarted || possession === 'NEUTRAL') {
+    if (!this.isStarted) {
       return;
     }
 
@@ -655,7 +655,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.clockPaused = state.clockPaused || this.isHalftime;
     this.clockElapsedSeconds = state.clockElapsedSeconds;
     if (state.currentPossession) {
-      this.currentPossession = state.currentPossession === 'OPPONENT' ? 'OPPONENT' : 'OWN';
+      this.currentPossession = state.currentPossession;
     }
     if (state.scoreboard) {
       this.scoreboard = { ...state.scoreboard };
@@ -839,6 +839,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       return `${name}${playerTag} — ${this.teamForPossession(possession)} ${score}`;
     }
 
+    if (possession === 'NEUTRAL') {
+      return `${event.name}${playerTag}`;
+    }
+
     return `${event.name}${playerTag} — ${this.teamForPossession(possession)}`;
   }
 
@@ -846,6 +850,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     switch (possession) {
       case 'OPPONENT':
         return this.awayTeam;
+      case 'NEUTRAL':
+        return 'Neutro';
       case 'OWN':
       default:
         return this.homeTeam;
@@ -1045,7 +1051,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     };
   }
 
-  /** Paso «equipo» para eventos cuyo actor debe elegirse. */
+  /** Paso «equipo» (eventos sin jugador con posesión neutral). */
   pickTeam(team: CaptureTeam): void {
     if (!this.capture) {
       return;
@@ -1101,7 +1107,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   captureHeaderPossession(capture: CaptureSession): Possession {
     if (!capture.teamSelected) {
-      return this.currentPossession;
+      return 'NEUTRAL';
     }
 
     return capture.team;
@@ -1127,7 +1133,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   optionPossessionEffect(
     possession: PossessionAfter | null | undefined,
   ): 'favorable' | 'unfavorable' | null {
-    if (!this.capture || possession == null) {
+    if (!this.capture || possession == null || this.currentPossession === 'NEUTRAL') {
       return null;
     }
 
