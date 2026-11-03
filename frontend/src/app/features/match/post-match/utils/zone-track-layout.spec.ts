@@ -182,6 +182,23 @@ describe('zone-track-layout', () => {
       expect(suggestNextRange([zone('a', 1, 0, 40)])).toEqual({ start: 40, end: 45 });
       expect(suggestNextRange([zone('a', 1, 0, 40), zone('b', 2, 40, 80)])).toBeNull();
     });
+
+    // Caracterización (C0.2): tras guardar, el formulario sugiere desde `request.endMinute` (panel `resetForm`/`applySuggestion`).
+    it('tras guardar un tramo que termina en el 80, vuelve al primer hueco', () => {
+      expect(suggestNextRange([zone('a', 1, 0, 5), zone('b', 2, 40, 80)], 80)).toEqual({ start: 5, end: 10 });
+    });
+
+    it('tras guardar un tramo que termina en el 40, pasa al primer hueco del 2T', () => {
+      expect(suggestNextRange([zone('a', 1, 0, 30)], 40)).toEqual({ start: 40, end: 45 });
+    });
+
+    it('afterMinute 0 equivale a no indicarlo', () => {
+      expect(suggestNextRange(assignments, 0)).toEqual(suggestNextRange(assignments));
+    });
+
+    it('si afterMinute cae dentro de un hueco, salta al siguiente hueco que arranca desde ahí', () => {
+      expect(suggestNextRange(assignments, 7)).toEqual({ start: 25, end: 30 });
+    });
   });
 
   describe('isOutsidePeriodFilter', () => {

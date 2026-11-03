@@ -13,9 +13,8 @@ describe('RugbyFieldComponent', () => {
 
   const reading = (): string => fixture.nativeElement.querySelector('[data-testid="zone-reading"]').textContent.trim();
 
-  const render = (summary: ZoneCellSummary[], unzoned = 0): void => {
+  const render = (summary: ZoneCellSummary[]): void => {
     fixture.componentRef.setInput('cells', summary);
-    fixture.componentRef.setInput('unzonedEventCount', unzoned);
     fixture.detectChanges();
   };
 
@@ -106,16 +105,8 @@ describe('RugbyFieldComponent', () => {
       expect(cellAt(3, 6)?.classList).not.toContain('has-events');
     });
 
-    it('informa los eventos sin zona cuando existen y lo oculta si no', () => {
-      render([{ row: 1, col: 1, eventCount: 2 }], 3);
-      expect(fixture.nativeElement.querySelector('[data-testid="unzoned-notice"]')?.textContent).toContain('3');
-
-      render([{ row: 1, col: 1, eventCount: 2 }], 0);
-      expect(fixture.nativeElement.querySelector('[data-testid="unzoned-notice"]')).toBeNull();
-    });
-
     it('sin eventos en ninguna zona no agrega carteles: la instrucción de inicio vive en la grilla y el formulario', () => {
-      render([], 0);
+      render([]);
 
       expect(fixture.nativeElement.querySelector('[data-testid="zones-empty"]')).toBeNull();
       expect(fixture.nativeElement.querySelector('[data-testid="start-hint"]')).toBeNull();

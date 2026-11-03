@@ -34,7 +34,6 @@ export class RugbyFieldComponent {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly cells = input<ZoneCellSummary[]>([]);
-  readonly unzonedEventCount = input<number>(0);
   readonly selectedCell = input<ZoneCellRef | null>(null);
   readonly ownClubName = input<string>('Mi club');
   readonly opponentName = input<string>('Rival');
