@@ -1,7 +1,6 @@
 <section class="live-capture" aria-label="Captura en vivo del partido"
     [attr.data-theme]="theme"
     [class.live-capture--own]="currentPossession === 'OWN'"
-    [class.live-capture--neutral]="currentPossession === 'NEUTRAL'"
     [class.live-capture--opponent]="currentPossession === 'OPPONENT'"
     [class.live-capture--paused]="clockPaused">
     @if (isLoading) {
@@ -99,7 +98,6 @@
 
         <div class="event-catalog"
             [class.event-catalog--own]="currentPossession === 'OWN'"
-            [class.event-catalog--neutral]="currentPossession === 'NEUTRAL'"
             [class.event-catalog--away]="currentPossession === 'OPPONENT'"
             [class.event-catalog--disabled]="!isStarted"
             role="region"
@@ -163,14 +161,12 @@
             type="button"
             class="possession-bar__btn"
             [class.possession-bar__btn--own]="possession === 'OWN'"
-            [class.possession-bar__btn--neutral]="possession === 'NEUTRAL'"
             [class.possession-bar__btn--opponent]="possession === 'OPPONENT'"
             [class.is-active]="currentPossession === possession"
             [attr.aria-pressed]="currentPossession === possession"
             (click)="selectPossession(possession)"
             [disabled]="!isStarted">
-            {{ possession === 'OWN' ? 'Propia' : possession === 'OPPONENT' ?
-            'Rival' : 'Neutral' }}
+            {{ possession === 'OWN' ? 'Propia' : 'Rival' }}
         </button>
         }
     </footer>

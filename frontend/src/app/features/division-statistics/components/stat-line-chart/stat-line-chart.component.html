@@ -21,14 +21,18 @@
   }
 
   @for (line of lines; track line.name) {
-    @if (line.points.length > 1) {
-      <polyline class="line" [attr.points]="line.polyline" [attr.stroke]="line.color"
+    @for (polyline of line.polylines; track $index) {
+      <polyline class="line" [attr.points]="polyline" [attr.stroke]="line.color"
         [attr.stroke-dasharray]="line.dashed ? '6 5' : null" />
     }
     @for (point of line.points; track $index) {
       <circle class="point" [attr.cx]="point.x" [attr.cy]="point.y" r="4.5" [attr.fill]="line.color">
         <title>{{ point.tooltip }}</title>
       </circle>
+      @if (showLabels) {
+        <text class="point-label" [attr.x]="point.x" [attr.y]="point.labelY" [attr.fill]="line.color"
+          text-anchor="middle">{{ point.label }}</text>
+      }
     }
   }
 </svg>

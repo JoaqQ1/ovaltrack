@@ -77,20 +77,13 @@
 
   </div>
 
-  <div style="display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 8px;">
+  <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
     <button class="calendar-view-toggle"
       (click)="isCalendarView = !isCalendarView" 
       style="padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">
       {{ isCalendarView ? '📅 Calendario' : '← Ver como tarjetas' }}
     </button>
-    <button class="calendar-view-toggle"
-      type="button"
-      (click)="goToDivisionStatistics()"
-      style="padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">
-      Reporte de partidos
-    </button>
   </div>
-
 
   <div *ngIf="!isCalendarView" class="calendar-wrapper" (click)="onCalendarClick($event)"
       style="padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
@@ -261,6 +254,7 @@
       <!-- Tarjetas Compactas de los partidos -->
       <div style="display: flex; flex-direction: column; gap: 4px;">
         @for (match of matchesForDayModal; track match.id) {
+          <!-- AQUÍ ESTÁ EL CAMBIO: [style.backgroundColor]="getMatchColor(match)" -->
           <div class="compact-match-card" (click)="openMatchDetailsFromDayModal(match)" 
                [style.backgroundColor]="getMatchColor(match)"
                style="border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: filter 0.15s ease;">

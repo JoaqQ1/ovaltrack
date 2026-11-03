@@ -19,6 +19,10 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     @Query("SELECT e FROM Event e WHERE e.active = true AND e.match.id = :matchId ORDER BY e.period, e.matchTime, e.realTime")
     Collection<Event> findEventsByMatchId(@Param("matchId") UUID matchId);
 
+    /** Eventos activos de varios partidos en una sola consulta. */
+    @Query("SELECT e FROM Event e JOIN FETCH e.eventType JOIN FETCH e.match WHERE e.active = true AND e.match.id IN :matchIds ORDER BY e.period, e.matchTime, e.realTime")
+    Collection<Event> findEventsByMatchIds(@Param("matchIds") Collection<UUID> matchIds);
+
     @Query("SELECT e FROM Event e JOIN FETCH e.eventType LEFT JOIN FETCH e.player WHERE e.active = true AND e.match.id = :matchId ORDER BY e.period, e.matchTime, e.realTime")
     Collection<Event> findPostMatchEventsByMatchId(@Param("matchId") UUID matchId);
 

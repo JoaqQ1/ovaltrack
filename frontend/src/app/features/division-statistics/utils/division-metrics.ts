@@ -7,7 +7,8 @@ export interface MetricSeriesDef {
   label: string;
   color: string;
   dashed?: boolean;
-  value: (stats: PeriodStatisticDTO) => number;
+  /** `null` cuando el partido no tiene datos para la serie (se corta la línea en ese punto). */
+  value: (stats: PeriodStatisticDTO) => number | null;
 }
 
 /** Métrica del dashboard: un gráfico con una o más series (una línea por serie, un punto por partido). */
@@ -25,6 +26,12 @@ const NAVY = '#16324f';
 const BLUE = '#2b6ca3';
 const AMBER = '#b7791f';
 const RED = '#b42318';
+
+/** Porcentaje de ganadas sobre ganadas + perdidas, con 1 decimal; `null` si no hubo ninguna resuelta. */
+export function winRate(won: number, lost: number): number | null {
+  const total = won + lost;
+  return total > 0 ? Math.round((won / total) * 1000) / 10 : null;
+}
 
 /**
  * Catálogo de métricas. Todas salen de `PeriodStatisticDTO`, el mismo DTO que ya calcula el backend
@@ -60,7 +67,29 @@ export const DIVISION_METRICS: DivisionMetricDef[] = [
     ],
   },
   {
-    id: 'turnovers', label: 'Obtención (turnovers)', unit: 'int', defaultSelected: true,
+    id: 'scrum-effectiveness', label: 'Obtención en scrum (efectividad)', unit: 'percent', defaultSelected: true,
+    series: [{ key: 'own', label: 'Scrum propio ganado', color: OWN, value: s => winRate(s.ownScrumsWon, s.ownScrumsLost) }],
+  },
+  {
+    id: 'lineout-effectiveness', label: 'Obtención en line (efectividad)', unit: 'percent', defaultSelected: true,
+    series: [{ key: 'own', label: 'Line propio ganado', color: NAVY, value: s => winRate(s.ownLineoutsWon, s.ownLineoutsLost) }],
+  },
+  {
+    id: 'scrum-result', label: 'Scrum propio: ganados / perdidos', unit: 'int', defaultSelected: false,
+    series: [
+      { key: 'won', label: 'Ganados', color: OWN, value: s => s.ownScrumsWon },
+      { key: 'lost', label: 'Perdidos', color: RED, dashed: true, value: s => s.ownScrumsLost },
+    ],
+  },
+  {
+    id: 'lineout-result', label: 'Line propio: ganados / perdidos', unit: 'int', defaultSelected: false,
+    series: [
+      { key: 'won', label: 'Ganados', color: OWN, value: s => s.ownLineoutsWon },
+      { key: 'lost', label: 'Perdidos', color: RED, dashed: true, value: s => s.ownLineoutsLost },
+    ],
+  },
+  {
+    id: 'turnovers', label: 'Turnovers', unit: 'int', defaultSelected: false,
     series: [
       { key: 'won', label: 'Ganados', color: OWN, value: s => s.ownTurnoversWon },
       { key: 'lost', label: 'Perdidos', color: RED, dashed: true, value: s => s.ownTurnoversLost },
