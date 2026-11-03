@@ -5,11 +5,12 @@ export interface ChartSeries {
   name: string;
   color: string;
   dashed?: boolean;
-  values: number[];
+  /** `null` = sin dato en ese partido: no se dibuja el punto y se corta la línea. */
+  values: (number | null)[];
 }
 
-interface ChartPoint { x: number; y: number; tooltip: string; }
-interface ChartLine { name: string; color: string; dashed: boolean; polyline: string; points: ChartPoint[]; }
+interface ChartPoint { x: number; y: number; tooltip: string; label: string; labelY: number; }
+interface ChartLine { name: string; color: string; dashed: boolean; polylines: string[]; points: ChartPoint[]; }
 interface Gridline { y: number; label: string; }
 interface XTick { x: number; label: string; }
 
@@ -17,6 +18,10 @@ const WIDTH = 600;
 const HEIGHT = 230;
 const MARGIN = { top: 14, right: 18, bottom: 34, left: 42 };
 const MAX_X_TICKS = 8;
+/** Con más partidos que esto los números se superponen y se ocultan (siguen en el tooltip). */
+const MAX_LABELED_POINTS = 24;
+const LABEL_OFFSET_ABOVE = 9;
+const LABEL_OFFSET_BELOW = 16;
 
 /** Gráfico de líneas con puntos en SVG puro (sin dependencias): un punto por partido, una línea por serie. */
 @Component({
@@ -42,12 +47,14 @@ export class StatLineChartComponent implements OnChanges {
   lines: ChartLine[] = [];
   gridlines: Gridline[] = [];
   xTicks: XTick[] = [];
+  showLabels = true;
 
   ngOnChanges(): void {
     const count = this.labels.length;
     const plotWidth = WIDTH - MARGIN.left - MARGIN.right;
     const plotHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
     const yMax = this.niceMax();
+    this.showLabels = count <= MAX_LABELED_POINTS;
 
     const xAt = (index: number) =>
       count <= 1 ? MARGIN.left + plotWidth / 2 : MARGIN.left + (plotWidth * index) / (count - 1);
@@ -64,26 +71,47 @@ export class StatLineChartComponent implements OnChanges {
       .filter(tick => tick.index % step === 0 || tick.index === count - 1)
       .map(({ x, label }) => ({ x, label }));
 
-    this.lines = this.series.map(serie => {
-      const points = serie.values.map((value, index) => ({
-        x: xAt(index),
-        y: yAt(value),
-        tooltip: `${this.details[index] ?? this.labels[index] ?? ''}\n${serie.name}: ${formatMetricValue(value, this.unit)}`,
-      }));
-      return {
-        name: serie.name,
-        color: serie.color,
-        dashed: !!serie.dashed,
-        polyline: points.map(point => `${point.x},${point.y}`).join(' '),
-        points,
+    this.lines = this.series.map((serie, serieIndex) => {
+      const points: ChartPoint[] = [];
+      const polylines: string[] = [];
+      let segment: ChartPoint[] = [];
+      const closeSegment = () => {
+        if (segment.length > 1) {
+          polylines.push(segment.map(point => `${point.x},${point.y}`).join(' '));
+        }
+        segment = [];
       };
+
+      serie.values.forEach((value, index) => {
+        if (value === null || value === undefined) {
+          closeSegment();
+          return;
+        }
+        const y = yAt(value);
+        // La primera serie rotula arriba del punto y las demás abajo, para que dos líneas cercanas no pisen sus números.
+        // Si no hay lugar arriba (valor en el techo del eje), se rotula abajo.
+        const below = serieIndex > 0 || y - LABEL_OFFSET_ABOVE < MARGIN.top - 4;
+        const formatted = formatMetricValue(value, this.unit);
+        const point = {
+          x: xAt(index),
+          y,
+          tooltip: `${this.details[index] ?? this.labels[index] ?? ''}\n${serie.name}: ${formatted}`,
+          label: formatted,
+          labelY: below ? y + LABEL_OFFSET_BELOW : y - LABEL_OFFSET_ABOVE,
+        };
+        points.push(point);
+        segment.push(point);
+      });
+      closeSegment();
+
+      return { name: serie.name, color: serie.color, dashed: !!serie.dashed, polylines, points };
     });
   }
 
   /** Techo del eje Y: 100 en porcentajes; en conteos, el siguiente valor "redondo" por encima del máximo. */
   private niceMax(): number {
     if (this.unit === 'percent') return 100;
-    const max = Math.max(0, ...this.series.flatMap(serie => serie.values));
+    const max = Math.max(0, ...this.series.flatMap(serie => serie.values).filter((v): v is number => v !== null));
     if (max <= 4) return 4;
     const magnitude = Math.pow(10, Math.floor(Math.log10(max)));
     return Math.ceil(max / (magnitude / 2)) * (magnitude / 2) || 4;

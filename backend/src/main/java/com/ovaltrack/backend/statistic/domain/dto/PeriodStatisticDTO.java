@@ -30,6 +30,10 @@ public record PeriodStatisticDTO(
     int opponentRedCards,
     int scrumsTotal,
     int lineoutsTotal,
+    int ownScrumsWon,
+    int ownScrumsLost,
+    int ownLineoutsWon,
+    int ownLineoutsLost,
     double ownPossessionPercentage
 ) {
 }

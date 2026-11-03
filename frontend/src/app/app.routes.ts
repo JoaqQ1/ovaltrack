@@ -115,6 +115,19 @@ export const routes: Routes = [
         component: DivisionCoachListComponent
     },
     {
+        path: 'divisions/:divisionId/statistics',
+        canMatch: [authGuard],
+        canActivate: [hasRoleGuard, hasClubGuard],
+        data: {
+            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
+            layout: 'wide'
+        },
+        loadComponent: () =>
+            import('./features/division-statistics/division-statistics.component').then(
+                m => m.DivisionStatisticsComponent
+            )
+    },
+    {
         path: 'divisions/:divisionId/players',
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
@@ -122,18 +135,6 @@ export const routes: Routes = [
         },
         canMatch: [authGuard],
         component: DivisionPlayerListComponent
-    },
-    {
-        path: 'divisions/:divisionId/statistics',
-        canActivate: [hasRoleGuard, hasClubGuard],
-        data: {
-            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
-            layout: 'wide'
-        },
-        canMatch: [authGuard],
-        loadComponent: () =>
-            import('./features/division-statistics/division-statistics.component')
-                .then(m => m.DivisionStatisticsComponent)
     },
     {
         path: 'division-statistics/:divisionId',
