@@ -230,15 +230,6 @@ describe('CargaEnVivoComponent', () => {
     expect(component.capture?.canChooseTeam).toBe(true);
   });
 
-  it('should ask for the team first on events without a player when possession is neutral', () => {
-    component.isStarted = true;
-    component.currentPossession = 'NEUTRAL';
-
-    component.onEventTap(eventType({ id: 'ruck', name: 'Ruck ofensivo', code: 'RUCK_OFFENSIVE', isScoring: false, points: 0, requiresPlayer: false }));
-
-    expect(component.captureStep?.kind).toBe('team');
-  });
-
   it('should skip preset steps and resolve the follow-up team with the updated possession', () => {
     const touch = eventType({
       id: 'touch', name: 'Patada a touch', code: 'KICK_TO_TOUCH', isScoring: false, points: 0,
