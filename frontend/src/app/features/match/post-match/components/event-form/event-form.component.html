@@ -63,7 +63,7 @@
   <!-- 4. Período y tiempo: una fila (1T/2T + reloj mm:ss); la regla del 2T va en el "?" -->
   <div *ngIf="showTimeFields" class="form-group mb-2" #timeFields (focusout)="onTimeFocusOut($event, timeFields)">
     <div class="time-label-row">
-      <label class="form-label-sport mb-0">Período y tiempo *</label>
+      <label class="form-label-sport mb-0">Tiempo *</label>
       <button type="button" class="rule-help tip-start" data-testid="time-help"
               [attr.aria-label]="timeHelp" [attr.data-tip]="timeHelp" [title]="timeHelp">?</button>
       <span *ngIf="periodHint() as hint" class="prefill-hint">{{ hint }}</span>
