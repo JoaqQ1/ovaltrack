@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '@environments/environment.docker';
+import { environment } from '@environments/environment';
 import { OvalTrackAdminOverview } from '../types/ovaltrack-admin.types';
 import { MessageResponse } from 'src/app/shared/types/shared-types';
 

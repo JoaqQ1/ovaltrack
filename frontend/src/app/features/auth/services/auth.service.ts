@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthResponse, ClubRegistrationDTO, CurrentUserSession, LoginRequest, MemberRegistrationDTO, TokenPayload } from '../types/auth.types';
-import { environment } from '@environments/environment.docker';
+import { environment } from '@environments/environment';
 import { TokenService } from '../../../core/services/token.service';
 import { UserContextService } from '../../../core/services/user-context.service';
 import { ToastService } from '../../../core/services/toast.service';

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '@environments/environment.docker';
+import { environment } from '@environments/environment';
 import { BackendUserResponse, ClubInfo, Member, UserRole } from '../types/members.types';
 
 @Injectable({
