@@ -26,6 +26,27 @@ Característica: Edición y eliminación de eventos post-partido (HU 8.2)
     Entonces el sistema responde con 200
     Y la línea de eventos refleja el cambio de tipo a "Line-out" y posesión a "OWN"
 
+  Escenario: Corrección del tiempo de un evento al segundo tiempo
+    Dado que el coach con email "felipe.conte@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Y que existe un partido finalizado para la división "Primera" contra "Comodoro Rugby Club"
+    Y que se han registrado los siguientes eventos en el partido:
+      | tipo_evento | posesion | tiempo_segundos | periodo | atributos   |
+      | Try         | OWN      | 300             | 1       | zone=center |
+    Cuando el entrenador corrige el tiempo del evento "Try" al segundo 2700 del periodo 2
+    Entonces el sistema responde con 200
+    Y la línea de eventos muestra el evento modificado en el segundo 2700 del periodo 2
+
+  Escenario: Al corregir el tiempo, el evento toma la zona del nuevo tramo
+    Dado que el coach con email "felipe.conte@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Y que existe un partido finalizado para la división "Primera" contra "Deportivo Portugués"
+    Y que el partido tiene asignada la zona fila 2 columna 3 en el periodo 1 entre el minuto 10 y el minuto 25
+    Y que se han registrado los siguientes eventos en el partido:
+      | tipo_evento | posesion | tiempo_segundos | periodo | atributos   |
+      | Try         | OWN      | 300             | 1       | zone=center |
+    Cuando el entrenador corrige el tiempo del evento "Try" al segundo 900 del periodo 1
+    Entonces el sistema responde con 200
+    Y el evento "Try" del minuto 15 del periodo 1 pertenece a la zona fila 2 columna 3
+
   Escenario: Eliminación lógica de un evento existente
     Dado que el coach con email "felipe.conte@test.com" y contraseña "PassSegura123!" ha iniciado sesión
     Y que existe un partido finalizado para la división "Primera" contra "Patoruzú Rugby Club"
@@ -67,6 +88,15 @@ Característica: Edición y eliminación de eventos post-partido (HU 8.2)
       | Scrum       | NEUTRAL  | 100             | 1       | scrumResult=won_clean |
     Cuando el entrenador intenta editar el evento "Scrum" enviando un ID de tipo de evento inválido
     Entonces el sistema responde con 409 y "No se puede asociar un evento a un tipo de evento que no existe"
+
+  Escenario: Error al corregir el tiempo de un evento fuera del primer tiempo
+    Dado que el coach con email "felipe.conte@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Y que existe un partido finalizado para la división "Primera" contra "Trelew Rugby Club"
+    Y que se han registrado los siguientes eventos en el partido:
+      | tipo_evento | posesion | tiempo_segundos | periodo | atributos   |
+      | Try         | OWN      | 300             | 1       | zone=center |
+    Cuando el entrenador corrige el tiempo del evento "Try" al segundo 2500 del periodo 1
+    Entonces el sistema responde con 409 y "El tiempo de juego del 1° Tiempo no puede exceder los 40 minutos"
 
   Escenario: Error al intentar eliminar un evento inexistente
     Dado que el coach con email "felipe.conte@test.com" y contraseña "PassSegura123!" ha iniciado sesión

@@ -53,6 +53,22 @@ Then('la línea de eventos refleja el cambio de tipo a {string} y posesión a {s
   assert.equal(event.teamPossession, posesion);
 });
 
+// <==================== Corrección del tiempo ====================>
+
+When('el entrenador corrige el tiempo del evento {string} al segundo {int} del periodo {int}', async function (tipoEvento, segundos, periodo) {
+  const event = await findTimelineEvent(this.currentMatch.id, tipoEvento, this.token);
+  this.editedEventId = event.id;
+  this.response = await patchEvent(event.id, { matchTime: segundos, period: periodo }, this.token);
+});
+
+Then('la línea de eventos muestra el evento modificado en el segundo {int} del periodo {int}', async function (segundos, periodo) {
+  const events = await getPostMatchEvents(this.currentMatch.id, this.token);
+  const event = events.find((e) => e.id === this.editedEventId);
+  assert.ok(event, 'El evento modificado ya no está en la línea de eventos');
+  assert.equal(event.matchTime, segundos);
+  assert.equal(event.period, periodo);
+});
+
 // <==================== Eliminación ====================>
 
 When('el entrenador elimina el evento {string}', async function (tipoEvento) {
