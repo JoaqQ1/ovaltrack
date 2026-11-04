@@ -156,7 +156,7 @@
 .time-label-row { position: relative; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 /* El tooltip se ancla a la fila (no al "?"): ocupa el ancho de la columna y no se corta en el borde derecho */
 .time-label-row .rule-help { position: static; }
-.time-label-row .rule-help::after { left: 0; right: auto; bottom: calc(100% + 2px); width: max-content; max-width: min(260px, 100%); }
+.time-label-row .rule-help::after { left: 0; right: auto; bottom: calc(100% + 2px); width: max-content; max-width: min(280px, 100%); padding: 10px 12px; font-size: 13px; line-height: 1.45; }
 .time-row { display: flex; align-items: center; gap: 10px; }
 .time-period { flex: 1; min-width: 0; }
 .time-period .possession-segment-btn { min-height: 32px; }
