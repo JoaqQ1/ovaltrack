@@ -28,6 +28,10 @@ const DEFAULT_LATERAL_ROW = 2;
  * Pantalla de zonas: arma el layout, carga los datos y conecta KPI, filtros, grilla de territorio, cancha y formulario.
  * La grilla y la cancha eligen la franja (y la cancha también el lateral); el formulario guarda el tramo.
  */
+/** Ancho máximo de la ayuda (el CSS usa el mismo) y margen mínimo contra el borde de la pantalla. */
+const HELP_MAX_WIDTH = 560;
+const HELP_VIEWPORT_MARGIN = 24;
+
 @Component({
   selector: 'app-post-match-zones',
   standalone: true,
@@ -75,6 +79,8 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
   private readonly pendingDeepLink = signal<ZoneDeepLinkTarget | null>(null);
 
   readonly helpOpen = signal<boolean>(false);
+  /** La ayuda se abre hacia la izquierda cuando, anclada al botón, se saldría por la derecha de la pantalla. */
+  readonly helpAlignEnd = signal<boolean>(false);
   readonly shortcutHelp = ZONE_SHORTCUT_HELP;
 
   /** Eventos según la posesión elegida; el tiempo lo aplican por separado la cancha y la grilla. */
@@ -133,8 +139,16 @@ export class PostMatchZonesComponent implements OnInit, OnDestroy {
     this.loading.dispose();
   }
 
-  toggleHelp(): void {
-    this.helpOpen.update(open => !open);
+  toggleHelp(event?: Event): void {
+    const opening = !this.helpOpen();
+    if (opening) this.helpAlignEnd.set(this.helpOverflowsRight(event?.currentTarget));
+    this.helpOpen.set(opening);
+  }
+
+  private helpOverflowsRight(trigger: EventTarget | null | undefined): boolean {
+    if (!(trigger instanceof HTMLElement)) return false;
+    const width = Math.min(HELP_MAX_WIDTH, window.innerWidth - HELP_VIEWPORT_MARGIN * 2);
+    return trigger.getBoundingClientRect().left + width > window.innerWidth - HELP_VIEWPORT_MARGIN;
   }
 
   /**

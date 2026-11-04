@@ -35,9 +35,9 @@
             <div class="shortcuts">
               <button type="button" class="help-btn" data-testid="shortcuts-toggle"
                       aria-controls="zone-shortcuts" [attr.aria-expanded]="helpOpen()"
-                      aria-label="Ayuda" title="Ayuda" (click)="toggleHelp()">?</button>
+                      aria-label="Ayuda" title="Ayuda" (click)="toggleHelp($event)">?</button>
               @if (helpOpen()) {
-                <div id="zone-shortcuts" class="shortcuts-pop" data-testid="shortcuts-help" role="region" aria-label="Ayuda">
+                <div id="zone-shortcuts" class="shortcuts-pop" [class.align-end]="helpAlignEnd()" data-testid="shortcuts-help" role="region" aria-label="Ayuda">
                   <div class="help-col">
                   <strong>Vista de la cancha</strong>
                   <p data-testid="relative-note">

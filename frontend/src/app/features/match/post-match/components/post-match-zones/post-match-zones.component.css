@@ -49,6 +49,7 @@
   border: 2px solid var(--border-sport, rgba(32, 75, 34, .28)); box-shadow: var(--shadow-elevation);
   font-size: 13px; color: var(--text-secondary, #3b4e33);
 }
+.shortcuts-pop.align-end { left: auto; right: 0; }
 .shortcuts-pop ul { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .shortcuts-pop p { margin: 6px 0 0; line-height: 1.4; }
 .shortcut-row { display: inline-block; min-width: 76px; font-weight: 700; color: var(--text-primary, #111d0e); }
