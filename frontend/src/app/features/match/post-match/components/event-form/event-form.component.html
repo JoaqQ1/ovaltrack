@@ -61,7 +61,7 @@
   </div>
 
   <!-- 4. Campos Opcionales de Tiempo (Período y Minutos/Segundos) -->
-  <ng-container *ngIf="showTimeFields">
+  <div *ngIf="showTimeFields" #timeFields (focusout)="onTimeFocusOut($event, timeFields)">
     <div class="form-group mb-2">
       <label class="form-label-sport">Período *
         <span *ngIf="periodHint() as hint" class="prefill-hint">{{ hint }}</span>
@@ -91,6 +91,7 @@
         </label>
         <input type="number" 
                class="form-control custom-sport-input"
+               [class.is-invalid]="timeError()"
                [ngModel]="minute()"
                (ngModelChange)="onMinuteChange($event)"
                min="0"
@@ -112,7 +113,11 @@
       <span *ngIf="period() === 1">Tiempo de juego: 1T {{ formattedDisplayTime }} (máx. 40 min)</span>
       <span *ngIf="period() === 2">Tiempo de juego: 2T {{ formattedDisplayTime }} &bull; Equivale al <strong>minuto {{ formattedMatchTotalTime }}</strong> de partido</span>
     </div>
-  </ng-container>
+    <div class="invalid-feedback-sport" *ngIf="timeError() as error">
+      <i class="bi bi-exclamation-circle-fill"></i>
+      <span>{{ error }}</span>
+    </div>
+  </div>
 
   <!-- Enriquecimiento Táctico Dinámico -->
   <div class="enrichment-section" *ngIf="showEnrichmentSlot && currentTemplateFields().length > 0">

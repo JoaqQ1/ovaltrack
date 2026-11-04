@@ -105,6 +105,9 @@
               <span *ngIf="saveStatus() === 'saved'" class="status-saved">
                 Guardado <i class="bi bi-check2"></i>
               </span>
+              <span *ngIf="saveStatus() === 'pending'" class="status-saving">
+                <i class="bi bi-hourglass-split me-1"></i> Cambios pendientes…
+              </span>
               <span *ngIf="saveStatus() === 'saving'" class="status-saving">
                 <span class="spinner-border spinner-border-sm me-1"></span> Guardando...
               </span>
@@ -220,15 +223,11 @@
         <div class="edit-tab-content" *ngIf="activeTab() === 'edit'">
           <ng-container *ngIf="store.selectedEvent() as ev">
             <app-event-form
-              [initialData]="{
-                eventTypeId: ev.eventTypeId,
-                teamPossession: ev.teamPossession,
-                playerId: ev.playerId,
-                attributes: ev.attributes
-              }"
-              [showTimeFields]="false"
+              [initialData]="editFormData()"
+              [showTimeFields]="true"
               [showEnrichmentSlot]="true"
               (formChange)="onFormChange($event)"
+              (timeCommit)="onTimeCommit()"
             />
 
             <div class="panel-edit-footer">

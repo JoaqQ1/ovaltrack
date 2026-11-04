@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
+import { Subject, merge, of, timer } from 'rxjs';
+import { catchError, debounce, filter, switchMap, tap } from 'rxjs/operators';
 import { MatchReviewStore } from '../../store/match-review.store';
 import { EventService } from '../../../services/event.service';
 import { ToastService } from 'src/app/core/services/toast.service';
@@ -21,6 +21,7 @@ import { OverflowMetrics, overflowCapacity, visibleWithOverflow } from '../../ut
 import { observeHeight } from '../../utils/observe-height';
 import { zoneDeepLinkParams } from '../../utils/zone-deep-link';
 import { zoneLabel } from '../../utils/zone-grid';
+import { fromMatchTimeSeconds, toMatchTimeSeconds } from '../../utils/event-time';
 import { ZoneMiniMapComponent } from '../zone-mini-map/zone-mini-map.component';
 
 /** Alturas fijas de la cola (las fija el CSS del panel): ítem, separación y aviso «+N más en la tabla». */
@@ -34,6 +35,16 @@ const QUEUE_UNBOUNDED_PREVIEW = 6;
 
 /** Desde este ancho el inspector es una columna de alto fijo y la cola se ajusta al espacio libre. */
 const DESKTOP_QUERY = '(min-width: 1121px)';
+
+/** Espera del autoguardado: más larga si cambió el tiempo, porque mover el evento lo reubica en tabla y línea de tiempo. */
+const FIELD_SAVE_DELAY_MS = 400;
+const TIME_SAVE_DELAY_MS = 2000;
+
+interface PendingSave {
+  id: string;
+  payload: Partial<MatchTimelineEventResponse>;
+  timeChanged: boolean;
+}
 
 @Component({
   selector: 'app-post-match-panel',
@@ -51,10 +62,32 @@ export class PostMatchPanelComponent implements OnDestroy {
   // Solapas de Inspección: Ver o Editar
   readonly activeTab = signal<'view' | 'edit'>('view');
 
-  // Estado del Autoguardado
-  readonly saveStatus = signal<'saved' | 'saving' | 'error' | 'idle'>('idle');
-  private readonly saveSubject = new Subject<{ id: string; payload: Partial<MatchTimelineEventResponse> }>();
+  // Estado del Autoguardado ('pending' = esperando la pausa del usuario; todavía no se envió)
+  readonly saveStatus = signal<'pending' | 'saved' | 'saving' | 'error' | 'idle'>('idle');
+  /** null = el formulario quedó inválido: se descarta lo que estuviera esperando. */
+  private readonly saveSubject = new Subject<PendingSave | null>();
+  /** Guarda ya lo que esté esperando (sale de los campos de tiempo, cambia el evento seleccionado). */
+  private readonly flushRequests = new Subject<void>();
+  private pendingSave: PendingSave | null = null;
+  private lastSentKey: string | null = null;
   private saveTimer: any = null;
+
+  /** Datos del formulario de edición; el formulario ignora los que lleguen mientras tenga cambios sin confirmar. */
+  readonly editFormData = computed<EventFormData | null>(() => {
+    const ev = this.store.selectedEvent();
+    if (!ev) return null;
+    const { minute, second } = fromMatchTimeSeconds(ev.matchTime);
+    return {
+      eventId: ev.id,
+      eventTypeId: ev.eventTypeId,
+      teamPossession: ev.teamPossession,
+      playerId: ev.playerId,
+      period: ev.period === 2 ? 2 : 1,
+      minute,
+      second,
+      attributes: ev.attributes ?? null
+    };
+  });
 
   // Estado del Bottom Sheet en Tablet/Mobile (< 1121px)
   readonly sheetState = signal<'peek' | 'open'>('peek');
@@ -112,24 +145,18 @@ export class PostMatchPanelComponent implements OnDestroy {
 
   constructor() {
     this.saveSubject.pipe(
-      debounceTime(400),
-      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
-      tap(() => this.saveStatus.set('saving')),
-      switchMap(({ id, payload }) =>
+      debounce(req => merge(timer(req?.timeChanged ? TIME_SAVE_DELAY_MS : FIELD_SAVE_DELAY_MS), this.flushRequests)),
+      filter((req): req is PendingSave => req !== null),
+      filter(req => this.isNewSave(req)),
+      tap(() => {
+        this.pendingSave = null;
+        this.saveStatus.set('saving');
+      }),
+      switchMap(({ id, payload, timeChanged }) =>
         this.eventService.update(id, payload).pipe(
-          tap(() => {
-            this.store.updateEvent(id, payload);
-            this.saveStatus.set('saved');
-            if (this.saveTimer) {
-              clearTimeout(this.saveTimer);
-            }
-            this.saveTimer = setTimeout(() => {
-              this.saveStatus.set('idle');
-            }, 2500);
-          }),
-          catchError(() => {
-            this.saveStatus.set('error');
-            this.toastService.error('Error al autoguardar la jugada');
+          tap(() => this.onSaveConfirmed(id, payload, timeChanged)),
+          catchError(err => {
+            this.onSaveFailed(err);
             return of(null);
           })
         )
@@ -141,6 +168,8 @@ export class PostMatchPanelComponent implements OnDestroy {
     effect(() => {
       this.store.selectedEventId();
       untracked(() => queueMicrotask(() => {
+        // Lo que quedó esperando del evento anterior se guarda ya (el pedido lleva su propio id)
+        this.flushRequests.next();
         if (this.detailScrollEl) this.detailScrollEl.scrollTop = 0;
         this.updateDetailOverflow();
       }));
@@ -153,21 +182,74 @@ export class PostMatchPanelComponent implements OnDestroy {
   }
 
   onFormChange(formData: EventFormData): void {
-    if (formData.isValid === false) {
-      return;
-    }
     const ev = this.store.selectedEvent();
     if (!ev) return;
-    this.saveStatus.set('saving');
-    this.saveSubject.next({
-      id: ev.id,
-      payload: {
-        eventTypeId: formData.eventTypeId,
-        teamPossession: formData.teamPossession,
-        playerId: formData.playerId,
-        attributes: formData.attributes
-      }
-    });
+    if (formData.isValid === false || formData.minute == null) {
+      // Un valor intermedio inválido (p. ej. 45 en el 1T) no se guarda, ni lo que esperaba antes de él
+      this.pendingSave = null;
+      this.saveStatus.set('idle');
+      this.saveSubject.next(null);
+      return;
+    }
+
+    const payload: Partial<MatchTimelineEventResponse> = {
+      eventTypeId: formData.eventTypeId,
+      teamPossession: formData.teamPossession,
+      playerId: formData.playerId,
+      attributes: formData.attributes
+    };
+
+    // Se compara con lo que mostró el formulario al cargarse: un tiempo guardado no se reescribe si no se tocó
+    const period = formData.period ?? 1;
+    const saved = fromMatchTimeSeconds(ev.matchTime);
+    const timeChanged = period !== ev.period || formData.minute !== saved.minute || (formData.second ?? 0) !== saved.second;
+    if (timeChanged) {
+      const matchTime = toMatchTimeSeconds(period, formData.minute, formData.second);
+      payload.period = period;
+      payload.matchTime = matchTime;
+      payload.absoluteMatchTime = this.store.estimateAbsoluteTime(matchTime, period, ev.id);
+    }
+
+    this.pendingSave = { id: ev.id, payload, timeChanged };
+    this.saveStatus.set('pending');
+    this.saveSubject.next(this.pendingSave);
+  }
+
+  onTimeCommit(): void {
+    this.flushRequests.next();
+  }
+
+  /** Evita repetir el último PATCH enviado (p. ej. tocar de nuevo el mismo botón de posesión). */
+  private isNewSave(req: PendingSave): boolean {
+    const key = JSON.stringify(req);
+    if (key === this.lastSentKey) {
+      this.pendingSave = null;
+      this.saveStatus.set('idle');
+      return false;
+    }
+    this.lastSentKey = key;
+    return true;
+  }
+
+  private onSaveConfirmed(id: string, payload: Partial<MatchTimelineEventResponse>, timeChanged: boolean): void {
+    this.store.updateEvent(id, payload);
+    // Con otro tiempo el evento cambia de lugar: la tabla lo sigue, salvo que ya se haya pasado a otro evento
+    if (timeChanged && this.store.selectedEventId() === id) {
+      this.store.revealEvent(id);
+    }
+    this.saveStatus.set('saved');
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+    }
+    this.saveTimer = setTimeout(() => {
+      this.saveStatus.set('idle');
+    }, 2500);
+  }
+
+  private onSaveFailed(err: unknown): void {
+    this.lastSentKey = null;
+    this.saveStatus.set('error');
+    this.toastService.error(errorMessage(err, 'Error al autoguardar la jugada'));
   }
 
   readonly zoneLabel = zoneLabel;
@@ -282,6 +364,15 @@ export class PostMatchPanelComponent implements OnDestroy {
     if (this.saveTimer) {
       clearTimeout(this.saveTimer);
     }
+    // Al salir de la pantalla no se pierde lo que esperaba la pausa: se envía fuera del flujo, que ya se cierra
+    const pending = this.pendingSave;
+    if (pending) {
+      this.pendingSave = null;
+      this.eventService.update(pending.id, pending.payload).subscribe({
+        next: () => this.store.updateEvent(pending.id, pending.payload),
+        error: err => this.toastService.error(errorMessage(err, 'Error al autoguardar la jugada'))
+      });
+    }
   }
 
   // --- Asignación Rápida desde el Panel ---
@@ -352,4 +443,10 @@ export class PostMatchPanelComponent implements OnDestroy {
       }
     });
   }
+}
+
+/** Mensaje del servidor (`{ message }` de un 409) o el genérico. */
+function errorMessage(err: unknown, fallback: string): string {
+  const message = (err as { error?: { message?: unknown } } | null)?.error?.message;
+  return typeof message === 'string' && message.trim() !== '' ? message : fallback;
 }
