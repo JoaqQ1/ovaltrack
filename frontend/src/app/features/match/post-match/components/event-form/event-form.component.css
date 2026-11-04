@@ -163,7 +163,8 @@
 .time-clock { display: flex; align-items: center; gap: 4px; }
 .time-input {
   width: 52px;
-  min-height: 36px;
+  height: 36px; /* pisa el height: 46px global de .form-control */
+  min-height: 0;
   padding: 0 4px;
   text-align: center;
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
