@@ -7,8 +7,8 @@ import { ToastService } from 'src/app/core/services/toast.service';
 import { Possession } from '../../../types/live-capture.types';
 import { BackendEventCreationRequest, MatchTimelineEventResponse } from '../../../types/event.types';
 import { EventFormComponent, EventFormData } from '../event-form/event-form.component';
-import { HALF_DURATION_SECONDS } from '../../../types/match.types';
 import { EventPrefillHints, buildEventPrefill } from '../../utils/event-prefill';
+import { toMatchTimeSeconds, validateEventTime } from '../../utils/event-time';
 
 @Component({
   selector: 'app-post-match-create-modal',
@@ -115,38 +115,19 @@ export class PostMatchCreateModalComponent implements OnChanges {
       return;
     }
 
+    // El tiempo va primero: su mensaje es más concreto que el genérico (el formulario también lo cuenta como inválido)
+    const timeError = validateEventTime(this.period, this.minute, this.second);
+    if (timeError || this.minute === null) {
+      this.toastService.warning(timeError ?? 'Ingresá un minuto válido');
+      return;
+    }
+
     if (!this.isFormValid) {
       this.toastService.warning('Corregí los valores inválidos antes de guardar');
       return;
     }
 
-    if (this.minute === null || this.minute === undefined || this.minute < 0) {
-      this.toastService.warning('Ingresá un minuto válido');
-      return;
-    }
-
-    if (this.period === 1 && this.minute > 40) {
-      this.toastService.warning(
-        `El 1° Tiempo no puede superar los 40 minutos. Si el evento ocurrió en el minuto ${this.minute} del partido, seleccioná el 2° Tiempo.`
-      );
-      return;
-    }
-
-    if (this.period === 2 && this.minute > 80) {
-      this.toastService.warning('El 2° Tiempo no puede superar los 80 minutos de partido.');
-      return;
-    }
-
-    const secVal = this.second ?? 0;
-    if (secVal < 0 || secVal > 59) {
-      this.toastService.warning('Los segundos deben estar entre 0 y 59');
-      return;
-    }
-
-    let matchTimeSeconds = Math.floor(this.minute) * 60 + Math.floor(secVal);
-    if (this.period === 2 && this.minute * 60 < HALF_DURATION_SECONDS) {
-      matchTimeSeconds = HALF_DURATION_SECONDS + matchTimeSeconds;
-    }
+    const matchTimeSeconds = toMatchTimeSeconds(this.period, this.minute, this.second);
 
     const assignedPlayerId = (this.possession === 'OPPONENT') ? null : (this.playerId.trim() || null);
     const absoluteSeconds = this.store.estimateAbsoluteTime(matchTimeSeconds, this.period);
