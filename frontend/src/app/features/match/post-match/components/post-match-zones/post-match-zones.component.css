@@ -13,7 +13,7 @@
 .zones-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .zones-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
-.toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 14px; margin-bottom: 14px; }
+.toolbar { position: relative; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 14px; margin-bottom: 14px; }
 
 .filter-group { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem; }
 .filter-pill-btn {
@@ -32,7 +32,7 @@
 }
 .filter-divider { display: inline-block; width: 1px; height: 22px; background: var(--border, rgba(27, 33, 22, .15)); margin: 0 .25rem; }
 
-.shortcuts { position: relative; }
+.shortcuts { position: static; } /* el popover se ancla a la barra, no al botón: nunca se sale del recuadro */
 .help-btn {
   width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
   background: var(--btn-outline-bg, #fff); color: var(--btn-outline-fg, #204b22);
@@ -41,7 +41,10 @@
 }
 .help-btn:hover, .help-btn[aria-expanded='true'] { background: #d6eac0; border-color: var(--btn-primary-bg, #204b22); }
 .shortcuts-pop {
-  position: absolute; z-index: 20; top: calc(100% + 8px); left: 0; width: min(340px, calc(100vw - 48px));
+  position: absolute; z-index: 20; top: calc(100% + 8px); left: 0; width: min(560px, 100%);
+  /* Dos columnas si entran (≥ ~500 px), una si no; con poca altura, scroll en vez de quedar cortado */
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 20px;
+  max-height: min(70vh, 640px); overflow-y: auto; overscroll-behavior: contain;
   padding: 14px 16px; border-radius: var(--radius-lg, 16px); background: var(--surface, #fff);
   border: 2px solid var(--border-sport, rgba(32, 75, 34, .28)); box-shadow: var(--shadow-elevation);
   font-size: 13px; color: var(--text-secondary, #3b4e33);
