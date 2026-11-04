@@ -436,6 +436,10 @@ export class MatchReviewStore {
       const existing = current[index];
       const dict = this.eventTypesDict();
       const updated = { ...existing, ...partial };
+      // La zona depende del tiempo: si cambió, se descarta la del servidor y se deriva de los tramos
+      if (partial.matchTime !== undefined || partial.period !== undefined) {
+        updated.zone = undefined;
+      }
       if (partial.eventTypeId && dict[partial.eventTypeId]) {
         updated.eventTypeName = dict[partial.eventTypeId];
       }
@@ -514,10 +518,10 @@ export class MatchReviewStore {
 
   /**
    * Estima la hora absoluta para un nuevo evento proyectando el desfase acumulado
-   * de pausas del evento previo más cercano en el mismo período.
+   * de pausas del evento previo más cercano en el mismo período (sin contar `excludeEventId`).
    */
-  estimateAbsoluteTime(newMatchTimeSeconds: number, period: 1 | 2): number {
-    return estimateAbsoluteTimeUtil(this.rawEvents(), newMatchTimeSeconds, period);
+  estimateAbsoluteTime(newMatchTimeSeconds: number, period: 1 | 2, excludeEventId?: string): number {
+    return estimateAbsoluteTimeUtil(this.rawEvents(), newMatchTimeSeconds, period, excludeEventId);
   }
 
   // --- Funciones Extraídas (Refactoring Niveles 1 y 2) ---

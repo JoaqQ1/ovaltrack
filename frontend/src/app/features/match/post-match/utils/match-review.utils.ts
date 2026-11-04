@@ -66,12 +66,16 @@ export function formatOnlyTime(iso: string | null | undefined): string {
 /**
  * Estima la hora absoluta para un nuevo evento proyectando el desfase acumulado
  * de pausas del evento previo más cercano en el mismo período.
+ * Al mover un evento existente se pasa su id para que no se tome a sí mismo como referencia.
  */
 export function estimateAbsoluteTime(
-  rawEvents: MatchTimelineEventResponse[],
+  allEvents: MatchTimelineEventResponse[],
   newMatchTimeSeconds: number,
-  period: 1 | 2
+  period: 1 | 2,
+  excludeEventId?: string
 ): number {
+  const rawEvents = excludeEventId ? allEvents.filter(e => e.id !== excludeEventId) : allEvents;
+
   // 1. Filtrar eventos del mismo período con hora absoluta válida
   const periodEvents = rawEvents
     .filter(e => (e.period ?? 1) === period && e.absoluteMatchTime != null)

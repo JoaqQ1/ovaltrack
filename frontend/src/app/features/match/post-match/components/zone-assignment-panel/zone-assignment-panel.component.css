@@ -94,43 +94,6 @@
 .label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .label-row .field-label { margin-bottom: 0; }
 
-/* "?" chico junto a "Hasta": la regla va en el tooltip (hover, foco o toque); el área táctil es de 44 px */
-.rule-help {
-  position: relative;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  margin: -12px -12px -12px -4px;
-  border: 12px solid transparent;
-  border-radius: 50%;
-  box-sizing: content-box;
-  background: var(--btn-outline-bg, #fff) padding-box;
-  color: var(--btn-outline-fg, #204b22);
-  font: 700 12px/20px var(--font-mono, monospace);
-  box-shadow: inset 0 0 0 1px var(--btn-outline-border, rgba(32, 75, 34, 0.25));
-  cursor: help;
-}
-.rule-help:hover, .rule-help:focus-visible { background-color: #d6eac0; }
-.rule-help::after {
-  content: attr(data-tip);
-  position: absolute;
-  z-index: 10;
-  right: -12px;
-  bottom: calc(100% + 2px);
-  width: max-content;
-  max-width: 220px;
-  padding: 8px 10px;
-  border-radius: var(--radius-md, 10px);
-  background: var(--text-primary, #111d0e);
-  color: #fff;
-  font: 500 12px/1.35 var(--font-body, Inter, sans-serif);
-  text-align: left;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.12s ease;
-}
-.rule-help:hover::after, .rule-help:focus::after { opacity: 1; }
-
 .stepper { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 4px; align-items: stretch; }
 
 .step-btn {

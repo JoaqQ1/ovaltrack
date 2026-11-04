@@ -41,11 +41,15 @@
 }
 .help-btn:hover, .help-btn[aria-expanded='true'] { background: #d6eac0; border-color: var(--btn-primary-bg, #204b22); }
 .shortcuts-pop {
-  position: absolute; z-index: 20; top: calc(100% + 8px); left: 0; width: min(340px, calc(100vw - 48px));
+  position: absolute; z-index: 20; top: calc(100% + 8px); left: 0; width: min(560px, calc(100vw - 48px));
+  /* Dos columnas si entran (≥ ~500 px), una si no; con poca altura, scroll en vez de quedar cortado */
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 20px;
+  max-height: min(70vh, 640px); overflow-y: auto; overscroll-behavior: contain;
   padding: 14px 16px; border-radius: var(--radius-lg, 16px); background: var(--surface, #fff);
   border: 2px solid var(--border-sport, rgba(32, 75, 34, .28)); box-shadow: var(--shadow-elevation);
   font-size: 13px; color: var(--text-secondary, #3b4e33);
 }
+.shortcuts-pop.align-end { left: auto; right: 0; }
 .shortcuts-pop ul { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .shortcuts-pop p { margin: 6px 0 0; line-height: 1.4; }
 .shortcut-row { display: inline-block; min-width: 76px; font-weight: 700; color: var(--text-primary, #111d0e); }

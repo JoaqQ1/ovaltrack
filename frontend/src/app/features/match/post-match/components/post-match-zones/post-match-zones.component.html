@@ -35,9 +35,10 @@
             <div class="shortcuts">
               <button type="button" class="help-btn" data-testid="shortcuts-toggle"
                       aria-controls="zone-shortcuts" [attr.aria-expanded]="helpOpen()"
-                      aria-label="Ayuda" title="Ayuda" (click)="toggleHelp()">?</button>
+                      aria-label="Ayuda" title="Ayuda" (click)="toggleHelp($event)">?</button>
               @if (helpOpen()) {
-                <div id="zone-shortcuts" class="shortcuts-pop" data-testid="shortcuts-help" role="region" aria-label="Ayuda">
+                <div id="zone-shortcuts" class="shortcuts-pop" [class.align-end]="helpAlignEnd()" data-testid="shortcuts-help" role="region" aria-label="Ayuda">
+                  <div class="help-col">
                   <strong>Vista de la cancha</strong>
                   <p data-testid="relative-note">
                     Vista relativa a tu equipo: siempre atacás hacia la derecha. En el 2T marcá como si no hubiera cambio de lado.
@@ -50,6 +51,8 @@
                     <li>Un tramo no puede cruzar el entretiempo: partilo en uno hasta el 40′ y otro desde el 40′.</li>
                     <li>El tiempo añadido cuenta como minuto 40 (1T) y 80 (2T).</li>
                   </ul>
+                  </div>
+                  <div class="help-col">
                   <strong>Elegir zona con el teclado</strong>
                   <ul>
                     @for (row of shortcutHelp; track row.rowName) {
@@ -65,6 +68,7 @@
                     <li><kbd>Esc</kbd> deshace una cosa por vez: el arrastre, el foco en un campo o la selección.</li>
                   </ul>
                   <p><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> guarda el tramo, también escribiendo un minuto. Con el foco en un campo, las flechas, Enter y las letras no hacen nada.</p>
+                  </div>
                 </div>
               }
             </div>

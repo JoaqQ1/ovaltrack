@@ -6,8 +6,12 @@ import { Possession } from '../../../types/live-capture.types';
 
 import { TemplateField } from '../../../types/event-type.types';
 import { EventPrefillHints } from '../../utils/event-prefill';
+import { toMatchTimeSeconds, validateEventTime } from '../../utils/event-time';
+import { formatTimeSeconds } from '../../utils/match-review.utils';
 
 export interface EventFormData {
+  /** Evento que se edita; sin id (alta) el formulario siempre toma los datos que recibe. */
+  eventId?: string;
   eventTypeId: string;
   teamPossession: Possession;
   playerId: string | null;
@@ -30,6 +34,12 @@ export class EventFormComponent {
 
   @Input() set initialData(data: EventFormData | null) {
     if (data) {
+      // Mientras haya cambios sin confirmar del mismo evento, los datos que llegan del store no pisan lo que se escribe
+      const sameEvent = data.eventId !== undefined && data.eventId === this.seededEventId;
+      if (sameEvent && this.hasUnsavedChanges && !this.matchesForm(data)) return;
+      this.seededEventId = data.eventId ?? null;
+      this.hasUnsavedChanges = false;
+      this.timeTouched.set(false);
       this.eventTypeId.set(data.eventTypeId || '');
       this.teamPossession.set(data.teamPossession || 'OWN');
       this.playerId.set(data.playerId || null);
@@ -54,6 +64,11 @@ export class EventFormComponent {
   @Input() disabled = false;
 
   @Output() formChange = new EventEmitter<EventFormData>();
+  /** El foco salió de los campos de tiempo: quien edita puede guardar sin esperar. */
+  @Output() timeCommit = new EventEmitter<void>();
+
+  private seededEventId: string | null = null;
+  private hasUnsavedChanges = false;
 
   readonly eventTypeId = signal<string>('');
   readonly teamPossession = signal<Possession>('OWN');
@@ -62,6 +77,25 @@ export class EventFormComponent {
   readonly minute = signal<number | null>(1);
   readonly second = signal<number | null>(0);
   readonly attributes = signal<Record<string, unknown>>({});
+  private readonly timeTouched = signal<boolean>(false);
+
+  /** Error del tiempo cargado; el minuto vacío del alta no se marca hasta que se toca un campo de tiempo. */
+  readonly timeError = computed<string | null>(() => {
+    if (!this.showTimeFields) return null;
+    if (this.minute() === null && !this.timeTouched()) return null;
+    return validateEventTime(this.period(), this.minute(), this.second());
+  });
+
+  readonly timeHelp = 'Minuto del partido (0–80). En el 2T podés escribir el minuto del tiempo (5) o el del partido (45): se guarda como 45′.';
+
+  /** Minuto del partido al que equivale lo escrito, solo en el 2T con minuto < 40 (la única ambigüedad posible). */
+  readonly matchTimeEquivalent = computed<string | null>(() => {
+    const minute = this.minute();
+    if (this.period() !== 2 || minute === null || minute < 0 || minute >= 40 || validateEventTime(2, minute, this.second()) !== null) {
+      return null;
+    }
+    return formatTimeSeconds(toMatchTimeSeconds(2, minute, this.second()));
+  });
 
   readonly currentTemplateFields = computed<TemplateField[]>(() => {
     const typeId = this.eventTypeId();
@@ -71,15 +105,10 @@ export class EventFormComponent {
   });
 
   private emitChange(): void {
-    const rawAttrs = this.attributes();
-    const cleanAttrs: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(rawAttrs)) {
-      if (v !== undefined && v !== null && v !== '') {
-        cleanAttrs[k] = v;
-      }
-    }
-
-    const isValid = !this.hasAnyInvalidField();
+    this.hasUnsavedChanges = true;
+    const cleanAttrs = cleanAttributes(this.attributes());
+    const isValid = !this.hasAnyInvalidField() &&
+      (!this.showTimeFields || validateEventTime(this.period(), this.minute(), this.second()) === null);
 
     this.formChange.emit({
       eventTypeId: this.eventTypeId(),
@@ -91,6 +120,30 @@ export class EventFormComponent {
       attributes: Object.keys(cleanAttrs).length > 0 ? cleanAttrs : null,
       isValid
     });
+  }
+
+  /** Los datos recibidos son los que muestra el formulario (el store ya confirmó lo escrito). */
+  private matchesForm(data: EventFormData): boolean {
+    return data.eventTypeId === this.eventTypeId() &&
+      data.teamPossession === this.teamPossession() &&
+      (data.playerId ?? null) === this.playerId() &&
+      (data.period === undefined || data.period === this.period()) &&
+      this.matchesFormTime(data) &&
+      sameAttributes(cleanAttributes(data.attributes ?? {}), cleanAttributes(this.attributes()));
+  }
+
+  /** Mismo instante de partido aunque se haya escrito distinto (5' del 2T se guarda y vuelve como 45'). */
+  private matchesFormTime(data: EventFormData): boolean {
+    if (data.minute === undefined) return true;
+    const minute = this.minute();
+    if (data.minute === null || minute === null) return data.minute === minute;
+    return toMatchTimeSeconds(this.period(), data.minute, data.second) === toMatchTimeSeconds(this.period(), minute, this.second());
+  }
+
+  onTimeFocusOut(event: FocusEvent, container: HTMLElement): void {
+    const next = event.relatedTarget as Node | null;
+    if (next && container.contains(next)) return;
+    this.timeCommit.emit();
   }
 
   isFieldInvalid(field: TemplateField): boolean {
@@ -195,32 +248,37 @@ export class EventFormComponent {
 
   onPeriodChange(p: 1 | 2): void {
     this.periodHint.set(null);
+    this.timeTouched.set(true);
     this.period.set(p);
     this.emitChange();
   }
 
   onMinuteChange(m: number | null): void {
     this.timeHint.set(null);
+    this.timeTouched.set(true);
     this.minute.set(m);
     this.emitChange();
   }
 
   onSecondChange(s: number | null): void {
     this.timeHint.set(null);
+    this.timeTouched.set(true);
     this.second.set(s);
     this.emitChange();
   }
+}
 
-  get formattedDisplayTime(): string {
-    const min = Math.max(0, Math.floor(this.minute() ?? 0));
-    const sec = Math.max(0, Math.min(59, Math.floor(this.second() ?? 0)));
-    return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+function cleanAttributes(raw: Record<string, unknown>): Record<string, unknown> {
+  const clean: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (v !== undefined && v !== null && v !== '') {
+      clean[k] = v;
+    }
   }
+  return clean;
+}
 
-  get formattedMatchTotalTime(): string {
-    const min = Math.max(0, Math.floor(this.minute() ?? 0));
-    const sec = Math.max(0, Math.min(59, Math.floor(this.second() ?? 0)));
-    const totalMin = this.period() === 2 ? (min < 40 ? 40 + min : min) : min;
-    return `${totalMin.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-  }
+function sameAttributes(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every(k => a[k] === b[k]);
 }

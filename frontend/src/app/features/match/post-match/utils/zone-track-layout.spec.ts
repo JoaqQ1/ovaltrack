@@ -1,7 +1,7 @@
 import { ZoneAssignmentResponse } from '../../types/zone.types';
 import { ZoneEvent } from './zone-stats';
 import {
-  FULL_TRACK, allGaps, blockLabel, blockLayout, isInWindow, trackWindow, countByFranja, gapAtMinute, gapsWithEventCount, isOutsidePeriodFilter, isShortBlock,
+  FULL_TRACK, allGaps, blockLabel, blockLayout, isInWindow, trackWindow, countByFranja, gapAtMinute, gapsWithEventCount, isShortBlock,
   minuteAtOffset, minuteToPercent, suggestNextRange, territoryRows
 } from './zone-track-layout';
 
@@ -198,15 +198,6 @@ describe('zone-track-layout', () => {
 
     it('si afterMinute cae dentro de un hueco, salta al siguiente hueco que arranca desde ahí', () => {
       expect(suggestNextRange(assignments, 7)).toEqual({ start: 25, end: 30 });
-    });
-  });
-
-  describe('isOutsidePeriodFilter', () => {
-    it('con "Todo" nada se atenúa; con 1T se atenúa el 2T y viceversa', () => {
-      expect(isOutsidePeriodFilter(1, 'ALL')).toBeFalse();
-      expect(isOutsidePeriodFilter(2, 1)).toBeTrue();
-      expect(isOutsidePeriodFilter(1, 1)).toBeFalse();
-      expect(isOutsidePeriodFilter(1, 2)).toBeTrue();
     });
   });
 });

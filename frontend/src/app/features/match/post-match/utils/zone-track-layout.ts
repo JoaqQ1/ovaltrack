@@ -133,8 +133,3 @@ export function gapsWithEventCount(assignments: ZoneAssignmentResponse[], events
     eventCount: eventsInRange({ period: gap.period, startMinute: gap.start, endMinute: gap.end }, events).length
   }));
 }
-
-/** Con el filtro de tiempo en 1T o 2T, la otra mitad de la grilla se atenúa. */
-export function isOutsidePeriodFilter(period: ZonePeriod, filter: ZonePeriodFilter): boolean {
-  return filter !== 'ALL' && filter !== period;
-}
