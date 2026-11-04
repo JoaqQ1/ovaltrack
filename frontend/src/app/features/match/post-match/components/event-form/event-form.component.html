@@ -60,59 +60,63 @@
     </div>
   </div>
 
-  <!-- 4. Campos Opcionales de Tiempo (Período y Minutos/Segundos) -->
-  <div *ngIf="showTimeFields" #timeFields (focusout)="onTimeFocusOut($event, timeFields)">
-    <div class="form-group mb-2">
-      <label class="form-label-sport">Período *
-        <span *ngIf="periodHint() as hint" class="prefill-hint">{{ hint }}</span>
-      </label>
-      <div class="possession-segmented">
-        <button type="button" 
-                class="possession-segment-btn" 
-                [class.active]="period() === 1"
-                (click)="onPeriodChange(1)"
-                [disabled]="disabled">
-          1° Tiempo
-        </button>
-        <button type="button" 
-                class="possession-segment-btn" 
-                [class.active]="period() === 2"
-                (click)="onPeriodChange(2)"
-                [disabled]="disabled">
-          2° Tiempo
-        </button>
-      </div>
+  <!-- 4. Período y tiempo: una fila (1T/2T + reloj mm:ss); la regla del 2T va en el "?" -->
+  <div *ngIf="showTimeFields" class="form-group mb-2" #timeFields (focusout)="onTimeFocusOut($event, timeFields)">
+    <div class="time-label-row">
+      <label class="form-label-sport mb-0">Período y tiempo *</label>
+      <button type="button" class="rule-help tip-start" data-testid="time-help"
+              [attr.aria-label]="timeHelp" [attr.data-tip]="timeHelp" [title]="timeHelp">?</button>
+      <span *ngIf="periodHint() as hint" class="prefill-hint">{{ hint }}</span>
+      <span *ngIf="timeHint() as hint" class="prefill-hint">{{ hint }}</span>
     </div>
 
-    <div class="row g-2">
-      <div class="col-6">
-        <label class="form-label-sport">Minuto (0-40)
-          <span *ngIf="timeHint() as hint" class="prefill-hint">{{ hint }}</span>
-        </label>
-        <input type="number" 
-               class="form-control custom-sport-input"
+    <div class="time-row">
+      <div class="possession-segmented time-period">
+        <button type="button"
+                class="possession-segment-btn"
+                [class.active]="period() === 1"
+                aria-label="1° Tiempo"
+                (click)="onPeriodChange(1)"
+                [disabled]="disabled">
+          1T
+        </button>
+        <button type="button"
+                class="possession-segment-btn"
+                [class.active]="period() === 2"
+                aria-label="2° Tiempo"
+                (click)="onPeriodChange(2)"
+                [disabled]="disabled">
+          2T
+        </button>
+      </div>
+
+      <div class="time-clock">
+        <input type="number"
+               class="form-control custom-sport-input time-input"
                [class.is-invalid]="timeError()"
                [ngModel]="minute()"
                (ngModelChange)="onMinuteChange($event)"
+               inputmode="numeric"
                min="0"
                max="80"
+               placeholder="mm"
+               aria-label="Minuto"
                [disabled]="disabled">
-      </div>
-      <div class="col-6">
-        <label class="form-label-sport">Segundo (0-59)</label>
-        <input type="number" 
-               class="form-control custom-sport-input"
+        <span class="time-colon" aria-hidden="true">:</span>
+        <input type="number"
+               class="form-control custom-sport-input time-input"
                [ngModel]="second()"
                (ngModelChange)="onSecondChange($event)"
+               inputmode="numeric"
                min="0"
                max="59"
+               placeholder="ss"
+               aria-label="Segundo"
                [disabled]="disabled">
       </div>
     </div>
-    <div class="mt-1 small text-muted">
-      <span *ngIf="period() === 1">Tiempo de juego: 1T {{ formattedDisplayTime }} (máx. 40 min)</span>
-      <span *ngIf="period() === 2">Tiempo de juego: 2T {{ formattedDisplayTime }} &bull; Equivale al <strong>minuto {{ formattedMatchTotalTime }}</strong> de partido</span>
-    </div>
+
+    <div class="time-equivalent" *ngIf="matchTimeEquivalent() as equivalent">= {{ equivalent }} de partido</div>
     <div class="invalid-feedback-sport" *ngIf="timeError() as error">
       <i class="bi bi-exclamation-circle-fill"></i>
       <span>{{ error }}</span>

@@ -151,3 +151,26 @@
   font-weight: 600;
   color: var(--text-secondary, #3b4e33);
 }
+
+/* Período y tiempo en una fila: 1T/2T a la izquierda, reloj mm:ss a la derecha (inputs de 44 px de alto) */
+.time-label-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.time-row { display: flex; align-items: center; gap: 10px; }
+.time-period { flex: 1; min-width: 0; }
+.time-period .possession-segment-btn { min-height: 38px; }
+.time-clock { display: flex; align-items: center; gap: 4px; }
+.time-input {
+  width: 56px;
+  min-height: 44px;
+  padding: 0 4px;
+  text-align: center;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 1rem;
+  font-weight: 600;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.time-input::-webkit-outer-spin-button,
+.time-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.time-colon { font: 700 1.1rem var(--font-mono, monospace); color: var(--text-secondary, #3b4e33); }
+.time-equivalent { margin-top: 4px; font-size: 0.75rem; color: var(--text-secondary, #3b4e33); }
+

@@ -7,6 +7,7 @@ import { Possession } from '../../../types/live-capture.types';
 import { TemplateField } from '../../../types/event-type.types';
 import { EventPrefillHints } from '../../utils/event-prefill';
 import { toMatchTimeSeconds, validateEventTime } from '../../utils/event-time';
+import { formatTimeSeconds } from '../../utils/match-review.utils';
 
 export interface EventFormData {
   /** Evento que se edita; sin id (alta) el formulario siempre toma los datos que recibe. */
@@ -83,6 +84,17 @@ export class EventFormComponent {
     if (!this.showTimeFields) return null;
     if (this.minute() === null && !this.timeTouched()) return null;
     return validateEventTime(this.period(), this.minute(), this.second());
+  });
+
+  readonly timeHelp = 'Minuto del partido (0–80). En el 2T podés escribir el minuto del tiempo (5) o el del partido (45): se guarda como 45′.';
+
+  /** Minuto del partido al que equivale lo escrito, solo en el 2T con minuto < 40 (la única ambigüedad posible). */
+  readonly matchTimeEquivalent = computed<string | null>(() => {
+    const minute = this.minute();
+    if (this.period() !== 2 || minute === null || minute < 0 || minute >= 40 || validateEventTime(2, minute, this.second()) !== null) {
+      return null;
+    }
+    return formatTimeSeconds(toMatchTimeSeconds(2, minute, this.second()));
   });
 
   readonly currentTemplateFields = computed<TemplateField[]>(() => {
@@ -253,19 +265,6 @@ export class EventFormComponent {
     this.timeTouched.set(true);
     this.second.set(s);
     this.emitChange();
-  }
-
-  get formattedDisplayTime(): string {
-    const min = Math.max(0, Math.floor(this.minute() ?? 0));
-    const sec = Math.max(0, Math.min(59, Math.floor(this.second() ?? 0)));
-    return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-  }
-
-  get formattedMatchTotalTime(): string {
-    const min = Math.max(0, Math.floor(this.minute() ?? 0));
-    const sec = Math.max(0, Math.min(59, Math.floor(this.second() ?? 0)));
-    const totalMin = this.period() === 2 ? (min < 40 ? 40 + min : min) : min;
-    return `${totalMin.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   }
 }
 
