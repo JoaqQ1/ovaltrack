@@ -7,6 +7,7 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
 import { SyncManagerService } from './core/synchronization/SyncManagerService';
 import { LayoutService } from './core/services/layout.service';
+import { NavbarModeService } from './core/navigation/navbar-mode.service';
 
 interface PingResponse {
   status: string;
@@ -24,6 +25,7 @@ export class AppComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
   readonly layout = inject(LayoutService);
+  readonly navbarMode = inject(NavbarModeService);
 
   isConnected = false;
   statusMessage = 'Intentando conectar con el backend...';
@@ -40,8 +42,7 @@ export class AppComponent {
   }
 
   get showNavbar(): boolean {
-    const url = this.currentUrl();
-    return !url.includes('/live-capture');
+    return !this.navbarMode.isHidden();
   }
 
   ngOnInit(): void {

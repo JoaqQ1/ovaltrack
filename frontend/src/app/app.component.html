@@ -1,5 +1,5 @@
 <app-toast-container />
-<div class="app-shell" [class.layout-wide]="layout.isWide()">
+<div class="app-shell" [class.layout-wide]="layout.isWide()" [class.navbar-compact]="navbarMode.isCompact()">
   @if (showNavbar) {
     <app-navbar />
   }

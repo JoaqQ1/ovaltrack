@@ -44,7 +44,8 @@ export const routes: Routes = [
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
-            preload: true
+            preload: true,
+            navbar: 'hidden'
         },
         loadComponent: () =>
             import('./features/match/halftime-summary/halftime-summary.component').then(
@@ -57,7 +58,8 @@ export const routes: Routes = [
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
-            preload: true
+            preload: true,
+            navbar: 'hidden'
         },
         loadComponent: () =>
             import('./features/match/carga-en-vivo/carga-en-vivo.component').then(
@@ -202,7 +204,8 @@ export const routes: Routes = [
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
-            preload: true
+            preload: true,
+            navbar: 'compact'
         },
         loadComponent: () =>
             import('./features/match/post-match/post-match-shell.component').then(
