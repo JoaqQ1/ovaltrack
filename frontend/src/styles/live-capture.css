@@ -421,11 +421,6 @@
   color: var(--ot-possession-own-fg);
 }
 
-.possession-bar__btn--neutral.is-active {
-  background: var(--ot-possession-neutral);
-  color: var(--ot-possession-neutral-fg);
-}
-
 .possession-bar__btn--opponent.is-active {
   background: var(--ot-possession-rival);
   color: var(--ot-possession-rival-fg);

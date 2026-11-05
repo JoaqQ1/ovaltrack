@@ -232,7 +232,7 @@ export class EventFormComponent {
     return this.attributes()[key] ?? null;
   }
 
-  onPossessionChange(pos: Possession): void {
+  onPossessionChange(pos: 'OWN' | 'OPPONENT'): void {
     this.teamPossession.set(pos);
     if (pos === 'OPPONENT') {
       this.playerId.set(null);
