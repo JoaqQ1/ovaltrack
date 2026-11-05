@@ -82,7 +82,7 @@ Variables en `.env` (ignorado por git): `DB_*`, `OVALTRACK_BOOTSTRAP_ADMIN_EMAIL
 - **Offline-first**: Dexie/IndexedDB (`features/local-database`, `LocalDatabaseService`) + `core/synchronization` (`ActiveMatchPullService`, `PendingEventSyncService`, `PendingMatchMutationSyncService`, `SyncManagerService`). Requisito crítico: **0% de pérdida de eventos**. No tocar orden de guardado/timestamps/conflictos "de paso".
 - Post-match: `features/match/post-match/` con `store/match-review.store.ts` (estado centralizado), componentes `event-form` (compartido entre modal e inspector), `post-match-{header,kpi-strip,timeline,table,panel,statistics,create-modal}`. Virtual scroll CDK + `ResizeObserver`.
 - Notificaciones: **siempre `ToastService`** (`success/error/warning/info`); nunca `window.alert()` ni librerías externas.
-- Rutas principales: `/home`, `/auth/*`, `/club`, `/club/new`, `/divisions`, `/divisions/new`, `/divisions/:id/players|coaches`, `/players/new`, `/members`, `/match-selection`, `/match-history`, `/opponent`, `/selection-roster/:id`, `/live-capture/:matchId`, `/live-capture/:matchId/halftime`, `/post-match/:id`, `/post-match/:id/statistics`, `/invitation`, `/admin/ovaltrack`.
+- Rutas principales: `/home`, `/auth/*`, `/club`, `/club/new`, `/divisions`, `/divisions/new`, `/divisions/:id/players|coaches`, `/players/new`, `/members`, `/match-selection`, `/opponent`, `/selection-roster/:id`, `/live-capture/:matchId`, `/live-capture/:matchId/halftime`, `/post-match/:id`, `/post-match/:id/statistics`, `/invitation`, `/admin/ovaltrack`.
 
 ## 5. UI / Design System "Sport Pro Salvia"
 
