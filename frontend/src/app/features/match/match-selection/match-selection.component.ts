@@ -58,7 +58,7 @@ export class MatchSelectComponent implements OnInit {
   private readonly toastService = inject(ToastService);
 
   /** Filtros disponibles, en el orden en que se renderizan en el control segmentado, menos el finalizado. */
-  readonly filters = MATCH_FILTERS.filter(f => f !== 'finished');
+  readonly filters = MATCH_FILTERS;
   readonly statusLabels = MATCH_STATUS_LABELS;
 
   matches: Match[] = [];
@@ -85,6 +85,7 @@ export class MatchSelectComponent implements OnInit {
   isPickerOpen = false;
   isDayModalOpen = false;
   isYearView = false;
+  isCalendarView = false;
   pickerYear = new Date().getFullYear();
   readonly monthsShort = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   selectedMonth: string = '';
@@ -188,14 +189,10 @@ export class MatchSelectComponent implements OnInit {
     // Solo cargamos las divisiones al iniciar. Los partidos se cargan después.
     this.loadUserDivisions();
   }
-
-  goToHistory() {
-    this.router.navigate(['/match-history']);
-  }
-
+  
   get visibleMatches(): Match[] {
-    // Filtramos los finalizados de la memoria (ahora viven en la otra pantalla)
-    let activeMatches = this.matches.filter(match => match.status !== 'finished');
+    // Ahora usamos el array completo, sin excluir los finalizados
+    let activeMatches = this.matches;
 
     if (this.activeFilter === 'all') {
       return activeMatches.filter(match => match.status !== 'cancelled');
@@ -216,9 +213,14 @@ export class MatchSelectComponent implements OnInit {
 
   setFilter(filter: MatchFilter): void {
     this.activeFilter = filter;
+    
+    // Si cambia de filtro a uno distinto de finalizados, ocultamos las tarjetas
+    if (filter !== 'finished') {
+      this.isCalendarView = false;
+    }
+    
     this.actualizarEventosCalendario(this.visibleMatches);
   }
-
   closeCreateModal(): void {
     this.isCreateOpen = false;
   }
@@ -676,5 +678,28 @@ export class MatchSelectComponent implements OnInit {
       case 'CANCELLED': return '#94a3b8';// Gris claro
       default: return '#1d3b20';
     }
+  }
+
+  goToDivisionStatistics() {
+    if (!this.selectedDivisionId) {
+      this.toastService.show('warning', 'Seleccioná una división para ver su reporte.', 'División requerida');
+      return;
+    }
+
+    this.router.navigate(['/division-statistics', this.selectedDivisionId]);
+  }
+
+  getDetailedStatusLabel(match: Match): string {
+    if (match.status === 'in_progress') return 'En progreso';
+    if (match.status === 'halftime') return 'Entretiempo';
+    if (match.status === 'cancelled') return 'Cancelado';
+    if (match.status === 'not_started' || match.status === 'empty_roster') return 'No iniciado';
+    
+    // Si está finalizado (o cualquier otro estado con score), calculamos el resultado
+    const home = match.homeScore || 0;
+    const away = match.awayScore || 0;
+    if (home > away) return 'Ganado';
+    if (home < away) return 'Perdido';
+    return 'Empatado';
   }
 }

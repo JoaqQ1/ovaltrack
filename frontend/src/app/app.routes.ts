@@ -8,7 +8,6 @@ import { DivisionCoachListComponent } from './features/division-coach/division-c
 import { hasRoleGuard } from './core/guards/has-role.guard';
 import { hasClubGuard } from './core/guards/has-club.guard';
 import { DivisionPlayerListComponent } from './features/division-player/list/division-player-list.component';
-import { MatchHistoryComponent } from './features/match/match-history/match-history.component';
 import { OpponentManagerComponent } from './features/match/opponents/opponent-manager.component';
 
 
@@ -238,15 +237,6 @@ export const routes: Routes = [
             import('./features/invitation/invitation.component').then(
                 c => c.InvitationComponent
             )
-    },
-    {
-        path: 'match-history',
-        canMatch: [authGuard],
-        canActivate: [hasRoleGuard, hasClubGuard],
-        data: {
-            roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST']
-        },
-        component: MatchHistoryComponent
     },
     {
         path: 'opponent',

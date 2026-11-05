@@ -60,7 +60,7 @@ export class PostMatchShellComponent {
   }
 
   goBack(): void {
-    this.router.navigate(['/match-history']);
+    this.router.navigate(['/match-selection']);
   }
 
   /** Datos de la ruta hija activa (la más profunda del árbol de rutas). */
