@@ -97,6 +97,17 @@
   }
 }
 
+/* Celular: reserva el lugar de la barra inferior flotante (y de la píldora de partido en vivo) */
+@media (max-width: 700px) {
+  .app-shell:has(app-mobile-tab-bar) {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+
+  .app-shell:has(app-mobile-tab-bar app-nav-live-match) {
+    padding-bottom: calc(140px + env(safe-area-inset-bottom));
+  }
+}
+
 @media (max-width: 768px) {
   :root {
     --layout-pad: 16px;

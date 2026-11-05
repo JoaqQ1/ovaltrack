@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -6,14 +6,17 @@ import { isModuleActive } from '../../../../core/navigation/is-module-active';
 import { NavigationModulesService } from '../../../../core/navigation/navigation-modules.service';
 import { NavModule } from '../../../../core/navigation/navigation.types';
 
-/** Lista de módulos del rol actual, con el de la pantalla actual resaltado. */
+/**
+ * Lista de módulos del rol actual, con el de la pantalla actual resaltado.
+ * `top` es la fila de la barra superior; `bottom` es la barra inferior del celular (icono sobre texto).
+ */
 @Component({
   selector: 'app-nav-modules',
   standalone: true,
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <ul class="modules">
+    <ul class="modules" [class.modules--bottom]="variant() === 'bottom'" [class.modules--icons]="iconOnly()">
       @for (module of modules(); track module.id) {
         <li>
           <a
@@ -33,6 +36,9 @@ import { NavModule } from '../../../../core/navigation/navigation.types';
 })
 export class NavModulesComponent {
   private readonly router = inject(Router);
+  readonly variant = input<'top' | 'bottom'>('top');
+  /** Solo íconos (el texto sigue disponible para lectores de pantalla): barra inferior compactada. */
+  readonly iconOnly = input(false);
   readonly modules = inject(NavigationModulesService).modules;
 
   private readonly url = toSignal(

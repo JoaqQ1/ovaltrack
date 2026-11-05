@@ -16,7 +16,7 @@
 
       <div class="navbar-status">
         @if (liveMatch(); as match) {
-          <app-nav-live-match [match]="match" />
+          <app-nav-live-match class="top-live" [match]="match" />
         }
         <app-nav-sync-status [status]="syncStatus()" (activate)="userMenu.open()" />
         <app-user-menu #userMenu />
@@ -41,3 +41,7 @@
     }
   </nav>
 </header>
+
+@if (currentUser() && !navbarMode.isCompact()) {
+  <app-mobile-tab-bar [liveMatch]="liveMatch()" />
+}

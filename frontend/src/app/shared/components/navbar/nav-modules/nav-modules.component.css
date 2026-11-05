@@ -60,6 +60,20 @@
   }
 }
 
+/* Tablet vertical: más compactos para que los cinco entren desde 701px */
+@media (max-width: 860px) {
+  .modules {
+    gap: 2px;
+  }
+
+  .module {
+    min-width: 44px;
+    justify-content: center;
+    padding: 0 6px;
+    font-size: 13px;
+  }
+}
+
 @media (pointer: coarse) {
   .module {
     height: 48px;
@@ -70,4 +84,44 @@
   .module {
     transition: none;
   }
+}
+
+/* Barra inferior del celular: ícono sobre texto, columnas iguales */
+.modules--bottom {
+  width: 100%;
+  gap: 2px;
+}
+
+.modules--bottom li {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.modules--bottom .module {
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  height: 52px;
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.modules--bottom .module i {
+  display: block;
+  font-size: 19px;
+}
+
+/* Compactada al bajar: solo íconos, el texto queda para lectores de pantalla */
+.modules--icons .module {
+  height: 44px;
+}
+
+.modules--icons .module span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }

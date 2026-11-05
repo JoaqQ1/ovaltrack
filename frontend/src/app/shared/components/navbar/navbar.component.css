@@ -59,13 +59,8 @@
 }
 
 .navbar-modules {
-  flex: 1 1 auto;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.navbar-modules::-webkit-scrollbar {
-  display: none;
+  /* Los módulos no se encogen: nunca quedan cortados ("Mi" en vez de "Miembros") */
+  flex: none;
 }
 
 /* El logo y el avatar quedan en el mismo lugar en todas las pantallas */
@@ -105,6 +100,47 @@
   .brand-icon {
     width: 112px;
     height: 28px;
+  }
+}
+
+/* Tablet vertical: se compacta el resto de la barra para que los módulos entren completos */
+@media (max-width: 860px) {
+  .navbar-global,
+  .navbar-status {
+    gap: 8px;
+  }
+
+  .navbar-status {
+    gap: 6px;
+  }
+
+  .brand-icon {
+    width: 96px;
+    height: 24px;
+  }
+}
+
+/* Celular: los módulos van en la barra inferior y el partido en vivo sobre ella */
+@media (max-width: 700px) {
+  .navbar-modules,
+  .top-live {
+    display: none;
+  }
+
+  .navbar-global {
+    gap: 8px;
+  }
+
+  /* Post-partido en celular: no hay barra inferior; el partido en vivo pasa a la barra superior */
+  :host-context(.navbar-compact) .top-live {
+    display: inline-flex;
+  }
+}
+
+/* Pantalla muy angosta: en post-partido se oculta el partido en vivo para que entre la barra */
+@media (max-width: 360px) {
+  :host-context(.navbar-compact) .top-live {
+    display: none;
   }
 }
 
