@@ -226,39 +226,6 @@
   font-weight: 700;
 }
 
-.logout-confirm {
-  padding: 10px 12px;
-  border: 1px solid var(--error-border);
-  border-radius: var(--radius-md, 10px);
-  background: var(--error-tint);
-  font-size: 12.5px;
-}
-
-.logout-confirm p {
-  margin: 0 0 10px;
-  color: var(--text-primary);
-}
-
-.logout-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.logout-actions button {
-  flex: 1;
-  min-height: 44px;
-  padding: 0 10px;
-  font-size: 13px;
-}
-
-.btn-danger {
-  border: 1px solid var(--error);
-  border-radius: 10px;
-  background: var(--error);
-  color: #ffffff;
-  font-weight: 700;
-}
-
 /* Tablet vertical y celular: la flecha del avatar no aporta y ocupa ~18px */
 @media (max-width: 860px) {
   .avatar-caret {

@@ -7,7 +7,9 @@ import { ROLE_META } from '../../../../features/members/types/members.types';
 import { getUserInitials } from '../../../../core/navigation/user-initials';
 import { SyncStatusSource } from '../../../../core/navigation/sync-status.source';
 import { ThemeService } from '../../../../core/services/theme.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { UserContextService } from '../../../../core/services/user-context.service';
+import { LogoutConfirmDialogComponent } from './logout-confirm-dialog/logout-confirm-dialog.component';
 
 /** Ruta de "Mi perfil". Mientras sea `null` la opción no se muestra. */
 const PROFILE_ROUTE: string | null = null;
@@ -16,7 +18,7 @@ const PROFILE_ROUTE: string | null = null;
 @Component({
   selector: 'app-user-menu',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, LogoutConfirmDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-menu.component.html',
   styleUrl: './user-menu.component.css'
@@ -27,6 +29,7 @@ export class UserMenuComponent {
   private readonly authService = inject(AuthService);
   private readonly userContext = inject(UserContextService);
   private readonly syncSource = inject(SyncStatusSource);
+  private readonly toast = inject(ToastService);
   readonly themeService = inject(ThemeService);
 
   private readonly trigger = viewChild<ElementRef<HTMLButtonElement>>('trigger');
@@ -34,7 +37,8 @@ export class UserMenuComponent {
 
   readonly profileRoute = PROFILE_ROUTE;
   readonly isOpen = signal(false);
-  readonly confirmingLogout = signal(false);
+  readonly logoutDialogOpen = signal(false);
+  readonly logoutSyncFailed = signal(false);
   readonly syncStatus = this.syncSource.status;
 
   readonly email = computed(() => this.userContext.userContext()?.email ?? this.authService.currentUser()?.email ?? '');
@@ -47,6 +51,7 @@ export class UserMenuComponent {
   });
   readonly hasPending = computed(() => this.syncStatus().pendingCount > 0);
   readonly isSyncing = computed(() => this.syncStatus().state === 'syncing');
+  readonly isOnline = computed(() => this.syncStatus().state !== 'offline');
 
   /** Lo usa la barra para abrir el menú al tocar el aviso de sincronización. */
   open(): void {
@@ -64,28 +69,50 @@ export class UserMenuComponent {
 
   close(restoreFocus = true): void {
     this.isOpen.set(false);
-    this.confirmingLogout.set(false);
     if (restoreFocus) {
       this.trigger()?.nativeElement.focus();
     }
   }
 
-  retrySync(): void {
-    void this.syncSource.retry();
+  async retrySync(): Promise<void> {
+    const result = await this.syncSource.retry();
+    if (result === 'offline') {
+      this.toast.warning('Sin conexión: los cambios se enviarán al volver la red.');
+    } else if (result === 'incomplete') {
+      this.toast.warning('No se pudieron enviar todos los cambios. Se reintentará automáticamente.');
+    }
   }
 
   setTheme(theme: 'light' | 'dark'): void {
     this.themeService.setTheme(theme);
   }
 
-  /** Con eventos sin enviar pide confirmar antes de cerrar sesión. */
+  /** Siempre pide confirmar: sin conexión no se puede volver a iniciar sesión. */
   logout(): void {
-    if (this.hasPending() && !this.confirmingLogout()) {
-      this.confirmingLogout.set(true);
-      return;
-    }
     this.close(false);
+    this.logoutSyncFailed.set(false);
+    this.logoutDialogOpen.set(true);
+  }
+
+  cancelLogout(): void {
+    this.logoutDialogOpen.set(false);
+    this.trigger()?.nativeElement.focus();
+  }
+
+  confirmLogout(): void {
+    this.logoutDialogOpen.set(false);
     this.authService.logout();
+  }
+
+  /** Cierra sesión solo si se pudo enviar todo; si no, el diálogo queda abierto con el aviso. */
+  async syncAndLogout(): Promise<void> {
+    this.logoutSyncFailed.set(false);
+    const result = await this.syncSource.retry();
+    if (result === 'done') {
+      this.confirmLogout();
+    } else if (result === 'incomplete') {
+      this.logoutSyncFailed.set(true);
+    }
   }
 
   /** `pointerdown` (no `click`): así abrir el menú desde el aviso de sincronización no lo cierra al burbujear. */

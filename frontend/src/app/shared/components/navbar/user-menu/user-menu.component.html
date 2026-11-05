@@ -53,7 +53,7 @@
             <strong>Sin conexión</strong>
             <span>Los eventos se guardan en este dispositivo y se envían al volver la conexión.</span>
           } @else {
-            <strong>{{ syncStatus().pendingCount }} {{ syncStatus().pendingCount === 1 ? 'evento sin sincronizar' : 'eventos sin sincronizar' }}</strong>
+            <strong>{{ syncStatus().pendingCount }} {{ syncStatus().pendingCount === 1 ? 'cambio sin sincronizar' : 'cambios sin sincronizar' }}</strong>
             <span>Se envían solos, o podés reintentar ahora.</span>
           }
           @if (hasPending() && syncStatus().state !== 'offline') {
@@ -91,23 +91,21 @@
     </ul>
 
     <div class="logout-zone">
-      @if (confirmingLogout()) {
-        <div class="logout-confirm" role="alert">
-          <p>
-            <strong>Tenés {{ syncStatus().pendingCount }} {{ syncStatus().pendingCount === 1 ? 'evento sin enviar' : 'eventos sin enviar' }}.</strong>
-            Si cerrás sesión se guardan en este dispositivo y se envían al volver a iniciar sesión con conexión.
-          </p>
-          <div class="logout-actions">
-            <button type="button" class="btn-outline" (click)="confirmingLogout.set(false)">Cancelar</button>
-            <button type="button" class="btn-danger" (click)="logout()">Cerrar sesión igual</button>
-          </div>
-        </div>
-      } @else {
-        <button type="button" class="logout" (click)="logout()">
-          <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
-          <span>Cerrar sesión</span>
-        </button>
-      }
+      <button type="button" class="logout" (click)="logout()">
+        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+        <span>Cerrar sesión</span>
+      </button>
     </div>
   </div>
 }
+
+<app-logout-confirm-dialog
+  [open]="logoutDialogOpen()"
+  [pendingCount]="syncStatus().pendingCount"
+  [online]="isOnline()"
+  [syncing]="isSyncing()"
+  [syncFailed]="logoutSyncFailed()"
+  (cancel)="cancelLogout()"
+  (logout)="confirmLogout()"
+  (syncAndLogout)="syncAndLogout()"
+/>
