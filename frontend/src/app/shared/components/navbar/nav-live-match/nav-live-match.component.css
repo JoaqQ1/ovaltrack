@@ -1,0 +1,62 @@
+:host {
+  display: inline-flex;
+}
+
+.live {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--score-pill-bg);
+  color: var(--score-pill-fg);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.live:hover {
+  filter: brightness(1.12);
+}
+
+/* Zona táctil de 48px sin agrandar la píldora */
+.live::after {
+  content: '';
+  position: absolute;
+  inset: -6px 0;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+.live-score {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* Tablet: solo marcador */
+@media (max-width: 1120px) {
+  .live-label {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    animation: none;
+  }
+}
