@@ -694,12 +694,6 @@
 	border-color: var(--green-500);
 }
 
-.possession-bar__btn--neutral.is-active {
-	background: var(--navy-700);
-	color: #FFFFFF;
-	border-color: var(--navy-700);
-}
-
 .possession-bar__btn--opponent.is-active {
 	background: var(--red-600);
 	color: #FFFFFF;

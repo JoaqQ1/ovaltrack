@@ -76,7 +76,8 @@ interface SlotView {
 /**
  * La vista breve de un evento que se muestra en el historial de la pantalla.
  */
-const POSSESSIONS: readonly Possession[] = ['OWN', 'NEUTRAL', 'OPPONENT'] as const;
+type SelectablePossession = 'OWN' | 'OPPONENT';
+const POSSESSIONS: readonly SelectablePossession[] = ['OWN', 'OPPONENT'] as const;
 /**
  * Pantalla de captura en vivo del partido.
  *
@@ -302,7 +303,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   * Cambia la posesión manualmente; los eventos guardan la posesión que tenían
   * al momento de registrarse.
    */
-  selectPossession(possession: Possession): void {
+  selectPossession(possession: SelectablePossession): void {
     if (!this.isStarted) {
       return;
     }

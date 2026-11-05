@@ -28,7 +28,7 @@ const eventType = (overrides: Partial<LiveCaptureEventType> = {}): LiveCaptureEv
   ...overrides,
 });
 
-const storedEvent = (id: string, eventTypeId: string, teamPossession: 'OWN' | 'OPPONENT' | 'NEUTRAL', sequence: number) => ({
+const storedEvent = (id: string, eventTypeId: string, teamPossession: 'OWN' | 'OPPONENT', sequence: number) => ({
   id, eventTypeId, matchId: 'match', playerId: null, teamPossession, matchTime: sequence * 10, realTime: null,
   period: 1, origin: 'live-capture', attributes: null, createdAt: '2026-09-14T12:00:00Z',
   synchronizedAt: null, localSequence: sequence,
@@ -136,6 +136,13 @@ describe('CargaEnVivoComponent', () => {
     expect(component.historyVisible).toBe(true);
   });
 
+  it('should offer only own and opponent possession controls', () => {
+    const buttons = fixture.nativeElement.querySelectorAll('.possession-bar__btn');
+
+    expect(buttons.length).toBe(2);
+    expect(Array.from(buttons, (button: Element) => button.textContent?.trim())).toEqual(['Propia', 'Rival']);
+  });
+
   it('should open the capture modal with a player step and cancel it without deleting an event', () => {
     component.isStarted = true;
     component.currentPossession = 'OWN';
@@ -228,15 +235,6 @@ describe('CargaEnVivoComponent', () => {
     component.onEventTap(eventType({ id: 'card', name: 'Amonestación', code: 'YELLOW_CARD', isScoring: false, points: 0, actor: 'CHOOSE' }));
 
     expect(component.capture?.canChooseTeam).toBe(true);
-  });
-
-  it('should ask for the team first on events without a player when possession is neutral', () => {
-    component.isStarted = true;
-    component.currentPossession = 'NEUTRAL';
-
-    component.onEventTap(eventType({ id: 'ruck', name: 'Ruck ofensivo', code: 'RUCK_OFFENSIVE', isScoring: false, points: 0, requiresPlayer: false }));
-
-    expect(component.captureStep?.kind).toBe('team');
   });
 
   it('should skip preset steps and resolve the follow-up team with the updated possession', () => {

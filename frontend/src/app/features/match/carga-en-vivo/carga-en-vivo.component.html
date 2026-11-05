@@ -163,14 +163,12 @@
             type="button"
             class="possession-bar__btn"
             [class.possession-bar__btn--own]="possession === 'OWN'"
-            [class.possession-bar__btn--neutral]="possession === 'NEUTRAL'"
             [class.possession-bar__btn--opponent]="possession === 'OPPONENT'"
             [class.is-active]="currentPossession === possession"
             [attr.aria-pressed]="currentPossession === possession"
             (click)="selectPossession(possession)"
             [disabled]="!isStarted">
-            {{ possession === 'OWN' ? 'Propia' : possession === 'OPPONENT' ?
-            'Rival' : 'Neutral' }}
+            {{ possession === 'OWN' ? 'Propia' : 'Rival' }}
         </button>
         }
     </footer>
