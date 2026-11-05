@@ -101,14 +101,11 @@
             </button>
           </div>
           <div class="tab-bar-end">
-            <div class="save-indicator">
+            <div class="save-indicator" aria-live="polite">
               <span *ngIf="saveStatus() === 'saved'" class="status-saved">
                 Guardado <i class="bi bi-check2"></i>
               </span>
-              <span *ngIf="saveStatus() === 'pending'" class="status-saving">
-                <i class="bi bi-hourglass-split me-1"></i> Cambios pendientes…
-              </span>
-              <span *ngIf="saveStatus() === 'saving'" class="status-saving">
+              <span *ngIf="saveStatus() === 'pending' || saveStatus() === 'saving'" class="status-saving">
                 <span class="spinner-border spinner-border-sm me-1"></span> Guardando...
               </span>
               <span *ngIf="saveStatus() === 'error'" class="status-error">

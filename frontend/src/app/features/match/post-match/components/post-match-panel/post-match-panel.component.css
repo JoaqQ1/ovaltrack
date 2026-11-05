@@ -459,6 +459,8 @@
   font-weight: 600;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  min-width: 88px;
   min-height: 20px;
 }
 
@@ -471,14 +473,14 @@
 }
 
 .status-saving {
-  color: #854d0e;
+  color: var(--text-secondary);
   display: inline-flex;
   align-items: center;
   animation: saveStatusFadeIn 0.2s ease-in;
 }
 
 .status-error {
-  color: #b42318;
+  color: var(--error);
   display: inline-flex;
   align-items: center;
   animation: saveStatusFadeIn 0.2s ease-in;
