@@ -25,6 +25,15 @@ export interface LiveMatchSummary {
 
 export type SyncState = 'synced' | 'pending' | 'syncing' | 'offline';
 
+/**
+ * Resultado de "Sincronizar ahora":
+ * - `done`: no quedan cambios sin enviar.
+ * - `incomplete`: se intentó, pero quedan cambios (servidor caído, sesión vencida...).
+ * - `offline`: sin red; no se intentó.
+ * - `busy`: ya había un reintento en curso.
+ */
+export type SyncRetryResult = 'done' | 'incomplete' | 'offline' | 'busy';
+
 export interface SyncStatus {
   state: SyncState;
   pendingCount: number;

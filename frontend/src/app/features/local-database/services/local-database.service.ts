@@ -7,6 +7,16 @@ import { Division } from '../../division/types/division.types';
 import { AvailablePlayer, SavedRoster } from '../../match/types/roster.types';
 import { UserContext } from '../../auth/types/auth.types';
 
+/**
+ * Evento que la sincronización todavía tiene que enviar: sin sincronizar, no rechazado por el servidor,
+ * y activo o borrado localmente después de existir en el backend.
+ */
+function isPendingEvent(event: LocalMatchEvent): boolean {
+  return event.synchronizedAt === null
+    && !event.syncFailedAt
+    && (event.active || event.backendEventId != null);
+}
+
 @Injectable({ providedIn: 'root' })
 export class LocalDatabaseService {
 
@@ -293,10 +303,20 @@ export class LocalDatabaseService {
       : liveCaptureDatabase.events.toCollection();
 
     return eventsQuery.toArray().then(events => events
-      .filter(event => event.synchronizedAt === null
-        && !event.syncFailedAt
-        && (event.active || event.backendEventId != null))
+      .filter(isPendingEvent)
       .sort((first, second) => first.localSequence - second.localSequence));
+  }
+
+  /**
+   * Cambios locales que la sincronización todavía tiene que enviar: eventos pendientes y transiciones de partido.
+   * Solo lectura; dentro de un `liveQuery` de Dexie se vuelve a calcular cuando cambian esas tablas.
+   */
+  async countPendingChanges(): Promise<number> {
+    const [pendingEvents, pendingMutations] = await Promise.all([
+      liveCaptureDatabase.events.filter(isPendingEvent).count(),
+      matchDatabase.pendingMatchMutations.count(),
+    ]);
+    return pendingEvents + pendingMutations;
   }
 
   async clearCachedDataOnLogout(): Promise<number> {
