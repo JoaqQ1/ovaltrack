@@ -91,7 +91,7 @@
   text-decoration: none;
 }
 
-/* Sin usuario no hay módulos: el logo no necesita el nombre del club */
+/* Notebook chica y tablet: sin nombre del club bajo el logo y logo más chico, para dejar lugar a los módulos */
 @media (max-width: 1120px) {
   .brand-subtitle {
     display: none;
