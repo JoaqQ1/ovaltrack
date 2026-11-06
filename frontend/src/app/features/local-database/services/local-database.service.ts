@@ -319,6 +319,10 @@ export class LocalDatabaseService {
     return pendingEvents + pendingMutations;
   }
 
+  /**
+   * Borra la caché de la sesión y conserva lo que no está en el backend (incluidos los rechazados).
+   * @returns los cambios que todavía se van a enviar; los rechazados no cuentan porque no se reintentan.
+   */
   async clearCachedDataOnLogout(): Promise<number> {
     await Promise.all([
       matchDatabase.userContexts.clear(),
@@ -333,11 +337,7 @@ export class LocalDatabaseService {
         .delete(),
     ]);
 
-    const [pendingEvents, pendingMutations] = await Promise.all([
-      liveCaptureDatabase.events.count(),
-      matchDatabase.pendingMatchMutations.count(),
-    ]);
-    return pendingEvents + pendingMutations;
+    return this.countPendingChanges();
   }
 
   deleteMatchData(matchId: string): Promise<void> {
