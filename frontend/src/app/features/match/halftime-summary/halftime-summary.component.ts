@@ -244,4 +244,8 @@ export class HalftimeSummaryComponent implements OnInit {
       },
     };
   }
+
+  goToMatchSelection() {
+    this.router?.navigate(['/match-selection']);
+  }
 }

@@ -111,7 +111,7 @@ describe('LocalDatabaseService (eventos)', () => {
   });
 
   describe('clearCachedDataOnLogout', () => {
-    it('borra la caché pero conserva eventos y mutaciones sin sincronizar', async () => {
+    it('borra la caché, conserva eventos sin sincronizar y no cuenta los rechazados', async () => {
       await cache.saveMatches([buildMatch()]);
       await cache.saveRoster('match-1', {
         startingPlayers: [
@@ -128,13 +128,33 @@ describe('LocalDatabaseService (eventos)', () => {
 
       const kept = await cache.clearCachedDataOnLogout();
 
-      expect(kept).toBe(3);
+      expect(kept).withContext('el rechazado se conserva pero no se reenvía').toBe(2);
       expect(await cache.getMatch('match-1')).toBeUndefined();
       expect(await cache.getRoster('match-1')).toBeUndefined();
       expect(await cache.getEventTypes()).toEqual([]);
       const { events } = await cache.getStatusData('match-1');
       expect(events.map(event => event.id).sort()).toEqual(['failed', 'pending']);
       expect((await cache.getPendingMatchMutations()).length).toBe(1);
+    });
+  });
+
+  describe('countPendingChanges', () => {
+    it('cuenta eventos pendientes y transiciones de partido, sin sincronizados ni rechazados', async () => {
+      await cache.saveEvent(buildLocalEvent({ id: 'synced', backendEventId: 'b-1', synchronizedAt: '2026-10-23T15:00:05' }));
+      await cache.saveEvent(buildLocalEvent({ id: 'pending', localSequence: 2 }));
+      await cache.saveEvent(buildLocalEvent({ id: 'failed', localSequence: 3, syncFailedAt: '2026-10-23T15:01:00' }));
+      await cache.saveEvent(buildLocalEvent({ id: 'discarded', localSequence: 4, active: false }));
+      await cache.saveEvent(buildLocalEvent({ id: 'pending-deletion', localSequence: 5, active: false, backendEventId: 'b-5' }));
+      await cache.savePendingMatchMutation({ id: 'match-1-latest', matchId: 'match-1', action: 'finish', createdAt: 1 });
+
+      expect(await cache.countPendingChanges()).toBe(3);
+    });
+
+    it('coincide con getPendingEvents cuando no hay transiciones pendientes', async () => {
+      await cache.saveEvent(buildLocalEvent({ id: 'a' }));
+      await cache.saveEvent(buildLocalEvent({ id: 'b', localSequence: 2, matchId: 'match-2' }));
+
+      expect(await cache.countPendingChanges()).toBe((await cache.getPendingEvents()).length);
     });
   });
 });

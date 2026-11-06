@@ -16,6 +16,14 @@
             <button
                 type="button"
                 class="btn btn--outline"
+                (click)="goToMatchSelection()"
+                [attr.aria-label]="'Ir a seleccion de partidos'">
+                <i class="ti ti-arrow-left" aria-hidden="true"></i>
+                Selección de partidos
+            </button>
+            <button
+                type="button"
+                class="btn btn--outline"
                 (click)="openCurrentStatisticsModal()"
                 [attr.aria-label]="'Abrir estadísticas tácticas'">
                 <i class="ti ti-chart-bar" aria-hidden="true"></i>

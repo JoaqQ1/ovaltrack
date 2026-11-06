@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { guestGuard } from './core/guards/guest.guard';
 import { ClubDetailsComponent } from './features/club/club-details.component';
 import { DivisionFormComponent } from './features/division/division-form.component';
 import { DivisionListComponent } from './features/division/division-list.component';
@@ -35,6 +36,7 @@ export const routes: Routes = [
     },
     {
         path: 'auth',
+        canMatch: [guestGuard],
         loadChildren: () =>
             import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
     },
@@ -44,7 +46,8 @@ export const routes: Routes = [
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
-            preload: true
+            preload: true,
+            navbar: 'hidden'
         },
         loadComponent: () =>
             import('./features/match/halftime-summary/halftime-summary.component').then(
@@ -57,7 +60,8 @@ export const routes: Routes = [
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
-            preload: true
+            preload: true,
+            navbar: 'hidden'
         },
         loadComponent: () =>
             import('./features/match/carga-en-vivo/carga-en-vivo.component').then(
@@ -202,7 +206,8 @@ export const routes: Routes = [
         canActivate: [hasRoleGuard, hasClubGuard],
         data: {
             roles: ['ADMIN_OVALTRACK', 'ADMIN_CLUB', 'COACH_ANALYST'],
-            preload: true
+            preload: true,
+            navbar: 'compact'
         },
         loadComponent: () =>
             import('./features/match/post-match/post-match-shell.component').then(

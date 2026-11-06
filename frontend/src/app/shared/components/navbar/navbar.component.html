@@ -1,0 +1,50 @@
+<header class="navbar-wrapper">
+  <nav class="navbar-global" [class.public-nav]="!currentUser()" aria-label="Principal">
+    <a routerLink="/home" class="brand-link" aria-label="OvalTrack, ir al inicio">
+      <img
+        class="brand-icon"
+        [src]="logoSrc()"
+        alt=""
+      >
+      @if (currentUser() && clubName() && !navbarMode.isCompact()) {
+        <small class="brand-subtitle">{{ clubName() }}</small>
+      }
+    </a>
+
+    @if (currentUser()) {
+      <app-nav-modules class="navbar-modules" />
+
+      <div class="navbar-status">
+        @if (liveMatch(); as match) {
+          <app-nav-live-match class="top-live" [match]="match" />
+        }
+        <app-nav-sync-status [status]="syncStatus()" (activate)="userMenu.open()" />
+        <app-user-menu #userMenu />
+      </div>
+    } @else {
+      <div class="navbar-status">
+        <button
+          type="button"
+          class="theme-toggle"
+          (click)="themeService.toggleTheme()"
+          [attr.aria-label]="themeToggleLabel()"
+        >
+          <i class="bi" [class.bi-sun]="themeService.theme() === 'dark'" [class.bi-moon]="themeService.theme() === 'light'" aria-hidden="true"></i>
+        </button>
+        @if (isAuthPage()) {
+          <a routerLink="/home" class="btn btn-outline navbar-cta">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+            Volver al inicio
+          </a>
+        } @else {
+          <a routerLink="/auth/login" class="btn navbar-link">Iniciar sesión</a>
+          <a routerLink="/auth/register" class="btn btn-outline navbar-cta">Crear cuenta</a>
+        }
+      </div>
+    }
+  </nav>
+</header>
+
+@if (currentUser() && !navbarMode.isCompact()) {
+  <app-mobile-tab-bar [liveMatch]="liveMatch()" />
+}

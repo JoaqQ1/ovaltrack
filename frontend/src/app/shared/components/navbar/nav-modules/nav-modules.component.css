@@ -1,0 +1,127 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.modules {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.module {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: var(--radius-md, 10px);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.module:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.module.active {
+  background: var(--grass-tint-strong);
+  color: var(--grass-deep);
+}
+
+.module i {
+  font-size: 16px;
+}
+
+/* Tablet horizontal: 48px táctiles */
+@media (max-width: 1120px) {
+  .module {
+    height: 48px;
+  }
+}
+
+/* Tablet vertical: solo texto */
+@media (max-width: 959px) {
+  .module {
+    padding: 0 10px;
+  }
+
+  .module i {
+    display: none;
+  }
+}
+
+/* Tablet vertical: más compactos para que los cinco entren desde 701px */
+@media (max-width: 860px) {
+  .modules {
+    gap: 2px;
+  }
+
+  .module {
+    min-width: 44px;
+    justify-content: center;
+    padding: 0 6px;
+    font-size: 13px;
+  }
+}
+
+@media (pointer: coarse) {
+  .module {
+    height: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .module {
+    transition: none;
+  }
+}
+
+/* Barra inferior del celular: ícono sobre texto, columnas iguales */
+.modules--bottom {
+  width: 100%;
+  gap: 2px;
+}
+
+.modules--bottom li {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.modules--bottom .module {
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  height: 52px;
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.modules--bottom .module i {
+  display: block;
+  font-size: 19px;
+}
+
+/* Compactada al bajar: solo íconos, el texto queda para lectores de pantalla */
+.modules--icons .module {
+  height: 44px;
+}
+
+.modules--icons .module span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

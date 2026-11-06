@@ -12,7 +12,16 @@ Característica: Inicio de un partido programado
 
   Escenario: Un partido con plantel cargado se inicia correctamente
     Dado que el coach con email "felipe.conte@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Y que la division "Primera" no tiene partidos en curso
     Y que existe un partido contra "Trelew Rugby Club" para el "2027-06-12T15:30:00" en la division "Primera"
     Y el plantel del partido tiene como titulares a los jugadores de la division
     Cuando intenta iniciar el partido
     Entonces el sistema responde con 200 y devuelve el partido en estado "IN_PROGRESS" contra el rival "Trelew Rugby Club"
+
+  Escenario: No se puede iniciar un partido si la division ya tiene otro en curso
+    Dado que el coach con email "felipe.conte@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Y que la division "Primera" tiene un partido en curso contra "Bigornia Club"
+    Y que existe un partido contra "Trelew Rugby Club" para el "2027-06-19T15:30:00" en la division "Primera"
+    Y el plantel del partido tiene como titulares a los jugadores de la division
+    Cuando intenta iniciar el partido
+    Entonces el sistema responde con 409 y "La division ya tiene un partido en curso contra Bigornia Club. Finalizalo o cancelalo antes de iniciar otro."

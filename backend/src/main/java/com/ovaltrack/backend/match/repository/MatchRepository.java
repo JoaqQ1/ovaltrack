@@ -2,6 +2,7 @@ package com.ovaltrack.backend.match.repository;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -36,6 +37,19 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
         @Param("divisionId") UUID divisionId,
         @Param("overlapStart") LocalDateTime overlapStart,
         @Param("newEnd") LocalDateTime newEnd
+    );
+
+    @Query("""
+        SELECT m
+        FROM Match m
+        WHERE m.division.id = :divisionId
+        AND m.id <> :matchId
+        AND m.status IN (MatchStatus.IN_PROGRESS, MatchStatus.HALFTIME)
+        ORDER BY m.date
+    """)
+    List<Match> findOtherLiveMatchesInDivision(
+        @Param("divisionId") UUID divisionId,
+        @Param("matchId") UUID matchId
     );
 
     @Query("""

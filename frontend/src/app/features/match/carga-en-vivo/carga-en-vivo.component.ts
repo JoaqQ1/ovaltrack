@@ -24,6 +24,7 @@ import { buildInitialLineup, currentLineup, Lineup } from './lineup';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
+import { readSyncErrorMessage } from 'src/app/core/synchronization/sync-errors';
 
 type CaptureTeam = Team;
 
@@ -483,9 +484,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.synchronized = true;
         this.persistState();
       },
-      error: () => {
+      error: (error: unknown) => {
         this.isStartingMatch = false;
-        this.showError('No se pudo iniciar el partido. Inténtalo nuevamente.');
+        this.showError(readSyncErrorMessage(error) ?? 'No se pudo iniciar el partido. Inténtalo nuevamente.');
       },
     });
   }
@@ -1345,5 +1346,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       return;
     }
     this.followUpChooser = null;
+  }
+
+  goToMatchSelection() {
+    this.router?.navigate(['/match-selection']);
   }
 }
