@@ -118,6 +118,10 @@ public class EventService {
 		if (match.getStatus() == MatchStatus.CANCELLED) {
 			throw new BusinessException("No se puede asignar un evento a un partido cancelado");
 		}
+		if (match.getStatus() == MatchStatus.FINISHED
+				&& !Event.ORIGIN_POST_CAPTURE.equals(eventRequest.origin())) {
+			throw new BusinessException("No se puede cargar eventos en un partido finalizado fuera de post-partido");
+		}
 
 		if (authentication != null) {
 			matchSecurityValidator.validateCanManageMatch(match, authentication);
@@ -126,7 +130,7 @@ public class EventService {
 		validateMatchTimePeriod(eventRequest.period(), eventRequest.matchTime());
 		validatePlayerPossession(eventRequest.teamPossession(), eventRequest.playerId());
 
-		Person aPerson = resolveEventPlayer(eventRequest.playerId(), match);
+		Person aPerson = isSubstitution(aEventType) ? null : resolveEventPlayer(eventRequest.playerId(), match);
 
 		Event result = EventDTOMapper.toEntity(eventRequest, match, aEventType, aPerson);
 
@@ -135,6 +139,10 @@ public class EventService {
 		}
 
 		Event savedEvent = eventRepository.save(result);
+		if (isSubstitution(aEventType)) {
+			savedEvent.setPlayer(null);
+			matchService.recalculateLineup(match);
+		}
 		recalculateMatchScore(match);
 		return EventDTOMapper.toResponseDTO(savedEvent);
 	}
@@ -147,6 +155,10 @@ public class EventService {
 	/** Los cambios del rival no se validan: solo se registra el plantel propio. */
 	private boolean isOwnSubstitution(EventType eventType, EventPossession possession) {
 		return "SUBSTITUTION".equals(eventType.getCode()) && possession == EventPossession.OWN;
+	}
+
+	private boolean isSubstitution(EventType eventType) {
+		return eventType != null && "SUBSTITUTION".equals(eventType.getCode());
 	}
 
 		private Event findExistingClientEvent(UUID clientEventId, UUID matchId) {
@@ -200,6 +212,10 @@ public class EventService {
 		result.setActive(false);
 		result.setSynchronizedAt(LocalDateTime.now());
 		Event savedEvent = eventRepository.save(result);
+		if (isSubstitution(result.getEventType())) {
+			result.setPlayer(null);
+			matchService.recalculateLineup(result.getMatch());
+		}
 		recalculateMatchScore(result.getMatch());
 		return EventDTOMapper.toResponseDTO(savedEvent);
 	}
@@ -286,6 +302,8 @@ public class EventService {
 		}
 
 		if (effectivePossession == EventPossession.OPPONENT) {
+			event.setPlayer(null);
+		} else if (isSubstitution(event.getEventType())) {
 			event.setPlayer(null);
 		} else if (request.playerId() != null) {
 			Person person = resolveEventPlayer(request.playerId(), event.getMatch());

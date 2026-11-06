@@ -31,6 +31,7 @@ import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionPlayer;
 import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
 import com.ovaltrack.backend.event.domain.dto.EventDTOMapper;
+import com.ovaltrack.backend.event.domain.Event;
 import com.ovaltrack.backend.event.repository.EventRepository;
 import com.ovaltrack.backend.event.repository.EventTypeRepository;
 import com.ovaltrack.backend.match.domain.Match;
@@ -65,9 +66,6 @@ public class MatchService {
     private static final Logger logger = LoggerFactory.getLogger(MatchService.class);
 
     private static final int MATCH_DURATION_MINUTES = 90;
-    /** Los slots 1-15 son titulares; del 16 en adelante, suplentes. */
-    private static final int STARTER_SLOTS = 15;
-
     @Autowired
     private DivisionPlayerRepository divisionPlayerRepository;
 
@@ -395,13 +393,16 @@ public class MatchService {
         if (outgoing == incoming) {
             throw new BusinessException("El jugador que sale y el que entra deben ser distintos");
         }
+        if (outgoing.getFieldStatus() != null && outgoing.getFieldStatus() != MatchPlayerStatus.EN_CANCHA) {
+            throw new BusinessException("El jugador saliente no está en cancha");
+        }
+        if (incoming.getFieldStatus() != null && incoming.getFieldStatus() != MatchPlayerStatus.EN_BANCO) {
+            throw new BusinessException("El jugador entrante no está en banco");
+        }
     }
 
-    /**
-     * Busca por id de persona y, si falta, por número de slot (titulares 1-15,
-     * suplentes 16-23).
-     */
-    private MatchPlayer findRosterPlayer(Match match, Map<String, Object> attributes,
+    /** Busca por id de persona y, si falta, por número permanente del partido. */
+    public MatchPlayer findRosterPlayer(Match match, Map<String, Object> attributes,
             String idKey, String slotKey) {
         Object rawId = attributes.get(idKey);
         if (rawId instanceof String id) {
@@ -415,25 +416,84 @@ public class MatchService {
                     return byId;
                 }
             } catch (IllegalArgumentException ignored) {
-                // Eventos sin id válido: se resuelve por número de slot.
+                // Eventos sin id válido: se resuelve por número permanente.
             }
         }
 
-        int slot = readSlotNumber(attributes, slotKey);
-        MatchPlayerRole role = slot <= STARTER_SLOTS ? MatchPlayerRole.TITULAR : MatchPlayerRole.SUPLENTE;
-        int slotOrder = role == MatchPlayerRole.TITULAR ? slot - 1 : slot - STARTER_SLOTS - 1;
+        Integer number = readSlotNumber(attributes, slotKey);
+        if (number == null) {
+            return null;
+        }
         return match.getRoster().stream()
-                .filter(player -> player.getRole() == role && Integer.valueOf(slotOrder).equals(player.getSlotOrder()))
+                .filter(player -> number.equals(player.getNumber()))
                 .findFirst()
                 .orElse(null);
     }
 
-    private int readSlotNumber(Map<String, Object> attributes, String key) {
+    private Integer readSlotNumber(Map<String, Object> attributes, String key) {
         Object value = attributes.get(key);
+        if (value == null) {
+            return null;
+        }
         if (!(value instanceof Number number) || number.intValue() != number.doubleValue()) {
             throw new BusinessException("El campo " + key + " debe ser un número entero");
         }
+        if (number.intValue() <= 0) {
+            throw new BusinessException("El campo " + key + " debe ser un número positivo");
+        }
         return number.intValue();
+    }
+
+    /**
+     * Reconstruye y persiste la ubicación actual de cada jugador a partir de la
+     * formación inicial y las sustituciones propias activas.
+     */
+    @Transactional
+    public void recalculateLineup(Match match) {
+        if (match == null || match.getRoster() == null) {
+            return;
+        }
+
+        match.getRoster().forEach(player -> {
+            if (player.getRole() == MatchPlayerRole.TITULAR) {
+                player.setFieldStatus(MatchPlayerStatus.EN_CANCHA);
+                player.setFieldSlot(player.getSlotOrder() == null ? null : player.getSlotOrder() + 1);
+            } else {
+                player.setFieldStatus(MatchPlayerStatus.EN_BANCO);
+                player.setFieldSlot(null);
+            }
+        });
+
+        List<Event> substitutions = eventRepository.findEventsByMatchId(match.getId()).stream()
+                .filter(event -> event.getEventType() != null
+                        && "SUBSTITUTION".equals(event.getEventType().getCode())
+                        && event.getTeamPossession() == com.ovaltrack.backend.event.domain.EventPossession.OWN)
+                .sorted(Comparator
+                        .comparing(Event::getAbsoluteMatchTime, Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(Event::getRealTime, Comparator.nullsLast(LocalDateTime::compareTo))
+                        .thenComparing(Event::getCreatedAt, Comparator.nullsLast(LocalDateTime::compareTo)))
+                .toList();
+
+        for (Event event : substitutions) {
+            MatchPlayer outgoing = findRosterPlayer(match, event.getAttributes(), "playerOutId", "playerOutNumber");
+            MatchPlayer incoming = findRosterPlayer(match, event.getAttributes(), "playerInId", "playerInNumber");
+            if (outgoing == null || incoming == null || outgoing == incoming) {
+                throw new BusinessException("La sustitución requiere jugadores saliente y entrante válidos");
+            }
+            if (outgoing.getFieldStatus() != MatchPlayerStatus.EN_CANCHA) {
+                throw new BusinessException("El jugador saliente no está en cancha");
+            }
+            if (incoming.getFieldStatus() != MatchPlayerStatus.EN_BANCO) {
+                throw new BusinessException("El jugador entrante no está en banco");
+            }
+            Integer fieldSlot = outgoing.getFieldSlot();
+            outgoing.setFieldStatus(MatchPlayerStatus.EN_BANCO);
+            outgoing.setFieldSlot(null);
+            incoming.setFieldStatus(MatchPlayerStatus.EN_CANCHA);
+            incoming.setFieldSlot(fieldSlot);
+        }
+
+        matchPlayerRepository.saveAll(match.getRoster());
     }
 
     @Transactional(readOnly = true)
