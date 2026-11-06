@@ -289,6 +289,11 @@ export class LocalDatabaseService {
     ]).then(([state, events]) => ({ state, events }));
   }
 
+  /** Partidos que este dispositivo abrió en captura (solo lectura). */
+  getCaptureStates(): Promise<LiveCapturePersistedState[]> {
+    return liveCaptureDatabase.states.toArray();
+  }
+
   getEventsByMatch(matchId: string): Promise<LocalMatchEvent[]> {
     return liveCaptureDatabase.events
       .where('matchId')

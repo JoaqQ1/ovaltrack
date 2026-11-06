@@ -1,7 +1,7 @@
 import { Injectable, Signal, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
-import { filter, from, map, startWith, switchMap } from 'rxjs';
+import { filter, from, startWith, switchMap } from 'rxjs';
 import { LocalDatabaseService } from '../../features/local-database/services/local-database.service';
 import { MatchStatus } from '../../features/match/types/match.types';
 import { UserContextService } from '../services/user-context.service';
@@ -15,7 +15,9 @@ export abstract class LiveMatchSource {
 const LIVE_STATUSES: readonly MatchStatus[] = ['in_progress', 'halftime'];
 
 /**
- * Lee de Dexie (solo lectura) el partido en curso de las divisiones del usuario.
+ * Lee de Dexie (solo lectura) el partido que este dispositivo está capturando: el último estado de
+ * captura guardado cuyo partido sigue en curso. Los partidos en vivo que cargan otros dispositivos
+ * no se muestran, para no abrir una segunda captura del mismo partido.
  * Se refresca en cada navegación: el marcador solo cambia en la captura en vivo, que no muestra barra.
  */
 @Injectable()
@@ -39,15 +41,20 @@ export class DexieLiveMatchSource extends LiveMatchSource {
       return null;
     }
     try {
-      const matches = await this.cache.getMatchesByStatus(LIVE_STATUSES);
-      for (const match of matches) {
+      const states = (await this.cache.getCaptureStates()).sort((a, b) => b.savedAt - a.savedAt);
+      for (const state of states) {
+        const match = await this.cache.getMatch(state.matchId);
+        if (!match || !LIVE_STATUSES.includes(match.status)) {
+          continue;
+        }
         const division = divisions.find(candidate => candidate.id === match.divisionId);
         if (division) {
           return {
             matchId: match.id,
+            status: match.status as LiveMatchSummary['status'],
             divisionLabel: division.name,
-            homeScore: match.homeScore,
-            awayScore: match.awayScore,
+            homeScore: state.scoreboard?.home ?? match.homeScore,
+            awayScore: state.scoreboard?.away ?? match.awayScore,
           };
         }
       }

@@ -18,6 +18,7 @@ export interface NavModule {
 
 export interface LiveMatchSummary {
   matchId: string;
+  status: 'in_progress' | 'halftime';
   divisionLabel: string;
   homeScore: number;
   awayScore: number;
