@@ -84,6 +84,7 @@ public class MatchService {
     private final OpponentRepository opponentRepository;
     private final MatchSecurityValidator matchSecurityValidator;
     private final ApplicationEventPublisher eventPublisher;
+    private final LineupReplayer lineupReplayer;
 
     private final ClubService clubService;
 
@@ -151,6 +152,11 @@ public class MatchService {
 
     public Match findMatchEntityById(UUID matchId) {
         return matchRepository.findById(matchId).orElse(null);
+    }
+
+    @Transactional
+    public Match findMatchEntityByIdForUpdate(UUID matchId) {
+        return matchRepository.findByIdForUpdate(matchId).orElse(null);
     }
 
     @Transactional
@@ -251,10 +257,11 @@ public class MatchService {
     }
 
     private void validateRosterForStart(Match match) {
-        boolean hasTitular = getSavedRoster(match.getId()).getStartingPlayers().size() >= 1;
-        if (!hasTitular) {
-            throw new BusinessException(
-                    "No se puede iniciar el partido sin al menos un jugador titular registrado.");
+        long titularCount = match.getRoster().stream()
+                .filter(player -> player.getRole() == MatchPlayerRole.TITULAR)
+                .count();
+        if (titularCount != 15) {
+            throw new BusinessException("No se puede iniciar el partido sin los 15 titulares registrados.");
         }
     }
 
@@ -350,16 +357,17 @@ public class MatchService {
             if (!assignedPersonIds.add(personId)) {
                 throw new BusinessException("Un jugador no puede repetirse en el plantel");
             }
+            int order = slotOrder++;
             roster.add(MatchPlayer.builder()
                     .match(match)
                     .divisionPlayer(divisionPlayer)
                     .role(role)
-                    .slotOrder(slotOrder++)
+                    .slotOrder(order)
                     .number(number)
                     .fieldStatus(role == MatchPlayerRole.TITULAR
                             ? MatchPlayerStatus.EN_CANCHA
                             : MatchPlayerStatus.EN_BANCO)
-                    .fieldSlot(role == MatchPlayerRole.TITULAR ? slotOrder : null)
+                    .fieldSlot(role == MatchPlayerRole.TITULAR ? order + 1 : null)
                     .build());
         }
     }
@@ -379,26 +387,14 @@ public class MatchService {
      * orden, así un
      * cambio cargado offline o borrado después no deja el plantel desfasado.
      */
-    public void validateSubstitution(Match match, Map<String, Object> attributes) {
-        if (match == null || attributes == null) {
+    public void validateSubstitution(Match match, Event candidate) {
+        if (match == null || candidate == null) {
             throw new BusinessException("El cambio requiere jugadores de entrada y salida");
         }
-
-        MatchPlayer outgoing = findRosterPlayer(match, attributes, "playerOutId", "playerOutNumber");
-        MatchPlayer incoming = findRosterPlayer(match, attributes, "playerInId", "playerInNumber");
-
-        if (outgoing == null || incoming == null) {
-            throw new BusinessException("Los jugadores indicados no pertenecen al plantel del partido");
-        }
-        if (outgoing == incoming) {
-            throw new BusinessException("El jugador que sale y el que entra deben ser distintos");
-        }
-        if (outgoing.getFieldStatus() != null && outgoing.getFieldStatus() != MatchPlayerStatus.EN_CANCHA) {
-            throw new BusinessException("El jugador saliente no está en cancha");
-        }
-        if (incoming.getFieldStatus() != null && incoming.getFieldStatus() != MatchPlayerStatus.EN_BANCO) {
-            throw new BusinessException("El jugador entrante no está en banco");
-        }
+        List<Event> events = new ArrayList<>(eventRepository.findEventsByMatchId(match.getId()));
+        events.removeIf(event -> event.getId() != null && event.getId().equals(candidate.getId()));
+        events.add(candidate);
+        lineupReplayer.replay(match, events);
     }
 
     /** Busca por id de persona y, si falta, por número permanente del partido. */
@@ -453,46 +449,7 @@ public class MatchService {
         if (match == null || match.getRoster() == null) {
             return;
         }
-
-        match.getRoster().forEach(player -> {
-            if (player.getRole() == MatchPlayerRole.TITULAR) {
-                player.setFieldStatus(MatchPlayerStatus.EN_CANCHA);
-                player.setFieldSlot(player.getSlotOrder() == null ? null : player.getSlotOrder() + 1);
-            } else {
-                player.setFieldStatus(MatchPlayerStatus.EN_BANCO);
-                player.setFieldSlot(null);
-            }
-        });
-
-        List<Event> substitutions = eventRepository.findEventsByMatchId(match.getId()).stream()
-                .filter(event -> event.getEventType() != null
-                        && "SUBSTITUTION".equals(event.getEventType().getCode())
-                        && event.getTeamPossession() == com.ovaltrack.backend.event.domain.EventPossession.OWN)
-                .sorted(Comparator
-                        .comparing(Event::getAbsoluteMatchTime, Comparator.nullsLast(Integer::compareTo))
-                        .thenComparing(Event::getRealTime, Comparator.nullsLast(LocalDateTime::compareTo))
-                        .thenComparing(Event::getCreatedAt, Comparator.nullsLast(LocalDateTime::compareTo)))
-                .toList();
-
-        for (Event event : substitutions) {
-            MatchPlayer outgoing = findRosterPlayer(match, event.getAttributes(), "playerOutId", "playerOutNumber");
-            MatchPlayer incoming = findRosterPlayer(match, event.getAttributes(), "playerInId", "playerInNumber");
-            if (outgoing == null || incoming == null || outgoing == incoming) {
-                throw new BusinessException("La sustitución requiere jugadores saliente y entrante válidos");
-            }
-            if (outgoing.getFieldStatus() != MatchPlayerStatus.EN_CANCHA) {
-                throw new BusinessException("El jugador saliente no está en cancha");
-            }
-            if (incoming.getFieldStatus() != MatchPlayerStatus.EN_BANCO) {
-                throw new BusinessException("El jugador entrante no está en banco");
-            }
-            Integer fieldSlot = outgoing.getFieldSlot();
-            outgoing.setFieldStatus(MatchPlayerStatus.EN_BANCO);
-            outgoing.setFieldSlot(null);
-            incoming.setFieldStatus(MatchPlayerStatus.EN_CANCHA);
-            incoming.setFieldSlot(fieldSlot);
-        }
-
+        lineupReplayer.replay(match, new ArrayList<>(eventRepository.findEventsByMatchId(match.getId())));
         matchPlayerRepository.saveAll(match.getRoster());
     }
 
