@@ -257,16 +257,21 @@
               </button>
             </div>
             } @else if (selectedMatchForModal.status === 'finished') {
-              <button type="button" class="btn btn-invite" (click)="onSelectMatch(selectedMatchForModal); closeMatchModal()">
-                Ver estadisticas
-              </button>
-            } @else if (selectedMatchForModal.status === 'halftime'){
-              <div class="match-actions-group">
-                <button type="button" class="action-link" (click)="onSelectMatch(selectedMatchForModal); closeMatchModal()">
-                  Capturar en vivo
-                </button>
+              <div>
                 <button type="button" class="btn btn-invite" (click)="onSelectMatch(selectedMatchForModal); closeMatchModal()">
                   Ver estadisticas
+                </button>
+              </div>
+            } @else if (selectedMatchForModal.status === 'halftime'){
+              <div class="match-actions-group">
+                <button type="button" class="btn btn-invite" (click)="onSelectMatch(selectedMatchForModal); closeMatchModal()">
+                  Entretiempo
+                </button>
+              </div>
+            } @else {
+              <div class="match-actions-group">
+                <button type="button" class="action-link" (click)="onSelectMatch(selectedMatchForModal); closeMatchModal()">
+                    Capturar en vivo
                 </button>
               </div>
             }
