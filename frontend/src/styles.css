@@ -51,10 +51,30 @@
   --error: #b42318;
   --error-tint: rgba(240, 68, 56, 0.14);
   --error-border: rgba(180, 35, 24, 0.35);
+  --success: #2e7d32;
+  --success-tint: rgba(46, 125, 50, 0.12);
+
+  /* Vistas de gestión "Sport Pro Salvia" (DESIGN_SYSTEM.md §1.1) */
+  --bg-canvas: #e1edde;
+  --surface-header-start: #edf5e9;
+  --surface-header-end: #e0ebd8;
+  --surface-toolbar: #eaf3e6;
+  --border-sport: rgba(32, 75, 34, 0.28);
+  --border-sport-subtle: rgba(32, 75, 34, 0.20);
+  --btn-primary-bg: #204b22;
+  --btn-primary-fg: #ffffff;
+  --btn-primary-hover: #163618;
+  --btn-outline-bg: #ffffff;
+  --btn-outline-border: rgba(32, 75, 34, 0.25);
+  --btn-outline-fg: #204b22;
+  --shadow-elevation: 0 16px 36px rgba(15, 35, 15, 0.12), 0 4px 12px rgba(15, 35, 15, 0.06);
+  --shadow-button: 0 4px 12px rgba(32, 75, 34, 0.20);
+  --shadow-button-hover: 0 6px 16px rgba(32, 75, 34, 0.28);
 
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
 
   --font-head: 'Hanken Grotesk', sans-serif;
@@ -126,6 +146,7 @@
   --surface-header-start: #162238;
   --surface-header-end: #162238;
   --surface-toolbar: #131c2e;
+  --bg-canvas: var(--bg);
 
   --border: #1f2e47;
   --border-strong: #2a3c5a;

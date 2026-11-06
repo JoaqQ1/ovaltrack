@@ -35,9 +35,9 @@ Los tokens oficiales del sistema corresponden a la identidad visual **Sport Pro 
   --border-sport-subtle: rgba(32, 75, 34, 0.20); /* Separadores internos de tarjetas */
 
   /* Textos y Tipografías */
-  --text-primary: #111d0e;                   /* Títulos y textos de alto contraste */
-  --text-secondary: #3b4e33;                 /* Subtítulos, descripciones y labels */
-  --text-muted: #7a8c74;                     /* Placeholders y contadores */
+  --text-primary: #1b2116;                   /* Títulos y textos de alto contraste */
+  --text-secondary: #4b5540;                 /* Subtítulos, descripciones y labels */
+  --text-muted: #7c8571;                     /* Placeholders y contadores */
 
   /* Colores de Acento y Acción */
   --btn-primary-bg: #204b22;                 /* Verde rugby botella (CTA principal) */
@@ -76,7 +76,7 @@ Los tokens oficiales del sistema corresponden a la identidad visual **Sport Pro 
   /* Geometría y Sombras */
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-lg: 14px;
   --radius-xl: 20px;
   --radius-pill: 999px;
   --shadow-elevation: 0 16px 36px rgba(15, 35, 15, 0.12), 0 4px 12px rgba(15, 35, 15, 0.06);
