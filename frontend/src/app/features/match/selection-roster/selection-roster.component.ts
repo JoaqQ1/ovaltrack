@@ -36,6 +36,7 @@ export class SelectionRosterComponent implements OnInit {
   readonly searchTerm = signal<string>('');
   readonly isLoading = signal<boolean>(true);
   readonly isSaving = signal<boolean>(false);
+  readonly validatedDuplicateSlotIndex = signal<number | null>(null);
 
   // Computeds
   readonly startingAssignedCount = computed(() =>
@@ -187,6 +188,7 @@ export class SelectionRosterComponent implements OnInit {
 
   setStep(step: RosterStep): void {
     this.currentStep.set(step);
+    this.validatedDuplicateSlotIndex.set(null);
     const slots = step === 'titulares' ? this.startingSlots() : this.substituteSlots();
     this.autoSelectFirstEmptySlot(step, slots);
   }
@@ -327,6 +329,41 @@ export class SelectionRosterComponent implements OnInit {
     const value = rawValue === null || rawValue === '' ? null : Number(rawValue);
     slots[index] = { ...slot, matchNumber: Number.isFinite(value) ? value : null };
     this.updateSlotsArray(this.currentStep(), slots);
+    if (this.validatedDuplicateSlotIndex() === index) {
+      this.validatedDuplicateSlotIndex.set(null);
+    }
+  }
+
+  isDuplicateSlotNumber(index: number): boolean {
+    if (this.validatedDuplicateSlotIndex() !== index) {
+      return false;
+    }
+
+    const slots = this.currentStep() === 'titulares' ? this.startingSlots() : this.substituteSlots();
+    const number = slots[index]?.matchNumber;
+    if (number === null || number === undefined || !Number.isInteger(number) || number <= 0) {
+      return false;
+    }
+
+    return [...this.startingSlots(), ...this.substituteSlots()]
+      .filter(slot => slot.matchNumber === number)
+      .length > 1;
+  }
+
+  finishSlotNumberEdit(index: number): void {
+    this.validatedDuplicateSlotIndex.set(this.isSlotNumberDuplicated(index) ? index : null);
+  }
+
+  private isSlotNumberDuplicated(index: number): boolean {
+    const slots = this.currentStep() === 'titulares' ? this.startingSlots() : this.substituteSlots();
+    const number = slots[index]?.matchNumber;
+    if (number === null || number === undefined || !Number.isInteger(number) || number <= 0) {
+      return false;
+    }
+
+    return [...this.startingSlots(), ...this.substituteSlots()]
+      .filter(slot => slot.matchNumber === number)
+      .length > 1;
   }
 
   goBack(): void {
