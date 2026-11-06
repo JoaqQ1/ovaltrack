@@ -31,6 +31,25 @@ export class MatchService {
     );
   }
 
+  /** Partidos de todas las divisiones del club; sin conexión, los de las divisiones cacheadas. */
+  getMatchesByClub(clubId: string): Observable<Match[]> {
+    return this.http.get<BackendMatchResponse[]>(`${this.apiUrl}/club?clubId=${clubId}`).pipe(
+      map(matches => matches.map(match => this.normalizeMatch(match))),
+      switchMap(matches => from(this.cache.saveMatches(matches)).pipe(map(() => matches))),
+      catchError(() => from(this.readCachedClubMatches(clubId)).pipe(
+        switchMap(matches => matches.length > 0
+          ? of(matches)
+          : throwError(() => new Error(`No hay partidos almacenados para el club ${clubId}`)))
+      ))
+    );
+  }
+
+  private async readCachedClubMatches(clubId: string): Promise<Match[]> {
+    const divisions = await this.cache.getDivisionsByClub(clubId);
+    const byDivision = await Promise.all(divisions.map(division => this.cache.getMatchesByDivision(division.id)));
+    return byDivision.flat();
+  }
+
   createMatch(draft: NewMatchDraft, divisionId: string): Observable<Match> {
     const formattedDate = draft.date.includes('T')
       ? draft.date
