@@ -79,11 +79,11 @@
         <span id="theme-label">Apariencia</span>
         <div class="theme-switch" role="group" aria-labelledby="theme-label">
           <button type="button" class="theme-btn" [class.on]="themeService.theme() === 'light'"
-                  [attr.aria-pressed]="themeService.theme() === 'light'" aria-label="Tema claro" (click)="setTheme('light')">
+                  [attr.aria-pressed]="themeService.theme() === 'light'" aria-label="Tema claro" (click)="themeService.setTheme('light')">
             <i class="bi bi-sun" aria-hidden="true"></i>
           </button>
           <button type="button" class="theme-btn" [class.on]="themeService.theme() === 'dark'"
-                  [attr.aria-pressed]="themeService.theme() === 'dark'" aria-label="Tema oscuro" (click)="setTheme('dark')">
+                  [attr.aria-pressed]="themeService.theme() === 'dark'" aria-label="Tema oscuro" (click)="themeService.setTheme('dark')">
             <i class="bi bi-moon" aria-hidden="true"></i>
           </button>
         </div>

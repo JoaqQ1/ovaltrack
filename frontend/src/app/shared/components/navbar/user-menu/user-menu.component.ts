@@ -83,10 +83,6 @@ export class UserMenuComponent {
     }
   }
 
-  setTheme(theme: 'light' | 'dark'): void {
-    this.themeService.setTheme(theme);
-  }
-
   /** Siempre pide confirmar: sin conexión no se puede volver a iniciar sesión. */
   logout(): void {
     this.close(false);
