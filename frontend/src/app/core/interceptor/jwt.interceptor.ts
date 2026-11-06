@@ -3,10 +3,12 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { TokenService } from '../services/token.service';
+import { SESSION_CLEANUP, runSessionCleanups } from '../session/session-cleanup';
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
     const tokenService = inject(TokenService);
     const router = inject(Router);
+    const sessionCleanups = inject(SESSION_CLEANUP, { optional: true }) ?? [];
     const token = tokenService.getToken();
 
     let clonedRequest = req;
@@ -24,6 +26,7 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
         catchError((error: HttpErrorResponse) => {
             // Si el backend devuelve 401 (token expirado o inválido)
             if (error.status === 401) {
+                runSessionCleanups(sessionCleanups);
                 tokenService.removeToken();
                 router.navigate(['/auth/login']);
             }
