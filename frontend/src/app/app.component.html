@@ -1,6 +1,6 @@
 <app-toast-container />
 <div class="app-shell" [class.layout-wide]="layout.isWide()" [class.navbar-compact]="navbarMode.isCompact()">
-  @if (showNavbar) {
+  @if (!navbarMode.isHidden()) {
     <app-navbar />
   }
   <router-outlet />

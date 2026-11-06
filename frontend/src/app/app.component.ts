@@ -21,8 +21,4 @@ export class AppComponent {
     // Se inyecta al arrancar para que el sincronizador offline quede activo desde el inicio.
     inject(SyncManagerService);
   }
-
-  get showNavbar(): boolean {
-    return !this.navbarMode.isHidden();
-  }
 }
