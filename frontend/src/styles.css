@@ -71,6 +71,27 @@
   --shadow-button: 0 4px 12px rgba(32, 75, 34, 0.20);
   --shadow-button-hover: 0 6px 16px rgba(32, 75, 34, 0.28);
 
+  /* Inicio · Pizarra de juego (DESIGN_SYSTEM.md §9): el tablero conserva sus colores en claro y oscuro */
+  --board-bg-start: #204b22;
+  --board-bg-end: #163618;
+  --board-line: rgba(255, 255, 255, 0.10);
+  --board-line-strong: rgba(255, 255, 255, 0.22);
+  --board-shadow: 0 18px 40px rgba(15, 35, 15, 0.28);
+  --on-board: #ffffff;
+  --on-board-muted: rgba(255, 255, 255, 0.72);
+  --on-board-accent: var(--grass);
+  --board-chip-ok-bg: var(--grass-tint-strong);
+  --board-chip-ok-fg: #ffffff;
+  --board-chip-warn-bg: var(--zone-heat-low);
+  --board-chip-warn-fg: #3d2600;
+  --board-chip-neutral-bg: rgba(255, 255, 255, 0.12);
+  --board-chip-neutral-fg: #ffffff;
+  --board-digit-bg: rgba(255, 255, 255, 0.08);
+  --board-digit-border: rgba(255, 255, 255, 0.22);
+  --btn-on-board-bg: #ffffff;
+  --btn-on-board-fg: var(--btn-primary-bg);
+  --btn-on-board-outline: rgba(255, 255, 255, 0.55);
+
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -147,6 +168,7 @@
   --surface-header-end: #162238;
   --surface-toolbar: #131c2e;
   --bg-canvas: var(--bg);
+  --btn-on-board-fg: #204b22;
 
   --border: #1f2e47;
   --border-strong: #2a3c5a;
@@ -567,6 +589,83 @@ button {
   border-color: #204b22;
   color: #142e15;
   transform: translateY(-1px);
+}
+
+/* Inicio: sobre el tablero oscuro el primario es blanco y su secundario es un contorno claro */
+.btn-on-board {
+  background-color: var(--btn-on-board-bg);
+  border: 1px solid var(--btn-on-board-bg);
+  color: var(--btn-on-board-fg);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.btn-on-board:hover {
+  background-color: #eef5ea;
+  color: var(--btn-on-board-fg);
+  transform: translateY(-1px);
+}
+
+.btn-on-board-outline {
+  background-color: transparent;
+  border: 1px solid var(--btn-on-board-outline);
+  color: var(--on-board);
+  font-weight: 600;
+}
+
+.btn-on-board-outline:hover {
+  background-color: var(--board-chip-neutral-bg);
+  border-color: var(--on-board);
+  color: var(--on-board);
+  transform: translateY(-1px);
+}
+
+/* Tarjeta del Inicio: sin cabecera en degradé; rótulo y título van en el cuerpo */
+.tile {
+  background: var(--surface);
+  border: 2px solid var(--border-sport);
+  border-radius: 18px;
+  box-shadow: var(--shadow-elevation);
+  padding: 20px;
+  min-width: 0;
+}
+
+/* Rótulo mono en mayúsculas (no es .eyebrow: esa es la píldora navy global) */
+.label-mono {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Pestañas con subrayado: división activa y serie del gráfico */
+.tabs-underline {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 2px solid var(--border-sport-subtle);
+}
+
+.tabs-underline > button,
+.tabs-underline > a {
+  min-height: 44px;
+  padding: 0 14px;
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  font: 600 14px var(--font-body);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.tabs-underline > [aria-selected="true"],
+.tabs-underline > [aria-current="page"] {
+  color: var(--btn-primary-bg);
+  border-bottom-color: var(--btn-primary-bg);
 }
 
 .btn-ghost {
