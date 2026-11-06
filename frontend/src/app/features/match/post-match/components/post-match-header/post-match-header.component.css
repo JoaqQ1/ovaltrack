@@ -17,7 +17,7 @@
   align-items: center;
   gap: 16px;
   min-width: 0;
-  flex: 1 1 0;
+  flex: 1 1 520px;
   order: 1;
 }
 
@@ -158,6 +158,7 @@
   align-items: center;
   gap: 16px;
   flex-shrink: 0;
+  margin-left: auto;
   order: 2;
 }
 
@@ -246,8 +247,9 @@
   color: #a3e635;
 }
 
-/* Pantallas angostas: el selector baja a su fila, a ancho completo y en partes iguales */
-@media (max-width: 1279px) {
+/* Tablet vertical y celular: el selector baja a su fila, a ancho completo y en partes iguales.
+   Entre 960px y 1279px comparte fila con el partido; si no entra, baja solo por el wrap del contenedor. */
+@media (max-width: 959px) {
   .hud-right {
     display: contents;
   }

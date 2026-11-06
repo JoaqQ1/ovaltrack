@@ -65,8 +65,18 @@ export async function saveRosterWithDivisionPlayers(match, token) {
   assert.equal(response.status, 200, `No se pudo guardar el plantel: ${response.body?.message}`);
 }
 
+/** Cancela los partidos en curso de la división (salvo los del rival indicado): solo puede haber uno por división. */
+export async function cancelLiveMatches(divisionId, token, exceptRival = null) {
+  const matches = await getDivisionMatches(divisionId, token);
+  const live = matches.filter((m) => ['IN_PROGRESS', 'HALFTIME'].includes(m.status) && m.opponent?.name !== exceptRival);
+  for (const match of live) {
+    await changeMatchStatus(match, 'DELETE', 'cancel', token);
+  }
+}
+
 /** Arma el plantel con los jugadores de la división e inicia el partido. */
 export async function startMatch(match, token) {
+  await cancelLiveMatches(match.divisionId, token);
   await saveRosterWithDivisionPlayers(match, token);
   return changeMatchStatus(match, 'PUT', 'start', token);
 }

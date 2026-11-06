@@ -1,0 +1,207 @@
+:host {
+  display: block;
+}
+
+.navbar-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  width: 100%;
+}
+
+/* Barra sólida, sin efecto vidrio: se lee bien también al aire libre */
+.navbar-global {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: var(--navbar-h, 64px);
+  /* Margen lateral proporcional al ancho: ~56px en 1920, ~43px en 1440, ~31px en 1024; el piso es --layout-pad (16px en celular) */
+  padding: 0 clamp(var(--layout-pad, 24px), 3vw, 56px);
+  background: var(--surface);
+  border-bottom: 2px solid var(--border-sport);
+  box-shadow: 0 4px 14px rgba(20, 45, 20, 0.08);
+  transition: height 0.2s ease;
+}
+
+/* Sin sesión (inicio, login y registro): barra plana con una línea fina, sin sombra */
+.navbar-global.public-nav {
+  border-bottom: 1px solid var(--border-sport-subtle, var(--border));
+  box-shadow: none;
+}
+
+.brand-link {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-height: 48px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand-icon {
+  display: block;
+  width: 126px;
+  height: 31px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.brand-subtitle {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.navbar-modules {
+  /* Los módulos no se encogen: nunca quedan cortados ("Mi" en vez de "Miembros") */
+  flex: none;
+}
+
+/* El logo y el avatar quedan en el mismo lugar en todas las pantallas */
+.navbar-status {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Tema e "Iniciar sesión" van sin borde: el único botón con contorno es la acción principal */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md, 10px);
+  background: transparent;
+  color: var(--btn-outline-fg, #204b22);
+  font-size: 17px;
+  transition: background-color 0.15s ease;
+}
+
+.navbar-link {
+  padding: 0 12px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--btn-outline-fg, #204b22);
+  font-weight: 600;
+}
+
+.theme-toggle:hover,
+.navbar-link:hover {
+  border-color: transparent;
+  background: var(--surface-hover);
+  color: var(--btn-outline-fg, #142e15);
+}
+
+.theme-toggle:focus-visible,
+.navbar-link:focus-visible,
+.navbar-cta:focus-visible {
+  outline: 2px solid var(--btn-outline-fg, #204b22);
+  outline-offset: 2px;
+}
+
+.navbar-cta {
+  padding: 0 16px;
+  font-weight: 600;
+}
+
+.navbar-cta .bi {
+  font-size: 16px;
+}
+
+/* Notebook chica y tablet: sin nombre del club bajo el logo y logo más chico, para dejar lugar a los módulos */
+@media (max-width: 1120px) {
+  .brand-subtitle {
+    display: none;
+  }
+
+  .brand-icon {
+    width: 112px;
+    height: 28px;
+  }
+}
+
+/* Tablet vertical: se compacta el resto de la barra para que los módulos entren completos */
+@media (max-width: 860px) {
+  .navbar-global {
+    gap: 8px;
+  }
+
+  .navbar-status {
+    gap: 6px;
+  }
+
+  .brand-icon {
+    width: 96px;
+    height: 24px;
+  }
+}
+
+/* Celular: los módulos van en la barra inferior y el partido en vivo sobre ella */
+@media (max-width: 700px) {
+  .navbar-modules,
+  .top-live {
+    display: none;
+  }
+
+  /* Post-partido en celular: no hay barra inferior; el partido en vivo pasa a la barra superior */
+  :host-context(.navbar-compact) .top-live {
+    display: inline-flex;
+  }
+}
+
+/* Celular sin sesión: tema, "Iniciar sesión" y "Crear cuenta" entran junto al logo hasta 360px */
+@media (max-width: 480px) {
+  .public-nav .navbar-status {
+    gap: 4px;
+  }
+
+  .public-nav .brand-icon {
+    width: 88px;
+    height: 22px;
+  }
+
+  .theme-toggle {
+    width: 40px;
+  }
+
+  .navbar-link {
+    padding: 0 6px;
+    font-size: 13px;
+  }
+
+  .navbar-cta {
+    padding: 0 10px;
+    font-size: 13px;
+  }
+}
+
+/* Pantalla muy angosta: en post-partido se oculta el partido en vivo para que entre la barra */
+@media (max-width: 360px) {
+  :host-context(.navbar-compact) .top-live {
+    display: none;
+  }
+}
+
+/* Post-partido (barra compacta): logo más chico */
+:host-context(.navbar-compact) .brand-icon {
+  width: 110px;
+  height: 27px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar-global {
+    transition: none;
+  }
+}

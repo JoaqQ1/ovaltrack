@@ -1,0 +1,111 @@
+<button
+  #trigger
+  type="button"
+  class="avatar"
+  [style.--role-color]="roleMeta()?.color"
+  [style.--role-tint]="roleMeta()?.tint"
+  aria-haspopup="dialog"
+  [attr.aria-expanded]="isOpen()"
+  aria-controls="user-menu-panel"
+  [attr.aria-label]="'Menú de usuario de ' + fullName()"
+  (click)="toggle()"
+>
+  <span class="avatar-initials">{{ initials() }}</span>
+  <i class="bi bi-chevron-down avatar-caret" aria-hidden="true"></i>
+</button>
+
+@if (isOpen()) {
+  <div class="backdrop" aria-hidden="true"></div>
+  <div
+    #panel
+    id="user-menu-panel"
+    class="panel"
+    role="dialog"
+    aria-label="Menú de usuario"
+    tabindex="-1"
+  >
+    <span class="sheet-handle" aria-hidden="true"></span>
+
+    <section class="identity">
+      <span class="avatar avatar--static" [style.--role-color]="roleMeta()?.color" [style.--role-tint]="roleMeta()?.tint" aria-hidden="true">
+        <span class="avatar-initials">{{ initials() }}</span>
+      </span>
+      <div class="identity-text">
+        <strong class="identity-name">{{ fullName() }}</strong>
+        <span class="identity-email">{{ email() }}</span>
+        @if (roleMeta(); as meta) {
+          <span class="role-chip" [style.--role-color]="meta.color" [style.--role-tint]="meta.tint">{{ meta.label }}</span>
+        }
+      </div>
+    </section>
+    @if (clubName()) {
+      <p class="club-name">{{ clubName() }}</p>
+    }
+
+    <section class="sync-card" [class.sync-card--ok]="syncStatus().state === 'synced'" aria-live="polite">
+      @if (syncStatus().state === 'synced') {
+        <i class="bi bi-check-circle" aria-hidden="true"></i>
+        <div class="sync-body"><strong>Todo sincronizado</strong></div>
+      } @else {
+        <i class="bi" [class.bi-arrow-repeat]="syncStatus().state !== 'offline'" [class.bi-wifi-off]="syncStatus().state === 'offline'" aria-hidden="true"></i>
+        <div class="sync-body">
+          @if (syncStatus().state === 'offline') {
+            <strong>Sin conexión</strong>
+            <span>Los eventos se guardan en este dispositivo y se envían al volver la conexión.</span>
+          } @else {
+            <strong>{{ syncStatus().pendingCount }} {{ syncStatus().pendingCount === 1 ? 'cambio sin sincronizar' : 'cambios sin sincronizar' }}</strong>
+            <span>Se envían solos, o podés reintentar ahora.</span>
+          }
+          @if (hasPending() && syncStatus().state !== 'offline') {
+            <button type="button" class="btn-sync" [disabled]="isSyncing()" (click)="retrySync()">
+              {{ isSyncing() ? 'Sincronizando…' : 'Sincronizar ahora' }}
+            </button>
+          }
+        </div>
+      }
+    </section>
+
+    <ul class="options">
+      @if (profileRoute) {
+        <li>
+          <a class="option" [routerLink]="profileRoute" (click)="close(false)">
+            <i class="bi bi-person" aria-hidden="true"></i>
+            <span>Mi perfil</span>
+          </a>
+        </li>
+      }
+      <li class="option option--theme">
+        <i class="bi bi-moon" aria-hidden="true"></i>
+        <span id="theme-label">Apariencia</span>
+        <div class="theme-switch" role="group" aria-labelledby="theme-label">
+          <button type="button" class="theme-btn" [class.on]="themeService.theme() === 'light'"
+                  [attr.aria-pressed]="themeService.theme() === 'light'" aria-label="Tema claro" (click)="themeService.setTheme('light')">
+            <i class="bi bi-sun" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="theme-btn" [class.on]="themeService.theme() === 'dark'"
+                  [attr.aria-pressed]="themeService.theme() === 'dark'" aria-label="Tema oscuro" (click)="themeService.setTheme('dark')">
+            <i class="bi bi-moon" aria-hidden="true"></i>
+          </button>
+        </div>
+      </li>
+    </ul>
+
+    <div class="logout-zone">
+      <button type="button" class="logout" (click)="logout()">
+        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+        <span>Cerrar sesión</span>
+      </button>
+    </div>
+  </div>
+}
+
+<app-logout-confirm-dialog
+  [open]="logoutDialogOpen()"
+  [pendingCount]="syncStatus().pendingCount"
+  [online]="isOnline()"
+  [syncing]="isSyncing()"
+  [syncFailed]="logoutSyncFailed()"
+  (cancel)="cancelLogout()"
+  (logout)="confirmLogout()"
+  (syncAndLogout)="syncAndLogout()"
+/>

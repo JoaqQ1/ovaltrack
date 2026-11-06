@@ -7,6 +7,16 @@ import { Division } from '../../division/types/division.types';
 import { AvailablePlayer, SavedRoster } from '../../match/types/roster.types';
 import { UserContext } from '../../auth/types/auth.types';
 
+/**
+ * Evento que la sincronización todavía tiene que enviar: sin sincronizar, no rechazado por el servidor,
+ * y activo o borrado localmente después de existir en el backend.
+ */
+function isPendingEvent(event: LocalMatchEvent): boolean {
+  return event.synchronizedAt === null
+    && !event.syncFailedAt
+    && (event.active || event.backendEventId != null);
+}
+
 @Injectable({ providedIn: 'root' })
 export class LocalDatabaseService {
 
@@ -279,6 +289,11 @@ export class LocalDatabaseService {
     ]).then(([state, events]) => ({ state, events }));
   }
 
+  /** Partidos que este dispositivo abrió en captura (solo lectura). */
+  getCaptureStates(): Promise<LiveCapturePersistedState[]> {
+    return liveCaptureDatabase.states.toArray();
+  }
+
   getEventsByMatch(matchId: string): Promise<LocalMatchEvent[]> {
     return liveCaptureDatabase.events
       .where('matchId')
@@ -293,13 +308,32 @@ export class LocalDatabaseService {
       : liveCaptureDatabase.events.toCollection();
 
     return eventsQuery.toArray().then(events => events
-      .filter(event => event.synchronizedAt === null
-        && !event.syncFailedAt
-        && (event.active || event.backendEventId != null))
+      .filter(isPendingEvent)
       .sort((first, second) => first.localSequence - second.localSequence));
   }
 
+  /**
+   * Cambios locales que la sincronización todavía tiene que enviar: eventos pendientes y transiciones de partido.
+   * Solo lectura; dentro de un `liveQuery` de Dexie se vuelve a calcular cuando cambian esas tablas.
+   */
+  async countPendingChanges(): Promise<number> {
+    const [pendingEvents, pendingMutations] = await Promise.all([
+      liveCaptureDatabase.events.filter(isPendingEvent).count(),
+      matchDatabase.pendingMatchMutations.count(),
+    ]);
+    return pendingEvents + pendingMutations;
+  }
+
+  /**
+   * Borra la caché de la sesión y conserva lo que no está en el backend (incluidos los rechazados).
+   * @returns los cambios que todavía se van a enviar; los rechazados no cuentan porque no se reintentan.
+   */
   async clearCachedDataOnLogout(): Promise<number> {
+    try {
+      localStorage.removeItem('ovaltrack.live-match-visits');
+    } catch {
+      // Sin almacenamiento no hay nada que borrar.
+    }
     await Promise.all([
       matchDatabase.userContexts.clear(),
       matchDatabase.matches.clear(),
@@ -313,11 +347,7 @@ export class LocalDatabaseService {
         .delete(),
     ]);
 
-    const [pendingEvents, pendingMutations] = await Promise.all([
-      liveCaptureDatabase.events.count(),
-      matchDatabase.pendingMatchMutations.count(),
-    ]);
-    return pendingEvents + pendingMutations;
+    return this.countPendingChanges();
   }
 
   deleteMatchData(matchId: string): Promise<void> {

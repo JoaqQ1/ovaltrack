@@ -1,59 +1,24 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { Component, inject } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
 import { SyncManagerService } from './core/synchronization/SyncManagerService';
 import { LayoutService } from './core/services/layout.service';
-
-interface PingResponse {
-  status: string;
-  message: string;
-}
+import { NavbarModeService } from './core/navigation/navbar-mode.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, NavbarComponent, ToastContainerComponent],
+  imports: [RouterOutlet, NavbarComponent, ToastContainerComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  private http = inject(HttpClient);
-  private router = inject(Router);
   readonly layout = inject(LayoutService);
-
-  isConnected = false;
-  statusMessage = 'Intentando conectar con el backend...';
-  currentUrl = signal(this.router.url);
+  readonly navbarMode = inject(NavbarModeService);
 
   constructor() {
-    this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe((event: any) => {
-        this.currentUrl.set(event.urlAfterRedirects || event.url);
-      });
-    inject(SyncManagerService)
-
-  }
-
-  get showNavbar(): boolean {
-    const url = this.currentUrl();
-    return !url.includes('/live-capture');
-  }
-
-  ngOnInit(): void {
-    // this.http.get<PingResponse>(`${environment.apiUrl}/api`).subscribe({
-    //   next: (data) => {
-    //     this.isConnected = true;
-    //     this.statusMessage = `${data.message} (status: ${data.status})`;
-    //   },
-    //   error: (err) => {
-    //     this.isConnected = false;
-    //     this.statusMessage = `Error al conectar con ${environment.apiUrl}: ${err.message}`;
-    //   }
-    // });
+    // Se inyecta al arrancar para que el sincronizador offline quede activo desde el inicio.
+    inject(SyncManagerService);
   }
 }

@@ -237,17 +237,25 @@ Inputs y selects con altura táctil accesible (46px), bordes salvia y foco verde
 ## 4. Patrones de Pantalla Implementados
 
 ### 4.1 Barra de Navegación Global (`NavbarComponent`)
-- **Posición:** `sticky-top` con `z-index: 1030`.
-- **Soporte de Tema Dual:**
-  - *Modo Oscuro:* Fondo `#0b111e`, borde `#1f2e47`, textos blancos, botón neón `#a3e635`.
-  - *Modo Claro:* Fondo `#e1edde`, borde inferior `2px solid #204b22`, sombra suave, botón de acción en verde rugby `#204b22`.
-- **Elementos Clave:**
-  - Isotipo dinámico con la inicial del club (o 'O' por defecto).
-  - Título del club actual reactivo vía `UserContextService`.
-  - Toggle de tema con ícono Sol / Luna.
-  - Botón inteligente `Volver al inicio` (visible únicamente cuando `currentUrl !== '/home'`).
-  - Badge de rol de usuario autenticado (`ADMIN_CLUB`, `COACH_ANALYST`, etc.).
-  - Botón de cierre de sesión con acento seguro.
+Barra superior **sólida, blanca (`--surface`), sin efecto vidrio**, de ancho completo (no usa `.layout-container`): el logo y el avatar no cambian de lugar entre pantallas. El margen lateral es `clamp(var(--layout-pad), 3vw, 56px)`. `position: sticky`, `z-index: 1030`, alto `var(--navbar-h)`.
+
+- **Estructura:** logo (lleva a `/home`; reemplaza a "Volver al inicio"), nombre del club debajo del logo (solo > 1120px y fuera de post-partido), módulos, y a la derecha partido en vivo, sincronización y avatar.
+- **Módulos por rol** (catálogo único `core/navigation/navigation-modules.ts`; un módulo sin `route` no se muestra): Admin de club → Inicio, Partidos, Divisiones, Club, Miembros · Entrenador/Analista → Inicio, Partidos, Divisiones (Reportes cuando exista su ruta) · Jugador → Inicio, Estadísticas (Partidos cuando exista su ruta) · Admin OvalTrack → Inicio, Administración. La pantalla actual se resalta en verde claro (`--grass-tint-strong`, `aria-current="page"`).
+- **Estados, solo cuando hacen falta:** *Partido en vivo* (`LiveMatchSource`, lee Dexie; solo el partido que captura este dispositivo, división + marcador, lleva a `/live-capture/:id` o a `/halftime`; el jugador no lo ve). *Sincronización* (`SyncStatusSource` → `LocalSyncStatusSource`; icono + texto o contador; desaparece si todo está sincronizado). Cuenta en Dexie, con `liveQuery`, los cambios sin enviar (eventos pendientes + transiciones de partido; los rechazados por el servidor no cuentan), combina la conexión (`ConnectivityService`) y "Sincronizar ahora" reutiliza `SyncManagerService.synchronizeAll()` sin cambiar el orden de envío.
+- **Menú de usuario** (`UserMenuComponent`): avatar con iniciales y color del rol; identidad (nombre, correo, rol, club); estado de sincronización con "Sincronizar ahora"; apariencia claro/oscuro; "Cerrar sesión" al final, separado y en rojo. Cerrar sesión siempre abre un modal bloqueante (`LogoutConfirmDialogComponent`, `<dialog>` nativo), porque sin conexión no se puede volver a entrar. Sin cambios pendientes es una confirmación simple («Cancelar» / «Cerrar sesión») que recuerda que hace falta conexión para volver. Con cambios sin enviar: sin conexión no se puede volver a iniciar sesión, así que la acción principal es «Seguir conectado» y «Cerrar sesión igual» queda en rojo secundario; con conexión, la principal es «Sincronizar y cerrar sesión» (cierra solo si se envió todo) junto a «Cancelar» y «Cerrar sin enviar». En celular el menú es una hoja inferior.
+- **Modo por ruta** (`data.navbar` en `app.routes.ts`, resuelto por `NavbarModeService`): `default`, `compact` (post-partido, 56px) y `hidden` (captura en vivo y entretiempo, sin navbar para evitar toques accidentales).
+- **Responsive:**
+
+| Ancho | Barra | Módulos | Estados |
+|---|---|---|---|
+| ≥ 1280px | 64px | icono + texto | sincronización con texto completo |
+| 1121–1279px | 64px | icono + texto | sincronización con contador |
+| 960–1120px | 64px | icono + texto, 48px de alto | marcador y contador |
+| 701–959px | 64px | solo texto, 48px de alto | marcador y contador |
+| ≤ 700px | 56px + barra inferior flotante | abajo, icono + texto | partido en vivo sobre la barra inferior |
+
+- **Celular:** `MobileTabBarComponent` (barra inferior flotante) se compacta a solo íconos al bajar y vuelve al subir. En post-partido no hay barra inferior (deja lugar a "Nuevo tramo") y el partido en vivo pasa a la barra superior; con ≤ 360px ese acceso se oculta. `styles.css` reserva el espacio inferior con `.app-shell:has(app-mobile-tab-bar)`.
+- **Accesibilidad:** objetivos táctiles de 48px (módulos, avatar y estados), estados con icono + texto/contador (nunca solo color), foco visible, botones reales, `aria-label` en controles de icono y `prefers-reduced-motion` respetado.
 
 ### 4.2 Autenticación Split-Screen Pro Deportivo (`/login` y `/auth/register`)
 - **Columna Izquierda (Hero de Alto Impacto):**
@@ -383,7 +391,7 @@ El sistema de interfaz de OvalTrack implementa una arquitectura de layout fluida
   - `LayoutService` activa automáticamente la clase `.layout-wide` en `.app-shell`, expandiendo simultáneamente la Navbar y el contenido a `1560px` con alineación vertical milimétrica.
 * **Vistas Especializadas Exentas (Pantalla Completa):**
   - Captura en vivo (`/live-capture/:matchId`) y Resumen táctico de entretiempo (`/live-capture/:matchId/halftime`).
-  - Ocultan la Navbar y no consumen `.layout-container`, operando al 100% del viewport en tablets.
+  - Declaran `data: { navbar: 'hidden' }`, ocultan la Navbar y no consumen `.layout-container`, operando al 100% del viewport en tablets.
 
 ---
 
@@ -417,7 +425,7 @@ La pantalla de post-partido está estructurada como una estación de trabajo de 
    - Compartido por Eventos (`/post-match/:id`), Zonas (`/zones`) y Estadísticas (`/statistics`), que son rutas hijas del shell.
    - Botón `.hud-back` (`←`) de 44px, etiqueta fija `ANÁLISIS POST-PARTIDO`, píldora de marcador con `--score-pill-bg` / `--score-pill-fg` (mono tabular) y línea inferior siempre `Hora de inicio HH:MM:SS`.
    - Burbuja flotante animada `.score-delta-badge` (`+5`), con `scoreDeltaPop` y temporizador de 3 segundos (solo cuando Eventos la informa).
-   - Selector de vistas en la misma fila del título: `routerLink` + `routerLinkActive` (`aria-current="page"`), contenedor gris claro y vista activa **blanca elevada** (el verde queda para filtros). En pantallas < 1280px baja a su propia fila con tres partes iguales.
+   - Selector de vistas en la misma fila del título: `routerLink` + `routerLinkActive` (`aria-current="page"`), contenedor gris claro y vista activa **blanca elevada** (el verde queda para filtros). Entre 960px y 1279px comparte fila con el partido (si no entra, baja a su propia fila); con < 960px baja a su propia fila con tres partes iguales.
    - El encabezado no tiene acciones propias de una vista: el selector queda siempre pegado al borde derecho. Lo que es de una vista vive en la barra de esa vista (p. ej. «Agregar evento», en la barra de Eventos).
 2. **Tira Condensada de KPIs (`PostMatchKpiStripComponent`):**
    - Altura de 44px con 3 secciones: total de eventos, conteo de jugadas sin jugador con botón `"Ver pendientes ›"` y porcentaje de carga con barra de progreso verde.

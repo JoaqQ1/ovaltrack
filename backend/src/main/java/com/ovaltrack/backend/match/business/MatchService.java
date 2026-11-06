@@ -238,6 +238,7 @@ public class MatchService {
         if (targetStatus == MatchStatus.IN_PROGRESS
                 && (currentStatus == MatchStatus.EMPTY_ROSTER || currentStatus == MatchStatus.NOT_STARTED)) {
             validateRosterForStart(match);
+            validateNoOtherLiveMatch(match);
         }
 
         if (currentStatus == MatchStatus.EMPTY_ROSTER && targetStatus == MatchStatus.FINISHED) {
@@ -247,6 +248,17 @@ public class MatchService {
         if (currentStatus == MatchStatus.FINISHED && targetStatus == MatchStatus.CANCELLED) {
             throw new BusinessException("No se puede cancelar un partido que ya termino");
         }
+    }
+
+    private void validateNoOtherLiveMatch(Match match) {
+        matchRepository.findOtherLiveMatchesInDivision(match.getDivision().getId(), match.getId())
+                .stream()
+                .findFirst()
+                .ifPresent(live -> {
+                    throw new BusinessException("La division ya tiene un partido en curso contra "
+                            + live.getOpponent().getName()
+                            + ". Finalizalo o cancelalo antes de iniciar otro.");
+                });
     }
 
     private void validateRosterForStart(Match match) {

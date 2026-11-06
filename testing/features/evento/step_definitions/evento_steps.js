@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { findEventType, parseAttributes, registerEvent } from '../../support/event_helper.js';
 import { makeHttpRequest } from '../../support/httpRequest.js';
 import {
+  cancelLiveMatches,
   changeMatchStatus,
   createMatchForRival,
   findDivisionId,
@@ -17,6 +18,7 @@ import {
 
 Given('que existe un partido en curso para la división {string} contra {string}', async function (divisionNombre, rival) {
   const divisionId = await findDivisionId(divisionNombre, this.token);
+  await cancelLiveMatches(divisionId, this.token, rival);
   let match = await findMatchByStatus(divisionId, rival, ['IN_PROGRESS', 'NOT_STARTED'], this.token)
     ?? await createMatchForRival(divisionId, rival, this.token);
 

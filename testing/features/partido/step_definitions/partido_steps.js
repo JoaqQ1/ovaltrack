@@ -2,7 +2,7 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
 import { findDivisionIdByName } from '../../support/division_helper.js';
 import { makeHttpRequest } from '../../support/httpRequest.js';
-import { findDivisionId, getDivisionMatches, requestMatchCreation, saveRosterWithDivisionPlayers } from '../../support/match_helper.js';
+import { cancelLiveMatches, findDivisionId, findMatchByStatus, getDivisionMatches, requestMatchCreation, saveRosterWithDivisionPlayers, startMatch } from '../../support/match_helper.js';
 
 export const matchCache = new Map();
 
@@ -75,4 +75,18 @@ Given('el plantel del partido tiene como titulares a los jugadores de la divisio
 
 When('intenta iniciar el partido', async function () {
   this.response = await makeHttpRequest('PUT', `matches/${this.match.id}/start`, null, this.token);
+});
+
+Given('que la division {string} tiene un partido en curso contra {string}', async function (divisionNombre, rival) {
+  const divisionId = await findDivisionId(divisionNombre, this.token);
+  await cancelLiveMatches(divisionId, this.token, rival);
+  const live = await findMatchByStatus(divisionId, rival, ['IN_PROGRESS'], this.token);
+  if (live) return;
+  const created = await createMatch('2027-06-18T15:30:00', divisionId, rival, this.token);
+  assert.equal(created.status, 200, `No se pudo crear el partido contra ${rival}: ${created.body?.message}`);
+  await startMatch(created.body, this.token);
+});
+
+Given('que la division {string} no tiene partidos en curso', async function (divisionNombre) {
+  await cancelLiveMatches(await findDivisionId(divisionNombre, this.token), this.token);
 });

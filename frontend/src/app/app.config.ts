@@ -6,6 +6,8 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { jwtInterceptor } from './core/interceptor/jwt.interceptor'; 
 import { initializeLocalDatabases } from './features/local-database/local-databases';
+import { DexieLiveMatchSource, LiveMatchSource } from './core/navigation/live-match.source';
+import { LocalSyncStatusSource, SyncStatusSource } from './core/navigation/sync-status.source';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,6 +22,8 @@ export const appConfig: ApplicationConfig = {
       useFactory: () => () => initializeLocalDatabases(),
       multi: true,
     },
-    provideHttpClient(withInterceptors([jwtInterceptor]))
+    provideHttpClient(withInterceptors([jwtInterceptor])),
+    { provide: LiveMatchSource, useClass: DexieLiveMatchSource },
+    { provide: SyncStatusSource, useClass: LocalSyncStatusSource }
   ]
 };

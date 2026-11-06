@@ -1,0 +1,267 @@
+:host {
+  position: relative;
+  display: inline-flex;
+}
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--role-color, var(--text-secondary));
+}
+
+/* Círculo con iniciales (el botón mide 48px de alto para el toque) */
+.avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--role-color, var(--border-strong));
+  border-radius: 50%;
+  background: var(--role-tint, var(--surface-alt));
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.avatar-caret {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.avatar--static {
+  min-width: 0;
+  height: auto;
+  flex: 0 0 auto;
+}
+
+.backdrop {
+  display: none;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 1040;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  padding: 16px;
+  border: 2px solid var(--border-sport);
+  border-radius: var(--radius-lg, 16px);
+  background: var(--surface);
+  box-shadow: var(--shadow-elevation);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  outline: none;
+}
+
+.sheet-handle {
+  display: none;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.identity-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 2px;
+}
+
+.identity-name {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.identity-email {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.role-chip {
+  margin-top: 2px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--role-tint);
+  color: var(--role-color);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.club-name {
+  margin: 10px 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.sync-card {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-md, 10px);
+  background: var(--warning-tint);
+  color: var(--warning);
+  font-size: 12.5px;
+}
+
+.sync-card--ok {
+  align-items: center;
+  border-color: var(--border);
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.sync-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.sync-body span {
+  color: var(--text-secondary);
+}
+
+.btn-sync {
+  min-height: 36px;
+  margin-top: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface);
+  color: var(--warning);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.btn-sync:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.options {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 4px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.option--theme span {
+  flex: 1;
+}
+
+.theme-switch {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface-alt);
+}
+
+.theme-btn {
+  width: 40px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.theme-btn.on {
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: 0 1px 4px rgba(15, 35, 15, 0.18);
+}
+
+/* Cerrar sesión: al final, separado y en rojo */
+.logout-zone {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--error);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Tablet vertical y celular: la flecha del avatar no aporta y ocupa ~18px */
+@media (max-width: 860px) {
+  .avatar-caret {
+    display: none;
+  }
+}
+
+/* Celular: el menú sube desde abajo como una hoja */
+@media (max-width: 700px) {
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1039;
+    background: rgba(15, 25, 15, 0.45);
+  }
+
+  .panel {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    max-width: none;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    border-width: 2px 0 0;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .sheet-handle {
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: -6px auto 12px;
+    border-radius: 2px;
+    background: var(--border-strong);
+  }
+}
