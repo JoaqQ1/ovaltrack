@@ -24,15 +24,6 @@
   font-size: 1.05rem;
 }
 
-/* Badges e indicadores */
-.status-dot {
-  width: 8px;
-  height: 8px;
-  background-color: #a3e635;
-  border-radius: 50%;
-  box-shadow: 0 0 8px #a3e635;
-}
-
 .badge-tech {
   background-color: rgba(59, 130, 246, 0.15);
   color: #60a5fa;
@@ -131,57 +122,6 @@
   transform: translateX(4px);
 }
 
-/* Landing Modo Oscuro */
-.landing-title {
-  color: #ffffff;
-  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
-  font-weight: 800;
-}
-
-.text-accent-highlight {
-  color: #a3e635;
-}
-
-.landing-subtitle {
-  color: #94a3b8;
-  font-size: 1.15rem;
-}
-
-/* Acciones del inicio: "Crear cuenta" es la única acción primaria; en celular van apiladas a todo el ancho */
-.landing-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-}
-
-@media (max-width: 576px) {
-  .landing-actions {
-    flex-direction: column;
-  }
-}
-
-.card-feature {
-  background-color: #131c2e;
-  border: 1px solid #1f2e47;
-  border-radius: 20px;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.feature-title {
-  color: #ffffff;
-  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
-  font-weight: 800;
-}
-
-.feature-desc {
-  color: #94a3b8;
-}
-
-.landing-footer {
-  color: #64748b;
-  border-top: 1px solid #1f2e47;
-}
-
 /* Alerta estado pendiente */
 .icon-warning-wrapper {
   width: 48px;
@@ -206,7 +146,6 @@
   color: #94a3b8;
 }
 
-
 /* ==========================================================================
    Modo Claro Calibrado (Fondo Agrizado/Salvia + Tarjetas Punto Medio)
    ========================================================================== */
@@ -217,7 +156,6 @@
   background-image: none;
   color: #1b2116;
 }
-
 
 :host-context([data-theme="light"]) .home-title,
 :host-context(.light-theme) .home-title {
@@ -300,45 +238,6 @@
 :host-context([data-theme="light"]) .card-module-link:hover .card-module-action,
 :host-context(.light-theme) .card-module-link:hover .card-module-action {
   color: #15320c;
-}
-
-/* Landing Page Modo Claro */
-:host-context([data-theme="light"]) .landing-title,
-:host-context(.light-theme) .landing-title {
-  color: #111d0e;
-}
-
-:host-context([data-theme="light"]) .text-accent-highlight,
-:host-context(.light-theme) .text-accent-highlight {
-  color: #2d550b;
-}
-
-:host-context([data-theme="light"]) .landing-subtitle,
-:host-context(.light-theme) .landing-subtitle {
-  color: #43523a;
-}
-
-:host-context([data-theme="light"]) .card-feature,
-:host-context(.light-theme) .card-feature {
-  background: linear-gradient(135deg, #daf2c0 0%, #bde68a 100%);
-  border-color: rgba(70, 130, 25, 0.28);
-  box-shadow: 0 4px 16px rgba(35, 75, 20, 0.08);
-}
-
-:host-context([data-theme="light"]) .feature-title,
-:host-context(.light-theme) .feature-title {
-  color: #111d0e;
-}
-
-:host-context([data-theme="light"]) .feature-desc,
-:host-context(.light-theme) .feature-desc {
-  color: #2f3e27;
-}
-
-:host-context([data-theme="light"]) .landing-footer,
-:host-context(.light-theme) .landing-footer {
-  color: #6a7b63;
-  border-top-color: rgba(27, 33, 22, 0.14);
 }
 
 /* Warning en modo claro */

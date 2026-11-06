@@ -4,11 +4,12 @@ import { AuthService } from '../auth/services/auth.service';
 import { UserContextService } from '../../core/services/user-context.service';
 import { UserRole } from '../auth/types/auth.types';
 import { NavigationCard } from './types/home.types';
+import { LandingComponent } from './landing/landing.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, LandingComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
