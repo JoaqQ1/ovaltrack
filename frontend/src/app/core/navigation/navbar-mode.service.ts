@@ -1,4 +1,4 @@
-import { Injectable, computed, inject } from '@angular/core';
+import { Injectable, Signal, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -9,7 +9,7 @@ import { NavbarMode } from './navigation.types';
 export class NavbarModeService {
   private readonly router = inject(Router);
 
-  private readonly routeMode = toSignal(
+  readonly mode: Signal<NavbarMode> = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       map(() => this.resolveMode()),
@@ -17,7 +17,6 @@ export class NavbarModeService {
     { initialValue: this.resolveMode() },
   );
 
-  readonly mode = computed<NavbarMode>(() => this.routeMode());
   readonly isCompact = computed(() => this.mode() === 'compact');
   readonly isHidden = computed(() => this.mode() === 'hidden');
 
