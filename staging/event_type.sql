@@ -1315,8 +1315,8 @@ VALUES
     'KEEP',
     $$[]$$::jsonb,
     $$[
-      {"key":"playerOutNumber","label":"Jugador que sale","type":"number","phase":"live","required":true,"min":1,"max":15},
-      {"key":"playerInNumber","label":"Jugador que entra","type":"number","phase":"live","required":true,"min":16,"max":23}
+      {"key":"playerOutNumber","label":"Jugador que sale","type":"number","phase":"live","required":true,"min":1},
+      {"key":"playerInNumber","label":"Jugador que entra","type":"number","phase":"live","required":true,"min":1}
     ]$$::jsonb,
     $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
