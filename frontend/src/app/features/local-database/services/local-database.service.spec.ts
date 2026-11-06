@@ -113,7 +113,12 @@ describe('LocalDatabaseService (eventos)', () => {
   describe('clearCachedDataOnLogout', () => {
     it('borra la caché, conserva eventos sin sincronizar y no cuenta los rechazados', async () => {
       await cache.saveMatches([buildMatch()]);
-      await cache.saveRoster('match-1', { startingPlayers: ['p-1'], substitutePlayers: [] });
+      await cache.saveRoster('match-1', {
+        startingPlayers: [
+          { playerId: 'p-1', number: 7, role: 'TITULAR', fieldStatus: 'EN_CANCHA', fieldSlot: 1, slotOrder: 0 },
+        ],
+        substitutePlayers: [],
+      });
       await cache.saveEventTypes([buildEventType()]);
       await cache.saveEvent(buildLocalEvent({ id: 'synced', backendEventId: 'b-1', synchronizedAt: '2026-10-23T15:00:05' }));
       await cache.saveEvent(buildLocalEvent({ id: 'pending', localSequence: 2 }));

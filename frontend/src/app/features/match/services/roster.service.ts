@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, forkJoin, map, of, switchMap, throwError, from } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, throwError, from } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Match } from '../types/match.types';
-import { AvailablePlayer, BackendRosterResponse, RosterPayload, SavedRoster, SaveRosterRequestDTO } from '../types/roster.types';
+import { AvailablePlayer, MatchRosterPlayer, RosterPayload, SavedRoster } from '../types/roster.types';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 
 @Injectable({ providedIn: 'root' })
@@ -36,21 +36,21 @@ export class RosterService {
   }
 
   saveRoster(payload: RosterPayload): Observable<void> {
-    const dto: SaveRosterRequestDTO = {
-      titularesIds: payload.startingPlayers,
-      suplentesIds: payload.substitutePlayers
-    };
-
-    return this.http.post<void>(`${this.matchesUrl}/${payload.matchId}/roster`, dto);
+    return this.http.post<void>(`${this.matchesUrl}/${payload.matchId}/roster`, {
+      titulares: payload.titulares,
+      suplentes: payload.suplentes,
+    });
   }
 
   getSavedRoster(matchId: string): Observable<SavedRoster | null> {
-    return this.http.get<BackendRosterResponse>(
-      `${this.matchesUrl}/${matchId}/roster`
-    ).pipe(
-      map(response => ({
-        startingPlayers: response.startingPlayers ?? response.titularesIds ?? [],
-        substitutePlayers: response.substitutePlayers ?? response.suplentesIds ?? [],
+    return this.getMatchRosterPlayers(matchId).pipe(
+      map(players => ({
+        startingPlayers: players
+          .filter(player => player.role === 'TITULAR')
+          .map(player => this.toRosterEntry(player)),
+        substitutePlayers: players
+          .filter(player => player.role === 'SUPLENTE')
+          .map(player => this.toRosterEntry(player)),
       })),
       switchMap(roster =>
         from(this.cache.saveRoster(matchId, roster)).pipe(
@@ -69,47 +69,48 @@ export class RosterService {
     );
   }
 
-  /**
-   * Obtiene exclusivamente los jugadores que integran el plantel convocado
-   * para el partido (titulares 1-15 y suplentes 16-23).
-   * Si no hay plantel guardado, recurre a los jugadores de la división.
-   */
-  getMatchRosterPlayers(matchId: string): Observable<AvailablePlayer[]> {
-    return forkJoin({
-      allPlayers: this.getAvailablePlayers(matchId).pipe(catchError(() => of([]))),
-      savedRoster: this.getSavedRoster(matchId).pipe(catchError(() => of(null)))
-    }).pipe(
-      map(({ allPlayers, savedRoster }) => {
-        if (!savedRoster || (!savedRoster.startingPlayers.length && !savedRoster.substitutePlayers.length)) {
-          return allPlayers;
+  getMatchRosterPlayers(matchId: string): Observable<MatchRosterPlayer[]> {
+    return this.http.get<MatchRosterPlayer[]>(
+      `${this.matchesUrl}/${matchId}/roster/players`
+    ).pipe(
+      catchError(error => {
+        if (error.status === 404) {
+          return of([]);
         }
-
-        const matchPlayers: AvailablePlayer[] = [];
-
-        // Titulares (camisetas 1 a 15)
-        savedRoster.startingPlayers.forEach((playerId, index) => {
-          const found = allPlayers.find(p => p.id === playerId);
-          if (found) {
-            matchPlayers.push({
-              ...found,
-              jerseyNumber: found.jerseyNumber ?? (index + 1)
-            });
-          }
-        });
-
-        // Suplentes (camisetas 16 a 23)
-        savedRoster.substitutePlayers.forEach((playerId, index) => {
-          const found = allPlayers.find(p => p.id === playerId);
-          if (found) {
-            matchPlayers.push({
-              ...found,
-              jerseyNumber: found.jerseyNumber ?? (index + 16)
-            });
-          }
-        });
-
-        return matchPlayers;
+        return throwError(() => error);
       })
     );
+  }
+
+  getRosterOrDivisionPlayers(matchId: string): Observable<MatchRosterPlayer[]> {
+    return this.getMatchRosterPlayers(matchId).pipe(
+      switchMap(players => players.length > 0
+        ? of(players)
+        : this.getAvailablePlayers(matchId).pipe(
+          map(available => available
+            .filter(player => player.jerseyNumber != null)
+            .map(player => ({
+              id: player.id,
+              fullName: player.fullName,
+              position: player.position,
+              number: player.jerseyNumber!,
+              role: 'TITULAR' as const,
+              fieldStatus: 'EN_CANCHA' as const,
+              fieldSlot: null,
+              slotOrder: null,
+            })))
+        ))
+    );
+  }
+
+  private toRosterEntry(player: MatchRosterPlayer) {
+    return {
+      playerId: player.id,
+      number: player.number,
+      role: player.role,
+      fieldStatus: player.fieldStatus,
+      fieldSlot: player.fieldSlot,
+      slotOrder: player.slotOrder,
+    };
   }
 }

@@ -2,6 +2,9 @@ package com.ovaltrack.backend.event.business;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.security.core.Authentication;
@@ -9,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.match.business.MatchSecurityValidator;
 import com.ovaltrack.backend.match.business.MatchService;
+import com.ovaltrack.backend.match.business.SubstitutionDependencyChecker;
 import com.ovaltrack.backend.match.domain.Match;
 import com.ovaltrack.backend.match.domain.MatchStatus;
 import com.ovaltrack.backend.person.business.PersonService;
@@ -45,6 +49,7 @@ public class EventService {
 	private final PersonService personService;
 	private final MatchRepository matchRepository;
 	private final MatchSecurityValidator matchSecurityValidator;
+	private final SubstitutionDependencyChecker substitutionDependencyChecker;
 
 	public Collection<EventResponseDTO> findEventsByClubId(UUID clubId) {
 		if (clubService.findClubById(clubId) == null) {
@@ -111,14 +116,15 @@ public class EventService {
 
 		EventAttributeValidator.validate(aEventType, eventRequest.attributes(), eventRequest.teamPossession());
 		
-		Match match = matchService.findMatchEntityById(eventRequest.matchId());
+		Match match = isSubstitution(aEventType)
+				? matchService.findMatchEntityByIdForUpdate(eventRequest.matchId())
+				: matchService.findMatchEntityById(eventRequest.matchId());
 		if (match == null) {
 			throw new BusinessException("No se puede asignar un evento a un partido que no existe");
 		}
 		if (match.getStatus() == MatchStatus.CANCELLED) {
 			throw new BusinessException("No se puede asignar un evento a un partido cancelado");
 		}
-
 		if (authentication != null) {
 			matchSecurityValidator.validateCanManageMatch(match, authentication);
 		}
@@ -126,15 +132,19 @@ public class EventService {
 		validateMatchTimePeriod(eventRequest.period(), eventRequest.matchTime());
 		validatePlayerPossession(eventRequest.teamPossession(), eventRequest.playerId());
 
-		Person aPerson = resolveEventPlayer(eventRequest.playerId(), match);
+		Person aPerson = isSubstitution(aEventType) ? null : resolveEventPlayer(eventRequest.playerId(), match);
 
 		Event result = EventDTOMapper.toEntity(eventRequest, match, aEventType, aPerson);
 
 		if (isOwnSubstitution(aEventType, eventRequest.teamPossession())) {
-			matchService.validateSubstitution(match, eventRequest.attributes());
+			matchService.validateSubstitution(match, result);
 		}
 
 		Event savedEvent = eventRepository.save(result);
+		if (isSubstitution(aEventType)) {
+			savedEvent.setPlayer(null);
+			matchService.recalculateLineup(match);
+		}
 		recalculateMatchScore(match);
 		return EventDTOMapper.toResponseDTO(savedEvent);
 	}
@@ -147,6 +157,10 @@ public class EventService {
 	/** Los cambios del rival no se validan: solo se registra el plantel propio. */
 	private boolean isOwnSubstitution(EventType eventType, EventPossession possession) {
 		return "SUBSTITUTION".equals(eventType.getCode()) && possession == EventPossession.OWN;
+	}
+
+	private boolean isSubstitution(EventType eventType) {
+		return eventType != null && "SUBSTITUTION".equals(eventType.getCode());
 	}
 
 		private Event findExistingClientEvent(UUID clientEventId, UUID matchId) {
@@ -197,9 +211,19 @@ public class EventService {
 			return EventDTOMapper.toResponseDTO(result);
 		}
 
+		if (isSubstitution(result.getEventType()) && result.getTeamPossession() == EventPossession.OWN) {
+			matchService.findMatchEntityByIdForUpdate(result.getMatch().getId());
+			substitutionDependencyChecker.validateChange(result.getMatch(),
+					new ArrayList<>(eventRepository.findEventsByMatchId(result.getMatch().getId())),
+					result, null);
+		}
 		result.setActive(false);
 		result.setSynchronizedAt(LocalDateTime.now());
 		Event savedEvent = eventRepository.save(result);
+		if (isSubstitution(result.getEventType())) {
+			result.setPlayer(null);
+			matchService.recalculateLineup(result.getMatch());
+		}
 		recalculateMatchScore(result.getMatch());
 		return EventDTOMapper.toResponseDTO(savedEvent);
 	}
@@ -216,11 +240,31 @@ public class EventService {
 		if (authentication != null) {
 			matchSecurityValidator.validateCanManageMatch(event.getMatch(), authentication);
 		}
+		boolean wasOwnSubstitution = isOwnSubstitution(event.getEventType(), event.getTeamPossession());
+		EventType requestedType = eventRequest.eventTypeId() == null
+				? event.getEventType()
+				: eventTypeService.findEventTypeEntityById(eventRequest.eventTypeId());
+		boolean willBeSubstitution = isSubstitution(requestedType);
+		List<Event> beforeEvents = (wasOwnSubstitution || willBeSubstitution)
+				? snapshotEvents(eventRepository.findEventsByMatchId(event.getMatch().getId()))
+				: List.of();
+		if (wasOwnSubstitution || willBeSubstitution || eventRequest.teamPossession() == EventPossession.OWN) {
+			matchService.findMatchEntityByIdForUpdate(event.getMatch().getId());
+		}
 
 		validateTimingPeriod(eventRequest, event);
 		applyEventTypeAndAttributes(event, eventRequest);
 		applyPossessionAndPlayer(event, eventRequest);
 		applyTimingFields(event, eventRequest);
+		boolean isOwnSubstitution = isOwnSubstitution(event.getEventType(), event.getTeamPossession());
+		if (isOwnSubstitution) {
+			matchService.validateSubstitution(event.getMatch(), event);
+		}
+		if (wasOwnSubstitution || isOwnSubstitution) {
+			Event original = beforeEvents.stream().filter(candidate -> candidate.getId().equals(event.getId()))
+					.findFirst().orElse(event);
+			substitutionDependencyChecker.validateChange(event.getMatch(), beforeEvents, original, event);
+		}
 
 		//para las notas
 		if (eventRequest.note() != null) {
@@ -229,8 +273,34 @@ public class EventService {
 
 		event.setSynchronizedAt(LocalDateTime.now());
 		Event savedEvent = eventRepository.save(event);
+		if (wasOwnSubstitution || isOwnSubstitution) {
+			event.setPlayer(null);
+			matchService.recalculateLineup(event.getMatch());
+		}
 		recalculateMatchScore(event.getMatch());
 		return EventDTOMapper.toResponseDTO(savedEvent);
+	}
+
+	private List<Event> snapshotEvents(Collection<Event> events) {
+		return events.stream().map(this::snapshotEvent).toList();
+	}
+
+	private Event snapshotEvent(Event event) {
+		return Event.builder()
+				.id(event.getId())
+				.eventType(event.getEventType())
+				.match(event.getMatch())
+				.player(event.getPlayer())
+				.teamPossession(event.getTeamPossession())
+				.matchTime(event.getMatchTime())
+				.absoluteMatchTime(event.getAbsoluteMatchTime())
+				.realTime(event.getRealTime())
+				.period(event.getPeriod())
+				.origin(event.getOrigin())
+				.attributes(event.getAttributes() == null ? null : new HashMap<>(event.getAttributes()))
+				.createdAt(event.getCreatedAt())
+				.active(event.getActive())
+				.build();
 	}
 
 	private Event findActiveEventOrThrow(UUID eventId) {
@@ -286,6 +356,8 @@ public class EventService {
 		}
 
 		if (effectivePossession == EventPossession.OPPONENT) {
+			event.setPlayer(null);
+		} else if (isSubstitution(event.getEventType())) {
 			event.setPlayer(null);
 		} else if (request.playerId() != null) {
 			Person person = resolveEventPlayer(request.playerId(), event.getMatch());

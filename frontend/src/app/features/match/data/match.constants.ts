@@ -34,6 +34,7 @@ export const RUGBY_SUBSTITUTE_SLOT_DEFINITIONS: readonly RugbySlotDefinition[] =
 export function createInitialStartingSlots(): RosterSlot[] {
   return RUGBY_STARTING_SLOT_DEFINITIONS.map(def => ({
     ...def,
+    matchNumber: def.number,
     player: null,
   }));
 }
@@ -41,6 +42,7 @@ export function createInitialStartingSlots(): RosterSlot[] {
 export function createInitialSubstituteSlots(): RosterSlot[] {
   return RUGBY_SUBSTITUTE_SLOT_DEFINITIONS.map(def => ({
     ...def,
+    matchNumber: def.number,
     player: null,
   }));
 }

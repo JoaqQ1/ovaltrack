@@ -149,11 +149,8 @@ class EventServiceTest {
         when(eventTypeService.findEventTypeEntityById(eventTypeId)).thenReturn(eventType);
         when(matchService.findMatchEntityById(matchId)).thenReturn(match);
 
-        BusinessException ex = assertThrows(BusinessException.class,
-                () -> eventService.saveEvent(request, authentication));
-
-        assertTrue(ex.getMessage().contains("No se puede cargar eventos"));
-        verify(eventRepository, never()).save(any());
+        assertDoesNotThrow(() -> eventService.saveEvent(request, authentication));
+        verify(eventRepository).save(any());
     }
 
     @Test

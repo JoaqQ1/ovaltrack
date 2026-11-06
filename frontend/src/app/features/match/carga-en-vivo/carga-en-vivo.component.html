@@ -152,13 +152,16 @@
                 <div class="history__meta">
                     <span class="history__time">{{ item.minute }}</span>
                     <button type="button" class="history__button"
-                        [attr.aria-label]="'Deshacer evento de ' + item.minute"
-                        (click)="undoHistoryEvent(item.id)"
+                        [attr.aria-label]="item.rejected ? 'Descartar evento rechazado' : 'Deshacer evento de ' + item.minute"
+                        (click)="item.rejected ? discardRejectedEvent(item.id) : undoHistoryEvent(item.id)"
                         [disabled]="!isStarted">
-                        <i class="ti ti-arrow-back-up" aria-hidden="true"></i>
+                        <i [class]="item.rejected ? 'ti ti-trash' : 'ti ti-arrow-back-up'" aria-hidden="true"></i>
                     </button>
                 </div>
                 <span class="history__desc">{{ item.description }}</span>
+                @if (item.rejected && item.syncErrorMessage) {
+                <span class="history__error">{{ item.syncErrorMessage }}</span>
+                }
             </div>
             }
         </aside>

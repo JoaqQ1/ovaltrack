@@ -175,7 +175,7 @@ public class MatchController {
     public ResponseEntity<Void> saveMatchRoster(
             @PathVariable UUID matchId,
             @RequestBody MatchRosterDTO request) {
-        matchService.saveMatchRoster(matchId, request.titularesIds(), request.suplentesIds());
+        matchService.saveMatchRoster(matchId, request.titulares(), request.suplentes());
         return ResponseEntity.ok().build();
     }
 

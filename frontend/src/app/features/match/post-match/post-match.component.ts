@@ -221,9 +221,14 @@ export class PostMatchComponent implements OnInit, OnDestroy {
   }
 
   loadRoster(): void {
-    this.rosterService.getMatchRosterPlayers(this.matchId).subscribe({
+    this.rosterService.getRosterOrDivisionPlayers(this.matchId).subscribe({
       next: (players) => {
-        this.store.setAvailablePlayers(players);
+        this.store.setAvailablePlayers(players.map(player => ({
+          id: player.id,
+          fullName: player.fullName,
+          jerseyNumber: player.number,
+          position: player.position,
+        })));
       },
       error: () => {
         // Fallback no bloqueante si la división no tiene jugadores cargados

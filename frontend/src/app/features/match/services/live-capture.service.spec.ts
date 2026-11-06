@@ -46,7 +46,13 @@ describe('LiveCaptureService', () => {
   describe('bootstrap offline', () => {
     beforeEach(async () => {
       await cache.saveMatches([buildMatch({ divisionId: 'division-1' })]);
-      await cache.saveRoster('match-1', { startingPlayers: ['p-2', 'p-1'], substitutePlayers: [] });
+      await cache.saveRoster('match-1', {
+        startingPlayers: [
+          { playerId: 'p-2', number: 99, role: 'TITULAR', fieldStatus: 'EN_CANCHA', fieldSlot: 1, slotOrder: 0 },
+          { playerId: 'p-1', number: 7, role: 'TITULAR', fieldStatus: 'EN_CANCHA', fieldSlot: 2, slotOrder: 1 },
+        ],
+        substitutePlayers: [],
+      });
       await cache.savePersonsByDivisionId([
         { id: 'p-1', fullName: 'Uno', jerseyNumber: 1, position: null, divisionId: 'division-1' },
         { id: 'p-2', fullName: 'Dos', jerseyNumber: 7, position: null, divisionId: 'division-1' },
@@ -73,14 +79,14 @@ describe('LiveCaptureService', () => {
         .toBe(false);
     });
 
-    it('asigna el jugador por número de slot del plantel y no por camiseta', async () => {
+    it('asigna el jugador por número permanente del plantel y no por índice ni camiseta', async () => {
       const saved = await firstValueFrom(service.saveEvent(buildLocalEvent({
         eventTypeId: 'tackle',
         playerId: null,
-        attributes: { playerNumber: 1 },
+        attributes: { playerNumber: 99 },
       })));
 
-      expect(saved.playerId).withContext('slot 1 del plantel es p-2 (camiseta 7)').toBe('p-2');
+      expect(saved.playerId).withContext('el número 99 del plantel es p-2 (camiseta 7)').toBe('p-2');
     });
 
     it('deja el evento sin jugador si no hay plantel, en vez de adivinar por camiseta', async () => {

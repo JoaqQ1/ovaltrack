@@ -24,6 +24,7 @@ export interface RugbySlotDefinition {
 
 export interface RosterSlot {
   readonly number: number;
+  matchNumber: number | null;
   readonly positionName: string;
   readonly positionCategory: RugbyPositionCategory;
   readonly isStarter: boolean;
@@ -40,13 +41,33 @@ export interface RosterValidationResult {
 
 export interface RosterPayload {
   matchId: string;
-  startingPlayers: string[];
-  substitutePlayers: string[];
+  titulares: RosterEntry[];
+  suplentes: RosterEntry[];
 }
 
 export interface SaveRosterRequestDTO {
-  titularesIds: string[];
-  suplentesIds: string[];
+  titulares: RosterEntry[];
+  suplentes: RosterEntry[];
+}
+
+export interface RosterEntry {
+  playerId: string;
+  number: number;
+  role?: 'TITULAR' | 'SUPLENTE';
+  fieldStatus?: 'EN_CANCHA' | 'EN_BANCO';
+  fieldSlot?: number | null;
+  slotOrder?: number | null;
+}
+
+export interface MatchRosterPlayer {
+  id: string;
+  fullName: string;
+  position: string | null;
+  number: number;
+  role: 'TITULAR' | 'SUPLENTE';
+  fieldStatus: 'EN_CANCHA' | 'EN_BANCO';
+  fieldSlot: number | null;
+  slotOrder: number | null;
 }
 
 export interface BackendRosterResponse {
@@ -57,6 +78,6 @@ export interface BackendRosterResponse {
 }
 
 export interface SavedRoster {
-  startingPlayers: string[];
-  substitutePlayers: string[];
+  startingPlayers: RosterEntry[];
+  substitutePlayers: RosterEntry[];
 }

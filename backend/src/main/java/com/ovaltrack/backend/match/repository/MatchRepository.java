@@ -6,12 +6,18 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.ovaltrack.backend.match.domain.Match;
 
 public interface MatchRepository extends JpaRepository<Match, UUID> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM Match m WHERE m.id = :id")
+    java.util.Optional<Match> findByIdForUpdate(@Param("id") UUID id);
 
     @Query("SELECT m FROM Match m WHERE m.division.club.id = :clubId")
     Collection<Match> findAllMatchesByClubId(@Param("clubId") UUID clubId);

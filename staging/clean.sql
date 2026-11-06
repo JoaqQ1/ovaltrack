@@ -4,6 +4,11 @@
 
 BEGIN;
 
+ALTER TABLE matches_players ADD COLUMN IF NOT EXISTS slot_order INTEGER;
+ALTER TABLE matches_players ADD COLUMN IF NOT EXISTS number INTEGER;
+ALTER TABLE matches_players ADD COLUMN IF NOT EXISTS field_status VARCHAR(32);
+ALTER TABLE matches_players ADD COLUMN IF NOT EXISTS field_slot INTEGER;
+
 -- 1. Desactivar temporalmente las validaciones de FK en la sesión actual
 SET session_replication_role = 'replica';
 
@@ -47,6 +52,17 @@ ALTER TABLE events ADD COLUMN IF NOT EXISTS client_event_id UUID;
 -- Catálogo de eventos v3
 ALTER TABLE event_types ADD COLUMN IF NOT EXISTS code VARCHAR(60);
 CREATE UNIQUE INDEX IF NOT EXISTS uk_event_types_code ON event_types (code);
+UPDATE event_types
+SET template_event_fields = (
+    SELECT jsonb_agg(
+        CASE WHEN field->>'key' IN ('playerOutNumber', 'playerInNumber')
+             THEN (field - 'max') || jsonb_build_object('min', 1)
+             ELSE field END)
+    FROM jsonb_array_elements(template_event_fields) AS field)
+WHERE code = 'SUBSTITUTION';
+UPDATE events
+SET player_id = NULL
+WHERE event_type_id IN (SELECT id FROM event_types WHERE code = 'SUBSTITUTION');
 -- show_in_palette = false -> el tipo no aparece en la botonera en vivo (solo se crea como seguimiento o desde video)
 ALTER TABLE event_types ADD COLUMN IF NOT EXISTS show_in_palette BOOLEAN NOT NULL DEFAULT TRUE;
 -- follow_up_event_type_id -> tras registrar este tipo, la app pide automáticamente el evento de seguimiento
@@ -1376,9 +1392,21 @@ VALUES
     'KEEP',
     $$[]$$::jsonb,
     $$[
-      {"key":"playerOutNumber","label":"Jugador que sale","type":"number","phase":"live","required":true,"min":1,"max":15},
-      {"key":"playerInNumber","label":"Jugador que entra","type":"number","phase":"live","required":true,"min":16,"max":23}
+      {"key":"playerOutNumber","label":"Jugador que sale","type":"number","phase":"live","required":true,"min":1},
+      {"key":"playerInNumber","label":"Jugador que entra","type":"number","phase":"live","required":true,"min":1}
     ]$$::jsonb,
     $$["basic", "intermediate"]$$::jsonb,
     CURRENT_TIMESTAMP
 );
+
+UPDATE event_types
+SET template_event_fields = (
+    SELECT jsonb_agg(
+        CASE WHEN field->>'key' IN ('playerOutNumber', 'playerInNumber')
+             THEN (field - 'max') || jsonb_build_object('min', 1)
+             ELSE field END)
+    FROM jsonb_array_elements(template_event_fields) AS field)
+WHERE code = 'SUBSTITUTION';
+UPDATE events
+SET player_id = NULL
+WHERE event_type_id IN (SELECT id FROM event_types WHERE code = 'SUBSTITUTION');

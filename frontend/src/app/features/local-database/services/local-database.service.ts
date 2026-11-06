@@ -64,7 +64,23 @@ export class LocalDatabaseService {
   }
 
   getRoster(matchId: string): Promise<SavedRoster | undefined> {
-    return matchDatabase.rosters.get(matchId);
+    return matchDatabase.rosters.get(matchId).then(roster => {
+      if (!roster || !this.isEnrichedRoster(roster)) {
+        return undefined;
+      }
+      return roster;
+    });
+  }
+
+  private isEnrichedRoster(roster: SavedRoster): boolean {
+    const players = [...roster.startingPlayers, ...roster.substitutePlayers];
+    return players.every(player =>
+      Number.isInteger(player.number)
+      && player.number > 0
+      && typeof player.playerId === 'string'
+      && player.fieldStatus !== undefined
+      && player.slotOrder !== undefined
+    );
   }
   
   savePersonsByDivisionId(players: (AvailablePlayer & { divisionId: string })[]): Promise<void> {

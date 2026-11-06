@@ -11,7 +11,7 @@ import {
 } from '../types/live-capture.types';
 import { FollowUpChoice, LiveCaptureEventType, PossessionAfter, TemplateField } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
-import { AvailablePlayer } from '../types/roster.types';
+import { MatchRosterPlayer } from '../types/roster.types';
 import {
   Team, countsAsScoring, followUpChoices, liveFields, opposite, possessionRule, resolveActor, scoringTeam,
 } from '../statistics/calculators/event-rules';
@@ -20,7 +20,7 @@ import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../statistics/services/statistic-calculation.service';
 import { MatchStatistics } from '../statistics/types/statistic.types';
 import { CurrentStatsModalComponent } from './components/current-stats-modal/current-stats-modal.component';
-import { currentLineup } from './lineup';
+import { buildInitialLineup, currentLineup, Lineup } from './lineup';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
@@ -72,6 +72,7 @@ interface FollowUpChooser {
 interface SlotView {
   number: number;
   name: string;
+  fieldSlot: number;
 }
 
 /**
@@ -114,11 +115,10 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   /** Estados de posesión, en el orden en que se renderizan en la barra de posesión. */
   readonly possessions = POSSESSIONS;
 
-  /** Jugadores titulares indexados por su puesto de alineación, del 1 al 15. */
-  private readonly playersByStartingNumber = new Map<number, AvailablePlayer>();
-  private readonly playersBySubstituteNumber = new Map<number, AvailablePlayer>();
-  private readonly initialStartingPlayers = new Map<number, AvailablePlayer>();
-  private readonly initialSubstitutePlayers = new Map<number, AvailablePlayer>();
+  /** Jugadores indexados por su número permanente del partido. */
+  private initialLineup: Lineup = { onField: new Map(), bench: new Map() };
+  private onField = new Map<number, MatchRosterPlayer>();
+  private bench = new Map<number, MatchRosterPlayer>();
 
   /** Los 15 titulares en cancha, agrupados para la cuadrícula del modal. */
   forwardSlots: SlotView[] = [];
@@ -173,6 +173,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   private events: LocalMatchEvent[] = [];
   private readonly eventVariantRotation: EventVariant[] = ['success', 'danger', 'warning', 'primary'];
   private readonly eventVariants = new Map<string, EventVariant>();
+  private readonly missingFieldSlotWarnings = new Set<string>();
   private nextEventVariantIndex = 0;
 
   /** Inicializa la pantalla, carga el partido y restaura su estado guardado. */
@@ -229,18 +230,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.eventVariants.clear();
         this.nextEventVariantIndex = 0;
         this.categories = this.groupEventTypes(response.eventTypes.filter(e => e.showInPalette !== false));
-        this.playersByStartingNumber.clear();
-        this.playersBySubstituteNumber.clear();
-        this.initialStartingPlayers.clear();
-        this.initialSubstitutePlayers.clear();
-        response.rosterPlayers.forEach((player, index) => {
-          this.playersByStartingNumber.set(index + 1, player);
-          this.initialStartingPlayers.set(index + 1, player);
-        });
-        (response.substitutePlayers ?? []).forEach((player, index) => {
-          this.playersBySubstituteNumber.set(index + 16, player);
-          this.initialSubstitutePlayers.set(index + 16, player);
-        });
+        this.initialLineup = buildInitialLineup(response.rosterPlayers);
+        this.onField = new Map(this.initialLineup.onField);
+        this.bench = new Map(this.initialLineup.bench);
         this.buildSlots();
         this.events = response.recentEvents;
         this.rebuildStateFromEvents();
@@ -337,7 +329,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   private commitEvent(
     event: LiveCaptureEventType,
     eventId: string,
-    player: AvailablePlayer | null,
+    player: MatchRosterPlayer | null,
     customAttributes?: Record<string, unknown>,
     onSuccess?: () => void,
     teamPossessionOverride?: Possession,
@@ -346,7 +338,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     let finalAttributes: Record<string, unknown> | null = customAttributes ? { ...customAttributes } : null;
     if (player !== null && finalAttributes?.['playerNumber'] === undefined) {
-      finalAttributes = { ...(finalAttributes ?? {}), playerNumber: player.jerseyNumber };
+      finalAttributes = { ...(finalAttributes ?? {}), playerNumber: player.number };
     }
 
     const localEvent: LocalMatchEvent = {
@@ -419,6 +411,14 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   removeHistoryEvent(historyId: string): void {
     this.undoHistoryEvent(historyId);
+  }
+
+  /** Descarta un evento rechazado localmente sin volver a enviarlo al servidor. */
+  discardRejectedEvent(historyId: string): void {
+    const event = this.events.find(currentEvent => currentEvent.id === historyId);
+    if (event?.syncFailedAt) {
+      this.deleteEventAndRebuild(event);
+    }
   }
 
   /** Pausa o reanuda el reloj del partido sin afectar el historial de deshacer. */
@@ -758,6 +758,17 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         continue;
       }
 
+      if (event.syncFailedAt) {
+        history.unshift({
+          id: event.id,
+          minute: this.formatEventMinute(event.matchTime),
+          description: `${eventType.name} — Rechazado`,
+          rejected: true,
+          syncErrorMessage: event.syncErrorMessage,
+        });
+        continue;
+      }
+
       const counts = countsAsScoring(eventType, event.attributes);
       const team = counts ? scoringTeam(event) : null;
       if (team === 'OPPONENT') {
@@ -793,16 +804,14 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   /** Aplica los cambios cargados sobre la formación inicial (ver `currentLineup`). */
   private rebuildRosterFromEvents(): void {
-    const { starters, substitutes } = currentLineup(
-      { starters: this.initialStartingPlayers, substitutes: this.initialSubstitutePlayers },
+    const { onField, bench } = currentLineup(
+      this.initialLineup,
       this.events,
       eventTypeId => this.eventTypeById(eventTypeId),
     );
 
-    this.playersByStartingNumber.clear();
-    starters.forEach((player, number) => this.playersByStartingNumber.set(number, player));
-    this.playersBySubstituteNumber.clear();
-    substitutes.forEach((player, number) => this.playersBySubstituteNumber.set(number, player));
+    this.onField = onField;
+    this.bench = bench;
     this.buildSlots();
   }
 
@@ -972,19 +981,36 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   // ───────────────────────── Captura de eventos (modal por pasos) ─────────────────────────
 
   private buildSlots(): void {
-    const slot = (number: number): SlotView => ({
+    const starters = [...this.onField.entries()]
+      .filter(([, player]) => {
+        if (player.fieldSlot != null) {
+          return true;
+        }
+        const warningKey = `${this.matchId}:${player.id}`;
+        if (!this.missingFieldSlotWarnings.has(warningKey)) {
+          this.missingFieldSlotWarnings.add(warningKey);
+          this.toastService.warning(
+            `No se pudo ubicar al jugador #${player.number} porque no tiene casilla de cancha.`,
+            'Alineación incompleta',
+          );
+        }
+        return false;
+      })
+      .sort(([, left], [, right]) => left.fieldSlot! - right.fieldSlot!);
+    const slot = (number: number, player: MatchRosterPlayer): SlotView => ({
       number,
-      name: this.shortName(this.playersByStartingNumber.get(number)?.fullName),
+      name: this.shortName(player.fullName),
+      fieldSlot: player.fieldSlot!,
     });
-    this.forwardSlots = Array.from({ length: 8 }, (_, index) => slot(index + 1));
-    this.backSlots = Array.from({ length: 7 }, (_, index) => slot(index + 9));
-    this.substituteSlots = Array.from({ length: 8 }, (_, index) => {
-      const number = index + 16;
-      return {
-        number,
-        name: this.shortName(this.playersBySubstituteNumber.get(number)?.fullName),
-      };
-    });
+    this.forwardSlots = starters
+      .filter(([, player]) => player.fieldSlot! <= 8)
+      .map(([number, player]) => slot(number, player));
+    this.backSlots = starters
+      .filter(([, player]) => player.fieldSlot! >= 9)
+      .map(([number, player]) => slot(number, player));
+    this.substituteSlots = [...this.bench.entries()]
+      .sort(([, left], [, right]) => (left.slotOrder ?? 0) - (right.slotOrder ?? 0))
+      .map(([number, player]) => slot(number, player));
   }
 
   /** Apellido para el botón: «Apellido, Nombre» → Apellido; «Nombre Apellido» → Apellido. */
@@ -1202,7 +1228,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     this.capture = null;
     const player = session.team === 'OWN' && session.playerNumber != null
-      ? this.playersByStartingNumber.get(session.playerNumber) ?? null
+      ? this.onField.get(session.playerNumber) ?? null
       : null;
     this.commitWithFollowUp(
       session.event,
@@ -1222,7 +1248,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   private commitWithFollowUp(
     event: LiveCaptureEventType,
     eventId: string,
-    player: AvailablePlayer | null,
+    player: MatchRosterPlayer | null,
     playerNumber: number | null,
     values: Record<string, unknown>,
     possession: Possession,
@@ -1233,12 +1259,16 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       ...(team === 'OWN' && playerNumber != null ? { playerNumber } : {}),
     };
     if (event.code === 'SUBSTITUTION' && team === 'OWN') {
-      const outgoing = this.playersByStartingNumber.get(Number(values['playerOutNumber']));
-      const incoming = this.playersBySubstituteNumber.get(Number(values['playerInNumber']));
-      if (outgoing && incoming) {
-        attributes['playerOutId'] = outgoing.id;
-        attributes['playerInId'] = incoming.id;
+      const outgoing = this.onField.get(Number(values['playerOutNumber']));
+      const incoming = this.bench.get(Number(values['playerInNumber']));
+      if (!outgoing || !incoming || outgoing.id === incoming.id) {
+        this.toastService.error('Selecciona un jugador saliente y uno entrante válidos.');
+        return;
       }
+      attributes['playerOutId'] = outgoing.id;
+      attributes['playerInId'] = incoming.id;
+      attributes['playerOutNumber'] = outgoing.number;
+      attributes['playerInNumber'] = incoming.number;
     }
     const followUp = event.followUpEventTypeId
       ? this.eventTypeById(event.followUpEventTypeId)

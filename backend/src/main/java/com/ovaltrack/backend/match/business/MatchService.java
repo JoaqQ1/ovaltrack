@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +31,13 @@ import com.ovaltrack.backend.division.domain.Division;
 import com.ovaltrack.backend.division.domain.DivisionPlayer;
 import com.ovaltrack.backend.division.repository.DivisionPlayerRepository;
 import com.ovaltrack.backend.event.domain.dto.EventDTOMapper;
+import com.ovaltrack.backend.event.domain.Event;
 import com.ovaltrack.backend.event.repository.EventRepository;
 import com.ovaltrack.backend.event.repository.EventTypeRepository;
 import com.ovaltrack.backend.match.domain.Match;
 import com.ovaltrack.backend.match.domain.MatchPlayer;
 import com.ovaltrack.backend.match.domain.MatchPlayerRole;
+import com.ovaltrack.backend.match.domain.MatchPlayerStatus;
 import com.ovaltrack.backend.match.domain.MatchStatus;
 import com.ovaltrack.backend.match.domain.Opponent;
 import com.ovaltrack.backend.match.domain.dto.LiveMatchBootstrapDTO;
@@ -42,6 +45,7 @@ import com.ovaltrack.backend.match.domain.dto.LiveMatchStateDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchCreationDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchDTOMapper;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
+import com.ovaltrack.backend.match.domain.dto.MatchRosterEntryDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchRosterPlayerDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchUpdateDTO;
 import com.ovaltrack.backend.match.domain.dto.PlayerMatchResponseDTO;
@@ -62,9 +66,6 @@ public class MatchService {
     private static final Logger logger = LoggerFactory.getLogger(MatchService.class);
 
     private static final int MATCH_DURATION_MINUTES = 90;
-    /** Los slots 1-15 son titulares; del 16 en adelante, suplentes. */
-    private static final int STARTER_SLOTS = 15;
-
     @Autowired
     private DivisionPlayerRepository divisionPlayerRepository;
 
@@ -83,6 +84,7 @@ public class MatchService {
     private final OpponentRepository opponentRepository;
     private final MatchSecurityValidator matchSecurityValidator;
     private final ApplicationEventPublisher eventPublisher;
+    private final LineupReplayer lineupReplayer;
 
     private final ClubService clubService;
 
@@ -150,6 +152,11 @@ public class MatchService {
 
     public Match findMatchEntityById(UUID matchId) {
         return matchRepository.findById(matchId).orElse(null);
+    }
+
+    @Transactional
+    public Match findMatchEntityByIdForUpdate(UUID matchId) {
+        return matchRepository.findByIdForUpdate(matchId).orElse(null);
     }
 
     @Transactional
@@ -262,10 +269,11 @@ public class MatchService {
     }
 
     private void validateRosterForStart(Match match) {
-        boolean hasTitular = getSavedRoster(match.getId()).getStartingPlayers().size() >= 1;
-        if (!hasTitular) {
-            throw new BusinessException(
-                    "No se puede iniciar el partido sin al menos un jugador titular registrado.");
+        long titularCount = match.getRoster().stream()
+                .filter(player -> player.getRole() == MatchPlayerRole.TITULAR)
+                .count();
+        if (titularCount != 15) {
+            throw new BusinessException("No se puede iniciar el partido sin los 15 titulares registrados.");
         }
     }
 
@@ -290,15 +298,26 @@ public class MatchService {
     }
 
     @Transactional
-    public void saveMatchRoster(UUID matchId, List<UUID> titularesIds, List<UUID> suplentesIds) {
-        Match match = findMatchEntityById(matchId);
+    public void saveMatchRoster(UUID matchId, List<MatchRosterEntryDTO> titulares,
+            List<MatchRosterEntryDTO> suplentes) {
+        Match match = findMatchEntityByIdForUpdate(matchId);
         if (match == null) {
             throw new EntityNotFoundException("Partido no encontrado");
         }
-        if (match.getStatus() == MatchStatus.CANCELLED) {
-            throw new BusinessException("No se puede modificar el plantel de un partido cancelado");
+        if (match.getStatus() == MatchStatus.IN_PROGRESS
+                || match.getStatus() == MatchStatus.HALFTIME
+                || match.getStatus() == MatchStatus.FINISHED
+                || match.getStatus() == MatchStatus.CANCELLED) {
+            throw new BusinessException("No se puede modificar el plantel después de iniciar el partido");
         }
-        matchPlayerRepository.deleteByMatch(match);
+        List<MatchRosterEntryDTO> starters = Objects.requireNonNullElse(titulares, List.of());
+        List<MatchRosterEntryDTO> substitutes = Objects.requireNonNullElse(suplentes, List.of());
+        if (starters.size() != 15) {
+            throw new BusinessException("El plantel debe tener exactamente 15 titulares");
+        }
+        if (substitutes.size() > 8) {
+            throw new BusinessException("El plantel no puede tener más de 8 suplentes");
+        }
 
         Map<UUID, DivisionPlayer> divisionPlayersByPersonId = new HashMap<>();
         for (DivisionPlayer dp : divisionPlayerRepository.findByDivisionId(match.getDivision().getId())) {
@@ -307,11 +326,16 @@ public class MatchService {
 
         List<MatchPlayer> nuevosJugadores = new ArrayList<>();
         Set<UUID> assignedPersonIds = new HashSet<>();
-        addRosterPlayers(match, titularesIds, MatchPlayerRole.TITULAR, divisionPlayersByPersonId, assignedPersonIds,
+        Set<Integer> assignedNumbers = new HashSet<>();
+        addRosterPlayers(match, starters, MatchPlayerRole.TITULAR, divisionPlayersByPersonId, assignedPersonIds,
+                assignedNumbers,
                 nuevosJugadores);
-        addRosterPlayers(match, suplentesIds, MatchPlayerRole.SUPLENTE, divisionPlayersByPersonId, assignedPersonIds,
+        addRosterPlayers(match, substitutes, MatchPlayerRole.SUPLENTE, divisionPlayersByPersonId, assignedPersonIds,
+                assignedNumbers,
                 nuevosJugadores);
 
+        matchPlayerRepository.deleteByMatch(match);
+        matchPlayerRepository.flush();
         if (match.getStatus() == null || match.getStatus() == MatchStatus.EMPTY_ROSTER) {
             match.setStatus(MatchStatus.NOT_STARTED);
         }
@@ -322,24 +346,50 @@ public class MatchService {
 
     private void addRosterPlayers(
             Match match,
-            List<UUID> personIds,
+            List<MatchRosterEntryDTO> entries,
             MatchPlayerRole role,
             Map<UUID, DivisionPlayer> divisionPlayersByPersonId,
             Set<UUID> assignedPersonIds,
+            Set<Integer> assignedNumbers,
             List<MatchPlayer> roster) {
         int slotOrder = 0;
-        for (UUID personId : Objects.requireNonNullElse(personIds, List.<UUID>of())) {
-            DivisionPlayer divisionPlayer = divisionPlayersByPersonId.get(personId);
-            if (divisionPlayer == null || !assignedPersonIds.add(personId)) {
-                continue;
+        for (MatchRosterEntryDTO entry : entries) {
+            if (entry == null || entry.playerId() == null) {
+                throw new BusinessException("Todos los jugadores del plantel son obligatorios");
             }
+            int number = parseRosterNumber(entry.number());
+            if (!assignedNumbers.add(number)) {
+                throw new BusinessException("Los números del plantel no pueden repetirse");
+            }
+            UUID personId = entry.playerId();
+            DivisionPlayer divisionPlayer = divisionPlayersByPersonId.get(personId);
+            if (divisionPlayer == null) {
+                throw new BusinessException("El jugador no pertenece a la división del partido");
+            }
+            if (!assignedPersonIds.add(personId)) {
+                throw new BusinessException("Un jugador no puede repetirse en el plantel");
+            }
+            int order = slotOrder++;
             roster.add(MatchPlayer.builder()
                     .match(match)
                     .divisionPlayer(divisionPlayer)
                     .role(role)
-                    .slotOrder(slotOrder++)
+                    .slotOrder(order)
+                    .number(number)
+                    .fieldStatus(role == MatchPlayerRole.TITULAR
+                            ? MatchPlayerStatus.EN_CANCHA
+                            : MatchPlayerStatus.EN_BANCO)
+                    .fieldSlot(role == MatchPlayerRole.TITULAR ? order + 1 : null)
                     .build());
         }
+    }
+
+    private int parseRosterNumber(JsonNode value) {
+        if (value == null || !value.isIntegralNumber() || value.asLong() <= 0
+                || value.asLong() > Integer.MAX_VALUE) {
+            throw new BusinessException("El número del jugador debe ser un entero positivo");
+        }
+        return value.intValue();
     }
 
     /**
@@ -349,59 +399,34 @@ public class MatchService {
      * orden, así un
      * cambio cargado offline o borrado después no deja el plantel desfasado.
      */
-    public void validateSubstitution(Match match, Map<String, Object> attributes) {
-        if (match == null || attributes == null) {
+    public void validateSubstitution(Match match, Event candidate) {
+        if (match == null || candidate == null) {
             throw new BusinessException("El cambio requiere jugadores de entrada y salida");
         }
+        List<Event> events = new ArrayList<>(eventRepository.findEventsByMatchId(match.getId()));
+        events.removeIf(event -> event.getId() != null && event.getId().equals(candidate.getId()));
+        events.add(candidate);
+        lineupReplayer.replay(match, events);
+    }
 
-        MatchPlayer outgoing = findRosterPlayer(match, attributes, "playerOutId", "playerOutNumber");
-        MatchPlayer incoming = findRosterPlayer(match, attributes, "playerInId", "playerInNumber");
-
-        if (outgoing == null || incoming == null) {
-            throw new BusinessException("Los jugadores indicados no pertenecen al plantel del partido");
-        }
-        if (outgoing == incoming) {
-            throw new BusinessException("El jugador que sale y el que entra deben ser distintos");
-        }
+    /** Resuelve por ID cuando existe; el número solo es compatible con eventos históricos sin ID. */
+    public MatchPlayer findRosterPlayer(Match match, Map<String, Object> attributes,
+            String idKey, String slotKey) {
+        Event candidate = Event.builder().id(UUID.randomUUID()).attributes(attributes).build();
+        return lineupReplayer.resolvePlayer(match, candidate, idKey, slotKey);
     }
 
     /**
-     * Busca por id de persona y, si falta, por número de slot (titulares 1-15,
-     * suplentes 16-23).
+     * Reconstruye y persiste la ubicación actual de cada jugador a partir de la
+     * formación inicial y las sustituciones propias activas.
      */
-    private MatchPlayer findRosterPlayer(Match match, Map<String, Object> attributes,
-            String idKey, String slotKey) {
-        Object rawId = attributes.get(idKey);
-        if (rawId instanceof String id) {
-            try {
-                UUID personId = UUID.fromString(id);
-                MatchPlayer byId = match.getRoster().stream()
-                        .filter(player -> player.getDivisionPlayer().getPerson().getId().equals(personId))
-                        .findFirst()
-                        .orElse(null);
-                if (byId != null) {
-                    return byId;
-                }
-            } catch (IllegalArgumentException ignored) {
-                // Eventos sin id válido: se resuelve por número de slot.
-            }
+    @Transactional
+    public void recalculateLineup(Match match) {
+        if (match == null || match.getRoster() == null) {
+            return;
         }
-
-        int slot = readSlotNumber(attributes, slotKey);
-        MatchPlayerRole role = slot <= STARTER_SLOTS ? MatchPlayerRole.TITULAR : MatchPlayerRole.SUPLENTE;
-        int slotOrder = role == MatchPlayerRole.TITULAR ? slot - 1 : slot - STARTER_SLOTS - 1;
-        return match.getRoster().stream()
-                .filter(player -> player.getRole() == role && Integer.valueOf(slotOrder).equals(player.getSlotOrder()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private int readSlotNumber(Map<String, Object> attributes, String key) {
-        Object value = attributes.get(key);
-        if (!(value instanceof Number number) || number.intValue() != number.doubleValue()) {
-            throw new BusinessException("El campo " + key + " debe ser un número entero");
-        }
-        return number.intValue();
+        lineupReplayer.replay(match, new ArrayList<>(eventRepository.findEventsByMatchId(match.getId())));
+        matchPlayerRepository.saveAll(match.getRoster());
     }
 
     @Transactional(readOnly = true)
@@ -454,6 +479,10 @@ public class MatchService {
                 .fullName(fullName.isEmpty() ? "Sin Nombre" : fullName)
                 .role(mp.getRole())
                 .position(dp.getPosition())
+                .number(mp.getNumber())
+                .fieldStatus(mp.getFieldStatus())
+                .fieldSlot(mp.getFieldSlot())
+                .slotOrder(mp.getSlotOrder())
                 .build();
     }
 
