@@ -61,17 +61,17 @@ import {
 
       <div class="actions">
         @if (!hasPending()) {
-          <button type="button" class="btn-outline" autofocus (click)="cancel.emit()">Cancelar</button>
+          <button type="button" class="btn btn-outline" autofocus (click)="cancel.emit()">Cancelar</button>
           <button type="button" class="btn-danger-solid" (click)="logout.emit()">Cerrar sesión</button>
         } @else if (online()) {
-          <button type="button" class="btn-outline" [disabled]="syncing()" (click)="cancel.emit()">Cancelar</button>
+          <button type="button" class="btn btn-outline" [disabled]="syncing()" (click)="cancel.emit()">Cancelar</button>
           <button type="button" class="btn-danger-text" [disabled]="syncing()" (click)="logout.emit()">Cerrar sin enviar</button>
-          <button type="button" class="btn-invite" autofocus [disabled]="syncing()" (click)="syncAndLogout.emit()">
+          <button type="button" class="btn btn-invite" autofocus [disabled]="syncing()" (click)="syncAndLogout.emit()">
             {{ syncing() ? 'Sincronizando…' : 'Sincronizar y cerrar sesión' }}
           </button>
         } @else {
           <button type="button" class="btn-danger-outline" (click)="logout.emit()">Cerrar sesión igual</button>
-          <button type="button" class="btn-invite" autofocus (click)="cancel.emit()">Seguir conectado</button>
+          <button type="button" class="btn btn-invite" autofocus (click)="cancel.emit()">Seguir conectado</button>
         }
       </div>
     </dialog>
