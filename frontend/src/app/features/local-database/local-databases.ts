@@ -68,4 +68,3 @@ async function requestPersistentStorage(): Promise<void> {
     console.warn('Could not request persistent storage:', error);
   }
 }
-

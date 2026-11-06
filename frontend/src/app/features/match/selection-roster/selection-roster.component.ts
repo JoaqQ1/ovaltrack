@@ -140,29 +140,29 @@ export class SelectionRosterComponent implements OnInit {
     const starting = createInitialStartingSlots();
     const subs = createInitialSubstituteSlots();
 
-    savedRoster.startingPlayers.forEach((playerId, index) => {
+    savedRoster.startingPlayers.forEach((entry, index) => {
       if (starting[index]) {
-        const found = players.find(p => p.id === playerId);
+        const found = players.find(p => p.id === entry.playerId);
         if (found) {
-          const saved = rosterPlayers.find(player => player.id === playerId);
-          const target = saved?.slotOrder != null ? starting[saved.slotOrder] : starting[index];
+          const saved = rosterPlayers.find(player => player.id === entry.playerId);
+          const target = saved?.slotOrder != null ? starting[saved.slotOrder] : undefined;
           if (target) {
             target.player = found;
-            target.matchNumber = saved?.number ?? target.matchNumber;
+            target.matchNumber = entry.number;
           }
         }
       }
     });
 
-    savedRoster.substitutePlayers.forEach((playerId, index) => {
+    savedRoster.substitutePlayers.forEach((entry, index) => {
       if (subs[index]) {
-        const found = players.find(p => p.id === playerId);
+        const found = players.find(p => p.id === entry.playerId);
         if (found) {
-          const saved = rosterPlayers.find(player => player.id === playerId);
-          const target = saved?.slotOrder != null ? subs[saved.slotOrder] : subs[index];
+          const saved = rosterPlayers.find(player => player.id === entry.playerId);
+          const target = saved?.slotOrder != null ? subs[saved.slotOrder] : undefined;
           if (target) {
             target.player = found;
-            target.matchNumber = saved?.number ?? target.matchNumber;
+            target.matchNumber = entry.number;
           }
         }
       }
@@ -334,25 +334,42 @@ export class SelectionRosterComponent implements OnInit {
   }
 
   guardarPlantel(): void {
-    const titulares = this.startingSlots()
-      .filter(slot => slot.player !== null)
-      .map(slot => ({ playerId: slot.player!.id, number: slot.matchNumber! }));
+    const titularSlots = this.startingSlots();
+    const substituteSlots = this.substituteSlots();
 
-    const suplentes = this.substituteSlots()
-      .filter(slot => slot.player !== null)
-      .map(slot => ({ playerId: slot.player!.id, number: slot.matchNumber! }));
-
-    if (titulares.length < 15) {
-      const missing = 15 - titulares.length;
+    if (this.startingAssignedCount() !== 15) {
+      const missing = 15 - this.startingAssignedCount();
       this.toastService.warning(
-        `Formación incompleta: has asignado ${titulares.length}/15 titulares. Faltan ${missing} para iniciar el partido.`,
+        `Formación incompleta: has asignado ${this.startingAssignedCount()}/15 titulares. Faltan ${missing} para iniciar el partido.`,
         'Atención'
       );
       this.setStep('titulares');
       return;
     }
+    let lastSubstitute = -1;
+    for (let index = substituteSlots.length - 1; index >= 0; index--) {
+      if (substituteSlots[index].player !== null) {
+        lastSubstitute = index;
+        break;
+      }
+    }
+    if (lastSubstitute >= 0 && substituteSlots.slice(0, lastSubstitute + 1).some(slot => slot.player === null)) {
+      this.toastService.warning('No puede haber casillas de suplentes vacías antes de otro suplente.', 'Plantel inválido');
+      this.setStep('suplentes');
+      return;
+    }
     if (this.hasInvalidNumbers()) {
       this.toastService.warning('Cada jugador debe tener un número entero positivo y no repetido.', 'Números inválidos');
+      return;
+    }
+    const titulares = titularSlots.map(slot => ({ playerId: slot.player!.id, number: slot.matchNumber! }));
+    const suplentes = lastSubstitute < 0
+      ? []
+      : substituteSlots.slice(0, lastSubstitute + 1)
+        .map(slot => ({ playerId: slot.player!.id, number: slot.matchNumber! }));
+    const playerIds = [...titulares, ...suplentes].map(entry => entry.playerId);
+    if (new Set(playerIds).size !== playerIds.length) {
+      this.toastService.warning('Un jugador no puede repetirse en el plantel.', 'Plantel inválido');
       return;
     }
     if (this.isRosterLocked()) {
@@ -364,8 +381,8 @@ export class SelectionRosterComponent implements OnInit {
 
     const payload: RosterPayload = {
       matchId: this.matchId(),
-      startingPlayers: titulares,
-      substitutePlayers: suplentes
+      titulares,
+      suplentes
     };
 
     this.rosterService.saveRoster(payload).subscribe({

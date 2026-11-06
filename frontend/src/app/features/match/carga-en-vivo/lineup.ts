@@ -1,11 +1,11 @@
 import { LiveCaptureEventType } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
-import { AvailablePlayer } from '../types/roster.types';
+import { MatchRosterPlayer } from '../types/roster.types';
 
-/** Jugadores por número de slot: titulares 1-15 y suplentes 16-23. */
+/** Jugadores por su número permanente del partido. */
 export interface Lineup {
-  starters: Map<number, AvailablePlayer>;
-  substitutes: Map<number, AvailablePlayer>;
+  starters: Map<number, MatchRosterPlayer>;
+  substitutes: Map<number, MatchRosterPlayer>;
 }
 
 const readSlot = (event: LocalMatchEvent, key: string): number | null => {
@@ -40,8 +40,16 @@ export function currentLineup(
     const outgoing = starters.get(playerOut);
     const incoming = substitutes.get(playerIn);
     if (outgoing && incoming) {
-      starters.set(playerOut, incoming);
-      substitutes.set(playerIn, outgoing);
+      starters.set(playerOut, {
+        ...incoming,
+        fieldStatus: 'EN_CANCHA',
+        fieldSlot: outgoing.fieldSlot,
+      });
+      substitutes.set(playerIn, {
+        ...outgoing,
+        fieldStatus: 'EN_BANCO',
+        fieldSlot: null,
+      });
     }
   }
 

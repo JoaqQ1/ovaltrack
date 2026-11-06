@@ -12,7 +12,7 @@ import { MatchService } from './match.service';
 import { EventService } from './event.service';
 import { RosterService } from './roster.service';
 import { toLiveCaptureEventType } from './event-type.service';
-import { AvailablePlayer , SavedRoster} from '../types/roster.types';
+import { AvailablePlayer, MatchRosterPlayer, SavedRoster } from '../types/roster.types';
 import { eventTeam } from '../statistics/calculators/event-rules';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 import { PendingEventSyncService } from '../../../core/synchronization/pending-event-sync.service';
@@ -28,7 +28,7 @@ export class LiveCaptureService {
   private readonly eventService = inject(EventService);
   private readonly rosterService = inject(RosterService);
   private readonly pendingEventSync = inject(PendingEventSyncService);
-  private readonly startingPlayersByMatch = new Map<string, AvailablePlayer[]>();
+  private readonly rosterPlayersByMatch = new Map<string, MatchRosterPlayer[]>();
 
   getLiveCaptureBootstrap(query: LiveCaptureQuery): Observable<LiveCaptureBootstrap> {
     return defer(() => from(this.readBootstrap(query)));
@@ -102,18 +102,18 @@ export class LiveCaptureService {
     let remoteEvents: BackendEventResponse[] | null = null;
     let eventTypes: LiveCaptureEventType[];
     let players: AvailablePlayer[];
-    let savedRoster: SavedRoster | null;
+    let rosterPlayers: MatchRosterPlayer[];
 
     try {
       const remote = await firstValueFrom(forkJoin({
         bootstrap: this.matchService.getLiveMatchBootstrap(query.matchId),
         players: this.rosterService.getAvailablePlayers(query.matchId),
-        savedRoster: this.rosterService.getSavedRoster(query.matchId),
+        rosterPlayers: this.rosterService.getMatchRosterPlayers(query.matchId),
       }));
       match = remote.bootstrap.match;
       remoteEvents = remote.bootstrap.events;
       players = remote.players;
-      savedRoster = remote.savedRoster;
+      rosterPlayers = remote.rosterPlayers;
       eventTypes = remote.bootstrap.eventTypes.map(toLiveCaptureEventType);
       await this.cache.syncActiveEventTypes(eventTypes);
     } catch {
@@ -123,11 +123,12 @@ export class LiveCaptureService {
       }
 
       match = localMatch;
-      [eventTypes, players, savedRoster] = await Promise.all([
+      [eventTypes, players] = await Promise.all([
         this.cache.getActiveEventTypes(),
         localMatch.divisionId ? this.cache.getPersonsByDivisionId(localMatch.divisionId) : Promise.resolve([]),
-        this.cache.getRoster(query.matchId).then(roster => roster ?? null),
       ]);
+      const cachedRoster = await this.cache.getRoster(query.matchId);
+      rosterPlayers = this.toRosterPlayers(cachedRoster, players);
     }
 
     if (match.status === 'cancelled') {
@@ -137,9 +138,8 @@ export class LiveCaptureService {
       ...query,
       divisionId: match.divisionId,
     };
-    const rosterPlayers = this.toStartingPlayers(savedRoster, players);
-    const substitutePlayers = this.playersInOrder(savedRoster?.substitutePlayers ?? [], players);
-    this.startingPlayersByMatch.set(query.matchId, rosterPlayers);
+    this.rosterPlayersByMatch.set(query.matchId, rosterPlayers);
+    const substitutePlayers = rosterPlayers.filter(player => player.role === 'SUPLENTE');
     const events = remoteEvents
       ? await this.cache.mergeRemoteEvents(query.matchId, remoteEvents)
       : await this.cache.getEventsByMatch(query.matchId);
@@ -180,17 +180,6 @@ export class LiveCaptureService {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 
-  private toStartingPlayers(savedRoster: SavedRoster | null, players: AvailablePlayer[]): AvailablePlayer[] {
-    return this.playersInOrder(savedRoster?.startingPlayers ?? [], players);
-  }
-
-  /** Jugadores del plantel en el orden guardado (el orden de los slots en la pantalla). */
-  private playersInOrder(playerIds: string[], players: AvailablePlayer[]): AvailablePlayer[] {
-    return playerIds
-      .map(playerId => players.find(player => player.id === playerId))
-      .filter((player): player is AvailablePlayer => player !== undefined);
-  }
-
   private async resolvePlayer(event: LocalMatchEvent): Promise<LocalMatchEvent> {
     if (event.playerId) return event;
 
@@ -200,17 +189,17 @@ export class LiveCaptureService {
 
     const raw = event.attributes?.['playerNumber'];
     if (raw === null || raw === undefined || raw === '') return event;
-    const slotNumber = Number(raw);
-    if (!Number.isInteger(slotNumber) || slotNumber < 1) return event;
+    const matchNumber = Number(raw);
+    if (!Number.isInteger(matchNumber) || matchNumber < 1) return event;
 
-    const startingPlayers = this.startingPlayersByMatch.get(event.matchId)
-      ?? await this.readCachedStartingPlayers(event.matchId);
-    const player = startingPlayers[slotNumber - 1];
+    const rosterPlayers = this.rosterPlayersByMatch.get(event.matchId)
+      ?? await this.readCachedRosterPlayers(event.matchId);
+    const player = rosterPlayers.find(candidate => candidate.number === matchNumber);
 
     return player ? { ...event, playerId: player.id } : event;
   }
 
-  private async readCachedStartingPlayers(matchId: string): Promise<AvailablePlayer[]> {
+  private async readCachedRosterPlayers(matchId: string): Promise<MatchRosterPlayer[]> {
     const [match, savedRoster] = await Promise.all([
       this.cache.getMatch(matchId),
       this.cache.getRoster(matchId),
@@ -219,7 +208,25 @@ export class LiveCaptureService {
       return [];
     }
     const players = await this.cache.getPersonsByDivisionId(match.divisionId);
-    return this.toStartingPlayers(savedRoster, players);
+    return this.toRosterPlayers(savedRoster, players);
+  }
+
+  private toRosterPlayers(roster: SavedRoster | undefined, players: AvailablePlayer[]): MatchRosterPlayer[] {
+    if (!roster) return [];
+    return [...roster.startingPlayers, ...roster.substitutePlayers]
+      .map(entry => {
+        const player = players.find(candidate => candidate.id === entry.playerId);
+        return player ? {
+          ...player,
+          jerseyNumber: entry.number,
+          number: entry.number,
+          role: entry.role ?? (roster.startingPlayers.includes(entry) ? 'TITULAR' : 'SUPLENTE'),
+          fieldStatus: entry.fieldStatus ?? (entry.role === 'TITULAR' ? 'EN_CANCHA' : 'EN_BANCO'),
+          fieldSlot: entry.fieldSlot ?? null,
+          slotOrder: entry.slotOrder ?? null,
+        } : null;
+      })
+      .filter((player): player is MatchRosterPlayer => player !== null);
   }
 
 

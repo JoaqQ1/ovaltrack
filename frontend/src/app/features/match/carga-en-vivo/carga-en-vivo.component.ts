@@ -11,7 +11,7 @@ import {
 } from '../types/live-capture.types';
 import { FollowUpChoice, LiveCaptureEventType, PossessionAfter, TemplateField } from '../types/event-type.types';
 import { LocalMatchEvent } from '../types/event.types';
-import { AvailablePlayer } from '../types/roster.types';
+import { MatchRosterPlayer } from '../types/roster.types';
 import {
   Team, countsAsScoring, followUpChoices, liveFields, opposite, possessionRule, resolveActor, scoringTeam,
 } from '../statistics/calculators/event-rules';
@@ -71,6 +71,7 @@ interface FollowUpChooser {
 interface SlotView {
   number: number;
   name: string;
+  fieldSlot: number;
 }
 
 /**
@@ -113,11 +114,11 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   /** Estados de posesión, en el orden en que se renderizan en la barra de posesión. */
   readonly possessions = POSSESSIONS;
 
-  /** Jugadores titulares indexados por su puesto de alineación, del 1 al 15. */
-  private readonly playersByStartingNumber = new Map<number, AvailablePlayer>();
-  private readonly playersBySubstituteNumber = new Map<number, AvailablePlayer>();
-  private readonly initialStartingPlayers = new Map<number, AvailablePlayer>();
-  private readonly initialSubstitutePlayers = new Map<number, AvailablePlayer>();
+  /** Jugadores indexados por su número permanente del partido. */
+  private readonly playersByStartingNumber = new Map<number, MatchRosterPlayer>();
+  private readonly playersBySubstituteNumber = new Map<number, MatchRosterPlayer>();
+  private readonly initialStartingPlayers = new Map<number, MatchRosterPlayer>();
+  private readonly initialSubstitutePlayers = new Map<number, MatchRosterPlayer>();
 
   /** Los 15 titulares en cancha, agrupados para la cuadrícula del modal. */
   forwardSlots: SlotView[] = [];
@@ -232,14 +233,18 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.playersBySubstituteNumber.clear();
         this.initialStartingPlayers.clear();
         this.initialSubstitutePlayers.clear();
-        response.rosterPlayers.forEach((player, index) => {
-          this.playersByStartingNumber.set(index + 1, player);
-          this.initialStartingPlayers.set(index + 1, player);
-        });
-        (response.substitutePlayers ?? []).forEach((player, index) => {
-          this.playersBySubstituteNumber.set(index + 16, player);
-          this.initialSubstitutePlayers.set(index + 16, player);
-        });
+        response.rosterPlayers
+          .filter(player => player.role === 'TITULAR')
+          .forEach(player => {
+            this.playersByStartingNumber.set(player.number, player);
+            this.initialStartingPlayers.set(player.number, player);
+          });
+        response.rosterPlayers
+          .filter(player => player.role === 'SUPLENTE')
+          .forEach(player => {
+            this.playersBySubstituteNumber.set(player.number, player);
+            this.initialSubstitutePlayers.set(player.number, player);
+          });
         this.buildSlots();
         this.events = response.recentEvents;
         this.rebuildStateFromEvents();
@@ -336,7 +341,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   private commitEvent(
     event: LiveCaptureEventType,
     eventId: string,
-    player: AvailablePlayer | null,
+    player: MatchRosterPlayer | null,
     customAttributes?: Record<string, unknown>,
     onSuccess?: () => void,
     teamPossessionOverride?: Possession,
@@ -345,7 +350,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     let finalAttributes: Record<string, unknown> | null = customAttributes ? { ...customAttributes } : null;
     if (player !== null && finalAttributes?.['playerNumber'] === undefined) {
-      finalAttributes = { ...(finalAttributes ?? {}), playerNumber: player.jerseyNumber };
+      finalAttributes = { ...(finalAttributes ?? {}), playerNumber: player.number };
     }
 
     const localEvent: LocalMatchEvent = {
@@ -971,19 +976,22 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   // ───────────────────────── Captura de eventos (modal por pasos) ─────────────────────────
 
   private buildSlots(): void {
-    const slot = (number: number): SlotView => ({
+    const slot = (number: number, player: MatchRosterPlayer | undefined): SlotView => ({
       number,
-      name: this.shortName(this.playersByStartingNumber.get(number)?.fullName),
+      name: this.shortName(player?.fullName),
+      fieldSlot: player?.fieldSlot ?? 0,
     });
-    this.forwardSlots = Array.from({ length: 8 }, (_, index) => slot(index + 1));
-    this.backSlots = Array.from({ length: 7 }, (_, index) => slot(index + 9));
-    this.substituteSlots = Array.from({ length: 8 }, (_, index) => {
-      const number = index + 16;
-      return {
-        number,
-        name: this.shortName(this.playersBySubstituteNumber.get(number)?.fullName),
-      };
-    });
+    const starters = [...this.playersByStartingNumber.entries()]
+      .sort(([, left], [, right]) => (left.fieldSlot ?? 0) - (right.fieldSlot ?? 0));
+    this.forwardSlots = starters
+      .filter(([, player]) => (player.fieldSlot ?? 0) <= 8)
+      .map(([number, player]) => slot(number, player));
+    this.backSlots = starters
+      .filter(([, player]) => (player.fieldSlot ?? 0) >= 9)
+      .map(([number, player]) => slot(number, player));
+    this.substituteSlots = [...this.playersBySubstituteNumber.entries()]
+      .sort(([, left], [, right]) => (left.slotOrder ?? 0) - (right.slotOrder ?? 0))
+      .map(([number, player]) => slot(number, player));
   }
 
   /** Apellido para el botón: «Apellido, Nombre» → Apellido; «Nombre Apellido» → Apellido. */
@@ -1221,7 +1229,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   private commitWithFollowUp(
     event: LiveCaptureEventType,
     eventId: string,
-    player: AvailablePlayer | null,
+    player: MatchRosterPlayer | null,
     playerNumber: number | null,
     values: Record<string, unknown>,
     possession: Possession,

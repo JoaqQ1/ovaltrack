@@ -41,8 +41,8 @@ export interface RosterValidationResult {
 
 export interface RosterPayload {
   matchId: string;
-  startingPlayers: RosterEntry[];
-  substitutePlayers: RosterEntry[];
+  titulares: RosterEntry[];
+  suplentes: RosterEntry[];
 }
 
 export interface SaveRosterRequestDTO {
@@ -53,9 +53,17 @@ export interface SaveRosterRequestDTO {
 export interface RosterEntry {
   playerId: string;
   number: number;
+  role?: 'TITULAR' | 'SUPLENTE';
+  fieldStatus?: 'EN_CANCHA' | 'EN_BANCO';
+  fieldSlot?: number | null;
+  slotOrder?: number | null;
 }
 
-export interface MatchRosterPlayer extends AvailablePlayer {
+export interface MatchRosterPlayer {
+  id: string;
+  fullName: string;
+  jerseyNumber: number;
+  position: string | null;
   number: number;
   role: 'TITULAR' | 'SUPLENTE';
   fieldStatus: 'EN_CANCHA' | 'EN_BANCO';
@@ -71,6 +79,6 @@ export interface BackendRosterResponse {
 }
 
 export interface SavedRoster {
-  startingPlayers: string[];
-  substitutePlayers: string[];
+  startingPlayers: RosterEntry[];
+  substitutePlayers: RosterEntry[];
 }

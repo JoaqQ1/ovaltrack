@@ -16,7 +16,6 @@ import {
 import { LiveCapturePersistedState } from '../types/live-capture.types';
 import { LiveCaptureService } from '../services/live-capture.service';
 
-import { AvailablePlayer, SavedRoster } from '../types/roster.types';
 import { RosterPlayerInfo } from '../statistics/calculators';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 import { HALF_DURATION_SECONDS } from '../types/match.types';
@@ -159,143 +158,16 @@ export class HalftimeSummaryComponent implements OnInit {
   }
 
   private async resolveRoster(matchId: string): Promise<RosterPlayerInfo[]> {
-    const { savedRoster, availablePlayers } = await this.fetchRosterData(matchId);
-    const rosterMap = new Map<number, RosterPlayerInfo>();
-
-    this.populateRosterFromSavedOrDivision(rosterMap, savedRoster, availablePlayers);
-    this.fillRegulatoryRugbySlots(rosterMap, availablePlayers);
-    await this.includeAdditionalJerseysFromEvents(rosterMap, matchId, availablePlayers);
-
-    return Array.from(rosterMap.values()).sort((a, b) => a.jerseyNumber - b.jerseyNumber);
-  }
-
-  private async fetchRosterData(matchId: string): Promise<{
-    savedRoster: SavedRoster | null;
-    availablePlayers: AvailablePlayer[];
-  }> {
-    try {
-      const [rosterRes, playersRes] = await Promise.all([
-        firstValueFrom(this.rosterService.getSavedRoster(matchId)).catch(() => null),
-        firstValueFrom(this.rosterService.getAvailablePlayers(matchId)).catch(() => []),
-      ]);
-      return {
-        savedRoster: rosterRes,
-        availablePlayers: Array.isArray(playersRes) ? playersRes : [],
-      };
-    } catch {
-      return { savedRoster: null, availablePlayers: [] };
-    }
-  }
-
-  private populateRosterFromSavedOrDivision(
-    rosterMap: Map<number, RosterPlayerInfo>,
-    savedRoster: SavedRoster | null,
-    availablePlayers: AvailablePlayer[]
-  ): void {
-    if (savedRoster && (savedRoster.startingPlayers.length > 0 || savedRoster.substitutePlayers.length > 0)) {
-      // Titulares 1 al 15
-      savedRoster.startingPlayers.forEach((playerId, index) => {
-        const jerseyNumber = index + 1;
-        const playerObj = playerId ? availablePlayers.find(p => p.id === playerId) : null;
-        rosterMap.set(
-          jerseyNumber,
-          this.buildRosterSlot(jerseyNumber, playerObj, {
-            playerId,
-            isStarter: true,
-            fallbackPrefix: 'starter',
-          })
-        );
-      });
-
-      // Suplentes 16 al 23
-      savedRoster.substitutePlayers.forEach((playerId, index) => {
-        const jerseyNumber = index + 16;
-        const playerObj = playerId ? availablePlayers.find(p => p.id === playerId) : null;
-        rosterMap.set(
-          jerseyNumber,
-          this.buildRosterSlot(jerseyNumber, playerObj, {
-            playerId,
-            isStarter: false,
-            fallbackPrefix: 'sub',
-          })
-        );
-      });
-    } else if (availablePlayers.length > 0) {
-      // Fallback con jugadores de la división ordenados por número de camiseta
-      availablePlayers.forEach((playerObj, index) => {
-        const jerseyNumber = playerObj.jerseyNumber ?? (index + 1);
-        if (!rosterMap.has(jerseyNumber) && jerseyNumber <= 23) {
-          rosterMap.set(
-            jerseyNumber,
-            this.buildRosterSlot(jerseyNumber, playerObj, {
-              fallbackPrefix: 'player',
-            })
-          );
-        }
-      });
-    }
-  }
-
-  private fillRegulatoryRugbySlots(
-    rosterMap: Map<number, RosterPlayerInfo>,
-    availablePlayers: AvailablePlayer[]
-  ): void {
-    for (let num = 1; num <= 23; num++) {
-      if (!rosterMap.has(num)) {
-        const playerObj = availablePlayers.find(p => p.jerseyNumber === num);
-        rosterMap.set(
-          num,
-          this.buildRosterSlot(num, playerObj, {
-            fallbackPrefix: 'slot',
-          })
-        );
-      }
-    }
-  }
-
-  private async includeAdditionalJerseysFromEvents(
-    rosterMap: Map<number, RosterPlayerInfo>,
-    matchId: string,
-    availablePlayers: AvailablePlayer[]
-  ): Promise<void> {
-    const { events } = await this.cacheService.getStatusData(matchId);
-    for (const event of events) {
-      const playerNum = event.attributes?.['playerNumber'];
-      const num = typeof playerNum === 'number' ? playerNum : (playerNum ? Number(playerNum) : null);
-      if (num && !isNaN(num) && !rosterMap.has(num)) {
-        const playerObj = availablePlayers.find(p => p.jerseyNumber === num || p.id === event.playerId);
-        rosterMap.set(
-          num,
-          this.buildRosterSlot(num, playerObj, {
-            playerId: event.playerId,
-            fallbackPrefix: 'event-player',
-          })
-        );
-      }
-    }
-  }
-
-  private buildRosterSlot(
-    jerseyNumber: number,
-    player?: AvailablePlayer | null,
-    options?: {
-      playerId?: string | null;
-      isStarter?: boolean;
-      fallbackPrefix?: string;
-    }
-  ): RosterPlayerInfo {
-    const isStarter = options?.isStarter ?? jerseyNumber <= 15;
-    const defaultName = isStarter ? `Titular #${jerseyNumber}` : `Suplente #${jerseyNumber}`;
-    const fallbackPrefix = options?.fallbackPrefix ?? (isStarter ? 'starter' : 'sub');
-    const playerId = options?.playerId ?? player?.id ?? `${fallbackPrefix}-${jerseyNumber}`;
-
-    return {
-      playerId,
-      jerseyNumber,
-      playerName: player?.fullName ?? defaultName,
-      position: player?.position ?? undefined,
-      isStarter,
-    };
+    const rosterPlayers = await firstValueFrom(this.rosterService.getMatchRosterPlayers(matchId));
+    return rosterPlayers
+      .map(player => ({
+        playerId: player.id,
+        jerseyNumber: player.number,
+        playerName: player.fullName,
+        position: player.position ?? undefined,
+        isStarter: player.role === 'TITULAR',
+      }))
+      .sort((a, b) => a.jerseyNumber - b.jerseyNumber);
   }
 
   setPlayerFilter(filter: 'all' | 'starters' | 'subs' | 'active'): void {

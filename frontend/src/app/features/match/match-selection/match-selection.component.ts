@@ -327,7 +327,7 @@ export class MatchSelectComponent implements OnInit {
   private navigateToLiveCaptureIfRosterIsValid(matchId: string): void {
     this.rosterService.getSavedRoster(matchId).subscribe({
       next: roster => {
-        if (this.hasValidRoster(roster?.startingPlayers)) {
+        if (this.hasValidRoster(roster?.startingPlayers.map(player => player.playerId))) {
           void this.router.navigate(['/live-capture', matchId]);
           return;
         }

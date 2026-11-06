@@ -3,7 +3,7 @@ import { LiveCaptureEventType } from './event-type.types';
 import { BackendEventResponse, LocalMatchEvent } from './event.types';
 import { BackendEventTypeResponse } from './event-type.types';
 import { Match } from './match.types';
-import { AvailablePlayer } from './roster.types';
+import { MatchRosterPlayer } from './roster.types';
 
 export type { UUID } from './common.types';
 export type { LiveCaptureEventType, BackendEventTypeResponse } from './event-type.types';
@@ -93,7 +93,7 @@ export interface LiveCaptureBootstrap {
   state: LiveCaptureState;
   recentEvents: LocalMatchEvent[];
   eventTypes: LiveCaptureEventType[];
-  rosterPlayers: AvailablePlayer[];
-  substitutePlayers?: AvailablePlayer[];
+  rosterPlayers: MatchRosterPlayer[];
+  substitutePlayers?: MatchRosterPlayer[];
   persistedState?: LiveCapturePersistedState;
 }

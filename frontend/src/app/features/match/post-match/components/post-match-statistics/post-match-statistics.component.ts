@@ -234,15 +234,15 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
    */
   private async loadRoster(matchId: string): Promise<RosterPlayerInfo[]> {
     try {
-      const players = await firstValueFrom(this.rosterService.getAvailablePlayers(matchId));
+      const players = await firstValueFrom(this.rosterService.getMatchRosterPlayers(matchId));
       return (Array.isArray(players) ? players : [])
-        .filter(p => p.jerseyNumber != null)
+        .filter(p => p.number != null)
         .map(p => ({
           playerId: p.id,
-          jerseyNumber: p.jerseyNumber as number,
+          jerseyNumber: p.number,
           playerName: p.fullName,
           position: p.position ?? undefined,
-          isStarter: (p.jerseyNumber as number) <= 15,
+          isStarter: p.role === 'TITULAR',
         }));
     } catch {
       return [];

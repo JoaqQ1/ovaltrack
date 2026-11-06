@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, switchMap, throwError, from } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Match } from '../types/match.types';
-import { AvailablePlayer, BackendRosterResponse, MatchRosterPlayer, RosterPayload, SavedRoster, SaveRosterRequestDTO } from '../types/roster.types';
+import { AvailablePlayer, MatchRosterPlayer, RosterPayload, SavedRoster } from '../types/roster.types';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 
 @Injectable({ providedIn: 'root' })
@@ -36,21 +36,21 @@ export class RosterService {
   }
 
   saveRoster(payload: RosterPayload): Observable<void> {
-    const dto: SaveRosterRequestDTO = {
-      titulares: payload.startingPlayers,
-      suplentes: payload.substitutePlayers
-    };
-
-    return this.http.post<void>(`${this.matchesUrl}/${payload.matchId}/roster`, dto);
+    return this.http.post<void>(`${this.matchesUrl}/${payload.matchId}/roster`, {
+      titulares: payload.titulares,
+      suplentes: payload.suplentes,
+    });
   }
 
   getSavedRoster(matchId: string): Observable<SavedRoster | null> {
-    return this.http.get<BackendRosterResponse>(
-      `${this.matchesUrl}/${matchId}/roster`
-    ).pipe(
-      map(response => ({
-        startingPlayers: response.startingPlayers ?? response.titularesIds ?? [],
-        substitutePlayers: response.substitutePlayers ?? response.suplentesIds ?? [],
+    return this.getMatchRosterPlayers(matchId).pipe(
+      map(players => ({
+        startingPlayers: players
+          .filter(player => player.role === 'TITULAR')
+          .map(player => this.toRosterEntry(player)),
+        substitutePlayers: players
+          .filter(player => player.role === 'SUPLENTE')
+          .map(player => this.toRosterEntry(player)),
       })),
       switchMap(roster =>
         from(this.cache.saveRoster(matchId, roster)).pipe(
@@ -73,6 +73,10 @@ export class RosterService {
     return this.http.get<MatchRosterPlayer[]>(
       `${this.matchesUrl}/${matchId}/roster/players`
     ).pipe(
+      map(players => players.map(player => ({
+        ...player,
+        jerseyNumber: player.number,
+      }))),
       catchError(error => {
         if (error.status === 404) {
           return of([]);
@@ -80,5 +84,16 @@ export class RosterService {
         return throwError(() => error);
       })
     );
+  }
+
+  private toRosterEntry(player: MatchRosterPlayer) {
+    return {
+      playerId: player.id,
+      number: player.number,
+      role: player.role,
+      fieldStatus: player.fieldStatus,
+      fieldSlot: player.fieldSlot,
+      slotOrder: player.slotOrder,
+    };
   }
 }
