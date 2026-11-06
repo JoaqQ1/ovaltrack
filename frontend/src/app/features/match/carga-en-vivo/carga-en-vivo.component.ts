@@ -1316,4 +1316,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     }
     this.followUpChooser = null;
   }
+
+  goToMatchSelection() {
+    this.router?.navigate(['/match-selection']);
+  }
 }

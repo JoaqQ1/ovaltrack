@@ -62,6 +62,20 @@ import { ThemeService } from 'src/app/core/services/theme.service';
 
             @if (currentUser(); as user) {
               <!-- Acciones Autenticadas -->
+              @if (currentUrl.includes('/post-match')) {
+                <a routerLink="/match-selection" class="btn-outline-dark-theme btn-nav-action"
+                   aria-label="Ir a selección de partidos" title="Ir a selección de partidos">
+                  <!-- Ícono de calendario -->
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <span class="nav-btn-text">Selección de partidos</span>
+                </a>
+              }
+
               <a routerLink="/home" class="btn-outline-dark-theme btn-nav-action" *ngIf="currentUrl !== '/home' && currentUrl !== '/'"
                  aria-label="Volver al inicio" title="Volver al inicio">
                 <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
