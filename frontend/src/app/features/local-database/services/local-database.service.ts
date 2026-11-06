@@ -329,6 +329,11 @@ export class LocalDatabaseService {
    * @returns los cambios que todavía se van a enviar; los rechazados no cuentan porque no se reintentan.
    */
   async clearCachedDataOnLogout(): Promise<number> {
+    try {
+      localStorage.removeItem('ovaltrack.live-match-visits');
+    } catch {
+      // Sin almacenamiento no hay nada que borrar.
+    }
     await Promise.all([
       matchDatabase.userContexts.clear(),
       matchDatabase.matches.clear(),

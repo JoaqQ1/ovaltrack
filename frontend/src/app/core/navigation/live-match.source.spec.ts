@@ -40,6 +40,7 @@ describe('DexieLiveMatchSource', () => {
   }
 
   beforeEach(() => {
+    localStorage.removeItem('ovaltrack.live-match-visits');
     matches = {};
     cache = jasmine.createSpyObj<LocalDatabaseService>('LocalDatabaseService', ['getCaptureStates', 'getMatch']);
     cache.getCaptureStates.and.resolveTo([]);
@@ -89,5 +90,12 @@ describe('DexieLiveMatchSource', () => {
 
     cache.getCaptureStates.and.resolveTo([captureState('a', 100)]);
     expect(await find()).toEqual(jasmine.objectContaining({ homeScore: 3, awayScore: 1 }));
+  });
+
+  it('un partido abierto en el entretiempo sin estado de captura también se muestra', async () => {
+    matches['h'] = match('h', 'halftime', 'div-1', 21, 13);
+    localStorage.setItem('ovaltrack.live-match-visits', JSON.stringify({ h: 500 }));
+
+    expect(await find()).toEqual(jasmine.objectContaining({ matchId: 'h', status: 'halftime', homeScore: 21, awayScore: 13 }));
   });
 });
