@@ -36,7 +36,7 @@ export class NavbarComponent {
 
   private readonly liveMatchSource = inject(LiveMatchSource);
 
-  readonly currentUrl = toSignal(
+  private readonly currentUrl = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       map(event => event.urlAfterRedirects)
