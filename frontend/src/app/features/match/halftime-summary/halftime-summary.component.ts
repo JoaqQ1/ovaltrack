@@ -158,7 +158,7 @@ export class HalftimeSummaryComponent implements OnInit {
   }
 
   private async resolveRoster(matchId: string): Promise<RosterPlayerInfo[]> {
-    const rosterPlayers = await firstValueFrom(this.rosterService.getMatchRosterPlayers(matchId));
+    const rosterPlayers = await firstValueFrom(this.rosterService.getRosterOrDivisionPlayers(matchId));
     return rosterPlayers
       .map(player => ({
         playerId: player.id,

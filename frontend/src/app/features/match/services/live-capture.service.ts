@@ -217,8 +217,9 @@ export class LiveCaptureService {
       .map(entry => {
         const player = players.find(candidate => candidate.id === entry.playerId);
         return player ? {
-          ...player,
-          jerseyNumber: entry.number,
+          id: player.id,
+          fullName: player.fullName,
+          position: player.position,
           number: entry.number,
           role: entry.role ?? (roster.startingPlayers.includes(entry) ? 'TITULAR' : 'SUPLENTE'),
           fieldStatus: entry.fieldStatus ?? (entry.role === 'TITULAR' ? 'EN_CANCHA' : 'EN_BANCO'),

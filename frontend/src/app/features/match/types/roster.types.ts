@@ -62,7 +62,6 @@ export interface RosterEntry {
 export interface MatchRosterPlayer {
   id: string;
   fullName: string;
-  jerseyNumber: number;
   position: string | null;
   number: number;
   role: 'TITULAR' | 'SUPLENTE';

@@ -234,7 +234,7 @@ export class PostMatchStatisticsComponent implements OnInit, OnDestroy {
    */
   private async loadRoster(matchId: string): Promise<RosterPlayerInfo[]> {
     try {
-      const players = await firstValueFrom(this.rosterService.getMatchRosterPlayers(matchId));
+      const players = await firstValueFrom(this.rosterService.getRosterOrDivisionPlayers(matchId));
       return (Array.isArray(players) ? players : [])
         .filter(p => p.number != null)
         .map(p => ({

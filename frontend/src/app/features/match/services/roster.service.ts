@@ -73,16 +73,33 @@ export class RosterService {
     return this.http.get<MatchRosterPlayer[]>(
       `${this.matchesUrl}/${matchId}/roster/players`
     ).pipe(
-      map(players => players.map(player => ({
-        ...player,
-        jerseyNumber: player.number,
-      }))),
       catchError(error => {
         if (error.status === 404) {
           return of([]);
         }
         return throwError(() => error);
       })
+    );
+  }
+
+  getRosterOrDivisionPlayers(matchId: string): Observable<MatchRosterPlayer[]> {
+    return this.getMatchRosterPlayers(matchId).pipe(
+      switchMap(players => players.length > 0
+        ? of(players)
+        : this.getAvailablePlayers(matchId).pipe(
+          map(available => available
+            .filter(player => player.jerseyNumber != null)
+            .map(player => ({
+              id: player.id,
+              fullName: player.fullName,
+              position: player.position,
+              number: player.jerseyNumber!,
+              role: 'TITULAR' as const,
+              fieldStatus: 'EN_CANCHA' as const,
+              fieldSlot: null,
+              slotOrder: null,
+            })))
+        ))
     );
   }
 

@@ -20,7 +20,7 @@ import { MatchService } from '../services/match.service';
 import { StatisticCalculationService } from '../statistics/services/statistic-calculation.service';
 import { MatchStatistics } from '../statistics/types/statistic.types';
 import { CurrentStatsModalComponent } from './components/current-stats-modal/current-stats-modal.component';
-import { currentLineup } from './lineup';
+import { buildInitialLineup, currentLineup, Lineup } from './lineup';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
@@ -115,10 +115,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   readonly possessions = POSSESSIONS;
 
   /** Jugadores indexados por su número permanente del partido. */
-  private readonly playersByStartingNumber = new Map<number, MatchRosterPlayer>();
-  private readonly playersBySubstituteNumber = new Map<number, MatchRosterPlayer>();
-  private readonly initialStartingPlayers = new Map<number, MatchRosterPlayer>();
-  private readonly initialSubstitutePlayers = new Map<number, MatchRosterPlayer>();
+  private initialLineup: Lineup = { onField: new Map(), bench: new Map() };
+  private onField = new Map<number, MatchRosterPlayer>();
+  private bench = new Map<number, MatchRosterPlayer>();
 
   /** Los 15 titulares en cancha, agrupados para la cuadrícula del modal. */
   forwardSlots: SlotView[] = [];
@@ -229,22 +228,9 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.eventVariants.clear();
         this.nextEventVariantIndex = 0;
         this.categories = this.groupEventTypes(response.eventTypes.filter(e => e.showInPalette !== false));
-        this.playersByStartingNumber.clear();
-        this.playersBySubstituteNumber.clear();
-        this.initialStartingPlayers.clear();
-        this.initialSubstitutePlayers.clear();
-        response.rosterPlayers
-          .filter(player => player.role === 'TITULAR')
-          .forEach(player => {
-            this.playersByStartingNumber.set(player.number, player);
-            this.initialStartingPlayers.set(player.number, player);
-          });
-        response.rosterPlayers
-          .filter(player => player.role === 'SUPLENTE')
-          .forEach(player => {
-            this.playersBySubstituteNumber.set(player.number, player);
-            this.initialSubstitutePlayers.set(player.number, player);
-          });
+        this.initialLineup = buildInitialLineup(response.rosterPlayers);
+        this.onField = new Map(this.initialLineup.onField);
+        this.bench = new Map(this.initialLineup.bench);
         this.buildSlots();
         this.events = response.recentEvents;
         this.rebuildStateFromEvents();
@@ -797,16 +783,14 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   /** Aplica los cambios cargados sobre la formación inicial (ver `currentLineup`). */
   private rebuildRosterFromEvents(): void {
-    const { starters, substitutes } = currentLineup(
-      { starters: this.initialStartingPlayers, substitutes: this.initialSubstitutePlayers },
+    const { onField, bench } = currentLineup(
+      this.initialLineup,
       this.events,
       eventTypeId => this.eventTypeById(eventTypeId),
     );
 
-    this.playersByStartingNumber.clear();
-    starters.forEach((player, number) => this.playersByStartingNumber.set(number, player));
-    this.playersBySubstituteNumber.clear();
-    substitutes.forEach((player, number) => this.playersBySubstituteNumber.set(number, player));
+    this.onField = onField;
+    this.bench = bench;
     this.buildSlots();
   }
 
@@ -976,12 +960,12 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   // ───────────────────────── Captura de eventos (modal por pasos) ─────────────────────────
 
   private buildSlots(): void {
-    const slot = (number: number, player: MatchRosterPlayer | undefined): SlotView => ({
+    const slot = (number: number, player: MatchRosterPlayer): SlotView => ({
       number,
-      name: this.shortName(player?.fullName),
-      fieldSlot: player?.fieldSlot ?? 0,
+      name: this.shortName(player.fullName),
+      fieldSlot: player.fieldSlot ?? 0,
     });
-    const starters = [...this.playersByStartingNumber.entries()]
+    const starters = [...this.onField.entries()]
       .sort(([, left], [, right]) => (left.fieldSlot ?? 0) - (right.fieldSlot ?? 0));
     this.forwardSlots = starters
       .filter(([, player]) => (player.fieldSlot ?? 0) <= 8)
@@ -989,7 +973,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
     this.backSlots = starters
       .filter(([, player]) => (player.fieldSlot ?? 0) >= 9)
       .map(([number, player]) => slot(number, player));
-    this.substituteSlots = [...this.playersBySubstituteNumber.entries()]
+    this.substituteSlots = [...this.bench.entries()]
       .sort(([, left], [, right]) => (left.slotOrder ?? 0) - (right.slotOrder ?? 0))
       .map(([number, player]) => slot(number, player));
   }
@@ -1209,7 +1193,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
     this.capture = null;
     const player = session.team === 'OWN' && session.playerNumber != null
-      ? this.playersByStartingNumber.get(session.playerNumber) ?? null
+      ? this.onField.get(session.playerNumber) ?? null
       : null;
     this.commitWithFollowUp(
       session.event,
@@ -1240,12 +1224,16 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
       ...(team === 'OWN' && playerNumber != null ? { playerNumber } : {}),
     };
     if (event.code === 'SUBSTITUTION' && team === 'OWN') {
-      const outgoing = this.playersByStartingNumber.get(Number(values['playerOutNumber']));
-      const incoming = this.playersBySubstituteNumber.get(Number(values['playerInNumber']));
-      if (outgoing && incoming) {
-        attributes['playerOutId'] = outgoing.id;
-        attributes['playerInId'] = incoming.id;
+      const outgoing = this.onField.get(Number(values['playerOutNumber']));
+      const incoming = this.bench.get(Number(values['playerInNumber']));
+      if (!outgoing || !incoming || outgoing.id === incoming.id) {
+        this.toastService.error('Selecciona un jugador saliente y uno entrante válidos.');
+        return;
       }
+      attributes['playerOutId'] = outgoing.id;
+      attributes['playerInId'] = incoming.id;
+      attributes['playerOutNumber'] = outgoing.number;
+      attributes['playerInNumber'] = incoming.number;
     }
     const followUp = event.followUpEventTypeId
       ? this.eventTypeById(event.followUpEventTypeId)
