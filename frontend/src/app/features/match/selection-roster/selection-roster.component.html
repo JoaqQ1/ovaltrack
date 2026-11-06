@@ -29,7 +29,7 @@
         class="status-tab"
         [class.active]="currentStep() === 'titulares'"
         (click)="setStep('titulares')">
-        <span>Titulares (1-15)</span>
+        <span>Titulares (15)</span>
         <span class="status-badge-count" [class.count-complete]="isStartingComplete()">
           {{ startingAssignedCount() }}/15
         </span>
@@ -40,7 +40,7 @@
         class="status-tab"
         [class.active]="currentStep() === 'suplentes'"
         (click)="setStep('suplentes')">
-        <span>Suplentes (16-23)</span>
+        <span>Suplentes (hasta 8)</span>
         <span class="status-badge-count">
           {{ substituteAssignedCount() }}/8
         </span>
@@ -80,8 +80,8 @@
             </h2>
             <p class="form-card-subtitle">
               {{ currentStep() === 'titulares'
-                  ? 'Puestos del 1 al 15 organizados por posición reglamentaria'
-                  : 'Relevos del 16 al 23 disponibles para cambios e impacto' }}
+                  ? '15 puestos organizados por posición reglamentaria'
+                  : 'Hasta 8 relevos disponibles para cambios e impacto' }}
             </p>
           </div>
           <div class="slot-mode-badge">
@@ -103,6 +103,17 @@
                 <div class="slot-top">
                   <span class="slot-number">{{ slot.number }}</span>
                   <span class="slot-position">{{ slot.positionName }}</span>
+                  <label class="match-number-field" (click)="$event.stopPropagation()">
+                    <span>Número</span>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      [ngModel]="slot.matchNumber"
+                      (ngModelChange)="updateSlotNumber(i, $event)"
+                      [disabled]="isRosterLocked()"
+                      aria-label="Número permanente del jugador">
+                  </label>
                   @if (slot.player) {
                     <button
                       type="button"
@@ -240,7 +251,7 @@
         <button
           type="button"
           class="btn btn-invite"
-          [disabled]="isSaving()"
+          [disabled]="isSaving() || isRosterLocked()"
           (click)="guardarPlantel()">
           @if (isSaving()) {
             <span>Guardando...</span>

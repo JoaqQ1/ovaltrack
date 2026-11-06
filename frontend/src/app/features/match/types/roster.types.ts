@@ -24,6 +24,7 @@ export interface RugbySlotDefinition {
 
 export interface RosterSlot {
   readonly number: number;
+  matchNumber: number | null;
   readonly positionName: string;
   readonly positionCategory: RugbyPositionCategory;
   readonly isStarter: boolean;

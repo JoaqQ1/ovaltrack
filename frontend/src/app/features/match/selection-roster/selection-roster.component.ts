@@ -2,12 +2,12 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { MatchService } from '../services/match.service';
 import { RosterService } from '../services/roster.service';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { Match } from '../types/match.types';
-import { AvailablePlayer, RosterPayload, RosterSlot, RosterStep, SavedRoster } from '../types/roster.types';
+import { AvailablePlayer, MatchRosterPlayer, RosterPayload, RosterSlot, RosterStep, SavedRoster } from '../types/roster.types';
 import { createInitialStartingSlots, createInitialSubstituteSlots } from '../data/match.constants';
 
 @Component({
@@ -50,6 +50,19 @@ export class SelectionRosterComponent implements OnInit {
     this.startingAssignedCount() === 15
   );
 
+  readonly hasInvalidNumbers = computed(() => {
+    const assigned = [...this.startingSlots(), ...this.substituteSlots()]
+      .filter(slot => slot.player !== null);
+    const numbers = assigned.map(slot => slot.matchNumber);
+    return numbers.some(number => number === null || !Number.isInteger(number) || number <= 0)
+      || new Set(numbers).size !== numbers.length;
+  });
+
+  readonly isRosterLocked = computed(() => {
+    const status = this.match()?.status;
+    return status === 'in_progress' || status === 'halftime' || status === 'finished' || status === 'cancelled';
+  });
+
   readonly currentSlots = computed(() =>
     this.currentStep() === 'titulares' ? this.startingSlots() : this.substituteSlots()
   );
@@ -57,10 +70,10 @@ export class SelectionRosterComponent implements OnInit {
   readonly assignedPlayerMap = computed(() => {
     const map = new Map<string, number>();
     this.startingSlots().forEach(slot => {
-      if (slot.player) map.set(slot.player.id, slot.number);
+      if (slot.player && slot.matchNumber !== null) map.set(slot.player.id, slot.matchNumber);
     });
     this.substituteSlots().forEach(slot => {
-      if (slot.player) map.set(slot.player.id, slot.number);
+      if (slot.player && slot.matchNumber !== null) map.set(slot.player.id, slot.matchNumber);
     });
     return map;
   });
@@ -95,14 +108,15 @@ export class SelectionRosterComponent implements OnInit {
     forkJoin({
       match: this.matchService.getMatchById(matchId),
       players: this.rosterService.getAvailablePlayers(matchId),
-      savedRoster: this.rosterService.getSavedRoster(matchId)
+      savedRoster: this.rosterService.getSavedRoster(matchId),
+      rosterPlayers: this.rosterService.getMatchRosterPlayers(matchId).pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ match, players, savedRoster }) => {
+      next: ({ match, players, savedRoster, rosterPlayers }) => {
         this.match.set(match);
         this.availablePlayers.set(players || []);
 
         if (savedRoster) {
-          this.applySavedRoster(savedRoster, players || []);
+          this.applySavedRoster(savedRoster, players || [], rosterPlayers);
         } else {
           // Pre-seleccionar primera casilla titular
           this.autoSelectFirstEmptySlot('titulares', this.startingSlots());
@@ -118,7 +132,11 @@ export class SelectionRosterComponent implements OnInit {
     });
   }
 
-  private applySavedRoster(savedRoster: SavedRoster, players: AvailablePlayer[]): void {
+  private applySavedRoster(
+    savedRoster: SavedRoster,
+    players: AvailablePlayer[],
+    rosterPlayers: MatchRosterPlayer[],
+  ): void {
     const starting = createInitialStartingSlots();
     const subs = createInitialSubstituteSlots();
 
@@ -126,7 +144,12 @@ export class SelectionRosterComponent implements OnInit {
       if (starting[index]) {
         const found = players.find(p => p.id === playerId);
         if (found) {
-          starting[index].player = found;
+          const saved = rosterPlayers.find(player => player.id === playerId);
+          const target = saved?.slotOrder != null ? starting[saved.slotOrder] : starting[index];
+          if (target) {
+            target.player = found;
+            target.matchNumber = saved?.number ?? target.matchNumber;
+          }
         }
       }
     });
@@ -135,7 +158,12 @@ export class SelectionRosterComponent implements OnInit {
       if (subs[index]) {
         const found = players.find(p => p.id === playerId);
         if (found) {
-          subs[index].player = found;
+          const saved = rosterPlayers.find(player => player.id === playerId);
+          const target = saved?.slotOrder != null ? subs[saved.slotOrder] : subs[index];
+          if (target) {
+            target.player = found;
+            target.matchNumber = saved?.number ?? target.matchNumber;
+          }
         }
       }
     });
@@ -179,7 +207,7 @@ export class SelectionRosterComponent implements OnInit {
   selectAvailablePlayer(player: AvailablePlayer): void {
     if (this.isPlayerAssigned(player.id)) {
       const assignedSlot = this.assignedPlayerMap().get(player.id);
-      this.toastService.info(`${player.fullName} ya está asignado en la camiseta #${assignedSlot}`);
+      this.toastService.info(`${player.fullName} ya está asignado en el número #${assignedSlot}`);
       return;
     }
 
@@ -292,6 +320,15 @@ export class SelectionRosterComponent implements OnInit {
     return this.assignedPlayerMap().get(playerId);
   }
 
+  updateSlotNumber(index: number, rawValue: number | string | null): void {
+    const slots = this.currentStep() === 'titulares' ? [...this.startingSlots()] : [...this.substituteSlots()];
+    const slot = slots[index];
+    if (!slot) return;
+    const value = rawValue === null || rawValue === '' ? null : Number(rawValue);
+    slots[index] = { ...slot, matchNumber: Number.isFinite(value) ? value : null };
+    this.updateSlotsArray(this.currentStep(), slots);
+  }
+
   goBack(): void {
     this.router.navigate(['/match-selection']);
   }
@@ -299,11 +336,11 @@ export class SelectionRosterComponent implements OnInit {
   guardarPlantel(): void {
     const titulares = this.startingSlots()
       .filter(slot => slot.player !== null)
-      .map(slot => ({ playerId: slot.player!.id, number: slot.number }));
+      .map(slot => ({ playerId: slot.player!.id, number: slot.matchNumber! }));
 
     const suplentes = this.substituteSlots()
       .filter(slot => slot.player !== null)
-      .map(slot => ({ playerId: slot.player!.id, number: slot.number }));
+      .map(slot => ({ playerId: slot.player!.id, number: slot.matchNumber! }));
 
     if (titulares.length < 15) {
       const missing = 15 - titulares.length;
@@ -312,6 +349,14 @@ export class SelectionRosterComponent implements OnInit {
         'Atención'
       );
       this.setStep('titulares');
+      return;
+    }
+    if (this.hasInvalidNumbers()) {
+      this.toastService.warning('Cada jugador debe tener un número entero positivo y no repetido.', 'Números inválidos');
+      return;
+    }
+    if (this.isRosterLocked()) {
+      this.toastService.warning('El plantel no puede modificarse después de iniciar el partido.', 'Partido iniciado');
       return;
     }
 
