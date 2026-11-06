@@ -101,19 +101,18 @@
                 tabindex="0">
                 
                 <div class="slot-top">
-                  <span class="slot-number">{{ slot.number }}</span>
+                  <input
+                    class="slot-number"
+                    type="number"
+                    min="1"
+                    step="1"
+                    [ngModel]="slot.matchNumber"
+                    (ngModelChange)="updateSlotNumber(i, $event)"
+                    (click)="$event.stopPropagation()"
+                    [disabled]="isRosterLocked()"
+                    [attr.aria-label]="'Número del jugador en el puesto ' + slot.number"
+                    [placeholder]="slot.number.toString()">
                   <span class="slot-position">{{ slot.positionName }}</span>
-                  <label class="match-number-field" (click)="$event.stopPropagation()">
-                    <span>Número</span>
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      [ngModel]="slot.matchNumber"
-                      (ngModelChange)="updateSlotNumber(i, $event)"
-                      [disabled]="isRosterLocked()"
-                      aria-label="Número permanente del jugador">
-                  </label>
                   @if (slot.player) {
                     <button
                       type="button"
