@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { guestGuard } from './core/guards/guest.guard';
 import { ClubDetailsComponent } from './features/club/club-details.component';
 import { DivisionFormComponent } from './features/division/division-form.component';
 import { DivisionListComponent } from './features/division/division-list.component';
@@ -35,6 +36,7 @@ export const routes: Routes = [
     },
     {
         path: 'auth',
+        canMatch: [guestGuard],
         loadChildren: () =>
             import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
     },

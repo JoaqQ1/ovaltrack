@@ -34,7 +34,7 @@ export class LoginComponent {
 
     this.errorMessage = '';
     this.authService.login(this.loginForm.getRawValue()).subscribe({
-      next: () => this.router.navigate(['/home']),
+      next: () => this.router.navigate(['/home'], { replaceUrl: true }),
       error: (error) => {
         this.errorMessage = this.authService.getErrorMessage(error, 'login');
       }
