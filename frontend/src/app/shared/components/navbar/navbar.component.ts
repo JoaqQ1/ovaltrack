@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
-import { filter, map } from 'rxjs';
+import { RouterLink } from '@angular/router';
 import { AuthService } from 'src/app/features/auth/services/auth.service';
+import { injectCurrentUrl } from 'src/app/core/navigation/current-url';
 import { LiveMatchSource } from 'src/app/core/navigation/live-match.source';
 import { NavbarModeService } from 'src/app/core/navigation/navbar-mode.service';
 import { SyncStatusSource } from 'src/app/core/navigation/sync-status.source';
@@ -27,7 +26,6 @@ import { UserMenuComponent } from './user-menu/user-menu.component';
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent {
-  private readonly router = inject(Router);
   private readonly userContext = inject(UserContextService);
   readonly themeService = inject(ThemeService);
   readonly navbarMode = inject(NavbarModeService);
@@ -36,13 +34,7 @@ export class NavbarComponent {
 
   private readonly liveMatchSource = inject(LiveMatchSource);
 
-  private readonly currentUrl = toSignal(
-    this.router.events.pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      map(event => event.urlAfterRedirects)
-    ),
-    { initialValue: this.router.url }
-  );
+  private readonly currentUrl = injectCurrentUrl();
 
   readonly clubName = computed(() => this.userContext.currentClub()?.name ?? null);
 
