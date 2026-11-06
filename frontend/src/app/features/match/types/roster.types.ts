@@ -40,13 +40,26 @@ export interface RosterValidationResult {
 
 export interface RosterPayload {
   matchId: string;
-  startingPlayers: string[];
-  substitutePlayers: string[];
+  startingPlayers: RosterEntry[];
+  substitutePlayers: RosterEntry[];
 }
 
 export interface SaveRosterRequestDTO {
-  titularesIds: string[];
-  suplentesIds: string[];
+  titulares: RosterEntry[];
+  suplentes: RosterEntry[];
+}
+
+export interface RosterEntry {
+  playerId: string;
+  number: number;
+}
+
+export interface MatchRosterPlayer extends AvailablePlayer {
+  number: number;
+  role: 'TITULAR' | 'SUPLENTE';
+  fieldStatus: 'EN_CANCHA' | 'EN_BANCO';
+  fieldSlot: number | null;
+  slotOrder: number | null;
 }
 
 export interface BackendRosterResponse {

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,7 @@ import com.ovaltrack.backend.match.domain.Match;
 import com.ovaltrack.backend.match.domain.MatchPlayer;
 import com.ovaltrack.backend.match.domain.MatchPlayerRole;
 import com.ovaltrack.backend.match.domain.MatchStatus;
+import com.ovaltrack.backend.match.domain.dto.MatchRosterEntryDTO;
 import com.ovaltrack.backend.match.domain.dto.MatchResponseDTO;
 import com.ovaltrack.backend.match.repository.MatchPlayerRepository;
 import com.ovaltrack.backend.match.repository.MatchRepository;
@@ -137,10 +139,10 @@ class MatchServiceOfflineSyncTest {
     void start_usesClientOccurredAt() {
         Person person = Person.builder().id(UUID.randomUUID()).build();
         Match match = matchWithStatus(MatchStatus.NOT_STARTED);
-        match.getRoster().add(MatchPlayer.builder()
-                .divisionPlayer(DivisionPlayer.builder().person(person).build())
+        IntStream.range(0, 15).forEach(index -> match.getRoster().add(MatchPlayer.builder()
+                .divisionPlayer(DivisionPlayer.builder().person(index == 0 ? person : Person.builder().id(UUID.randomUUID()).build()).build())
                 .role(MatchPlayerRole.TITULAR)
-                .build());
+                .build()));
         saveReturnsArgument();
 
         matchService.changeMatchStatus(matchId, MatchStatus.IN_PROGRESS, Instant.parse("2026-10-23T15:02:00Z"));
@@ -149,35 +151,49 @@ class MatchServiceOfflineSyncTest {
     }
 
     @Test
-    @DisplayName("el plantel conserva el orden recibido, solo usa jugadores de la división y no duplica")
-    void saveMatchRoster_keepsOrderAndAvoidsDuplicates() {
+    @DisplayName("el plantel conserva el orden recibido y los números asignados")
+    void saveMatchRoster_keepsOrderAndNumbers() {
         Division division = Division.builder().id(UUID.randomUUID()).build();
         Match match = matchWithStatus(MatchStatus.NOT_STARTED);
         match.setDivision(division);
 
-        Person first = Person.builder().id(UUID.randomUUID()).build();
-        Person second = Person.builder().id(UUID.randomUUID()).build();
+        List<Person> starters = IntStream.range(0, 15)
+                .mapToObj(index -> Person.builder().id(UUID.randomUUID()).build())
+                .toList();
         Person substitute = Person.builder().id(UUID.randomUUID()).build();
-        when(divisionPlayerRepository.findByDivisionId(division.getId())).thenReturn(List.of(
-                DivisionPlayer.builder().person(substitute).build(),
-                DivisionPlayer.builder().person(second).build(),
-                DivisionPlayer.builder().person(first).build()));
+        List<DivisionPlayer> divisionPlayers = new ArrayList<>();
+        starters.forEach(person -> divisionPlayers.add(DivisionPlayer.builder().person(person).build()));
+        divisionPlayers.add(DivisionPlayer.builder().person(substitute).build());
+        when(divisionPlayerRepository.findByDivisionId(division.getId())).thenReturn(divisionPlayers);
 
+        List<MatchRosterEntryDTO> starterEntries = new ArrayList<>();
+        for (int index = 0; index < starters.size(); index++) {
+            starterEntries.add(new MatchRosterEntryDTO(starters.get(index).getId(),
+                    com.fasterxml.jackson.databind.node.IntNode.valueOf(100 + index)));
+        }
         matchService.saveMatchRoster(
                 matchId,
-                List.of(first.getId(), second.getId(), first.getId()),
-                List.of(substitute.getId(), UUID.randomUUID()));
+                starterEntries,
+                List.of(new MatchRosterEntryDTO(substitute.getId(),
+                        com.fasterxml.jackson.databind.node.IntNode.valueOf(999))));
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<MatchPlayer>> saved = ArgumentCaptor.forClass(List.class);
         verify(matchPlayerRepository).saveAll(saved.capture());
         List<MatchPlayer> roster = saved.getValue();
 
-        assertEquals(List.of(first.getId(), second.getId(), substitute.getId()),
-                roster.stream().map(mp -> mp.getDivisionPlayer().getPerson().getId()).toList());
-        assertEquals(List.of(MatchPlayerRole.TITULAR, MatchPlayerRole.TITULAR, MatchPlayerRole.SUPLENTE),
-                roster.stream().map(MatchPlayer::getRole).toList());
-        assertEquals(List.of(0, 1, 0), roster.stream().map(MatchPlayer::getSlotOrder).toList());
+        List<UUID> expectedIds = new ArrayList<>(starters.stream().map(Person::getId).toList());
+        expectedIds.add(substitute.getId());
+        assertEquals(expectedIds, roster.stream().map(mp -> mp.getDivisionPlayer().getPerson().getId()).toList());
+        List<MatchPlayerRole> expectedRoles = new ArrayList<>(
+                IntStream.range(0, 15).mapToObj(index -> MatchPlayerRole.TITULAR).toList());
+        expectedRoles.add(MatchPlayerRole.SUPLENTE);
+        assertEquals(expectedRoles, roster.stream().map(MatchPlayer::getRole).toList());
+        List<Integer> expectedSlotOrders = new ArrayList<>(IntStream.range(0, 15).boxed().toList());
+        expectedSlotOrders.add(0);
+        assertEquals(expectedSlotOrders, roster.stream().map(MatchPlayer::getSlotOrder).toList());
+        assertEquals(100, roster.get(0).getNumber());
+        assertEquals(999, roster.get(15).getNumber());
         verify(divisionPlayerRepository, never()).findAll();
     }
 }

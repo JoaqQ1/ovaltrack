@@ -297,18 +297,18 @@ export class SelectionRosterComponent implements OnInit {
   }
 
   guardarPlantel(): void {
-    const titularesIds = this.startingSlots()
-      .map(slot => slot.player?.id)
-      .filter((id): id is string => id !== undefined && id !== null);
+    const titulares = this.startingSlots()
+      .filter(slot => slot.player !== null)
+      .map(slot => ({ playerId: slot.player!.id, number: slot.number }));
 
-    const suplentesIds = this.substituteSlots()
-      .map(slot => slot.player?.id)
-      .filter((id): id is string => id !== undefined && id !== null);
+    const suplentes = this.substituteSlots()
+      .filter(slot => slot.player !== null)
+      .map(slot => ({ playerId: slot.player!.id, number: slot.number }));
 
-    if (titularesIds.length < 15) {
-      const missing = 15 - titularesIds.length;
+    if (titulares.length < 15) {
+      const missing = 15 - titulares.length;
       this.toastService.warning(
-        `Formación incompleta: has asignado ${titularesIds.length}/15 titulares. Faltan ${missing} para iniciar el partido.`,
+        `Formación incompleta: has asignado ${titulares.length}/15 titulares. Faltan ${missing} para iniciar el partido.`,
         'Atención'
       );
       this.setStep('titulares');
@@ -319,8 +319,8 @@ export class SelectionRosterComponent implements OnInit {
 
     const payload: RosterPayload = {
       matchId: this.matchId(),
-      startingPlayers: titularesIds,
-      substitutePlayers: suplentesIds
+      startingPlayers: titulares,
+      substitutePlayers: suplentes
     };
 
     this.rosterService.saveRoster(payload).subscribe({
