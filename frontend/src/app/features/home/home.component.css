@@ -147,49 +147,17 @@
   font-size: 1.15rem;
 }
 
-.btn-landing-cta {
-  background-color: #a3e635;
-  color: #0b111e;
-  font-weight: 800;
-  border-radius: 10px;
-  border: none;
-  transition: all 0.2s ease;
+/* Acciones del inicio: "Crear cuenta" es la única acción primaria; en celular van apiladas a todo el ancho */
+.landing-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
 }
 
-.btn-landing-cta:hover {
-  background-color: #bef264;
-  color: #0b111e;
-  box-shadow: 0 0 16px rgba(163, 230, 53, 0.35);
-}
-
-.btn-landing-secondary {
-  background-color: #162238;
-  border: 1px solid #2a3c5a;
-  color: #cbd5e1;
-  font-weight: 600;
-  border-radius: 10px;
-  transition: all 0.2s ease;
-}
-
-.btn-landing-secondary:hover {
-  background-color: #1c2b44;
-  border-color: #3b82f6;
-  color: #ffffff;
-}
-
-.btn-outline-dark-theme {
-  background-color: #131c2e;
-  border: 1px solid #2a3c5a;
-  color: #cbd5e1;
-  font-weight: 600;
-  border-radius: 10px;
-  transition: all 0.2s ease;
-}
-
-.btn-outline-dark-theme:hover {
-  background-color: #1a273e;
-  border-color: #3b82f6;
-  color: #ffffff;
+@media (max-width: 576px) {
+  .landing-actions {
+    flex-direction: column;
+  }
 }
 
 .card-feature {
@@ -348,34 +316,6 @@
 :host-context([data-theme="light"]) .landing-subtitle,
 :host-context(.light-theme) .landing-subtitle {
   color: #43523a;
-}
-
-:host-context([data-theme="light"]) .btn-landing-cta,
-:host-context(.light-theme) .btn-landing-cta {
-  background-color: #91da40;
-  color: #1d3700;
-  box-shadow: 0 6px 16px rgba(90, 150, 30, 0.25);
-}
-
-:host-context([data-theme="light"]) .btn-landing-cta:hover,
-:host-context(.light-theme) .btn-landing-cta:hover {
-  background-color: #7fc932;
-  color: #1d3700;
-  box-shadow: 0 8px 20px rgba(90, 150, 30, 0.35);
-}
-
-:host-context([data-theme="light"]) .btn-landing-secondary,
-:host-context(.light-theme) .btn-landing-secondary {
-  background-color: #dce7d2;
-  border-color: rgba(65, 120, 20, 0.25);
-  color: #1b2116;
-}
-
-:host-context([data-theme="light"]) .btn-landing-secondary:hover,
-:host-context(.light-theme) .btn-landing-secondary:hover {
-  background-color: #d0dec4;
-  border-color: rgba(65, 120, 20, 0.35);
-  color: #111d0e;
 }
 
 :host-context([data-theme="light"]) .card-feature,
