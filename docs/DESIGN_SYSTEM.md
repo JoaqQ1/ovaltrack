@@ -450,3 +450,42 @@ La pantalla de post-partido está estructurada como una estación de trabajo de 
    - **Cola de Revisión:** Tarjetas compactas (`02:36 Penal / infracción 1T`) con resaltado ámbar al seleccionar y stepper rápido.
    - **`EventFormComponent` Reutilizable:** Componente común compartido entre el inspector y el modal de alta, asegurando consistencia y mantenibilidad (SRP/DRY).
 
+
+---
+
+## 9. Inicio · Pizarra de juego (`/home`)
+
+Reglas propias del Inicio con sesión (la landing pública no cambia). Se suman a las anteriores; el lienzo (`.layout-container.page`, fondo salvia global) no cambia.
+
+1. **Tablero oscuro verde botella, uno por pantalla.** Degradé de 135° entre `--board-bg-start` y `--board-bg-end`, radio 24px (20px en ≤ 700px) y `--board-shadow`. Contiene el próximo partido, el día de partido, el partido en curso o el onboarding.
+2. **Sobre el tablero, el primario es blanco** (`.btn-on-board`); su secundario es `.btn-on-board-outline`. Nunca hay otro primario sólido en la pantalla.
+3. **Tarjeta `.tile`** sin cabecera en degradé: borde 2px `--border-sport`, radio 18px, `--shadow-elevation`, padding 20px; el rótulo (`.label-mono`) y el título van en el cuerpo.
+4. **Pestañas `.tabs-underline`** (división activa, serie del gráfico): subrayado en la activa, 44px de alto, scroll interno en celular.
+
+### 9.1 Tokens nuevos (`:root`)
+Valores iguales en claro y oscuro: el tablero conserva sus colores en los dos temas.
+
+| Token | Valor |
+|---|---|
+| `--board-bg-start` / `--board-bg-end` | `#204b22` / `#163618` |
+| `--board-line` / `--board-line-strong` | `rgba(255,255,255,.10)` / `rgba(255,255,255,.22)` |
+| `--board-shadow` | `0 18px 40px rgba(15,35,15,.28)` |
+| `--on-board` / `--on-board-muted` | `#ffffff` / `rgba(255,255,255,.72)` |
+| `--on-board-accent` | `var(--grass)` |
+| `--board-chip-ok-bg/fg` | `var(--grass-tint-strong)` / `#ffffff` |
+| `--board-chip-warn-bg/fg` | `var(--zone-heat-low)` / `#3d2600` |
+| `--board-chip-neutral-bg/fg` | `rgba(255,255,255,.12)` / `#ffffff` |
+| `--board-digit-bg/border` | `rgba(255,255,255,.08)` / `rgba(255,255,255,.22)` |
+| `--btn-on-board-bg/fg` | `#ffffff` / `var(--btn-primary-bg)` |
+| `--btn-on-board-outline` | `rgba(255,255,255,.55)` |
+
+### 9.2 Color de los datos
+- Propio: `--btn-primary-bg`. Rival y promedio: `--text-muted`.
+- Mejor: `--success`. Peor: `--error`. Pendiente: `--warning`.
+- Las variaciones siempre llevan texto (`▼ −17 p.p. · peor`); el color solo no alcanza.
+- La barra de análisis usa `--success` (≥ 90 %), `--warning` (≥ 60 %) y `--error`, con el porcentaje escrito.
+
+### 9.3 Tipografía
+- h1: Hanken 800, 44/32px, tracking −.03em. Título del tablero: Hanken 800, 52/36px. Título de tarjeta: Hanken 800, 20px.
+- Rótulo (`.label-mono`): Mono 700, 12px, mayúsculas, tracking .12em. No usar `.eyebrow`, que es la píldora navy global.
+- Marcador: Mono 700, 104/72px tabular. Cuenta regresiva: Mono 52/36px en cajas de 84/64px. Hora de inicio: Mono 60px. KPIs: Mono 34–44px.
