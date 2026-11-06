@@ -1,5 +1,5 @@
 <header class="navbar-wrapper">
-  <nav class="navbar-global" [class.landing-nav]="isLanding()" aria-label="Principal">
+  <nav class="navbar-global" [class.public-nav]="!currentUser()" aria-label="Principal">
     <a routerLink="/home" class="brand-link" aria-label="OvalTrack, ir al inicio">
       <img
         class="brand-icon"
@@ -31,11 +31,14 @@
         >
           <i class="bi" [class.bi-sun]="themeService.theme() === 'dark'" [class.bi-moon]="themeService.theme() === 'light'" aria-hidden="true"></i>
         </button>
-        @if (authPage() !== 'login') {
-          <a routerLink="/auth/login" class="btn-outline navbar-cta">Iniciar sesión</a>
-        }
-        @if (authPage() !== 'register') {
-          <a routerLink="/auth/register" class="btn-invite navbar-cta">Crear cuenta</a>
+        @if (isAuthPage()) {
+          <a routerLink="/home" class="btn btn-outline navbar-cta">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+            Volver al inicio
+          </a>
+        } @else {
+          <a routerLink="/auth/login" class="btn navbar-link">Iniciar sesión</a>
+          <a routerLink="/auth/register" class="btn btn-outline navbar-cta">Crear cuenta</a>
         }
       </div>
     }

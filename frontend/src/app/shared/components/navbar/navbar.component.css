@@ -23,8 +23,9 @@
   transition: height 0.2s ease;
 }
 
-.navbar-global.landing-nav {
-  border-bottom-color: transparent;
+/* Sin sesión (inicio, login y registro): barra plana con una línea fina, sin sombra */
+.navbar-global.public-nav {
+  border-bottom: 1px solid var(--border-sport-subtle, var(--border));
   box-shadow: none;
 }
 
@@ -72,23 +73,51 @@
   margin-left: auto;
 }
 
+/* Tema e "Iniciar sesión" van sin borde: el único botón con contorno es la acción principal */
 .theme-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: 1px solid var(--btn-outline-border, var(--border-strong));
+  padding: 0;
+  border: 0;
   border-radius: var(--radius-md, 10px);
-  background: var(--btn-outline-bg, var(--surface));
-  color: var(--btn-outline-fg, var(--text-primary));
+  background: transparent;
+  color: var(--btn-outline-fg, #204b22);
+  font-size: 17px;
+  transition: background-color 0.15s ease;
+}
+
+.navbar-link {
+  padding: 0 12px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--btn-outline-fg, #204b22);
+  font-weight: 600;
+}
+
+.theme-toggle:hover,
+.navbar-link:hover {
+  border-color: transparent;
+  background: var(--surface-hover);
+  color: var(--btn-outline-fg, #142e15);
+}
+
+.theme-toggle:focus-visible,
+.navbar-link:focus-visible,
+.navbar-cta:focus-visible {
+  outline: 2px solid var(--btn-outline-fg, #204b22);
+  outline-offset: 2px;
 }
 
 .navbar-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
+  padding: 0 16px;
+  font-weight: 600;
+}
+
+.navbar-cta .bi {
+  font-size: 16px;
 }
 
 /* Notebook chica y tablet: sin nombre del club bajo el logo y logo más chico, para dejar lugar a los módulos */
@@ -129,6 +158,32 @@
   /* Post-partido en celular: no hay barra inferior; el partido en vivo pasa a la barra superior */
   :host-context(.navbar-compact) .top-live {
     display: inline-flex;
+  }
+}
+
+/* Celular sin sesión: tema, "Iniciar sesión" y "Crear cuenta" entran junto al logo hasta 360px */
+@media (max-width: 480px) {
+  .public-nav .navbar-status {
+    gap: 4px;
+  }
+
+  .public-nav .brand-icon {
+    width: 88px;
+    height: 22px;
+  }
+
+  .theme-toggle {
+    width: 40px;
+  }
+
+  .navbar-link {
+    padding: 0 6px;
+    font-size: 13px;
+  }
+
+  .navbar-cta {
+    padding: 0 10px;
+    font-size: 13px;
   }
 }
 

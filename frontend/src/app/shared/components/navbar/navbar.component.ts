@@ -50,15 +50,6 @@ export class NavbarComponent {
     this.currentUser()?.role === 'PLAYER' ? null : this.liveMatchSource.liveMatch()
   );
 
-  readonly isLanding = computed(() => {
-    const path = this.currentUrl().split('?')[0];
-    return (path === '/home' || path === '/' || path === '') && !this.currentUser();
-  });
-
-  readonly authPage = computed<'login' | 'register' | null>(() => {
-    const url = this.currentUrl();
-    if (url.includes('/login')) return 'login';
-    if (url.includes('/register')) return 'register';
-    return null;
-  });
+  /** En login y registro la barra solo ofrece volver al inicio: la página ya tiene sus propios accesos. */
+  readonly isAuthPage = computed(() => this.currentUrl().startsWith('/auth'));
 }
