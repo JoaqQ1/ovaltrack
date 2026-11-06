@@ -63,7 +63,7 @@ class MatchServiceOfflineSyncTest {
 
     private Match matchWithStatus(MatchStatus status) {
         Match match = Match.builder().id(matchId).status(status).roster(new ArrayList<>()).build();
-        when(matchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        lenient().when(matchRepository.findById(matchId)).thenReturn(Optional.of(match));
         return match;
     }
 
@@ -156,6 +156,7 @@ class MatchServiceOfflineSyncTest {
         Division division = Division.builder().id(UUID.randomUUID()).build();
         Match match = matchWithStatus(MatchStatus.NOT_STARTED);
         match.setDivision(division);
+        when(matchRepository.findByIdForUpdate(matchId)).thenReturn(Optional.of(match));
 
         List<Person> starters = IntStream.range(0, 15)
                 .mapToObj(index -> Person.builder().id(UUID.randomUUID()).build())
