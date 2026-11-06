@@ -39,6 +39,6 @@ export class NavSyncStatusComponent {
     if (state === 'syncing') {
       return 'Sincronizando…';
     }
-    return pendingCount === 1 ? '1 sin sincronizar' : `${pendingCount} sin sincronizar`;
+    return `${pendingCount} sin sincronizar`;
   });
 }
