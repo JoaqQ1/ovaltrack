@@ -46,6 +46,13 @@ export class NavbarComponent {
 
   readonly clubName = computed(() => this.userContext.currentClub()?.name ?? null);
 
+  readonly logoSrc = computed(() => this.themeService.theme() === 'light'
+    ? 'assets/brand/OvalTrack-fondo-claro.png'
+    : 'assets/brand/OvalTrack-fondo-oscuro.png');
+
+  readonly themeToggleLabel = computed(() =>
+    this.themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+
   /** El jugador no captura partidos: no ve el acceso al partido en vivo. */
   readonly liveMatch = computed(() =>
     this.currentUser()?.role === 'PLAYER' ? null : this.liveMatchSource.liveMatch()

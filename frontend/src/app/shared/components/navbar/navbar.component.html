@@ -3,7 +3,7 @@
     <a routerLink="/home" class="brand-link" aria-label="OvalTrack, ir al inicio">
       <img
         class="brand-icon"
-        [src]="themeService.theme() === 'light' ? 'assets/brand/OvalTrack-fondo-claro.png' : 'assets/brand/OvalTrack-fondo-oscuro.png'"
+        [src]="logoSrc()"
         alt=""
       >
       @if (currentUser() && clubName() && !navbarMode.isCompact()) {
@@ -27,7 +27,7 @@
           type="button"
           class="theme-toggle"
           (click)="themeService.toggleTheme()"
-          [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+          [attr.aria-label]="themeToggleLabel()"
         >
           <i class="bi" [class.bi-sun]="themeService.theme() === 'dark'" [class.bi-moon]="themeService.theme() === 'light'" aria-hidden="true"></i>
         </button>
