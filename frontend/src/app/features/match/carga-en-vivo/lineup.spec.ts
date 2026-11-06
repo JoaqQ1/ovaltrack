@@ -51,6 +51,22 @@ describe('currentLineup', () => {
     expect(ids(lineup.onField)).toEqual(['7:A', '99:B']);
   });
 
+  it('ignora eventos rechazados por el servidor', () => {
+    const rejected = change(99, 42);
+    rejected.syncFailedAt = '2026-10-23T15:00:00Z';
+    rejected.syncErrorMessage = 'Roster desactualizado';
+    const lineup = currentLineup(initial(), [rejected], typeById);
+    expect(ids(lineup.onField)).toEqual(['7:A', '99:B']);
+    expect(ids(lineup.bench)).toEqual(['42:X', '1000:Y']);
+  });
+
+  it('no usa el número cuando el id informado no resuelve', () => {
+    const event = change(99, 42);
+    event.attributes = { playerOutId: 'missing', playerOutNumber: 99, playerInNumber: 42 };
+    const lineup = currentLineup(initial(), [event], typeById);
+    expect(ids(lineup.onField)).toEqual(['7:A', '99:B']);
+  });
+
   it('no modifica la formación inicial: sin el evento, el cambio se revierte', () => {
     const start = initial();
     currentLineup(start, [change(7, 1000)], typeById);

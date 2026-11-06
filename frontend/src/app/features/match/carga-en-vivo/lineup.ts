@@ -31,9 +31,12 @@ const resolve = (
   numberKey: string,
 ): MatchRosterPlayer | undefined => {
   const id = event.attributes?.[idKey];
-  if (typeof id === 'string') {
+  if (id !== undefined && id !== null) {
+    if (typeof id !== 'string') {
+      return undefined;
+    }
     const byId = [...map.values()].find(player => player.id === id);
-    if (byId) return byId;
+    return byId;
   }
   const number = readNumber(event, numberKey);
   return number === null ? undefined : map.get(number);
@@ -48,6 +51,7 @@ export function currentLineup(
   const bench = new Map(initial.bench);
   const ordered = events
     .filter(event => event.active !== false
+      && !event.syncFailedAt
       && event.teamPossession === 'OWN'
       && eventTypeById(event.eventTypeId)?.code === 'SUBSTITUTION')
     .sort((left, right) =>

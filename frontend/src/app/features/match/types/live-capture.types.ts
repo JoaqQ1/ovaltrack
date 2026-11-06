@@ -26,6 +26,8 @@ export interface HistoryItem {
   id: UUID;
   minute: string;
   description: string;
+  rejected?: boolean;
+  syncErrorMessage?: string | null;
 }
 
 /** Identificadores necesarios para consultar datos relacionados con un partido. */

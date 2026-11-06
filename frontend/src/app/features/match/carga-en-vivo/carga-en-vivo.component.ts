@@ -172,6 +172,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   private events: LocalMatchEvent[] = [];
   private readonly eventVariantRotation: EventVariant[] = ['success', 'danger', 'warning', 'primary'];
   private readonly eventVariants = new Map<string, EventVariant>();
+  private readonly missingFieldSlotWarnings = new Set<string>();
   private nextEventVariantIndex = 0;
 
   /** Inicializa la pantalla, carga el partido y restaura su estado guardado. */
@@ -409,6 +410,14 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
 
   removeHistoryEvent(historyId: string): void {
     this.undoHistoryEvent(historyId);
+  }
+
+  /** Descarta un evento rechazado localmente sin volver a enviarlo al servidor. */
+  discardRejectedEvent(historyId: string): void {
+    const event = this.events.find(currentEvent => currentEvent.id === historyId);
+    if (event?.syncFailedAt) {
+      this.deleteEventAndRebuild(event);
+    }
   }
 
   /** Pausa o reanuda el reloj del partido sin afectar el historial de deshacer. */
@@ -748,6 +757,17 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         continue;
       }
 
+      if (event.syncFailedAt) {
+        history.unshift({
+          id: event.id,
+          minute: this.formatEventMinute(event.matchTime),
+          description: `${eventType.name} — Rechazado`,
+          rejected: true,
+          syncErrorMessage: event.syncErrorMessage,
+        });
+        continue;
+      }
+
       const counts = countsAsScoring(eventType, event.attributes);
       const team = counts ? scoringTeam(event) : null;
       if (team === 'OPPONENT') {
@@ -960,18 +980,32 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   // ───────────────────────── Captura de eventos (modal por pasos) ─────────────────────────
 
   private buildSlots(): void {
+    const starters = [...this.onField.entries()]
+      .filter(([, player]) => {
+        if (player.fieldSlot != null) {
+          return true;
+        }
+        const warningKey = `${this.matchId}:${player.id}`;
+        if (!this.missingFieldSlotWarnings.has(warningKey)) {
+          this.missingFieldSlotWarnings.add(warningKey);
+          this.toastService.warning(
+            `No se pudo ubicar al jugador #${player.number} porque no tiene casilla de cancha.`,
+            'Alineación incompleta',
+          );
+        }
+        return false;
+      })
+      .sort(([, left], [, right]) => left.fieldSlot! - right.fieldSlot!);
     const slot = (number: number, player: MatchRosterPlayer): SlotView => ({
       number,
       name: this.shortName(player.fullName),
-      fieldSlot: player.fieldSlot ?? 0,
+      fieldSlot: player.fieldSlot!,
     });
-    const starters = [...this.onField.entries()]
-      .sort(([, left], [, right]) => (left.fieldSlot ?? 0) - (right.fieldSlot ?? 0));
     this.forwardSlots = starters
-      .filter(([, player]) => (player.fieldSlot ?? 0) <= 8)
+      .filter(([, player]) => player.fieldSlot! <= 8)
       .map(([number, player]) => slot(number, player));
     this.backSlots = starters
-      .filter(([, player]) => (player.fieldSlot ?? 0) >= 9)
+      .filter(([, player]) => player.fieldSlot! >= 9)
       .map(([number, player]) => slot(number, player));
     this.substituteSlots = [...this.bench.entries()]
       .sort(([, left], [, right]) => (left.slotOrder ?? 0) - (right.slotOrder ?? 0))

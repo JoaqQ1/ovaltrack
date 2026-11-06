@@ -1,5 +1,12 @@
 :host {
 	display: block;
+}
+
+.history__error {
+	display: block;
+	color: var(--error);
+	font-size: 0.75rem;
+	margin-top: 0.2rem;
 	height: 100%;
 	min-width: 0;
 }
