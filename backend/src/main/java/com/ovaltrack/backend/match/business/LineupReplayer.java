@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.springframework.stereotype.Component;
 
@@ -24,16 +26,38 @@ public class LineupReplayer {
     public void replay(Match match, List<Event> sourceEvents) {
         Map<MatchPlayer, State> states = initialStates(match);
         List<Event> events = new ArrayList<>(sourceEvents);
-        events.stream()
-                .filter(this::isOwnSubstitution)
-                .filter(event -> Boolean.TRUE.equals(event.getActive()))
-                .sorted(eventComparator())
-                .forEach(event -> apply(states, event));
+        orderedSubstitutions(sourceEvents).forEach(event -> apply(states, event));
 
         states.forEach((player, state) -> {
             player.setFieldStatus(state.status());
             player.setFieldSlot(state.fieldSlot());
         });
+    }
+
+    public Set<UUID> playersOnFieldBefore(Match match, List<Event> sourceEvents, Event target) {
+        Map<MatchPlayer, State> states = initialStates(match);
+        for (Event event : orderedSubstitutions(sourceEvents)) {
+            if (sameEvent(event, target)) {
+                break;
+            }
+            apply(states, event);
+        }
+        return onField(states);
+    }
+
+    public Set<UUID> playersOnFieldAfter(Match match, List<Event> sourceEvents, Event target) {
+        Map<MatchPlayer, State> states = initialStates(match);
+        for (Event event : orderedSubstitutions(sourceEvents)) {
+            apply(states, event);
+            if (sameEvent(event, target)) {
+                break;
+            }
+        }
+        return onField(states);
+    }
+
+    public MatchPlayer resolvePlayer(Match match, Event event, String idKey, String numberKey) {
+        return resolve(new HashSet<>(match.getRoster()), event, idKey, numberKey);
     }
 
     private Map<MatchPlayer, State> initialStates(Match match) {
@@ -44,6 +68,7 @@ public class LineupReplayer {
                     throw new BusinessException("Roster corrupto: el titular " + player.getNumber()
                             + " no tiene posición inicial");
                 }
+
                 states.put(player, new State(MatchPlayerStatus.EN_CANCHA, player.getSlotOrder() + 1));
             } else {
                 states.put(player, new State(MatchPlayerStatus.EN_BANCO, null));
@@ -52,9 +77,32 @@ public class LineupReplayer {
         return states;
     }
 
+    private List<Event> orderedSubstitutions(List<Event> sourceEvents) {
+        return sourceEvents.stream()
+                .filter(this::isOwnSubstitution)
+                .filter(event -> Boolean.TRUE.equals(event.getActive()))
+                .sorted(eventComparator())
+                .toList();
+    }
+
+    private boolean sameEvent(Event left, Event right) {
+        return left == right || (left != null && right != null && left.getId() != null
+                && left.getId().equals(right.getId()));
+    }
+
+    private Set<UUID> onField(Map<MatchPlayer, State> states) {
+        Set<UUID> result = new HashSet<>();
+        states.forEach((player, state) -> {
+            if (state.status() == MatchPlayerStatus.EN_CANCHA) {
+                result.add(player.getDivisionPlayer().getPerson().getId());
+            }
+        });
+        return result;
+    }
+
     private void apply(Map<MatchPlayer, State> states, Event event) {
-        MatchPlayer outgoing = resolve(states, event, "playerOutId", "playerOutNumber", event.getId());
-        MatchPlayer incoming = resolve(states, event, "playerInId", "playerInNumber", event.getId());
+        MatchPlayer outgoing = resolve(states.keySet(), event, "playerOutId", "playerOutNumber");
+        MatchPlayer incoming = resolve(states.keySet(), event, "playerInId", "playerInNumber");
         if (outgoing == incoming) {
             invalid(event, "el jugador saliente y entrante deben ser distintos");
         }
@@ -73,8 +121,7 @@ public class LineupReplayer {
         states.put(incoming, new State(MatchPlayerStatus.EN_CANCHA, out.fieldSlot()));
     }
 
-    private MatchPlayer resolve(Map<MatchPlayer, State> states, Event event, String idKey,
-            String numberKey, UUID eventId) {
+    private MatchPlayer resolve(Set<MatchPlayer> players, Event event, String idKey, String numberKey) {
         Object rawId = event.getAttributes() == null ? null : event.getAttributes().get(idKey);
         MatchPlayer byId = null;
         if (rawId != null) {
@@ -83,7 +130,7 @@ public class LineupReplayer {
             }
             try {
                 UUID personId = UUID.fromString((String) rawId);
-                byId = states.keySet().stream()
+                byId = players.stream()
                         .filter(player -> personId.equals(player.getDivisionPlayer().getPerson().getId()))
                         .findFirst().orElse(null);
             } catch (IllegalArgumentException ex) {
@@ -103,7 +150,7 @@ public class LineupReplayer {
         if (number == null) {
             invalid(event, "falta " + idKey + " o " + numberKey);
         }
-        return states.keySet().stream().filter(player -> number.equals(player.getNumber()))
+        return players.stream().filter(player -> number.equals(player.getNumber()))
                 .findFirst().orElseThrow(() -> new BusinessException("Evento " + event.getId()
                         + ": el jugador " + numberKey + " no pertenece al plantel"));
     }

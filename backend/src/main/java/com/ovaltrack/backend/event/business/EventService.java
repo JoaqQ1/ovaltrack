@@ -2,6 +2,9 @@ package com.ovaltrack.backend.event.business;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.security.core.Authentication;
@@ -9,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.ovaltrack.backend.match.business.MatchSecurityValidator;
 import com.ovaltrack.backend.match.business.MatchService;
+import com.ovaltrack.backend.match.business.SubstitutionDependencyChecker;
 import com.ovaltrack.backend.match.domain.Match;
 import com.ovaltrack.backend.match.domain.MatchStatus;
 import com.ovaltrack.backend.person.business.PersonService;
@@ -45,6 +49,7 @@ public class EventService {
 	private final PersonService personService;
 	private final MatchRepository matchRepository;
 	private final MatchSecurityValidator matchSecurityValidator;
+	private final SubstitutionDependencyChecker substitutionDependencyChecker;
 
 	public Collection<EventResponseDTO> findEventsByClubId(UUID clubId) {
 		if (clubService.findClubById(clubId) == null) {
@@ -111,7 +116,9 @@ public class EventService {
 
 		EventAttributeValidator.validate(aEventType, eventRequest.attributes(), eventRequest.teamPossession());
 		
-		Match match = matchService.findMatchEntityById(eventRequest.matchId());
+		Match match = isSubstitution(aEventType)
+				? matchService.findMatchEntityByIdForUpdate(eventRequest.matchId())
+				: matchService.findMatchEntityById(eventRequest.matchId());
 		if (match == null) {
 			throw new BusinessException("No se puede asignar un evento a un partido que no existe");
 		}
@@ -206,6 +213,9 @@ public class EventService {
 
 		if (isSubstitution(result.getEventType()) && result.getTeamPossession() == EventPossession.OWN) {
 			matchService.findMatchEntityByIdForUpdate(result.getMatch().getId());
+			substitutionDependencyChecker.validateChange(result.getMatch(),
+					new ArrayList<>(eventRepository.findEventsByMatchId(result.getMatch().getId())),
+					result, null);
 		}
 		result.setActive(false);
 		result.setSynchronizedAt(LocalDateTime.now());
@@ -231,7 +241,14 @@ public class EventService {
 			matchSecurityValidator.validateCanManageMatch(event.getMatch(), authentication);
 		}
 		boolean wasOwnSubstitution = isOwnSubstitution(event.getEventType(), event.getTeamPossession());
-		if (wasOwnSubstitution || eventRequest.teamPossession() == EventPossession.OWN) {
+		EventType requestedType = eventRequest.eventTypeId() == null
+				? event.getEventType()
+				: eventTypeService.findEventTypeEntityById(eventRequest.eventTypeId());
+		boolean willBeSubstitution = isSubstitution(requestedType);
+		List<Event> beforeEvents = (wasOwnSubstitution || willBeSubstitution)
+				? snapshotEvents(eventRepository.findEventsByMatchId(event.getMatch().getId()))
+				: List.of();
+		if (wasOwnSubstitution || willBeSubstitution || eventRequest.teamPossession() == EventPossession.OWN) {
 			matchService.findMatchEntityByIdForUpdate(event.getMatch().getId());
 		}
 
@@ -242,6 +259,11 @@ public class EventService {
 		boolean isOwnSubstitution = isOwnSubstitution(event.getEventType(), event.getTeamPossession());
 		if (isOwnSubstitution) {
 			matchService.validateSubstitution(event.getMatch(), event);
+		}
+		if (wasOwnSubstitution || isOwnSubstitution) {
+			Event original = beforeEvents.stream().filter(candidate -> candidate.getId().equals(event.getId()))
+					.findFirst().orElse(event);
+			substitutionDependencyChecker.validateChange(event.getMatch(), beforeEvents, original, event);
 		}
 
 		//para las notas
@@ -257,6 +279,28 @@ public class EventService {
 		}
 		recalculateMatchScore(event.getMatch());
 		return EventDTOMapper.toResponseDTO(savedEvent);
+	}
+
+	private List<Event> snapshotEvents(Collection<Event> events) {
+		return events.stream().map(this::snapshotEvent).toList();
+	}
+
+	private Event snapshotEvent(Event event) {
+		return Event.builder()
+				.id(event.getId())
+				.eventType(event.getEventType())
+				.match(event.getMatch())
+				.player(event.getPlayer())
+				.teamPossession(event.getTeamPossession())
+				.matchTime(event.getMatchTime())
+				.absoluteMatchTime(event.getAbsoluteMatchTime())
+				.realTime(event.getRealTime())
+				.period(event.getPeriod())
+				.origin(event.getOrigin())
+				.attributes(event.getAttributes() == null ? null : new HashMap<>(event.getAttributes()))
+				.createdAt(event.getCreatedAt())
+				.active(event.getActive())
+				.build();
 	}
 
 	private Event findActiveEventOrThrow(UUID eventId) {

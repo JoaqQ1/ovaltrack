@@ -288,7 +288,7 @@ public class MatchService {
     @Transactional
     public void saveMatchRoster(UUID matchId, List<MatchRosterEntryDTO> titulares,
             List<MatchRosterEntryDTO> suplentes) {
-        Match match = findMatchEntityById(matchId);
+        Match match = findMatchEntityByIdForUpdate(matchId);
         if (match == null) {
             throw new EntityNotFoundException("Partido no encontrado");
         }
@@ -397,47 +397,11 @@ public class MatchService {
         lineupReplayer.replay(match, events);
     }
 
-    /** Busca por id de persona y, si falta, por número permanente del partido. */
+    /** Resuelve por ID cuando existe; el número solo es compatible con eventos históricos sin ID. */
     public MatchPlayer findRosterPlayer(Match match, Map<String, Object> attributes,
             String idKey, String slotKey) {
-        Object rawId = attributes.get(idKey);
-        if (rawId instanceof String id) {
-            try {
-                UUID personId = UUID.fromString(id);
-                MatchPlayer byId = match.getRoster().stream()
-                        .filter(player -> player.getDivisionPlayer().getPerson().getId().equals(personId))
-                        .findFirst()
-                        .orElse(null);
-                if (byId != null) {
-                    return byId;
-                }
-            } catch (IllegalArgumentException ignored) {
-                // Eventos sin id válido: se resuelve por número permanente.
-            }
-        }
-
-        Integer number = readSlotNumber(attributes, slotKey);
-        if (number == null) {
-            return null;
-        }
-        return match.getRoster().stream()
-                .filter(player -> number.equals(player.getNumber()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private Integer readSlotNumber(Map<String, Object> attributes, String key) {
-        Object value = attributes.get(key);
-        if (value == null) {
-            return null;
-        }
-        if (!(value instanceof Number number) || number.intValue() != number.doubleValue()) {
-            throw new BusinessException("El campo " + key + " debe ser un número entero");
-        }
-        if (number.intValue() <= 0) {
-            throw new BusinessException("El campo " + key + " debe ser un número positivo");
-        }
-        return number.intValue();
+        Event candidate = Event.builder().id(UUID.randomUUID()).attributes(attributes).build();
+        return lineupReplayer.resolvePlayer(match, candidate, idKey, slotKey);
     }
 
     /**
