@@ -46,7 +46,7 @@ export class UserMenuComponent {
   readonly initials = computed(() => getUserInitials(this.fullName(), this.email()));
   readonly clubName = computed(() => this.userContext.currentClub()?.name ?? null);
   readonly roleMeta = computed(() => {
-    const role = this.userContext.currentRole() ?? this.authService.currentUser()?.role;
+    const role = this.authService.effectiveRole();
     return role ? ROLE_META[role] : null;
   });
   readonly hasPending = computed(() => this.syncStatus().pendingCount > 0);

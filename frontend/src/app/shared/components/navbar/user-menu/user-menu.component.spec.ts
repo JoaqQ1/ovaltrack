@@ -19,6 +19,7 @@ describe('UserMenuComponent (cierre de sesión)', () => {
     retryResult = 'done';
     authService = jasmine.createSpyObj<AuthService>('AuthService', ['logout'], {
       currentUser: signal({ id: 'u-1', email: 'ana@club.org', role: 'ADMIN_CLUB' }),
+      effectiveRole: signal('ADMIN_CLUB'),
     });
 
     TestBed.configureTestingModule({

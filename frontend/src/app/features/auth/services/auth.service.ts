@@ -1,7 +1,7 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { AuthResponse, ClubRegistrationDTO, CurrentUserSession, LoginRequest, MemberRegistrationDTO, TokenPayload } from '../types/auth.types';
+import { AuthResponse, ClubRegistrationDTO, CurrentUserSession, LoginRequest, MemberRegistrationDTO, TokenPayload, UserRole } from '../types/auth.types';
 import { environment } from '@environments/environment';
 import { TokenService } from '../../../core/services/token.service';
 import { UserContextService } from '../../../core/services/user-context.service';
@@ -23,6 +23,10 @@ export class AuthService {
   private readonly toastService = inject(ToastService);
   private currentUserSignal = signal<CurrentUserSession | null>(this.loadUserFromToken());
   readonly currentUser = this.currentUserSignal.asReadonly();
+  /** Rol vigente: el del contexto (`/api/me`) y, mientras no cargó, el del token. */
+  readonly effectiveRole = computed<UserRole | null>(
+    () => this.userContextService.currentRole() ?? this.currentUser()?.role ?? null
+  );
 
   constructor(private http: HttpClient) {
     if (this.tokenService.isAuthenticated()) {
