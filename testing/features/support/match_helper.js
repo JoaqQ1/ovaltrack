@@ -55,13 +55,14 @@ export async function changeMatchStatus(match, method, action, token) {
   return response.body;
 }
 
-// Los slots titulares del partido se completan con los jugadores de la división (hasta 15)
+const TITULARES = 15;
+
+// Los 15 titulares del partido son los primeros jugadores de la división, numerados del 1 al 15
 export async function saveRosterWithDivisionPlayers(match, token) {
   const players = await makeHttpRequest('GET', `players/with-user?divisionId=${match.divisionId}`, null, token);
   assert.equal(players.status, 200, 'No se pudieron obtener los jugadores de la división');
-  assert.ok(players.body.length > 0, 'La división no tiene jugadores para armar el plantel');
-  // Contrato de MatchRosterDTO: cada titular lleva su persona y su número de partido (1 a 15).
-  const titulares = players.body.slice(0, 15).map((p, index) => ({ playerId: p.personId, number: index + 1 }));
+  assert.ok(players.body.length >= TITULARES, `La división tiene ${players.body.length} jugadores y el plantel exige ${TITULARES} titulares`);
+  const titulares = players.body.slice(0, TITULARES).map((p, index) => ({ playerId: p.personId, number: index + 1 }));
   const response = await makeHttpRequest('POST', `matches/${match.id}/roster`, { titulares, suplentes: [] }, token);
   assert.equal(response.status, 200, `No se pudo guardar el plantel: ${response.body?.message}`);
 }

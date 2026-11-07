@@ -43,6 +43,10 @@ When('el entrenador agrega post-partido el evento {string} con atributos {string
   await addPostMatchEvent.call(this, tipoEvento, atributos, minuto, periodo);
 });
 
+When('el entrenador agrega post-partido el evento {string} para el equipo propio en el minuto {int} del periodo {int}', async function (tipoEvento, minuto, periodo) {
+  await addPostMatchEvent.call(this, tipoEvento, '', minuto, periodo);
+});
+
 Then('la línea de eventos refleja el nuevo evento {string} en el periodo {int} asignado a {string}', async function (tipoEvento, periodo, nombreJugador) {
   const event = await findCreatedEvent.call(this);
   assert.equal(event.eventTypeName, tipoEvento);
