@@ -152,6 +152,25 @@
         </div>
       }
 
+      @if (m.kind === 'team-idle') {
+        <div class="board-main">
+          <p class="label-mono on-board">Plantel {{ m.divisionName }}</p>
+          <h2 class="board-title">Sin partido programado</h2>
+          <p class="board-meta">
+            <i class="bi bi-clock-history" aria-hidden="true"></i>
+            Último: {{ m.last.ownScore }}-{{ m.last.opponentScore }} vs {{ m.last.opponent }} · {{ m.last.dateLabel }}
+          </p>
+          <ul class="chips">
+            <li class="chip-board" [class.ok]="m.last.result === 'win'">
+              {{ m.last.result === 'win' ? 'Ganado' : m.last.result === 'loss' ? 'Perdido' : 'Empatado' }}
+            </li>
+          </ul>
+        </div>
+        <div class="board-side">
+          <ng-container *ngTemplateOutlet="actions" />
+        </div>
+      }
+
       @if (m.kind === 'player-last') {
         <div class="board-main">
           <p class="label-mono on-board">Tu último partido · {{ m.dateLabel }}</p>

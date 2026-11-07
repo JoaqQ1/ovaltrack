@@ -46,6 +46,36 @@ describe('coach-board', () => {
     expect(buildCoachBoard(context([]))).toEqual({ kind: 'onboarding', step: 'schedule-match' });
   });
 
+  it('con partidos jugados y ninguno programado: team-idle con el último resultado, no "Arrancá la temporada"', () => {
+    const board = buildCoachBoard(context([
+      match({ id: 'a', status: 'finished', date: '2026-10-10T15:00:00', homeScore: 10, awayScore: 20 }),
+      match({ id: 'b', status: 'finished', date: '2026-10-17T15:00:00', homeScore: 32, awayScore: 21 })
+    ]));
+    expect(board).toEqual({
+      kind: 'team-idle', divisionName: 'Superior',
+      last: { opponent: 'Trelew', dateLabel: '17 oct', ownScore: 32, opponentScore: 21, result: 'win' }
+    });
+  });
+
+  it('team-idle también si el último fue derrota o empate', () => {
+    const lost = buildCoachBoard(context([match({ status: 'finished', date: '2026-10-10T15:00:00', homeScore: 10, awayScore: 20 })]));
+    const drawn = buildCoachBoard(context([match({ status: 'finished', date: '2026-10-10T15:00:00', homeScore: 20, awayScore: 20 })]));
+    expect(lost.kind === 'team-idle' && lost.last.result).toBe('loss');
+    expect(drawn.kind === 'team-idle' && drawn.last.result).toBe('draw');
+  });
+
+  it('solo partidos cancelados: sigue siendo primeros pasos (nunca se jugó)', () => {
+    expect(buildCoachBoard(context([match({ status: 'cancelled' })]))).toEqual({ kind: 'onboarding', step: 'schedule-match' });
+  });
+
+  it('con un próximo programado gana el próximo aunque haya partidos jugados', () => {
+    const board = buildCoachBoard(context([
+      match({ id: 'a', status: 'finished', date: '2026-10-10T15:00:00' }),
+      match({ id: 'b', status: 'empty_roster', date: '2026-11-09T14:30:00' })
+    ]));
+    expect(board.kind).toBe('next');
+  });
+
   it('el entretiempo se muestra como tal', () => {
     expect(periodText(match({ status: 'halftime' }), null)).toBe('Entretiempo');
   });

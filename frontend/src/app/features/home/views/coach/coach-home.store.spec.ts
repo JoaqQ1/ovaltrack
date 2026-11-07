@@ -164,4 +164,12 @@ describe('CoachHomeStore', () => {
     expect(store.hudTitle()).toBe('Buenas tardes, Tomás');
     expect(store.hudLabel()).toBe('Viernes 6 nov · PMRC');
   });
+
+  it('división con partidos jugados y ninguno programado: tablero team-idle y "Programar partido" como primario', () => {
+    matches = { status: 'ready', data: [match({ status: 'finished', date: '2026-10-17T15:00:00', homeScore: 32, awayScore: 21 })], fetchedAt: 1, stale: false };
+    const store = createStore();
+    store.reload();
+    expect(store.board().kind).toBe('team-idle');
+    expect(store.primary()).toEqual(jasmine.objectContaining({ kind: 'schedule-match', route: '/match-selection', target: 'board' }));
+  });
 });

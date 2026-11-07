@@ -2,7 +2,8 @@ import { Match } from '../../match/types/match.types';
 import { shortTeamName } from '../../match/post-match/utils/zone-grid';
 import { BoardModel, LiveEventLine } from '../types/home.types';
 import { MATCH_DAY_WINDOW_MS } from './countdown';
-import { formatUtcAsArgentina, msUntil, parseWallClock, relativeMatchLabel } from './match-time';
+import { resultOf } from './form-record';
+import { formatUtcAsArgentina, msUntil, parseWallClock, relativeMatchLabel, shortDateLabel } from './match-time';
 import { upcomingMatches } from './primary-action';
 
 export interface CoachBoardContext {
@@ -30,7 +31,17 @@ export function periodText(match: Match, progress: CoachBoardContext['progress']
   return match.currentPeriod === 2 ? '2T' : '1T';
 }
 
-/** Elige la variante del tablero del entrenador: en curso, día de partido, próximo o primeros pasos. */
+/** Último partido jugado de la división; `null` si todavía no se jugó ninguno. */
+function lastFinished(matches: readonly Match[]): { match: Match; start: Date } | null {
+  return matches
+    .flatMap(match => {
+      const start = parseWallClock(match.date);
+      return match.status === 'finished' && start ? [{ match, start }] : [];
+    })
+    .sort((a, b) => b.start.getTime() - a.start.getTime())[0] ?? null;
+}
+
+/** Elige la variante del tablero del entrenador: en curso, día de partido, próximo, sin partido programado o primeros pasos. */
 export function buildCoachBoard(ctx: CoachBoardContext): BoardModel {
   const live = ctx.matches.find(isLive);
   if (live) {
@@ -48,7 +59,20 @@ export function buildCoachBoard(ctx: CoachBoardContext): BoardModel {
 
   const next = upcomingMatches(ctx.matches, ctx.now)[0];
   const start = next && parseWallClock(next.date);
-  if (!next || !start) return { kind: 'onboarding', step: 'schedule-match' };
+  if (!next || !start) {
+    // Con partidos ya jugados no se "arranca la temporada": solo falta programar el siguiente.
+    const last = lastFinished(ctx.matches);
+    if (!last) return { kind: 'onboarding', step: 'schedule-match' };
+    const { match } = last;
+    return {
+      kind: 'team-idle',
+      divisionName: ctx.divisionName,
+      last: {
+        opponent: opponentName(match), dateLabel: shortDateLabel(last.start), ownScore: match.homeScore,
+        opponentScore: match.awayScore, result: resultOf(match.homeScore, match.awayScore)
+      }
+    };
+  }
 
   const starters = ctx.roster?.starters ?? 0;
   const substitutes = ctx.roster?.substitutes ?? 0;
