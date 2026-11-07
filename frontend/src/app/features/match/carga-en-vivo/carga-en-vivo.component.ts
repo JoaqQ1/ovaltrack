@@ -368,11 +368,8 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.rebuildStateFromEvents();
         this.synchronized = savedEvent.synchronizedAt !== null;
         this.persistState();
-        this.liveCaptureService
-          .syncPendingEvents(this.matchId)
-          .subscribe({
-            next: () => onSuccess?.(),
-          });
+        onSuccess?.();
+        this.liveCaptureService.syncPendingEvents(this.matchId).subscribe();
       },
       error: (error: HttpErrorResponse) => {
         this.showError(this.readBackendError(error) ?? 'Ocurrió un error inesperado.');
@@ -739,6 +736,7 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
         this.rebuildStateFromEvents(!deletingLatestEvent);
         this.synchronized = false;
         this.persistState();
+        this.liveCaptureService.syncPendingEvents(this.matchId).subscribe();
       },
       error: (error: HttpErrorResponse) => {
         this.showError(this.readBackendError(error) ?? 'Ocurrió un error inesperado.');
