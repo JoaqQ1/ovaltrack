@@ -22,6 +22,7 @@ Given('que se registró el evento {string} en el partido', async function (tipoE
     period: 1,
   });
   assert.equal(response.status, 200, `No se pudo registrar el evento ${tipoEvento}: ${response.body?.message}`);
+  this.event = response.body;
 });
 
 // <==================== Estado en vivo ====================>
