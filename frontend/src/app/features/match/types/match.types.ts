@@ -81,7 +81,7 @@ export interface PendingMatchMutation {
 export type MatchFilter = MatchStatus | 'all';
 
 /** Filtros disponibles, en el orden en que se renderizan en el control segmentado. */
-export const MATCH_FILTERS: readonly MatchFilter[] = ['all', 'not_started', 'in_progress', 'halftime', 'finished', 'cancelled'] as const;
+export const MATCH_FILTERS: readonly MatchFilter[] = ['all', 'empty_roster', 'not_started', 'in_progress', 'halftime', 'finished', 'cancelled'] as const;
 
 /** Etiquetas legibles para cada estado/filtro. */
 export const MATCH_STATUS_LABELS: Record<MatchFilter, string> = {
