@@ -4,7 +4,8 @@ import { getUserToken } from '../../support/auth_helper.js';
 import { getPostMatchEvents } from '../../support/event_helper.js';
 import { makeHttpRequest } from '../../support/httpRequest.js';
 import { findDivisionId, requestMatchCreation } from '../../support/match_helper.js';
-import { MISSING_UUID, createZone, deleteZone, listZones, updateZone } from '../../support/zone_helper.js';
+import { MISSING_UUID } from '../../support/ids.js';
+import { createZone, deleteZone, listZones, updateZone } from '../../support/zone_helper.js';
 
 // Pasos reutilizados:
 //  - "Dado que el coach ... ha iniciado sesión" (division-jugador/step_definitions/creacion_jugadores.js)

@@ -1,7 +1,8 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
+import { MISSING_UUID } from '../../support/ids.js';
 import { makeHttpRequest } from '../../support/httpRequest.js';
-import { cancelLiveMatches, findDivisionId, findMatchByStatus, getDivisionMatches, requestMatchCreation, saveRosterWithDivisionPlayers, startMatch } from '../../support/match_helper.js';
+import { cancelLiveMatches, changeMatchStatus, createScheduledMatch, findDivisionId, findMatchByStatus, getDivisionMatches, requestMatchCreation, saveRosterWithDivisionPlayers, startMatch } from '../../support/match_helper.js';
 
 // <==================== Helpers ====================>
 
@@ -36,8 +37,7 @@ When('intenta programar un partido contra {string} para el {string} en la divisi
 });
 
 When('intenta programar un partido contra {string} asociándolo a un ID de división inexistente', async function (rival) {
-  const fakeDivisionId = '00000000-0000-0000-0000-000000000000';
-  this.response = await requestMatchCreation('2026-11-15T15:30:00', fakeDivisionId, rival, this.token);
+  this.response = await requestMatchCreation('2026-11-15T15:30:00', MISSING_UUID, rival, this.token);
 });
 
 // <==================== Cancelación de partidos ====================>
@@ -78,4 +78,22 @@ Given('que la division {string} tiene un partido en curso contra {string}', asyn
 
 Given('que la division {string} no tiene partidos en curso', async function (divisionNombre) {
   await cancelLiveMatches(await findDivisionId(divisionNombre, this.token), this.token);
+});
+
+// <==================== Partidos de contexto con fecha propia ====================>
+
+Given('que existe un partido programado para la división {string} contra {string}', async function (divisionNombre, rival) {
+  this.match = await createScheduledMatch(await findDivisionId(divisionNombre, this.token), rival, this.token);
+});
+
+Given('que el partido está en curso', async function () {
+  this.match = await startMatch(this.match, this.token);
+});
+
+Given('que el partido está finalizado', async function () {
+  this.match = await changeMatchStatus(this.match, 'PUT', 'finish', this.token);
+});
+
+Given('que el partido está cancelado', async function () {
+  this.match = await changeMatchStatus(this.match, 'DELETE', 'cancel', this.token);
 });

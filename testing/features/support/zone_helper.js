@@ -1,7 +1,5 @@
 import { makeHttpRequest } from './httpRequest.js';
 
-export const MISSING_UUID = '00000000-0000-0000-0000-000000000000';
-
 const zonesPath = (matchId) => `matches/${matchId}/zones`;
 
 export function createZone(matchId, zone, token) {

@@ -2,7 +2,7 @@ import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { createSentInvitation } from "../../support/db_helper.js";
 import { makeHttpRequest } from "../../support/httpRequest.js";
-import { MISSING_UUID } from "../../support/zone_helper.js";
+import { MISSING_UUID } from "../../support/ids.js";
 import { findDivisionId } from "../../support/match_helper.js";
 
 // Pasos reutilizados:

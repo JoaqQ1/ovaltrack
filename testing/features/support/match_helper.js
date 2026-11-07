@@ -57,13 +57,21 @@ export async function changeMatchStatus(match, method, action, token) {
 
 const TITULARES = 15;
 
-// Los 15 titulares del partido son los primeros jugadores de la división, numerados del 1 al 15
-export async function saveRosterWithDivisionPlayers(match, token) {
-  const players = await makeHttpRequest('GET', `players/with-user?divisionId=${match.divisionId}`, null, token);
+/** Los primeros `count` jugadores de la división como titulares, numerados desde el 1. */
+export async function getDivisionStarters(divisionId, token, count = TITULARES) {
+  const players = await makeHttpRequest('GET', `players/with-user?divisionId=${divisionId}`, null, token);
   assert.equal(players.status, 200, 'No se pudieron obtener los jugadores de la división');
-  assert.ok(players.body.length >= TITULARES, `La división tiene ${players.body.length} jugadores y el plantel exige ${TITULARES} titulares`);
-  const titulares = players.body.slice(0, TITULARES).map((p, index) => ({ playerId: p.personId, number: index + 1 }));
-  const response = await makeHttpRequest('POST', `matches/${match.id}/roster`, { titulares, suplentes: [] }, token);
+  assert.ok(players.body.length >= count, `La división tiene ${players.body.length} jugadores y se pidieron ${count}`);
+  return players.body.slice(0, count).map((p, index) => ({ playerId: p.personId, number: index + 1 }));
+}
+
+export function saveRoster(matchId, roster, token) {
+  return makeHttpRequest('POST', `matches/${matchId}/roster`, roster, token);
+}
+
+export async function saveRosterWithDivisionPlayers(match, token) {
+  const titulares = await getDivisionStarters(match.divisionId, token);
+  const response = await saveRoster(match.id, { titulares, suplentes: [] }, token);
   assert.equal(response.status, 200, `No se pudo guardar el plantel: ${response.body?.message}`);
 }
 
@@ -83,22 +91,27 @@ export async function startMatch(match, token) {
   return changeMatchStatus(match, 'PUT', 'start', token);
 }
 
-// Cada partido finalizado de prueba se crea en un día distinto para no chocar con la franja horaria de otro
-let finishedMatchCount = 0;
-const nextFinishedMatchDate = () => {
+// Cada partido de prueba se crea en un día distinto para no chocar con la franja horaria de otro
+let createdMatchCount = 0;
+const nextMatchDate = () => {
   const date = new Date(Date.UTC(2027, 1, 1, 15, 30));
-  date.setUTCDate(date.getUTCDate() + finishedMatchCount++);
+  date.setUTCDate(date.getUTCDate() + createdMatchCount++);
   return date.toISOString().slice(0, 19);
 };
+
+/** Crea un partido nuevo contra el rival en una fecha que no se solapa con la de otro. */
+export async function createScheduledMatch(divisionId, rival, token) {
+  const created = await requestMatchCreation(nextMatchDate(), divisionId, rival, token);
+  assert.equal(created.status, 200, `No se pudo crear el partido contra ${rival}: ${created.body?.message}`);
+  return created.body;
+}
 
 /**
  * Crea un partido nuevo contra el rival, lo inicia con plantel, ejecuta `whileInProgress`
  * (por ejemplo, cargar eventos en vivo) y lo finaliza.
  */
 export async function createFinishedMatch(divisionId, rival, token, whileInProgress = async () => {}) {
-  const created = await requestMatchCreation(nextFinishedMatchDate(), divisionId, rival, token);
-  assert.equal(created.status, 200, `No se pudo crear el partido contra ${rival}: ${created.body?.message}`);
-  const started = await startMatch(created.body, token);
+  const started = await startMatch(await createScheduledMatch(divisionId, rival, token), token);
   await whileInProgress(started);
   return changeMatchStatus(started, 'PUT', 'finish', token);
 }
