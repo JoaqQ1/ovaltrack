@@ -1,4 +1,4 @@
-import { formatUtcAsArgentina, msUntil, parseWallClock, relativeMatchLabel, seasonRange } from './match-time';
+import { formatLocalClock, formatUtcAsArgentina, msUntil, parseWallClock, relativeMatchLabel, seasonRange } from './match-time';
 
 describe('match-time', () => {
   const now = new Date(2026, 10, 6, 18, 0, 0); // vie 6 nov 2026, 18:00
@@ -54,5 +54,9 @@ describe('match-time', () => {
 
   it('seasonRange cubre del 1 de enero al día de hoy', () => {
     expect(seasonRange(now)).toEqual({ from: '2026-01-01', to: '2026-11-06' });
+  });
+
+  it('formatLocalClock da la hora local con ceros', () => {
+    expect(formatLocalClock(new Date(2026, 10, 6, 9, 5).getTime())).toBe('09:05');
   });
 });

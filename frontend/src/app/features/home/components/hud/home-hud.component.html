@@ -1,0 +1,13 @@
+<header class="hud">
+  <div class="hud-text">
+    <p class="label-mono hud-label">{{ label() }}</p>
+    <h1 class="hud-title">{{ title() }}</h1>
+    @if (subtitle()) {
+      <p class="hud-subtitle">{{ subtitle() }}</p>
+    }
+  </div>
+  <div class="hud-actions">
+    <ng-content select="[hudActions]" />
+  </div>
+</header>
+<ng-content />

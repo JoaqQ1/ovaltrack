@@ -30,6 +30,11 @@ function hhmm(date: Date): string {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
+/** Hora local de un instante (ms epoch) como "14:05"; alimenta el sello "Datos de hh:mm". */
+export function formatLocalClock(epochMs: number): string {
+  return hhmm(new Date(epochMs));
+}
+
 /** "Sáb 7 nov · mañana · 14:30"; desde pasado mañana se omite la palabra relativa. */
 export function relativeMatchLabel(start: Date, now: Date): string {
   const days = calendarDaysBetween(now, start);

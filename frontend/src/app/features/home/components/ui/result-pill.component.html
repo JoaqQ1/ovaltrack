@@ -1,0 +1,13 @@
+<span class="pill" [class.win]="result() === 'win'" [class.loss]="result() === 'loss'" [class.draw]="result() === 'draw'"
+      role="img" [attr.aria-label]="ariaLabel()">
+  <span class="pill-letter" aria-hidden="true">{{ letter() }}</span>
+  @if (score()) {
+    <span class="pill-line" aria-hidden="true">{{ score() }}</span>
+  }
+  @if (opponent()) {
+    <span class="pill-line" aria-hidden="true">{{ opponent() }}</span>
+  }
+  @if (analysisPercent() !== null) {
+    <span class="pill-line pill-percent" [class.incomplete]="incomplete()" aria-hidden="true">{{ analysisPercent() }}%</span>
+  }
+</span>
