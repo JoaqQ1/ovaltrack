@@ -70,7 +70,9 @@ export class AdminHomeStore {
   readonly boardStatus = computed(() => this.divisions().length === 0 ? 'ready' : this.matchesState().status);
 
   readonly primary = computed<PrimaryAction | null>(() => {
-    const action = resolvePrimaryAction(adminRules, { now: this.now(), divisions: this.divisionsForRules(), matches: this.matches() });
+    const action = resolvePrimaryAction(adminRules, {
+      now: this.now(), divisions: this.divisionsForRules(), matches: this.matches(), rosters: this.rosters()
+    });
     if (!action || action.kind !== 'define-lineup') return action;
     const match = this.matches().find(candidate => action.route.endsWith(candidate.id));
     const division = this.divisions().find(candidate => candidate.id === match?.divisionId);

@@ -80,6 +80,7 @@ export class CoachHomeStore {
       now: this.now(),
       matches: this.divisionMatches(),
       captureMatchId: this.captureMatchId(),
+      nextRoster: this.extras().roster,
       lastFinished: debt.status === 'ready' ? { id: debt.data.matchId, analysisPercent: debt.data.percent } : null
     });
   });

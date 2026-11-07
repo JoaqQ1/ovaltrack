@@ -1,5 +1,5 @@
 import { Match } from '../../match/types/match.types';
-import { PrimaryAction } from '../types/home.types';
+import { PrimaryAction, STARTERS_TARGET } from '../types/home.types';
 import { MATCH_DAY_WINDOW_MS } from './countdown';
 import { msUntil, parseWallClock } from './match-time';
 
@@ -45,6 +45,17 @@ export function upcomingMatches<T extends RuleMatch>(matches: readonly T[], now:
     .map(entry => entry.match);
 }
 
+/** Titulares cargados en la nómina de un partido; `null`/ausente = no se conoce (sin red o sin respuesta). */
+export type KnownRoster = { starters: number } | null | undefined;
+
+/**
+ * Falta definir la alineación si el partido está en `empty_roster` o si la nómina conocida no llega a 15 titulares.
+ * El estado solo no alcanza: un partido puede seguir en `not_started` sin jugadores cargados.
+ */
+export function lineupIncomplete(match: RuleMatch, roster: KnownRoster): boolean {
+  return match.status === 'empty_roster' || (roster != null && roster.starters < STARTERS_TARGET);
+}
+
 const defineLineup = (matchId: string): PrimaryAction => ({
   kind: 'define-lineup', label: 'Definir alineación', route: `/selection-roster/${matchId}`, target: 'board', requiresConnection: true
 });
@@ -53,6 +64,8 @@ export interface CoachRuleContext {
   now: Date;
   /** Partidos de la división activa. */
   matches: readonly RuleMatch[];
+  /** Nómina del próximo partido sin iniciar de la división (el primero de `upcomingMatches`). */
+  nextRoster?: KnownRoster;
   /** Partido que captura este dispositivo (`LiveMatchSource`), si hay uno. */
   captureMatchId: string | null;
   /** Último partido FINISHED con su % de análisis. */
@@ -74,20 +87,20 @@ export const coachRules: readonly PrimaryRule<CoachRuleContext>[] = [
       ? { kind: 'go-halftime', label: 'Ir al entretiempo', route: `/live-capture/${here.id}/halftime`, target: 'board', requiresConnection: false }
       : { kind: 'continue-capture', label: 'Continuar captura', route: `/live-capture/${here.id}`, target: 'board', requiresConnection: false };
   },
-  // 2. Partido con nómina a menos de 24 h: se ofrece capturar aunque falten titulares (el tablero lo marca).
+  // 2. Próximo partido con la alineación completa a menos de 24 h: se ofrece capturar.
   ctx => {
     if (liveElsewhere(ctx)) return null;
-    const next = upcomingMatches(ctx.matches, ctx.now).find(match => match.status === 'not_started');
+    const next = upcomingMatches(ctx.matches, ctx.now)[0];
     const start = next && startOf(next);
-    if (!next || !start || msUntil(start, ctx.now) >= MATCH_DAY_WINDOW_MS) return null;
+    if (!next || !start || msUntil(start, ctx.now) >= MATCH_DAY_WINDOW_MS || lineupIncomplete(next, ctx.nextRoster)) return null;
     return { kind: 'capture-live', label: 'Capturar en vivo', route: `/live-capture/${next.id}`, target: 'board', requiresConnection: false };
   },
-  // 3. Partido sin nómina a 72 h o menos.
+  // 3. Próximo partido con la alineación incompleta a 72 h o menos.
   ctx => {
     if (liveElsewhere(ctx)) return null;
-    const next = upcomingMatches(ctx.matches, ctx.now).find(match => match.status === 'empty_roster');
+    const next = upcomingMatches(ctx.matches, ctx.now)[0];
     const start = next && startOf(next);
-    return next && start && msUntil(start, ctx.now) <= LINEUP_WINDOW_MS ? defineLineup(next.id) : null;
+    return next && start && lineupIncomplete(next, ctx.nextRoster) && msUntil(start, ctx.now) <= LINEUP_WINDOW_MS ? defineLineup(next.id) : null;
   },
   // 4. El último partido jugado todavía tiene jugadas sin jugador.
   ctx => ctx.lastFinished && ctx.lastFinished.analysisPercent < 100
@@ -104,15 +117,17 @@ export interface AdminRuleContext {
   divisions: readonly { id: string; hasCoach: boolean }[];
   /** Partidos de todo el club, con la división a la que pertenecen. */
   matches: readonly (RuleMatch & { divisionId: string })[];
+  /** Titulares por partido; solo están los partidos cuya nómina se pudo leer. */
+  rosters?: Readonly<Record<string, { starters: number }>>;
 }
 
 /** Reglas del administrador del club, en orden de prioridad. */
 export const adminRules: readonly PrimaryRule<AdminRuleContext>[] = [
-  // 1. Partido sin nómina a 72 h o menos en cualquier división: gana el que juega primero.
+  // 1. Partido con la alineación incompleta a 72 h o menos en cualquier división: gana el que juega primero.
   ctx => {
     const next = upcomingMatches(ctx.matches, ctx.now).find(match => {
       const start = startOf(match);
-      return match.status === 'empty_roster' && start !== null && msUntil(start, ctx.now) <= LINEUP_WINDOW_MS;
+      return start !== null && lineupIncomplete(match, ctx.rosters?.[match.id]) && msUntil(start, ctx.now) <= LINEUP_WINDOW_MS;
     });
     return next ? defineLineup(next.id) : null;
   },

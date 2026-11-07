@@ -46,6 +46,21 @@ describe('coachRules', () => {
     expect(action).toEqual(jasmine.objectContaining({ kind: 'define-lineup', route: '/selection-roster/m3', requiresConnection: true }));
   });
 
+  it('2/3 · partido en not_started con 0 titulares cargados: definir alineación, no capturar', () => {
+    const action = resolve(coach({ matches: [match('m2', 'not_started', at(1, 14))], nextRoster: { starters: 0 } }));
+    expect(action).toEqual(jasmine.objectContaining({ kind: 'define-lineup', route: '/selection-roster/m2' }));
+  });
+
+  it('2 · con 15 titulares cargados ofrece capturar', () => {
+    const action = resolve(coach({ matches: [match('m2', 'not_started', at(1, 14))], nextRoster: { starters: 15 } }));
+    expect(action?.kind).toBe('capture-live');
+  });
+
+  it('2 · si la nómina no se pudo leer (sin red) se confía en el estado y se ofrece capturar', () => {
+    const action = resolve(coach({ matches: [match('m2', 'not_started', at(1, 14))], nextRoster: null }));
+    expect(action?.kind).toBe('capture-live');
+  });
+
   it('3 · sin nómina a más de 72 h no es primario', () => {
     const action = resolve(coach({ matches: [match('m3', 'empty_roster', at(5, 14))] }));
     expect(action).toBeNull();
@@ -124,6 +139,13 @@ describe('adminRules', () => {
   const division = (id: string, hasCoach = true) => ({ id, hasCoach });
   const admin = (overrides: Partial<AdminRuleContext>): AdminRuleContext => ({ now, divisions: [division('d1')], matches: [], ...overrides });
   const clubMatch = (id: string, divisionId: string, status: RuleMatch['status'], date: string) => ({ ...match(id, status, date), divisionId });
+
+  it('1 · partido en not_started con nómina incompleta a 72 h o menos: definir alineación', () => {
+    const action = resolvePrimaryAction(adminRules, {
+      now, divisions: [{ id: 'd1', hasCoach: true }], matches: [clubMatch('m1', 'd1', 'not_started', at(0, 20))], rosters: { m1: { starters: 0 } }
+    });
+    expect(action).toEqual(jasmine.objectContaining({ kind: 'define-lineup', route: '/selection-roster/m1' }));
+  });
 
   it('1 · gana la división que juega primero sin nómina', () => {
     const action = resolve(admin({
