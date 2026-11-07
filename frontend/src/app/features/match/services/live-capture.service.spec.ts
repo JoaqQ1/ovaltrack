@@ -4,7 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { firstValueFrom } from 'rxjs';
 import { LiveCaptureService } from './live-capture.service';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
-import { buildBackendEventResponse, buildBackendMatch, buildEventType, buildLocalEvent, buildMatch, clearLocalDatabases, nextRequest } from '../../../testing/offline-test-helpers';
+import { buildBackendEventResponse, buildBackendMatch, buildEventType, buildLocalEvent, buildMatch, clearLocalDatabases, nextRequest, settle } from '../../../testing/offline-test-helpers';
 
 describe('LiveCaptureService', () => {
   let service: LiveCaptureService;
@@ -79,6 +79,22 @@ describe('LiveCaptureService', () => {
         .toBe(false);
     });
 
+    it('con el backend lento abre con los datos de Dexie al vencer el plazo', async () => {
+      jasmine.clock().install();
+      const loading = firstValueFrom(service.getLiveCaptureBootstrap({ matchId: 'match-1' }));
+      jasmine.clock().tick(3_000);
+      jasmine.clock().uninstall();
+
+      const bootstrap = await loading;
+      expect(bootstrap.rosterPlayers.map(player => player.id)).toEqual(['p-2', 'p-1']);
+      expect(bootstrap.eventTypes.map(type => type.id)).toEqual(['tackle']);
+
+      // La consulta al backend sigue en vuelo: se cierra para el verify del mock (forkJoin cancela el resto).
+      httpMock.expectOne(req => req.url.endsWith('/matches/match-1/live-bootstrap'))
+        .error(new ProgressEvent('error'), { status: 0 });
+      httpMock.match(() => true);
+    });
+
     it('asigna el jugador por número permanente del plantel y no por índice ni camiseta', async () => {
       const saved = await firstValueFrom(service.saveEvent(buildLocalEvent({
         eventTypeId: 'tackle',
@@ -100,6 +116,26 @@ describe('LiveCaptureService', () => {
 
       expect(saved.playerId).toBeNull();
     });
+  });
+
+  it('sin datos en Dexie sigue esperando al backend lento, sin repetir la consulta', async () => {
+    let resolved = false;
+    jasmine.clock().install();
+    const loading = firstValueFrom(service.getLiveCaptureBootstrap({ matchId: 'match-1' }))
+      .finally(() => { resolved = true; });
+    jasmine.clock().tick(3_000);
+    jasmine.clock().uninstall();
+
+    await settle();
+    expect(resolved).withContext('no se rinde al vencer el plazo si no hay datos locales').toBeFalse();
+
+    httpMock.expectOne(req => req.url.endsWith('/matches/match-1/live-bootstrap'))
+      .flush({ match: buildBackendMatch(), events: [], eventTypes: [] });
+    (await nextRequest(httpMock, req => req.url.endsWith('/matches/match-1'))).flush(buildBackendMatch());
+    (await nextRequest(httpMock, req => req.url.endsWith('/division/division-1/players'))).flush([]);
+    (await nextRequest(httpMock, req => req.url.endsWith('/matches/match-1/roster/players'))).flush([]);
+
+    expect((await loading).match.id).toBe('match-1');
   });
 
   it('actualiza clockUpdatedAt del partido cacheado al guardar el reloj', async () => {
