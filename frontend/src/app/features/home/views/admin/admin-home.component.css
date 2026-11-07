@@ -148,6 +148,10 @@
   color: var(--text-secondary);
 }
 
+.card-figures span {
+  display: block;
+}
+
 .figure {
   margin: 0;
   font-family: var(--font-mono);

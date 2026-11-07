@@ -60,7 +60,11 @@
               </div>
               <div class="card-figures">
                 <div><p class="figure">{{ card.players ?? '–' }}</p><span>jugadores</span></div>
-                <div><p class="figure small">{{ card.nextLabel ?? 'Sin partido' }}</p><span>próximo</span></div>
+                @if (card.nextLabel) {
+                  <div><p class="figure small">{{ card.nextLabel }}</p><span>próximo</span></div>
+                } @else {
+                  <div><p class="figure small">Sin partido programado</p></div>
+                }
               </div>
               @if (card.last.length > 0) {
                 <div class="card-last">
