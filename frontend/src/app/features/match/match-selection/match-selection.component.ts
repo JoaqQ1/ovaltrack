@@ -585,7 +585,8 @@ export class MatchSelectComponent implements OnInit {
         let category = 'WON'; 
         // Prioridad de visualización si hay varios partidos el mismo día
         if (matchesOnDay.some(m => this.getMatchCategory(m) === 'LIVE')) category = 'LIVE';
-        else if (matchesOnDay.some(m => this.getMatchCategory(m) === 'UPCOMING')) category = 'UPCOMING';
+        else if (matchesOnDay.some(m => this.getMatchCategory(m) === 'READY')) category = 'READY';
+        else if (matchesOnDay.some(m => this.getMatchCategory(m) === 'NEW_GAME')) category = 'NEW_GAME';
         else category = this.getMatchCategory(matchesOnDay[0]);
         
         return ['day-with-match', `day-status-${category.toLowerCase()}`];
@@ -652,10 +653,11 @@ export class MatchSelectComponent implements OnInit {
   }
 
   // Determina la categoría del partido
-  getMatchCategory(match: Match): 'LIVE' | 'UPCOMING' | 'WON' | 'LOST' | 'TIED' | 'CANCELLED' {
+  getMatchCategory(match: Match): 'LIVE' | 'READY' | 'NEW_GAME' | 'WON' | 'LOST' | 'TIED' | 'CANCELLED' {
     if (match.status === 'cancelled') return 'CANCELLED';
     if (match.status === 'in_progress' || match.status === 'halftime') return 'LIVE';
-    if (match.status === 'not_started' || match.status === 'empty_roster') return 'UPCOMING';
+    if (match.status === 'not_started') return 'READY';
+    if (match.status === 'empty_roster') return 'NEW_GAME';
     
     const home = match.homeScore || 0;
     const away = match.awayScore || 0;
@@ -668,7 +670,8 @@ export class MatchSelectComponent implements OnInit {
   getMatchColor(match: Match): string {
     switch (this.getMatchCategory(match)) {
       case 'LIVE': return '#ca8a04';     // Ámbar
-      case 'UPCOMING': return '#475569'; // Gris azulado
+      case 'READY': return '#475569'; // Gris azulado
+      case 'NEW_GAME': return 'var(--player)'; // Gris oliva (token del design system)
       case 'WON': return '#1d3b20';      // Verde oscuro
       case 'LOST': return '#b42318';     // Rojo oscuro
       case 'TIED': return '#0369a1';     // Azul oscuro
@@ -687,12 +690,12 @@ export class MatchSelectComponent implements OnInit {
   }
 
   getDetailedStatusLabel(match: Match): string {
-    if (match.status === 'in_progress') return 'En progreso';
-    if (match.status === 'halftime') return 'Entretiempo';
-    if (match.status === 'cancelled') return 'Cancelado';
-    if (match.status === 'not_started' || match.status === 'empty_roster') return 'No iniciado';
-    
-    // Si está finalizado (o cualquier otro estado con score), calculamos el resultado
+    // Los estados sin resultado usan las mismas etiquetas que el filtro y el modal.
+    if (match.status !== 'finished') {
+      return this.statusLabel(match.status);
+    }
+
+    // Finalizado: se muestra el resultado
     const home = match.homeScore || 0;
     const away = match.awayScore || 0;
     if (home > away) return 'Ganado';
