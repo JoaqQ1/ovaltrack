@@ -20,4 +20,6 @@ export abstract class OfflineMatchReader {
   abstract recentEvents(matchId: string, limit: number): Promise<LocalMatchEvent[]>;
   /** Período y reloj guardados; `null` si este dispositivo nunca capturó el partido. */
   abstract captureProgress(matchId: string): Promise<CaptureProgress | null>;
+  /** Nombre de cada tipo de evento por id, para rotular los últimos eventos; vacío si no hay catálogo guardado. */
+  abstract eventTypeNames(): Promise<Record<string, string>>;
 }

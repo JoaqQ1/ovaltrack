@@ -118,12 +118,23 @@ describe('DexieOfflineMatchReader', () => {
     expect(await reader.captureProgress('m1')).toBeNull();
   });
 
+  it('eventTypeNames indexa el nombre de cada tipo por id', async () => {
+    data.eventTypes = [{ id: 't1', name: 'Try' }, { id: 't2', name: 'Tackle' }];
+    expect(await reader.eventTypeNames()).toEqual({ t1: 'Try', t2: 'Tackle' });
+  });
+
+  it('eventTypeNames es vacío si no hay catálogo guardado', async () => {
+    data.eventTypes = [];
+    expect(await reader.eventTypeNames()).toEqual({});
+  });
+
   it('nunca escribe en el almacenamiento', async () => {
     data.events = [{ id: 'a' }];
     data.state = { periodLabel: '1T', gameClock: '10:00' };
     await reader.isReadyOffline(match);
     await reader.recentEvents('m1', 3);
     await reader.captureProgress('m1');
+    await reader.eventTypeNames();
     expect(writes).toEqual([]);
   });
 });

@@ -50,4 +50,13 @@ export class DexieOfflineMatchReader extends OfflineMatchReader {
       return null;
     }
   }
+
+  async eventTypeNames(): Promise<Record<string, string>> {
+    try {
+      const eventTypes = await this.cache.getActiveEventTypes();
+      return Object.fromEntries(eventTypes.map(eventType => [eventType.id, eventType.name]));
+    } catch {
+      return {};
+    }
+  }
 }
