@@ -9,7 +9,8 @@
     right: 0;
     bottom: 0;
     left: 0;
-    z-index: 1030;
+    /* Un punto por debajo del header (1030): la hoja del menú de usuario vive dentro de él y debe quedar por encima. */
+    z-index: 1029;
     padding: 0 12px calc(12px + env(safe-area-inset-bottom));
     pointer-events: none;
   }
