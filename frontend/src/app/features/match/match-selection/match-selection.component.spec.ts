@@ -73,4 +73,56 @@ describe('MatchSelectionComponent', () => {
     expect(availablePlayersRequests).toEqual([]);
     expect(savedRosterRequests).toEqual(['match-1', 'match-2', 'match-3']);
   });
+
+  describe('match without roster (empty_roster)', () => {
+    const sameDay = '2026-10-23T15:00:00';
+    const multiMonthDay = { view: { type: 'multiMonthYear' }, date: new Date(2026, 9, 23) };
+
+    it('should offer a "Sin plantel" filter that lists only the matches without roster', () => {
+      component.matches = [
+        buildMatch({ id: 'new', status: 'empty_roster' }),
+        buildMatch({ id: 'ready', status: 'not_started' }),
+      ];
+
+      component.setFilter('empty_roster');
+
+      expect(component.filters.includes('empty_roster')).toBeTrue();
+      expect(component.statusLabels['empty_roster']).toBe('Sin plantel');
+      expect(component.visibleMatches.map(match => match.id)).toEqual(['new']);
+    });
+
+    it('should label each pending status with the shared status labels', () => {
+      expect(component.getDetailedStatusLabel(buildMatch({ status: 'empty_roster' }))).toBe('Sin plantel');
+      expect(component.getDetailedStatusLabel(buildMatch({ status: 'not_started' }))).toBe('No iniciado');
+      expect(component.getDetailedStatusLabel(buildMatch({ status: 'in_progress' }))).toBe('En progreso');
+      expect(component.getDetailedStatusLabel(buildMatch({ status: 'halftime' }))).toBe('Entretiempo');
+      expect(component.getDetailedStatusLabel(buildMatch({ status: 'cancelled' }))).toBe('Cancelado');
+      expect(component.getDetailedStatusLabel(buildMatch({ status: 'finished', homeScore: 10, awayScore: 3 }))).toBe('Ganado');
+    });
+
+    it('should not share the cancelled color', () => {
+      const newGameColor = component.getMatchColor(buildMatch({ status: 'empty_roster' }));
+
+      expect(newGameColor).toBe('var(--player)');
+      expect(newGameColor).not.toBe(component.getMatchColor(buildMatch({ status: 'cancelled' })));
+    });
+
+    it('should paint a day with a match without roster over a finished one', () => {
+      component.matches = [
+        buildMatch({ id: 'played', date: sameDay, status: 'finished' }),
+        buildMatch({ id: 'new', date: sameDay, status: 'empty_roster' }),
+      ];
+
+      expect(component.getDayClassNames(multiMonthDay)).toEqual(['day-with-match', 'day-status-new_game']);
+    });
+
+    it('should paint a day with a ready match over one without roster', () => {
+      component.matches = [
+        buildMatch({ id: 'new', date: sameDay, status: 'empty_roster' }),
+        buildMatch({ id: 'ready', date: sameDay, status: 'not_started' }),
+      ];
+
+      expect(component.getDayClassNames(multiMonthDay)).toEqual(['day-with-match', 'day-status-ready']);
+    });
+  });
 });
