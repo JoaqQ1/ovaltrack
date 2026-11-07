@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { NEVER, of } from 'rxjs';
 
 import { LiveCaptureService } from '../services/live-capture.service';
 import { MatchService } from '../services/match.service';
@@ -42,6 +43,10 @@ describe('CargaEnVivoComponent', () => {
     await TestBed.configureTestingModule({
       imports: [CargaEnVivoComponent],
       providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap({ matchId: '550e8400-e29b-41d4-a716-446655440002' }) } },
+        },
         {
           provide: LiveCaptureService,
           useValue: {
@@ -109,6 +114,8 @@ describe('CargaEnVivoComponent', () => {
           provide: ToastService,
           useValue: {
             warning: () => undefined,
+            error: () => undefined,
+            clear: () => undefined,
           },
         },
       ],
@@ -178,6 +185,9 @@ describe('CargaEnVivoComponent', () => {
     expect(component.capture).toBe(null);
 
     component.onEventTap(tryEvent);
+    expect(component.capture).toBe(null);
+
+    component.onEventTap(tryEvent);
     expect(component.capture?.event.id).toBe('try');
   });
 
@@ -205,6 +215,45 @@ describe('CargaEnVivoComponent', () => {
     expect(component.capture).toBe(null);
     expect((component as any).events[0].eventTypeId).toBe('event-type-try');
     expect((component as any).events[0].attributes).toBe(null);
+  });
+
+  it('should open the follow-up capture without waiting for the event to reach the server', () => {
+    const liveCaptureService = TestBed.inject(LiveCaptureService);
+    let syncRequests = 0;
+    liveCaptureService.syncPendingEvents = () => {
+      syncRequests += 1;
+      return NEVER;
+    };
+    const conversion = eventType({ id: 'conversion', name: 'Conversión', code: 'CONVERSION', points: 2 });
+    const tryEvent = eventType({ followUpEventTypeId: 'conversion' });
+    component.eventTypes = [tryEvent, conversion];
+    component.isStarted = true;
+    component.currentPossession = 'OWN';
+
+    component.onEventTap(tryEvent);
+    component.pickPlayer(null);
+
+    expect(component.capture?.event.id).toBe('conversion');
+    expect(syncRequests).toBe(1);
+  });
+
+  it('should remove a deleted event without waiting for the deletion to reach the server', () => {
+    const liveCaptureService = TestBed.inject(LiveCaptureService);
+    let syncRequests = 0;
+    liveCaptureService.syncPendingEvents = () => {
+      syncRequests += 1;
+      return NEVER;
+    };
+    component.eventTypes = [eventType({ requiresPlayer: false })];
+    (component as any).events = [storedEvent('event-1', 'event-type-try', 'OWN', 1)];
+    component.isStarted = true;
+    (component as any).rebuildStateFromEvents();
+
+    component.undoLastEvent();
+
+    expect((component as any).events).toEqual([]);
+    expect(component.scoreboard.home).toBe(0);
+    expect(syncRequests).toBe(1);
   });
 
   it('should assign a defensive event to the team without the ball', () => {
@@ -243,6 +292,9 @@ describe('CargaEnVivoComponent', () => {
       templateEventFields: [{
         key: 'kind', label: 'Tipo', type: 'select', phase: 'live', required: true,
         options: [{ value: 'penalty_touch', label: 'Penal a touch' }, { value: 'open_play', label: 'Juego abierto' }],
+      }, {
+        key: 'outcome', label: 'Resultado', type: 'select', phase: 'live', required: true,
+        options: [{ value: 'gained', label: 'Ganada' }, { value: 'lost', label: 'Perdida' }],
       }],
     });
     component.eventTypes = [touch];
@@ -266,6 +318,7 @@ describe('CargaEnVivoComponent', () => {
       storedEvent('event-2', 'event-type-turnover', 'OPPONENT', 2),
     ];
     component.currentPossession = 'OWN';
+    component.isStarted = true;
     (component as any).rebuildStateFromEvents();
 
     component.undoHistoryEvent('event-1');
@@ -311,6 +364,7 @@ describe('CargaEnVivoComponent', () => {
   });
 
   it('should open confirm halftime dialog when period button is clicked in period 1', () => {
+    component.isStarted = true;
     component.period = 1;
     component.isHalftime = false;
     component.showConfirmHalftime = false;

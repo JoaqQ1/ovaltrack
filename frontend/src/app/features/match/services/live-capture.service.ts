@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, defer, firstValueFrom, forkJoin, from, map, switchMap, catchError, of } from 'rxjs';
+import { Observable, TimeoutError, defer, firstValueFrom, forkJoin, from, map, switchMap, catchError, of, shareReplay, timeout } from 'rxjs';
 import {
   LiveCaptureBootstrap,
   LiveCaptureEventType,
@@ -18,6 +18,8 @@ import { LocalDatabaseService } from '../../local-database/services/local-databa
 import { PendingEventSyncService } from '../../../core/synchronization/pending-event-sync.service';
 
 const HOME_TEAM_NAME = 'PMRC';
+
+const BOOTSTRAP_REMOTE_TIMEOUT_MS = 3_000;
 
 @Injectable({
   providedIn: 'root',
@@ -87,10 +89,7 @@ export class LiveCaptureService {
   }
 
   deleteEvent(event: LocalMatchEvent): Observable<void> {
-    return from(this.cache.deleteEvent(event)).pipe(
-      switchMap(() => this.syncPendingEvents(event.matchId)),
-      map(() => undefined),
-    );
+    return defer(() => from(this.cache.deleteEvent(event)));
   }
 
   deleteMatchData(matchId: string): Observable<void> {
@@ -104,12 +103,20 @@ export class LiveCaptureService {
     let players: AvailablePlayer[];
     let rosterPlayers: MatchRosterPlayer[];
 
+    const remote$ = forkJoin({
+      bootstrap: this.matchService.getLiveMatchBootstrap(query.matchId),
+      players: this.rosterService.getAvailablePlayers(query.matchId),
+      rosterPlayers: this.rosterService.getMatchRosterPlayers(query.matchId),
+    }).pipe(shareReplay({ bufferSize: 1, refCount: false }));
+
     try {
-      const remote = await firstValueFrom(forkJoin({
-        bootstrap: this.matchService.getLiveMatchBootstrap(query.matchId),
-        players: this.rosterService.getAvailablePlayers(query.matchId),
-        rosterPlayers: this.rosterService.getMatchRosterPlayers(query.matchId),
-      }));
+      const remote = await firstValueFrom(remote$.pipe(timeout(BOOTSTRAP_REMOTE_TIMEOUT_MS)))
+        .catch(async error => {
+          if (error instanceof TimeoutError && !(await this.cache.getMatch(query.matchId))) {
+            return firstValueFrom(remote$);
+          }
+          throw error;
+        });
       match = remote.bootstrap.match;
       remoteEvents = remote.bootstrap.events;
       players = remote.players;
