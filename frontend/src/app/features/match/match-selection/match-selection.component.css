@@ -1065,8 +1065,11 @@
 .calendar-wrapper ::ng-deep .day-status-live .fc-daygrid-day-frame {
   background-color: #fef08a !important; border-color: #fde047 !important; /* Amarillo */
 }
-.calendar-wrapper ::ng-deep .day-status-upcoming .fc-daygrid-day-frame {
+.calendar-wrapper ::ng-deep .day-status-ready .fc-daygrid-day-frame {
   background-color: #e2e8f0 !important; border-color: #94a3b8 !important; /* Gris oscuro bien visible */
+}
+.calendar-wrapper ::ng-deep .day-status-new_game .fc-daygrid-day-frame {
+  background-color: var(--player-tint) !important; border-color: var(--player) !important; /* Sin plantel */
 }
 
 /* Hover de las tarjetas compactas del nuevo modal */
@@ -1169,7 +1172,13 @@
   border-color: rgba(250, 204, 21, 0.5) !important;
 }
 
-:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .day-status-upcoming .fc-daygrid-day-frame {
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .day-status-ready .fc-daygrid-day-frame {
   background-color: rgba(148, 163, 184, 0.2) !important;
   border-color: rgba(148, 163, 184, 0.5) !important;
+}
+
+/* --player y --player-tint ya cambian en el tema oscuro (styles.css) */
+:host-context([data-theme="dark"]) .calendar-wrapper ::ng-deep .day-status-new_game .fc-daygrid-day-frame {
+  background-color: var(--player-tint) !important;
+  border-color: var(--player) !important;
 }
