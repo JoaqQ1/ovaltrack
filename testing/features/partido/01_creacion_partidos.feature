@@ -7,7 +7,7 @@ Para organizar el calendario deportivo y preparar la posterior captura en vivo
 Esquema del escenario: Creación exitosa de un único partido para una división
 Dado que el coach con email "felipe.conte@test.com" y contraseña "PassSegura123!" ha iniciado sesión
 Cuando programa un partido contra el rival "<nombreRival>" para la fecha "<fechaPartido>" en la división "<nombreDivision>"
-Entonces el sistema responde con 200 y devuelve el partido en estado "NOT_STARTED" contra el rival "<nombreRival>"
+Entonces el sistema responde con 200 y devuelve el partido en estado "EMPTY_ROSTER" contra el rival "<nombreRival>"
 Ejemplos: Creacion de partidos
 | nombreRival         | fechaPartido        | nombreDivision |
 | Trelew Rugby Club   | 2026-10-21T14:00:00 | Primera        |
