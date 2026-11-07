@@ -75,7 +75,7 @@ describe('toWidgetState', () => {
       const { snapshot } = fakeSnapshot({ data: 5, fetchedAt: 10 });
       let requested = false;
       const source = new Subject<number>();
-      const states = collect(source.pipe(map(value => { requested = true; return value; })), { snapshot, offline: true });
+      const states = collect<number>(source.pipe(map(value => { requested = true; return value; })), { snapshot, offline: true });
       expect(states).toEqual([{ status: 'loading' }, { status: 'ready', data: 5, fetchedAt: 10, stale: true }]);
       expect(requested).toBeFalse();
     });
@@ -88,13 +88,13 @@ describe('toWidgetState', () => {
 
     it('un error con snapshot cae a la última vista buena', () => {
       const { snapshot } = fakeSnapshot({ data: 9, fetchedAt: 20 });
-      const states = collect(throwError(() => new Error('500')), { snapshot });
+      const states = collect<number>(throwError(() => new Error('500')), { snapshot });
       expect(states[1]).toEqual({ status: 'ready', data: 9, fetchedAt: 20, stale: true });
     });
 
     it('un error sin snapshot sigue siendo error', () => {
       const { snapshot } = fakeSnapshot(null);
-      const states = collect(throwError(() => new Error('500')), { snapshot });
+      const states = collect<number>(throwError(() => new Error('500')), { snapshot });
       expect(states[1].status).toBe('error');
     });
   });

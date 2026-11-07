@@ -28,3 +28,10 @@ export function minutesWithoutZone(assignments: readonly Pick<ZoneAssignmentResp
   const covered = coverageMinutes([...assignments], 1) + coverageMinutes([...assignments], 2);
   return ZONE_HALF_MINUTES * 2 - covered;
 }
+
+export type AnalysisTone = 'good' | 'warn' | 'bad';
+
+/** Color de la barra y del anillo de análisis: ≥ 90 % bien, ≥ 60 % atención, el resto mal. */
+export function analysisTone(percent: number): AnalysisTone {
+  return percent >= 90 ? 'good' : percent >= 60 ? 'warn' : 'bad';
+}

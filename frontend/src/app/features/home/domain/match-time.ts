@@ -43,6 +43,11 @@ export function relativeMatchLabel(start: Date, now: Date): string {
   return [date, word, hhmm(start)].filter(Boolean).join(' · ');
 }
 
+/** "1 nov": fecha corta de un partido ya jugado. */
+export function shortDateLabel(date: Date): string {
+  return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
+}
+
 /** `clockUpdatedAt`, `startedAt` y `finishedAt` llegan en UTC y se muestran en hora de Argentina. */
 export function formatUtcAsArgentina(iso: string): string | null {
   const instant = new Date(iso);

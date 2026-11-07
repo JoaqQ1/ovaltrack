@@ -17,6 +17,11 @@ export type WidgetState<T> =
   | { status: 'empty' }
   | { status: 'error'; message: string };
 
+/** El dato de un widget listo; `null` en cualquier otro estado. */
+export function dataOf<T>(state: WidgetState<T>): T | null {
+  return state.status === 'ready' ? state.data : null;
+}
+
 export type PrimaryActionKind =
   | 'continue-capture'
   | 'go-halftime'

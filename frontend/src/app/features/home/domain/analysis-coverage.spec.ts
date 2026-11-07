@@ -1,4 +1,4 @@
-import { analysisCoverage, minutesWithoutZone } from './analysis-coverage';
+import { analysisCoverage, analysisTone, minutesWithoutZone } from './analysis-coverage';
 
 describe('analysisCoverage', () => {
   it('sin eventos es 100 %', () => {
@@ -44,5 +44,15 @@ describe('minutesWithoutZone', () => {
       { period: 1, startMinute: 0, endMinute: 40 },
       { period: 2, startMinute: 40, endMinute: 55 }
     ])).toBe(25);
+  });
+});
+
+describe('analysisTone', () => {
+  it('90 o más es bien, 60 o más es atención, menos es mal', () => {
+    expect(analysisTone(100)).toBe('good');
+    expect(analysisTone(90)).toBe('good');
+    expect(analysisTone(89)).toBe('warn');
+    expect(analysisTone(60)).toBe('warn');
+    expect(analysisTone(59)).toBe('bad');
   });
 });
