@@ -18,11 +18,7 @@ export class RosterService {
         if (!match?.divisionId) {
           return throwError(() => new Error(`Partido ${matchId} no encontrado o sin división asignada`));
         }
-        return this.http.get<AvailablePlayer[]>(`${environment.apiUrl}/division/${match.divisionId}/players`).pipe(
-          switchMap(players =>
-            from(this.cache.savePersonsByDivisionId(players.map(p => ({ ...p, divisionId: match.divisionId })))).pipe(map(() => players))
-          )
-        );
+        return this.getDivisionPlayers(match.divisionId);
       }),
       catchError(() => 
         from(this.cache.getMatch(matchId)).pipe(
@@ -32,6 +28,15 @@ export class RosterService {
           })
         )
       ) 
+    );
+  }
+
+  /** Trae los jugadores de la división y los deja en Dexie para el modo offline. */
+  getDivisionPlayers(divisionId: string): Observable<AvailablePlayer[]> {
+    return this.http.get<AvailablePlayer[]>(`${environment.apiUrl}/division/${divisionId}/players`).pipe(
+      switchMap(players =>
+        from(this.cache.savePersonsByDivisionId(players.map(p => ({ ...p, divisionId })))).pipe(map(() => players))
+      )
     );
   }
 
