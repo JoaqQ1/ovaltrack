@@ -357,7 +357,7 @@ Path parameter: `matchId` (`UUID`)
 
 ### `POST /matches`
 
-Creates a match. The service assigns the initial status `NOT_STARTED`.
+Creates a match. The service assigns the initial status `EMPTY_ROSTER` (no roster yet); saving the match roster (`POST /matches/{matchId}/roster`) moves it to `NOT_STARTED`.
 
 Request body: `MatchCreationDTO` (required)
 
@@ -558,7 +558,7 @@ Path parameter: `userId` (`UUID`)
   "date": "2026-09-09T18:30:00",
   "divisionId": "00000000-0000-0000-0000-000000000001",
   "opponent": "Rival Club",
-  "status": "NOT_STARTED"
+  "status": "EMPTY_ROSTER"
 }
 ```
 
