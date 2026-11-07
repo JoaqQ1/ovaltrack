@@ -68,6 +68,8 @@
 - **Target**: Hits the live backend at `http://backend:8080` (or `API_URL`).
 - **Execution**: Run with `./ds test`. It automatically cleans the database with `staging clean.sql` before execution.
 - **Helpers**: Reusable auth and domain helpers in `testing/features/support/` (`auth_helper.js`, `getUserToken`, `getAdminToken`).
+- **Frontend specs (no Karma/Chrome)**: the dev environment has no Chrome and Karma cannot run (`ng test` is unavailable). Only pure specs run, with `./ds test-front [folder-or-file]` (Jasmine in Node; it skips any spec that uses `TestBed` or `HttpTestingController`). Pure logic (utils, rules, calculators) must be covered by specs that run there. Component, service and store specs that need `TestBed` are still written, but are **not executed by the agent**: flag them as "not run" in the report.
+- **Manual verification is done by the user**: UI behavior, responsive layout (390/1024/1440px), light/dark theme, offline (`./ds pwa` + DevTools offline) and anything else that needs a browser. The agent must not claim these were verified; it lists the exact manual steps to follow and what result to expect.
 - **Database Seeding**: SQL scripts in `staging/` (`clean.sql`, `data.sql`, `snapshot.sql`, `event_type.sql`) loaded with `./ds staging <file.sql>`.
 
 ## Development Guidelines (SOLID & Clean Code)
