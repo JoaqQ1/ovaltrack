@@ -19,7 +19,6 @@ import {
 
 // <==================== Helpers ====================>
 
-// Eventos del primer tiempo con los que se deja preparado el partido antes de cerrarlo
 const FIRST_HALF_EVENTS = [
   { tipoEvento: 'Try', teamPossession: 'OWN', matchTime: 300, attributes: { zone: 'left' } },
   { tipoEvento: 'Tackle completado', teamPossession: 'OPPONENT', matchTime: 600 },
@@ -38,17 +37,15 @@ const registerFirstHalfEvents = async (match, token) => {
   }
 };
 
-// Busca un partido contra el rival en alguno de los estados dados o lo crea en NOT_STARTED
 const findOrCreateMatch = async (divisionNombre, rival, statuses, token) => {
   const divisionId = await findDivisionId(divisionNombre, token);
   return await findMatchByStatus(divisionId, rival, statuses, token)
     ?? await createMatchForRival(divisionId, rival, token);
 };
 
-// Lleva el partido hasta el entretiempo: lo inicia (si hace falta), carga eventos y cierra el primer tiempo
 const bringToHalftime = async (match, token) => {
   if (match.status === 'HALFTIME') return match;
-  const started = match.status === 'NOT_STARTED' ? await startMatch(match, token) : match;
+  const started = ['NOT_STARTED', 'EMPTY_ROSTER'].includes(match.status) ? await startMatch(match, token) : match;
   await registerFirstHalfEvents(started, token);
   return changeMatchStatus(started, 'PUT', 'close-first-half', token);
 };
@@ -73,12 +70,12 @@ Given('que se han registrado los siguientes eventos en el primer tiempo:', async
 });
 
 Given('que el partido contra {string} se encuentra en estado de entretiempo', async function (rival) {
-  const match = await findOrCreateMatch('Primera', rival, ['NOT_STARTED', 'IN_PROGRESS', 'HALFTIME'], this.token);
+  const match = await findOrCreateMatch('Primera', rival, ['EMPTY_ROSTER', 'NOT_STARTED', 'IN_PROGRESS', 'HALFTIME'], this.token);
   this.currentMatch = await bringToHalftime(match, this.token);
 });
 
 Given('que el partido contra {string} se encuentra en el segundo tiempo', async function (rival) {
-  const match = await findOrCreateMatch('Primera', rival, ['NOT_STARTED', 'IN_PROGRESS', 'HALFTIME'], this.token);
+  const match = await findOrCreateMatch('Primera', rival, ['EMPTY_ROSTER', 'NOT_STARTED', 'IN_PROGRESS', 'HALFTIME'], this.token);
   if (match.status === 'IN_PROGRESS' && match.currentPeriod === 2) {
     this.currentMatch = match;
     return;

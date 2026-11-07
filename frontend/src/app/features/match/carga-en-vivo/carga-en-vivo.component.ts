@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -24,6 +24,7 @@ import { buildInitialLineup, currentLineup, Lineup } from './lineup';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ToastService } from 'src/app/core/services/toast.service';
+import { SyncStatusSource } from 'src/app/core/navigation/sync-status.source';
 import { readSyncErrorMessage } from 'src/app/core/synchronization/sync-errors';
 
 type CaptureTeam = Team;
@@ -110,6 +111,22 @@ export class CargaEnVivoComponent implements OnInit, OnDestroy {
   private readonly toastService = inject(ToastService);
   private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly router = inject(Router, { optional: true });
+
+  /** Estado real de sincronización (pendientes en Dexie + conexión), el mismo que muestra la barra de navegación. */
+  readonly syncStatus = inject(SyncStatusSource).status;
+  readonly syncLabel = computed(() => {
+    const { state, pendingCount } = this.syncStatus();
+    switch (state) {
+      case 'synced':
+        return 'Sincronizado';
+      case 'offline':
+        return 'Sin conexión, guardando local';
+      case 'syncing':
+        return 'Sincronizando…';
+      case 'pending':
+        return `${pendingCount} sin sincronizar`;
+    }
+  });
   private matchId = '';
 
   /** Estados de posesión, en el orden en que se renderizan en la barra de posesión. */

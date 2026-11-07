@@ -182,7 +182,7 @@ public class MatchService {
         match.setDate(request.date());
         match.setDivision(division);
         match.setOpponent(opponent);
-        match.setStatus(MatchStatus.NOT_STARTED);
+        match.setStatus(MatchStatus.EMPTY_ROSTER);
 
         match = matchRepository.save(match);
         return MatchDTOMapper.toResponseDTO(match);
@@ -249,7 +249,7 @@ public class MatchService {
         }
 
         if (currentStatus == MatchStatus.EMPTY_ROSTER && targetStatus == MatchStatus.FINISHED) {
-            throw new BusinessException("No se puede finalizar un partido que no fue empezado");
+            throw new BusinessException("No se puede finalizar un partido cuyo plantel no fue asignado.");
         }
 
         if (currentStatus == MatchStatus.FINISHED && targetStatus == MatchStatus.CANCELLED) {

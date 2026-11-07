@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { NEVER, of } from 'rxjs';
@@ -8,6 +9,8 @@ import { StatisticCalculationService } from '../statistics/services/statistic-ca
 import { LiveCaptureEventType } from '../types/event-type.types';
 import { CargaEnVivoComponent } from './carga-en-vivo.component';
 import { ToastService } from 'src/app/core/services/toast.service';
+import { SyncStatusSource } from 'src/app/core/navigation/sync-status.source';
+import { SyncStatus } from 'src/app/core/navigation/navigation.types';
 
 declare const describe: (description: string, specDefinitions: () => void) => void;
 declare const beforeEach: (action: () => void | Promise<void>) => void;
@@ -38,8 +41,10 @@ const storedEvent = (id: string, eventTypeId: string, teamPossession: 'OWN' | 'O
 describe('CargaEnVivoComponent', () => {
   let fixture: ComponentFixture<CargaEnVivoComponent>;
   let component: CargaEnVivoComponent;
+  let syncStatus: ReturnType<typeof signal<SyncStatus>>;
 
   beforeEach(async () => {
+    syncStatus = signal<SyncStatus>({ state: 'synced', pendingCount: 0 });
     await TestBed.configureTestingModule({
       imports: [CargaEnVivoComponent],
       providers: [
@@ -109,6 +114,10 @@ describe('CargaEnVivoComponent', () => {
               derived: [],
             }),
           },
+        },
+        {
+          provide: SyncStatusSource,
+          useValue: { status: syncStatus.asReadonly(), retry: () => Promise.resolve('done') },
         },
         {
           provide: ToastService,
@@ -384,5 +393,43 @@ describe('CargaEnVivoComponent', () => {
     expect(component.isHalftime).toBe(true);
     expect(component.periodLabel).toBe('Entretiempo');
     expect(component.clockPaused).toBe(true);
+  });
+
+  describe('sync icon', () => {
+    const syncIcon = (): HTMLElement => fixture.nativeElement.querySelector('.live-capture__sync');
+
+    it('should show the cloud check when every change is synchronized', () => {
+      syncStatus.set({ state: 'synced', pendingCount: 0 });
+      fixture.detectChanges();
+
+      expect(syncIcon().classList.contains('ti-cloud-check')).toBe(true);
+      expect(syncIcon().getAttribute('aria-label')).toBe('Sincronizado');
+    });
+
+    it('should show the pending changes while online', () => {
+      syncStatus.set({ state: 'pending', pendingCount: 2 });
+      fixture.detectChanges();
+
+      expect(syncIcon().classList.contains('ti-cloud-upload')).toBe(true);
+      expect(syncIcon().getAttribute('aria-label')).toBe('2 sin sincronizar');
+    });
+
+    it('should refresh to synchronized once the pending changes are sent', () => {
+      syncStatus.set({ state: 'pending', pendingCount: 1 });
+      fixture.detectChanges();
+      syncStatus.set({ state: 'synced', pendingCount: 0 });
+      fixture.detectChanges();
+
+      expect(syncIcon().classList.contains('ti-cloud-check')).toBe(true);
+      expect(syncIcon().classList.contains('ti-cloud-upload')).toBe(false);
+    });
+
+    it('should show the cloud off without connection', () => {
+      syncStatus.set({ state: 'offline', pendingCount: 3 });
+      fixture.detectChanges();
+
+      expect(syncIcon().classList.contains('ti-cloud-off')).toBe(true);
+      expect(syncIcon().getAttribute('aria-label')).toBe('Sin conexión, guardando local');
+    });
   });
 });

@@ -60,8 +60,9 @@ export async function saveRosterWithDivisionPlayers(match, token) {
   const players = await makeHttpRequest('GET', `players/with-user?divisionId=${match.divisionId}`, null, token);
   assert.equal(players.status, 200, 'No se pudieron obtener los jugadores de la división');
   assert.ok(players.body.length > 0, 'La división no tiene jugadores para armar el plantel');
-  const titularesIds = players.body.slice(0, 15).map((p) => p.personId);
-  const response = await makeHttpRequest('POST', `matches/${match.id}/roster`, { titularesIds, suplentesIds: [] }, token);
+  // Contrato de MatchRosterDTO: cada titular lleva su persona y su número de partido (1 a 15).
+  const titulares = players.body.slice(0, 15).map((p, index) => ({ playerId: p.personId, number: index + 1 }));
+  const response = await makeHttpRequest('POST', `matches/${match.id}/roster`, { titulares, suplentes: [] }, token);
   assert.equal(response.status, 200, `No se pudo guardar el plantel: ${response.body?.message}`);
 }
 

@@ -19,10 +19,10 @@ import {
 Given('que existe un partido en curso para la división {string} contra {string}', async function (divisionNombre, rival) {
   const divisionId = await findDivisionId(divisionNombre, this.token);
   await cancelLiveMatches(divisionId, this.token, rival);
-  let match = await findMatchByStatus(divisionId, rival, ['IN_PROGRESS', 'NOT_STARTED'], this.token)
+  let match = await findMatchByStatus(divisionId, rival, ['IN_PROGRESS', 'NOT_STARTED', 'EMPTY_ROSTER'], this.token)
     ?? await createMatchForRival(divisionId, rival, this.token);
 
-  if (match.status === 'NOT_STARTED') {
+  if (match.status === 'NOT_STARTED' || match.status === 'EMPTY_ROSTER') {
     match = await startMatch(match, this.token);
   }
   this.currentMatch = match;
