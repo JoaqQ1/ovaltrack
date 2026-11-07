@@ -211,6 +211,20 @@
 }
 
 @media (max-width: 700px) {
+  /* Celular: las pestañas ocupan todo el ancho y se reparten; con muchas divisiones scrollean sin achicarse. */
+  .hud-tabs {
+    width: 100%;
+  }
+
+  .hud-tabs .tabs-underline {
+    width: 100%;
+  }
+
+  .hud-tabs .tabs-underline > button {
+    flex: 1 0 auto;
+    text-align: center;
+  }
+
   .grid {
     gap: 14px;
   }
