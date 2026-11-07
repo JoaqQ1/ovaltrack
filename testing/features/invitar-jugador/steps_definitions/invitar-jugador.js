@@ -1,4 +1,4 @@
-import { Given, When, Then } from "@cucumber/cucumber";
+import { Given, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { findClubMember } from "../../support/club_helper.js";
 import { createSentInvitation } from "../../support/db_helper.js";
@@ -49,12 +49,6 @@ When('invita al jugador {string} {string} {string} {string} a crearse una cuenta
     { divisionId: player.divisionId, personId: player.personId },
     this.token,
   );
-});
-
-Then('el sistema responde con {int} y la invitación se envía a {string}', function (statusCode, email) {
-  assert.equal(this.response.status, statusCode, this.response.body?.message);
-  assert.equal(this.response.body?.email, email);
-  assert.ok(this.response.body?.sentAt, `La invitación a ${email} no tiene fecha de envío.`);
 });
 
 // <==================== Invitaciones no permitidas ====================>

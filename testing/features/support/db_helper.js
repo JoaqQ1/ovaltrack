@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from 'node:crypto';
 import pg from 'pg';
 import bcrypt from 'bcryptjs';
 
@@ -39,22 +40,29 @@ export async function personExists(email) {
   return result.rowCount > 0;
 }
 
+const sha256 = (value) => createHash('sha256').update(value).digest('hex');
+
 /**
  * Registra una invitación ya enviada para la persona (por email) en la división, como haría
- * POST /api/invitation/invite tras mandar el correo. El token es de prueba: nadie puede canjearlo.
+ * POST /api/invitation/invite tras mandar el correo, reemplazando la anterior (es única por persona y división).
+ * Con `rawToken` el enlace se puede canjear (el backend guarda su SHA-256); sin él, nadie puede canjearlo.
  */
-export async function createSentInvitation(email, divisionId) {
+export async function createSentInvitation(email, divisionId, { rawToken = randomBytes(32).toString('hex'), expiresInHours = 72 } = {}) {
+  await query(
+    `DELETE FROM invitations WHERE division_id = $2 AND person_id = (SELECT id FROM persons WHERE contact_email = $1)`,
+    [email, divisionId],
+  );
   await query(
     `WITH person AS (
        SELECT id, club_id FROM persons WHERE contact_email = $1
      ), token AS (
        INSERT INTO tokens (id, email, expires_at, hash, used)
-       VALUES (gen_random_uuid(), $1, now() + interval '72 hours', md5(random()::text) || md5(random()::text), false)
+       VALUES (gen_random_uuid(), $1, now() + make_interval(hours => $4::int), $3, false)
        RETURNING id
      )
      INSERT INTO invitations (id, sent_at, club_id, division_id, person_id, token_id)
      SELECT gen_random_uuid(), now(), person.club_id, $2, person.id, token.id
      FROM person, token`,
-    [email, divisionId],
+    [email, divisionId, sha256(rawToken), expiresInHours],
   );
 }

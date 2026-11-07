@@ -3,8 +3,6 @@ import assert from 'node:assert/strict';
 import {getUserToken } from '../../support/auth_helper.js';
 import { makeHttpRequest } from '../../support/httpRequest.js';
 
-//Given ('que el administrador del club con email {string} y contraseña {string} ha iniciado sesión') en common_steps.js
-
 When('intenta crear la division con nombre {string}, categoria {string} y genero {string}', async function (nombreDivision, categoriaDivision, generoDivision) {
   const division = {
     name: nombreDivision || null,
@@ -40,6 +38,3 @@ When('intenta crear la division con nombre {string}, categoria {string} y genero
   this.response = await makeHttpRequest('POST', `division`, division, this.token);
 
 });
-
-//Then (el sistema responde con <estadoCodigo>) en common_steps.js 
-//Then (el sistema responde con <estadoCodigo> y "<estadoTexto>") en common_steps.js

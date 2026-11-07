@@ -49,13 +49,14 @@ Given('que existe un partido finalizado para la división {string} contra {strin
 
 Given('que se han registrado los siguientes eventos en el partido:', async function (dataTable) {
   for (const row of dataTable.hashes()) {
-    await registerPostMatchEvent(this.currentMatch, this.token, {
+    const event = await registerPostMatchEvent(this.currentMatch, this.token, {
       tipoEvento: row.tipo_evento,
       teamPossession: row.posesion,
       matchTime: parseInt(row.tiempo_segundos, 10),
       period: parseInt(row.periodo, 10),
       attributes: parseAttributes(row.atributos),
     });
+    this.createdEventId = event.id;
   }
 });
 
