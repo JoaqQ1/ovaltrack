@@ -431,7 +431,7 @@ export class MatchSelectComponent implements OnInit {
     this.matchService.getAllMatchesByDivisionId(divisionId).subscribe({
       next: (matches) => {
         this.matches = matches;
-        this.cacheMatchData(matches);
+        this.cacheMatchData(divisionId, matches);
         this.actualizarEventosCalendario(this.visibleMatches);
       },
       error: () => {
@@ -462,7 +462,7 @@ export class MatchSelectComponent implements OnInit {
   }
 
   //ta raro esto, no me gusta del todo usar el mismo filtro de partidos tanto en LiveCaptureCacheService como aca
-  private cacheMatchData(matches: Match[]): void {
+  private cacheMatchData(divisionId: string, matches: Match[]): void {
     if (matches.length === 0) {
       return;
     }
@@ -471,14 +471,11 @@ export class MatchSelectComponent implements OnInit {
       m => m.status === 'not_started' || m.status === 'in_progress' || m.status === 'halftime'
     );
 
-    forkJoin(
-      matches.map(match => 
-        forkJoin([
-          this.rosterService.getSavedRoster(match.id).pipe(catchError(() => of(null))),
-          this.rosterService.getAvailablePlayers(match.id).pipe(catchError(() => of([])))
-        ])
-      )
-    ).subscribe();
+    // Los jugadores son de la división, no de cada partido: se piden (y guardan en Dexie) una sola vez.
+    forkJoin([
+      this.rosterService.getDivisionPlayers(divisionId).pipe(catchError(() => of([]))),
+      ...matches.map(match => this.rosterService.getSavedRoster(match.id).pipe(catchError(() => of(null)))),
+    ]).subscribe();
 
     if (offlineMatches.length > 0) {
       forkJoin(
