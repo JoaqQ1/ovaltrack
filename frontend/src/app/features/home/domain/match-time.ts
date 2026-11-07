@@ -39,8 +39,12 @@ export function formatLocalClock(epochMs: number): string {
 export function relativeMatchLabel(start: Date, now: Date): string {
   const days = calendarDaysBetween(now, start);
   const word = days === 0 ? 'hoy' : days === 1 ? 'mañana' : days === -1 ? 'ayer' : null;
-  const date = `${WEEKDAYS[start.getDay()]} ${start.getDate()} ${MONTHS[start.getMonth()]}`;
-  return [date, word, hhmm(start)].filter(Boolean).join(' · ');
+  return [dayLabel(start), word, hhmm(start)].filter(Boolean).join(' · ');
+}
+
+/** "Sáb 7 nov". */
+export function dayLabel(date: Date): string {
+  return `${WEEKDAYS[date.getDay()]} ${date.getDate()} ${MONTHS[date.getMonth()]}`;
 }
 
 /** "1 nov": fecha corta de un partido ya jugado. */

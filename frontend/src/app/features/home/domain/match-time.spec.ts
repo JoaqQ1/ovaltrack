@@ -1,4 +1,4 @@
-import { shortDateLabel, formatLocalClock, formatUtcAsArgentina, msUntil, parseWallClock, relativeMatchLabel, seasonRange } from './match-time';
+import { dayLabel, shortDateLabel, formatLocalClock, formatUtcAsArgentina, msUntil, parseWallClock, relativeMatchLabel, seasonRange } from './match-time';
 
 describe('match-time', () => {
   const now = new Date(2026, 10, 6, 18, 0, 0); // vie 6 nov 2026, 18:00
@@ -62,5 +62,9 @@ describe('match-time', () => {
 
   it('shortDateLabel da día y mes', () => {
     expect(shortDateLabel(new Date(2026, 10, 1))).toBe('1 nov');
+  });
+
+  it('dayLabel da día de la semana, número y mes', () => {
+    expect(dayLabel(new Date(2026, 10, 7))).toBe('Sáb 7 nov');
   });
 });
