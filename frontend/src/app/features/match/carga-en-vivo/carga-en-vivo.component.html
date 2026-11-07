@@ -90,11 +90,12 @@
             </button>
             <i
                 class="ti live-capture__sync"
-                [class.ti-cloud-check]="synchronized"
-                [class.ti-cloud-off]="!synchronized"
-                [class.live-capture__sync--ok]="synchronized"
-                [class.live-capture__sync--off]="!synchronized"
-                [attr.aria-label]="synchronized ? 'Sincronizado' : 'Sin conexión, guardando local'"
+                [class.ti-cloud-check]="syncStatus().state === 'synced'"
+                [class.ti-cloud-off]="syncStatus().state === 'offline'"
+                [class.ti-cloud-upload]="syncStatus().state === 'pending' || syncStatus().state === 'syncing'"
+                [class.live-capture__sync--ok]="syncStatus().state === 'synced'"
+                [class.live-capture__sync--off]="syncStatus().state !== 'synced'"
+                [attr.aria-label]="syncLabel()"
                 aria-live="polite"
                 role="img"></i>
         </div>
