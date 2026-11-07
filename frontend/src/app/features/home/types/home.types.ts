@@ -40,12 +40,39 @@ export interface PrimaryAction {
   requiresConnection: boolean;
 }
 
+/** Un partido del día del club en el timeline del administrador. */
+export type ClubDayItemStatus = 'alert' | 'ok' | 'live' | 'final';
+
+export interface ClubDayTimelineItem {
+  id: string;
+  /** Minutos desde la medianoche. */
+  startMinute: number;
+  endMinute: number;
+  /** "10:00". */
+  timeLabel: string;
+  /** División a la que pertenece. */
+  title: string;
+  /** "Sin nómina", "Suplentes 7/8", "Nómina lista"... */
+  detail: string;
+  status: ClubDayItemStatus;
+}
+
+export interface LiveEventLine {
+  label: string;
+  /** Minuto de juego, "38'". */
+  minute: string;
+}
+
 /** Contenido del tablero verde; `kind` decide la variante que dibuja `home-board`. */
 export type BoardModel =
-  | { kind: 'next'; matchId: string; divisionName: string; opponent: string; city: string | null; when: string; starters: number; substitutes: number; readyOffline: boolean }
-  | { kind: 'match-day'; matchId: string; opponent: string; startsAt: Date }
-  | { kind: 'live-here'; matchId: string; opponent: string; periodLabel: string; ownScore: number; opponentScore: number; halftime: boolean }
+  | { kind: 'next'; matchId: string; divisionName: string; opponent: string; city: string | null; dateLabel: string; time: string; starters: number; substitutes: number; readyOffline: boolean }
+  | { kind: 'match-day'; matchId: string; divisionName: string; opponent: string; startsAt: Date; starters: number; substitutes: number }
+  | { kind: 'live-here'; matchId: string; opponent: string; periodLabel: string; ownScore: number; opponentScore: number; halftime: boolean; recent: LiveEventLine[] }
   | { kind: 'live-elsewhere'; matchId: string; opponent: string; ownScore: number; opponentScore: number; lastDataAt: string | null }
-  | { kind: 'onboarding'; step: 'create-division' | 'schedule-match' | 'await-division' }
-  | { kind: 'club-day'; day: 'today' | 'tomorrow' }
-  | { kind: 'player-last'; matchId: string; opponent: string; ownScore: number; opponentScore: number };
+  | { kind: 'onboarding'; step: 'create-division' | 'schedule-match' | 'await-division' | 'no-matches-player' }
+  | { kind: 'club-day'; title: string; label: string; items: ClubDayTimelineItem[]; nowMinute: number | null }
+  | { kind: 'club-idle'; nextLabel: string | null }
+  | { kind: 'player-last'; matchId: string; dateLabel: string; opponent: string; ownScore: number; opponentScore: number; result: 'win' | 'loss' | 'draw'; role: 'TITULAR' | 'SUPLENTE'; tries: number; tackles: number; analysisPercent: number; slotNumber: number | null };
+
+export const STARTERS_TARGET = 15;
+export const SUBSTITUTES_TARGET = 8;
