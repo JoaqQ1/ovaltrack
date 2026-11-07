@@ -1,15 +1,3 @@
-import { UserRole } from "../../auth/types/auth.types";
-
-/** Tarjeta del Inicio viejo; se elimina junto con la grilla "Ingresar al módulo" (Fase 2). */
-export interface NavigationCard {
-  title: string;
-  description: string;
-  route: string;
-  badge: string;
-  allowedRoles: UserRole[];
-  icon: 'division' | 'live' | 'club' | 'player' | 'members';
-}
-
 /** Estado de un widget: cada tarjeta carga, falla y se reintenta sin afectar a las demás. */
 export type WidgetState<T> =
   | { status: 'loading' }
