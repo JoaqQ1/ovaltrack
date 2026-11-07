@@ -1,4 +1,4 @@
-import { AdminRuleContext, CoachRuleContext, RuleMatch, adminRules, coachRules, isActionEnabled, resolvePrimaryAction, upcomingMatches } from './primary-action';
+import { AdminRuleContext, CoachRuleContext, RuleMatch, adminRules, coachRules, isActionEnabled, playerRules, resolvePrimaryAction, upcomingMatches } from './primary-action';
 
 const now = new Date(2026, 10, 6, 18, 0); // vie 6 nov, 18:00
 
@@ -151,5 +151,17 @@ describe('adminRules', () => {
 
   it('con todo en orden no hay primario', () => {
     expect(resolve(admin({ matches: [clubMatch('m', 'd1', 'not_started', at(5, 10))] }))).toBeNull();
+  });
+});
+
+describe('playerRules', () => {
+  it('con un partido jugado ofrece ver ese partido', () => {
+    expect(resolvePrimaryAction(playerRules, { lastMatchId: 'm9' })).toEqual(jasmine.objectContaining({
+      kind: 'view-my-match', route: '/player-statistics/m9', target: 'board', requiresConnection: true
+    }));
+  });
+
+  it('sin partidos no hay primario', () => {
+    expect(resolvePrimaryAction(playerRules, { lastMatchId: null })).toBeNull();
   });
 });

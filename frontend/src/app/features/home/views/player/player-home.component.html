@@ -1,0 +1,41 @@
+<main class="layout-container page">
+  <app-home-hud [label]="store.hudLabel()" [title]="store.hudTitle()" [subtitle]="store.hudSubtitle()" />
+
+  @switch (boardStatus()) {
+    @case ('loading') {
+      <div class="board-skeleton sk" aria-hidden="true"></div>
+    }
+    @case ('error') {
+      <section class="tile board-error" role="alert">
+        <p>No pudimos cargar tu último partido.</p>
+        <button type="button" class="btn btn-outline" (click)="store.reload()">Reintentar</button>
+      </section>
+    }
+    @default {
+      <app-home-board [model]="store.board()" [primary]="store.primary()" [online]="store.online()" [now]="store.now()" />
+    }
+  }
+
+  <div class="grid">
+    <app-home-tile class="s12" [label]="'Mi temporada ' + store.now().getFullYear()" title="Tus números" [state]="seasonState()" (retry)="store.reload()">
+      @if (season(); as s) {
+        <div class="kpis">
+          <div class="kpi highlight"><p class="kpi-value">{{ s.points }}</p><span>Puntos</span></div>
+          <div class="kpi"><p class="kpi-value">{{ s.tries }}</p><span>Tries</span></div>
+          <div class="kpi"><p class="kpi-value">{{ s.matches }}</p><span>Partidos</span></div>
+          <div class="kpi"><p class="kpi-value">{{ s.starts }}</p><span>Titular</span></div>
+          <div class="kpi"><p class="kpi-value">{{ s.tacklePercent === null ? '–' : s.tacklePercent + '%' }}</p><span>Tackle</span></div>
+        </div>
+        @if (s.last.length > 0) {
+          <div class="last">
+            <span class="label-mono">Últimos {{ s.last.length }}</span>
+            @for (entry of s.last; track entry.matchId) {
+              <app-result-pill [result]="entry.result" [score]="entry.score" [opponent]="entry.opponent" />
+            }
+          </div>
+        }
+      }
+      <p tileEmpty>Todavía no jugaste partidos en {{ store.now().getFullYear() }}.</p>
+    </app-home-tile>
+  </div>
+</main>

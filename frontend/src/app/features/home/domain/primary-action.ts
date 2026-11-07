@@ -133,3 +133,15 @@ export const adminRules: readonly PrimaryRule<AdminRuleContext>[] = [
       : null;
   }
 ];
+
+export interface PlayerRuleContext {
+  /** Último partido jugado por el usuario; `null` si todavía no jugó ninguno. */
+  lastMatchId: string | null;
+}
+
+/** Reglas del jugador: lo único que ofrece el Inicio es ver su último partido. */
+export const playerRules: readonly PrimaryRule<PlayerRuleContext>[] = [
+  ctx => ctx.lastMatchId
+    ? { kind: 'view-my-match', label: 'Ver mi partido', route: `/player-statistics/${ctx.lastMatchId}`, target: 'board', requiresConnection: true }
+    : null
+];
