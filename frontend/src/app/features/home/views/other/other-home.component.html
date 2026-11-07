@@ -1,0 +1,22 @@
+<main class="layout-container page">
+  <app-home-hud [label]="label()" [title]="title()"
+                [subtitle]="isPlatformAdmin() ? 'Administración de OvalTrack' : ''" />
+
+  @if (isPlatformAdmin()) {
+    <section class="tile">
+      <p class="label-mono">Plataforma</p>
+      <h2 class="tile-title">Solicitudes y cuentas</h2>
+      <p class="tile-copy">Revisá las solicitudes de acceso y consultá las cuentas activas de la plataforma.</p>
+      <a class="btn btn-invite tile-btn" routerLink="/admin/ovaltrack">Ir a la administración</a>
+    </section>
+  } @else {
+    <section class="tile pending" role="status">
+      <span class="pending-icon" aria-hidden="true"><i class="bi bi-hourglass-split"></i></span>
+      <h2 class="tile-title">Cuenta pendiente de asignación</h2>
+      <p class="tile-copy">
+        Tu usuario está registrado, pero un administrador del club aún debe asignarte un rol deportivo
+        o de gestión para habilitar las secciones.
+      </p>
+    </section>
+  }
+</main>

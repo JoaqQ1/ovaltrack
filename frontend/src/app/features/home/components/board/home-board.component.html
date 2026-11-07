@@ -1,0 +1,215 @@
+<section class="board" aria-label="Tablero">
+  <svg class="board-pitch" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true">
+    <line x1="60" y1="0" x2="60" y2="200" />
+    <line x1="150" y1="0" x2="150" y2="200" />
+    <line x1="300" y1="0" x2="300" y2="200" class="dashed" />
+    <line x1="450" y1="0" x2="450" y2="200" />
+    <line x1="540" y1="0" x2="540" y2="200" />
+  </svg>
+
+  @if (model(); as m) {
+    <div class="board-body">
+      @if (m.kind === 'next') {
+        <div class="board-main">
+          <p class="label-mono on-board">Próximo partido · {{ m.divisionName }}</p>
+          <h2 class="board-title"><span class="board-vs">vs</span> {{ m.opponent }}</h2>
+          @if (m.city) {
+            <p class="board-meta"><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ m.city }}</p>
+          }
+          <ul class="chips">
+            <li class="chip-board" [class.warn]="m.starters < startersTarget" [class.ok]="m.starters >= startersTarget">
+              <i class="bi" [class.bi-exclamation-triangle]="m.starters < startersTarget" [class.bi-check2]="m.starters >= startersTarget" aria-hidden="true"></i>
+              Titulares {{ m.starters }}/{{ startersTarget }}
+            </li>
+            <li class="chip-board" [class.warn]="m.substitutes < substitutesTarget" [class.ok]="m.substitutes >= substitutesTarget">
+              <i class="bi" [class.bi-exclamation-triangle]="m.substitutes < substitutesTarget" [class.bi-check2]="m.substitutes >= substitutesTarget" aria-hidden="true"></i>
+              Suplentes {{ m.substitutes }}/{{ substitutesTarget }}
+            </li>
+            @if (m.readyOffline) {
+              <li class="chip-board ok"><i class="bi bi-wifi-off" aria-hidden="true"></i> Sin señal: listo</li>
+            }
+          </ul>
+        </div>
+        <div class="board-side">
+          <p class="label-mono on-board">{{ m.dateLabel }}</p>
+          <p class="board-time">{{ m.time }}</p>
+          <ng-container *ngTemplateOutlet="actions" />
+          <a class="btn btn-on-board-outline board-btn" [routerLink]="['/selection-roster', m.matchId]">Ver alineación</a>
+        </div>
+      }
+
+      @if (m.kind === 'match-day') {
+        <div class="board-main">
+          <p class="label-mono on-board">Hoy · {{ m.divisionName }}</p>
+          <h2 class="board-title"><span class="board-vs">vs</span> {{ m.opponent }}</h2>
+          <ul class="chips">
+            <li class="chip-board" [class.warn]="m.starters < startersTarget" [class.ok]="m.starters >= startersTarget">
+              Titulares {{ m.starters }}/{{ startersTarget }}
+            </li>
+            <li class="chip-board" [class.warn]="m.substitutes < substitutesTarget" [class.ok]="m.substitutes >= substitutesTarget">
+              Suplentes {{ m.substitutes }}/{{ substitutesTarget }}
+            </li>
+          </ul>
+        </div>
+        <div class="board-side">
+          <p class="label-mono on-board">Empieza en</p>
+          <div class="countdown" role="timer" aria-live="off">
+            @for (part of countdownParts(); track $index) {
+              <span class="digit">{{ part }}</span>
+            }
+          </div>
+          <ng-container *ngTemplateOutlet="actions" />
+        </div>
+      }
+
+      @if (m.kind === 'live-here') {
+        <div class="board-main">
+          <p class="label-mono on-board"><span class="pulse" aria-hidden="true"></span> En curso · {{ m.periodLabel }}</p>
+          <p class="score" [attr.aria-label]="'Marcador ' + m.ownScore + ' a ' + m.opponentScore">
+            <span>{{ m.ownScore }}</span><span class="score-sep" aria-hidden="true">·</span><span>{{ m.opponentScore }}</span>
+          </p>
+          <p class="board-meta">vs {{ m.opponent }}</p>
+          @if (m.recent.length > 0) {
+            <ul class="ticker" aria-label="Últimos eventos">
+              @for (line of m.recent; track $index) {
+                <li><span class="ticker-minute">{{ line.minute }}</span> {{ line.label }}</li>
+              }
+            </ul>
+          }
+        </div>
+        <div class="board-side">
+          <ng-container *ngTemplateOutlet="actions" />
+        </div>
+      }
+
+      @if (m.kind === 'live-elsewhere') {
+        <div class="board-main">
+          <p class="label-mono on-board">En curso · otro dispositivo</p>
+          <p class="score dim">
+            <span>{{ m.ownScore }}</span><span class="score-sep" aria-hidden="true">·</span><span>{{ m.opponentScore }}</span>
+          </p>
+          <p class="board-meta">vs {{ m.opponent }}</p>
+          <p class="board-note">
+            <i class="bi bi-broadcast" aria-hidden="true"></i>
+            Capturando en otro dispositivo@if (m.lastDataAt) { · último dato {{ m.lastDataAt }} }.
+            Desde acá no se puede capturar para no duplicar eventos.
+          </p>
+        </div>
+      }
+
+      @if (m.kind === 'onboarding') {
+        <div class="board-main">
+          @switch (m.step) {
+            @case ('await-division') {
+              <p class="label-mono on-board">Todavía sin división</p>
+              <h2 class="board-title">Casi listo</h2>
+              <p class="board-note">Pedile al administrador del club que te asigne una división.</p>
+            }
+            @case ('no-matches-player') {
+              <p class="label-mono on-board">Tu temporada</p>
+              <h2 class="board-title">Todavía no jugaste</h2>
+              <p class="board-note">Cuando juegues un partido con nómina, vas a ver acá tu resumen.</p>
+            }
+            @default {
+              <p class="label-mono on-board">Primeros pasos</p>
+              <h2 class="board-title">Arrancá la temporada</h2>
+              <ol class="steps">
+                @for (step of onboardingSteps; track step; let i = $index) {
+                  <li class="step" [class.current]="i + 1 === onboardingStep()" [class.done]="i + 1 < onboardingStep()">
+                    <span class="step-dot" aria-hidden="true">{{ i + 1 }}</span>{{ step }}
+                  </li>
+                }
+              </ol>
+            }
+          }
+        </div>
+        <div class="board-side">
+          <ng-container *ngTemplateOutlet="actions" />
+        </div>
+      }
+
+      @if (m.kind === 'club-day') {
+        <div class="board-wide">
+          <p class="label-mono on-board">{{ m.label }}</p>
+          <div class="board-row">
+            <h2 class="board-title">{{ m.title }}</h2>
+            <ng-container *ngTemplateOutlet="actions" />
+          </div>
+          <app-club-day-timeline [items]="m.items" [nowMinute]="m.nowMinute" />
+        </div>
+      }
+
+      @if (m.kind === 'club-idle') {
+        <div class="board-main">
+          <p class="label-mono on-board">Club</p>
+          <h2 class="board-title">Sin partidos hoy ni mañana</h2>
+          @if (m.nextLabel) {
+            <p class="board-meta"><i class="bi bi-calendar-event" aria-hidden="true"></i> Próxima fecha: {{ m.nextLabel }}</p>
+          }
+        </div>
+        <div class="board-side">
+          <ng-container *ngTemplateOutlet="actions" />
+        </div>
+      }
+
+      @if (m.kind === 'team-idle') {
+        <div class="board-main">
+          <p class="label-mono on-board">Plantel {{ m.divisionName }}</p>
+          <h2 class="board-title">Sin partido programado</h2>
+          <p class="board-meta">
+            <i class="bi bi-clock-history" aria-hidden="true"></i>
+            Último: {{ m.last.ownScore }}-{{ m.last.opponentScore }} vs {{ m.last.opponent }} · {{ m.last.dateLabel }}
+          </p>
+          <ul class="chips">
+            <li class="chip-board" [class.ok]="m.last.result === 'win'">
+              {{ m.last.result === 'win' ? 'Ganado' : m.last.result === 'loss' ? 'Perdido' : 'Empatado' }}
+            </li>
+          </ul>
+        </div>
+        <div class="board-side">
+          <ng-container *ngTemplateOutlet="actions" />
+        </div>
+      }
+
+      @if (m.kind === 'player-last') {
+        <div class="board-main">
+          <p class="label-mono on-board">Tu último partido · {{ m.dateLabel }}</p>
+          <p class="score" [attr.aria-label]="'Marcador ' + m.ownScore + ' a ' + m.opponentScore">
+            <span>{{ m.ownScore }}</span><span class="score-sep" aria-hidden="true">·</span><span>{{ m.opponentScore }}</span>
+          </p>
+          <p class="board-meta">vs {{ m.opponent }}</p>
+          <ul class="chips">
+            <li class="chip-board" [class.ok]="m.result === 'win'">
+              {{ m.result === 'win' ? 'Ganado' : m.result === 'loss' ? 'Perdido' : 'Empatado' }}
+            </li>
+            <li class="chip-board">{{ m.role === 'TITULAR' ? 'Titular' : 'Suplente' }}</li>
+            <li class="chip-board">{{ m.tries }} {{ m.tries === 1 ? 'try' : 'tries' }} · {{ m.tackles }} tackles</li>
+            @if (m.analysisPercent < 100) {
+              <li class="chip-board warn has-tip" tabindex="0" aria-describedby="provisional-tip">
+                <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Estadísticas provisorias
+                <span class="chip-tip" id="provisional-tip" role="tooltip">El entrenador todavía está terminando de cargar los datos de este partido. Tus números pueden cambiar.</span>
+              </li>
+            }
+          </ul>
+        </div>
+        <div class="board-side">
+          @if (m.slotNumber !== null) {
+            <p class="jersey" aria-hidden="true">{{ m.slotNumber }}</p>
+          }
+          <ng-container *ngTemplateOutlet="actions" />
+        </div>
+      }
+    </div>
+  }
+
+  <ng-template #actions>
+    @if (boardAction(); as action) {
+      @if (actionEnabled()) {
+        <a class="btn btn-on-board board-btn" [routerLink]="action.route">{{ action.label }}</a>
+      } @else {
+        <button type="button" class="btn btn-on-board board-btn" disabled>{{ action.label }}</button>
+        <p class="board-offline">Requiere conexión</p>
+      }
+    }
+  </ng-template>
+</section>

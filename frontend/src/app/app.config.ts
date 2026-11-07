@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, ApplicationConfig, provideZoneChangeDetection, isDevMode } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, inject, provideZoneChangeDetection, isDevMode } from '@angular/core';
 import { provideRouter, withPreloading } from '@angular/router';
 import { routes } from './app.routes';
 import { SelectivePreloadingStrategy } from './core/routing/selective-preloading.strategy';
@@ -8,6 +8,8 @@ import { jwtInterceptor } from './core/interceptor/jwt.interceptor';
 import { initializeLocalDatabases } from './features/local-database/local-databases';
 import { DexieLiveMatchSource, LiveMatchSource } from './core/navigation/live-match.source';
 import { LocalSyncStatusSource, SyncStatusSource } from './core/navigation/sync-status.source';
+import { SESSION_CLEANUP } from './core/session/session-cleanup';
+import { DashboardSnapshotCache } from './features/home/data/dashboard-snapshot.cache';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,6 +26,15 @@ export const appConfig: ApplicationConfig = {
     },
     provideHttpClient(withInterceptors([jwtInterceptor])),
     { provide: LiveMatchSource, useClass: DexieLiveMatchSource },
-    { provide: SyncStatusSource, useClass: LocalSyncStatusSource }
+    { provide: SyncStatusSource, useClass: LocalSyncStatusSource },
+    // En la raíz porque el Inicio es lazy: al cerrar sesión o ante un 401 se borran los snapshots de todos los usuarios.
+    {
+      provide: SESSION_CLEANUP,
+      multi: true,
+      useFactory: () => {
+        const snapshots = inject(DashboardSnapshotCache);
+        return () => snapshots.clearAll();
+      }
+    }
   ]
 };

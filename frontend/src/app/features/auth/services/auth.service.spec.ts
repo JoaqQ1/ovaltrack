@@ -10,6 +10,7 @@ import { UserContextService } from '../../../core/services/user-context.service'
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 import { TokenPayload, UserRole } from '../types/auth.types';
 import { AuthService } from './auth.service';
+import { SESSION_CLEANUP } from '../../../core/session/session-cleanup';
 
 describe('AuthService.effectiveRole', () => {
   const contextRole = signal<UserRole | null>(null);
@@ -48,5 +49,27 @@ describe('AuthService.effectiveRole', () => {
     payload = { sub: 'ana@club.org', userId: 'u-1', role: 'PLAYER', exp: 0, iat: 0 };
     contextRole.set('COACH_ANALYST');
     expect(effectiveRole()).toBe('COACH_ANALYST');
+  });
+});
+
+describe('AuthService.logout', () => {
+  it('ejecuta todas las limpiezas de sesión registradas', () => {
+    const cleanups = [jasmine.createSpy('a'), jasmine.createSpy('b')];
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: TokenService, useValue: { isAuthenticated: () => false, getPayload: () => null, removeToken: () => undefined } },
+        { provide: UserContextService, useValue: { currentRole: signal(null), loadUserContext: () => of(null), clear: () => undefined } },
+        { provide: LocalDatabaseService, useValue: { clearCachedDataOnLogout: () => Promise.resolve(0) } },
+        { provide: ToastService, useValue: {} },
+        ...cleanups.map(cleanup => ({ provide: SESSION_CLEANUP, useValue: cleanup, multi: true })),
+      ],
+    });
+
+    TestBed.inject(AuthService).logout();
+
+    cleanups.forEach(cleanup => expect(cleanup).toHaveBeenCalledTimes(1));
   });
 });

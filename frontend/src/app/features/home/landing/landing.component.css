@@ -1,0 +1,168 @@
+:host {
+  display: flow-root;
+  min-height: calc(100vh - 64px);
+  background-color: transparent;
+  background-image: none;
+  color: #e2e8f0;
+  transition: color 0.2s ease;
+}
+
+/* Badges e indicadores */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #a3e635;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #a3e635;
+}
+
+.badge-tech {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+
+/* Tarjetas de módulo */
+.card-dark {
+  background-color: #131c2e;
+  border: 1px solid #1f2e47;
+  border-radius: 20px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.card-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  background-color: #162238;
+  border: 1px solid #2a3c5a;
+  border-radius: 12px;
+  color: #60a5fa;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+/* Landing Modo Oscuro */
+.landing-title {
+  color: #ffffff;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-weight: 800;
+}
+
+.text-accent-highlight {
+  color: #a3e635;
+}
+
+.landing-subtitle {
+  color: #94a3b8;
+  font-size: 1.15rem;
+}
+
+/* Acciones del inicio: "Crear cuenta" es la única acción primaria; en celular van apiladas a todo el ancho */
+.landing-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.card-feature {
+  background-color: #131c2e;
+  border: 1px solid #1f2e47;
+  border-radius: 20px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-title {
+  color: #ffffff;
+  font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
+  font-weight: 800;
+}
+
+.feature-desc {
+  color: #94a3b8;
+}
+
+.landing-footer {
+  color: #64748b;
+  border-top: 1px solid #1f2e47;
+}
+
+/* ==========================================================================
+   Modo Claro Calibrado (Fondo Agrizado/Salvia + Tarjetas Punto Medio)
+   ========================================================================== */
+:host-context([data-theme="light"]),
+:host-context(.light-theme) {
+  /* Hereda el fondo global deportivo unificado en styles.css */
+  background-color: transparent;
+  background-image: none;
+  color: #1b2116;
+}
+
+:host-context([data-theme="light"]) .badge-tech,
+:host-context(.light-theme) .badge-tech {
+  background-color: #d6eac0;
+  color: #244c09;
+  border-color: rgba(65, 120, 20, 0.35);
+}
+
+/* Tarjetas Verdes: Degrade diagonal (arriba izq a abajo der) 135deg y bordes redondeados */
+:host-context([data-theme="light"]) .card-dark,
+:host-context(.light-theme) .card-dark {
+  background: linear-gradient(135deg, #daf2c0 0%, #bde68a 100%);
+  border-color: rgba(70, 130, 25, 0.28);
+  box-shadow: 0 4px 16px rgba(35, 75, 20, 0.08);
+}
+
+/* Ícono en verde bosque rugby */
+:host-context([data-theme="light"]) .card-icon-wrapper,
+:host-context(.light-theme) .card-icon-wrapper {
+  background-color: #244d18;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+/* Landing Page Modo Claro */
+:host-context([data-theme="light"]) .landing-title,
+:host-context(.light-theme) .landing-title {
+  color: #111d0e;
+}
+
+:host-context([data-theme="light"]) .text-accent-highlight,
+:host-context(.light-theme) .text-accent-highlight {
+  color: #2d550b;
+}
+
+:host-context([data-theme="light"]) .landing-subtitle,
+:host-context(.light-theme) .landing-subtitle {
+  color: #43523a;
+}
+
+:host-context([data-theme="light"]) .card-feature,
+:host-context(.light-theme) .card-feature {
+  background: linear-gradient(135deg, #daf2c0 0%, #bde68a 100%);
+  border-color: rgba(70, 130, 25, 0.28);
+  box-shadow: 0 4px 16px rgba(35, 75, 20, 0.08);
+}
+
+:host-context([data-theme="light"]) .feature-title,
+:host-context(.light-theme) .feature-title {
+  color: #111d0e;
+}
+
+:host-context([data-theme="light"]) .feature-desc,
+:host-context(.light-theme) .feature-desc {
+  color: #2f3e27;
+}
+
+:host-context([data-theme="light"]) .landing-footer,
+:host-context(.light-theme) .landing-footer {
+  color: #6a7b63;
+  border-top-color: rgba(27, 33, 22, 0.14);
+}
+
+@media (max-width: 576px) {
+  .landing-actions {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,98 @@
+<main class="layout-container page">
+  <app-home-hud [label]="store.hudLabel()" [title]="store.hudTitle()" subtitle="Entrenador / Analista">
+    <div hudActions class="hud-tabs">
+      @if (store.divisions().length > 1) {
+        <nav class="tabs-underline" role="tablist" aria-label="División">
+          @for (division of store.divisions(); track division.id) {
+            <button type="button" role="tab" [attr.aria-selected]="division.id === store.activeDivisionId()"
+                    (click)="store.selectDivision(division.id)">{{ division.name }}</button>
+          }
+        </nav>
+      }
+    </div>
+  </app-home-hud>
+
+  @switch (store.boardStatus()) {
+    @case ('loading') {
+      <div class="board-skeleton sk" aria-hidden="true"></div>
+    }
+    @case ('error') {
+      <section class="tile board-error" role="alert">
+        <p>No pudimos cargar tus partidos.</p>
+        <button type="button" class="btn btn-outline" (click)="store.retry('matches')">Reintentar</button>
+      </section>
+    }
+    @default {
+      <app-home-board [model]="store.board()" [primary]="store.primary()" [online]="store.online()" [now]="store.now()" />
+    }
+  }
+
+  @if (store.divisions().length > 0) {
+    <div class="grid">
+      <app-home-tile class="s4" label="Deuda de análisis" [title]="debt() ? 'vs ' + debt()!.opponent + ' · ' + debt()!.dateLabel : 'Último partido'"
+                     [state]="store.debtState()" (retry)="store.retry('debt')">
+        @if (debt(); as d) {
+          <div class="debt">
+            <div class="ring" [class]="'ring tone-' + debtTone()">
+              <svg viewBox="0 0 124 124" width="124" height="124" role="img" [attr.aria-label]="d.percent + ' % cargado'">
+                <circle class="ring-track" cx="62" cy="62" [attr.r]="ringRadius" />
+                <circle class="ring-value" cx="62" cy="62" [attr.r]="ringRadius" [attr.stroke-dasharray]="ringDash()" transform="rotate(-90 62 62)" />
+              </svg>
+              <div class="ring-text"><span class="ring-percent">{{ d.percent }}%</span><span class="label-mono ring-caption">Cargado</span></div>
+            </div>
+            <dl class="debt-rows">
+              <div><dt>Jugadas sin jugador</dt><dd>{{ d.withoutPlayer }}</dd></div>
+              @if (d.minutesWithoutZone !== null) {
+                <div><dt>Minutos sin zona</dt><dd>{{ d.minutesWithoutZone }}'</dd></div>
+              }
+            </dl>
+          </div>
+          @if (d.percent < 100) {
+            @if (store.online()) {
+              <a class="btn debt-btn" [class.btn-invite]="debtIsPrimary()" [class.btn-outline]="!debtIsPrimary()" [routerLink]="['/post-match', d.matchId]">Completar análisis</a>
+            } @else {
+              <button type="button" class="btn btn-outline debt-btn" disabled>Completar análisis</button>
+              <p class="offline-note">Requiere conexión</p>
+            }
+          }
+        }
+        <p tileEmpty>Todavía no jugaron ningún partido.</p>
+      </app-home-tile>
+
+      <app-home-tile class="s4" label="Pendientes" title="Antes del partido" [state]="store.pendingState()" (retry)="store.retry('pending')">
+        <ul class="pending">
+          @for (item of pending(); track item.kind) {
+            <li class="pending-item">
+              <div class="pending-text">
+                <strong>{{ item.text }}</strong>
+                <span>{{ item.detail }}</span>
+              </div>
+              @if (store.online()) {
+                <a class="btn btn-outline pending-btn" [routerLink]="item.route" [attr.aria-label]="item.actionLabel + ': ' + item.text + ', ' + item.detail">{{ item.actionLabel }}</a>
+              } @else {
+                <button type="button" class="btn btn-outline pending-btn" disabled [attr.aria-label]="item.actionLabel + ': ' + item.text + ', requiere conexión'">Requiere conexión</button>
+              }
+            </li>
+          }
+        </ul>
+        <p tileEmpty>No hay nada pendiente.</p>
+      </app-home-tile>
+
+      <app-home-tile class="s4 form-tile" [label]="'Forma · ' + seasonYear()" title="Últimos partidos" [state]="store.formState()" (retry)="store.retry('form')">
+        @if (form(); as f) {
+          <div class="record">
+            <div><span class="label-mono">Récord</span><p class="kpi">{{ f.record.wins }}-{{ f.record.draws }}-{{ f.record.losses }}</p></div>
+            <div><span class="label-mono">Dif.</span>
+              <p class="kpi" [class.positive]="f.record.diff > 0" [class.negative]="f.record.diff < 0">{{ f.record.diff > 0 ? '+' : '' }}{{ f.record.diff }}</p></div>
+          </div>
+          <div class="last">
+            @for (entry of f.record.last; track entry.matchId) {
+              <app-result-pill [result]="entry.result" [score]="entry.score" [opponent]="entry.opponent" [analysisPercent]="f.percents[entry.matchId] ?? null" />
+            }
+          </div>
+        }
+        <p tileEmpty>Sin partidos jugados en {{ seasonYear() }}.</p>
+      </app-home-tile>
+    </div>
+  }
+</main>

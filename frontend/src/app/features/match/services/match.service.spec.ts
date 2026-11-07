@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { firstValueFrom } from 'rxjs';
 import { MatchService } from './match.service';
+import { Division } from '../../division/types/division.types';
 import { LocalDatabaseService } from '../../local-database/services/local-database.service';
 import { buildBackendMatch, buildMatch, clearLocalDatabases, nextRequest } from '../../../testing/offline-test-helpers';
 
@@ -82,6 +83,24 @@ describe('MatchService (transiciones offline)', () => {
     const cached = await cache.getMatchesByDivision('division-1');
     expect(cached.map(match => [match.id, match.status]))
       .toEqual([['match-1', 'finished'], ['match-2', 'cancelled']]);
+  });
+
+  it('lista los partidos del club y los cachea', async () => {
+    const loading = firstValueFrom(service.getMatchesByClub('club-1'));
+    (await nextRequest(httpMock, req => req.url.endsWith('/matches/club?clubId=club-1')))
+      .flush([buildBackendMatch({ id: 'match-1', status: 'NOT_STARTED' })]);
+
+    expect((await loading).map(match => [match.id, match.status])).toEqual([['match-1', 'not_started']]);
+    expect((await cache.getMatch('match-1'))?.status).toBe('not_started');
+  });
+
+  it('sin conexión lista los partidos cacheados de las divisiones del club', async () => {
+    await cache.saveDivisions([{ id: 'division-1', clubId: 'club-1' } as Division]);
+    const loading = firstValueFrom(service.getMatchesByClub('club-1'));
+    (await nextRequest(httpMock, req => req.url.includes('/matches/club')))
+      .error(new ProgressEvent('error'), { status: 0 });
+
+    expect((await loading).map(match => match.id)).toEqual(['match-1']);
   });
 
   it('cachea el partido cancelado tras cancelarlo', async () => {

@@ -51,10 +51,51 @@
   --error: #b42318;
   --error-tint: rgba(240, 68, 56, 0.14);
   --error-border: rgba(180, 35, 24, 0.35);
+  --success: #2e7d32;
+  --success-tint: rgba(46, 125, 50, 0.12);
+
+  /* Vistas de gestión "Sport Pro Salvia" (DESIGN_SYSTEM.md §1.1) */
+  --bg-canvas: #e1edde;
+  --surface-header-start: #edf5e9;
+  --surface-header-end: #e0ebd8;
+  --surface-toolbar: #eaf3e6;
+  --border-sport: rgba(32, 75, 34, 0.28);
+  --border-sport-subtle: rgba(32, 75, 34, 0.20);
+  --btn-primary-bg: #204b22;
+  --btn-primary-fg: #ffffff;
+  --btn-primary-hover: #163618;
+  --btn-outline-bg: #ffffff;
+  --btn-outline-border: rgba(32, 75, 34, 0.25);
+  --btn-outline-fg: #204b22;
+  --shadow-elevation: 0 16px 36px rgba(15, 35, 15, 0.12), 0 4px 12px rgba(15, 35, 15, 0.06);
+  --shadow-button: 0 4px 12px rgba(32, 75, 34, 0.20);
+  --shadow-button-hover: 0 6px 16px rgba(32, 75, 34, 0.28);
+
+  /* Inicio · Pizarra de juego (DESIGN_SYSTEM.md §9): el tablero conserva sus colores en claro y oscuro */
+  --board-bg-start: #204b22;
+  --board-bg-end: #163618;
+  --board-line: rgba(255, 255, 255, 0.10);
+  --board-line-strong: rgba(255, 255, 255, 0.22);
+  --board-shadow: 0 18px 40px rgba(15, 35, 15, 0.28);
+  --on-board: #ffffff;
+  --on-board-muted: rgba(255, 255, 255, 0.72);
+  --on-board-accent: var(--grass);
+  --board-chip-ok-bg: var(--grass-tint-strong);
+  --board-chip-ok-fg: #ffffff;
+  --board-chip-warn-bg: var(--zone-heat-low);
+  --board-chip-warn-fg: #3d2600;
+  --board-chip-neutral-bg: rgba(255, 255, 255, 0.12);
+  --board-chip-neutral-fg: #ffffff;
+  --board-digit-bg: rgba(255, 255, 255, 0.08);
+  --board-digit-border: rgba(255, 255, 255, 0.22);
+  --btn-on-board-bg: #ffffff;
+  --btn-on-board-fg: var(--btn-primary-bg);
+  --btn-on-board-outline: rgba(255, 255, 255, 0.55);
 
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
 
   --font-head: 'Hanken Grotesk', sans-serif;
@@ -126,6 +167,8 @@
   --surface-header-start: #162238;
   --surface-header-end: #162238;
   --surface-toolbar: #131c2e;
+  --bg-canvas: var(--bg);
+  --btn-on-board-fg: #204b22;
 
   --border: #1f2e47;
   --border-strong: #2a3c5a;
@@ -211,18 +254,15 @@ html:has(.pm-shell) {
 /* ==========================================================================
    Modo Oscuro: Componentes Globales Compartidos (SOLID)
    ========================================================================== */
-[data-theme="dark"] .brand-text .title,
-[data-theme="dark"] .page-title {
+[data-theme="dark"] .brand-text .title {
   color: #ffffff;
 }
 
-[data-theme="dark"] .brand-text .club,
-[data-theme="dark"] .page-subtitle {
+[data-theme="dark"] .brand-text .club {
   color: #94a3b8;
 }
 
-[data-theme="dark"] .badge-tech,
-[data-theme="dark"] .header-badge {
+[data-theme="dark"] .badge-tech {
   background-color: #162238;
   border-color: #2a3c5a;
   color: #a3e635;
@@ -348,44 +388,12 @@ html:has(.pm-shell) {
   color: #94a3b8;
 }
 
-[data-theme="dark"] .card-base {
-  background: #131c2e;
-  border-color: #1f2e47;
-}
-
-[data-theme="dark"] .card-base:hover {
-  border-color: #2a3c5a;
-}
-
 [data-theme="dark"] .status-pill,
 [data-theme="dark"] .position-badge,
 [data-theme="dark"] .tag {
   background: #162238;
   border-color: #2a3c5a;
   color: #cbd5e1;
-}
-
-[data-theme="dark"] .club-form-container {
-  background: #131c2e;
-  border: 1px solid #1f2e47;
-  border-radius: 16px;
-  padding: 24px;
-  color: #ffffff;
-}
-
-[data-theme="dark"] .club-form-container h2 {
-  color: #ffffff;
-}
-
-[data-theme="dark"] .club-form-container label {
-  color: #cbd5e1;
-}
-
-[data-theme="dark"] .club-form-container input,
-[data-theme="dark"] .club-form-container select {
-  background: #162238;
-  border: 1px solid #2a3c5a;
-  color: #ffffff;
 }
 
 body {
@@ -459,11 +467,6 @@ button {
   padding-block: var(--layout-pad-y) 64px;
 }
 
-/* Barra de acento superior (removida para evitar doble división bajo la navbar) */
-.topbar {
-  display: none;
-}
-
 /* ==========================================================================
    Page Header (Cabecera Integrada de Página)
    ========================================================================== */
@@ -485,8 +488,7 @@ button {
   display: none;
 }
 
-.hud-brand,
-.header-brand {
+.hud-brand {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -494,12 +496,7 @@ button {
   flex-shrink: 0;
 }
 
-.crest {
-  display: none;
-}
-
-.badge-tech,
-.header-badge {
+.badge-tech {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -514,8 +511,7 @@ button {
   color: #244c09;
 }
 
-.brand-text .title,
-.page-title {
+.brand-text .title {
   font-family: var(--font-head, 'Hanken Grotesk', sans-serif);
   font-weight: 800;
   font-size: 2rem;
@@ -525,8 +521,7 @@ button {
   letter-spacing: -0.015em;
 }
 
-.brand-text .club,
-.page-subtitle {
+.brand-text .club {
   font-size: 14px;
   font-weight: 500;
   color: #3b4e33;
@@ -596,6 +591,84 @@ button {
   transform: translateY(-1px);
 }
 
+/* Inicio: sobre el tablero oscuro el primario es blanco y su secundario es un contorno claro */
+.btn-on-board {
+  background-color: var(--btn-on-board-bg);
+  border: 1px solid var(--btn-on-board-bg);
+  color: var(--btn-on-board-fg);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.btn-on-board:hover {
+  background-color: #eef5ea;
+  color: var(--btn-on-board-fg);
+  transform: translateY(-1px);
+}
+
+.btn-on-board-outline {
+  background-color: transparent;
+  border: 1px solid var(--btn-on-board-outline);
+  color: var(--on-board);
+  font-weight: 600;
+}
+
+.btn-on-board-outline:hover {
+  background-color: var(--board-chip-neutral-bg);
+  border-color: var(--on-board);
+  color: var(--on-board);
+  transform: translateY(-1px);
+}
+
+/* Tarjeta del Inicio: sin cabecera en degradé; rótulo y título van en el cuerpo */
+.tile {
+  background: var(--surface);
+  border: 2px solid var(--border-sport);
+  border-radius: 18px;
+  box-shadow: var(--shadow-elevation);
+  padding: 20px;
+  min-width: 0;
+}
+
+/* Rótulo mono en mayúsculas (no es .eyebrow: esa es la píldora navy global) */
+.label-mono {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Pestañas con subrayado: división activa y serie del gráfico */
+.tabs-underline {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  /* Con overflow-x el eje Y también scrollea: la línea de base va como sombra interior y no como borde que los botones solapan. */
+  overflow-y: hidden;
+  box-shadow: inset 0 -2px 0 var(--border-sport-subtle);
+}
+
+.tabs-underline > button,
+.tabs-underline > a {
+  min-height: 44px;
+  padding: 0 14px;
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  font: 600 14px var(--font-body);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.tabs-underline > [aria-selected="true"],
+.tabs-underline > [aria-current="page"] {
+  color: var(--btn-primary-bg);
+  border-bottom-color: var(--btn-primary-bg);
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
@@ -614,21 +687,6 @@ button {
   background: var(--error-tint);
   border: 1px solid var(--error-border);
   color: var(--error);
-}
-
-.btn-neon {
-  background-color: #a3e635;
-  color: #0b111e;
-  font-weight: 600;
-  border: none;
-  border-radius: var(--radius-md);
-  transition: all 0.2s ease;
-}
-
-.btn-neon:hover:not(:disabled) {
-  background-color: #bef264;
-  color: #0b111e;
-  box-shadow: 0 0 14px rgba(163, 230, 53, 0.35);
 }
 
 /* ==========================================================================
@@ -1021,21 +1079,6 @@ button {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-/* ==========================================================================
-   Tarjetas y Superficies
-   ========================================================================== */
-.card-base {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  transition: border-color .15s ease, transform .15s ease;
-}
-
-.card-base:hover {
-  border-color: var(--border-strong);
-  transform: translateY(-2px);
 }
 
 /* ==========================================================================

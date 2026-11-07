@@ -1,0 +1,44 @@
+import { FormMatch, finishedOfSeason, formRecord, resultOf } from './form-record';
+
+describe('form-record', () => {
+  const now = new Date(2026, 10, 6, 18, 0);
+  const match = (id: string, date: string, home: number, away: number, status: FormMatch['status'] = 'finished', alias = 'Draig Goch'): FormMatch => ({
+    id, date, status, homeScore: home, awayScore: away,
+    opponent: { id: 'o', name: alias, alias, city: null }
+  });
+
+  it('resultOf compara el marcador propio con el rival', () => {
+    expect(resultOf(24, 17)).toBe('win');
+    expect(resultOf(10, 10)).toBe('draw');
+    expect(resultOf(3, 9)).toBe('loss');
+  });
+
+  it('solo cuenta los FINISHED del año en curso, en orden cronológico', () => {
+    const matches = [
+      match('b', '2026-03-10T15:00:00', 1, 0),
+      match('a', '2026-02-10T15:00:00', 2, 0),
+      match('old', '2025-11-10T15:00:00', 9, 0),
+      match('next', '2026-11-07T15:00:00', 0, 0, 'not_started')
+    ];
+    expect(finishedOfSeason(matches, now).map(m => m.id)).toEqual(['a', 'b']);
+  });
+
+  it('arma récord, diferencia y últimos 5', () => {
+    const matches = [
+      match('1', '2026-01-01T15:00:00', 24, 17),
+      match('2', '2026-01-08T15:00:00', 15, 22),
+      match('3', '2026-01-15T15:00:00', 19, 19),
+      match('4', '2026-01-22T15:00:00', 31, 12),
+      match('5', '2026-01-29T15:00:00', 27, 10),
+      match('6', '2026-02-05T15:00:00', 10, 3)
+    ];
+    const record = formRecord(matches, now);
+    expect(record).toEqual(jasmine.objectContaining({ wins: 4, draws: 1, losses: 1, diff: 7 - 7 + 0 + 19 + 17 + 7 }));
+    expect(record?.last.map(entry => entry.matchId)).toEqual(['2', '3', '4', '5', '6']);
+    expect(record?.last[0]).toEqual({ matchId: '2', result: 'loss', score: '15-22', opponent: 'Draig Goch' });
+  });
+
+  it('sin partidos jugados no hay forma', () => {
+    expect(formRecord([match('n', '2026-11-07T15:00:00', 0, 0, 'not_started')], now)).toBeNull();
+  });
+});

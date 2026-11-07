@@ -1,0 +1,72 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.tile {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tile-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tile-label {
+  margin: 0 0 4px;
+}
+
+.tile-title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--text-primary);
+}
+
+.tile-seal {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--warning);
+  white-space: nowrap;
+}
+
+.tile-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tile-loading .sk-block {
+  flex: none;
+  height: 64px;
+}
+
+.tile-empty {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.tile-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.tile-error-text {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.tile-retry {
+  min-height: 44px;
+}

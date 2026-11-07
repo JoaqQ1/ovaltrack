@@ -1,105 +1,35 @@
-import { Component, computed, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { AuthService } from '../auth/services/auth.service';
 import { UserContextService } from '../../core/services/user-context.service';
-import { UserRole } from '../auth/types/auth.types';
-import { NavigationCard } from './types/home.types';
+import { LandingComponent } from './landing/landing.component';
+import { AdminHomeComponent } from './views/admin/admin-home.component';
+import { CoachHomeComponent } from './views/coach/coach-home.component';
+import { OtherHomeComponent } from './views/other/other-home.component';
+import { PlayerHomeComponent } from './views/player/player-home.component';
 
+export type HomeView = 'coach' | 'admin' | 'player' | 'other';
+
+/** Inicio: la landing sin sesión y, con sesión, la vista que corresponde al rol del usuario. */
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink],
+  imports: [LandingComponent, CoachHomeComponent, AdminHomeComponent, PlayerHomeComponent, OtherHomeComponent],
   templateUrl: './home.component.html',
-  styleUrl: './home.component.css'
+  styleUrl: './home.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HomeComponent {
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
-  readonly userContextService = inject(UserContextService);
+  readonly currentUser = inject(AuthService).currentUser;
+  private readonly userContext = inject(UserContextService).userContext;
 
-  readonly currentUser = this.authService.currentUser;
-
-  // Catálogo de secciones protegidas con control de roles
-  private readonly allNavigationCards: NavigationCard[] = [
-    {
-      title: 'Administración de OvalTrack',
-      description: 'Revisa solicitudes de acceso y consulta las cuentas activas de la plataforma.',
-      route: '/admin/ovaltrack',
-      badge: 'Global',
-      allowedRoles: ['ADMIN_OVALTRACK'],
-      icon: 'members'
-    },
-    {
-      title: 'Seleccion de partidos',
-      description: 'Tagging y registro en tiempo real de eventos de partido y métricas tácticas.',
-      route: '/match-selection',
-      badge: 'En vivo',
-      allowedRoles: ['ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK'] as UserRole[],
-      icon: 'live'
-    },
-    {
-      title: 'Divisiones & Planteles',
-      description: 'Consulta de categorías, listados de equipos y gestión de convocatorias.',
-      route: '/divisions',
-      badge: 'Gestión',
-      allowedRoles: ['ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK'] as UserRole[],
-      icon: 'division'
-    },
-    {
-      title: 'Gestión del Club',
-      description: 'Administración de sede, configuraciones globales y estructura institucional.',
-      route: '/club',
-      badge: 'Admin',
-      allowedRoles: ['ADMIN_CLUB', 'ADMIN_OVALTRACK'] as UserRole[],
-      icon: 'club'
-    },
-    {
-      title: 'Gestión de Miembros',
-      description: 'Administración de usuarios, roles deportivos y asignación de permisos.',
-      route: '/members',
-      badge: 'Admin',
-      allowedRoles: ['ADMIN_CLUB', 'ADMIN_OVALTRACK'] as UserRole[],
-      icon: 'members'
-    },
-    {
-      title: 'Nuevo Jugador',
-      description: 'Alta y asignación de perfiles médicos y técnicos al plantel.',
-      route: '/players/new',
-      badge: 'Staff',
-      allowedRoles: ['ADMIN_CLUB', 'COACH_ANALYST', 'ADMIN_OVALTRACK'] as UserRole[],
-      icon: 'player'
-    },
-    // Panel de jugador
-    {
-      title: 'Estadisticas del jugador',
-      description: 'Revision de tus estadisticas.',
-      route: '/player-statistics',
-      badge: 'Player',
-      allowedRoles: ['PLAYER'] as UserRole[],
-      icon: 'player'
+  /** `null` mientras llega el contexto del usuario: sin él no se sabe qué división o club mostrar. */
+  readonly view = computed<HomeView | null>(() => {
+    switch (this.userContext()?.role) {
+      case undefined: return null;
+      case 'COACH_ANALYST': return 'coach';
+      case 'ADMIN_CLUB': return 'admin';
+      case 'PLAYER': return 'player';
+      default: return 'other';
     }
-  ];
-
-  readonly visibleCards = computed(() => {
-    const user = this.currentUser();
-    if(user)
-      console.log(user.role)
-    if (!user) return [];
-    const roleCards = this.allNavigationCards.filter(card => card.allowedRoles.includes(user.role));
-    return user.role === 'ADMIN_OVALTRACK'
-      ? roleCards.filter(card => card.route === '/admin/ovaltrack')
-      : roleCards;
   });
-
-  goToMembers(): void {
-    void this.router.navigate(['/members']);
-  }
-
-  logout(): void {
-    this.authService.logout();
-  }
-
-  goToMatchSelection(): void {
-    void this.router.navigate(['/match-selection']);
-  }
 }

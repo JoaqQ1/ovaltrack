@@ -10,6 +10,7 @@ import { LocalDatabaseService } from '../../local-database/services/local-databa
 import { Observable, tap } from 'rxjs';
 import { MessageResponse } from 'src/app/shared/types/shared-types';
 import { RegisterFromInvitationRequest } from '../../invitation/types/invitation.types';
+import { SESSION_CLEANUP, runSessionCleanups } from '../../../core/session/session-cleanup';
 @Injectable({
   providedIn: 'root'
 })
@@ -21,6 +22,7 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly cache = inject(LocalDatabaseService);
   private readonly toastService = inject(ToastService);
+  private readonly sessionCleanups = inject(SESSION_CLEANUP, { optional: true }) ?? [];
   private currentUserSignal = signal<CurrentUserSession | null>(this.loadUserFromToken());
   readonly currentUser = this.currentUserSignal.asReadonly();
   /** Rol vigente: el del contexto (`/api/me`) y, mientras no cargó, el del token. */
@@ -74,6 +76,7 @@ export class AuthService {
     return 'No se pudo completar la operación. Inténtalo nuevamente.';
   }
   logout(): void {
+    runSessionCleanups(this.sessionCleanups);
     this.userContextService.clear();
     this.tokenService.removeToken();
     this.currentUserSignal.set(null);

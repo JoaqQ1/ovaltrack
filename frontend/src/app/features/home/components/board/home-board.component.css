@@ -1,0 +1,376 @@
+:host {
+  display: block;
+  margin-bottom: 20px;
+}
+
+.board {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  padding: 28px;
+  background: linear-gradient(135deg, var(--board-bg-start), var(--board-bg-end));
+  box-shadow: var(--board-shadow);
+  color: var(--on-board);
+}
+
+.board-pitch {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.board-pitch line {
+  stroke: var(--board-line);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.board-pitch .dashed {
+  stroke: var(--board-line-strong);
+  stroke-dasharray: 8 8;
+}
+
+.board-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 20px 32px;
+  align-items: center;
+}
+
+.board-main,
+.board-side,
+.board-wide {
+  min-width: 0;
+}
+
+.board-wide {
+  grid-column: 1 / -1;
+}
+
+.board-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  text-align: right;
+}
+
+.board-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.on-board {
+  margin: 0 0 8px;
+  color: var(--on-board-muted);
+}
+
+.board-title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 52px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--on-board);
+  overflow-wrap: anywhere;
+}
+
+.board-vs {
+  font-size: 0.6em;
+  color: var(--on-board-muted);
+}
+
+.board-meta,
+.board-note {
+  margin: 10px 0 0;
+  font-size: 15px;
+  color: var(--on-board-muted);
+}
+
+.board-time {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 60px;
+  line-height: 1;
+  color: var(--on-board);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.chip-board {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--board-chip-neutral-bg);
+  color: var(--board-chip-neutral-fg);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.chip-board.ok {
+  background: var(--board-chip-ok-bg);
+  color: var(--board-chip-ok-fg);
+}
+
+.chip-board.warn {
+  background: var(--board-chip-warn-bg);
+  color: var(--board-chip-warn-fg);
+}
+
+.has-tip {
+  position: relative;
+  cursor: help;
+}
+
+.chip-tip {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  z-index: 2;
+  width: max-content;
+  max-width: min(280px, 80vw);
+  padding: 10px 12px;
+  border: 2px solid var(--border-sport);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-elevation);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.has-tip:hover .chip-tip,
+.has-tip:focus .chip-tip,
+.has-tip:focus-visible .chip-tip {
+  visibility: visible;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip-tip {
+    transition: none;
+  }
+}
+
+.board-btn {
+  min-height: 48px;
+  min-width: 180px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.board-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.board-offline {
+  margin: -4px 0 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--on-board-muted);
+}
+
+.countdown {
+  display: flex;
+  gap: 8px;
+}
+
+.digit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  padding: 10px 0;
+  border-radius: 12px;
+  background: var(--board-digit-bg);
+  border: 1px solid var(--board-digit-border);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 52px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.score {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 104px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.score.dim {
+  opacity: 0.6;
+}
+
+.score-sep {
+  font-size: 0.4em;
+  color: var(--on-board-muted);
+}
+
+.pulse {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: var(--on-board-accent);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.ticker {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--on-board-muted);
+}
+
+.ticker-minute {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--on-board);
+}
+
+.steps {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--on-board-muted);
+  font-weight: 600;
+}
+
+.step-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--board-line-strong);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.step.current {
+  color: var(--on-board);
+}
+
+.step.current .step-dot {
+  background: var(--on-board);
+  border-color: var(--on-board);
+  color: var(--btn-on-board-fg);
+}
+
+.step.done .step-dot {
+  border-color: var(--on-board-accent);
+  color: var(--on-board-accent);
+}
+
+.jersey {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 104px;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--board-line-strong);
+}
+
+@media (max-width: 1120px) {
+  .board-body {
+    grid-template-columns: 1fr;
+  }
+
+  .board-side {
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 700px) {
+  .board {
+    border-radius: 20px;
+    padding: 20px;
+  }
+
+  .board-title {
+    font-size: 36px;
+  }
+
+  .board-time {
+    font-size: 44px;
+  }
+
+  .score,
+  .jersey {
+    font-size: 72px;
+  }
+
+  .jersey {
+    display: none;
+  }
+
+  .digit {
+    min-width: 64px;
+    font-size: 36px;
+  }
+
+  .board-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
+}

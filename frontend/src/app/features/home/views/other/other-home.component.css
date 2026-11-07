@@ -1,0 +1,45 @@
+:host {
+  display: block;
+}
+
+.tile-title {
+  margin: 4px 0 8px;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--text-primary);
+}
+
+.tile-copy {
+  margin: 0 0 16px;
+  max-width: 520px;
+  color: var(--text-secondary);
+}
+
+.tile-btn {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.pending {
+  text-align: center;
+}
+
+.pending .tile-copy {
+  margin: 0 auto;
+}
+
+.pending-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: var(--warning-tint);
+  border: 1px solid var(--warning-border);
+  color: var(--warning);
+  font-size: 22px;
+}

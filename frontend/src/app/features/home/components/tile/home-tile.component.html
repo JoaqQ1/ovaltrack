@@ -1,0 +1,33 @@
+<section class="tile" [attr.aria-busy]="state().status === 'loading'">
+  <div class="tile-head">
+    <div class="tile-heading">
+      <p class="label-mono tile-label">{{ label() }}</p>
+      <h2 class="tile-title">{{ title() }}</h2>
+    </div>
+    @if (staleSeal(); as seal) {
+      <span class="tile-seal"><i class="bi bi-clock-history" aria-hidden="true"></i> {{ seal }}</span>
+    }
+  </div>
+
+  @switch (state().status) {
+    @case ('loading') {
+      <div class="tile-loading" aria-hidden="true">
+        <div class="sk sk-line"></div>
+        <div class="sk sk-block"></div>
+        <div class="sk sk-line s"></div>
+      </div>
+    }
+    @case ('empty') {
+      <div class="tile-empty"><ng-content select="[tileEmpty]" /></div>
+    }
+    @case ('error') {
+      <div class="tile-error" role="alert">
+        <p class="tile-error-text">{{ errorMessage() }}</p>
+        <button type="button" class="btn btn-outline tile-retry" (click)="retry.emit()">Reintentar</button>
+      </div>
+    }
+    @default {
+      <ng-content />
+    }
+  }
+</section>
