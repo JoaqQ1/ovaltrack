@@ -645,7 +645,9 @@ button {
   display: flex;
   gap: 4px;
   overflow-x: auto;
-  border-bottom: 2px solid var(--border-sport-subtle);
+  /* Con overflow-x el eje Y también scrollea: la línea de base va como sombra interior y no como borde que los botones solapan. */
+  overflow-y: hidden;
+  box-shadow: inset 0 -2px 0 var(--border-sport-subtle);
 }
 
 .tabs-underline > button,
@@ -655,7 +657,6 @@ button {
   background: none;
   border: 0;
   border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
   font: 600 14px var(--font-body);
   color: var(--text-secondary);
   white-space: nowrap;
