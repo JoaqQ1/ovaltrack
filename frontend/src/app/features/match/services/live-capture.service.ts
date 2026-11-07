@@ -87,10 +87,7 @@ export class LiveCaptureService {
   }
 
   deleteEvent(event: LocalMatchEvent): Observable<void> {
-    return from(this.cache.deleteEvent(event)).pipe(
-      switchMap(() => this.syncPendingEvents(event.matchId)),
-      map(() => undefined),
-    );
+    return defer(() => from(this.cache.deleteEvent(event)));
   }
 
   deleteMatchData(matchId: string): Observable<void> {
