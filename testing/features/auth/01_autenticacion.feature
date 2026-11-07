@@ -55,3 +55,15 @@ Característica: Autenticación de usuarios
     Dado un usuario con un token de sesión inválido
     Cuando consulta los datos de su sesión
     Entonces el sistema responde con 401 y "No autorizado: se requiere autenticación"
+
+  # --- DISPONIBILIDAD ---
+
+  Escenario: Un usuario autenticado consulta la disponibilidad del backend
+    Dado que el usuario con email "felipe.conte@test.com" y contraseña "PassSegura123!" ha iniciado sesión
+    Cuando consulta la disponibilidad del backend
+    Entonces el backend informa que está disponible
+
+  Escenario: La consulta de disponibilidad sin autenticación es rechazada
+    Dado un usuario sin sesión iniciada en la plataforma
+    Cuando consulta la disponibilidad del backend
+    Entonces el sistema responde con 401 y "No autorizado: se requiere autenticación"

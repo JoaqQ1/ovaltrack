@@ -47,3 +47,14 @@ Then('el sistema devuelve la sesión de {string} con el rol {string} en el club 
   assert.equal(this.response.body.role, rol);
   assert.equal(this.response.body.club?.name, nombreClub);
 });
+
+// <==================== Disponibilidad ====================>
+
+When('consulta la disponibilidad del backend', async function () {
+  this.response = await makeHttpRequest('GET', 'api', null, this.token);
+});
+
+Then('el backend informa que está disponible', function () {
+  assert.equal(this.response.status, 200, this.response.body?.message);
+  assert.equal(this.response.body.status, 'UP');
+});
