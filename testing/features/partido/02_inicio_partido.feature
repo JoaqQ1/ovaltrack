@@ -8,7 +8,7 @@ Característica: Inicio de un partido programado
     Dado que el coach con email "felipe.conte@test.com" y contraseña "PassSegura123!" ha iniciado sesión
     Y que existe un partido contra "Trelew Rugby Club" para el "2027-06-05T15:30:00" en la division "Primera"
     Cuando intenta iniciar el partido
-    Entonces el sistema responde con 409 y "No se puede iniciar el partido sin al menos un jugador titular registrado."
+    Entonces el sistema responde con 409 y "No se puede iniciar el partido sin los 15 titulares registrados."
 
   Escenario: Un partido con plantel cargado se inicia correctamente
     Dado que el coach con email "felipe.conte@test.com" y contraseña "PassSegura123!" ha iniciado sesión
