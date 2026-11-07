@@ -1,4 +1,4 @@
-const BACKEND_URL = process.env.API_URL || 'http://backend:8080';
+import { makeHttpRequest } from './httpRequest.js';
 
 const divisionCache = new Map();
 
@@ -7,27 +7,12 @@ export async function findDivisionIdByName(name, token) {
     return divisionCache.get(name);
   }
 
-  const myClubRes = await fetch(`${BACKEND_URL}/club/my-club`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  if (myClubRes.ok) {
-    const club = await myClubRes.json();
-    const divRes = await fetch(`${BACKEND_URL}/division?clubId=${club.id}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (divRes.ok) {
-      const divisions = await divRes.json();
-      const target = divisions.find(d => d.name === name);
-      if (target) {
-        divisionCache.set(name, target.id);
-        return target.id;
-      }
-    }
-  }
+  const myClub = await makeHttpRequest('GET', 'club/my-club', null, token);
+  if (myClub.status !== 200) return null;
+  const divisions = await makeHttpRequest('GET', `division?clubId=${myClub.body.id}`, null, token);
+  if (divisions.status !== 200) return null;
 
-  return null;
-}
-
-export function clearDivisionCache() {
-  divisionCache.clear();
+  const target = divisions.body.find((d) => d.name === name);
+  if (target) divisionCache.set(name, target.id);
+  return target?.id ?? null;
 }

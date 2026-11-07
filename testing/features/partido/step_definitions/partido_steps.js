@@ -1,20 +1,9 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
-import { findDivisionIdByName } from '../../support/division_helper.js';
 import { makeHttpRequest } from '../../support/httpRequest.js';
 import { cancelLiveMatches, findDivisionId, findMatchByStatus, getDivisionMatches, requestMatchCreation, saveRosterWithDivisionPlayers, startMatch } from '../../support/match_helper.js';
 
-export const matchCache = new Map();
-
 // <==================== Helpers ====================>
-
-const createMatch = async (fecha, divisionId, rival, token) => {
-  const response = await requestMatchCreation(fecha, divisionId, rival, token);
-  if (response.status === 200 && response.body?.id) {
-    matchCache.set(rival, response.body);
-  }
-  return response;
-};
 
 const findMatchInDivision = async (divisionId, rival, fecha, token) => {
   const matches = await getDivisionMatches(divisionId, token);
@@ -31,7 +20,7 @@ const assertCreatedMatch = (response, rival, estado) => {
 
 When('programa un partido contra el rival {string} para la fecha {string} en la división {string}', async function (rival, fecha, divisionNombre) {
   const divisionId = await findDivisionId(divisionNombre, this.token);
-  this.response = await createMatch(fecha, divisionId, rival, this.token);
+  this.response = await requestMatchCreation(fecha, divisionId, rival, this.token);
 });
 
 Then('el sistema responde con {int} y devuelve el partido en estado {string} contra el rival {string}', function (statusCode, estado, rival) {
@@ -43,12 +32,12 @@ Then('el sistema responde con {int} y devuelve el partido en estado {string} con
 
 When('intenta programar un partido contra {string} para el {string} en la división {string}', async function (rival, fecha, divisionNombre) {
   const divisionId = await findDivisionId(divisionNombre, this.token);
-  this.response = await createMatch(fecha, divisionId, rival, this.token);
+  this.response = await requestMatchCreation(fecha, divisionId, rival, this.token);
 });
 
 When('intenta programar un partido contra {string} asociándolo a un ID de división inexistente', async function (rival) {
   const fakeDivisionId = '00000000-0000-0000-0000-000000000000';
-  this.response = await createMatch('2026-11-15T15:30:00', fakeDivisionId, rival, this.token);
+  this.response = await requestMatchCreation('2026-11-15T15:30:00', fakeDivisionId, rival, this.token);
 });
 
 // <==================== Cancelación de partidos ====================>
@@ -57,7 +46,7 @@ Given('que existe un partido contra {string} para el {string} en la division {st
   const divisionId = await findDivisionId(divisionNombre, this.token);
   this.match = await findMatchInDivision(divisionId, rival, fecha, this.token);
   if (!this.match) {
-    const response = await createMatch(fecha, divisionId, rival, this.token);
+    const response = await requestMatchCreation(fecha, divisionId, rival, this.token);
     assert.equal(response.status, 200, `No se pudo crear el partido contra ${rival}: ${response.body?.message}`);
     this.match = response.body;
   }
@@ -82,7 +71,7 @@ Given('que la division {string} tiene un partido en curso contra {string}', asyn
   await cancelLiveMatches(divisionId, this.token, rival);
   const live = await findMatchByStatus(divisionId, rival, ['IN_PROGRESS'], this.token);
   if (live) return;
-  const created = await createMatch('2027-06-18T15:30:00', divisionId, rival, this.token);
+  const created = await requestMatchCreation('2027-06-18T15:30:00', divisionId, rival, this.token);
   assert.equal(created.status, 200, `No se pudo crear el partido contra ${rival}: ${created.body?.message}`);
   await startMatch(created.body, this.token);
 });
